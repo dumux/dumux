@@ -211,6 +211,9 @@ public:
         depthBOR_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.DepthBOR);
 
         brineDensity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Fluid.BrineDensity);
+
+        this->spatialParams().setEpisode(this->timeManager().episodeIndex());
+        episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthInit);
     }
 
     void init()
@@ -586,35 +589,28 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
 //         //and the failureTimeStepSize for anyFailure = true
 //         double newTimeStepSize = this->newtonController().suggestTimeStepSize(oldTimeStep);
 //         std::cout << "elastic: newTimeStepSize is " << newTimeStepSize << "\n";
-//         if( (this->timeManager().time() + this->timeManager().timeStepSize() > tInitEnd_ + eps_)
-//             && ( this->timeManager().episodeIndex() < 2) )
-//         {
-//             episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
-//         }
-//
-//         if( this->timeManager().episodeIndex() >= 2)
-//         {
-//             episodeLength_ = episodeLength_ * 2.0;
-//         }
-//         if( this->timeManager().episodeIndex() == 10)
-//             episodeLength_ = 389.0;
-//         if( this->timeManager().episodeIndex() == 12)
-//             episodeLength_ = 122.0;
-//         if( this->timeManager().episodeIndex() == 16)
-//             episodeLength_ = 92.0;
-//         if( this->timeManager().episodeIndex() == 21)
-//             episodeLength_ = 840;
-//         if( this->timeManager().episodeIndex() == 23)
-//             episodeLength_ = 1820;
-//         if( this->timeManager().episodeIndex() == 24)
-//             episodeLength_ = 100;
-//
-//
-//         std::cout << "elastic: episodeLength_ is " << episodeLength_ << "\n";
-//
-//         this->timeManager().startNextEpisode(episodeLength_);
-//         this->timeManager().setTimeStepSize(episodeLength_);
-//         std::cout << "elastic: TimeStepSize_ " << this->timeManager().timeStepSize() << "\n";
+        if( (this->timeManager().time() + this->timeManager().timeStepSize() > tInitEnd_ + eps_)
+            && ( this->timeManager().episodeIndex() < 2) )
+        {
+            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
+        }
+
+        if( this->timeManager().episodeIndex() >= 2)
+        {
+            episodeLength_ = episodeLength_ * 2.0;
+        }
+        if( this->timeManager().episodeIndex() == 10)
+            episodeLength_ = 389.0;
+        if( this->timeManager().episodeIndex() == 12)
+            episodeLength_ = 122.0;
+        if( this->timeManager().episodeIndex() == 16)
+            episodeLength_ = 92.0;
+        if( this->timeManager().episodeIndex() == 21)
+            episodeLength_ = 840;
+        if( this->timeManager().episodeIndex() == 23)
+            episodeLength_ = 1820;
+        if( this->timeManager().episodeIndex() == 24)
+            episodeLength_ = 100;
     }
 
     /*!
@@ -806,6 +802,7 @@ private:
 
     std::vector<Scalar> effPressureVector_;
     std::vector<Scalar> pInit_;
+
     std::vector<std::vector<Scalar>> pwVector_, pnVector_, pcVector_, SwVector_, SnVector_, rhonVector_, rhowVector_;
     std::vector<std::vector<Scalar>> effPorosityVector_, effPermeabilityVector_;
     std::vector<std::vector<Scalar>> effPorosityVectorOldIteration_;

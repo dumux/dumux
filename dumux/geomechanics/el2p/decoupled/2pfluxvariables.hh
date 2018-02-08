@@ -111,8 +111,10 @@ public:
                 const bool onBoundary = false)
     {
         ParentType::update(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary);
-        calculateDDt_(problem, element, elemVolVars);
+//         calculateDDt_(problem, element, elemVolVars);
         calculateNormalVelocity_(problem, element, elemVolVars);
+
+        onBoundary_ = onBoundary;
     }
 
         /*!
@@ -150,7 +152,7 @@ public:
     {
         // calculate the mean intrinsic permeability
         const SpatialParams &spatialParams = problem.spatialParams();
-        DimWorldMatrix Keff, Keff_i, Keff_j;
+        DimWorldMatrix Keff_i, Keff_j;
 
         Scalar factor_i, factor_j;
 
@@ -184,7 +186,7 @@ public:
             Keff_i *= factor_i;
             Keff_j *= factor_j;
 
-            spatialParams.meanK(Keff,
+            spatialParams.meanK(Keff_,
                                 Keff_i,
                                 Keff_j);
 
@@ -219,7 +221,7 @@ public:
             Keff_i *= factor_i;
             Keff_j *= factor_j;
 
-            spatialParams.meanK(Keff,
+            spatialParams.meanK(Keff_,
                                 Keff_i,
                                 Keff_j);
 
@@ -261,18 +263,17 @@ public:
             //  Q = - (K grad phi) dot n /|n| * A
 
 
-            Keff.mv(this->potentialGrad_[phaseIdx], this->kGradP_[phaseIdx]);
+            Keff_.mv(this->potentialGrad_[phaseIdx], this->kGradP_[phaseIdx]);
             this->kGradPNormal_[phaseIdx] = this->kGradP_[phaseIdx]*this->face().normal;
 
-            int eIdx = problem.model().elementMapper().index(element);
-            if (phaseIdx == 0)
-            {
-                if (eIdx == 210)
-                {
-//                     std::cout << "Keff = " << Keff << std::endl;
-//                     std::cout << "kGradP_[phaseIdx] = " << this->kGradP_[phaseIdx] << std::endl;
-                }
-            }
+//             if ((problem.coupled() == true) && (phaseIdx == 0))
+//             {
+//                 std::cout << "FluxVars at element " << eIdx << std::endl;
+//                 std::cout << "potentialGrad_ = " << this->potentialGrad_[phaseIdx] << std::endl;
+// //                 std::cout << "Keff = " << Keff << std::endl;
+// //                 std::cout << "kGradP_[phaseIdx] = " << this->kGradP_[phaseIdx] << std::endl;
+//                 std::cout << std::endl;
+//             }
 
             // determine the upwind direction
             if (this->kGradPNormal_[phaseIdx] < 0)
@@ -307,12 +308,38 @@ public:
         return timeDerivUNormal_;
     }
 
+    DimWorldMatrix Keff() const
+    {
+        return Keff_;
+    }
+    /*
+     * \brief Return the gradient of the potential for each phase.
+     */
+    DimVector potentialGrad(int phaseIdx) const
+    {
+        return this->potentialGrad_[phaseIdx];
+    }
+
+    Scalar kGradPNormal(int phaseIdx) const
+    {
+        return this->kGradPNormal_[phaseIdx];
+    }
+
     Scalar timeDerivUNormal_;
     //! change of solid displacement with time at integration point
     GlobalPosition dU_;
+    DimWorldMatrix Keff_;
 
+    /*!
+     * \brief Indicates if a face is on a boundary. Used for in the
+     *        face() method (e.g. for outflow boundary conditions).
+     */
+    bool onBoundary() const
+    { return onBoundary_; }
 private:
     const FVElementGeometry* fvGeometryPtr_; //!< Information about the geometry of discretization
+    bool onBoundary_;
+
 
 };
 

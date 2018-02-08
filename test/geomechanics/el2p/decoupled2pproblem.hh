@@ -58,6 +58,7 @@ class InitialPressSat;
 //////////
 namespace Properties
 {
+// NEW_TYPE_TAG(TwoP_TestProblem, INHERITS_FROM(CCTwoP, TwoPSpatialParams));
 NEW_TYPE_TAG(TwoP_TestProblem, INHERITS_FROM(BoxTwoP, TwoPSpatialParams));
 NEW_PROP_TAG(InitialPressSat);
 
@@ -116,7 +117,7 @@ SET_SCALAR_PROP(TwoP_TestProblem, NewtonMaxRelativeShift, 1e-5);
 // SET_BOOL_PROP(TwoP_TestProblem, NewtonWriteConvergence, true);
 SET_BOOL_PROP(TwoP_TestProblem, NewtonUseLineSearch, true);
 // SET_BOOL_PROP(TwoP_TestProblem, NewtonUseDampedUpdate, true);
-SET_INT_PROP(TwoP_TestProblem, NewtonMaxSteps, 2000);
+SET_INT_PROP(TwoP_TestProblem, NewtonMaxSteps, 30);
 
 SET_BOOL_PROP(TwoP_TestProblem, EvalGradientsAtSCVCenter, true);
 
@@ -258,7 +259,9 @@ public:
                 const GridView &gridView)
     : ParentType(timeManager, gridView),
     gridView_(gridView),
-    vertexMapper_(gridView)
+    vertexMapper_(gridView),
+    evalOriginalRhs_(false),
+    evalGlobalResidual_(false)
     {
         GridCreator::grid().globalRefine(GET_RUNTIME_PARAM(TypeTag, Scalar,Grid.Refine));
 
@@ -294,6 +297,8 @@ public:
         this->spatialParams().setEpisode(this->timeManager().episodeIndex());
 
         depthBOR_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.DepthBOR);
+
+        episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthInit);
 
 //         eps_ = 3e-6;
 //         brineDensity_ = 1000;
@@ -351,24 +356,6 @@ public:
     {
         output_ = output;
     }
-
-//         /*!
-//      * \brief Set the old effective porosity vector of the transport problem.
-//      */
-//     std::vector<std::vector<Scalar>> &setPInit()
-//     {
-//         std::cout<<"El2P_TestProblem: initialized pressure field copied to pInit_"<<std::endl;
-//         for(const auto& vertex : vertices(gridView_))
-//         {
-//             int vIdxGlobal = this->vertexMapper().index(vertex);
-//
-// //             std::cout<< "curSol[0] is " << this->model().curSol()[vIdxGlobal][0] << std::endl;
-// //             std::cout<< "curSol[1] is " << this->model().curSol()[vIdxGlobal][1] << std::endl;
-//
-//             pInit_[vIdxGlobal] = -1.0 * this->model().curSol()[vIdxGlobal][0];
-// //             std::cout<< " pInit_[" << vIdxGlobal << "] is " << pInit_[vIdxGlobal] << std::endl;
-//         }
-//     }
 
     // returns the initializationRun_ variable which defines if this is an initialization run
     bool initializationRun()
@@ -644,6 +631,10 @@ public:
         void preTimeStep()
     {
         this->spatialParams().setEpisode(this->timeManager().episodeIndex());
+        this->timeManager().startNextEpisode(episodeLength_);
+        std::cout << "2p: episodeLength_ is " << episodeLength_ << "\n";
+        this->timeManager().setTimeStepSize(episodeLength_);
+        std::cout << "2p: TimeStepSize_ " << this->timeManager().timeStepSize() << "\n";
     }
 
     /*!
@@ -666,8 +657,6 @@ public:
             <<"\n"
             <<"***************************************" <<std::endl;
         }
-
-
     }
 
     void advanceTimeLevel()
@@ -688,45 +677,39 @@ public:
     void episodeEnd()
     {
 //         Scalar oldTimeStep = this->timeManager().timeStepSize();
-//         //calls suggestTimeStepSize function, which returns the new suggested TimeStepSize for no failure
-//         //and the failureTimeStepSize for anyFailure = true
+        //calls suggestTimeStepSize function, which returns the new suggested TimeStepSize for no failure
+        //and the failureTimeStepSize for anyFailure = true
 //         double newTimeStepSize = this->newtonController().suggestTimeStepSize(oldTimeStep);
 //         std::cout << "2p: newTimeStepSize is " << newTimeStepSize << "\n";
-//         if( (this->timeManager().time() + this->timeManager().timeStepSize() > tInitEnd_ + eps_)
-//             && ( this->timeManager().episodeIndex() < 2) )
+        if( (this->timeManager().time() + this->timeManager().timeStepSize() > tInitEnd_ + eps_)
+            && ( this->timeManager().episodeIndex() < 2) )
+        {
+            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
+        }
+//         if(this->timeManager().time() > 26400.0 - eps_)
 //         {
-//             episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
-//         }
-// //         if(this->timeManager().time() > 26400.0 - eps_)
-// //         {
-// //             episodeLength_ = 3600.0;
-// //        }
-// //         if(this->timeManager().time() > 10800 - eps_)
-// //         {
-// //             episodeLength_ = 1200.0;
-// //         }
-//         if( this->timeManager().episodeIndex() >= 2)
+//             episodeLength_ = 3600.0;
+//        }
+//         if(this->timeManager().time() > 10800 - eps_)
 //         {
-//             episodeLength_ = episodeLength_ * 2.0;
+//             episodeLength_ = 1200.0;
 //         }
-//         if( this->timeManager().episodeIndex() == 10)
-//             episodeLength_ = 389.0;
-//         if( this->timeManager().episodeIndex() == 12)
-//             episodeLength_ = 122.0;
-//         if( this->timeManager().episodeIndex() == 16)
-//             episodeLength_ = 92.0;
-//         if( this->timeManager().episodeIndex() == 21)
-//             episodeLength_ = 840;
-//         if( this->timeManager().episodeIndex() == 23)
-//             episodeLength_ = 1820;
-//         if( this->timeManager().episodeIndex() == 24)
-//             episodeLength_ = 100;
-//
-//         std::cout << "2p: episodeLength_ is " << episodeLength_ << "\n";
-//
-//         this->timeManager().startNextEpisode(episodeLength_);
-//         this->timeManager().setTimeStepSize(episodeLength_);
-//         std::cout << "2p: TimeStepSize_ " << this->timeManager().timeStepSize() << "\n";
+        if( this->timeManager().episodeIndex() >= 2)
+        {
+            episodeLength_ = episodeLength_ * 2.0;
+        }
+        if( this->timeManager().episodeIndex() == 10)
+            episodeLength_ = 389.0;
+        if( this->timeManager().episodeIndex() == 12)
+            episodeLength_ = 122.0;
+        if( this->timeManager().episodeIndex() == 16)
+            episodeLength_ = 92.0;
+        if( this->timeManager().episodeIndex() == 21)
+            episodeLength_ = 840;
+        if( this->timeManager().episodeIndex() == 23)
+            episodeLength_ = 1820;
+        if( this->timeManager().episodeIndex() == 24)
+            episodeLength_ = 100;
     }
 
     /*!
@@ -798,21 +781,21 @@ public:
     { return deltaVolumetricStrainOldIteration_; }
 
     /*!
-       * \brief Get pInit of a scv for the previous iteration.
+       * \brief Get the volumetricStrain of an element for the last iteration.
     */
-    Scalar getpInitPerScv_(const Element &element,
+    Scalar getDeltaVolumetricStrainFullyCoupled(const Element &element,
                 const FVElementGeometry &fvGeometry,
                 int scvIdx) const
     {
         int eIdx = this->model().elementMapper().index(element);
-        return pInitPerScv_[eIdx][scvIdx];
+        return deltaVolumetricStrainFullyCoupled_[eIdx][scvIdx];
     }
 
     /*!
-     * \brief Set pInit of a scv for the previous iteration.
+     * \brief Set the volumetricStrain of an element for the last iteration.
      */
-    std::vector<std::vector<Scalar>> &setpInitPerScv_()
-    { return pInitPerScv_; }
+    std::vector<std::vector<Scalar>> &setDeltaVolumetricStrainFullyCoupled()
+    { return deltaVolumetricStrainFullyCoupled_; }
 
     /*!
        * \brief Get pW of a scv for the previous iteration.
@@ -952,6 +935,26 @@ public:
     int &setIteration()
     { return iteration_; }
 
+    void setEvalOriginalRhs(bool evalOriginalRhs)
+    {
+        evalOriginalRhs_ = evalOriginalRhs;
+    }
+
+    bool evalOriginalRhs() const
+    {
+        return evalOriginalRhs_;
+    }
+
+    void setEvalGlobalResidual(bool evalGlobalResidual)
+    {
+        evalGlobalResidual_ = evalGlobalResidual;
+    }
+
+    bool evalGlobalResidual() const
+    {
+        return evalGlobalResidual_;
+    }
+
 private:
     static constexpr Scalar eps_ = 3e-6;
     Scalar depthBOR_;
@@ -962,12 +965,13 @@ private:
     std::vector<std::vector<Scalar>> pInitPerScv_;
     GridView gridView_;
     VertexMapper vertexMapper_;
-    std::vector<std::vector<Scalar>> effPorosityVector_, effPorosityVectorOldTimestep_, effPorosityVectorOldIteration_, effPermeabilityVector_, deltaVolumetricStrainOldIteration_;
+    std::vector<std::vector<Scalar>> effPorosityVector_, effPorosityVectorOldTimestep_, effPorosityVectorOldIteration_, effPermeabilityVector_, deltaVolumetricStrainOldIteration_, deltaVolumetricStrainFullyCoupled_;
     std::vector<std::vector<Scalar>> pWOldIteration_, pNOldIteration_, sWOldIteration_,sNOldIteration_;
     std::vector<std::vector<DimVector>> dUVector_;
         std::vector<Scalar> BNodeWiseAveraged_;
     Scalar tInitEnd_;
     int iteration_;
+    bool evalOriginalRhs_, evalGlobalResidual_;
 public:
     bool initializationRun_, coupled_, output_;
     InitialStressField initialStressField_;

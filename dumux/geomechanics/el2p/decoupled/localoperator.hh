@@ -78,7 +78,6 @@ class DecoupledElasticLocalOperator
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef DecoupledElasticLocalOperator<TypeTag> ThisType;
 
     enum {
@@ -151,8 +150,6 @@ public:
         // retrieve lame parameters for calculation of effective stresses
         const Dune::FieldVector<Scalar,3> lameParams = model_.problem().spatialParams().lameParams(eg.entity(), fvGeometry, 0);
 
-        Scalar porosity = model_.problem().spatialParams().porosity(eg.entity(), fvGeometry, 0);
-
         Scalar E = lameParams[0];
         //bulk modulus for both the pure elastic and the viscoelastic model
         Scalar B = lameParams[1];
@@ -168,15 +165,8 @@ public:
         fullElasticTensor2D[1][0] = nu * E / (1 - nu*nu), fullElasticTensor2D[1][1] = E / (1 - nu*nu),               fullElasticTensor2D[1][2] = 0.0;
         fullElasticTensor2D[2][0] = 0.0,                                              fullElasticTensor2D[2][1] = 0.0,                                                fullElasticTensor2D[2][2] = 2 * mu;
 
-        int eIdx = model_.elementMapper().index(eg.entity());
-//         std::cout << "fullElasticTensor2D[" << eIdx << "] =" << std::endl;
-//         std::cout << fullElasticTensor2D[0][0] << fullElasticTensor2D[0][1] << fullElasticTensor2D[0][2] << std::endl;
-//         std::cout << fullElasticTensor2D[1][0] << fullElasticTensor2D[1][1] << fullElasticTensor2D[1][2] << std::endl;
-//         std::cout << fullElasticTensor2D[2][0] << fullElasticTensor2D[2][1] << fullElasticTensor2D[2][2] << std::endl;
-
         // retrieve materialParams for calculate of capillary pressure
-        const MaterialLawParams& materialParams =
-            model_.problem().spatialParams().materialLawParams(eg.entity(), fvGeometry, 0);
+        const MaterialLawParams& materialParams = model_.problem().spatialParams().materialLawParams(eg.entity(), fvGeometry, 0);
 
         // order of quadrature rule
         const int qorder = 3;
@@ -234,8 +224,6 @@ public:
                 // compute gradient of u
                 for (size_t i = 0; i < dispSize; i++)
                 {
-//                     std::cout << "u[" << eIdx << "][" << i << "][" << coordDir << "] = " << x(uLFS,i) << std::endl;
-
                     uGrad[coordDir].axpy(x(uLFS,i),vGrad[i]);
                 }
              }
@@ -248,15 +236,6 @@ public:
              RF traceEpsilon = 0.0;
              for(int i = 0; i < dim; ++i)
                 traceEpsilon += epsilon[i][i];
-
-            Scalar volumetricStrain = 0.0;
-
-            for(int coordDir = 0; coordDir < dim; ++coordDir)
-            {
-                volumetricStrain += uGrad[coordDir][coordDir];
-            }
-
-//             std::cout << "volumetricStrain[" << eIdx << "] = " << volumetricStrain << std::endl;
 
             // calculate the effective stress tensor effStress
             Dune::FieldMatrix<RF,dim,dim> deltaEffStress(0.0);
@@ -304,6 +283,22 @@ public:
             int numScv = fvGeometry.numScv;
             const GlobalPosition& globalPos = geometry.global(it->position());
 
+            // for box with rectangular elements, pw, sn etc are interpolated
+            for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
+            {
+                pw += model_.problem().getpw(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
+                sn += model_.problem().getSn(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
+
+                rhon += model_.problem().getRhon(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
+                rhow += model_.problem().getRhow(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
+
+                ux += x(lfsu.child(0),scvIdx) * q[scvIdx];
+                if (dim > 1)
+                    uy += x(lfsu.child(1),scvIdx) * q[scvIdx];
+                if (dim > 2)
+                    uz += x(lfsu.child(2),scvIdx) * q[scvIdx];
+            }
+
             // fill primary variable vector for current quadrature point
             PrimaryVariables primVars;
 
@@ -322,44 +317,23 @@ public:
             // interpolate pw, sn, rhon and rhow at current quadrature point
             // for (size_t i = 0; i < pressLFS.size(); i++)
 
-            // if box with rectangular elements, pw, sn etc are interpolated
-            if (numScv == 4)
-            {
-                for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
-                {
-                    pw += model_.problem().getpw(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
-                    sn += model_.problem().getSn(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
 
-                    rhon += model_.problem().getRhon(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
-                    rhow += model_.problem().getRhow(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
-                }
-            }
             // if cc pw, sn etc are constant per element
-            else
-            {
-                pw = model_.problem().getpw(eg.entity(), fvGeometry, 0);
-                sn = model_.problem().getSn(eg.entity(), fvGeometry, 0);
+//             pw = model_.problem().getpw(eg.entity(), fvGeometry, 0);
+//             sn = model_.problem().getSn(eg.entity(), fvGeometry, 0);
+//
+//             rhon = model_.problem().getRhon(eg.entity(), fvGeometry, 0);
+//             rhow = model_.problem().getRhow(eg.entity(), fvGeometry, 0);
 
-                rhon = model_.problem().getRhon(eg.entity(), fvGeometry, 0);
-                rhow = model_.problem().getRhow(eg.entity(), fvGeometry, 0);
-            }
 
             RT_P sw = 1.0 - sn;
             RT_P pn = pw + MaterialLaw::pc(materialParams, sw);
-
-            Scalar depthBOR = model_.problem().depthBOR();
-            Scalar T = 283.15 + (depthBOR - globalPos[dim-1]) * 0.025;
-
-            FluidState fluidState;
-            fluidState = volVars.fluidState();
 
             RT_P deltaPeff;
             // calculate change in effective pressure with respect to initial conditions pInit (pInit is negativ)
             deltaPeff = pw*sw + pn*sn + model_.problem().pInit(globalPos, it->position(), eg.entity());
             std::cout.precision(15);
 //             std::cout << "deltaPeff[" << eIdx << "] = " << deltaPeff << std::endl;
-
-            RF uDiv = traceEpsilon;
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(model_.problem(), eg.entity(), fvGeometry, false);

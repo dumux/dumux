@@ -259,7 +259,7 @@ public:
         effPermeabilityVector_.resize(numElements);
         volumetricStrain_.resize(numElements);
         deltaVolumetricStrainOldIteration_.resize(numElements);
-        dUVector_.resize(numElements);
+//         dUVector_.resize(numElements);
 
         FVElementGeometryTranspProblem fvGeometryTranspProblem;
 
@@ -272,14 +272,12 @@ public:
                     fvGeometryTranspProblem.update(gridView_, element);
 
                     int numScv = fvGeometryTranspProblem.numScv;
-//                     std::cout << "numScv = " << numScv << std::endl;
 
                     effPorosityVector_[eIdx].resize(numScv);
                     effPermeabilityVector_[eIdx].resize(numScv);
 
                     volumetricStrain_[eIdx].resize(numScv);
-                    deltaVolumetricStrainOldIteration_[eIdx].resize(numScv);
-                    dUVector_[eIdx].resize(numScv);
+                    deltaVolumetricStrainOldIteration_[eIdx].resize(numScv);;
 
                     pwVector_[eIdx].resize(numScv);
                     pnVector_[eIdx].resize(numScv);
@@ -293,8 +291,8 @@ public:
                     {
                         volumetricStrain_[eIdx][scvIdx] = 0.0;
                         deltaVolumetricStrainOldIteration_[eIdx][scvIdx] = 0.0;
-                        DimVector zeroes(0.0);
-                        dUVector_[eIdx][scvIdx] = zeroes;
+//                         DimVector zeroes(0.0);
+//                         dUVector_[eIdx][scvIdx] = zeroes;
                     }
                 }
             }
@@ -308,8 +306,6 @@ public:
         MechanicsProblem().setRhon() = rhonVector_;
         MechanicsProblem().setRhow() = rhowVector_;
 
-        TranspProblem().setpInitPerScv_() = pwVector_;
-
         TranspProblem().setpWOldIteration_() = pwVector_;
         TranspProblem().setpNOldIteration_() = pnVector_;
         TranspProblem().setsWOldIteration_() = SwVector_;
@@ -319,7 +315,7 @@ public:
         TranspProblem().setEffPermeability() = effPermeabilityVector_;
 
         TranspProblem().setDeltaVolumetricStrainOldIteration() = deltaVolumetricStrainOldIteration_;
-        TranspProblem().setdU() = dUVector_;
+//         TranspProblem().setdU() = dUVector_;
 
         MechanicsProblem().setEffPorosity() = effPorosityVector_;
         MechanicsProblem().setEffPermeability() = effPermeabilityVector_;
@@ -332,7 +328,15 @@ public:
 //             lastSol_[vIdxGlobal] = 0.0;
 //         }
 
+/*
         ParentType::init();
+        updateParamsMassBalance();
+
+        std::cout << "************************************" << std::endl;*/
+
+        ParentType::init();
+
+        std::cout << "initialisation done" << std::endl;
     }
 
     /*!
@@ -365,14 +369,21 @@ public:
                         initializePoroPerm();
                     }
 
-//                     if (iterator == (numIterations_ - 1))
-//                     {
-//                         MechanicsProblem().setOutput(true);
-//                         std::cout << "Set MechanicsProblem output to true." << std::endl;
-//                     }
-
                     TranspProblem().setIteration() = iterator;
                     runTransport();
+
+//                     std::cout << "norm of curSol is " << TranspProblem().model().curSol().two_norm() << std::endl;
+                    SolutionVectorTranspProblem b(TranspProblem().model().curSol());
+                    TranspProblem().setEvalGlobalResidual(true);
+                    res_ = TranspProblem().model().globalResidual(b);
+                    std::cout << "global residual = " << res_ << std::endl;
+                    TranspProblem().setEvalGlobalResidual(false);
+
+                    // set timestep size to 0 as Timemanager will do time_ += dt and
+                    // this leads to wrong time in the output
+                    // the preTimestep method takes care of setting the appropriate timestepsize
+                    TranspProblem().timeManager().setTimeStepSize(0.0);
+
 
                     std::cout << "Ran transport" << std::endl;
 
@@ -382,9 +393,12 @@ public:
 
                     runMechanics();
 
+                    // et timestep size to 0 - see above
+                    MechanicsProblem().timeManager().setTimeStepSize(0.0);
+
                     std::cout << "Ran mechanics" << std::endl;
 
-                    updateParamsMassBalance(iterator);
+                    updateParamsMassBalance();
 
                     std::cout
                     << "----------------------------- \n"
@@ -400,8 +414,7 @@ public:
                         TranspProblem().setInitializationRun(false);
 
                         TranspProblem().setOutput(true);
-
-//                         TranspProblem().setPInit();
+                        MechanicsProblem().setOutput(true);
 
                         // set old iteration values to initial values
                         TranspProblem().setpWOldIteration_() = pwVector_;
@@ -435,8 +448,13 @@ public:
 
                     // finish timestep if initialization is done and change between iteration sufficiently small
                     Scalar maxRelDiffPw = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.MaxRelDiffPw);
-                    if((time > tInitEnd_ + eps_) && (*biggest < maxRelDiffPw) || (iterator == numIterations_))
+                    Scalar maxAbsoluteGlobalResidual = GET_RUNTIME_PARAM(TypeTag, Scalar, Newton.MaxAbsoluteGlobalResidual);
+//                     if((time > tInitEnd_ + eps_) && (*biggest < maxRelDiffPw) || (iterator == numIterations_))
+                    if(
+                        ( (time > tInitEnd_ + eps_) && (res_ < maxAbsoluteGlobalResidual) && iterator > 1)
+                        || (iterator == numIterations_) )
                         break;
+//                     TranspProblem().setEvalOriginalRhs(true);
 
                     lastSol_ = TranspProblem().model().curSol();
 
@@ -458,52 +476,6 @@ public:
 
                 TranspProblem().setEffPorosityOldTimestep() = effPorosityVector_;
 
-                unsigned numElements = gridView_.size(0);
-
-                for (int eIdx = 0; eIdx < numElements; ++eIdx)
-                {
-                    unsigned numScv = deltaVolumetricStrainOldIteration_[eIdx].size();
-                    for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
-                    {
-                        deltaVolumetricStrainOldIteration_[eIdx][scvIdx] = 0.0;
-                    }
-
-                }
-
-                TranspProblem().setDeltaVolumetricStrainOldIteration() = deltaVolumetricStrainOldIteration_;
-
-                // check of get function
-//                 FVElementGeometryTranspProblem fvGeometryTranspProblem;
-//
-//                 for (const auto& element : elements(gridView_))
-//                 {
-//                     if(element.partitionType() == Dune::InteriorEntity)
-//                     {
-//                         fvGeometryTranspProblem.update(gridView_, element);
-//
-//                         int eIdx = MechanicsProblem().model().elementMapper().index(element);
-//                         int numScv = element.subEntities(dim);
-//
-//                         for (int scvIdx = 0; scvIdx < fvGeometryTranspProblem.numScv; ++scvIdx)
-//                         {
-// //                                         Scalar effPorosityVectorOld = TranspProblem().getEffPorosityOld(element, fvGeometryTranspProblem, scvIdx);
-// //                                         Scalar effPorosityVector = TranspProblem().getEffPorosity(element, fvGeometryTranspProblem, scvIdx);
-// //
-// //                                         if (std::abs(effPorosityVector - effPorosityVectorOld) > 1e-6)
-// //                                         {
-// //                                             std::cout << "effPorosityVector_[ " << eIdx << "][" << scvIdx << "] is " << effPorosityVector << std::endl;
-// //                                             std::cout << "effPorosityVectorOld_[ " << eIdx << "][" << scvIdx << "] is " << effPorosityVectorOld << std::endl;
-// //                                         }
-// //                             if (eIdx == 12873)
-//                             if (eIdx == 210)
-//                             {
-//                                 Scalar effPorosityVectorOld = TranspProblem().getEffPorosityOldTimestep(element, fvGeometryTranspProblem, scvIdx);
-//
-//                                 std::cout << "effPorosityVectorOld from getFunction[ " << eIdx << "][" << scvIdx << "] is " << effPorosityVectorOld << std::endl;
-//                             }
-//                         }
-//                     }
-//                 }
                 return;
             }
             catch (Dune::MathError &e) {
@@ -632,8 +604,6 @@ public:
 
                     rank[eIdx] = gridView_.comm().rank();
 
-                    int dofIdxGlobal = MechanicsProblem().model().vertexMapper().subIndex(element, scvIdx, dim);
-
 //                     Scalar pw = elemVolVarsTranspProblem[scvIdx].pressure(wPhaseIdx);
 //                     Scalar pn = elemVolVarsTranspProblem[scvIdx].pressure(nPhaseIdx);
 //                     Scalar pc = elemVolVarsTranspProblem[scvIdx].capillaryPressure();
@@ -652,7 +622,7 @@ public:
 
 //                     if (eIdx == 210)
 //                     {
-//                         std::cout << "effPorosityVector_[ " << eIdx << "][" << scvIdx << "] is " << effPorosityVector_[eIdx][scvIdx] << std::endl;
+//                         std::cout << "pwVector_[ " << eIdx << "][" << scvIdx << "] is " << pwVector_[eIdx][scvIdx] << std::endl;
 //                     }
                 }
             }
@@ -667,10 +637,11 @@ public:
         MechanicsProblem().setRhon() = rhonVector_;
         MechanicsProblem().setRhow() = rhowVector_;
 
-        TranspProblem().setpWOldIteration_() = pwVector_;
-        TranspProblem().setpNOldIteration_() = pnVector_;
-        TranspProblem().setsWOldIteration_() = SwVector_;
-        TranspProblem().setsNOldIteration_() = SnVector_;
+        // commented for pore compressibility
+//         TranspProblem().setpWOldIteration_() = pwVector_;
+//         TranspProblem().setpNOldIteration_() = pnVector_;
+//         TranspProblem().setsWOldIteration_() = SwVector_;
+//         TranspProblem().setsNOldIteration_() = SnVector_;
 
 //         // check of get function
 //         for (const auto& element : elements(gridView_))
@@ -692,27 +663,25 @@ public:
     /*
      *\brief Calculate solidity according to the solid phase in MechanicsProblem.
      */
-    void updateParamsMassBalance(int iteration)
+    void updateParamsMassBalance()
     {
         // create the required scalar and vector fields
-        unsigned numVert = gridView_.size(dim);
-        unsigned numElements = gridView_.size(0);
+//         unsigned numVert = gridView_.size(dim);
+//         unsigned numElements = gridView_.size(0);
 
         FVElementGeometryTranspProblem fvGeometryTranspProblem;
         FVElementGeometryMechanicsProblem fvGeometryMechanicsProblem;
 
-        ScalarField rank;
-        rank.resize(numElements);
+//         ElementVolumeVariablesMechanicsProblem elemVolVarsMechanicsProblem;
 
-        std::vector<Scalar> zerosNumVert(numVert, 0.0);
-        std::vector<int> zerosNumVertInt(numVert, 0);
 
-        numScvOfNode_ = zerosNumVert;
 
         for (const auto& element : elements(gridView_))
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {
+//                 elemVolVarsMechanicsProblem.update(MechanicsProblem(), element, fvGeometryMechanicsProblem, false);
+
                 fvGeometryMechanicsProblem.update(gridView_, element);
                 fvGeometryTranspProblem.update(gridView_, element);
 
@@ -721,7 +690,9 @@ public:
 
                 typedef typename GET_PROP_TYPE(SubTypeTag2, GridFunctionSpace) GridFunctionSpace;
                 typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;
+
                 const GridFunctionSpace& gridFunctionSpace = MechanicsProblem().model().jacobianAssembler().gridFunctionSpace();
+
                 const typename GridFunctionSpace::Ordering& ordering = gridFunctionSpace.ordering();
                 LocalFunctionSpace localFunctionSpace(gridFunctionSpace);
                 localFunctionSpace.bind(element);
@@ -747,6 +718,9 @@ public:
                     std::vector<Scalar> prevSolutionValues(localFunctionSpace.size());
                     // copy values of current solution into curSolutionValues Vector
                     std::vector<Scalar> curSolutionValues(localFunctionSpace.size());
+//                     std::vector<Scalar> fullyCoupledSolutionValues(localFunctionSpace.size());
+
+
                     for (typename LocalFunctionSpace::Traits::IndexContainer::size_type k=0; k<localFunctionSpace.size(); ++k)
                     {
                         const typename GridFunctionSpace::Ordering::Traits::DOFIndex& di = localFunctionSpace.dofIndex(k);
@@ -754,6 +728,8 @@ public:
                         ordering.mapIndex(di.view(),ci);
                         prevSolutionValues[k] = MechanicsProblem().model().prevSol()[ci];
                         curSolutionValues[k] = MechanicsProblem().model().curSol()[ci];
+//                         fullyCoupledSolutionValues[k] = std::stod(xOutput[xOutput.size()/2 + ci[0]]);
+//                         std::cout << "fullyCoupledSolutionValues[" << k << "] = " << fullyCoupledSolutionValues[k] << ", calculated from xOutput[" << ci[0] << "]" << std::endl;
                     }
 
                     // evaluate gradient of displacement shape functions at the center of
@@ -772,13 +748,17 @@ public:
                         jacInvT.umv(vRefShapeGradient[i][0],vShapeGradient[i]);
                     }
 
-
                     DimMatrix gradU(0.0);
+                    DimMatrix gradUFullyCoupled(0.0);
                     for(int coordDir = 0; coordDir < dim; ++coordDir) {
                         const ScalarDispLFS& uLFS = localFunctionSpace.child(coordDir);
                         // compute gradient of u
                         for (size_t i = 0; i < dispSize; i++)
+                        {
                             gradU[coordDir].axpy(curSolutionValues[uLFS.localIndex(i)],vShapeGradient[i]);
+//                             gradUFullyCoupled[coordDir].axpy(fullyCoupledSolutionValues[uLFS.localIndex(i)],vShapeGradient[i]);
+                        }
+//                         gradU[coordDir].axpy(elemVolVarsMechanicsProblem[i].displacement(coordDir), vShapeGradient[i]);
                     }
 
                     volumetricStrain_[eIdx][scvIdx] = 0.0;
@@ -799,10 +779,10 @@ public:
                         // evaluate shape functions of all element vertices for current integration point and write it into vector vShape
                         scalarDispLFS.finiteElement().localBasis().evaluateFunction(scvCenter, vShape);
 
-                        for (size_t i = 0; i < dispSize; i++)
-                        {
-                            dUVector_[eIdx][scvIdx][coordDir] +=( curSolutionValues[scalarDispLFS.localIndex(i)]*vShape[i]- prevSolutionValues[scalarDispLFS.localIndex(i)])*vShape[i];
-                        }
+//                         for (size_t i = 0; i < dispSize; i++)
+//                         {
+//                             dUVector_[eIdx][scvIdx][coordDir] +=( curSolutionValues[scalarDispLFS.localIndex(i)]*vShape[i]- prevSolutionValues[scalarDispLFS.localIndex(i)])*vShape[i];
+//                         }
                     }
                 }
             }
@@ -810,7 +790,7 @@ public:
 
         if (TranspProblem().coupled() == true)
         {
-            TranspProblem().setdU() = dUVector_;
+//             TranspProblem().setdU() = dUVector_;
             TranspProblem().setDeltaVolumetricStrainOldIteration() = deltaVolumetricStrainOldIteration_;
         }
 
@@ -916,10 +896,10 @@ public:
             episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
         }
 
-//         if(ParentType::timeManager_.time() > 12000 - eps_)
-//         {
-//             episodeLength_ = 100.0;
-//         }
+        if(ParentType::timeManager_.time() > 12000 - eps_)
+        {
+            episodeLength_ = 100.0;
+        }
 
         if( ParentType::timeManager_.episodeIndex() >= 2)
         {
@@ -944,10 +924,6 @@ public:
         ParentType::timeManager_.setTimeStepSize(episodeLength_);
         std::cout << "el2p: TimeStepSize_ " <<  ParentType::timeManager_.timeStepSize() << "\n";
 
-        TranspProblem().timeManager().startNextEpisode(episodeLength_);
-        TranspProblem().timeManager().setTimeStepSize(episodeLength_);
-        MechanicsProblem().timeManager().startNextEpisode(episodeLength_);
-        MechanicsProblem().timeManager().setTimeStepSize(episodeLength_);
     }
 
     TwoP_TestProblem& TranspProblem()
@@ -981,10 +957,18 @@ private:
 
     GridView gridView_;
 
+//     std::vector<Dune::FieldVector<Scalar, (1 << dim)>> pwVector_, pnVector_, pcVector_, SwVector_, SnVector_, rhonVector_, rhowVector_;
+//     std::vector<Dune::FieldVector<Scalar, (1 << dim)>> effPorosityVector_, effPermeabilityVector_;
+//
+// //     std::vector<std::vector<DimVector>> dUVector_;
+//
+//     std::vector<Dune::FieldVector<Scalar, (1 << dim)>> volumetricStrain_;
+//     std::vector<Dune::FieldVector<Scalar, (1 << dim)>> deltaVolumetricStrainOldIteration_;
+
     std::vector<std::vector<Scalar>> pwVector_, pnVector_, pcVector_, SwVector_, SnVector_, rhonVector_, rhowVector_;
     std::vector<std::vector<Scalar>> effPorosityVector_, effPermeabilityVector_;
 
-    std::vector<std::vector<DimVector>> dUVector_;
+//     std::vector<std::vector<DimVector>> dUVector_;
 
     std::vector<std::vector<Scalar>> volumetricStrain_;
     std::vector<std::vector<Scalar>> deltaVolumetricStrainOldIteration_;
@@ -1001,6 +985,8 @@ private:
     Scalar previousTimeStepSize_;
 
     SolutionVectorTranspProblem lastSol_;
+
+    Scalar res_;
 
 };
 

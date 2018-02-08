@@ -102,12 +102,26 @@ public:
 //         std::cout << "volVars.density(wPhaseIdx) = " << volVars.density(wPhaseIdx) << std::endl;
 //          std::cout << "volVars.saturation(wPhaseIdx) = " << volVars.saturation(wPhaseIdx) << std::endl;
 
+        storage = Scalar(0);
+
         // wetting phase mass
         storage[contiWEqIdx] = volVars.density(wPhaseIdx) * volVars.effPorosity()
                 * volVars.saturation(wPhaseIdx);
 
         storage[contiNEqIdx] = volVars.density(nPhaseIdx) * volVars.effPorosity()
                 * volVars.saturation(nPhaseIdx);
+
+        int eIdx = this->problem_().model().elementMapper().index(this->element_());
+
+//         if ( (this->problem_().coupled() == true) && (eIdx == 221) )
+//         {
+//             std::cout.precision(15);
+//             std::cout << "usePrevSol = " << usePrevSol << std::endl;
+//             std::cout << "volVars.saturation(wPhaseIdx) = " << volVars.saturation(wPhaseIdx) << std::endl;
+//             std::cout << "volVars.density(wPhaseIdx) = " << volVars.density(wPhaseIdx) << std::endl;
+//             std::cout << "volVars.effPorosity() = " << volVars.effPorosity() << std::endl;
+//             std::cout << "storage[contiWEqIdx] at [" << scvIdx << "] = " << storage[contiWEqIdx] << std::endl;
+//         }
     }
 
     /*!
@@ -127,9 +141,25 @@ public:
                         fIdx,
                         this->curVolVars_(),
                         onBoundary);
+
+        FluxVariables fluxVarsOld;
+        fluxVarsOld.update(this->problem_(),
+                        this->element_(),
+                        this->fvGeometry_(),
+                        fIdx,
+                        this->prevVolVars_(),
+                        onBoundary);
+
         flux = 0;
-        asImp_()->computeAdvectiveFlux(flux, fluxVars);
+
+        asImp_()->computeAdvectiveFlux(flux, fluxVars, fluxVarsOld);
         asImp_()->computeDiffusiveFlux(flux, fluxVars);
+
+//         if (this->problem_().coupled() == true)
+//         {
+//             std::cout.precision(15);
+//             std::cout << "flux at [" << fIdx << "] = " << flux << std::endl;
+//         }
     }
 
     /*!
@@ -142,7 +172,7 @@ public:
      * This method is called by compute flux and is mainly there for
      * derived models to ease adding equations selectively.
      */
-    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
+    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars, const FluxVariables &fluxVarsOld) const
     {
         // loop over all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -166,7 +196,20 @@ public:
 //             flux[eqIdx] += up.effPorosity() * up.saturation(phaseIdx)
 //                         * up.density(phaseIdx) * fluxVars.timeDerivUNormal();
 
-                int eIdx = this->problem_().model().elementMapper().index(this->element_());
+            int eIdx = this->problem_().model().elementMapper().index(this->element_());
+
+//             if (eIdx == 13)
+//             {
+//                 if ((this->problem_().coupled() == true) && (phaseIdx == 0))
+//                 {
+//                     std::cout.precision(15);
+//                     std::cout << "potentialGrad_ = " << fluxVars.potentialGrad(phaseIdx) << std::endl;
+//                     std::cout << "Keff = " << fluxVars.Keff() << std::endl;
+//                     std::cout << "volumeFlux = " << fluxVars.volumeFlux(phaseIdx) << std::endl;
+//                     std::cout << std::endl;
+//                     std::cout << "flux = " << flux << std::endl;
+//                 }
+//             }
 
 //                 if (eIdx == 210)
 //                 {
@@ -175,7 +218,42 @@ public:
 //             std::cout << "up.density(phaseIdx) = " << up.density(phaseIdx) << std::endl;
 //             std::cout << "dn.density(phaseIdx) = " << dn.density(phaseIdx) << std::endl;
 //             std::cout.precision(20);
-//             std::cout << "flux = " << flux << std::endl;
+
+            if (this->problem_().coupled() == true && phaseIdx == 0) {
+                if (!fluxVars.onBoundary())
+                {
+                    Dune::FieldVector<Scalar,4> lameParams = this->problem_().spatialParams().lameParams(this->element_(), this->fvGeometry_(), 0);
+
+                    Scalar E = lameParams[0];
+                    //bulk modulus for both the pure elastic and the viscoelastic model
+                    Scalar B = lameParams[1];
+
+                    Scalar lambda = 3.0*B*((3.0*B-E)/(9.0*B-E));
+                    Scalar mu = ((3.0*B*E)/(9.0*B-E));
+
+                    Scalar dt = this->problem_().timeManager().timeStepSize();
+                    Scalar beta = GET_RUNTIME_PARAM(TypeTag, Scalar, Damping.Beta);
+
+                    Scalar currentGradP = fluxVars.potentialGrad(phaseIdx)* fluxVars.face().normal;
+                    Scalar oldGradP = fluxVarsOld.potentialGrad(phaseIdx)* fluxVarsOld.face().normal;
+                    Scalar dGradP = currentGradP - oldGradP;
+
+                    Scalar stabilizationTerm = dGradP;
+                    stabilizationTerm *= fluxVars.face().area * fluxVars.face().area;
+                    stabilizationTerm /= beta * (lambda + 2.0 * mu);
+
+                    stabilizationTerm /= dt;
+
+//                     std::cout << "potentialGrad_(" << phaseIdx << ")      = " << fluxVars.potentialGrad(phaseIdx) << std::endl;
+//                     std::cout << "stabilizationTerm of " << phaseIdx << " = " << fluxVars.potentialGrad(phaseIdx) << std::endl;
+
+
+//                     for (int coordDir = 0; coordDir < dim; ++coordDir)
+//                             tmp[coordDir] = fluxVars.potentialGrad(phaseIdx)[coordDir] / dt;
+
+//                     flux[eqIdx] -= stabilizationTerm;
+                }
+            }
         }
     }
 

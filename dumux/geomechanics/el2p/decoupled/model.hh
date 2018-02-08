@@ -377,6 +377,15 @@ public:
                 rhoW[vIdxGlobal] = this->problem_().getRhow(element, fvGeometry, scvIdx);
                 rhoN[vIdxGlobal] = this->problem_().getRhon(element, fvGeometry, scvIdx);
 
+//                 pw[vIdxGlobal] = this->problem_().getpw(element, fvGeometry, 0);
+//                 pn[vIdxGlobal] = this->problem_().getpn(element, fvGeometry, 0);
+//                 pc[vIdxGlobal] = this->problem_().getpc(element, fvGeometry, 0);
+//                 sw[vIdxGlobal] = this->problem_().getSw(element, fvGeometry, 0);
+//                 sn[vIdxGlobal] = this->problem_().getSn(element, fvGeometry, 0);
+//                 rhoW[vIdxGlobal] = this->problem_().getRhow(element, fvGeometry, 0);
+//                 rhoN[vIdxGlobal] = this->problem_().getRhon(element, fvGeometry, 0);
+
+
                 // the following lines are correct for rock mechanics sign convention
                 // but lead to a very counter-intuitive output therefore, they are commented.
                 // in case of rock mechanics sign convention solid displacement is

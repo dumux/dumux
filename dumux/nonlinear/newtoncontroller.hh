@@ -395,6 +395,10 @@ public:
                            SolutionVector &b)
     {
         try {
+                problem_().setEvalOriginalRhs(true);
+                auto res = model_().globalResidual(b);
+                std::cout << "global residual is " << res << std::endl;
+                problem_().setEvalOriginalRhs(false);
             if (numSteps_ == 0)
             {
                 Scalar norm2 = b.two_norm2();
@@ -498,7 +502,12 @@ public:
             if (enableResidualCriterion_)
             {
                 SolutionVector tmp(uLastIter);
+                if (problem_().coupled() == true && problem_().getIteration() > GET_RUNTIME_PARAM(TypeTag, Scalar, Newton.FirstEvalOriginalRhsIteration))
+                {
+                    problem_().setEvalOriginalRhs(true);
+                }
                 residual_ = this->method().model().globalResidual(tmp, uCurrentIter);
+                problem_().setEvalOriginalRhs(false);
                 reduction_ = residual_;
                 reduction_ /= initialResidual_;
             }
@@ -702,12 +711,17 @@ protected:
            uCurrentIter += uLastIter;
 
            // calculate the residual of the current solution
+           if (problem_().coupled() == true && problem_().getIteration() > GET_RUNTIME_PARAM(TypeTag, Scalar, Newton.FirstEvalOriginalRhsIteration))
+           {
+                problem_().setEvalOriginalRhs(true);
+           }
            residual_ = this->method().model().globalResidual(tmp, uCurrentIter);
+           problem_().setEvalOriginalRhs(false);
            reduction_ = residual_;
            reduction_ /= initialResidual_;
 
            if (reduction_ < lastReduction_ || lambda <= 0.01) {
-               this->endIterMsg() << ", residual reduction " << lastReduction_ << "->"  << reduction_ << "@lambda=" << lambda;
+               this->endIterMsg() << ", residual reduction " << lastReduction_ << "->"  << reduction_ << ", residual = " << residual_ << "@lambda=" << lambda;
                return;
            }
 

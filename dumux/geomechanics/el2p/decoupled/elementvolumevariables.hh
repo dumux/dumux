@@ -163,8 +163,6 @@ public:
                 const FVElementGeometry &fvGeometry,
                 bool isOldSol)
     {
-        int eIdx = problem.model().elementMapper().index(element);
-
         int numScv = element.subEntities(dim);
 
         // retrieve the current or the previous solution vector and write the values into globalSol

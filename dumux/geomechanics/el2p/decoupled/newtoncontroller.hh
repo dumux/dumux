@@ -113,7 +113,8 @@ public:
             if (this->enableResidualCriterion_)
             {
                 SolutionVector tmp(uLastIter);
-                this->reduction_ = this->method().model().globalResidual(tmp, uCurrentIter);
+                this->residual_ = this->method().model().globalResidual(tmp, uCurrentIter);
+                this->reduction_ = this->residual_;
                 std::cout << "before: reduction = " << this->reduction_ << std::endl;
                 this->reduction_ /= this->initialResidual_;
                 std::cout << "after: reduction = " << this->reduction_
@@ -190,6 +191,35 @@ public:
             p.message(e.what());
             throw p;
         }
+    }
+
+    // Overwrite lineSearchUpdate_ as the one implemented in the nonlinear/newtoncontroller contains
+    // the setEvalOriginalRhs function
+    void lineSearchUpdate_(SolutionVector &uCurrentIter,
+                           const SolutionVector &uLastIter,
+                           const SolutionVector &deltaU)
+    {
+       Scalar lambda = 1.0;
+       SolutionVector tmp(uLastIter);
+
+       while (true) {
+           uCurrentIter = deltaU;
+           uCurrentIter *= -lambda;
+           uCurrentIter += uLastIter;
+
+           // calculate the residual of the current solution
+           this->residual_ = this->method().model().globalResidual(tmp, uCurrentIter);
+           this->reduction_ = this->residual_;
+           this->reduction_ /= this->initialResidual_;
+
+           if (this->reduction_ < this->lastReduction_ || lambda <= 0.01) {
+               this->endIterMsg() << ", residual reduction " << this->lastReduction_ << "->"  << this->reduction_ << ", residual = " << this->residual_ << "@lambda=" << lambda;
+               return;
+           }
+
+           // try with a smaller update
+           lambda /= 4.0;
+       }
     }
 
     // absolute errors and tolerance
