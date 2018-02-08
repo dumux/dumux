@@ -322,6 +322,31 @@ public:
     }
 
     /*!
+     * \brief Vapor pressure including the Kelvin equation in \f$\mathrm{[Pa]}\f$
+     *
+     * Calculate the decreased vapor pressure due to capillarity
+     *
+     * \param fluidState An abitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx The index of the component to consider
+     */
+    template <class FluidState>
+    static Scalar kelvinVaporPressure(const FluidState &fluidState,
+                                      const int phaseIdx,
+                                      const int compIdx)
+    {
+        assert(compIdx == wCompIdx && phaseIdx == wPhaseIdx);
+
+        using std::exp;
+        return fugacityCoefficient(fluidState, phaseIdx, compIdx)
+               * fluidState.pressure(phaseIdx)
+               * exp(-(fluidState.pressure(nPhaseIdx)-fluidState.pressure(wPhaseIdx))
+                          / density(fluidState, phaseIdx)
+                          / (Dumux::Constants<Scalar>::R / molarMass(compIdx))
+                          / fluidState.temperature());
+    }
+
+    /*!
      * \brief Calculate the surface tension between water and air in \f$\mathrm{[\frac{N}{m}]}\f$,
      * according to IAPWS Release on Surface Tension from September 1994.
      * The equation is valid between the triple Point (0.01C) and the critical temperature.

@@ -35,7 +35,7 @@
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
-#include <dumux/material/constraintsolvers/miscible2pnccomposition.hh>
+#include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
 #include "indices.hh" // for formulation
 
@@ -94,7 +94,7 @@ class TwoPNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using Miscible2pNCComposition = Dumux::Miscible2pNCComposition<Scalar, FluidSystem>;
+    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static_assert(useMoles, "use moles has to be set true in the 2pnc model");
@@ -263,7 +263,7 @@ public:
             // constraint solver
 
             // set the known mole fractions in the fluidState so that they
-            // can be used by the Miscible2pNCComposition constraint solver
+            // can be used by the MiscibleMultiPhaseComposition constraint solver
             unsigned int knownPhaseIdx = nPhaseIdx;
             if (GET_PROP_VALUE(TypeTag, SetMoleFractionsForWettingPhase))
             {
@@ -275,11 +275,11 @@ public:
                 fluidState.setMoleFraction(knownPhaseIdx, compIdx, priVars[compIdx]);
             }
 
-            Miscible2pNCComposition::solve(fluidState,
+            MiscibleMultiPhaseComposition::solve(fluidState,
                                            paramCache,
-                                           knownPhaseIdx,
                                            /*setViscosity=*/true,
-                                           /*setEnthalpy=*/false);
+                                           /*setEnthalpy=*/false,
+                                           knownPhaseIdx);
         }
         else if (phasePresence == nPhaseOnly)
         {

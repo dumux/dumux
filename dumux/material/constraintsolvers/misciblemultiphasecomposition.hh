@@ -62,11 +62,7 @@ class MiscibleMultiPhaseComposition
 {
     static constexpr int numPhases = FluidSystem::numPhases;
     static constexpr int numComponents = FluidSystem::numComponents;
-
-    static_assert(numComponents == numPhases,
-                  "This solver requires that the number fluid phases is equal "
-                  "to the number of components");
-
+    static const int numMajorComponents = FluidSystem::numPhases;
 
 public:
     /*!
@@ -89,7 +85,8 @@ public:
     static void solve(FluidState &fluidState,
                       ParameterCache &paramCache,
                       bool setViscosity,
-                      bool setEnthalpy)
+                      bool setEnthalpy,
+                      int knownPhaseIdx = 0)
     {
 #ifndef NDEBUG
         // currently this solver can only handle fluid systems which
@@ -98,8 +95,17 @@ public:
         // newton method.)
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             assert(FluidSystem::isIdealMixture(phaseIdx));
+
         }
 #endif
+
+        //get the known mole fractions from the fluidState
+        //in a 2pnc system the n>2 mole fractions are primary variables and are already set in the fluidstate
+        Dune::FieldVector<Scalar, numComponents-numMajorComponents> xKnown(0.0);
+        for (int knownCompIdx = 0; knownCompIdx < numComponents-numMajorComponents; ++knownCompIdx)
+        {
+            xKnown[knownCompIdx] = fluidState.moleFraction(knownPhaseIdx, knownCompIdx + numMajorComponents);
+        }
 
         // compute all fugacity coefficients
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
@@ -132,6 +138,17 @@ public:
 
                 M[rowIdx][colIdx] = 1.0;
             }
+        }
+
+        //set the additional equations for the numComponents-numMajorComponents
+        // this is only relevant if numphases != numcomponents e.g. in a 2pnc system
+        //Components, of which the molefractions are known, set to molefraction(knownCompIdx)=xKnown
+        for(int knownCompIdx = 0; knownCompIdx < numComponents-numMajorComponents; ++knownCompIdx)
+        {
+            int rowIdx = numComponents + numPhases + knownCompIdx;
+            int colIdx = knownPhaseIdx*numComponents + knownCompIdx + numMajorComponents;
+            M[rowIdx][colIdx] = 1.0;
+            b[rowIdx] = xKnown[knownCompIdx];
         }
 
         // assemble the equations expressing the fact that the
@@ -175,6 +192,28 @@ public:
                 }
             }
         }
+
+
+        //preconditioning of M to reduce condition number
+        //prevents matrix meeting dune's singularity criteria
+        for (int compIdx = 0; compIdx < numComponents; compIdx++)
+        {
+            if (compIdx < numMajorComponents)
+            {
+                for (int colIdx = 0; colIdx < numPhases*numComponents; colIdx++)
+                {
+                    //Multiply row of main component (Raoult's Law) with 10e-5 (order of magn. of pressure)
+                    M[compIdx][colIdx] *= 10e-5;
+                }
+            } else {
+                for (int colIdx = 0; colIdx < numPhases*numComponents; colIdx++)
+                {
+                    //Multiply row of sec. components (Henry's Law) with 10e-9 (order of magn. of Henry constant)
+                    M[compIdx][colIdx] *= 10e-9;
+                }
+            }
+        }
+
 
         // solve for all mole fractions
         try

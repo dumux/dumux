@@ -435,6 +435,14 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
+    template <class FluidState>
+    static Scalar kelvinVaporPressure(const FluidState &fluidState,
+                                      const int phaseIdx,
+                                      const int compIdx)
+    {
+        DUNE_THROW(Dune::NotImplemented, "FluidSystems::BrineAir::kelvinVaporPressure()");
+    }
+
 
     using Base::diffusionCoefficient;
     template <class FluidState>
