@@ -34,6 +34,9 @@
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
+#include <dune/common/deprecated.hh>
+
+#warning "This file is deprecated. Use NewtonSolver instead."
 
 namespace Dumux {
 
@@ -45,7 +48,8 @@ namespace Dumux {
 
 template <class Scalar,
           class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> >
-class StaggeredNewtonController : public NewtonController<Scalar, Comm>
+class DUNE_DEPRECATED_MSG("Use NewtonSolver instead.")
+StaggeredNewtonController : public NewtonController<Scalar, Comm>
 {
     using ParentType = NewtonController<Scalar, Comm>;
 

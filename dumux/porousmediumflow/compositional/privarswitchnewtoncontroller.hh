@@ -32,6 +32,9 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
+#include <dune/common/deprecated.hh>
+
+#warning "This file is deprecated. Use PriVarSwitchNewtonSolver instead."
 
 namespace Dumux
 {
@@ -44,7 +47,8 @@ namespace Dumux
  * \todo Implement for volume variable caching enabled
  */
 template <class TypeTag>
-class PriVarSwitchNewtonController : public NewtonController<typename GET_PROP_TYPE(TypeTag, Scalar)>
+class DUNE_DEPRECATED_MSG("Use PriVarSwitchNewtonSolver instead.")
+PriVarSwitchNewtonController : public NewtonController<typename GET_PROP_TYPE(TypeTag, Scalar)>
 {
     using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
     using ParentType = NewtonController<Scalar>;

@@ -35,6 +35,9 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dune/common/deprecated.hh>
+
+#warning "This file is deprecated. Use NewtonSolver instead."
 
 namespace Dumux {
 
@@ -48,7 +51,7 @@ namespace Dumux {
  * \tparam LinearSolver the linear solver used to solve one iteration
  */
 template <class NewtonController, class JacobianAssembler, class LinearSolver>
-class NewtonMethod
+class DUNE_DEPRECATED_MSG("Use NewtonSolver instead.") NewtonMethod
 {
     //! provide an interface as a form of type erasure
     //! this is the minimal requirements a convergence write passed to a newton method has to fulfill

@@ -26,6 +26,9 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
+#include <dune/common/deprecated.hh>
+
+#warning "This file is deprecated. Use RichardsNewtonSolver instead."
 
 namespace Dumux {
 /*!
@@ -39,7 +42,8 @@ namespace Dumux {
  *       or from possible ModelTraits.
  */
 template <class TypeTag>
-class RichardsNewtonController : public NewtonController<typename GET_PROP_TYPE(TypeTag, Scalar)>
+class DUNE_DEPRECATED_MSG("Use RichardsNewtonSolver instead.")
+RichardsNewtonController : public NewtonController<typename GET_PROP_TYPE(TypeTag, Scalar)>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ParentType = NewtonController<Scalar>;
