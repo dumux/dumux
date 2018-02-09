@@ -60,44 +60,34 @@ class CCBBoxTreeEmbeddedCouplingManagerSimple
     static constexpr auto lowDimIdx = typename MDTraits::template DomainIdx<1>();
     using SolutionVector = typename MDTraits::SolutionVector;
     using PointSourceData = Dumux::PointSourceData<MDTraits>;
+    using CouplingStencils = std::unordered_map<std::size_t, std::vector<std::size_t> >;
+    using CouplingStencil = CouplingStencils::mapped_type;
 
-    // obtain the type tags of the sub problems
-    using BulkTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
-    using LowDimTypeTag = typename MDTraits::template SubDomainTypeTag<1>;
+    // the sub domain type tags
+    template<std::size_t id>
+    using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
 
-    using BulkGridView = typename GET_PROP_TYPE(BulkTypeTag, GridView);
-    using BulkProblem = typename GET_PROP_TYPE(BulkTypeTag, Problem);
-    using BulkPointSource = typename GET_PROP_TYPE(BulkTypeTag, PointSource);
-    using BulkPrimaryVariables = typename GET_PROP_TYPE(BulkTypeTag, PrimaryVariables);
-    using BulkNumEqVector = typename GET_PROP_TYPE(BulkTypeTag, NumEqVector);
-    using BulkElementSolutionVector = typename GET_PROP_TYPE(BulkTypeTag, ElementSolutionVector);
-    using BulkVolumeVariables = typename GET_PROP_TYPE(BulkTypeTag, VolumeVariables);
-    using BulkElementVolumeVariables = typename GET_PROP_TYPE(BulkTypeTag, ElementVolumeVariables);
-    using BulkFVGridGeometry = typename GET_PROP_TYPE(BulkTypeTag, FVGridGeometry);
-    using BulkFVElementGeometry = typename BulkFVGridGeometry::LocalView;
-    using BulkElementBoundaryTypes = typename GET_PROP_TYPE(BulkTypeTag, ElementBoundaryTypes);
-    using BulkElementFluxVariablesCache = typename GET_PROP_TYPE(BulkTypeTag, ElementFluxVariablesCache);
-    using BulkElement = typename BulkGridView::template Codim<0>::Entity;
-
-    using LowDimGridView = typename GET_PROP_TYPE(LowDimTypeTag, GridView);
-    using LowDimProblem = typename GET_PROP_TYPE(LowDimTypeTag, Problem);
-    using LowDimPointSource = typename GET_PROP_TYPE(LowDimTypeTag, PointSource);
-    using LowDimPrimaryVariables = typename GET_PROP_TYPE(LowDimTypeTag, PrimaryVariables);
-    using LowDimNumEqVector = typename GET_PROP_TYPE(LowDimTypeTag, NumEqVector);
-    using LowDimElementSolutionVector = typename GET_PROP_TYPE(LowDimTypeTag, ElementSolutionVector);
-    using LowDimVolumeVariables = typename GET_PROP_TYPE(LowDimTypeTag, VolumeVariables);
-    using LowDimElementVolumeVariables = typename GET_PROP_TYPE(LowDimTypeTag, ElementVolumeVariables);
-    using LowDimFVGridGeometry = typename GET_PROP_TYPE(LowDimTypeTag, FVGridGeometry);
-    using LowDimFVElementGeometry = typename LowDimFVGridGeometry::LocalView;
-    using LowDimElementBoundaryTypes = typename GET_PROP_TYPE(LowDimTypeTag, ElementBoundaryTypes);
-    using LowDimElementFluxVariablesCache = typename GET_PROP_TYPE(LowDimTypeTag, ElementFluxVariablesCache);
-    using LowDimElement = typename LowDimGridView::template Codim<0>::Entity;
+    template<std::size_t id> using GridView = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridView);
+    template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
+    template<std::size_t id> using PointSource = typename GET_PROP_TYPE(SubDomainTypeTag<id>, PointSource);
+    template<std::size_t id> using PrimaryVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, PrimaryVariables);
+    template<std::size_t id> using NumEqVector = typename GET_PROP_TYPE(SubDomainTypeTag<id>, NumEqVector);
+    template<std::size_t id> using ElementSolutionVector = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementSolutionVector);
+    template<std::size_t id> using VolumeVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, VolumeVariables);
+    template<std::size_t id> using ElementVolumeVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementVolumeVariables);
+    template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
+    template<std::size_t id> using ElementBoundaryTypes = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementBoundaryTypes);
+    template<std::size_t id> using ElementFluxVariablesCache = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementFluxVariablesCache);
+    template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
     enum {
-        bulkDim = BulkGridView::dimension,
-        lowDimDim = LowDimGridView::dimension,
-        dimWorld = BulkGridView::dimensionworld
+        bulkDim = GridView<bulkIdx>::dimension,
+        lowDimDim = GridView<lowDimIdx>::dimension,
+        dimWorld = GridView<bulkIdx>::dimensionworld
     };
+
+    using GlueType = CCMixedDimensionGlue<GridView<bulkIdx>, GridView<lowDimIdx>>;
 
 public:
 
@@ -107,11 +97,6 @@ public:
     CCBBoxTreeEmbeddedCouplingManagerSimple(std::shared_ptr<const BulkFVGridGeometry> bulkFvGridGeometry,
                                             std::shared_ptr<const LowDimFVGridGeometry> lowDimFvGridGeometry)
     {
-
-        // Check if we are using the cellcentered method in both domains
-        static_assert(lowDimDim == 1, "The bounding box coupling manager only works with one-dimensional low-dim grids");
-
-        using GlueType = CCMixedDimensionGlue<BulkGridView, LowDimGridView>;
         glue_ = std::make_shared<GlueType>();
         computePointSourceData(*bulkFvGridGeometry, *lowDimFvGridGeometry);
     }
@@ -126,8 +111,7 @@ public:
               const SolutionVector& curSol)
     {
         curSol_ = curSol;
-        bulkProblem_ = bulkProblem;
-        lowDimProblem_ = lowDimProblem;
+        problemTuple_ = std::make_tuple(bulkProblem, lowDimProblem);
         computeLowDimVolumeFractions();
     }
 
