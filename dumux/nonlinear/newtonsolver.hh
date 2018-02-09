@@ -451,17 +451,17 @@ public:
         if (useLineSearch_)
             lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
 
+        else if (useChop_)
+            choppedUpdate_(uCurrentIter, uLastIter, deltaU);
+
         else
         {
             uCurrentIter = uLastIter;
             uCurrentIter -= deltaU;
 
             if (enableResidualCriterion_)
-            {
-                residualNorm_ = assembler_->residualNorm(uCurrentIter);
-                reduction_ = residualNorm_;
-                reduction_ /= initialResidual_;
-            }
+                computeResidualReduction_(uCurrentIter);
+
             else
             {
                 // If we get here, the convergence criterion does not require
@@ -622,6 +622,16 @@ public:
 
 protected:
 
+    void computeResidualReduction_(const SolutionVector &uCurrentIter)
+    {
+        residualNorm_ = assembler_->residualNorm(uCurrentIter);
+        reduction_ = residualNorm_;
+        reduction_ /= initialResidual_;
+    }
+
+    bool enableResidualCriterion() const
+    { return enableResidualCriterion_; }
+
     const LinearSolver& linearSolver() const
     { return *linearSolver_; }
 
@@ -715,9 +725,7 @@ private:
             uCurrentIter *= -lambda;
             uCurrentIter += uLastIter;
 
-            residualNorm_ = assembler_->residualNorm(uCurrentIter);
-            reduction_ = residualNorm_;
-            reduction_ /= initialResidual_;
+            computeResidualReduction_(uCurrentIter);
 
             if (reduction_ < lastReduction_ || lambda <= 0.125) {
                 endIterMsgStream_ << ", residual reduction " << lastReduction_ << "->"  << reduction_ << "@lambda=" << lambda;
@@ -727,6 +735,15 @@ private:
             // try with a smaller update
             lambda /= 2.0;
         }
+    }
+
+    //! \note method must update the gridVariables, too!
+    virtual void choppedUpdate_(SolutionVector &uCurrentIter,
+                                const SolutionVector &uLastIter,
+                                const SolutionVector &deltaU)
+    {
+        DUNE_THROW(Dune::NotImplemented,
+                   "Chopped Newton update strategy not implemented.");
     }
 
     virtual bool solveLinearSystem_(SolutionVector& deltaU)
@@ -874,10 +891,15 @@ private:
     void initParams_(const std::string& group = "")
     {
         useLineSearch_ = getParamFromGroup<bool>(group, "Newton.UseLineSearch");
+        useChop_ = getParamFromGroup<bool>(group, "Newton.EnableChop");
+        if(useLineSearch_ && useChop_)
+            DUNE_THROW(Dune::InvalidStateException, "Use either linesearch OR chop!");
+
         enableAbsoluteResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableAbsoluteResidualCriterion");
         enableShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableShiftCriterion");
         enableResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableResidualCriterion") || enableAbsoluteResidualCriterion_;
         satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.SatisfyResidualAndShiftCriterion");
+
         if (!enableShiftCriterion_ && !enableResidualCriterion_)
         {
             DUNE_THROW(Dune::NotImplemented,
@@ -938,6 +960,7 @@ private:
     // further parameters
     bool enablePartialReassemble_;
     bool useLineSearch_;
+    bool useChop_;
     bool enableAbsoluteResidualCriterion_;
     bool enableShiftCriterion_;
     bool enableResidualCriterion_;
