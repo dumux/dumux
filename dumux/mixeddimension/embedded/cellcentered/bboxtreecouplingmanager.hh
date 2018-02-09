@@ -432,7 +432,7 @@ public:
     // For one-dimensional low dim domain we assume radial tubes
     Scalar lowDimVolume(const Element<bulkIdx>& element) const
     {
-        const auto eIdx = problem(bulkIdx).elementMapper().index(element);
+        const auto eIdx = problem(bulkIdx).fvGridGeometry().elementMapper().index(element);
         return lowDimVolumeInBulkElement_[eIdx];
     }
 
@@ -519,9 +519,12 @@ public:
     const std::vector<std::size_t>& getAdditionalDofDependenciesInverse(Dune::index_constant<0> bulkDomain, std::size_t bulkElementIdx) const
     { return bulkCircleStencilsInverse_.count(bulkElementIdx) ? bulkCircleStencilsInverse_.at(bulkElementIdx) : emptyStencil_; }
 
-
     const std::vector<std::size_t>& getAdditionalDofDependenciesInverse(Dune::index_constant<1> lowDimDomain, std::size_t lowDimElementIdx) const
     { return emptyStencil_; }
+
+    //! Return reference to point source data vector member
+    const std::vector<PointSourceData>& pointSourceData() const
+    { return pointSourceData_; }
 
 protected:
     //! Return reference to point source data vector member
