@@ -181,22 +181,22 @@ public:
 
 protected:
 
-     /*!
-     * \brief Evaluate boundary conditions
-     */
-    void evalBoundary_(const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const ElementFaceVariables& elemFaceVars,
-                       const ElementBoundaryTypes& elemBcTypes,
-                       const ElementFluxVariablesCache& elemFluxVarsCache)
-    {
-        evalBoundaryForCellCenter_(element, fvGeometry, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            evalBoundaryForFace_(element, fvGeometry, scvf, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
-        }
-    }
+//      /*!
+//      * \brief Evaluate boundary conditions
+//      */
+//     void evalBoundary_(const Element& element,
+//                        const FVElementGeometry& fvGeometry,
+//                        const ElementVolumeVariables& elemVolVars,
+//                        const ElementFaceVariables& elemFaceVars,
+//                        const ElementBoundaryTypes& elemBcTypes,
+//                        const ElementFluxVariablesCache& elemFluxVarsCache)
+//     {
+//         evalBoundaryForCellCenter_(element, fvGeometry, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
+//         for (auto&& scvf : scvfs(fvGeometry))
+//         {
+//             evalBoundaryForFace_(element, fvGeometry, scvf, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
+//         }
+//     }
 
      /*!
      * \brief Evaluate boundary conditions for a cell center dof

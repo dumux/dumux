@@ -66,7 +66,14 @@ NEW_TYPE_TAG(ZeroEqNI, INHERITS_FROM(ZeroEq, RANSNI));
 // SET_STRING_PROP(ModelProperties, ModelParameterGroup, "ZeroEq");
 
 //! The indices
-SET_TYPE_PROP(ZeroEq, Indices, ZeroEqIndices<TypeTag>);
+SET_PROP(ZeroEq, Indices)
+{
+private:
+    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
+public:
+    using type = ZeroEqIndices<dim, numEq>;
+};
 
 //! The volume variables
 SET_TYPE_PROP(ZeroEq, VolumeVariables, ZeroEqVolumeVariables<TypeTag>);

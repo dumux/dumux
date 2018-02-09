@@ -112,6 +112,12 @@ public:
      */
     // \{
 
+    const bool isOnWall(GlobalPosition &globalPos) const
+    {
+        Scalar localEps_ = 1e-6; // cannot use the epsilon, because ParentType is initialized first
+        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + localEps_
+              || globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - localEps_;
+    }
 
     bool shouldWriteRestartFile() const
     {

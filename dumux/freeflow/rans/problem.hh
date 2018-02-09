@@ -54,7 +54,8 @@ class RANSProblem : public NavierStokesParentProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -73,6 +74,75 @@ public:
     {
         if (getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity"))
             gravity_[dim-1]  = -9.81;
+
+        asImp_().updateStaticWallProperties();
+        asImp_().updateDynamicWallProperties();
+    }
+
+    /*!
+     * \brief \todo please doc me
+     */
+    void updateStaticWallProperties() const
+    {
+        // update size and initial values of the global vectors
+        wallElementIDs_.resize(this->fvGridGeometry().elementMapper().size());
+        wallDistances_.resize(this->fvGridGeometry().elementMapper().size());
+            for (unsigned int i = 0; i < wallElementIDs_.size(); ++i)
+        {
+            wallDistances_[i] = std::numeric_limits<Scalar>::max();
+        }
+
+        // retrieve all wall intersections and corresponding elements
+        std::vector<unsigned int> wallElements;
+        std::vector<GlobalPosition> wallPositions;
+        auto& gridView(this->fvGridGeometry().gridView());
+        for (const auto& element : elements(gridView))
+        {
+            for (const auto& intersection : intersections(gridView, element))
+            {
+                GlobalPosition global = intersection.geometry().center();
+                if (asImp_().isOnWall(global))
+                {
+                    wallElements.push_back(this->fvGridGeometry().elementMapper().index(element));
+                    wallPositions.push_back(global);
+                }
+            }
+        }
+        std::cout << "numWallIntersections: " << wallPositions.size() << std::endl;
+
+        // search for shortest distance to wall for each element
+        for (const auto& element : elements(gridView))
+        {
+            for (unsigned int i = 0; i < wallPositions.size(); ++i)
+            {
+                GlobalPosition global = element.geometry().center();
+                global -= wallPositions[i];
+                unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+                if (global.two_norm() < wallDistances_[elementID])
+                {
+                    wallDistances_[elementID] = global.two_norm();
+                    wallElementIDs_[elementID] = wallElements[i];
+                }
+            }
+        }
+    }
+
+    /*!
+     * \brief \todo please doc me
+     */
+    void updateDynamicWallProperties() const
+    {
+        return;
+    }
+
+    /*!
+     * \brief Returns whether a given point is on a wall
+     */
+    const bool isOnWall(GlobalPosition &globalPos) const
+    {
+        // Throw an exception if no walls are implemented
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem does not provide an isOnWall() method.");
     }
 
     /*!
@@ -105,7 +175,7 @@ public:
 
     //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
     template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Staggered, void>::type
+    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethod::staggered, void>::type
     applyInititalFaceSolution(SolutionVector& sol,
                               const SubControlVolumeFace& scvf,
                               const PrimaryVariables& initSol) const
@@ -115,8 +185,11 @@ public:
         sol[faceIdx][scvf.dofIndex()][numEqCellCenter] = initSol[Indices::velocity(scvf.directionIndex())];
     }
 
-private:
+public:
+    mutable std::vector<unsigned int> wallElementIDs_;
+    mutable std::vector<Scalar> wallDistances_;
 
+private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }

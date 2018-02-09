@@ -55,12 +55,16 @@ class RANSVolumeVariablesImplementation<TypeTag, false>
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+
+    enum { dimWorld = GridView::dimensionworld };
+    using FieldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
     static const int defaultPhaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
@@ -83,8 +87,63 @@ public:
                 const SubControlVolume& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
-        setDynamicEddyViscosity(0.0);
+
+        elementID_ = problem.fvGridGeometry().elementMapper().index(element);
+        wallDistance_ = problem.wallDistances_[elementID_];
+
+        asImp_().calculateVelocityGradients(elemSol, problem, element, scv);
+
+        // calculate the eddy viscosity based on the implemented RANS model
+        asImp_().calculateEddyViscosity(elemSol, problem, element, scv);
     };
+
+
+    /*!
+     * \brief Calculate the velocity gradients at the cell center
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    void calculateVelocityGradients(const ElementSolutionVector &elemSol,
+                                    const Problem &problem,
+                                    const Element &element,
+                                    const SubControlVolume& scv)
+    { velocityGradients_ = FieldMatrix(1.0); }
+
+
+    /*!
+     * \brief Calculate the eddy viscosity
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    void calculateEddyViscosity(const ElementSolutionVector &elemSol,
+                                const Problem &problem,
+                                const Element &element,
+                                const SubControlVolume& scv)
+    {
+        // Throw an exception if no eddy viscosity is calculated
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem does not provide an calculateEddyViscosity(...) method.");
+    }
+
+    /*!
+     * \brief Return the velocity gradients \f$\mathrm{[1/s]}\f$ at the control volume center.
+     */
+    FieldMatrix velocityGradients() const
+    { return velocityGradients_; }
+
+    /*!
+     * \brief Return the wall distance \f$\mathrm{[m]}\f$ of the control volume.
+     */
+    Scalar wallDistance() const
+    { return wallDistance_; }
 
     /*!
      * \brief Set the values of the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ within the
@@ -117,7 +176,11 @@ private:
     { return *static_cast<const Implementation *>(this); }
 
 protected:
+    FieldMatrix velocityGradients_;
     Scalar dynamicEddyViscosity_;
+    unsigned int elementID_;
+    unsigned int wallElementID_;
+    Scalar wallDistance_;
 };
 
 /*!
@@ -133,7 +196,8 @@ class RANSVolumeVariablesImplementation<TypeTag, true>
     using ParentTypeIsothermal = RANSVolumeVariablesImplementation<TypeTag, false>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -163,25 +227,7 @@ public:
     {
         ParentTypeIsothermal::update(elemSol, problem, element, scv);
         ParentTypeNonIsothermal::update(elemSol, problem, element, scv);
-        calculateEddyViscosity(elemSol, problem, element, scv);
-    }
-
-    /*!
-     * \brief Calculate the eddy thermal conductivity
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to
-     *                be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
-     */
-    void calculateEddyViscosity(const ElementSolutionVector &elemSol,
-                                const Problem &problem,
-                                const Element &element,
-                                const SubControlVolume &scv)
-    {
-        // TODO convert mit Prandtl number etc.
-        eddyThermalConductivity_(ParentTypeIsothermal::dynamicEddyViscosity_());
+        // TODO: convert eddyViscosity to eddyThermalConductivity
     }
 
     /*!

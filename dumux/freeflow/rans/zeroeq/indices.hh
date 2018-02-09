@@ -35,9 +35,9 @@ namespace Dumux
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int PVOffset = 0>
+template <int dimension, int numEquations, int PVOffset = 0>
 struct ZeroEqIndices
-    : NavierStokesIndices<TypeTag, PVOffset>
+    : NavierStokesIndices<dimension, numEquations, PVOffset>
 {
     static constexpr int noEddyViscosityModel = 0;
     static constexpr int prandtl = 1;

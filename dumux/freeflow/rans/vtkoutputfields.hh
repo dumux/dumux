@@ -43,14 +43,15 @@ class RANSVtkOutputFields
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
 
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
     // Helper type used for tag dispatching (to add discretization-specific fields).
-    template<DiscretizationMethods method>
-    using MethodType = std::integral_constant<DiscretizationMethods, method>;
+    template<DiscretizationMethod discMethod>
+    using discMethodTag = std::integral_constant<DiscretizationMethod, discMethod>;
 
 public:
     //! Initialize the Navier-Stokes specific vtk output fields.
@@ -62,10 +63,10 @@ public:
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(); }, "rho [kg/m^3]");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.viscosity() / v.density(); }, "nu [m^2/s]");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.dynamicEddyViscosity() / v.density(); }, "nu_t [m^2/s]");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.wallDistance(); }, "l_w [m]");
 
         // add discretization-specific fields
-        const auto discType = MethodType<GET_PROP_VALUE(TypeTag, DiscretizationMethod)>();
-        additionalOutput_(vtk, discType);
+        additionalOutput_(vtk, discMethodTag<GET_PROP_VALUE(TypeTag, DiscretizationMethod)>{});
     }
 
 private:
@@ -77,7 +78,7 @@ private:
 
     //! Adds discretization-specific fields (velocity vectors on the faces for the staggered discretization).
     template <class VtkOutputModule>
-    static void additionalOutput_(VtkOutputModule& vtk, MethodType<DiscretizationMethods::Staggered>)
+    static void additionalOutput_(VtkOutputModule& vtk, discMethodTag<DiscretizationMethod::staggered>)
     {
         const bool writeFaceVars = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.WriteFaceData", false);
         if(writeFaceVars)

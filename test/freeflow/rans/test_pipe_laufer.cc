@@ -44,12 +44,10 @@
 #include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
-#include <dumux/nonlinear/newtoncontroller.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
-#include <dumux/nonlinear/staggerednewtoncontroller.hh>
 
 #include <dumux/discretization/methods.hh>
 
@@ -130,7 +128,6 @@ int main(int argc, char** argv) try
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
@@ -173,14 +170,12 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    using LinearSolver = Dumux::UMFPackBackend<TypeTag>;
+    using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonController = StaggeredNewtonController<TypeTag>;
-    using NewtonMethod = Dumux::NewtonMethod<NewtonController, Assembler, LinearSolver>;
-    auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
-    NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
+    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // set up two planes over which fluxes are calculated
     FluxOverPlane<TypeTag> flux(*assembler, x);
@@ -216,24 +211,8 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
-        // try solving the non-linear system
-        for (int i = 0; i < maxDivisions; ++i)
-        {
-            // linearize & solve
-            auto converged = nonLinearSolver.solve(x);
-
-            if (converged)
-                break;
-
-            if (!converged && i == maxDivisions-1)
-                DUNE_THROW(Dune::MathError,
-                           "Newton solver didn't converge after "
-                           << maxDivisions
-                           << " time-step divisions. dt="
-                           << timeLoop->timeStepSize()
-                           << ".\nThe solutions of the current and the previous time steps "
-                           << "have been saved to restart files.");
-        }
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(x, *timeLoop);
 
         // make the new solution the old solution
         xOld = x;
@@ -245,29 +224,11 @@ int main(int argc, char** argv) try
         // write vtk output
         vtkWriter.write(timeLoop->time());
 
-        // calculate and print mass fluxes over the planes
-        flux.calculateMassOrMoleFluxes();
-        if(GET_PROP_VALUE(TypeTag, EnableEnergyBalance))
-        {
-            std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
-            std::cout << "mass / energy flux at outlet is: " << flux.netFlux("outlet") << std::endl;
-        }
-        else
-        {
-            std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
-            std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
-        }
-
-        // calculate and print volume fluxes over the planes
-        flux.calculateVolumeFluxes();
-        std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
-        std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
-
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        // set new dt as suggested by newton controller
-        timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+        // set new dt as suggested by newton solver
+        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 

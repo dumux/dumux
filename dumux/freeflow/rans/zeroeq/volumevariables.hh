@@ -51,11 +51,12 @@ template <class TypeTag>
 class ZeroEqVolumeVariablesImplementation<TypeTag, false>
 : public RANSVolumeVariablesImplementation<TypeTag, false>
 {
-    using ParentType = NavierStokesVolumeVariablesImplementation<TypeTag, false>;
+    using ParentType = RANSVolumeVariablesImplementation<TypeTag, false>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -86,7 +87,6 @@ public:
                 const SubControlVolume& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
-        calculateEddyViscosity(elemSol, problem, element, scv);
     };
 
 
@@ -107,7 +107,9 @@ public:
         Scalar kinematicEddyViscosity = 0.0;
         if (eddyViscosityModel_ == Indices::prandtl)
         {
-            kinematicEddyViscosity = std::max(0.0, scv.dofPosition()[1] * (0.2469 - scv.dofPosition()[1])); // TODO preliminary
+            Scalar mixingLength = 0.41 * asImp_().wallDistance_;
+            Scalar velGrad = asImp_().velocityGradients()[0][1];
+            kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
         asImp_().setDynamicEddyViscosity(kinematicEddyViscosity * asImp_().density(defaultPhaseIdx));
     }
