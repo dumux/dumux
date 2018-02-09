@@ -103,6 +103,7 @@ public:
     , isStationaryProblem_(true)
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
+        std::cout << "Instantiated assembler for a stationary problem." << std::endl;
     }
 
     /*!
@@ -121,7 +122,9 @@ public:
     , couplingManager_(couplingManager)
     , timeLoop_(timeLoop)
     , isStationaryProblem_(false)
-    {}
+    {
+        std::cout << "Instantiated assembler for an instationary problem." << std::endl;
+    }
 
     /*!
      * \brief Assembles the global Jacobian of the residual
@@ -331,7 +334,7 @@ public:
      *        called prior to assembly for time-dependent problems.
      */
     void setPreviousSolution(const SolutionVector& u)
-    { prevSol_ = &u;  }
+    { prevSol_ = &u; }
 
     /*!
      * \brief Whether we are assembling a stationary or instationary problem
@@ -378,6 +381,10 @@ private:
     {
         if (!isStationaryProblem_ && !prevSol_)
             DUNE_THROW(Dune::InvalidStateException, "Assembling instationary problem but previous solution was not set!");
+
+        if (isStationaryProblem_ && prevSol_)
+            DUNE_THROW(Dune::InvalidStateException, "Assembling stationary problem but a previous solution was set."
+                                                    << " Did you forget to set the timeLoop to make this problem instationary?");
     }
 
     template<std::size_t i, class JacRow, class SubRes>
