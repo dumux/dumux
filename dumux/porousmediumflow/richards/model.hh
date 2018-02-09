@@ -108,7 +108,6 @@
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "vtkoutputfields.hh"
-#include "newtoncontroller.hh"
 #include "localresidual.hh"
 #include "primaryvariableswitch.hh"
 
