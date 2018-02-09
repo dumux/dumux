@@ -330,9 +330,10 @@ int main(int argc, char** argv) try
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
 
     //! instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, maxDt, tEnd);
-    timeLoop->setMaxTimeStepSize(0.9*maxDt);
-    std::cout << "Maximum time step size was set to " << 0.9*maxDt << std::endl;
+    maxDt *= 0.9; // make maxdt ten percent smaller even
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, maxDt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
+    std::cout << "Maximum time step size was set to " << maxDt << std::endl;
 
     //! the assembler with time loop for instationary problem
     using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
@@ -348,6 +349,9 @@ int main(int argc, char** argv) try
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // run instationary non-linear simulation
     /////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // we want to have 50 outputs
+    timeLoop->setPeriodicCheckPoint(tEnd/50);
 
     //! start the time loop
     timeLoop->start(); do
@@ -390,7 +394,8 @@ int main(int argc, char** argv) try
         tracerProblem->writeMassDistribution(timeLoop->time(), x, *tracerFvGridGeometry, *gridVariables);
 
         // write vtk output on check points
-        vtkWriter.write(timeLoop->time());
+        if (timeLoop->isCheckPoint())
+            vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
