@@ -268,14 +268,9 @@ int main(int argc, char** argv) try
 
             // evaluate cfl crit for this element
             Scalar elementDt = 0;
-            // if all velocity entries are ~zero, don't consider this element
-            if (std::all_of(scvVelocity.begin(), scvVelocity.end(), [] (const auto& comp) { return std::abs(comp) > 1e-15; }))
-            {
-                for (int coord = 0; coord < dimWorld; ++coord)
-                    if (abs(scvVelocity[coord]) > 1e-15)
-                        elementDt += abs(scvVelocity[coord])/mindx[coord];
-                maxDt = min( maxDt, 1/elementDt );
-            }
+            for (int coord = 0; coord < dimWorld; ++coord)
+                elementDt += abs(scvVelocity[coord])/mindx[coord];
+            maxDt = min( maxDt, 1/elementDt );
         }
 
         //! write output to vtk
@@ -330,7 +325,7 @@ int main(int argc, char** argv) try
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
 
     //! instantiate time loop
-    maxDt *= 0.9; // make maxdt ten percent smaller even
+    maxDt *= 0.5; // use Cmax = 0.5
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, maxDt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
     std::cout << "Maximum time step size was set to " << maxDt << std::endl;
