@@ -130,7 +130,10 @@ public:
         if (fluxVarsCache.usesSecondaryIv())
         {
             const auto& tij = fluxVarsCache.advectionTijSecondaryIv();
-            assert(stencil.size() == tij.size());
+
+            // We assume same the tij are order as the stencil up to stencil.size()
+            // any contribution of Dirichlet BCs is assumed to be placed afterwards
+            assert(stencil.size() <= tij.size());
 
             // add partial derivatives to the respective given matrices
             for (unsigned int i = 0; i < stencil.size();++i)
@@ -144,7 +147,10 @@ public:
         else
         {
             const auto& tij = fluxVarsCache.advectionTijPrimaryIv();
-            assert(stencil.size() == tij.size());
+
+            // We assume same the tij are order as the stencil up to stencil.size()
+            // any contribution of Dirichlet BCs is assumed to be placed afterwards
+            assert(stencil.size() <= tij.size());
 
             // add partial derivatives to the respective given matrices
             for (unsigned int i = 0; i < stencil.size();++i)

@@ -591,7 +591,7 @@ public:
                 const auto& wijk = iv.omegas()[localScvfIdx][idxInOutside+1];
 
                 // make sure the given outside gravity container has the right size
-                assert(outsideG[pIdx][localScvfIdx].size() == iv.localScvf(localScvfIdx).neighboringLocalScvIndices().size());
+                assert(outsideG[pIdx][localScvfIdx].size() == iv.localScvf(localScvfIdx).neighboringLocalScvIndices().size()-1);
 
                 // add contributions from all local directions
                 for (LocalIndexType localDir = 0; localDir < IV::Traits::GridView::dimension; localDir++)
