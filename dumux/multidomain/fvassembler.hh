@@ -104,7 +104,7 @@ private:
     };
 
     template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethods::Staggered, id>
+    struct SubDomainAssemblerType<DiscretizationMethod::staggered, id>
     {
         using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
     };
@@ -444,7 +444,7 @@ private:
     }
 
     // get diagonal block pattern
-    template<std::size_t i, std::size_t j, typename std::enable_if_t<(i==j && FVGridGeometry<i>::discretizationMethod != DiscretizationMethods::Staggered), int> = 0>
+    template<std::size_t i, std::size_t j, typename std::enable_if_t<(i==j && FVGridGeometry<i>::discMethod != DiscretizationMethod::staggered), int> = 0>
     Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainI,
                                              Dune::index_constant<j> domainJ) const
     {
@@ -464,7 +464,7 @@ private:
     }
 
     // get diagonal block pattern
-    template<std::size_t i, std::size_t j, typename std::enable_if_t<(i==j && FVGridGeometry<i>::discretizationMethod == DiscretizationMethods::Staggered), int> = 0>
+    template<std::size_t i, std::size_t j, typename std::enable_if_t<(i==j && FVGridGeometry<i>::discMethod == DiscretizationMethod::staggered), int> = 0>
     Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainI,
                                              Dune::index_constant<j> domainJ) const
     {

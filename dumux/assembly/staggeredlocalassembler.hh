@@ -117,7 +117,7 @@ public:
 
         // get some references for convenience
         const auto& problem = assembler.problem();
-        auto& localResidual = assembler.localResidual();
+        auto localResidual = assembler.localResidual();
         auto& gridVariables = assembler.gridVariables();
 
         // prepare the local views
@@ -138,8 +138,8 @@ public:
         auto prevElemFaceVars = localView(gridVariables.prevGridFaceVars());
         if (!isStationary)
         {
-            prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
-            prevElemFaceVars.bindElement(element, fvGeometry, localResidual.prevSol());
+            prevElemVolVars.bindElement(element, fvGeometry, assembler.prevSol());
+            prevElemFaceVars.bindElement(element, fvGeometry, assembler.prevSol());
         }
 
         // for compatibility with box models
@@ -191,7 +191,7 @@ public:
 
         // get some references for convenience
         const auto& problem = assembler.problem();
-        auto& localResidual = assembler.localResidual();
+        auto localResidual = assembler.localResidual();
         auto& gridVariables = assembler.gridVariables();
 
         // prepare the local views
@@ -207,13 +207,13 @@ public:
         auto curElemFaceVars = localView(gridVariables.curGridFaceVars());
         curElemFaceVars.bind(element, fvGeometry, curSol);
 
-        const bool isStationary = localResidual.isStationary();
+        const bool isStationary = assembler.isStationaryProblem();
         auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
         auto prevElemFaceVars = localView(gridVariables.prevGridFaceVars());
         if (!isStationary)
         {
-            prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
-            prevElemFaceVars.bindElement(element, fvGeometry, localResidual.prevSol());
+            prevElemVolVars.bindElement(element, fvGeometry, assembler.prevSol());
+            prevElemFaceVars.bindElement(element, fvGeometry, assembler.prevSol());
         }
 
         // for compatibility with box models
@@ -319,7 +319,7 @@ protected:
         typename DofTypeIndices::CellCenterIdx cellCenterIdx;
 
         const auto& problem = assembler.problem();
-        auto& localResidual = assembler.localResidual();
+        auto localResidual = assembler.localResidual();
         auto& gridVariables = assembler.gridVariables();
 
        // build derivatives with for cell center dofs w.r.t. cell center dofs
@@ -383,7 +383,7 @@ protected:
        typename DofTypeIndices::FaceIdx faceIdx;
 
        const auto& problem = assembler.problem();
-       auto& localResidual = assembler.localResidual();
+       auto localResidual = assembler.localResidual();
        auto& gridVariables = assembler.gridVariables();
 
        // build derivatives with for cell center dofs w.r.t. cell center dofs
@@ -446,7 +446,7 @@ protected:
            typename DofTypeIndices::FaceIdx faceIdx;
 
            const auto& problem = assembler.problem();
-           auto& localResidual = assembler.localResidual();
+           auto localResidual = assembler.localResidual();
            auto& gridVariables = assembler.gridVariables();
            const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
 
@@ -510,7 +510,7 @@ protected:
         typename DofTypeIndices::FaceIdx faceIdx;
 
         const auto& problem = assembler.problem();
-        auto& localResidual = assembler.localResidual();
+        auto localResidual = assembler.localResidual();
         const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
         auto& gridVariables = assembler.gridVariables();
 
