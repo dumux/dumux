@@ -109,6 +109,46 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
     return pattern;
 }
 
+
+template<bool isImplicit, class CouplingManager, class GridGeometry0, class GridGeometry1, std::size_t i, std::size_t j,
+         typename std::enable_if_t<(GridGeometry0::discMethod == DiscretizationMethod::staggered), int> = 0>
+Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
+                                                Dune::index_constant<i> domainI,
+                                                const GridGeometry0& gridGeometry0,
+                                                Dune::index_constant<j> domainJ,
+                                                const GridGeometry1& gridGeometry1)
+{
+    const auto numDofs0 = gridGeometry0.numDofs();
+    const auto numDofs1 = gridGeometry1.numDofs();
+    Dune::MatrixIndexSet pattern(numDofs0, numDofs1);
+
+    for (const auto& element0 : elements(gridGeometry0.gridView()))
+    {
+        if(gridGeometry0.isCellCenter)
+        {
+            const auto ccGlobalI = gridGeometry0.elementMapper().index(element0);
+            for (auto&& faceGlobalJ : couplingManager.couplingStencil(element0, domainI, domainJ))
+                    pattern.add(ccGlobalI, faceGlobalJ);
+        }
+        else
+        {
+            auto fvGeometry = localView(gridGeometry0);
+            fvGeometry.bindElement(element0);
+
+            // loop over sub control faces
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                const auto faceGlobalI = scvf.dofIndex();
+                for (auto&& ccGlobalJ : couplingManager.couplingStencil(scvf, domainI, domainJ))
+                    pattern.add(faceGlobalI, ccGlobalJ);
+            }
+        }
+
+    }
+
+    return pattern;
+}
+
 } // namespace Dumux
 
 #endif
