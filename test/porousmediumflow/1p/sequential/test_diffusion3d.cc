@@ -116,7 +116,7 @@ int start(int argc,
     auto fvDefaultParams = [] (Dune::ParameterTree& p) {GET_PROP(FVTypeTag, ModelDefaultParameters)::defaultParams(p);};
     Dumux::Parameters::init(argc, argv, fvDefaultParams, usage);
 
-    std::shared_ptr<FVProblem> fvProblem = std::make_shared<FVProblem>(grid.leafGridView());
+    std::shared_ptr<FVProblem> fvProblem = std::make_shared<FVProblem>(grid);
     // set output name
     std::string fvOutput = "test_diffusion3d_fv" + outputName;
     if (numRefine > 0)
@@ -144,7 +144,7 @@ int start(int argc,
     auto mpfalDefaultParams = [] (Dune::ParameterTree& p) {GET_PROP(MPFALTypeTag, ModelDefaultParameters)::defaultParams(p);};
     Dumux::Parameters::init(argc, argv, mpfalDefaultParams, usage);
 
-    std::shared_ptr<MPFALProblem> mpfaProblem = std::make_shared<MPFALProblem>(grid.leafGridView());
+    std::shared_ptr<MPFALProblem> mpfaProblem = std::make_shared<MPFALProblem>(grid);
     // set output name
     std::string fvmpfaOutput = "test_diffusion3d_fvmpfal" + outputName;
     if (numRefine > 0)
@@ -172,7 +172,7 @@ int start(int argc,
     auto mimeticDefaultParams = [] (Dune::ParameterTree& p) {GET_PROP(MimeticTypeTag, ModelDefaultParameters)::defaultParams(p);};
     Dumux::Parameters::init(argc, argv, mimeticDefaultParams, usage);
 
-    std::shared_ptr<MimeticProblem> mimeticProblem = std::make_shared<MimeticProblem>(grid.leafGridView());
+    std::shared_ptr<MimeticProblem> mimeticProblem = std::make_shared<MimeticProblem>(grid);
     // set output name
     std::string mimeticOutput = "test_diffusion3d_mimetic" + outputName;
     if (numRefine > 0)

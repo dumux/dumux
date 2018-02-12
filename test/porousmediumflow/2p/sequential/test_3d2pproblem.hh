@@ -123,6 +123,7 @@ class Test3D2PProblem: public IMPESProblem2P<TypeTag>
 using ThisType = Test3D2PProblem<TypeTag>;
 using ParentType = IMPESProblem2P<TypeTag>;
 using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+using Grid = typename GridView::Grid;
 
 using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -162,21 +163,21 @@ using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 public:
 
-Test3D2PProblem(TimeManager &timeManager,const GridView &gridView) :
-ParentType(timeManager, gridView), inflowEdge_(0), outflowEdge_(0)
+Test3D2PProblem(TimeManager& timeManager, Grid& grid) :
+ParentType(timeManager, grid), inflowEdge_(0), outflowEdge_(0)
 {
     int refinementFactor = 0;
     if (haveParam("Grid.RefinementFactor") && !GET_PROP_VALUE(TypeTag, AdaptiveGrid))
     {
         refinementFactor = getParam<Scalar>("Grid.RefinementFactor");
-        this->grid().globalRefine(refinementFactor);
+        grid.globalRefine(refinementFactor);
     }
 
     Scalar minDist = this->bBoxMax().two_norm();
     Scalar maxDist = this->bBoxMin().two_norm();
 
     // calculate the bounding box of the grid view
-    for (const auto& vertex : vertices(gridView)) {
+    for (const auto& vertex : vertices(grid.leafGridView())) {
         GlobalPosition vertexCoord(vertex.geometry().center());
 
         Scalar dist = vertexCoord.two_norm();

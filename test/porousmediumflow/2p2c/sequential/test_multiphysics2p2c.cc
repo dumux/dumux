@@ -103,7 +103,7 @@ int main(int argc, char** argv)
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
         TimeManager timeManager;
-        Problem problem(timeManager, grid.leafGridView(), H);
+        Problem problem(timeManager, grid, H);
 
         // initialize the simulation
         timeManager.init(problem, startTime, firstDt, tEnd, restart);

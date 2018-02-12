@@ -89,6 +89,7 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
 {
     using ParentType = TransportProblem2P<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GridView::Grid;
 
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -114,8 +115,8 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    TestTransportProblem(TimeManager &timeManager, const GridView &gridView) :
-        ParentType(timeManager, gridView)
+    TestTransportProblem(TimeManager& timeManager, Grid& grid) :
+        ParentType(timeManager, grid)
     {}
 
 

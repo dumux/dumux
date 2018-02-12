@@ -98,6 +98,7 @@ class TestDiffusion3DProblem: public DiffusionProblem2P<TypeTag>
 {
     using ParentType = DiffusionProblem2P<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GridView::Grid;
 
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -131,8 +132,8 @@ public:
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
     using ScalarSolution = typename SolutionTypes::ScalarSolution;
 
-    TestDiffusion3DProblem(const GridView &gridView) :
-        ParentType(gridView), velocity_(*this)
+    TestDiffusion3DProblem(Grid& grid) :
+        ParentType(grid), velocity_(*this)
     { }
 
     //!for this specific problem: initialize the saturation and afterwards the model

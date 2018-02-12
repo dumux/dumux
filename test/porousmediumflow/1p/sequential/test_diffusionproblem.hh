@@ -114,6 +114,7 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
 {
     using ParentType = DiffusionProblem2P<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GridView::Grid;
 
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -144,8 +145,8 @@ public:
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
     using ScalarSolution = typename SolutionTypes::ScalarSolution;
 
-    TestDiffusionProblem(const GridView &gridView) :
-        ParentType(gridView), velocity_(*this)
+    TestDiffusionProblem(Grid& grid) :
+        ParentType(grid), velocity_(*this)
     {
         delta_ = getParam<Scalar>("Problem.Delta", 1e-3);
     }

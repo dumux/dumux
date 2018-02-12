@@ -89,6 +89,7 @@ class TestDecTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag>
 {
 using ParentType = IMPETProblem2P2C<TypeTag>;
 using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+using Grid = typename GridView::Grid;
 using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -109,8 +110,8 @@ using Intersection = typename GridView::Intersection;
 using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-TestDecTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView) :
-ParentType(timeManager, gridView), depthBOR_(1000.0)
+TestDecTwoPTwoCProblem(TimeManager& timeManager, Grid& grid) :
+ParentType(timeManager, grid), depthBOR_(1000.0)
 {}
 
 /*!

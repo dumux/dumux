@@ -92,13 +92,13 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    TransportProblem2P(TimeManager& timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView),
+    TransportProblem2P(TimeManager& timeManager, Grid& grid)
+        : ParentType(timeManager, grid),
         gravity_(0)
     {
         cFLFactor_ = getParam<Scalar>("Impet.CFLFactor");
 
-        spatialParams_ = std::make_shared<SpatialParams>(gridView);
+        spatialParams_ = std::make_shared<SpatialParams>(grid.leafGridView());
 
         gravity_ = 0;
         if (getParam<bool>("Problem.EnableGravity"))
@@ -112,8 +112,8 @@ public:
      * \param gridView The grid view
      * \param spatialParams SpatialParams instantiation
      */
-    TransportProblem2P(TimeManager &timeManager, const GridView &gridView, SpatialParams &spatialParams)
-        : ParentType(timeManager, gridView),
+    TransportProblem2P(TimeManager& timeManager, Grid& grid, SpatialParams& spatialParams)
+        : ParentType(timeManager, grid),
         gravity_(0)
     {
         cFLFactor_ = getParam<Scalar>("Impet.CFLFactor");

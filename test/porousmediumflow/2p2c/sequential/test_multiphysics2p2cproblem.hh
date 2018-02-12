@@ -96,6 +96,7 @@ class TestMultTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag>
 {
 using ParentType = IMPETProblem2P2C<TypeTag>;
 using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+using Grid = typename GridView::Grid;
 using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -116,8 +117,8 @@ using Intersection = typename GridView::Intersection;
 using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-TestMultTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView, const GlobalPosition upperRight = 0) :
-ParentType(timeManager, gridView), lowerLeft_(0), upperRight_(upperRight), depthBOR_(1000.0)
+TestMultTwoPTwoCProblem(TimeManager &timeManager, Grid &grid, const GlobalPosition& upperRight = 0) :
+ParentType(timeManager, grid), lowerLeft_(0), upperRight_(upperRight), depthBOR_(1000.0)
 {}
 
 /*!

@@ -96,23 +96,23 @@ public:
      * \param timeManager The time manager
      * \param gridView gridview to the grid.
      */
-    IMPETProblem(TimeManager &timeManager, const GridView &gridView)
-        : gridView_(gridView),
+    IMPETProblem(TimeManager &timeManager, Grid& grid)
+        : gridView_(grid.leafGridView()),
           grid_(nullptr),
           bBoxMin_(std::numeric_limits<double>::max()),
           bBoxMax_(-std::numeric_limits<double>::max()),
           timeManager_(&timeManager),
-          variables_(gridView),
+          variables_(grid.leafGridView()),
           outputInterval_(1),
           outputTimeInterval_(0.0),
           vtkOutputLevel_(-1)
     {
-        setGrid(GridCreator::grid());
+        setGrid(grid);
 
         // calculate the bounding box of the grid view
         using std::min;
         using std::max;
-        for (const auto& vertex : vertices(gridView)) {
+        for (const auto& vertex : vertices(grid.leafGridView())) {
             for (int i=0; i<dim; i++) {
                 bBoxMin_[i] = min(bBoxMin_[i], vertex.geometry().center()[i]);
                 bBoxMax_[i] = max(bBoxMax_[i], vertex.geometry().center()[i]);
@@ -120,10 +120,10 @@ public:
         }
 
         // communicate to get the bounding box of the whole domain
-        if (gridView.comm().size() > 1)
+        if (grid.leafGridView().comm().size() > 1)
             for (int i = 0; i < dim; ++i) {
-                bBoxMin_[i] = gridView.comm().min(bBoxMin_[i]);
-                bBoxMax_[i] = gridView.comm().max(bBoxMax_[i]);
+                bBoxMin_[i] = grid.leafGridView().comm().min(bBoxMin_[i]);
+                bBoxMax_[i] = grid.leafGridView().comm().max(bBoxMax_[i]);
             }
 
         pressModel_ = std::make_shared<PressureModel>(asImp_());

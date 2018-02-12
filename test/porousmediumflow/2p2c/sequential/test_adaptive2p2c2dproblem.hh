@@ -127,9 +127,9 @@ using Intersection = typename GridView::Intersection;
 using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-Adaptive2p2c2d(TimeManager &timeManager, const GridView& gridView) :
-    ParentType(timeManager, gridView),
-            debugWriter_(gridView, "gridAfterAdapt")
+Adaptive2p2c2d(TimeManager& timeManager, Grid& grid)
+: ParentType(timeManager, grid)
+, debugWriter_(grid.leafGridView(), "gridAfterAdapt")
 {
     this->setName(getParam<std::string>("Problem.SimulationName"));
     this->setOutputInterval(getParam<int>("Problem.OutputInterval"));

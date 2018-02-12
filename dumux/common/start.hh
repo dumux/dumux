@@ -108,7 +108,7 @@ int start_(int argc,
 
     // instantiate and run the problem
     TimeManager timeManager;
-    Problem problem(timeManager, GridCreator::grid().leafGridView());
+    Problem problem(timeManager, GridCreator::grid());
     timeManager.init(problem, restartTime, dt, tEnd, restart);
     timeManager.run();
 

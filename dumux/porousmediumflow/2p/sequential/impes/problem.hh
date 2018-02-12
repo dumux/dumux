@@ -73,11 +73,11 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    IMPESProblem2P(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView),
+    IMPESProblem2P(TimeManager& timeManager, Grid& grid)
+        : ParentType(timeManager, grid),
         gravity_(0)
     {
-        spatialParams_ = std::make_shared<SpatialParams>(gridView);
+        spatialParams_ = std::make_shared<SpatialParams>(grid.leafGridView());
 
         gravity_ = 0;
         if (getParam<bool>("Problem.EnableGravity"))
@@ -90,8 +90,8 @@ public:
      * \param gridView The grid view
      * \param spatialParams SpatialParams instantiation
      */
-    IMPESProblem2P(TimeManager &timeManager, const GridView &gridView, SpatialParams &spatialParams)
-        : ParentType(timeManager, gridView),
+    IMPESProblem2P(TimeManager& timeManager, Grid& grid, SpatialParams& spatialParams)
+        : ParentType(timeManager, grid),
         gravity_(0)
     {
         spatialParams_ = Dune::stackobject_to_shared_ptr<SpatialParams>(spatialParams);
