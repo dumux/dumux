@@ -61,5 +61,5 @@ dune_add_test(NAME test_msfreeflow
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/maxwellstefanfreeflow-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_msfreeflow-00022.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_msfreeflow-00025.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_msfreeflow test_msfreeflow.input")

@@ -7,10 +7,13 @@ UpperRight = 1 1
 Cells = 64 64
 
 [Problem]
-Name = test_liddrivencavity # name passed to the output routines
+Name = test_liddrivencavity_re1 # name passed to the output routines
 LidVelocity = 1
-LiquidDensity = 1
 EnableGravity = false
+
+[Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 1
 
 [ Newton ]
 MaxSteps = 10

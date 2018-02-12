@@ -79,8 +79,6 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
-    static constexpr bool normalizePressure = GET_PROP_VALUE(TypeTag, NormalizePressure);
-
 public:
 
     //! Use the parent type's constructor
@@ -177,12 +175,8 @@ public:
                                             const ElementFaceVariables& elementFaceVars,
                                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        FacePrimaryVariables flux(0.0);
         FluxVariables fluxVars;
-        flux += fluxVars.computeNormalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars);
-        flux += fluxVars.computeTangetialMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars);
-        flux += computePressureTerm_(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars);
-        return flux;
+        return fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars);
     }
 
 protected:
@@ -356,36 +350,6 @@ protected:
     void computeStorageForCellCenterNonIsothermal_(std::false_type, Args&&... args) const {}
 
 private:
-
-     /*!
-     * \brief Returns the pressure term
-     * \param scvf The sub control volume face
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
-     * \param elementFaceVars The face variables
-     */
-    FacePrimaryVariables computePressureTerm_(const Problem& problem,
-                                              const Element& element,
-                                              const SubControlVolumeFace& scvf,
-                                              const FVElementGeometry& fvGeometry,
-                                              const ElementVolumeVariables& elemVolVars,
-                                              const ElementFaceVariables& elementFaceVars) const
-    {
-        const auto insideScvIdx = scvf.insideScvIdx();
-        const auto& insideVolVars = elemVolVars[insideScvIdx];
-
-        const Scalar deltaP = normalizePressure ? problem.initialAtPos(scvf.center())[pressureIdx] : 0.0;
-
-        Scalar result = (insideVolVars.pressure() - deltaP) * scvf.area() * -1.0 * scvf.directionSign();
-
-        // treat outflow BCs
-        if(scvf.boundary())
-        {
-            const Scalar pressure = problem.dirichlet(element, scvf)[pressureIdx] - deltaP;
-            result += pressure * scvf.area() * scvf.directionSign();
-        }
-        return result;
-    }
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
