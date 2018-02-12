@@ -173,6 +173,11 @@ public:
         bCH4_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SorptionCoefficients, bCH4);
         VCO2_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SorptionCoefficients, VCO2);
         bCO2_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SorptionCoefficients, bCO2);
+        nF_         = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SorptionCoefficients, nF);
+        kF_         = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SorptionCoefficients, kF);
+        cBET_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SorptionCoefficients, cBET);
+        qsatBET_    = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SorptionCoefficients, qsatBET);
+        csatBET_    = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SorptionCoefficients, csatBET);
 
         //stating in the console whether mole or mass fractions are used
         if(useMoles)
@@ -343,7 +348,6 @@ public:
     const Scalar V(int compIdx) const
     {
         Scalar V_[numComponents] = {};
-
         V_[nCompIdx] = VCH4_*1000; // *1000 for conversion from mol/l to mol/m3
         V_[TCIdx]    = VCO2_*1000;
         return V_[compIdx];
@@ -360,6 +364,46 @@ public:
         b_[nCompIdx] = bCH4_;
         b_[TCIdx]   = bCO2_;
         return b_[compIdx];
+    }
+
+    /*!
+     * \brief Returns the n constant from Freundlich Adsorption for ad- and desorption
+     */
+    const Scalar nF() const
+    {
+        return nF_;
+    }
+
+    /*!
+     * \brief Returns the kF constant from Freundlich Adsorption for ad- and desorption
+     */
+    const Scalar kF() const
+    {
+        return kF_;
+    }
+
+    /*!
+     * \brief Returns the cBET constant for ad-and desorption
+     */
+    const Scalar cBET() const
+    {
+        return cBET_;
+    }
+
+    /*!
+     * \brief Returns the qsatBET constant for ad-and desorption for each component
+     */
+    const Scalar qsatBET() const
+    {
+        return qsatBET_;
+    }
+
+    /*!
+     * \brief Returns the cBET constant for ad-and desorption for each component
+     */
+    const Scalar csatBET() const
+    {
+        return csatBET_;
     }
     // \}
 
@@ -382,6 +426,11 @@ private:
     Scalar bCH4_;
     Scalar VCO2_;
     Scalar bCO2_;
+    Scalar nF_;
+    Scalar kF_;
+    Scalar cBET_;
+    Scalar qsatBET_;
+    Scalar csatBET_;
 };
 
 } //end namespace

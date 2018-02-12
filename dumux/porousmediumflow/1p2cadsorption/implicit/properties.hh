@@ -76,6 +76,10 @@ NEW_PROP_TAG(TauTortuosity); //!< Tortuosity value (tau) used in macroscopic dif
 NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
 NEW_PROP_TAG(SorptionCoefficientsuseAdsorption); //!< Determines if Adsorption in general is used
 NEW_PROP_TAG(SorptionCoefficientsuseEL); //!< Determines if extended Langmuir Ad- and Desorption is used
+NEW_PROP_TAG(SorptionCoefficientsuseL); //!< Determines if Langmuir Ad- and Desorption is used
+NEW_PROP_TAG(SorptionCoefficientsuseF); //!< Determines if Freundlich Ad- and Desorption is used
+NEW_PROP_TAG(SorptionCoefficientsuseBET); //!< Determines if Freundlich Ad- and Desorption is used
+
 
 }
 // \}

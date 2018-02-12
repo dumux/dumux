@@ -143,7 +143,10 @@ SET_PROP(OnePTwoCAdsorptionNI, ThermalConductivityModel)
 //! enable Ad- and Desorption for the calculation of the CH4 and CO2 displacement on coal by default
 SET_BOOL_PROP(OnePTwoCAdsorption, SorptionCoefficientsuseAdsorption, false);
 //! enable extended Langmuir Ad- and Desorption for the calculation of the CH4 and CO2 displacement on coal by default
-SET_BOOL_PROP(OnePTwoCAdsorption, SorptionCoefficientsuseEL, true);
+SET_BOOL_PROP(OnePTwoCAdsorption, SorptionCoefficientsuseEL, false);
+SET_BOOL_PROP(OnePTwoCAdsorption, SorptionCoefficientsuseL, false);
+SET_BOOL_PROP(OnePTwoCAdsorption, SorptionCoefficientsuseF, false);
+SET_BOOL_PROP(OnePTwoCAdsorption, SorptionCoefficientsuseBET, false);
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model

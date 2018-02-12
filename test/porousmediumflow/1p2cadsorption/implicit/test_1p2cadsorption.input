@@ -18,12 +18,20 @@ ReservoirPressure   = 1.01325E5     # [Pa] Initial reservoir pressure
 initCO2				= 0 			# [-] initial mole fraction of CO2 in the entire domain
 
 [SorptionCoefficients]
-useAdsorption       = 0             # Using Ad-/Desorption in general (1: yes, 0: no)
-useEL               = 0             # Using Extended Langmuir Ad-/Desorption formulation (1: yes, 0: no=simple Langmuir), useAdsorption must be 1!
+useAdsorption       = 1	            # Using Ad-/Desorption in general (1: yes, 0: no)
+useEL               = 0             # Using Extended Langmuir Ad-/Desorption formulation (1: yes, 0: no), useAdsorption must be 1!
+useL				= 0				# Using Langmuir Ad-/Desorption formulation (1: yes, 0: no), useAdsorption must be 1!
+useF				= 0				# Using Freundlich Ad-/Desorption formulation (1: yes, 0: no), useAdsorption must be 1!
+useBET				= 1				# Using BET Ad-/Desorption formulation (1: yes, 0: no), useAdsorption must be 1!
 VCH4                = 0.8           # [mol/l] or m3/kg? values from "Malgo's table [67]"
 bCH4                = 2.3e-7        # [1/Pa] or maybe use 1/MPa !conversion 1/b=Pl with Pl =167.5 psia
 VCO2                = 1.6           # [mol/l] or m3/kg? 
 bCO2                = 4.64e-7       # [1/Pa] !conversion 1/b=Pl with Pl =167.5 psia
+nF					= 1.5227		# Freundlich Coefficient
+kF					= 0.002721		# Freundlich Constante
+cBET				= 1.375			# BET Constante
+qsatBET				= 909.09		# theoretical isotherm saturation capacity [mg/g]; relevant for BET
+csatBET				= 3E7			# adsorbate monolayer saturation concentration [mg/L]; relevant for BET
 
 [Vtk]
 AddVelocity = 1 # enable velocity output

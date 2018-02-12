@@ -125,63 +125,62 @@ public:
         else
         {   // using Adsorption
             //set "useAdsorption = 1" in input file under [SorptionCoefficients] to enable Adsorption
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                if (compIdx == CH4Idx)
+                {
+                    //check if Extended Langmuir formulation should be used
+                    if (GET_PARAM_FROM_GROUP(TypeTag, bool, SorptionCoefficients, useEL))
+                    {
+                        adsorption_[compIdx] = adsorptionExtendedLangmuir(compIdx, problem);
+                    }
 
-            //check if Extended Langmuir formulation should be used
-            if (GET_PARAM_FROM_GROUP(TypeTag, bool, SorptionCoefficients, useEL))
-            {   // using Extended Langmuir (not Gibbs conform!), which is the standard if not ohterwise mentioned in input
-                // "useEL = 1" in input file under [SorptionCoefficients] to enable Extended Langmuir or delete line
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    if (compIdx == CH4Idx)
+                    //check if Simple Langmuir formulation should be used
+                    else if (GET_PARAM_FROM_GROUP(TypeTag, bool, SorptionCoefficients, useL))
                     {
-                        adsorption_[compIdx] = problem.V(compIdx) * problem.b(compIdx) *
-                                this->fluidState_.moleFraction(nPhaseIdx, compIdx)*
-                                this->fluidState_.pressure(nPhaseIdx)  /
-                                (1 + problem.b(compIdx) * this->fluidState_.moleFraction(nPhaseIdx, compIdx)*
-                                        this->fluidState_.pressure(nPhaseIdx)+
-                                        problem.b(TCIdx)* this->fluidState_.moleFraction(nPhaseIdx, TCIdx) *
-                                        this->fluidState_.pressure(nPhaseIdx));
+                        adsorption_[compIdx] = adsorptionSimpleLangmuir(compIdx, problem);
                     }
-                    else if (compIdx == TCIdx)// Extended Langmuir (not Gibbs conform!)
+
+                    //check if Freundlich formulation should be used
+                    else if (GET_PARAM_FROM_GROUP(TypeTag, bool, SorptionCoefficients, useF))
                     {
-                        adsorption_[compIdx] = problem.V(compIdx) * problem.b(compIdx) *
-                                this->fluidState_.moleFraction(nPhaseIdx, compIdx) *
-                                this->fluidState_.pressure(nPhaseIdx) /
-                                (1 + problem.b(compIdx) * this->fluidState_.moleFraction(nPhaseIdx, compIdx) *
-                                        this->fluidState_.pressure(nPhaseIdx) +
-                                        problem.b(CH4Idx)* this->fluidState_.moleFraction(nPhaseIdx, CH4Idx) *
-                                        this->fluidState_.pressure(nPhaseIdx));
+                        adsorption_[compIdx] = adsorptionFreundlich(compIdx, problem);
                     }
-                    else
-                        adsorption_[compIdx] = 0;
+
+                    //check if BET formulation should be used
+                    else if (GET_PARAM_FROM_GROUP(TypeTag, bool, SorptionCoefficients, useBET))
+                    {
+                        adsorption_[compIdx] = adsorptionBET(compIdx, problem);
+                    }
                 }
-            }
-            else
-            {   // using simple Langmuir Adsorption and not using EL formulation now
-                // set "useEL = 0" in input file under [SorptionCoefficients] to use Simple Langmuir Adsorption
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                else if (compIdx == TCIdx)
                 {
-                    if (compIdx == CH4Idx)
+                    //check if Extended Langmuir formulation should be used
+                    if (GET_PARAM_FROM_GROUP(TypeTag, bool, SorptionCoefficients, useEL))
                     {
-                        //Standard Langmuir Adsorption formulation
-                        adsorption_[compIdx] = problem.V(compIdx) * problem.b(compIdx) *
-                                this->fluidState_.moleFraction(nPhaseIdx, compIdx) *
-                                this->fluidState_.pressure(nPhaseIdx) /
-                                (1 + problem.b(compIdx) * this->fluidState_.moleFraction(nPhaseIdx, compIdx) *
-                                        this->fluidState_.pressure(nPhaseIdx) );
+                        adsorption_[compIdx] = adsorptionExtendedLangmuir(compIdx, problem);
                     }
-                    else if (compIdx == TCIdx)
+
+                    //check if Simple Langmuir formulation should be used
+                    else if (GET_PARAM_FROM_GROUP(TypeTag, bool, SorptionCoefficients, useL))
                     {
-                        //Standard Langmuir Adsorption formulation
-                        adsorption_[compIdx] = problem.V(compIdx) * problem.b(compIdx) *
-                                this->fluidState_.moleFraction(nPhaseIdx, compIdx) *
-                                this->fluidState_.pressure(nPhaseIdx) /
-                                (1 + problem.b(compIdx) * this->fluidState_.moleFraction(nPhaseIdx, compIdx) *
-                                        this->fluidState_.pressure(nPhaseIdx) );
+                        adsorption_[compIdx] = adsorptionSimpleLangmuir(compIdx, problem);
                     }
-                    else
-                        adsorption_[compIdx] = 0;
+
+                    //check if Freundlich formulation should be used
+                    else if (GET_PARAM_FROM_GROUP(TypeTag, bool, SorptionCoefficients, useF))
+                    {
+                        adsorption_[compIdx] = adsorptionFreundlich(compIdx, problem);
+                    }
+
+                    //check if BET formulation should be used
+                    else if (GET_PARAM_FROM_GROUP(TypeTag, bool, SorptionCoefficients, useBET))
+                    {
+                        adsorption_[compIdx] = adsorptionBET(compIdx, problem);
+                    }
                 }
+                else
+                    adsorption_[compIdx] = 0;
             }
         }
     }
@@ -324,6 +323,100 @@ public:
         return adsorption_[compIdx];
     }
 
+    /*!
+     * \brief Returns the amount of adsorbate in the adsorbent at equilibrium.
+     *      using Extended Langmuir Isotherm
+     *
+     * \param compIdx The component index
+     */
+    Scalar adsorptionExtendedLangmuir(int compIdx, const Problem &problem)
+    {
+        // using Extended Langmuir (not Gibbs conform!), which is the standard if not ohterwise mentioned in input
+        // "useEL=1", "useL=0", "useF=0","useBET=0" in input file under [SorptionCoefficients] to enable Extended Langmuir or delete line
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+            if (compIdx == CH4Idx)
+            {
+                adsorptionExtendedLangmuir_[compIdx] = problem.V(compIdx) * problem.b(compIdx) *
+                    this->fluidState_.moleFraction(nPhaseIdx, compIdx)* this->fluidState_.pressure(nPhaseIdx)  /
+                    (1 + problem.b(compIdx) * this->fluidState_.moleFraction(nPhaseIdx, compIdx)*
+                    this->fluidState_.pressure(nPhaseIdx) + problem.b(TCIdx) * this->fluidState_.moleFraction(nPhaseIdx, TCIdx) *
+                    this->fluidState_.pressure(nPhaseIdx));
+            }
+            else if (compIdx == TCIdx)// Extended Langmuir (not Gibbs conform!)
+            {
+                adsorptionExtendedLangmuir_[compIdx] = problem.V(compIdx) * problem.b(compIdx) *
+                    this->fluidState_.moleFraction(nPhaseIdx, compIdx) * this->fluidState_.pressure(nPhaseIdx) /
+                    (1 + problem.b(compIdx) * this->fluidState_.moleFraction(nPhaseIdx, compIdx) *
+                    this->fluidState_.pressure(nPhaseIdx) + problem.b(CH4Idx)* this->fluidState_.moleFraction(nPhaseIdx, CH4Idx) *
+                    this->fluidState_.pressure(nPhaseIdx));
+            }
+            else
+            {
+                adsorptionExtendedLangmuir_[compIdx] = 0;
+            }
+        }
+        return adsorptionExtendedLangmuir_[compIdx];
+    }
+
+    /*!
+     * \brief Returns the amount of adsorbate in the adsorbent at equilibrium.
+     *      using Single Langmuir Isotherm
+     *
+     * \param compIdx The component index
+     */
+    Scalar adsorptionSimpleLangmuir(int compIdx, const Problem &problem)
+    {
+        // using simple Langmuir Adsorption and not using EL formulation now
+        // set "useEL=0", "useL=1", "useF=0", "useBET=0" in input file under [SorptionCoefficients] to use Simple Langmuir Adsorption
+
+        //Standard Langmuir Adsorption formulation
+        adsorptionSimpleLangmuir_[compIdx] = problem.V(compIdx) * problem.b(compIdx) *
+            this->fluidState_.moleFraction(nPhaseIdx, compIdx) * this->fluidState_.pressure(nPhaseIdx) /
+            (1 + problem.b(compIdx) * this->fluidState_.moleFraction(nPhaseIdx, compIdx) *
+            this->fluidState_.pressure(nPhaseIdx) );
+
+        return adsorptionSimpleLangmuir_[compIdx];
+    }
+
+    /*!
+     * \brief Returns the amount of adsorbate in the adsorbent at equilibrium.
+     *      using Freundlich Isotherm
+     *
+     * \param compIdx The component index
+     */
+    Scalar adsorptionFreundlich(int compIdx, const Problem &problem)
+    {
+        //using Freundlich Adsorption
+        //set "useEL=0", "useL=0", "useF=1", "useBET=0" in input file under [SorptionCoefficients] to use Freundlich Adsorption
+
+        //Freundlich Adsorption Formulation
+        adsorptionFreundlich_[compIdx] = problem.kF() * std::pow((this->fluidState_.moleFraction(nPhaseIdx, compIdx) *
+            this->fluidState_.pressure(nPhaseIdx)), (1/problem.nF()));
+
+        return adsorptionFreundlich_[compIdx];
+    }
+
+     /*!
+     * \brief Returns the amount of adsorbate in the adsorbent at equilibrium.
+     *      using BET Isotherm
+     *
+     * \param compIdx The component index
+     */
+    Scalar adsorptionBET(int compIdx, const Problem &problem)
+    {
+        //using BET Adsorption
+        //set "useEL=0", "useL=0", "useF=0", "useBET=1" in input file under [Sorption Coefficients] to use Freundlich Adsorption
+
+        //BET Adsorption Formulation
+        adsorptionBET_[compIdx] = problem.qsatBET() * problem.cBET() * this->fluidState_.moleFraction(nPhaseIdx, compIdx) *
+            this->fluidState_.pressure(nPhaseIdx) / ((problem.csatBET() - this->fluidState_.moleFraction(nPhaseIdx, compIdx) *
+            this->fluidState_.pressure(nPhaseIdx)) * (1 + (problem.cBET() - 1) * (this->fluidState_.moleFraction(nPhaseIdx, compIdx) *
+            this->fluidState_.pressure(nPhaseIdx) / problem.csatBET() )));
+
+        return adsorptionBET_[compIdx];
+    }
+
 protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
                                const Problem& problem,
@@ -357,7 +450,11 @@ protected:
     GlobalPosition dispersivity_;
     Scalar diffCoeff_;
     FluidState fluidState_;
-    Scalar adsorption_[numComponents];
+    Scalar adsorption_[numComponents] = {};
+    Scalar adsorptionExtendedLangmuir_[numComponents] = {};
+    Scalar adsorptionSimpleLangmuir_[numComponents] = {};
+    Scalar adsorptionFreundlich_[numComponents] = {};
+    Scalar adsorptionBET_[numComponents] = {};
 private:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
