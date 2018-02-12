@@ -176,6 +176,9 @@ int main(int argc, char** argv) try
     auto newtonController = std::make_shared<NewtonController>(timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
+    //! set some check points for the time loop
+    timeLoop->setPeriodicCheckPoint(tEnd/5.0);
+
     // time loop
     timeLoop->start(); do
     {
@@ -209,8 +212,9 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // write vtk output
-        vtkWriter.write(timeLoop->time());
+        // write vtk output on check points
+        if (timeLoop->isCheckPoint())
+            vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
