@@ -46,8 +46,6 @@
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
-#include <dumux/discretization/methods.hh>
-
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 
 /*!
@@ -141,11 +139,9 @@ int main(int argc, char** argv) try
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
-    const auto numDofsCellCenter = leafGridView.size(0);
-    const auto numDofsFace = leafGridView.size(1);
     SolutionVector x;
-    x[cellCenterIdx].resize(numDofsCellCenter);
-    x[faceIdx].resize(numDofsFace);
+    x[cellCenterIdx].resize(fvGridGeometry->numCellCenterDofs());
+    x[faceIdx].resize(fvGridGeometry->numFaceDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -161,7 +157,7 @@ int main(int argc, char** argv) try
     vtkWriter.addField(problem->getDeltaP(), "deltaP");
     vtkWriter.write(0.0);
 
-    // the assembler with time loop for instationary problem
+    // the assembler
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
@@ -170,7 +166,7 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+    using NewtonSolver = NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
