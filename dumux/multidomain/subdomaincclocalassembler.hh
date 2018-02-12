@@ -36,6 +36,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/fvlocalassemblerbase.hh>
 
@@ -376,7 +377,9 @@ public:
             };
 
             // derive the residuals numerically
-            NumericDifferentiation::partialDerivative(evalResiduals, elemSol[0][pvIdx], partialDerivs, origResiduals);
+            static const NumericEpsilon<Scalar, numEq> eps_{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
+            NumericDifferentiation::partialDerivative(evalResiduals, elemSol[0][pvIdx], partialDerivs, origResiduals,
+                                                      eps_(elemSol[0][pvIdx], pvIdx));
 
             // add the current partial derivatives to the global jacobian matrix
             for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
@@ -590,7 +593,10 @@ public:
 
                 // derive the residuals numerically
                 LocalResidualValues partialDeriv = 0.0;
-                NumericDifferentiation::partialDerivative(evalCouplingResidual, elemSolJ[0][pvIdx], partialDeriv, origResidual);
+                using CoupledDomainTypeTag = typename Assembler::Traits::template SubDomainTypeTag<domainJ>;
+                static const NumericEpsilon<Scalar, JacobianBlock::block_type::cols> epsCoupl_{GET_PROP_VALUE(CoupledDomainTypeTag, ModelParameterGroup)};
+                NumericDifferentiation::partialDerivative(evalCouplingResidual, elemSolJ[0][pvIdx], partialDeriv, origResidual,
+                                                          epsCoupl_(elemSolJ[0][pvIdx], pvIdx));
 
                 // add the current partial derivatives to the global jacobian matrix
                 for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
