@@ -705,11 +705,16 @@ private:
     void newtonUpdateShiftImpl_(const Dune::MultiTypeBlockVector<Args...> &uLastIter,
                                 const Dune::MultiTypeBlockVector<Args...> &deltaU)
     {
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(uLastIter)), [&](const auto subVectorIdx)
+        // There seems to be a bug in g++5 which which prevents compilation when
+        // passing the call to the implementation directly to Dune::Hybrid::forEach.
+        // We therefore store this call in a lambda and pass it to the for loop afterwards.
+        auto doUpdate = [&](const auto subVectorIdx)
         {
-            newtonUpdateShiftImpl_(uLastIter[subVectorIdx], deltaU[subVectorIdx]);
-        });
+            this->newtonUpdateShiftImpl_(uLastIter[subVectorIdx], deltaU[subVectorIdx]);
+        };
+
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(uLastIter)), doUpdate);
     }
 
     virtual void lineSearchUpdate_(SolutionVector &uCurrentIter,
