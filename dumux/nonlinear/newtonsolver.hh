@@ -395,7 +395,7 @@ public:
 
             // solve by calling the appropriate implementation depending on whether the linear solver
             // is capable of handling MultiType matrices or not
-            const bool converged = solveLinearSystem_(deltaU);
+            bool converged = solveLinearSystem_(deltaU);
 
             // make sure all processes converged
             int convergedRemote = converged;
