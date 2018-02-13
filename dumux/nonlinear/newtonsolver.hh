@@ -486,13 +486,23 @@ public:
 
         if (verbose_)
         {
-            std::cout << "\rNewton iteration " << numSteps_ << " done";
+            auto width = std::to_string(maxSteps_).size();
+            std::cout << "\rNewton iteration " << std::setw(width) << numSteps_ << " done";
+
+            auto formatFlags = std::cout.flags();
+            auto prec = std::cout.precision();
+            std::cout << std::scientific << std::setprecision(3);
+
             if (enableShiftCriterion_)
                 std::cout << ", maximum relative shift = " << shift_;
             if (enableResidualCriterion_ && enableAbsoluteResidualCriterion_)
                 std::cout << ", residual = " << residualNorm_;
             else if (enableResidualCriterion_)
                 std::cout << ", residual reduction = " << reduction_;
+
+            std::cout.flags(formatFlags);
+            std::cout.precision(prec);
+
             std::cout << endIterMsgStream_.str() << "\n";
         }
         endIterMsgStream_.str("");
