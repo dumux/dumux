@@ -23,18 +23,15 @@
  *
  * Usually this controller should be sufficient.
  */
-#ifndef DUMUX_PRIVARSWITCH_NEWTON_CONTROLLER_HH
-#define DUMUX_PRIVARSWITCH_NEWTON_CONTROLLER_HH
+#ifndef DUMUX_PRIVARSWITCH_NEWTON_SOLVER_HH
+#define DUMUX_PRIVARSWITCH_NEWTON_SOLVER_HH
 
 #include <memory>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
-#include <dumux/nonlinear/newtoncontroller.hh>
-#include <dune/common/deprecated.hh>
-
-#warning "This file is deprecated. Use PriVarSwitchNewtonSolver instead."
+#include <dumux/nonlinear/newtonsolver.hh>
 
 namespace Dumux
 {
@@ -46,16 +43,17 @@ namespace Dumux
  *       and extracting everything model specific from there
  * \todo Implement for volume variable caching enabled
  */
-template <class TypeTag>
-class DUNE_DEPRECATED_MSG("Use PriVarSwitchNewtonSolver instead.")
-PriVarSwitchNewtonController : public NewtonController<typename GET_PROP_TYPE(TypeTag, Scalar)>
+template <class TypeTag, class Assembler, class LinearSolver>
+class PriVarSwitchNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
 {
-    using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ParentType = NewtonController<Scalar>;
+    using Scalar =  typename Assembler::Scalar;
+    using ParentType = NewtonSolver<Assembler, LinearSolver>;
+    using SolutionVector = typename Assembler::ResidualType;
     using PrimaryVariableSwitch =  typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static constexpr auto discretizationMethod = Assembler::FVGridGeometry::discretizationMethod;
+    static constexpr bool isBox = discretizationMethod == DiscretizationMethods::Box;
 
 public:
     using ParentType::ParentType;
@@ -64,7 +62,7 @@ public:
      * \brief Returns true if the error of the solution is below the
      *        tolerance.
      */
-    bool newtonConverged() const
+    bool newtonConverged() const final
     {
         if (switchedInLastIteration_)
             return false;
@@ -79,8 +77,7 @@ public:
      *
      * \param u The initial solution
      */
-    template<class SolutionVector>
-    void newtonBegin(const SolutionVector &u)
+    void newtonBegin(const SolutionVector &u) final
     {
         ParentType::newtonBegin(u);
         priVarSwitch_ = std::make_unique<PrimaryVariableSwitch>(u.size());
@@ -93,15 +90,14 @@ public:
      * \param uCurrentIter The solution after the current Newton iteration
      * \param uLastIter The solution at the beginning of the current Newton iteration
      */
-    template<class JacobianAssembler, class SolutionVector>
-    void newtonEndStep(JacobianAssembler& assembler,
-                       SolutionVector &uCurrentIter,
-                       const SolutionVector &uLastIter)
+    void newtonEndStep(SolutionVector &uCurrentIter,
+                       const SolutionVector &uLastIter) final
     {
-        ParentType::newtonEndStep(assembler, uCurrentIter, uLastIter);
+        ParentType::newtonEndStep(uCurrentIter, uLastIter);
 
         // update the variable switch (returns true if the pri vars at at least one dof were switched)
         // for disabled grid variable caching
+        auto& assembler = this->assembler();
         const auto& fvGridGeometry = assembler.fvGridGeometry();
         const auto& problem = assembler.problem();
         auto& gridVariables = assembler.gridVariables();
@@ -130,7 +126,7 @@ public:
      * \brief Called if the Newton method ended
      *        (not known yet if we failed or succeeded)
      */
-    void newtonEnd()
+    void newtonEnd() final
     {
         ParentType::newtonEnd();
 
@@ -146,10 +142,10 @@ private:
      * \brief Update the volume variables whose primary variables were
               switched. Required when volume variables are cached globally.
      */
-    template<class Element, class JacobianAssembler, class SolutionVector>
+    template<class Element>
     void updateSwitchedVolVars_(std::true_type,
                                 const Element& element,
-                                JacobianAssembler& assembler,
+                                Assembler& assembler,
                                 const SolutionVector &uCurrentIter,
                                 const SolutionVector &uLastIter)
     {
@@ -178,10 +174,10 @@ private:
      * \brief Update the fluxVars cache for dof whose primary variables were
               switched. Required when flux variables are cached globally.
      */
-     template<class Element, class JacobianAssembler, class SolutionVector>
+     template<class Element>
      void updateSwitchedFluxVarsCache_(std::true_type,
                                        const Element& element,
-                                       JacobianAssembler& assembler,
+                                       Assembler& assembler,
                                        const SolutionVector &uCurrentIter,
                                        const SolutionVector &uLastIter)
     {

@@ -35,6 +35,9 @@
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/timeloop.hh>
+#include <dune/common/deprecated.hh>
+
+#warning "This file is deprecated. Use NewtonSolver instead."
 
 namespace Dumux {
 
@@ -49,7 +52,7 @@ namespace Dumux {
  */
 template <class Scalar,
           class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> >
-class NewtonController
+class DUNE_DEPRECATED_MSG("Use NewtonSolver instead.") NewtonController
 {
 
 public:

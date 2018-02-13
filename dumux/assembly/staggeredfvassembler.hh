@@ -51,14 +51,11 @@ template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
 class StaggeredFVAssembler
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using TimeLoop = TimeLoopBase<typename GET_PROP_TYPE(TypeTag, Scalar)>;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using TimeLoop = TimeLoopBase<Scalar>;
 
     static constexpr int dim = GridView::dimension;
 
@@ -74,6 +71,9 @@ class StaggeredFVAssembler
     using FaceToCCMatrixBlock = typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockFaceToCC;
 
 public:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using ResidualType = SolutionVector;
 
     //! The constructor for stationary problems
@@ -364,6 +364,22 @@ public:
 
     bool isStationaryProblem() const
     { return stationary_; }
+
+    /*!
+     * \brief Update the grid variables
+     */
+    void updateGridVariables(const SolutionVector &cursol)
+    {
+        gridVariables().update(cursol);
+    }
+
+    /*!
+     * \brief Reset the gridVariables
+     */
+    void resetTimeStep(const SolutionVector &cursol)
+    {
+        gridVariables().resetTimeStep(cursol);
+    }
 
 private:
     //! reset the residual to 0.0

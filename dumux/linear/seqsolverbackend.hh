@@ -34,17 +34,11 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/matrix.hh>
 #include <dumux/linear/solver.hh>
 
 namespace Dumux
 {
-
-//! Helper type to determine whether a given type is a Dune::BCRSMatrix
-template<class T> struct isBCRSMatrix : public std::false_type {};
-
-//! Helper type to determine whether a given type is a Dune::BCRSMatrix
-template<class T>
-struct isBCRSMatrix<Dune::BCRSMatrix<T> > : public std::true_type {};
 
 /*!
  * \ingroup Linear

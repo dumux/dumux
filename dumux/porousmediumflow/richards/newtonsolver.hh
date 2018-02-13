@@ -19,34 +19,31 @@
 /*!
  * \file
  * \ingroup RichardsModel
- * \brief A Richards model specific controller for the newton solver.
+ * \brief A Richards model newton solver.
  */
-#ifndef DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
-#define DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
+#ifndef DUMUX_RICHARDS_NEWTON_SOLVER_HH
+#define DUMUX_RICHARDS_NEWTON_SOLVER_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/nonlinear/newtoncontroller.hh>
-#include <dune/common/deprecated.hh>
-
-#warning "This file is deprecated. Use RichardsNewtonSolver instead."
+#include <dumux/nonlinear/newtonsolver.hh>
 
 namespace Dumux {
 /*!
  * \ingroup RichardsModel
- * \brief A Richards model specific controller for the newton solver.
+ * \brief A Richards model specific newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
- * and can thus do update smarter than the plain Newton controller.
+ * and can thus do update smarter than the plain Newton solver.
  *
  * \todo make this typetag independent by extracting anything model specific from assembler
  *       or from possible ModelTraits.
  */
-template <class TypeTag>
-class DUNE_DEPRECATED_MSG("Use RichardsNewtonSolver instead.")
-RichardsNewtonController : public NewtonController<typename GET_PROP_TYPE(TypeTag, Scalar)>
+template <class TypeTag, class Assembler, class LinearSolver>
+class RichardsNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ParentType = NewtonController<Scalar>;
+    using Scalar = typename Assembler::Scalar;
+    using ParentType = NewtonSolver<Assembler, LinearSolver>;
+    using SolutionVector = typename Assembler::ResidualType;
 
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using ElementSolution =  typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
@@ -56,33 +53,30 @@ RichardsNewtonController : public NewtonController<typename GET_PROP_TYPE(TypeTa
 public:
     using ParentType::ParentType;
 
+private:
+
     /*!
      * \brief Update the current solution of the newton method
      *
-     * This is basically the step
-     * \f[ u^{k+1} = u^k - \Delta u^k \f]
+     * \todo TODO: doc me!
      *
-     * \param assembler The Jacobian assembler
      * \param uCurrentIter The solution after the current Newton iteration \f$ u^{k+1} \f$
      * \param uLastIter The solution after the last Newton iteration \f$ u^k \f$
      * \param deltaU The vector of differences between the last
      *               iterative solution and the next one \f$ \Delta u^k \f$
      */
-    template<class JacobianAssembler, class SolutionVector>
-    void newtonUpdate(JacobianAssembler& assembler,
-                      SolutionVector &uCurrentIter,
-                      const SolutionVector &uLastIter,
-                      const SolutionVector &deltaU)
+    void choppedUpdate_(SolutionVector &uCurrentIter,
+                        const SolutionVector &uLastIter,
+                        const SolutionVector &deltaU) final
     {
-        ParentType::newtonUpdate(assembler, uCurrentIter, uLastIter, deltaU);
-        if (!this->useLineSearch_ && getParamFromGroup<bool>(this->paramGroup(), "Newton.EnableChop"))
-        {
-            // do not clamp anything after 5 iterations
-            if (this->numSteps_ > 4)
-                return;
+        uCurrentIter = uLastIter;
+        uCurrentIter -= deltaU;
 
+        // do not clamp anything after 5 iterations
+        if (this->numSteps_ <= 4)
+        {
             // clamp saturation change to at most 20% per iteration
-            const auto& fvGridGeometry = assembler.fvGridGeometry();
+            const auto& fvGridGeometry = this->assembler().fvGridGeometry();
             for (const auto& element : elements(fvGridGeometry.gridView()))
             {
                 auto fvGeometry = localView(fvGridGeometry);
@@ -93,13 +87,13 @@ public:
                     auto dofIdxGlobal = scv.dofIndex();
 
                     // calculate the old wetting phase saturation
-                    const auto& spatialParams = assembler.problem().spatialParams();
+                    const auto& spatialParams = this->assembler().problem().spatialParams();
                     const ElementSolution elemSol(element, uCurrentIter, fvGridGeometry);
                     const auto& materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
                     const Scalar pcMin = MaterialLaw::pc(materialLawParams, 1.0);
                     const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];
                     using std::max;
-                    const Scalar pn = max(assembler.problem().nonWettingReferencePressure(), pw + pcMin);
+                    const Scalar pn = max(this->assembler().problem().nonWettingReferencePressure(), pw + pcMin);
                     const Scalar pcOld = pn - pw;
                     const Scalar SwOld = max(0.0, MaterialLaw::sw(materialLawParams, pcOld));
 
@@ -113,6 +107,17 @@ public:
                     uCurrentIter[dofIdxGlobal][pressureIdx] = max(pwMin, min(uCurrentIter[dofIdxGlobal][pressureIdx], pwMax));
                 }
             }
+        }
+
+        if (this->enableResidualCriterion())
+            this->computeResidualReduction_(uCurrentIter);
+
+        else
+        {
+            // If we get here, the convergence criterion does not require
+            // additional residual evalutions. Thus, the grid variables have
+            // not yet been updated to the new uCurrentIter.
+            this->assembler().updateGridVariables(uCurrentIter);
         }
     }
 };

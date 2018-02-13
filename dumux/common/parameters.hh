@@ -373,6 +373,7 @@ private:
         params["Newton.MaxSteps"] = "18";
         params["Newton.TargetSteps"] = "10";
         params["Newton.UseLineSearch"] = "false";
+        params["Newton.EnableChop"] = "false";
         params["Newton.EnableShiftCriterion"] = "true";
         params["Newton.MaxRelativeShift"] = "1e-8";
         params["Newton.EnableResidualCriterion"] = "false";

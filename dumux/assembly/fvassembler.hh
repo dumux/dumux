@@ -51,15 +51,12 @@ template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
 class FVAssembler
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using Element = typename GridView::template Codim<0>::Entity;
-    using TimeLoop = TimeLoopBase<Scalar>;
+    using TimeLoop = TimeLoopBase<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
@@ -68,6 +65,9 @@ class FVAssembler
                                                      CCLocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>>;
 
 public:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using ResidualType = SolutionVector;
 
     /*!
@@ -299,6 +299,22 @@ public:
      */
     LocalResidual localResidual() const
     { return LocalResidual(problem_.get(), timeLoop_.get()); }
+
+    /*!
+     * \brief Update the grid variables
+     */
+    void updateGridVariables(const SolutionVector &cursol)
+    {
+        gridVariables().update(cursol);
+    }
+
+    /*!
+     * \brief Reset the gridVariables
+     */
+    void resetTimeStep(const SolutionVector &cursol)
+    {
+        gridVariables().resetTimeStep(cursol);
+    }
 
 private:
     // reset the residual vector to 0.0

@@ -88,7 +88,6 @@
 
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
-#include <dumux/porousmediumflow/compositional/privarswitchnewtoncontroller.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"

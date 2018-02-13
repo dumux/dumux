@@ -33,6 +33,16 @@
 namespace Dumux
 {
 
+//! provide an interface as a form of type erasure
+//! this is the minimal requirements a convergence write passed to a newton method has to fulfill
+template <class SolutionVector>
+struct ConvergenceWriterInterface
+{
+    virtual ~ConvergenceWriterInterface() = default;
+
+    virtual void write(const SolutionVector &uLastIter, const SolutionVector &deltaU, const SolutionVector &residual) {}
+};
+
 /*!
  * \ingroup Nonlinear
  * \brief Writes the intermediate solutions for every Newton iteration
@@ -41,9 +51,12 @@ namespace Dumux
  *       to write out multiple Newton solves with a unique id, if you don't call use all
  *       Newton iterations just come after each other in the pvd file.
  */
-template <class Scalar, class GridView, int numEq>
-class NewtonConvergenceWriter
+// template <class Scalar, class GridView, int numEq>
+template <class GridView, class SolutionVector>
+class NewtonConvergenceWriter : virtual public ConvergenceWriterInterface<SolutionVector>
 {
+    static constexpr auto numEq = SolutionVector::block_type::dimension;
+    using Scalar = typename SolutionVector::block_type::value_type;
 public:
     /*!
      * \brief Constructor
@@ -56,7 +69,7 @@ public:
                             const std::string& name = "newton_convergence")
     : writer_(gridView, name, "", "")
     {
-        resize(gridView, size);
+        resize(size);
 
         if (size == gridView.size(GridView::dimension))
         {
@@ -83,7 +96,7 @@ public:
     }
 
     //! Resizes the output fields. This has to be called whenever the grid changes
-    void resize(const GridView& gridView, std::size_t size)
+    void resize(std::size_t size)
     {
         // resize the output fields
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -99,10 +112,9 @@ public:
     void reset(std::size_t newId = 0UL)
     { id_ = newId; iteration_ = 0UL; }
 
-    template<class SolutionVector>
     void write(const SolutionVector &uLastIter,
                const SolutionVector &deltaU,
-               const SolutionVector &residual)
+               const SolutionVector &residual) override
     {
         assert(uLastIter.size() == deltaU.size() && uLastIter.size() == residual.size());
 

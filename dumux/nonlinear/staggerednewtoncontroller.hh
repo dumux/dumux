@@ -34,6 +34,9 @@
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
+#include <dune/common/deprecated.hh>
+
+#warning "This file is deprecated. Use NewtonSolver instead."
 
 namespace Dumux {
 
@@ -45,7 +48,8 @@ namespace Dumux {
 
 template <class Scalar,
           class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> >
-class StaggeredNewtonController : public NewtonController<Scalar, Comm>
+class DUNE_DEPRECATED_MSG("Use NewtonSolver instead.")
+StaggeredNewtonController : public NewtonController<Scalar, Comm>
 {
     using ParentType = NewtonController<Scalar, Comm>;
 
@@ -90,7 +94,7 @@ public:
             // solve by calling the appropriate implementation depending on whether the linear solver
             // is capable of handling MultiType matrices or not
             bool converged = solveLinearSystem_(ls, A, x, b,
-                                                std::integral_constant<bool, LinearSolverAcceptsMultiTypeMatrix<LinearSolver>::value>());
+                                                std::integral_constant<bool, linearSolverAcceptsMultiTypeMatrix<LinearSolver>::value>());
 
             // make sure all processes converged
             int convergedRemote = converged;
