@@ -58,7 +58,8 @@ class FVAssembler
     using TimeLoop = TimeLoopBase<typename GET_PROP_TYPE(TypeTag, Scalar)>;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static constexpr DiscretizationMethods discMethod = GET_PROP_VALUE(TypeTag, DiscretizationMethod);
+    static constexpr bool isBox = discMethod == DiscretizationMethods::Box;
 
     using ThisType = FVAssembler<TypeTag, diffMethod, isImplicit>;
     using LocalAssembler = std::conditional_t<isBox, BoxLocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>,
@@ -68,6 +69,7 @@ public:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+
     using ResidualType = SolutionVector;
 
     /*!
@@ -107,16 +109,17 @@ public:
      * \brief Assembles the global Jacobian of the residual
      *        and the residual for the current solution.
      */
-    void assembleJacobianAndResidual(const SolutionVector& curSol)
+    template<class PartialReassembler = DefaultPartialReassembler>
+    void assembleJacobianAndResidual(const SolutionVector& curSol, const PartialReassembler* partialReassembler = nullptr)
     {
         checkAssemblerState_();
-        resetJacobian_();
+        resetJacobian_(partialReassembler);
         resetResidual_();
 
         assemble_([&](const Element& element)
         {
             LocalAssembler localAssembler(*this, element, curSol);
-            localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_);
+            localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
         });
     }
 
@@ -329,8 +332,9 @@ private:
         (*residual_) = 0.0;
     }
 
-    // reset the jacobian vector to 0.0
-    void resetJacobian_()
+    // reset the Jacobian matrix to 0.0
+    template <class PartialReassembler = DefaultPartialReassembler>
+    void resetJacobian_(const PartialReassembler *partialReassembler = nullptr)
     {
         if(!jacobian_)
         {
@@ -339,7 +343,10 @@ private:
             setJacobianPattern();
         }
 
-       (*jacobian_)  = 0.0;
+        if (partialReassembler)
+            partialReassembler->resetJacobian(*jacobian_, fvGridGeometry());
+        else
+            *jacobian_ = 0.0;
     }
 
     // check if the assembler is in a correct state for assembly
