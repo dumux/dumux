@@ -220,6 +220,15 @@ NEW_PROP_TAG(SherwoodFormulation);
 NEW_PROP_TAG(EnableInertiaTerms); //!< Returns whether to include inertia terms in the momentum balance eq or not (Stokes / Navier-Stokes)
 NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure term in the momentum balance or not
 
+/////////////////////////////////////////////////////////////
+// Properties used by shallow water models:
+/////////////////////////////////////////////////////////////
+
+NEW_PROP_TAG(NumericalFluxType);             //!< specifies the Numerical Flux e.g. Riemann solver type
+NEW_PROP_TAG(TurbulenceModelType);           //!< specifies the turbulence model to use
+NEW_PROP_TAG(EnableNumericalFlux);           //!< specifies if numerical flux is considered in the model
+NEW_PROP_TAG(EnableTurbulenceModel);         //!< specifies if turbulence model is considered in the model
+
 } // end namespace Properties
 } // end namespace Dumux
 
