@@ -100,7 +100,7 @@ int main(int argc, char** argv) try
     vtkWriter.write(0.0);
 
     // make assemble and attach linear system
-    using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
+    using Assembler = FVAssembler<TypeTag, NUMDIFFMETHOD>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     auto A = std::make_shared<JacobianMatrix>();
