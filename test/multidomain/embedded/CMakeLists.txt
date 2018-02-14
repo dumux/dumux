@@ -1,2 +1,2 @@
-add_subdirectory("1p_1p")
-add_subdirectory("fracture1p")
+add_subdirectory("1d3d")
+add_subdirectory("2d3d")
