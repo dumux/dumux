@@ -1,0 +1,34 @@
+[MixedDimension]
+NumCircleSegments = 10
+
+[TimeLoop]
+DtInitial = 8640 # [s]
+TEnd = 864000 # [s]
+EpisodeLength = 21700 # [s]
+
+[Root.Grid]
+File = lupine.dgf
+Refinement = 0
+
+[Soil.Grid]
+LowerLeft = -0.05 -0.05 -0.1
+UpperRight = 0.05 0.05 0
+Cells = 20 20 20
+
+[Problem]
+Name = test_soilroot
+EnableGravity = false
+
+[Soil.SpatialParams]
+Permeability = 2.57e-12 # [m^2]
+Porosity = 0.3 # [-]
+
+[Root.SpatialParams]
+Kx = 5.0968e-17
+Kr = 2.04e-13
+
+[BoundaryConditions]
+InitialSoilPressure =  -0.9429e4 # [Pa] used as Dirichlet BC and IC
+InitialRootPressure = -1.2e6 # [Pa]
+TranspirationRate = 2.15e-8 # [kg / s]
+CriticalCollarPressure = -1.5e6 # [Pa]
