@@ -38,23 +38,9 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/matrix.hh>
+#include <dumux/common/typetraits/utility.hh>
 
 namespace Dumux {
-
-/*
- * \brief create a variadic template from indexed types
- * \tparam V a variadic template that we want to create
- * \tparam T an indexed type (type that gets an index as template parameter)
- * \tparam U the list of indices
- */
-template <template<typename... Args> class Variadic, template<std::size_t> class Indexed, class U>
-struct makeFromIndexedType;
-
-template <template<typename... Args> class Variadic, template<std::size_t> class Indexed, std::size_t... IndexSeq>
-struct makeFromIndexedType<Variadic, Indexed, std::index_sequence<IndexSeq...>>
-{
-    using type = Variadic<Indexed<IndexSeq>...>;
-};
 
 //! a helper class to create a multitype matrix given the diagonal matrix blocks
 template<class Scalar, class... JacobianBlocks>
