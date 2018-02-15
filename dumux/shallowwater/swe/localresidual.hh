@@ -26,6 +26,8 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/assembly/fvlocalresidual.hh>
+#include <dune/common/hybridutilities.hh>
 
 namespace Dumux
 {
@@ -42,34 +44,19 @@ class SweResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-
-    using Element = typename GridView::template Codim<0>::Entity;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes); //LEO TODO SWE boundary types
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);//LEO TODO SWE boundary types
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
-
-    using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FaceResidual = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-
-    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
     enum {
          // grid and world dimension

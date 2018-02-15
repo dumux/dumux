@@ -47,7 +47,6 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
     using ParentType = StaggeredLocalResidual<TypeTag>;
     friend class StaggeredLocalResidual<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

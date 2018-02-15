@@ -39,13 +39,13 @@ template<class TypeTag> //LEO TypeTag ist der Template parameter es ginge auch t
 class SweFluxVariables : public FluxVariablesBase<TypeTag>
 {
     using ParentType = FluxVariablesBase<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem); //typenam allows to use it withoud qualification
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);

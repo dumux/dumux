@@ -50,7 +50,9 @@ class SweVolumeVariablesImplementation
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
