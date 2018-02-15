@@ -153,6 +153,14 @@ public:
         return 0;
     }
 
+    int fluxMultiplier() const
+    {
+        if(scvIndices_[0] < scvIndices_[1])
+            return 1;
+        else
+            return -1;
+    }
+
 private:
     Scalar area_;
     GlobalPosition center_;
