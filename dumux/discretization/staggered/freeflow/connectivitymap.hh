@@ -41,7 +41,7 @@ class StaggeredFreeFlowConnectivityMap
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using IndexType = std::size_t;
 
     using CellCenterIdxType = typename FVGridGeometry::DofTypeIndices::CellCenterIdx;
     using FaceIdxType = typename FVGridGeometry::DofTypeIndices::FaceIdx;
