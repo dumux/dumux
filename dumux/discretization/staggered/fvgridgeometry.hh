@@ -31,6 +31,87 @@ namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
+ * \brief Base class for cell center of face specific auxiliary FvGridGeometry classes.
+ *        Provides a common interface and a pointer to the actual fvGridGeometry.
+ */
+template<class ActualFVGridGeometry>
+class GridGeometryView
+{
+public:
+
+    explicit GridGeometryView(const ActualFVGridGeometry* actualFVGridGeometry)
+    : fvGridGeometry_(actualFVGridGeometry) {}
+
+    //! export discretization method
+    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+    using LocalView = typename ActualFVGridGeometry::LocalView;
+
+    static constexpr bool isCellCenter = false;
+    static constexpr bool isFace = false;
+
+    const auto& gridView() const
+    { return fvGridGeometry_->gridView(); }
+
+    const auto &connectivityMap() const // TODO return correct map
+    { return fvGridGeometry_->connectivityMap(); }
+
+    const auto& vertexMapper() const
+    { return fvGridGeometry_->vertexMapper(); }
+
+    const auto& elementMapper() const
+    { return fvGridGeometry_->elementMapper(); }
+
+    const ActualFVGridGeometry& actualfvGridGeometry() const
+    { return *fvGridGeometry_; }
+
+protected:
+    const ActualFVGridGeometry* fvGridGeometry_;
+
+};
+
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Cell center specific auxiliary FvGridGeometry classes.
+ *        Required for the Dumux multi-domain framework.
+ */
+template <class ActualFVGridGeometry>
+class CellCenterFVGridGeometry : public GridGeometryView<ActualFVGridGeometry>
+{
+    using ParentType = GridGeometryView<ActualFVGridGeometry>;
+public:
+
+    using ParentType::ParentType;
+
+    static constexpr bool isCellCenter = true;
+
+    std::size_t numDofs() const
+    { return this->fvGridGeometry_->numCellCenterDofs(); }
+
+};
+
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Face specific auxiliary FvGridGeometry classes.
+ *        Required for the Dumux multi-domain framework.
+ */
+template <class ActualFVGridGeometry>
+class FaceFVGridGeometry : public GridGeometryView<ActualFVGridGeometry>
+{
+    using ParentType = GridGeometryView<ActualFVGridGeometry>;
+public:
+
+    using ParentType::ParentType;
+
+    static constexpr bool isFace = true;
+
+    std::size_t numDofs() const
+    { return this->fvGridGeometry_->numFaceDofs(); }
+};
+
+
+
+/*!
+ * \ingroup StaggeredDiscretization
  * \brief Base class for the finite volume geometry vector for staggered models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
@@ -77,6 +158,11 @@ public:
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
     //! export the grid view type
     using GridView = GV;
+
+    using CellCenterFVGridGeometryType = CellCenterFVGridGeometry<ThisType>;
+    using FaceFVGridGeometryType = FaceFVGridGeometry<ThisType>;
+
+    using FVGridGeometryTuple = std::tuple< CellCenterFVGridGeometry<ThisType>, FaceFVGridGeometry<ThisType> >;
 
     //! Constructor
     StaggeredFVGridGeometry(const GridView& gridView)
@@ -240,6 +326,29 @@ public:
     const ConnectivityMap &connectivityMap() const
     { return connectivityMap_; }
 
+    //! Returns a pointer the cell center specific auxiliary class. Required for the multi-domain FVAssembler's ctor.
+    std::unique_ptr<CellCenterFVGridGeometry<ThisType>> cellCenterFVGridGeometryPtr() const
+    {
+        return std::make_unique<CellCenterFVGridGeometry<ThisType>>(this);
+    }
+
+    //! Returns a pointer the face specific auxiliary class. Required for the multi-domain FVAssembler's ctor.
+    std::unique_ptr<FaceFVGridGeometry<ThisType>> faceFVGridGeometryPtr() const
+    {
+        return std::make_unique<FaceFVGridGeometry<ThisType>>(this);
+    }
+
+    //! Return a copy of the cell center specific auxiliary class.
+    CellCenterFVGridGeometry<ThisType> cellCenterFVGridGeometry() const
+    {
+        return CellCenterFVGridGeometry<ThisType>(this);
+    }
+
+    //! Return a copy of the face specific auxiliary class.
+    FaceFVGridGeometry<ThisType> faceFVGridGeometry() const
+    {
+        return FaceFVGridGeometry<ThisType>(this);
+    }
 
 private:
 
