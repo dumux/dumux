@@ -1,6 +1,6 @@
 [TimeManager]
 DtInitial = 100 # [s]
-TEnd = 3000 # [s]
+TEnd = 8000 # [s]
 
 [Grid]
 LowerLeft = 0 0

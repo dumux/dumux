@@ -86,14 +86,14 @@ NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(CPTwoPProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 
 // Enable gravity
-SET_BOOL_PROP(CPTwoPProblem, ProblemEnableGravity, true);
+SET_BOOL_PROP(CPTwoPProblem, ProblemEnableGravity, false);
 
 SET_BOOL_PROP(CPTwoPProblem, EnableGlobalFVGeometryCache, true);
 
 SET_BOOL_PROP(CPTwoPProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(CPTwoPProblem, EnableGlobalVolumeVariablesCache, true);
 
-SET_TYPE_PROP(CPTwoPProblem, LinearSolver, UMFPackBackend<TypeTag> );
+SET_TYPE_PROP(CPTwoPProblem, LinearSolver, SuperLUBackend<TypeTag> );
 
 SET_BOOL_PROP(CPTwoPProblem, VtkWriteFaceData, false);
 
@@ -166,6 +166,7 @@ class CPTwoPProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
         facePressureNIdx = Indices::facePressureNIdx,
 
         // equation indices
+        contiWEqIdx = Indices::contiWEqIdx,
         contiNEqIdx = Indices::contiNEqIdx,
         faceFluxBalanceNIdx = Indices::faceFluxBalanceNIdx,
 
@@ -185,12 +186,16 @@ class CPTwoPProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
     enum { dofCodim = isBox ? dim : 0 };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
 
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename MaterialLaw::Params;
@@ -206,14 +211,10 @@ public:
                 const GridView &gridView)
     : ParentType(timeManager, gridView), gravity_(0)
     {
+        //gravity_[dimWorld-1] = 9.81;
         temperature_ = 273.15 + 20; // -> 20°C
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             std::string,
-                                             Problem,
-                                             Name);
-
-        //gravity_[dimWorld-1] = 9.81;
+        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
 
         injectionElement_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, InjectionElement);
         injectionRate_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InjectionRate);
@@ -247,16 +248,87 @@ public:
     const GlobalPosition &gravity() const
     { return gravity_; }
 
-    /*!
-     * \brief Returns the source term
-     *
-     * \param values Stores the source values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
-     * \param globalPos The global position
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables source(const Element &element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolume &scv) const
     {
-        return PrimaryVariables(0.0);
+        PrimaryVariables values(0.0);
+
+        const GlobalPosition& globalPos = scv.center();
+
+        Scalar deltaXMin = 1e16;
+        Scalar deltaXMax = -1e16;
+        Scalar deltaYMin = 1e16;
+        Scalar deltaYMax = -1e16;
+        Scalar deltaZMin = 1e16;
+        Scalar deltaZMax = -1e16;
+
+        GlobalPosition deltaXYZ(0);
+
+        std::vector<GlobalPosition> corners;
+        for(int i=0; i < element.geometry().corners(); i++)
+        {
+            auto corner = element.geometry().corner(i);
+            deltaXMin = std::min(deltaXMin,corner[0]);
+            deltaXMax = std::max(deltaXMax,corner[0]);
+            deltaYMin = std::min(deltaYMin,corner[1]);
+            deltaYMax = std::max(deltaYMax,corner[1]);
+            deltaZMin = std::min(deltaZMin,corner[2]);
+            deltaZMax = std::max(deltaZMax,corner[2]);
+        }
+
+        deltaXYZ[0] = deltaXMax - deltaXMin;
+        deltaXYZ[1] = deltaYMax - deltaYMin;
+        deltaXYZ[2] = deltaZMax - deltaZMin;
+
+        Scalar P1x0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, P1WellXCoord);
+        Scalar P1y0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, P1WellYCoord);
+        Scalar P1deviationX = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, P1DeviationX);
+        Scalar P1deviationY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, P1DeviationY);
+        Scalar P2x0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, P2WellXCoord);
+        Scalar P2y0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, P2WellYCoord);
+        Scalar P2deviationX = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, P2DeviationX);
+        Scalar P2deviationY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, P2DeviationY);
+        Scalar I1x0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, I1WellXCoord);
+        Scalar I1y0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, I1WellYCoord);
+        Scalar I1deviationX = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, I1DeviationX);
+        Scalar I1deviationY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, I1DeviationY);
+        Scalar I2x0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, I2WellXCoord);
+        Scalar I2y0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, I2WellYCoord);
+        Scalar I2deviationX = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, I2DeviationX);
+        Scalar I2deviationY = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, I2DeviationY);
+
+        Scalar height = deltaXYZ[2];
+        Scalar pi = 4.0*atan(1.0);
+        Scalar rw = 0.15;
+        Scalar re = 0.14*std::sqrt(deltaXYZ[0]*deltaXYZ[0] + deltaXYZ[1]*deltaXYZ[1]);
+        Scalar pbhI = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, BoreHolePressureI);
+        Scalar pbhP = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, BoreHolePressureP);
+        auto K = this->spatialParams().permeability(element, scv,
+                this->model().elementSolution(element, this->model().curSol()));
+
+        auto volVars = elemVolVars[scv];
+        Scalar pw = volVars.pressure(wPhaseIdx);
+        Scalar pn = volVars.pressure(nPhaseIdx);
+        Scalar mobN = volVars.mobility(nPhaseIdx);
+        Scalar densityW = volVars.density(wPhaseIdx);
+        Scalar densityN = volVars.density(nPhaseIdx);
+        Scalar viscosityW = volVars.fluidState().viscosity(wPhaseIdx);
+
+        if(std::abs(globalPos[0]-I1x0) < I1deviationX && std::abs(globalPos[1]-I1y0) < I1deviationY)
+            values[contiWEqIdx] = (2.0*pi*height*K[0][0]*densityW)/(std::log(re/rw)*viscosityW) * (pbhI - (pw -densityW*(this->gravity()*globalPos)));
+        else if(std::abs(globalPos[0]-I2x0) < I2deviationX && std::abs(globalPos[1]-I2y0) < I2deviationY)
+            values[contiWEqIdx] = (2.0*pi*height*K[0][0]*densityW)/(std::log(re/rw)*viscosityW) * (pbhI - (pw -densityW*(this->gravity()*globalPos)));
+        else if(std::abs(globalPos[0]-P1x0) < P1deviationX && std::abs(globalPos[1]-P1y0) < P1deviationY)
+            values[contiNEqIdx] = (2.0*pi*height*K[0][0]*densityN)/(std::log(re/rw))*mobN* (pbhP - (pn -densityN*(this->gravity()*globalPos)));
+        else if(std::abs(globalPos[0]-P2x0) < P2deviationX && std::abs(globalPos[1]-P2y0) < P2deviationY)
+             values[contiNEqIdx] = (2.0*pi*height*K[0][0]*densityN)/(std::log(re/rw))*mobN* (pbhP - (pn -densityN*(this->gravity()*globalPos)));
+
+        values[contiWEqIdx] /= scv.volume();
+        values[contiNEqIdx] /= scv.volume();
+
+        return values;
     }
 
     // \}
@@ -277,13 +349,13 @@ public:
     {
         BoundaryTypes values;
 
-//        if(globalPos[0] > 461000.0)
-//            values.setAllDirichlet();
-//        else
-//            values.setAllNeumann();
+        if(globalPos[0] > 461000.0)
+            values.setAllDirichlet();
+        else
+            values.setAllNeumann();
 
 //        if(globalPos[0] < this->bBoxMin()[0] + eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)
-            values.setAllDirichlet();
+//            values.setAllDirichlet();
 //        else
 //            values.setAllNeumann();
 
@@ -308,20 +380,12 @@ public:
 
         Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
 
-        if(globalPos[0] < this->bBoxMin()[0] + eps_)
-        {
-            values[pwIdx] = 2e5 + densityW*(this->gravity()*globalPos);
-            values[snIdx] = 0.1;
-        }
-        else
-        {
-            values[pwIdx] = 1e5 + densityW*(this->gravity()*globalPos);
-            values[snIdx] = 1.0;
-        }
+        values[pwIdx] = 1e5 + densityW*(this->gravity()*globalPos);
+        values[snIdx] = 1.0;
 
         Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), 1.0 - values[snIdx]);
         values[facePressureWIdx] = values[pwIdx];
-        values[facePressureNIdx] = pc + values[facePressureWIdx];
+        //values[facePressureNIdx] = pc + values[facePressureWIdx];
 
         return values;
     }
@@ -371,8 +435,8 @@ public:
         values[snIdx] = 1.0;
 
         Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), 1.0 - values[snIdx]);
-        values[facePressureWIdx] = values[pwIdx];
-        values[facePressureNIdx] = pc + values[facePressureWIdx];
+        values[facePressureWIdx] = 0.0;
+        //values[facePressureNIdx] = 0.0;
 
         return values;
     }

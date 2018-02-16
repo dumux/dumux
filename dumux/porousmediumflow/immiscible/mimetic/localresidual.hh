@@ -257,7 +257,24 @@ protected:
         {
             if (scvf.boundary())
             {
-                this->ccResidual_ += computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
+                // handle the actual boundary conditions:
+                const auto bcTypes = this->problem().boundaryTypes(element, scvf);
+
+                // set a fixed value for the velocity
+                if(bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
+                {
+                    auto neumannFluxes = this->problem().neumann(element, fvGeometry, elemVolVars, scvf)[cellCenterIdx];
+
+                    // multiply neumann fluxes with the area and the extrusion factor
+                    auto&& scv = fvGeometry.scv(scvf.insideScvIdx());
+                    neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
+
+                    this->ccResidual_ += neumannFluxes;
+                }
+                else if(!bcTypes.hasNeumann() && bcTypes.hasDirichlet())
+                {
+                    this->ccResidual_ += computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
+                }
             }
         }
     }
@@ -320,7 +337,7 @@ protected:
                     int indexLocal = 0;
                     for (auto&& scvfIt : scvfs(fvGeometry))
                     {
-                        Scalar velFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[0];
+                        Scalar velFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[phaseIdx];
                         faceRes += W[indexFace][indexLocal] * scvfIt.fluxMultiplier() * velFace;
                         indexLocal++;
                     }

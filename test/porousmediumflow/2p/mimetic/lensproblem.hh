@@ -77,7 +77,7 @@ SET_TYPE_PROP(LensProblem, SpatialParams, LensSpatialParams<TypeTag> );
 NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(LensProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 
-//SET_TYPE_PROP(LensProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(LensProblem, LinearSolver, SuperLUBackend<TypeTag> );
 
 // Enable gravity
 SET_BOOL_PROP(LensProblem, ProblemEnableGravity, true);
@@ -363,8 +363,8 @@ public:
         values[snIdx] = 0.0;
 
         Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), 1.0-values[snIdx]);
-        values[facePressureWIdx] = 1e5 - densityW*this->gravity()[1]*depth;
-        values[facePressureNIdx] = pc + values[facePressureWIdx];
+        values[facePressureWIdx] = 0.0;
+        values[facePressureNIdx] = 0.0;
 
         return values;
     }

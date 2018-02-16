@@ -1,13 +1,13 @@
 [TimeManager]
-DtInitial = 1.0 # [s]
+DtInitial = 1e4 # [s]
 TEnd = 6e8 # [s]
 EpisodeLength = 5e7
 
 [Grid]
-File = ../implicit/grids/Hummocky.grdecl
+File = ./grids/nornegrid.data
 
 [Problem]
-Name = cc2pcornerpoint_mimetic_lineSearch_writeEpisodes_withDirichlet_shorter # name passed to the output routines
+Name = cp2p_mimetic # name passed to the output routines
 Homogeneous = 0 # use a homogeneous permeablity/porosity distribution
 InjectionElement = 0 # index of the element where injection should take place
 InjectionRate = 100 # injection rate in kg/s
@@ -38,4 +38,5 @@ EnableGravity = false
 Verbosity = 0
 
 [Newton]
-UseLineSearch = 1
+UseLineSearch = 0
+MaxSteps = 100
