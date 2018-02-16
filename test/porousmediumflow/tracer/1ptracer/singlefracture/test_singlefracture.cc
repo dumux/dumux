@@ -179,12 +179,6 @@ int main(int argc, char** argv) try
             auto elemFluxVars = localView(onePGridVariables->gridFluxVarsCache());
             elemFluxVars.bind(element, fvGeometry, elemVolVars);
 
-            //! get estimate of min dx/dy by doubling the distance to center
-            const auto eg = element.geometry();
-            const auto center = eg.center();
-            std::array<Scalar, dimWorld> mindx;
-            std::fill(mindx.begin(), mindx.end(), std::numeric_limits<Scalar>::max());
-
             // find the local face indices of the scvfs (for conforming meshes)
             std::vector<unsigned int> scvfIndexInInside(fvGeometry.numScvf());
             int localScvfIdx = 0;
@@ -197,6 +191,7 @@ int main(int argc, char** argv) try
                 scvfIndexInInside[localScvfIdx++] = intersection.indexInInside();
             }
 
+            Scalar sumInflux = 0.0;
             std::vector<Scalar> faceFluxes(element.subEntities(1), 0.0);
             localScvfIdx = 0;
             for (const auto& scvf : scvfs(fvGeometry))
@@ -209,6 +204,8 @@ int main(int argc, char** argv) try
                     fluxVars.init(*problemOneP, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
                     volumeFlux[idx] = fluxVars.advectiveFlux(0, upwindTerm);
                     faceFluxes[scvfIndexInInside[localScvfIdx++]] += volumeFlux[idx];
+                    if (std::signbit(volumeFlux[idx]))
+                        sumInflux += volumeFlux[idx];
                 }
                 else
                 {
@@ -219,6 +216,8 @@ int main(int argc, char** argv) try
                         fluxVars.init(*problemOneP, element, fvGeometry, elemVolVars, scvf, elemFluxVars);
                         volumeFlux[idx] = fluxVars.advectiveFlux(0, upwindTerm);
                         faceFluxes[scvfIndexInInside[localScvfIdx++]] += volumeFlux[idx];
+                        if (std::signbit(volumeFlux[idx]))
+                            sumInflux += volumeFlux[idx];
 
                         if (problemOneP->isOnInflowBoundary(scvf.ipGlobal()))
                             massInflux += fluxVars.advectiveFlux(0, massUpwindTerm);
@@ -228,22 +227,10 @@ int main(int argc, char** argv) try
                             DUNE_THROW(Dune::InvalidStateException, "Wrong Dirichlet BCs set");
                     }
                 }
-
-                //! find coordinate in which normal is maximal
-                const auto& n = scvf.unitOuterNormal();
-                int maxNCoord;
-                Scalar maxCoord = 0.0;
-                for (int coord = 0; coord < dimWorld; ++coord)
-                    if (abs(n[coord]) > maxCoord) {
-                        maxCoord = abs(n[coord]);
-                        maxNCoord = coord;
-                    }
-
-                const auto dist = scvf.ipGlobal()-center;
-                mindx[maxNCoord] = min(mindx[maxNCoord], 2*abs(dist[maxNCoord]));
             }
 
             // get the transposed Jacobian of the element mapping
+            const auto eg = element.geometry();
             using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
     #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
             const auto referenceElement = ReferenceElements::general(eg.type());
@@ -267,10 +254,11 @@ int main(int argc, char** argv) try
             v[eIdx] = scvVelocity;
 
             // evaluate cfl crit for this element
-            Scalar elementDt = 0;
-            for (int coord = 0; coord < dimWorld; ++coord)
-                elementDt += abs(scvVelocity[coord])/mindx[coord];
-            maxDt = min( maxDt, 1/elementDt );
+            using ElementSolution = typename GET_PROP_TYPE(OnePTypeTag, ElementSolutionVector);
+            const auto elemSol = ElementSolution(element, elemVolVars, fvGeometry);
+            const auto phi = problemOneP->spatialParams().porosity(element, fvGeometry.scv(eIdx), elemSol);
+            Scalar elemDt = 0.9*phi*eg.volume()/abs(sumInflux);
+            maxDt = min( maxDt, elemDt );
         }
 
         //! write output to vtk
@@ -325,7 +313,12 @@ int main(int argc, char** argv) try
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
 
     //! instantiate time loop
-    maxDt *= 0.5; // use Cmax = 0.5
+    const int numOutputFiles = getParam<int>("TimeLoop.NumOutputFiles");
+    const Scalar deltaT = tEnd/numOutputFiles;
+
+    using std::min;
+    maxDt = min(maxDt, deltaT);
+
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, maxDt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
     std::cout << "Maximum time step size was set to " << maxDt << std::endl;
@@ -346,7 +339,7 @@ int main(int argc, char** argv) try
     /////////////////////////////////////////////////////////////////////////////////////////////////
 
     // we want to have 50 outputs
-    timeLoop->setPeriodicCheckPoint(tEnd/50);
+    timeLoop->setPeriodicCheckPoint(deltaT);
 
     //! start the time loop
     timeLoop->start(); do
