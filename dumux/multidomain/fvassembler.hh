@@ -219,7 +219,6 @@ public:
         residual_ = r;
 
         setJacobianBuildMode(*jacobian_);
-        setJacobianSize(*jacobian_);
         setJacobianPattern(*jacobian_);
         setResidualSize(*residual_);
     }
@@ -234,7 +233,6 @@ public:
         residual_ = std::make_shared<SolutionVector>();
 
         setJacobianBuildMode(*jacobian_);
-        setJacobianSize(*jacobian_);
         setJacobianPattern(*jacobian_);
         setResidualSize(*residual_);
     }
@@ -254,19 +252,6 @@ public:
                     jacBlock.setBuildMode(BlockType::BuildMode::random);
                 else if (jacBlock.buildMode() != BlockType::BuildMode::random)
                     DUNE_THROW(Dune::NotImplemented, "Only BCRS matrices with random build mode are supported at the moment");
-            });
-        });
-    }
-
-    /*!
-     * \brief Set jacobian size
-     */
-    void setJacobianSize(JacobianMatrix& jac) const
-    {
-        using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(jac)), [&](const auto domainI) {
-            forEach(integralRange(Dune::Hybrid::size(jac[domainI])), [&](const auto domainJ) {
-                jac[domainI][domainJ].setSize(numDofs(domainI), numDofs(domainJ));
             });
         });
     }
@@ -394,7 +379,6 @@ private:
         {
             jacobian_ = std::make_shared<JacobianMatrix>();
             setJacobianBuildMode(*jacobian_);
-            setJacobianSize(*jacobian_);
             setJacobianPattern(*jacobian_);
         }
 
