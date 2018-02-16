@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 
+#include <vector>
+
 #include <dune/common/exceptions.hh>
 
 namespace Dumux
