@@ -30,6 +30,7 @@
 #include <utility>
 #include <algorithm>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/reservedvector.hh>
 #include <dumux/discretization/fluxstencil.hh>
 

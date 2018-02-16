@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FV_ELEMENT_GEOMETRY_HH
 
+#include <vector>
+
 #include <dune/common/iteratorrange.hh>
 
 #include <dumux/discretization/scvandscvfiterators.hh>

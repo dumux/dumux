@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_FLUXSTENCIL_HH
 #define DUMUX_DISCRETIZATION_FLUXSTENCIL_HH
 
+#include <vector>
+
 #include <dune/common/reservedvector.hh>
 #include <dumux/discretization/methods.hh>
 
