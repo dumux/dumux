@@ -55,13 +55,13 @@ namespace Dumux {
 template<class MDTraits, class CMType, DiffMethod diffMethod, bool isImplicit = true>
 class MultiDomainFVAssembler
 {
-    using Scalar = typename MDTraits::Scalar;
-
     template<std::size_t id>
     using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
 
 public:
     using Traits = MDTraits;
+
+    using Scalar = typename MDTraits::Scalar;
 
     template<std::size_t id>
     using LocalResidual = typename GET_PROP_TYPE(SubDomainTypeTag<id>, LocalResidual);
