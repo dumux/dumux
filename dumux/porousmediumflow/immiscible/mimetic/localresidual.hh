@@ -217,21 +217,26 @@ public:
 
         FacePrimaryVariables faceRes(0);
         int indexFace = scvf.localFaceIdx();
-        int indexLocal = 0;
-        for (auto&& scvfIt : scvfs(fvGeometry))
-        {
-            Scalar velFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[0];
-            faceRes += W[indexFace][indexLocal] * scvfIt.fluxMultiplier() * velFace;
-            indexLocal++;
-        }
 
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
-        const auto xInside = insideScv.center();
-        const auto gInside = this->problem().gravityAtPos(xInside);
-        const auto hInside = insideVolVars.pressure(0) - insideVolVars.density(0)*(gInside*xInside);
-        faceRes += scvf.area() * hInside;
-        faceRes *= scvf.fluxMultiplier();
+        for (int phaseIdx = 0; phaseIdx < faceRes.size(); ++phaseIdx)
+        {
+            int indexLocal = 0;
+            for (auto&& scvfIt : scvfs(fvGeometry))
+            {
+                Scalar velFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[phaseIdx];
+                faceRes[phaseIdx] += W[indexFace][indexLocal] * scvfIt.fluxMultiplier() * velFace;
+                indexLocal++;
+            }
+
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& insideVolVars = elemVolVars[insideScv];
+            const auto xInside = insideScv.center();
+            const auto gInside = this->problem().gravityAtPos(xInside);
+            //So far only for incompressible otherwise use density averaging
+            const auto hInside = insideVolVars.pressure(phaseIdx) - insideVolVars.density(phaseIdx)*(gInside*xInside);
+            faceRes[phaseIdx] += scvf.area() * hInside;
+            faceRes[phaseIdx] *= scvf.fluxMultiplier();
+        }
         //EnergyLocalResidual::heatConductionFlux(faceRes, fluxVars);
 
         return faceRes;
@@ -252,24 +257,7 @@ protected:
         {
             if (scvf.boundary())
             {
-                // handle the actual boundary conditions:
-                const auto bcTypes = this->problem().boundaryTypes(element, scvf);
-
-                // set a fixed value for the velocity
-                if(bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
-                {
-                    auto neumannFluxes = this->problem().neumann(element, fvGeometry, elemVolVars, scvf)[cellCenterIdx];
-
-                    // multiply neumann fluxes with the area and the extrusion factor
-                    auto&& scv = fvGeometry.scv(scvf.insideScvIdx());
-                    neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
-
-                    this->ccResidual_ += neumannFluxes;
-                }
-                else if(!bcTypes.hasNeumann() && bcTypes.hasDirichlet())
-                {
-                    this->ccResidual_ += computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
-                }
+                this->ccResidual_ += computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
             }
         }
     }
@@ -301,19 +289,18 @@ protected:
                 FluxVariables fluxVars;
                 fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
 
-                PrimaryVariables flux;
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                FacePrimaryVariables flux;
+                for (int phaseIdx = 0; phaseIdx < flux.size(); ++phaseIdx)
                 {
                     auto upwindTerm = [phaseIdx](const VolumeVariables& volVars)
                                       { return volVars.density(phaseIdx)/volVars.viscosity(phaseIdx); };
 
-                    auto eqIdx = conti0EqIdx + phaseIdx;
-                    flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+                    flux[phaseIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                 }
 
-                EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
+                //EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
-                this->faceResiduals_[scvf.localFaceIdx()] = flux[cellCenterIdx];
+                this->faceResiduals_[scvf.localFaceIdx()] = flux;
                 this->faceResiduals_[scvf.localFaceIdx()] -= neumannFlux;
 
             }
@@ -327,26 +314,34 @@ protected:
 
                 FacePrimaryVariables faceRes(0);
                 int indexFace = scvf.localFaceIdx();
-                int indexLocal = 0;
-                for (auto&& scvfIt : scvfs(fvGeometry))
+
+                for (int phaseIdx = 0; phaseIdx < faceRes.size(); ++phaseIdx)
                 {
-                    Scalar velFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[0];
-                    faceRes += W[indexFace][indexLocal] * scvfIt.fluxMultiplier() * velFace;
-                    indexLocal++;
+                    int indexLocal = 0;
+                    for (auto&& scvfIt : scvfs(fvGeometry))
+                    {
+                        Scalar velFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[0];
+                        faceRes += W[indexFace][indexLocal] * scvfIt.fluxMultiplier() * velFace;
+                        indexLocal++;
+                    }
+
+                    const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                    const auto& insideVolVars = elemVolVars[insideScv];
+                    const auto xInside = insideScv.center();
+                    const auto gInside = this->problem().gravityAtPos(xInside);
+                    //So far only for incompressible otherwise use density averaging
+                    const auto hInside = insideVolVars.pressure(phaseIdx) - insideVolVars.density(phaseIdx)*(gInside*xInside);
+
+                    const auto xFace = scvf.ipGlobal();
+                    const auto gFace = this->problem().gravityAtPos(xFace);
+                    const auto faceDirichlet = this->problem().dirichlet(element, scvf)[faceIdx];
+                    const auto hFace = faceDirichlet[phaseIdx] - insideVolVars.density(phaseIdx)*(gFace*xFace);
+
+                    faceRes[phaseIdx] += scvf.area() * (hInside- hFace);
+                    faceRes[phaseIdx] *= scvf.fluxMultiplier();
                 }
 
-                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-                const auto& insideVolVars = elemVolVars[insideScv];
-                const auto xInside = insideScv.center();
-                const auto gInside = this->problem().gravityAtPos(xInside);
-                const auto hInside = insideVolVars.pressure(0) - insideVolVars.density(0)*(gInside*xInside);
-
-                const auto xFace = scvf.ipGlobal();
-                const auto gFace = this->problem().gravityAtPos(xFace);
-                const auto hFace = this->problem().dirichlet(element, scvf)[faceIdx] - insideVolVars.density(0)*(gFace*xFace);
-
-                faceRes += scvf.area() * (hInside- hFace);
-                faceRes *= scvf.fluxMultiplier();
+                this->faceResiduals_[scvf.localFaceIdx()] = faceRes;
             }
         }
     }
@@ -368,11 +363,6 @@ protected:
         // multiply neumann fluxes with the area and the extrusion factor
         auto&& scv = fvGeometry.scv(scvf.insideScvIdx());
         neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
-
-        // add fluxes to the residual
-//        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-//            if (bcTypes.isNeumann(eqIdx))
-//                flux[eqIdx] += neumannFluxes[faceIdx][eqIdx];
 
         return neumannFluxes;
     }

@@ -153,12 +153,12 @@ public:
         return 0;
     }
 
-    int fluxMultiplier() const
+    Scalar fluxMultiplier() const
     {
         if(scvIndices_[0] < scvIndices_[1])
-            return 1;
+            return 1.0e-8;
         else
-            return -1;
+            return -1.0e-8;
     }
 
 private:

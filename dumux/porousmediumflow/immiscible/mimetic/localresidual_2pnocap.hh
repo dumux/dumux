@@ -212,20 +212,29 @@ public:
         FluxVariables fluxVars;
         fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
 
-        PrimaryVariables flux;
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {
-            // the physical quantities for which we perform upwinding
-            auto upwindTerm = [phaseIdx](const VolumeVariables& volVars)
-                              { return volVars.density(phaseIdx)/volVars.viscosity(phaseIdx); };
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+        const auto& W = fluxVarsCache.W();
 
-            auto eqIdx = conti0EqIdx + phaseIdx;
-            flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+        FacePrimaryVariables faceRes(0);
+        int indexFace = scvf.localFaceIdx();
+        int indexLocal = 0;
+        for (auto&& scvfIt : scvfs(fvGeometry))
+        {
+            Scalar velFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[0];
+            faceRes += W[indexFace][indexLocal] * scvfIt.fluxMultiplier() * velFace;
+            indexLocal++;
         }
 
-       EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto xInside = insideScv.center();
+        const auto gInside = this->problem().gravityAtPos(xInside);
+        const auto hInside = insideVolVars.pressure(0) - insideVolVars.density(0)*(gInside*xInside);
+        faceRes += scvf.area() * hInside;
+        faceRes *= scvf.fluxMultiplier();
+        //EnergyLocalResidual::heatConductionFlux(faceRes, fluxVars);
 
-        return flux[cellCenterIdx][0];
+        return faceRes;
     }
 
 protected:
@@ -243,24 +252,24 @@ protected:
         {
             if (scvf.boundary())
             {
-                // handle the actual boundary conditions:
-                const auto bcTypes = this->problem().boundaryTypes(element, scvf);
-
-                // set a fixed value for the velocity
-                if(bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
-                {
-                    auto neumannFluxes = this->problem().neumann(element, fvGeometry, elemVolVars, scvf)[cellCenterIdx];
-
-                    // multiply neumann fluxes with the area and the extrusion factor
-                    auto&& scv = fvGeometry.scv(scvf.insideScvIdx());
-                    neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
-
-                    this->ccResidual_ += neumannFluxes;
-                }
-                else if(!bcTypes.hasNeumann() && bcTypes.hasDirichlet())
-                {
+//                // handle the actual boundary conditions:
+//                const auto bcTypes = this->problem().boundaryTypes(element, scvf);
+//
+//                // set a fixed value for the velocity
+//                if(bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
+//                {
+//                    auto neumannFluxes = this->problem().neumann(element, fvGeometry, elemVolVars, scvf)[cellCenterIdx];
+//
+//                    // multiply neumann fluxes with the area and the extrusion factor
+//                    auto&& scv = fvGeometry.scv(scvf.insideScvIdx());
+//                    neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
+//
+//                    this->ccResidual_ += neumannFluxes;
+//                }
+//                else if(!bcTypes.hasNeumann() && bcTypes.hasDirichlet())
+//                {
                     this->ccResidual_ += computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
-                }
+//                }
             }
         }
     }
@@ -286,45 +295,60 @@ protected:
             {
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& insideVolVars = elemVolVars[insideScv];
-//
-//                auto neumannFlux = this->evalNeumannSegment_(element, fvGeometry, elemVolVars, scvf, bcTypes);
-//
-//                FluxVariables fluxVars;
-//                fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
-//
-////                Scalar pdiff = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[nPhaseIdx] - globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[wPhaseIdx];
-////                Scalar Sw = MaterialLaw::sw(this->problem().spatialParams().materialLawParamsAtPos(scvf.center()), pdiff);
-////                std::vector<Scalar> kr(numPhases);
-////                kr[wPhaseIdx] =  MaterialLaw::krw(this->problem().spatialParams().materialLawParamsAtPos(scvf.center()), Sw);
-////                kr[nPhaseIdx] =  MaterialLaw::krn(this->problem().spatialParams().materialLawParamsAtPos(scvf.center()), Sw);
-//
-//                PrimaryVariables flux;
-//                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-//                {
-//                    auto upwindTerm = [phaseIdx](const VolumeVariables& volVars)
-//                                      { return volVars.density(phaseIdx)/volVars.viscosity(phaseIdx); };
-//
-//                    auto eqIdx = conti0EqIdx + phaseIdx;
-//                    flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-//                }
-//
-//                EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
-//
-//                this->faceResiduals_[scvf.localFaceIdx()] = flux[cellCenterIdx][0];
-//                this->faceResiduals_[scvf.localFaceIdx()] -= neumannFlux;
 
-                this->faceResiduals_[scvf.localFaceIdx()] = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()
-                                                          - insideVolVars.pressure(0);
+                auto neumannFlux = this->evalNeumannSegment_(element, fvGeometry, elemVolVars, scvf, bcTypes);
 
-//               this->faceResiduals_[scvf.localFaceIdx()] = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars();
+                FluxVariables fluxVars;
+                fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
+
+                PrimaryVariables flux;
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                {
+                    auto upwindTerm = [phaseIdx](const VolumeVariables& volVars)
+                                      { return volVars.density(phaseIdx)/volVars.viscosity(phaseIdx); };
+
+                    auto eqIdx = conti0EqIdx + phaseIdx;
+                    flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+                }
+
+                EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
+
+                this->faceResiduals_[scvf.localFaceIdx()] = flux[cellCenterIdx][0];
+                this->faceResiduals_[scvf.localFaceIdx()] -= neumannFlux;
 
             }
             else if(!bcTypes.hasNeumann() && bcTypes.hasDirichlet())
             {
+                FluxVariables fluxVars;
+                fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
+
+                const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+                const auto& W = fluxVarsCache.W();
+
+                FacePrimaryVariables faceRes(0);
+                int indexFace = scvf.localFaceIdx();
+                int indexLocal = 0;
+                for (auto&& scvfIt : scvfs(fvGeometry))
+                {
+                    Scalar velFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[0];
+                    faceRes += W[indexFace][indexLocal] * scvfIt.fluxMultiplier() * velFace;
+                    indexLocal++;
+                }
+
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& insideVolVars = elemVolVars[insideScv];
-                this->faceResiduals_[scvf.localFaceIdx()] = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()
-                                                          - this->problem().dirichlet(element, scvf)[faceIdx];
+                const auto xInside = insideScv.center();
+                const auto gInside = this->problem().gravityAtPos(xInside);
+                const auto hInside = insideVolVars.pressure(0) - insideVolVars.density(0)*(gInside*xInside);
+
+                const auto xFace = scvf.ipGlobal();
+                const auto gFace = this->problem().gravityAtPos(xFace);
+                const auto hFace = this->problem().dirichlet(element, scvf)[faceIdx] - insideVolVars.density(0)*(gFace*xFace);
+
+                faceRes += scvf.area() * (hInside- hFace);
+                faceRes *= scvf.fluxMultiplier();
+
+                this->faceResiduals_[scvf.localFaceIdx()] = faceRes;
             }
         }
     }
