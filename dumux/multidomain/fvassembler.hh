@@ -120,10 +120,10 @@ public:
                            FVGridGeometryTuple&& fvGridGeometry,
                            GridVariablesTuple&& gridVariables,
                            std::shared_ptr<CouplingManager> couplingManager)
-    : problemTuple_(problem)
+    : couplingManager_(couplingManager)
+    , problemTuple_(problem)
     , fvGridGeometryTuple_(fvGridGeometry)
     , gridVariablesTuple_(gridVariables)
-    , couplingManager_(couplingManager)
     , timeLoop_()
     , isStationaryProblem_(true)
     {
@@ -141,10 +141,10 @@ public:
                            GridVariablesTuple&& gridVariables,
                            std::shared_ptr<CouplingManager> couplingManager,
                            std::shared_ptr<const TimeLoop> timeLoop)
-    : problemTuple_(problem)
+    : couplingManager_(couplingManager)
+    , problemTuple_(problem)
     , fvGridGeometryTuple_(fvGridGeometry)
     , gridVariablesTuple_(gridVariables)
-    , couplingManager_(couplingManager)
     , timeLoop_(timeLoop)
     , isStationaryProblem_(false)
     {
@@ -359,6 +359,10 @@ public:
     LocalResidual<i> localResidual(Dune::index_constant<i> domainId) const
     { return LocalResidual<i>(std::get<domainId>(problemTuple_).get(), timeLoop_.get()); }
 
+protected:
+    //! the coupling manager coupling the sub domains
+    std::shared_ptr<CouplingManager> couplingManager_;
+
 private:
     // reset the residual vector to 0.0
     void resetResidual_()
@@ -470,9 +474,6 @@ private:
 
     //! the variables container for the grid
     GridVariablesTuple gridVariablesTuple_;
-
-    //! the coupling manager coupling the sub domains
-    std::shared_ptr<CouplingManager> couplingManager_;
 
     //! the time loop for instationary problem assembly
     std::shared_ptr<const TimeLoop> timeLoop_;
