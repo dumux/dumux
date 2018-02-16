@@ -25,6 +25,7 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_FV_GRID_GEOMETRY
 
 #include <dumux/discretization/basefvgridgeometry.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux {
 
@@ -65,6 +66,9 @@ class StaggeredFVGridGeometry<GV, true, Traits>
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
 
 public:
+    //! export discretization method
+    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::Staggered;
+
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;
     //! export the type of sub control volume
