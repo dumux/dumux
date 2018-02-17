@@ -86,14 +86,14 @@ NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(CPTwoPProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 
 // Enable gravity
-SET_BOOL_PROP(CPTwoPProblem, ProblemEnableGravity, false);
+SET_BOOL_PROP(CPTwoPProblem, ProblemEnableGravity, true);
 
 SET_BOOL_PROP(CPTwoPProblem, EnableGlobalFVGeometryCache, true);
 
 SET_BOOL_PROP(CPTwoPProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(CPTwoPProblem, EnableGlobalVolumeVariablesCache, true);
 
-SET_TYPE_PROP(CPTwoPProblem, LinearSolver, SuperLUBackend<TypeTag> );
+//SET_TYPE_PROP(CPTwoPProblem, LinearSolver, SuperLUBackend<TypeTag> );
 
 SET_BOOL_PROP(CPTwoPProblem, VtkWriteFaceData, false);
 
@@ -211,7 +211,7 @@ public:
                 const GridView &gridView)
     : ParentType(timeManager, gridView), gravity_(0)
     {
-        //gravity_[dimWorld-1] = 9.81;
+        gravity_[dimWorld-1] = 9.81;
         temperature_ = 273.15 + 20; // -> 20°C
 
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
@@ -385,7 +385,7 @@ public:
 
         Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), 1.0 - values[snIdx]);
         values[facePressureWIdx] = values[pwIdx];
-        //values[facePressureNIdx] = pc + values[facePressureWIdx];
+        values[facePressureNIdx] = pc + values[facePressureWIdx];
 
         return values;
     }
@@ -436,7 +436,7 @@ public:
 
         Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), 1.0 - values[snIdx]);
         values[facePressureWIdx] = 0.0;
-        //values[facePressureNIdx] = 0.0;
+        values[facePressureNIdx] = 0.0;
 
         return values;
     }

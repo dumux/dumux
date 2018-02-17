@@ -55,7 +55,7 @@ private:
     // define the material law which is parameterized by effective
     // saturations
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
 public:
     // define the material law parameterized by absolute saturations
     using type = EffToAbsLaw<EffectiveLaw>;
@@ -153,15 +153,8 @@ public:
             permZ_ = permX_;
         }
 
-
-        materialLawParams_.setSwr(0.0);
-        materialLawParams_.setSnr(0.0);
-
-        // parameters for the Brooks-Corey Law
-        // entry pressures
-        materialLawParams_.setPe(0.0);
-        // Brooks-Corey shape parameters
-        materialLawParams_.setLambda(2);
+        materialParams_.setVgAlpha(0.00045);
+        materialParams_.setVgn(7.3);
     }
 
     /*!
@@ -203,13 +196,13 @@ public:
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
-        return materialLawParams_;
+        return materialParams_;
     }
 
 
 
 private:
-    MaterialLawParams materialLawParams_;
+    MaterialLawParams materialParams_;
     std::vector<Scalar> porosity_;
     std::vector<Scalar> permX_;
     std::vector<Scalar> permZ_;
