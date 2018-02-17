@@ -338,7 +338,7 @@ protected:
                     for (auto&& scvfIt : scvfs(fvGeometry))
                     {
                         Scalar velFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[phaseIdx];
-                        faceRes += W[indexFace][indexLocal] * scvfIt.fluxMultiplier() * velFace;
+                        faceRes[phaseIdx] += W[indexFace][indexLocal] * scvfIt.fluxMultiplier() * velFace;
                         indexLocal++;
                     }
 
