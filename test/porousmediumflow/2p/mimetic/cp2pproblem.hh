@@ -219,7 +219,24 @@ public:
         injectionElement_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, InjectionElement);
         injectionRate_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InjectionRate);
         episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLength);
-        this->timeManager().startNextEpisode(episodeLength_);
+        //this->timeManager().startNextEpisode(episodeLength_);
+
+        useFixedTimeSteps_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, UseFixedTimeSteps);
+
+        timeStepSizes_ = std::vector<int>
+            ({10000,15000,21250,30105,42645,60419,85591,121254,151568, 202091,
+            269454,179636,254484,318106,344614,459486,612648,765809,957262,1276350,
+            1382712,1728389,2016455,1833141,2291426,2864282,3102972,3102973,3361553,3641683,
+            3641683,2801295,2334412,2334412,2723481,2723481,1937878,2700000,3000000,3400000,
+            3800000,4290000,5110000,3600000,4200000,5000000,5700000,5800000,3400000,5700000,
+            6300000,7000000,7000000,7000000,7000000,7000000,3000000,7000000,8000000,8000000,
+            10000000,7000000,10000000,9000000,7000000,7000000,10000000,6000000,8000000,3000000,
+            8000000,9000000,7000000,7000000,7000000,6000000,6000000,5000000,7000000,6000000,
+            5000000,6000000,4000000,3000000,3000000,4000000,4000000,3000000,4000000,4000000,
+            5000000,6000000,7000000,6000000,6000000,8000000,4000000,7000000,8000000,7000000,
+            8000000,7000000,5000000,5000000,3000000,5000000,5000000,6000000,7000000,5000000,
+            7000000,7000000,8000000,7000000,7000000,4000000,7000000,5000000,6000000,7000000,
+            7000000,7000000,6000000,7000000,6000000,6000000,7000000,4000000,3000000,4000000});
     }
 
     /*!
@@ -445,6 +462,39 @@ public:
     {
         return false;
     }
+
+    /*!
+     * \brief Called by TimeManager whenever a solution for a
+     *        time step has been computed and the simulation time has
+     *        been updated.
+     *
+     * \param dt The current time-step size
+     */
+    Scalar nextTimeStepSize(const Scalar dt)
+    {
+        if(useFixedTimeSteps_)
+        {
+            Scalar dtEpisodeEnd = episodeLength_ - fmod(this->timeManager().time(), episodeLength_);
+            Scalar dtSuggested = timeStepSizes_[this->timeManager().timeStepIndex()];
+            return std::min(dtEpisodeEnd,dtSuggested);
+        }
+        else
+            return ParentType::nextTimeStepSize(dt);
+    }
+
+
+    bool shouldWriteOutput() const
+    {
+//        return this->timeManager().timeStepIndex() == 0 ||
+//               this->timeManager().episodeWillBeOver() ||
+//               this->timeManager().willBeFinished();
+        return true;
+    }
+
+//    void episodeEnd()
+//    {
+//        this->timeManager().startNextEpisode(episodeLength_);
+//    }
     // \}
 
     /*!
@@ -493,6 +543,8 @@ private:
     int injectionElement_;
     Scalar injectionRate_;
     Scalar episodeLength_;
+    std::vector<int> timeStepSizes_;
+    bool useFixedTimeSteps_;
 };
 } //end namespace
 

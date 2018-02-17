@@ -31,12 +31,12 @@ I2WellXCoord = 457452
 I2WellYCoord = 7322575
 I2DeviationX = 10
 I2DeviationY = 40
-
-EnableGravity = false
+UseFixedTimeSteps = true
 
 [LinearSolver]
 Verbosity = 0
 
 [Newton]
 UseLineSearch = 0
-MaxSteps = 100
+MaxSteps = 100 
+TargetSteps = 100
