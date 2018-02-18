@@ -162,7 +162,7 @@ int main(int argc, char** argv) try
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 
-    // the assembler with time loop for instationary problem
+    // use the staggered FV assembler
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
@@ -175,7 +175,7 @@ int main(int argc, char** argv) try
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // set up two planes over which fluxes are calculated
-    FluxOverPlane<TypeTag> flux(*assembler, x);
+    FluxOverPlane<TypeTag> flux(*problem, *gridVariables, x);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
