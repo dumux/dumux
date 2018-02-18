@@ -130,10 +130,10 @@ public:
 
         // for the coupling blocks
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& i)
+        forEach(integralRange(Dune::Hybrid::size(jacRow)), [&, domainId = domainId](auto&& i)
         {
             if (i != domainId)
-                assembleJacobianCoupling(i, jacRow, residual, gridVariables);
+                this->assembleJacobianCoupling(i, jacRow, residual, gridVariables);
         });
 
         this->asImp_().evalDirichletBoundaries(applyDirichlet);

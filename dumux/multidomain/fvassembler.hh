@@ -166,7 +166,7 @@ public:
         {
             auto& jacRow = (*jacobian_)[domainId];
             auto& subRes = (*residual_)[domainId];
-            assembleJacobianAndResidual_(domainId, jacRow, subRes, curSol);
+            this->assembleJacobianAndResidual_(domainId, jacRow, subRes, curSol);
         });
     }
 
@@ -189,7 +189,7 @@ public:
         forEach(integralRange(Dune::Hybrid::size(r)), [&](const auto domainId)
         {
             auto& subRes = r[domainId];
-            assembleResidual_(domainId, subRes, curSol);
+            this->assembleResidual_(domainId, subRes, curSol);
         });
     }
 
@@ -266,7 +266,7 @@ public:
         {
             forEach(integralRange(Dune::Hybrid::size(jac[domainI])), [&](const auto domainJ)
             {
-                const auto pattern = getJacobianPattern_(domainI, domainJ);
+                const auto pattern = this->getJacobianPattern_(domainI, domainJ);
                 pattern.exportIdx(jac[domainI][domainJ]);
             });
         });
@@ -279,21 +279,21 @@ public:
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(res)), [&](const auto domainId)
-        { res[domainId].resize(numDofs(domainId)); });
+        { res[domainId].resize(this->numDofs(domainId)); });
     }
 
     void updateGridVariables(const SolutionVector& curSol)
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(gridVariablesTuple_)), [&](const auto domainId)
-        { gridVariables(domainId).update(curSol[domainId]); });
+        { this->gridVariables(domainId).update(curSol[domainId]); });
     }
 
     void resetTimeStep(const SolutionVector& curSol)
     {
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(gridVariablesTuple_)), [&](const auto domainId)
-        { gridVariables(domainId).resetTimeStep(curSol[domainId]); });
+        { this->gridVariables(domainId).resetTimeStep(curSol[domainId]); });
     }
 
     template<std::size_t i>
