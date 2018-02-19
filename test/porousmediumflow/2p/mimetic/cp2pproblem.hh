@@ -381,6 +381,44 @@ public:
     {
         return false;
     }
+
+    /*!
+     * \brief Called by TimeManager whenever a solution for a
+     *        time step has been computed and the simulation time has
+     *        been updated.
+     *
+     * \param dt The current time-step size
+     */
+    Scalar nextTimeStepSize(const Scalar dt)
+    {
+        if(useFixedTimeSteps_)
+        {
+            Scalar dtEpisodeEnd = episodeLength_ - fmod(this->timeManager().time(), episodeLength_);
+            Scalar dtSuggested = timeStepSizes_[this->timeManager().timeStepIndex()];
+            return std::min(dtEpisodeEnd,dtSuggested);
+        }
+        else
+        {
+            Scalar dtSuggested =  ParentType::nextTimeStepSize(dt);
+            Scalar dtEpisodeEnd = episodeLength_ - fmod(this->timeManager().time(), episodeLength_);
+            return std::min(dtEpisodeEnd,dtSuggested);
+        }
+
+    }
+
+
+    bool shouldWriteOutput() const
+    {
+//        return this->timeManager().timeStepIndex() == 0 ||
+//               this->timeManager().episodeWillBeOver() ||
+//               this->timeManager().willBeFinished();
+        return true;
+    }
+
+//    void episodeEnd()
+//    {
+//        this->timeManager().startNextEpisode(episodeLength_);
+//    }
     // \}
 
     /*!
