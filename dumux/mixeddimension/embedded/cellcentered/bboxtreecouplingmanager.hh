@@ -116,7 +116,8 @@ public:
         curSol_ = curSol;
         problemTuple_ = std::make_tuple(bulkProblem, lowDimProblem);
 
-        computePointSourceData();
+        integrationOrder_ = getParam<int>("MixedDimension.IntegrationOrder", 1);
+        computePointSourceData(integrationOrder_);
         computeLowDimVolumeFractions();
     }
 
@@ -630,6 +631,9 @@ private:
     //! TODO: this is the simplest context -> just the solutionvector
     ////////////////////////////////////////////////////////////////////////////
     SolutionVector curSol_;
+
+    // integration order for coupling source
+    int integrationOrder_;
 };
 
 } // end namespace Dumux
