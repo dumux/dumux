@@ -27,7 +27,6 @@
 
 #include <dumux/common/elementmap.hh>
 #include <dumux/implicit/staggered/properties.hh>
-#include <dumux/common/intersectionmapper.hh>
 
 namespace Dumux
 {
@@ -53,6 +52,7 @@ class MimeticGlobalFVGeometry<TypeTag, true>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using Element = typename GridView::template Codim<0>::Entity;
+    using IntersectionMapper = typename GET_PROP_TYPE(TypeTag, IntersectionMapper);
     //! The local class needs access to the scv, scvfs and the fv element geometry
     //! as they are globally cached
     friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -63,8 +63,9 @@ class MimeticGlobalFVGeometry<TypeTag, true>
         dimWorld = GridView::dimensionworld
     };
 
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using GeometryHelper = typename GET_PROP_TYPE(TypeTag, StaggeredGeometryHelper);
-    using IntersectionMapper = typename Dumux::IntersectionMapper<GridView>;
 
 public:
     //! Constructor
@@ -83,16 +84,16 @@ public:
         return scvfs_.size();
     }
 
-    //! The total number of sub control volume faces
-    std::size_t numFaces() const
-    {
-        return intersectionMapper_.size();
-    }
-
     //! The total number of boundary sub control volume faces
     std::size_t numBoundaryScvf() const
     {
         return numBoundaryScvf_;
+    }
+
+    //! The total number of intersections
+    std::size_t numIntersections() const
+    {
+        return intersectionMapper_.numIntersections();
     }
 
     // Get an element from a sub control volume contained in it
@@ -135,12 +136,13 @@ public:
         // Build the scvs and scv faces
         IndexType scvfIdx = 0;
         numBoundaryScvf_ = 0;
+        bool calcNewCellCenter = false;
         for (const auto& element : elements(gridView_))
         {
             auto eIdx = problem.elementMapper().index(element);
 
             // reserve memory for the localToGlobalScvfIdx map
-            auto numLocalFaces = intersectionMapper_.numFaces(eIdx);
+            auto numLocalFaces = intersectionMapper_.numFaces(element);
             localToGlobalScvfIndices_[eIdx].resize(numLocalFaces);
 
             scvs_[eIdx] = SubControlVolume(element.geometry(), eIdx);
@@ -154,10 +156,11 @@ public:
 
             GeometryHelper geometryHelper(element, gridView_);
 
-            int localFIdx = 0;
             for (const auto& intersection : intersections(gridView_, element))
             {
-                geometryHelper.updateLocalFace(intersectionMapper_.subIndex(eIdx, localFIdx), localFIdx, intersection);
+                geometryHelper.updateLocalFace(intersectionMapper_, intersection);
+                const int localFaceIndex = geometryHelper.localFaceIndex();
+
                 // inner sub control volume faces
                 if (intersection.neighbor())
                 {
@@ -168,7 +171,13 @@ public:
                                         std::vector<IndexType>({eIdx, nIdx}),
                                         geometryHelper
                                         );
-                    localToGlobalScvfIndices_[eIdx][localFIdx] = scvfIdx;
+                    localToGlobalScvfIndices_[eIdx][localFaceIndex] = scvfIdx;
+
+                    auto di = scvfs_[scvfIdx].ipGlobal();
+                    di -= element.geometry().center();
+                    if(scvfs_[scvfIdx].unitOuterNormal()*di < 0)
+                        calcNewCellCenter = true;
+
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
                 // boundary sub control volume faces
@@ -180,14 +189,22 @@ public:
                                         std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++}),
                                         geometryHelper
                                         );
-                    localToGlobalScvfIndices_[eIdx][localFIdx] = scvfIdx;
+                    localToGlobalScvfIndices_[eIdx][localFaceIndex] = scvfIdx;
+
+                    auto di = scvfs_[scvfIdx].ipGlobal();
+                    di -= element.geometry().center();
+                    if(scvfs_[scvfIdx].unitOuterNormal()*di < 0)
+                        calcNewCellCenter = true;
+
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
-                localFIdx++;
             }
 
             // Save the scvf indices belonging to this scv to build up fv element geometries fast
             scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
+
+            //if(calcNewCellCenter)
+            //    findNewCellCenter(eIdx);
         }
     }
 
@@ -227,6 +244,85 @@ public:
     const SubControlVolumeFace& scvf(IndexType eIdx ,IndexType localScvfIdx) const
     {
         return scvf(localToGlobalScvfIndex(eIdx, localScvfIdx));
+    }
+
+    void findNewCellCenter(int eIdx)
+    {
+        GlobalPosition center(0);
+        int fIdxI = -1;
+        int fIdxJ = -1;
+        double distFuncVal = 1.0e100;
+        int numFaces = localToGlobalScvfIndices_[eIdx].size();
+
+        for(int i=0; i<numFaces; i++)
+        {
+            auto scvfIdx = localToGlobalScvfIndices_[eIdx][i];
+            const auto scfv = scvfs_[scvfIdx];
+            auto faceCenterI = scfv.ipGlobal();
+            for(int j=0; j<numFaces; j++)
+            {
+                auto scvfIdxJ = localToGlobalScvfIndices_[eIdx][j];
+                const auto scfvJ = scvfs_[scvfIdxJ];
+                GlobalPosition faceCenterJ = scfvJ.ipGlobal();
+                center = faceCenterI + faceCenterJ;
+                center /= 2.0;
+                if(checkValidility(center, eIdx))
+                {
+                    Scalar distVal = calculateInvDistFunction(center, eIdx);
+                    if(distVal < distFuncVal)
+                    {
+                        fIdxI = i;
+                        fIdxJ = j;
+                        distFuncVal = distVal;
+                    }
+                }
+            }
+
+        }
+
+        if(fIdxI == -1 && fIdxJ == -1 )
+            DUNE_THROW(Dune::InvalidStateException, "Cannot find new cell center!");
+        else
+        {
+            auto scvfIdx = localToGlobalScvfIndices_[eIdx][fIdxI];
+            const auto scfvI = scvfs_[scvfIdx];
+            auto scvfIdxJ = localToGlobalScvfIndices_[eIdx][fIdxJ];
+            const auto scfvJ = scvfs_[scvfIdxJ];
+            GlobalPosition faceCenterI = scfvI.ipGlobal();
+            GlobalPosition faceCenterJ = scfvJ.ipGlobal();
+            center = faceCenterI + faceCenterJ;
+            center /= 2.0;
+            std::cout << "Found new cell center: " << center << " Old center was: " << scvs_[eIdx].center() << std::endl;
+
+            scvs_[eIdx].setCellCenter(center);
+        }
+
+    }
+
+    bool checkValidility(GlobalPosition& Point, int eIdx)
+    {
+        for(int i=0; i<localToGlobalScvfIndices_[eIdx].size(); i++)
+        {
+            auto scvfIdx = localToGlobalScvfIndices_[eIdx][i];
+            const auto scfv = scvfs_[scvfIdx];
+            if(scfv.unitOuterNormal() * (scfv.ipGlobal()- Point) < 1.0e-8)
+                return false;
+        }
+
+        return true;
+    }
+
+    double calculateInvDistFunction(GlobalPosition& Point, int eIdx)
+    {
+        double distFuncVal = 0.0;
+        for(int i=0; i<localToGlobalScvfIndices_[eIdx].size(); i++)
+        {
+            auto scvfIdx = localToGlobalScvfIndices_[eIdx][i];
+            const auto scfv = scvfs_[scvfIdx];
+            Scalar val = scfv.unitOuterNormal() * (scfv.ipGlobal()- Point);
+            distFuncVal += 1.0/val*val;
+        }
+        return distFuncVal;
     }
 
 
@@ -275,12 +371,6 @@ public:
     std::size_t numScvf() const
     {
         return numScvf_;
-    }
-
-    //! The total number of sub control volume faces
-    std::size_t numFaces() const
-    {
-        return gridView_.size(1);
     }
 
     //! The total number of boundary sub control volume faces

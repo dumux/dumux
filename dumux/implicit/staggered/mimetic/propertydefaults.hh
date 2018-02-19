@@ -32,6 +32,8 @@
 
 #include <dumux/porousmediumflow/implicit/mimetic/fluxvariables.hh>
 #include <dumux/porousmediumflow/implicit/mimetic/velocityoutput.hh>
+#include <dumux/discretization/staggered/mimetic/subcontrolvolume.hh>
+#include <dumux/discretization/staggered/mimetic/globalfvgeometry.hh>
 
 #include <dumux/discretization/staggered/mimetic/globalfluxvariablescache.hh>
 #include <dumux/discretization/staggered/mimetic/mimeticgeometryhelper.hh>
@@ -48,6 +50,9 @@ SET_PROP(MimeticModel, DiscretizationMethod)
     static const DiscretizationMethods value = DiscretizationMethods::Mimetic;
 };
 
+//! Set the default for the global finite volume geometry
+SET_TYPE_PROP(MimeticModel, GlobalFVGeometry, MimeticGlobalFVGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
+
 //! The geometry helper required for the stencils, etc.
 SET_PROP(MimeticModel, StaggeredGeometryHelper)
 {
@@ -55,6 +60,17 @@ private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 public:
     using type = MimeticGeometryHelper<GridView>;
+};
+
+//! The sub control volume
+SET_PROP(MimeticModel, SubControlVolume)
+{
+private:
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using ScvGeometry = typename Grid::template Codim<0>::Geometry;
+    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+public:
+    typedef Dumux::MimeticSubControlVolume<ScvGeometry, IndexType> type;
 };
 
 //! The sub-controlvolume face

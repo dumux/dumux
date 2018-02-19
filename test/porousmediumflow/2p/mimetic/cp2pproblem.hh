@@ -479,7 +479,12 @@ public:
             return std::min(dtEpisodeEnd,dtSuggested);
         }
         else
-            return ParentType::nextTimeStepSize(dt);
+        {
+            Scalar dtSuggested =  ParentType::nextTimeStepSize(dt);
+            Scalar dtEpisodeEnd = episodeLength_ - fmod(this->timeManager().time(), episodeLength_);
+            return std::min(dtEpisodeEnd,dtSuggested);
+        }
+
     }
 
 
