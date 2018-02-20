@@ -102,7 +102,7 @@ public:
                                                            const ElementBoundaryTypes& bcTypes,
                                                            const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        CellCenterResidualValue residual = 0.0;
+        CellCenterResidualValue residual(0.0);
 
         // evaluate the source term
         for (auto&& scv : scvs(fvGeometry))
@@ -154,7 +154,7 @@ public:
                                                      const ElementVolumeVariables& curElemVolVars) const
     {
         assert(timeLoop_ && "no time loop set for storage term evaluation");
-        CellCenterResidualValue storage = 0.0;
+        CellCenterResidualValue storage(0.0);
 
         for (auto&& scv : scvs(fvGeometry))
             asImp().evalStorageForCellCenter(storage, problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, scv);
@@ -171,7 +171,7 @@ public:
                                   const ElementVolumeVariables& curElemVolVars,
                                   const SubControlVolume& scv) const
     {
-        CellCenterResidualValue storage = 0.0;
+        CellCenterResidualValue storage(0.0);
         const auto& curVolVars = curElemVolVars[scv];
         const auto& prevVolVars = prevElemVolVars[scv];
 
@@ -274,7 +274,7 @@ public:
                                                const ElementFluxVariablesCache& elemFluxVarsCache,
                                                const SubControlVolumeFace& scvf) const
     {
-        FaceResidualValue residual = 0.0;
+        FaceResidualValue residual(0.0);
         asImp().evalSourceForFace(residual, this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, scvf);
         asImp().evalFluxForFace(residual, this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache, scvf);
 
@@ -324,7 +324,8 @@ public:
                                          const ElementFaceVariables& curElemFaceVars,
                                          const SubControlVolumeFace& scvf) const
     {
-        FaceResidualValue storage = 0.0;
+        assert(timeLoop_ && "no time loop set for storage term evaluation");
+        FaceResidualValue storage(0.0);
         asImp().evalStorageForFace(storage, problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, scvf);
         return storage;
     }
@@ -340,7 +341,7 @@ public:
                             const ElementFaceVariables& curElemFaceVars,
                             const SubControlVolumeFace& scvf) const
     {
-        FaceResidualValue storage = 0.0;
+        FaceResidualValue storage(0.0);
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
         auto prevFaceStorage = asImp_().computeStorageForFace(problem, scvf, prevElemVolVars[scv], prevElemFaceVars);
         auto curFaceStorage = asImp_().computeStorageForFace(problem, scvf, curElemVolVars[scv], curElemFaceVars);
