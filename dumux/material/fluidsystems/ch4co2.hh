@@ -29,8 +29,7 @@
 #include <dumux/material/idealgas.hh>
 
 #include <dumux/material/components/ch4.hh>
-#include <dumux/material/components/co2.hh>
-#include <dumux/material/components/co2tablereader.hh>
+#include <dumux/material/components/simpleco2.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 #include <dumux/material/binarycoefficients/ch4_co2.hh>
 
@@ -46,7 +45,6 @@
 
 namespace Dumux
 {
-#include <dumux/material/components/co2tables.inc>
 namespace FluidSystems
 {
 
@@ -62,17 +60,17 @@ namespace FluidSystems
  * An adapter class using FluidSystem<TypeTag> is also provided
  * at the end of this file.
  */
-template <class TypeTag, class Scalar, class CO2Tables, bool useComplexRelations = true>
+template <class TypeTag, class Scalar, bool useComplexRelations = true>
 class CH4CO2
-    : public BaseFluidSystem<Scalar, CH4CO2<TypeTag, Scalar, CO2Tables, useComplexRelations> >
+    : public BaseFluidSystem<Scalar, CH4CO2<TypeTag, Scalar, useComplexRelations> >
 {
-    typedef CH4CO2<TypeTag, Scalar, CO2Tables, useComplexRelations> ThisType;
+    typedef CH4CO2<TypeTag, Scalar,useComplexRelations> ThisType;
     typedef BaseFluidSystem<Scalar, ThisType> Base;
 
     // convenience typedefs
     typedef Dumux::IdealGas<Scalar> IdealGas;
     typedef Dumux::CH4<Scalar> CH4;
-    typedef Dumux::CO2<Scalar, CO2Tables> CO2;
+    typedef Dumux::SimpleCO2<Scalar> CO2;
 public:
     /****************************************
      * Fluid phase related static parameters

@@ -27,7 +27,7 @@
 #include "henryiapws.hh"
 #include "fullermethod.hh"
 
-#include <dumux/material/components/co2.hh>
+#include <dumux/material/components/simpleco2.hh>
 #include <dumux/material/components/ch4.hh>
 
 namespace Dumux

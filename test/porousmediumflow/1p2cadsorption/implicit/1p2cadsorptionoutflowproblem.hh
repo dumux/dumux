@@ -64,9 +64,8 @@ SET_TYPE_PROP(OnePTwoCAdsorptionOutflowProblem, Problem, OnePTwoCAdsorptionOutfl
 SET_PROP(OnePTwoCAdsorptionOutflowProblem, FluidSystem)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dumux::CO2Tables CO2Tables;
     static const bool useComplexRelations = false;
-    typedef Dumux::FluidSystems::CH4CO2<TypeTag, Scalar, CO2Tables, useComplexRelations> type;
+    typedef Dumux::FluidSystems::CH4CO2<TypeTag, Scalar, useComplexRelations> type;
 };
 
 // Set the spatial parameters
@@ -120,6 +119,7 @@ class OnePTwoCAdsorptionOutflowProblem : public ImplicitPorousMediaProblem<TypeT
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -131,6 +131,8 @@ class OnePTwoCAdsorptionOutflowProblem : public ImplicitPorousMediaProblem<TypeT
         numComponents   = FluidSystem::numComponents,
         CH4Idx          = FluidSystem::CH4Idx,
         TCIdx           = FluidSystem::CO2Idx,
+        //write files
+        outputFile = 2,
     };
     enum {
         // indices of the primary variables
@@ -341,6 +343,133 @@ public:
     }
 
     /*!
+     * \brief Calculate the fluxes across a certain layer in the domain.
+     * The layer is situated perpendicular to the coordinate axis "coord" and cuts
+     * the axis at the value "coordVal".
+     *
+     * \param globalSol The global solution vector
+     * \param flux A vector to store the flux
+     * \param axis The dimension, perpendicular to which the layer is situated
+     * \param coordVal The (Scalar) coordinate on the axis, at which the layer is situated
+     */
+    void calculateFluxAcrossLayer(const SolutionVector &globalSol, Dune::FieldVector<Scalar, dimWorld> &flux, int axis, Scalar coordVal)
+    {
+        FVElementGeometry fvGeometry;
+        ElementVolumeVariables elemVolVars;
+
+        // Loop over elements
+        for (const auto& element : elements(this->model().gridView(), Dune::Partitions::interior))
+        {
+            fvGeometry.update(this->model().gridView(), element);
+            elemVolVars.update(*this, element, fvGeometry, false);
+            this->model().localResidual().evalFluxes(element, elemVolVars);
+
+            bool hasLeft = false;
+            bool hasRight = false;
+            for (int i = 0; i < fvGeometry.numScv; i++) {
+                const GlobalPosition &globalPos = fvGeometry.subContVol[i].global;
+                if (globalPos[axis] < coordVal)
+                    hasLeft = true;
+                else if (globalPos[axis] >= coordVal)
+                    hasRight = true;
+            }
+            if (!hasLeft || !hasRight)
+                continue;
+
+            for (int i = 0; i < fvGeometry.numScv; i++) {
+                const GlobalPosition &globalPos = fvGeometry.subContVol[i].global;
+                if (globalPos[axis] < coordVal)
+                    flux[CH4Idx] += this->model().localResidual().residual(i)[1]*elemVolVars[i].moleFraction(CH4Idx);
+                    flux[TCIdx] += this->model().localResidual().residual(i)[1]*elemVolVars[i].moleFraction(TCIdx);
+            }
+        }
+        flux = this->model().gridView().comm().sum(flux);
+        storeFluxAcrossCH4_ = flux[CH4Idx];
+        storeFluxAcrossTC_  = flux[TCIdx];
+    }
+
+   /*!
+    * Write a data file for iTough2 with the simulated pressures at the top of the domain
+    * The options are:
+    * instructionFile - write the instruction file for the itough2 problem
+    * inputFile - observation values (true values) to be copied in the itough2 input file
+    * outputFile - write the output file containing the values to be minimized
+    * \param fileType give the type of file you want to set
+    */
+    void writeDataFile(int fileType)
+    {
+             if(fileType == outputFile)
+             //output file
+             {
+                 std::string filename(name_);
+                 std::string id("_time");
+                 //create new output file for CH4
+                 std::string filename2(name_);
+                 const std::string id2("_CH4mol");
+                 //create new output file for CO2
+                 std::string filename3(name_);
+                 const std::string id3("_TCmol");
+
+                 Scalar time = this->timeManager().time();
+                  if (time == 0)
+                 {
+                     //create new output file for time
+                     std::cout<<"Writing NEW output files."<<std::endl;
+                     filename += id;
+                     std::string suffix(".out");
+                     filename += suffix;
+                     std::ofstream data(filename.c_str());
+                     filename2 += id2;
+                     filename2 += suffix;
+                     std::ofstream data2(filename2.c_str());
+                     //create new output file for non-wetting phase molar mass
+                     filename3 += id3;
+                     filename3 += suffix;
+                     std::ofstream data3(filename3.c_str());
+                 }
+                 else
+                 {
+                     //fill output file for time
+                     std::cout<<"Writing output files."<<std::endl;
+                     filename += id;
+                     std::string suffix(".out");
+                     filename += suffix;
+                     std::ofstream data(filename.c_str(), std::ofstream::app);
+                     filename2 += id2;
+                     filename2 += suffix;
+                     std::ofstream data2(filename2.c_str(),std::ofstream::app);
+                     filename3 += id3;
+                     filename3 += suffix;
+                     std::ofstream data3(filename3.c_str(),std::ofstream::app);
+
+                     SolutionVector globalSol;      // get globalSolution vector
+                     PrimaryVariables flux(0.0);    // get/define PrimaryVariables and store in a vector, initialize to zero
+                     int axis = 1;                  // define axis prependicular to intersection/layer: x-axis:0 y-axis:1
+                     Scalar coordVal = 0.2;       // set value where you want the intersection on the previously defined axis
+                     calculateFluxAcrossLayer(globalSol, flux, axis, coordVal); // call function in the model, with the parameters set above
+                     data << time << "\n";
+                     data2 << storeFluxAcrossCH4_ << "\n";
+                     data3 << storeFluxAcrossTC_ << "\n";
+                     data.close();
+                     data2.close();
+                     data3.close();
+                     std::cout<<"Closed output files."<<std::endl;
+                 }
+
+             }
+             else
+             {
+                 std::cout<<"==============================================NO Output file!==================================================="<<std::endl;
+             }
+         }
+
+    void postTimeStep()
+    {
+        ParentType::postTimeStep();
+        writeDataFile(outputFile);
+    }
+
+    /*!
      * \brief Returns the V constant for ad- and desorption for each component in \f$\mathrm{[mol/m^3]}\f$.
      *
      * \param compIdx The component index
@@ -431,6 +560,9 @@ private:
     Scalar cBET_;
     Scalar qsatBET_;
     Scalar csatBET_;
+
+    Scalar storeFluxAcrossCH4_;
+    Scalar storeFluxAcrossTC_;
 };
 
 } //end namespace
