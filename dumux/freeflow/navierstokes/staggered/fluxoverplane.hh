@@ -152,12 +152,13 @@ public:
      * \param assembler The assembler
      * \param sol The solution vector
      */
-    template<class Assembler>
-    FluxOverPlane(const Assembler& assembler,
+    FluxOverPlane(const Problem& problem,
+                  const GridVariables& gridVariables,
                   const SolutionVector& sol)
-    : problem_(assembler.problem())
-    , gridVariables_(assembler.gridVariables())
+    : problem_(problem)
+    , gridVariables_(gridVariables)
     , sol_(sol)
+    , localResidual_(LocalResidual(&problem_))
     {
         verbose_  = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "FluxOverPlane.Verbose", false);
     }
@@ -298,7 +299,6 @@ public:
         // make sure not to iterate over the same dofs twice
         std::vector<bool> dofVisited(problem_.fvGridGeometry().numFaceDofs(), false);
 
-        LocalResidual localResidual;
         auto elemVolVars = localView(gridVariables_.curGridVolVars());
         auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
         auto elemFaceVars = localView(gridVariables_.curGridFaceVars());
