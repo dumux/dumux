@@ -446,12 +446,11 @@ public:
     /*!
      * \brief called by the assembler after successful assembly
      */
-    void finalizeAssembly(const FVGridGeometry& fvGridGeometry, std::ostream& outStream)
+    template <class Communication>
+    void report(const Communication& comm, std::ostream& outStream)
     {
-        const auto& gridView = fvGridGeometry.gridView();
-
-        if (gridView.comm().size() > 1)
-            greenElems_ = gridView.comm().sum(greenElems_);
+        if (comm.size() > 1)
+            greenElems_ = comm.sum(greenElems_);
 
         auto reassembledElems = totalElems_ - greenElems_;
         auto width = std::to_string(totalElems_).size();

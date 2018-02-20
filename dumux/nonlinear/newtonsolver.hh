@@ -393,8 +393,7 @@ public:
         assembleLinearSystem_(uCurrentIter);
 
         if (enablePartialReassembly_)
-            partialReassembler_->finalizeAssembly(assembler_->fvGridGeometry(),
-                                                  endIterMsgStream_);
+            partialReassembler_->report(comm_, endIterMsgStream_);
     }
 
     /*!
