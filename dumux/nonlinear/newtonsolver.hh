@@ -41,8 +41,10 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/typetraits/vector.hh>
+#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
+#include <dumux/assembly/partialreassembler.hh>
 
 #include "newtonconvergencewriter.hh"
 
@@ -65,7 +67,15 @@ class NewtonSolver
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using SolutionVector = typename Assembler::ResidualType;
     using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
+    using Reassembler = PartialReassembler<Assembler>;
 
+    // TODO: Require Reassembler argument from the standard interface
+    static constexpr auto supportsPartialReassembly =
+                                Dumux::isValid([](auto&& a) -> decltype(
+                                    a.assembleJacobianAndResidual(std::declval<Assembler>(),
+                                                                  std::declval<const SolutionVector&>(),
+                                                                  std::declval<const Reassembler*>())
+                                ){});
 public:
 
     using Communication = Comm;
@@ -91,6 +101,13 @@ public:
         // set a different default for the linear solver residual reduction
         // within the Newton the linear solver doesn't need to solve too exact
         linearSolver_->setResidualReduction(getParamFromGroup<Scalar>(paramGroup, "LinearSolver.ResidualReduction", 1e-6));
+
+        // initialize the partial reassembler
+        if (enablePartialReassembly_)
+        {
+            partialReassembler_ = std::make_unique<Reassembler>(assembler_->fvGridGeometry());
+            distanceFromLastLinearization_.resize(assembler_->fvGridGeometry().numDofs(), 0);
+        }
     }
 
     /*!
@@ -116,6 +133,13 @@ public:
         // set a different default for the linear solver residual reduction
         // within the Newton the linear solver doesn't need to solve too exact
         linearSolver_->setResidualReduction(getParamFromGroup<Scalar>(paramGroup, "LinearSolver.ResidualReduction", 1e-6));
+
+        // initialize the partial reassembler
+        if (enablePartialReassembly_)
+        {
+            partialReassembler_ = std::make_unique<Reassembler>(assembler_->fvGridGeometry());
+            distanceFromLastLinearization_.resize(assembler_->fvGridGeometry().numDofs(), 0);
+        }
     }
 
     //! the communicator for parallel runs
@@ -188,6 +212,12 @@ public:
             Dune::Timer solveTimer(false);
             Dune::Timer updateTimer(false);
 
+            if (enablePartialReassembly_)
+            {
+                partialReassembler_->resetColors();
+                std::fill(distanceFromLastLinearization_.begin(),
+                          distanceFromLastLinearization_.end(), 0.0);
+            }
             newtonBegin(uCurrentIter);
 
             // execute the method as long as the controller thinks
@@ -360,7 +390,10 @@ public:
      */
     virtual void assembleLinearSystem(const SolutionVector& uCurrentIter)
     {
-        assembler_->assembleJacobianAndResidual(uCurrentIter);
+        assembleLinearSystem_(uCurrentIter);
+
+        if (enablePartialReassembly_)
+            partialReassembler_->report(comm_, endIterMsgStream_);
     }
 
     /*!
@@ -445,8 +478,43 @@ public:
                       const SolutionVector &uLastIter,
                       const SolutionVector &deltaU)
     {
-        if (enableShiftCriterion_)
+        if (enableShiftCriterion_ || enablePartialReassembly_)
             newtonUpdateShift_(uLastIter, deltaU);
+
+        if (enablePartialReassembly_) {
+            // Determine the threshold 'eps' that is used for the partial reassembly.
+            // Every entity where the primary variables exhibit a relative shift
+            // summed up since the last linearization above 'eps' will be colored
+            // red yielding a reassembly.
+            // The user can provide three parameters to influence the threshold:
+            // 'minEps' by 'Newton.ReassemblyMinThreshold' (1e-1*shiftTolerance_ default)
+            // 'maxEps' by 'Newton.ReassemblyMaxThreshold' (1e2*shiftTolerance_ default)
+            // 'omega'  by 'Newton.ReassemblyShiftWeight'  (1e-3 default)
+            // The threshold is calculated from the currently achieved maximum
+            // relative shift according to the formula
+            // eps = max( minEps, min(maxEps, omega*shift) ).
+            // Increasing/decreasing 'minEps' leads to less/more reassembly if
+            // 'omega*shift' is small, i.e., for the last Newton iterations.
+            // Increasing/decreasing 'maxEps' leads to less/more reassembly if
+            // 'omega*shift' is large, i.e., for the first Newton iterations.
+            // Increasing/decreasing 'omega' leads to more/less first and last
+            // iterations in this sense.
+            using std::max;
+            using std::min;
+            auto reassemblyThreshold = max(reassemblyMinThreshold_,
+                                           min(reassemblyMaxThreshold_,
+                                               shift_*reassemblyShiftWeight_));
+
+            updateDistanceFromLastLinearization_(uLastIter, deltaU);
+            partialReassembler_->computeColors(reassemblyThreshold,
+                                               assembler_->fvGridGeometry(),
+                                               distanceFromLastLinearization_);
+
+            // set the discrepancy of the red entities to zero
+            for (unsigned int i = 0; i < distanceFromLastLinearization_.size(); i++)
+                if (partialReassembler_->dofColor(i) == EntityColor::red)
+                    distanceFromLastLinearization_[i] = 0;
+        }
 
         if (useLineSearch_)
             lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
@@ -679,6 +747,22 @@ protected:
 
 
 private:
+
+    //! assembleLinearSystem_ for assemblers that support partial reassembly
+    template<class A = Assembler>
+    auto assembleLinearSystem_(const SolutionVector& uCurrentIter)
+    -> typename std::enable_if_t<decltype(supportsPartialReassembly(std::declval<A>()))::value, void>
+    {
+        assembler_->assembleJacobianAndResidual(uCurrentIter, partialReassembler_.get());
+    }
+
+    //! assembleLinearSystem_ for assemblers that don't support partial reassembly
+    template<class A = Assembler>
+    auto assembleLinearSystem_(const SolutionVector& uCurrentIter)
+    -> typename std::enable_if_t<!decltype(supportsPartialReassembly(std::declval<A>()))::value, void>
+    {
+        assembler_->assembleJacobianAndResidual(uCurrentIter);
+    }
 
     /*!
      * \brief Update the maximum relative shift of the solution compared to
@@ -928,8 +1012,35 @@ private:
         setTargetSteps(getParamFromGroup<int>(group, "Newton.TargetSteps"));
         setMaxSteps(getParamFromGroup<int>(group, "Newton.MaxSteps"));
 
+        enablePartialReassembly_ = getParamFromGroup<bool>(group, "Newton.EnablePartialReassembly");
+        reassemblyMinThreshold_ = getParamFromGroup<Scalar>(group, "Newton.ReassemblyMinThreshold", 1e-1*shiftTolerance_);
+        reassemblyMaxThreshold_ = getParamFromGroup<Scalar>(group, "Newton.ReassemblyMaxThreshold", 1e2*shiftTolerance_);
+        reassemblyShiftWeight_ = getParamFromGroup<Scalar>(group, "Newton.ReassemblyShiftWeight", 1e-3);
+
         verbose_ = comm_.rank() == 0;
         numSteps_ = 0;
+    }
+
+    template<class SolVec>
+    void updateDistanceFromLastLinearization_(const SolVec &u,
+                                              const SolVec &uDelta)
+    {
+        for (size_t i = 0; i < u.size(); ++i) {
+            const auto& currentPriVars(u[i]);
+            auto nextPriVars(currentPriVars);
+            nextPriVars -= uDelta[i];
+
+            // add the current relative shift for this degree of freedom
+            auto shift = relativeShiftAtDof_(currentPriVars, nextPriVars);
+            distanceFromLastLinearization_[i] += shift;
+        }
+    }
+
+    template<class ...Args>
+    void updateDistanceFromLastLinearization_(const Dune::MultiTypeBlockVector<Args...> &uLastIter,
+                                              const Dune::MultiTypeBlockVector<Args...> &deltaU)
+    {
+        //! \todo implement the function for MultiTypeBlockVectors
     }
 
     /*!
@@ -941,7 +1052,7 @@ private:
      */
     template<class PrimaryVariables>
     Scalar relativeShiftAtDof_(const PrimaryVariables &priVars1,
-                               const PrimaryVariables &priVars2)
+                               const PrimaryVariables &priVars2) const
     {
         Scalar result = 0.0;
         using std::abs;
@@ -973,7 +1084,6 @@ private:
     Scalar residualTolerance_;
 
     // further parameters
-    bool enablePartialReassemble_;
     bool useLineSearch_;
     bool useChop_;
     bool enableAbsoluteResidualCriterion_;
@@ -984,6 +1094,13 @@ private:
     //! the parameter group for getting parameters from the parameter tree
     std::string paramGroup_;
 
+    // infrastructure for partial reassembly
+    bool enablePartialReassembly_;
+    std::unique_ptr<Reassembler> partialReassembler_;
+    std::vector<Scalar> distanceFromLastLinearization_;
+    Scalar reassemblyMinThreshold_;
+    Scalar reassemblyMaxThreshold_;
+    Scalar reassemblyShiftWeight_;
 };
 
 } // end namespace Dumux

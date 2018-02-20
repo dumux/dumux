@@ -352,7 +352,6 @@ private:
     {
         // parameters in the implicit group
         params["Implicit.UpwindWeight"] = "1.0";
-        params["Implicit.EnablePartialReassemble"] = "false";
         params["Implicit.EnableJacobianRecycling"] = "false";
 
         // parameters in the assembly group
@@ -369,7 +368,7 @@ private:
         // parameters in the problem group
         params["Problem.EnableGravity"] = "true";
 
-        // parameters in the newton group
+        // parameters in the Newton group
         params["Newton.MaxSteps"] = "18";
         params["Newton.TargetSteps"] = "10";
         params["Newton.UseLineSearch"] = "false";
@@ -381,6 +380,7 @@ private:
         params["Newton.EnableAbsoluteResidualCriterion"] = "false";
         params["Newton.MaxAbsoluteResidual"] = "1e-5";
         params["Newton.SatisfyResidualAndShiftCriterion"] = "false";
+        params["Newton.EnablePartialReassembly"] = "false";
 
         // parameters in the time loop group
         params["TimeLoop.MaxTimeStepSize"] = "1e300";

@@ -5,10 +5,12 @@ boxlocalresidual.hh
 cclocalassembler.hh
 cclocalresidual.hh
 diffmethod.hh
+entitycolor.hh
 fvassembler.hh
 fvlocalassemblerbase.hh
 fvlocalresidual.hh
 jacobianpattern.hh
+partialreassembler.hh
 staggeredfvassembler.hh
 staggeredlocalassembler.hh
 staggeredlocalresidual.hh

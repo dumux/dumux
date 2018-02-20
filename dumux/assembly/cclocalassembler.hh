@@ -36,6 +36,8 @@
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/fvlocalassemblerbase.hh>
+#include <dumux/assembly/entitycolor.hh>
+#include <dumux/assembly/partialreassembler.hh>
 #include <dumux/discretization/fluxstencil.hh>
 
 namespace Dumux {
@@ -47,7 +49,7 @@ namespace Dumux {
  * \tparam TypeTag The TypeTag
  * \tparam Assembler The assembler type
  * \tparam Implementation The actual implementation
- * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
+ * \tparam implicit Specifies whether the time discretization is implicit or not (i.e. explicit)
  */
 template<class TypeTag, class Assembler, class Implementation, bool implicit>
 class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
@@ -68,11 +70,21 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    void assembleJacobianAndResidual(JacobianMatrix& jac, SolutionVector& res, GridVariables& gridVariables)
+    template <class PartialReassembler = DefaultPartialReassembler>
+    void assembleJacobianAndResidual(JacobianMatrix& jac, SolutionVector& res, GridVariables& gridVariables,
+                                     const PartialReassembler* partialReassembler)
     {
         this->asImp_().bindLocalViews();
         const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(this->element());
-        res[globalI] = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
+        if (partialReassembler
+            && partialReassembler->elementColor(globalI) == EntityColor::green)
+        {
+            res[globalI] = this->asImp_().evalLocalResidual()[0]; // forward to the internal implementation
+        }
+        else
+        {
+            res[globalI] = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
+        }
     }
 
     /*!

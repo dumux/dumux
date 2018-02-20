@@ -34,6 +34,8 @@
 #include <dumux/assembly/numericepsilon.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/fvlocalassemblerbase.hh>
+#include <dumux/assembly/partialreassembler.hh>
+#include <dumux/assembly/entitycolor.hh>
 
 namespace Dumux {
 
@@ -72,14 +74,25 @@ public:
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    void assembleJacobianAndResidual(JacobianMatrix& jac, SolutionVector& res, GridVariables& gridVariables)
+    template <class PartialReassembler = DefaultPartialReassembler>
+    void assembleJacobianAndResidual(JacobianMatrix& jac, SolutionVector& res, GridVariables& gridVariables,
+                                     const PartialReassembler* partialReassembler = nullptr)
     {
         this->asImp_().bindLocalViews();
-
-        const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables);
-
-        for (const auto& scv : scvs(this->fvGeometry()))
-            res[scv.dofIndex()] += residual[scv.indexInElement()];
+        const auto eIdxGlobal = this->assembler().fvGridGeometry().elementMapper().index(this->element());
+        if (partialReassembler
+            && partialReassembler->elementColor(eIdxGlobal) == EntityColor::green)
+        {
+            const auto residual = this->asImp_().evalLocalResidual(); // forward to the internal implementation
+            for (const auto& scv : scvs(this->fvGeometry()))
+                res[scv.dofIndex()] += residual[scv.indexInElement()];
+        }
+        else
+        {
+            const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
+            for (const auto& scv : scvs(this->fvGeometry()))
+                res[scv.dofIndex()] += residual[scv.indexInElement()];
+        }
 
         auto applyDirichlet = [&] (const auto& scvI,
                                    const auto& dirichletValues,
@@ -225,7 +238,9 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    template <class PartialReassembler = DefaultPartialReassembler>
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables,
+                                                          const PartialReassembler* partialReassembler = nullptr)
     {
         // get some aliases for convenience
         const auto& element = this->element();
@@ -233,7 +248,7 @@ public:
         const auto& curSol = this->curSol();
         auto&& curElemVolVars = this->curElemVolVars();
 
-        // get the vecor of the acutal element residuals
+        // get the vector of the actual element residuals
         const auto origResiduals = this->evalLocalResidual();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -280,14 +295,19 @@ public:
                 // update the global stiffness matrix with the current partial derivatives
                 for (auto&& scvJ : scvs(fvGeometry))
                 {
-                      for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                      {
-                          // A[i][col][eqIdx][pvIdx] is the rate of change of
-                          // the residual of equation 'eqIdx' at dof 'i'
-                          // depending on the primary variable 'pvIdx' at dof
-                          // 'col'.
-                          A[scvJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
-                      }
+                    // don't add derivatives for green vertices
+                    if (!partialReassembler
+                        || partialReassembler->vertexColor(scvJ.dofIndex()) != EntityColor::green)
+                    {
+                        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                        {
+                            // A[i][col][eqIdx][pvIdx] is the rate of change of
+                            // the residual of equation 'eqIdx' at dof 'i'
+                            // depending on the primary variable 'pvIdx' at dof
+                            // 'col'.
+                            A[scvJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
+                        }
+                    }
                 }
 
                 // restore the original state of the scv's volume variables
@@ -336,8 +356,13 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    template <class PartialReassembler = DefaultPartialReassembler>
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables,
+                                                          const PartialReassembler* partialReassembler = nullptr)
     {
+        if (partialReassembler)
+            DUNE_THROW(Dune::NotImplemented, "partial reassembly for explicit time discretization");
+
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
@@ -437,8 +462,13 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    template <class PartialReassembler = DefaultPartialReassembler>
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables,
+                                                          const PartialReassembler* partialReassembler = nullptr)
     {
+        if (partialReassembler)
+            DUNE_THROW(Dune::NotImplemented, "partial reassembly for analytic differentiation");
+
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
@@ -551,8 +581,13 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    template <class PartialReassembler = DefaultPartialReassembler>
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables,
+                                                          const PartialReassembler* partialReassembler = nullptr)
     {
+        if (partialReassembler)
+            DUNE_THROW(Dune::NotImplemented, "partial reassembly for explicit time discretization");
+
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
