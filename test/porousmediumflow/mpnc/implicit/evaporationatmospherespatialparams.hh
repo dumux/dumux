@@ -537,7 +537,7 @@ public:
     { return heightPM_; }
 
 private:
-    static constexpr Scalar eps_  = 1e-6;;
+    static constexpr Scalar eps_  = 1e-6;
     Scalar heightDomain_ ;
 
     AwnSurfaceParams    aWettingNonWettingSurfaceParams_;

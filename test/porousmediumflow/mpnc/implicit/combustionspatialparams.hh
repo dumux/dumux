@@ -100,7 +100,7 @@ public:
         // this is the parameter value from file part
         porosity_ = getParam<Scalar>("SpatialParams.PorousMedium.porosity");
         intrinsicPermeabilityOutFlow_ = getParam<Scalar>("SpatialParams.Outflow.permeabilityOutFlow");
-        porosityOutFlow_                = getParam<Scalar>("SpatialParams.Outflow.porosityOutFlow");;
+        porosityOutFlow_                = getParam<Scalar>("SpatialParams.Outflow.porosityOutFlow");
         solidThermalConductivityOutflow_ =getParam<Scalar>("SpatialParams.Outflow.soilThermalConductivityOutFlow");
         solidDensity_   = getParam<Scalar>("SpatialParams.soil.density");
         solidThermalConductivity_ = getParam<Scalar>("SpatialParams.soil.thermalConductivity");
@@ -304,7 +304,7 @@ public:
     }
 
 private:
-    static constexpr Scalar eps_ = 1e-6;;
+    static constexpr Scalar eps_ = 1e-6;
 
     // Porous Medium Domain
     Scalar intrinsicPermeability_ ;

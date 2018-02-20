@@ -178,7 +178,7 @@ public:
         switch (phaseIdx) {
         case wPhaseIdx: return "w";
         case nPhaseIdx: return "n";
-        case gPhaseIdx: return "g";;
+        case gPhaseIdx: return "g";
         };
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

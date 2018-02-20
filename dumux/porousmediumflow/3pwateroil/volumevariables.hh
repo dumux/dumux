@@ -350,7 +350,7 @@ public:
                 // water and NAPL are present, phase compositions are a
                 // mole fractions of non-existing gas phase are used as switching criteria
                 Scalar partPressH2O = FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx);
-                Scalar partPressNAPL =  FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);;
+                Scalar partPressNAPL =  FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
                 Scalar xgn = partPressNAPL/pg_;
                 Scalar xgw = partPressH2O/pg_;
@@ -601,7 +601,7 @@ public:
             else if (phasePresence == wnPhaseOnly) {
                 // mole fractions of non-existing gas phase are used as switching criteria
                 Scalar partPressH2O = FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx);
-                Scalar partPressNAPL =  FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);;
+                Scalar partPressNAPL =  FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
                 Scalar xgn = partPressNAPL/pg_;
                 Scalar xgw = partPressH2O/pg_;

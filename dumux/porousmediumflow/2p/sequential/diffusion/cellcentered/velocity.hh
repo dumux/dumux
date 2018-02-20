@@ -135,7 +135,7 @@ public:
         viscosity_[wPhaseIdx] = 0.;
         viscosity_[nPhaseIdx] = 0.;
 
-        vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");;
+        vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");
     }
 
     // For initialization

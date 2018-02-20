@@ -41,7 +41,7 @@ namespace Dumux
 template <class Scalar>
 class Xylene : public Component<Scalar, Xylene<Scalar> >
 {
-    using Consts = Constants<Scalar>;;
+    using Consts = Constants<Scalar>;
 
 public:
     /*!
