@@ -38,8 +38,11 @@
 #include "iapws/region2.hh"
 #include "iapws/region4.hh"
 
-namespace Dumux
-{
+#include <dune/common/deprecated.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief Material properties of pure water \f$H_2O\f$.
@@ -888,6 +891,12 @@ private:
             Rs * temperature / pressure;
     }
 }; // end class
-} // end namespace
+
+} // end namespace Components
+
+template<class Scalar>
+using H2O DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::H2O<Scalar>;
+
+} // end namespace Dumux
 
 #endif

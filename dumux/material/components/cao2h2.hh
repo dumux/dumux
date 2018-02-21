@@ -31,8 +31,11 @@
 #include <cmath>
 #include <iostream>
 
-namespace Dumux
-{
+#include <dune/common/deprecated.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A class for the CaO2H2 properties
@@ -74,6 +77,11 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+template<class Scalar>
+using CaO2H2 DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::CaO2H2<Scalar>;
+
+} // end namespace Dumux
 
 #endif

@@ -29,8 +29,11 @@
 #include <dumux/material/components/component.hh>
 #include <dumux/material/constants.hh>
 
-namespace Dumux
-{
+#include <dune/common/deprecated.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief Properties of the component heavyoil
@@ -484,6 +487,11 @@ protected:
 
 };
 
-} // end namespace
+} // end namespace Components
+
+template<class Scalar>
+using HeavyOil DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::HeavyOil<Scalar>;
+
+} // end namespace Dumux
 
 #endif

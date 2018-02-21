@@ -29,8 +29,11 @@
 #include <dumux/material/components/component.hh>
 #include <dumux/material/constants.hh>
 
-namespace Dumux
-{
+#include <dune/common/deprecated.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief mesitylene
@@ -368,6 +371,11 @@ protected:
 
 };
 
-} // end namespace
+} // end namespace Components
+
+template<class Scalar>
+using Mesitylene DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::Mesitylene<Scalar>;
+
+} // end namespace Dumux
 
 #endif

@@ -27,9 +27,11 @@
 #include <dumux/material/idealgas.hh>
 #include "component.hh"
 
+#include <dune/common/deprecated.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A simple benzene component (LNAPL).
@@ -170,6 +172,11 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+template<class Scalar>
+using Benzene DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::Benzene<Scalar>;
+
+} // end namespace Dumux
 
 #endif

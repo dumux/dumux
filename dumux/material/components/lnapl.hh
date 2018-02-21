@@ -27,8 +27,11 @@
 
 #include "component.hh"
 
-namespace Dumux
-{
+#include <dune/common/deprecated.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A simple implementation of a LNAPL, e.g. a kind of oil
@@ -76,6 +79,11 @@ public:
 
 };
 
-} // end namespace
+} // end namespace Components
+
+template<class Scalar>
+using LNAPL DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::LNAPL<Scalar>;
+
+} // end namespace Dumux
 
 #endif

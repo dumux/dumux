@@ -30,8 +30,10 @@
 
 #include <cmath>
 
-namespace Dumux
-{
+#include <dune/common/deprecated.hh>
+
+namespace Dumux {
+namespace Components {
 
 /*!
  * \ingroup Components
@@ -247,6 +249,11 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+template<class Scalar>
+using O2 DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::O2<Scalar>;
+
+} // end namespace Dumux
 
 #endif

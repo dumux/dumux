@@ -35,8 +35,10 @@
 
 #include <dumux/common/exceptions.hh>
 
-namespace Dumux
-{
+#include <dune/common/deprecated.hh>
+
+namespace Dumux {
+namespace Components {
 
 /*!
  * \ingroup Components
@@ -950,7 +952,11 @@ Scalar TabulatedComponent<Scalar, RawComponent, useVaporPressure>::densityMax_;
 template <class Scalar, class RawComponent, bool useVaporPressure>
 unsigned TabulatedComponent<Scalar, RawComponent, useVaporPressure>::nDensity_;
 
+} // end namespace Components
 
-} // end namespace
+template <class Scalar, class RawComponent, bool useVaporPressure=true>
+using TabulatedComponent DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::TabulatedComponent<Scalar, RawComponent, useVaporPressure>;
+
+} // end namespace Dumux
 
 #endif
