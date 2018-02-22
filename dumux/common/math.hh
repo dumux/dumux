@@ -501,7 +501,7 @@ Scalar antoine(Scalar temperature,
  * Returns 0 if the argument is zero.
  */
 template<class ValueType>
-int sign(const ValueType& value)
+constexpr int sign(const ValueType& value) noexcept
 {
     return (ValueType(0) < value) - (value < ValueType(0));
 }
