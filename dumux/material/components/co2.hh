@@ -32,8 +32,11 @@
 #include <cmath>
 #include <iostream>
 
-namespace Dumux
-{
+#include <dune/common/deprecated.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A class for the CO2 fluid properties
@@ -387,6 +390,11 @@ const Scalar CO2<Scalar, CO2Tables>::R = Constants<Scalar>::R;
 template <class Scalar, class CO2Tables>
 bool CO2<Scalar, CO2Tables>::warningThrown = false;
 
-} // end namespace
+} // end namespace Components
+
+template <class Scalar, class CO2Tables>
+using CO2 DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::CO2<Scalar, CO2Tables>;
+
+} // end namespace Dumux
 
 #endif

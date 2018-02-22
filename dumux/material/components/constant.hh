@@ -156,9 +156,6 @@ public:
 
 } // end namespace Components
 
-template<class TypeTag, class Scalar>
-using Constant DUNE_DEPRECATED_MSG("Use Components::Constant<id, Scalar> instead") = Dumux::Components::Constant<1, Scalar>;
-
 } // end namespace Dumux
 
 #endif // DUMUX_COMPONENTS_CONSTANT_HH

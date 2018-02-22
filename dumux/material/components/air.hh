@@ -28,8 +28,11 @@
 #include <dumux/material/components/component.hh>
 #include <dumux/material/idealgas.hh>
 
-namespace Dumux
-{
+#include <dune/common/deprecated.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A class for the air fluid properties
@@ -331,6 +334,11 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+template<class Scalar>
+using Air DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::Air<Scalar>;
+
+} // end namespace Dumux
 
 #endif

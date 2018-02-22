@@ -30,9 +30,11 @@
 #include <cmath>
 #include <iostream>
 
+#include <dune/common/deprecated.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A class for the NaCl properties
@@ -84,7 +86,11 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+template<class Scalar>
+using NaCl DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::NaCl<Scalar>;
+
+} // end namespace Dumux
 
 #endif
-

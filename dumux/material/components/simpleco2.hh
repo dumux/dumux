@@ -30,8 +30,11 @@
 
 #include <cmath>
 
-namespace Dumux
-{
+#include <dune/common/deprecated.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A class for the \f$CO_2\f$ fluid properties
@@ -196,6 +199,11 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+template<class Scalar>
+using SimpleCO2 DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::SimpleCO2<Scalar>;
+
+} // end namespace Dumux
 
 #endif

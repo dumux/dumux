@@ -29,9 +29,11 @@
 #include <dumux/material/components/component.hh>
 #include <dumux/material/constants.hh>
 
+#include <dune/common/deprecated.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief Properties of xylene.
@@ -383,6 +385,11 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+template<class Scalar>
+using Xylene DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::Xylene<Scalar>;
+
+} // end namespace Dumux
 
 #endif

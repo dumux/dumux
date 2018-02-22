@@ -31,8 +31,11 @@
 
 #include <cmath>
 
-namespace Dumux
-{
+#include <dune/common/deprecated.hh>
+
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A much simpler (and thus potentially less buggy) version of
@@ -325,6 +328,11 @@ public:
 template <class Scalar>
 const Scalar SimpleH2O<Scalar>::R = Constants<Scalar>::R / 18e-3;
 
-} // end namespace
+} // end namespace Components
+
+template<class Scalar>
+using SimpleH2O DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::SimpleH2O<Scalar>;
+
+} // end namespace Dumux
 
 #endif

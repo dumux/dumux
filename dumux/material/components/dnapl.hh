@@ -27,9 +27,11 @@
 #include <dumux/material/idealgas.hh>
 #include "component.hh"
 
+#include <dune/common/deprecated.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+namespace Components {
+
 /*!
  * \ingroup Components
  * \brief A simple implementation of TCE as exemplary component for a dense NAPL.
@@ -152,6 +154,11 @@ public:
     }
 };
 
-} // end namespace
+} // end namespace Components
+
+template<class Scalar>
+using DNAPL DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::DNAPL<Scalar>;
+
+} // end namespace Dumux
 
 #endif
