@@ -64,7 +64,7 @@ class ElectroChemistryNI : public ElectroChemistry<TypeTag, electroChemistryMode
             energyEqIdx = FluidSystem::numComponents, //energy equation
     };
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
     enum { dofCodim = isBox ? GridView::dimension : 0 };
 
     using GlobalPosition = typename Dune::FieldVector<Scalar, GridView::dimensionworld>;

@@ -67,7 +67,7 @@ int main(int argc, char** argv) try
 
     Dune::Timer timer;
     using HostGrid = Dune::YaspGrid<dim, Dune::TensorProductCoordinates<double, dim> >;
-    using HostGridCreator = GridCreatorImpl<HostGrid, DiscretizationMethods::None>;
+    using HostGridCreator = GridCreatorImpl<HostGrid, DiscretizationMethod::none>;
     HostGridCreator::makeGrid();
 
     // Calculate the bounding box of the host grid view.

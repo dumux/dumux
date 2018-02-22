@@ -58,8 +58,8 @@ class FVAssembler
     using TimeLoop = TimeLoopBase<typename GET_PROP_TYPE(TypeTag, Scalar)>;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
-    static constexpr DiscretizationMethods discMethod = GET_PROP_VALUE(TypeTag, DiscretizationMethod);
-    static constexpr bool isBox = discMethod == DiscretizationMethods::Box;
+    static constexpr DiscretizationMethod discMethod = GET_PROP_VALUE(TypeTag, DiscretizationMethod);
+    static constexpr bool isBox = discMethod == DiscretizationMethod::box;
 
     using ThisType = FVAssembler<TypeTag, diffMethod, isImplicit>;
     using LocalAssembler = std::conditional_t<isBox, BoxLocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>,

@@ -33,7 +33,7 @@ namespace Dumux
 {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethods Method>
+template<class TypeTag, DiscretizationMethod discMethod>
 class NavierStokesResidualImpl;
 
 /*!
@@ -41,7 +41,7 @@ class NavierStokesResidualImpl;
  * \brief Element-wise calculation of the Navier-Stokes residual for models using the staggered discretization
  */
 template<class TypeTag>
-class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
+class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
 : public StaggeredLocalResidual<TypeTag>
 {
     using ParentType = StaggeredLocalResidual<TypeTag>;

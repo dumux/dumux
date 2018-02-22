@@ -102,7 +102,7 @@ namespace Properties
 
 SET_PROP(SequentialModel, DiscretizationMethod)
 {
-    static const DiscretizationMethods value = DiscretizationMethods::CCTpfa;
+    static const DiscretizationMethod value = DiscretizationMethod::cctpfa;
 };
 
 //! Type of the jacobian matrix needed for compatibility with implicit models for the amg backend

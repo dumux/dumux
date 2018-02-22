@@ -55,7 +55,7 @@ PriVarSwitchNewtonController : public NewtonController<typename GET_PROP_TYPE(Ty
     using PrimaryVariableSwitch =  typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
 
 public:
     using ParentType::ParentType;

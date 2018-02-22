@@ -35,7 +35,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethods DM>
+template <class TypeTag, DiscretizationMethod discMethod>
 class MaxwellStefansLawImplementation;
 
 /*!
@@ -43,7 +43,7 @@ class MaxwellStefansLawImplementation;
  * \brief Specialization of Maxwell Stefan's Law for the CCTpfa method.
  */
 template <class TypeTag>
-class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
+class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::cctpfa >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -74,7 +74,7 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
 
 public:
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! state the type for the corresponding cache and its filler
     //! We don't cache anything for this law

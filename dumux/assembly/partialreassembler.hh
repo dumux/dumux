@@ -54,7 +54,7 @@ public:
 };
 
 //! the partial reassembler engine specialized for discretization methods
-template<class Assembler, DiscretizationMethods discMethod>
+template<class Assembler, DiscretizationMethod discMethod>
 class PartialReassemblerEngine
 {
 public:
@@ -79,7 +79,7 @@ public:
 
 //! the partial reassembler engine specialized for the box method
 template<class Assembler>
-class PartialReassemblerEngine<Assembler, DiscretizationMethods::Box>
+class PartialReassemblerEngine<Assembler, DiscretizationMethod::box>
 {
     using Scalar = typename Assembler::Scalar;
     using FVGridGeometry = typename Assembler::FVGridGeometry;
@@ -280,7 +280,7 @@ private:
 
 //! the partial reassembler engine specialized for the box method
 template<class Assembler>
-class PartialReassemblerEngine<Assembler, DiscretizationMethods::CCTpfa>
+class PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>
 {
     using Scalar = typename Assembler::Scalar;
     using FVGridGeometry = typename Assembler::FVGridGeometry;
@@ -372,10 +372,10 @@ private:
 
 //! the partial reassembler engine specialized for the mpfa method
 template<class Assembler>
-class PartialReassemblerEngine<Assembler, DiscretizationMethods::CCMpfa>
-: public PartialReassemblerEngine<Assembler, DiscretizationMethods::CCTpfa>
+class PartialReassemblerEngine<Assembler, DiscretizationMethod::ccmpfa>
+: public PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>
 {
-    using ParentType = PartialReassemblerEngine<Assembler, DiscretizationMethods::CCTpfa>;
+    using ParentType = PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>;
 public:
     using ParentType::ParentType;
 };
@@ -393,7 +393,7 @@ class PartialReassembler
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using VertexMapper = typename FVGridGeometry::VertexMapper;
 
-    static constexpr DiscretizationMethods discMethod = FVGridGeometry::discretizationMethod;
+    static constexpr DiscretizationMethod discMethod = FVGridGeometry::discMethod;
     using Engine = PartialReassemblerEngine<Assembler, discMethod>;
 
     static constexpr auto hasVertexColor = Dumux::isValid([](auto&& a) -> decltype(a.vertexColor(0)) {});

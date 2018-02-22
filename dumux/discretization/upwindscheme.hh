@@ -32,7 +32,7 @@ namespace Dumux
 {
 
 //! Forward declaration of the upwind scheme implementation
-template<class TypeTag, DiscretizationMethods Method>
+template<class TypeTag, DiscretizationMethod discMethod>
 class UpwindSchemeImplementation;
 
 /*!
@@ -45,7 +45,7 @@ using UpwindScheme = UpwindSchemeImplementation<TypeTag, GET_PROP_VALUE(TypeTag,
 
 //! Upwind scheme for the box method
 template<class TypeTag>
-class UpwindSchemeImplementation<TypeTag, DiscretizationMethods::Box>
+class UpwindSchemeImplementation<TypeTag, DiscretizationMethod::box>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
@@ -75,7 +75,7 @@ public:
 
 //! Upwind scheme for the cell-centered tpfa scheme
 template<class TypeTag>
-class UpwindSchemeImplementation<TypeTag, DiscretizationMethods::CCTpfa>
+class UpwindSchemeImplementation<TypeTag, DiscretizationMethod::cctpfa>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -190,8 +190,8 @@ public:
 
 //! Upwind scheme for cell-centered mpfa schemes
 template<class TypeTag>
-class UpwindSchemeImplementation<TypeTag, DiscretizationMethods::CCMpfa>
-: public UpwindSchemeImplementation<TypeTag, DiscretizationMethods::CCTpfa> {};
+class UpwindSchemeImplementation<TypeTag, DiscretizationMethod::ccmpfa>
+: public UpwindSchemeImplementation<TypeTag, DiscretizationMethod::cctpfa> {};
 
 } // end namespace Dumux
 

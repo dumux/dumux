@@ -38,7 +38,7 @@
 namespace Dumux {
 
 //! The implementation is specialized for the different discretizations
-template<class TypeTag, DiscretizationMethods DM> struct AmgTraitsImpl;
+template<class TypeTag, DiscretizationMethod discMethod> struct AmgTraitsImpl;
 
 //! The type traits required for using the AMG backend
 template<class TypeTag>
@@ -69,7 +69,7 @@ public:
 
 //! Box: use the non-overlapping AMG
 template<class TypeTag>
-struct AmgTraitsImpl<TypeTag, DiscretizationMethods::Box>
+struct AmgTraitsImpl<TypeTag, DiscretizationMethod::box>
 {
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
@@ -116,7 +116,7 @@ public:
 
 //! Cell-centered tpfa: use the overlapping AMG
 template<class TypeTag>
-struct AmgTraitsImpl<TypeTag, DiscretizationMethods::CCTpfa>
+struct AmgTraitsImpl<TypeTag, DiscretizationMethod::cctpfa>
 {
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
@@ -140,8 +140,8 @@ struct AmgTraitsImpl<TypeTag, DiscretizationMethods::CCTpfa>
 };
 
 template<class TypeTag>
-struct AmgTraitsImpl<TypeTag, DiscretizationMethods::CCMpfa>
-: public AmgTraitsImpl<TypeTag, DiscretizationMethods::CCTpfa> {};
+struct AmgTraitsImpl<TypeTag, DiscretizationMethod::ccmpfa>
+: public AmgTraitsImpl<TypeTag, DiscretizationMethod::cctpfa> {};
 
 } // end namespace Dumux
 

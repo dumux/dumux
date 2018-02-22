@@ -146,7 +146,7 @@ public:
      * \param scv The sub control volume
      */
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCTpfa, void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethod::cctpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -262,7 +262,7 @@ public:
      * \param scv The sub control volume
      */
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Box, void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethod::box, void>
     addFluxDerivatives(JacobianMatrix& A,
                        const Problem& problem,
                        const Element& element,

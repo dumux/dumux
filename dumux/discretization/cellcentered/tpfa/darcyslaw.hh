@@ -34,7 +34,7 @@
 namespace Dumux
 {
 // forward declarations
-template<class TypeTag, DiscretizationMethods discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class DarcysLawImplementation;
 
 template<class TypeTag, bool isNetwork>
@@ -46,7 +46,7 @@ class CCTpfaDarcysLaw;
  * \note Darcy's law is speialized for network and surface grids (i.e. if grid dim < dimWorld)
  */
 template <class TypeTag>
-class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
+class DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 : public CCTpfaDarcysLaw<TypeTag, (GET_PROP_TYPE(TypeTag, Grid)::dimension < GET_PROP_TYPE(TypeTag, Grid)::dimensionworld) >
 {};
 
@@ -121,7 +121,7 @@ private:
 template<class TypeTag>
 class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
 {
-    using Implementation = DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
+    using Implementation = DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -143,7 +143,7 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
 
   public:
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! state the type for the corresponding cache
     using Cache = TpfaDarcysLawCache<TypeTag>;
@@ -277,7 +277,7 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
 template<class TypeTag>
 class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ true>
 {
-    using Implementation = DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
+    using Implementation = DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -299,7 +299,7 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ true>
 
 public:
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! state the type for the corresponding cache
     using Cache = TpfaDarcysLawCache<TypeTag>;

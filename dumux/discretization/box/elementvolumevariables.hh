@@ -53,7 +53,7 @@ class BoxElementVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
 
 public:
     //! Constructor

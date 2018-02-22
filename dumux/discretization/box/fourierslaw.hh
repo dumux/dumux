@@ -31,7 +31,7 @@
 namespace Dumux
 {
 // forward declaration
-template<class TypeTag, DiscretizationMethods discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FouriersLawImplementation;
 
 /*!
@@ -39,7 +39,7 @@ class FouriersLawImplementation;
  * \brief Specialization of Fourier's Law for the box method.
  */
 template <class TypeTag>
-class FouriersLawImplementation<TypeTag, DiscretizationMethods::Box>
+class FouriersLawImplementation<TypeTag, DiscretizationMethod::box>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

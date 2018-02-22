@@ -53,7 +53,7 @@ namespace Dumux {
  * \tparam implicit if to use an implicit or explicit time discretization
  */
 template<class TypeTag,
-         DiffMethod DM = DiffMethod::numeric,
+         DiffMethod diffMethod = DiffMethod::numeric,
          bool implicit = true>
 class StaggeredLocalAssembler;
 

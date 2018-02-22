@@ -42,7 +42,7 @@ namespace Properties
     SET_TYPE_PROP(GridCreatorGmshTest, Scalar, double);
     SET_STRING_PROP(GridCreatorGmshTest, ModelParameterGroup, "Bifurcation");
     SET_PROP(GridCreatorGmshTest, DiscretizationMethod) {
-        static constexpr DiscretizationMethods value = DiscretizationMethods::CCTpfa;
+        static constexpr DiscretizationMethod value = DiscretizationMethod::cctpfa;
     };
 }
 

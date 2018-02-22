@@ -50,8 +50,8 @@ class NavierStokesVtkOutputFields
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
     // Helper type used for tag dispatching (to add discretization-specific fields).
-    template<DiscretizationMethods method>
-    using MethodType = std::integral_constant<DiscretizationMethods, method>;
+    template<DiscretizationMethod discMethod>
+    using discMethodTag = std::integral_constant<DiscretizationMethod, discMethod>;
 
 public:
     //! Initialize the Navier-Stokes specific vtk output fields.
@@ -61,8 +61,7 @@ public:
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(); }, "p");
 
         // add discretization-specific fields
-        const auto discType = MethodType<GET_PROP_VALUE(TypeTag, DiscretizationMethod)>();
-        additionalOutput_(vtk, discType);
+        additionalOutput_(vtk, discMethodTag<GET_PROP_VALUE(TypeTag, DiscretizationMethod)>{});
     }
 
 private:
@@ -74,7 +73,7 @@ private:
 
     //! Adds discretization-specific fields (velocity vectors on the faces for the staggered discretization).
     template <class VtkOutputModule>
-    static void additionalOutput_(VtkOutputModule& vtk, MethodType<DiscretizationMethods::Staggered>)
+    static void additionalOutput_(VtkOutputModule& vtk, discMethodTag<DiscretizationMethod::staggered>)
     {
         const bool writeFaceVars = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.WriteFaceData", false);
         if(writeFaceVars)
