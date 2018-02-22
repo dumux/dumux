@@ -97,7 +97,7 @@ public:
     using GridView = GV;
 
     //! export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethod discretizationMethod = DiscretizationMethod::ccmpfa;
+    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = Traits::maxElementStencilSize;
@@ -446,7 +446,7 @@ public:
     using GridView = GV;
 
     //! export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethod discretizationMethod = DiscretizationMethod::ccmpfa;
+    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     static constexpr int maxElementStencilSize = Traits::maxElementStencilSize;

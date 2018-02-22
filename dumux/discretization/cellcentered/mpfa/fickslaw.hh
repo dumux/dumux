@@ -220,7 +220,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 
 public:
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethod myDiscretizationMethod = DiscretizationMethod::ccmpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
 
     // state the type for the corresponding cache and its filler
     using Cache = MpfaFicksLawCache;

@@ -393,7 +393,7 @@ class PartialReassembler
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using VertexMapper = typename FVGridGeometry::VertexMapper;
 
-    static constexpr DiscretizationMethod discMethod = FVGridGeometry::discretizationMethod;
+    static constexpr DiscretizationMethod discMethod = FVGridGeometry::discMethod;
     using Engine = PartialReassemblerEngine<Assembler, discMethod>;
 
     static constexpr auto hasVertexColor = Dumux::isValid([](auto&& a) -> decltype(a.vertexColor(0)) {});

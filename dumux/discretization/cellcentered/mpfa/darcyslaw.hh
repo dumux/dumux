@@ -264,7 +264,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 
 public:
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethod myDiscretizationMethod = DiscretizationMethod::ccmpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::ccmpfa;
 
     // export the type for the corresponding cache
     using Cache = MpfaDarcysLawCache;

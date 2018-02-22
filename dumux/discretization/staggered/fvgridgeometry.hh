@@ -67,7 +67,7 @@ class StaggeredFVGridGeometry<GV, true, Traits>
 
 public:
     //! export discretization method
-    static constexpr DiscretizationMethod discretizationMethod = DiscretizationMethod::staggered;
+    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
 
     //! export the type of the fv element geometry (the local view type)
     using LocalView = typename Traits::template LocalView<ThisType, true>;

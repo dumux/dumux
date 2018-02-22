@@ -77,7 +77,7 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
 
 public:
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethod myDiscretizationMethod = DiscretizationMethod::staggered;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::staggered;
 
     //! state the type for the corresponding cache and its filler
     //! We don't cache anything for this law

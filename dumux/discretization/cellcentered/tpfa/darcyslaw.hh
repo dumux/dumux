@@ -143,7 +143,7 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
 
   public:
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod myDiscretizationMethod = DiscretizationMethod::cctpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! state the type for the corresponding cache
     using Cache = TpfaDarcysLawCache<TypeTag>;
@@ -299,7 +299,7 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ true>
 
 public:
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod myDiscretizationMethod = DiscretizationMethod::cctpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! state the type for the corresponding cache
     using Cache = TpfaDarcysLawCache<TypeTag>;

@@ -107,7 +107,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 
 public:
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod myDiscretizationMethod = DiscretizationMethod::cctpfa;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
 
     //! export the type for the corresponding cache
     using Cache = TpfaFouriersLawCache;

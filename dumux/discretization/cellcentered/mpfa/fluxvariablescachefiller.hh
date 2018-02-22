@@ -427,7 +427,7 @@ private:
     template< class InteractionVolume,
               class DataHandle,
               class AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType),
-              typename std::enable_if_t<AdvectionType::myDiscretizationMethod == DiscretizationMethod::ccmpfa, int> = 0 >
+              typename std::enable_if_t<AdvectionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
     void fillAdvectionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
     {
         using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethod::ccmpfa>;
@@ -509,7 +509,7 @@ private:
     template< class InteractionVolume,
               class DataHandle,
               class DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType),
-              typename std::enable_if_t<DiffusionType::myDiscretizationMethod == DiscretizationMethod::ccmpfa, int> = 0 >
+              typename std::enable_if_t<DiffusionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
     void fillDiffusionHandle(InteractionVolume& iv,
                              DataHandle& handle,
                              bool forceUpdateAll,
@@ -551,7 +551,7 @@ private:
     template< class InteractionVolume,
               class DataHandle,
               class HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType),
-              typename std::enable_if_t<HeatConductionType::myDiscretizationMethod == DiscretizationMethod::ccmpfa, int> = 0 >
+              typename std::enable_if_t<HeatConductionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
     void fillHeatConductionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
     {
         using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethod::ccmpfa>;
@@ -584,21 +584,21 @@ private:
     template< class InteractionVolume,
               class DataHandle,
               class AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType),
-              typename std::enable_if_t<AdvectionType::myDiscretizationMethod != DiscretizationMethod::ccmpfa, int> = 0 >
+              typename std::enable_if_t<AdvectionType::discMethod != DiscretizationMethod::ccmpfa, int> = 0 >
     void fillAdvectionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll) {}
 
     //! fill handle only when diffusion uses mpfa
     template< class InteractionVolume,
               class DataHandle,
               class DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType),
-              typename std::enable_if_t<DiffusionType::myDiscretizationMethod != DiscretizationMethod::ccmpfa, int> = 0 >
+              typename std::enable_if_t<DiffusionType::discMethod != DiscretizationMethod::ccmpfa, int> = 0 >
     void fillDiffusionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll, int phaseIdx, int compIdx) {}
 
     //! fill handle only when heat conduction uses mpfa
     template< class InteractionVolume,
               class DataHandle,
               class HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType),
-              typename std::enable_if_t<HeatConductionType::myDiscretizationMethod != DiscretizationMethod::ccmpfa, int> = 0 >
+              typename std::enable_if_t<HeatConductionType::discMethod != DiscretizationMethod::ccmpfa, int> = 0 >
     void fillHeatConductionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll) {}
 
     const Problem* problemPtr_;

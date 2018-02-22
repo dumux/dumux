@@ -52,8 +52,8 @@ class PriVarSwitchNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
     using PrimaryVariableSwitch =  typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    static constexpr auto discretizationMethod = Assembler::FVGridGeometry::discretizationMethod;
-    static constexpr bool isBox = discretizationMethod == DiscretizationMethod::box;
+    static constexpr auto discMethod = Assembler::FVGridGeometry::discMethod;
+    static constexpr bool isBox = discMethod == DiscretizationMethod::box;
 
 public:
     using ParentType::ParentType;

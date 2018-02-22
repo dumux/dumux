@@ -51,7 +51,7 @@ class StationaryVelocityField
 
 public:
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethod myDiscretizationMethod = DiscretizationMethod::none;
+    static const DiscretizationMethod discMethod = DiscretizationMethod::none;
 
     //! state the type for the corresponding cache
     using Cache = FluxVariablesCaching::EmptyAdvectionCache<TypeTag>;

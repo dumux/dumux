@@ -35,7 +35,7 @@ namespace Dumux {
  * \brief Helper function to generate Jacobian pattern for the box method
  */
 template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<(GridGeometry::discretizationMethod == DiscretizationMethod::box), int> = 0>
+         typename std::enable_if_t<(GridGeometry::discMethod == DiscretizationMethod::box), int> = 0>
 Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 {
     const auto numDofs = gridGeometry.numDofs();
@@ -76,8 +76,8 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
  * \brief Helper function to generate Jacobian pattern for cell-centered methods
  */
 template<bool isImplicit, class GridGeometry,
-         typename std::enable_if_t<( (GridGeometry::discretizationMethod == DiscretizationMethod::cctpfa)
-                                     || (GridGeometry::discretizationMethod == DiscretizationMethod::ccmpfa) ), int> = 0>
+         typename std::enable_if_t<( (GridGeometry::discMethod == DiscretizationMethod::cctpfa)
+                                     || (GridGeometry::discMethod == DiscretizationMethod::ccmpfa) ), int> = 0>
 Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
 {
     const auto numDofs = gridGeometry.numDofs();
