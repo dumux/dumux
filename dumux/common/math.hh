@@ -42,8 +42,10 @@ namespace Dumux
  * \param y The second input value
  */
 template <class Scalar>
-Scalar harmonicMean(Scalar x, Scalar y)
+constexpr Scalar harmonicMean(Scalar x, Scalar y) noexcept
 {
+    static_assert(Dune::IsNumber<Scalar>::value, "The arguments x and y have to be numbers!");
+
     if (x*y <= 0)
         return 0;
     return (2*x*y)/(x + y);
@@ -55,10 +57,13 @@ Scalar harmonicMean(Scalar x, Scalar y)
  *
  * \param x The first input value
  * \param y The second input value
+ * \note as std::sqrt is not constexpr this function is not constexpr
  */
 template <class Scalar>
-Scalar geometricMean(Scalar x, Scalar y)
+Scalar geometricMean(Scalar x, Scalar y) noexcept
 {
+    static_assert(Dune::IsNumber<Scalar>::value, "The arguments x and y have to be numbers!");
+
     if (x*y <= 0)
         return 0;
     using std::sqrt;
