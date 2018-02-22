@@ -34,7 +34,7 @@ namespace Dumux
 
 
 //! The implementation is specialized for the different discretizations
-template<class TypeTag, DiscretizationMethod DM> struct NavierStokesParentProblemImpl;
+template<class TypeTag, DiscretizationMethod discMethod> struct NavierStokesParentProblemImpl;
 
 template<class TypeTag>
 struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethod::staggered>

@@ -38,7 +38,7 @@
 namespace Dumux {
 
 //! The implementation is specialized for the different discretizations
-template<class TypeTag, DiscretizationMethod DM> struct AmgTraitsImpl;
+template<class TypeTag, DiscretizationMethod discMethod> struct AmgTraitsImpl;
 
 //! The type traits required for using the AMG backend
 template<class TypeTag>

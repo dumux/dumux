@@ -35,7 +35,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod DM>
+template <class TypeTag, DiscretizationMethod discMethod>
 class MaxwellStefansLawImplementation;
 
 /*!

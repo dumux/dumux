@@ -30,7 +30,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethod Method>
+template <class TypeTag, DiscretizationMethod discMethod>
 class FouriersLawNonEquilibriumImplementation
 {};
 

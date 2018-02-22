@@ -32,7 +32,7 @@ namespace Dumux
 {
 
 //! Forward declaration of the upwind scheme implementation
-template<class TypeTag, DiscretizationMethod Method>
+template<class TypeTag, DiscretizationMethod discMethod>
 class UpwindSchemeImplementation;
 
 /*!

@@ -41,7 +41,7 @@ namespace Dumux
  *       since we use the flux stencil for matrix and assembly. This might lead to some zeros stored
  *       in the matrix.
  */
-template<class FVElementGeometry, DiscretizationMethod Method = FVElementGeometry::FVGridGeometry::discretizationMethod>
+template<class FVElementGeometry, DiscretizationMethod discMethod = FVElementGeometry::FVGridGeometry::discretizationMethod>
 class FluxStencil;
 
 /*
