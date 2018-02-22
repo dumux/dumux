@@ -30,7 +30,7 @@
 namespace Dumux
 {
 // forward declaration
-template<class TypeTag, DiscretizationMethods Method>
+template<class TypeTag, DiscretizationMethod Method>
 class FreeFlowFluxVariablesCacheImplementation
 {};
 
@@ -49,7 +49,7 @@ using FreeFlowFluxVariablesCache = FreeFlowFluxVariablesCacheImplementation<Type
  *        Specialization for the staggered grid discretization.
  */
 template<class TypeTag>
-class FreeFlowFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::Staggered>
+class FreeFlowFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::staggered>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

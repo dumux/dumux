@@ -33,7 +33,7 @@
 namespace Dumux
 {
 // forward declaration
-template<class TypeTag, DiscretizationMethods discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FicksLawImplementation;
 
 /*!
@@ -41,9 +41,9 @@ class FicksLawImplementation;
  * \brief Fick's law for cell-centered finite volume schemes with two-point flux approximation
  */
 template <class TypeTag>
-class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
+class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 {
-    using Implementation = FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
+    using Implementation = FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
@@ -115,7 +115,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 
 public:
     //! state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+    static const DiscretizationMethod myDiscretizationMethod = DiscretizationMethod::cctpfa;
 
     //! state the type for the corresponding cache and its filler
     using Cache = TpfaFicksLawCache;

@@ -35,7 +35,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, DiscretizationMethods DM>
+template <class TypeTag, DiscretizationMethod DM>
 class MaxwellStefansLawImplementation;
 
 /*!
@@ -43,7 +43,7 @@ class MaxwellStefansLawImplementation;
  * \brief Specialization of Maxwell Stefan's Law for the Staggered method.
  */
 template <class TypeTag>
-class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethods::Staggered >
+class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -77,7 +77,7 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethods::Staggered 
 
 public:
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::Staggered;
+    static const DiscretizationMethod myDiscretizationMethod = DiscretizationMethod::staggered;
 
     //! state the type for the corresponding cache and its filler
     //! We don't cache anything for this law

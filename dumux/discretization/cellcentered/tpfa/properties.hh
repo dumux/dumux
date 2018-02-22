@@ -56,7 +56,7 @@ NEW_TYPE_TAG(CCTpfaModel, INHERITS_FROM(FiniteVolumeModel));
 //! Set the corresponding discretization method property
 SET_PROP(CCTpfaModel, DiscretizationMethod)
 {
-    static const DiscretizationMethods value = DiscretizationMethods::CCTpfa;
+    static const DiscretizationMethod value = DiscretizationMethod::cctpfa;
 };
 
 //! Set the default for the global finite volume geometry

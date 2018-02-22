@@ -34,10 +34,10 @@ namespace Dumux
 
 
 //! The implementation is specialized for the different discretizations
-template<class TypeTag, DiscretizationMethods DM> struct NavierStokesParentProblemImpl;
+template<class TypeTag, DiscretizationMethod DM> struct NavierStokesParentProblemImpl;
 
 template<class TypeTag>
-struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethods::Staggered>
+struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethod::staggered>
 {
     using type = StaggeredFVProblem<TypeTag>;
 };
@@ -120,7 +120,7 @@ public:
 
     //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
     template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Staggered, void>::type
+    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethod::staggered, void>::type
     applyInititalFaceSolution(SolutionVector& sol,
                               const SubControlVolumeFace& scvf,
                               const PrimaryVariables& initSol) const

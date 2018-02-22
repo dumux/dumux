@@ -34,7 +34,7 @@ namespace Dumux
  * \ingroup BoxModel
  * \brief Convert intersection boundary types to vertex boundary types
  */
-template<class BoundaryTypes, DiscretizationMethods discMethod>
+template<class BoundaryTypes, DiscretizationMethod discMethod>
 class ScvfToScvBoundaryTypes
 {
 public:
@@ -44,7 +44,7 @@ public:
     void computeBoundaryTypes(const Problem& problem)
     {
         // only do something for box
-        if (discMethod == DiscretizationMethods::Box)
+        if (discMethod == DiscretizationMethod::box)
         {
             const auto& fvGridGeometry = problem.fvGridGeometry();
             scvBoundaryTypes.resize(fvGridGeometry.vertexMapper().size());
@@ -81,7 +81,7 @@ public:
     template<class SubControlVolume>
     const BoundaryTypes& boundaryTypes(const SubControlVolume& scv) const
     {
-        if (discMethod == DiscretizationMethods::Box)
+        if (discMethod == DiscretizationMethod::box)
             return scvBoundaryTypes[scv.dofIndex()];
         else
             DUNE_THROW(Dune::InvalidStateException, "Only use this for the box discretization!");

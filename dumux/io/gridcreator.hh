@@ -371,7 +371,7 @@ std::vector<int> GridCreatorBase<Grid>::boundaryMarkers_;
  *        from information in the input file. This class is specialised below for all
  *        supported grid managers. It inherits the functionality of the base class.
  */
-template <class Grid, DiscretizationMethods DM>
+template <class Grid, DiscretizationMethod DM>
 class GridCreatorImpl : public GridCreatorBase<Grid> {};
 
 /*!
@@ -392,7 +392,7 @@ using GridCreator = GridCreatorImpl<typename GET_PROP_TYPE(TypeTag, Grid), GET_P
  * \brief Helper class for determining the default overlap in case of parallel yasp grids
  * \note the default of 1 works for all overlapping implementation like the cell-centered discretization schemes
  */
-template <DiscretizationMethods DM>
+template <DiscretizationMethod DM>
 struct YaspOverlapHelper
 {
     static int getOverlap(const std::string& modelParamGroup)
@@ -406,7 +406,7 @@ struct YaspOverlapHelper
 
 //! specialization for the box method
 template <>
-struct YaspOverlapHelper<DiscretizationMethods::Box>
+struct YaspOverlapHelper<DiscretizationMethod::box>
 {
     static int getOverlap(const std::string& modelParamGroup)
     { return 0; }
@@ -429,7 +429,7 @@ struct YaspOverlapHelper<DiscretizationMethods::Box>
  * - Refinement : the number of global refines to apply initially.
  *
  */
-template<DiscretizationMethods DiscMethod, class ct, int dim>
+template<DiscretizationMethod DiscMethod, class ct, int dim>
 class GridCreatorImpl<Dune::YaspGrid<dim, Dune::EquidistantCoordinates<ct, dim> >, DiscMethod>
           : public GridCreatorBase<Dune::YaspGrid<dim, Dune::EquidistantCoordinates<ct, dim> > >
 {
@@ -524,7 +524,7 @@ private:
  * - Refinement : the number of global refines to apply initially.
  *
  */
-template<DiscretizationMethods DiscMethod, class ct, int dim>
+template<DiscretizationMethod DiscMethod, class ct, int dim>
 class GridCreatorImpl<Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<ct, dim> >, DiscMethod>
           : public GridCreatorBase<Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<ct, dim> > >
 {
@@ -630,7 +630,7 @@ private:
  * \f$ g = -\frac{1}{g_\textrm{negative}} \f$
  * to avoid issues with imprecise fraction numbers.
  */
-template<DiscretizationMethods DiscMethod, class ctype, int dim>
+template<DiscretizationMethod DiscMethod, class ctype, int dim>
 class GridCreatorImpl<Dune::YaspGrid<dim, Dune::TensorProductCoordinates<ctype, dim> >, DiscMethod>
           : public GridCreatorBase<Dune::YaspGrid<dim, Dune::TensorProductCoordinates<ctype, dim> > >
 {
@@ -858,7 +858,7 @@ private:
  * - Refinement : the number of global refines to apply initially.
  *
  */
-template<DiscretizationMethods DiscMethod>
+template<DiscretizationMethod DiscMethod>
 class GridCreatorImpl<Dune::OneDGrid, DiscMethod>
           : public GridCreatorBase<Dune::OneDGrid>
 {
@@ -953,7 +953,7 @@ private:
  * - BoundarySegments : whether to insert boundary segments into the grid
  *
  */
-template<DiscretizationMethods DiscMethod, int dim>
+template<DiscretizationMethod DiscMethod, int dim>
 class GridCreatorImpl<Dune::UGGrid<dim>, DiscMethod>
           : public GridCreatorBase<Dune::UGGrid<dim> >
 {
@@ -1060,7 +1060,7 @@ private:
  * - BoundarySegments : whether to insert boundary segments into the grid
  *
  */
-template<DiscretizationMethods DiscMethod, int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRefinementType refinementType>
+template<DiscretizationMethod DiscMethod, int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRefinementType refinementType>
 class GridCreatorImpl<Dune::ALUGrid<dim, dimworld, elType, refinementType>, DiscMethod>
           : public GridCreatorBase<Dune::ALUGrid<dim, dimworld, elType, refinementType> >
 {
@@ -1145,7 +1145,7 @@ public:
  * - Cells : number of elements in a structured grid
  *
  */
-template<DiscretizationMethods DiscMethod, int dim, int dimworld>
+template<DiscretizationMethod DiscMethod, int dim, int dimworld>
 class GridCreatorImpl<Dune::FoamGrid<dim, dimworld>, DiscMethod>
           : public GridCreatorBase<Dune::FoamGrid<dim, dimworld> >
 {
@@ -1199,7 +1199,7 @@ public:
  * - Cells : number of elements in a structured grid
  *
  */
-template<DiscretizationMethods DiscMethod, int dimworld>
+template<DiscretizationMethod DiscMethod, int dimworld>
 class GridCreatorImpl<Dune::FoamGrid<1, dimworld>, DiscMethod>
           : public GridCreatorBase<Dune::FoamGrid<1, dimworld> >
 {

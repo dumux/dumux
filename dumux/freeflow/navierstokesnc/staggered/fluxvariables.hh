@@ -34,7 +34,7 @@ namespace Dumux
 {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethods Method>
+template<class TypeTag, DiscretizationMethod Method>
 class NavierStokesNCFluxVariablesImpl;
 
 /*!
@@ -42,7 +42,7 @@ class NavierStokesNCFluxVariablesImpl;
  * \brief The flux variables class for the multi-component Navier-Stokes model using the staggered grid discretization.
  */
 template<class TypeTag>
-class NavierStokesNCFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
+class NavierStokesNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
 : public NavierStokesFluxVariables<TypeTag>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

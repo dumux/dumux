@@ -40,7 +40,7 @@ class SubControlVolumeOperatorImplementation;
  */
 template<class TypeTag>
 using SubControlVolumeOperator DUNE_DEPRECATED_MSG("Use evalSolution() instead") =
-        SubControlVolumeOperatorImplementation<TypeTag, (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box)>;
+        SubControlVolumeOperatorImplementation<TypeTag, (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box)>;
 
 
 //! Specialization for the box method

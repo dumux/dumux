@@ -66,7 +66,7 @@ NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel));
 //! Set the corresponding discretization method property
 SET_PROP(StaggeredModel, DiscretizationMethod)
 {
-    static const DiscretizationMethods value = DiscretizationMethods::Staggered;
+    static const DiscretizationMethod value = DiscretizationMethod::staggered;
 };
 
 //! Set the default global face variables cache vector class

@@ -37,7 +37,7 @@
 namespace Dumux
 {
 // forward declaration
-template<class TypeTag, DiscretizationMethods discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FicksLawImplementation;
 
 /*!
@@ -45,7 +45,7 @@ class FicksLawImplementation;
  * \brief Specialization of Fick's Law for the staggered free flow method.
  */
 template <class TypeTag>
-class FicksLawImplementation<TypeTag, DiscretizationMethods::Staggered >
+class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -75,7 +75,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Staggered >
 
 public:
     // state the discretization method this implementation belongs to
-    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::Staggered;
+    static const DiscretizationMethod myDiscretizationMethod = DiscretizationMethod::staggered;
 
     //! state the type for the corresponding cache
     //! We don't cache anything for this law

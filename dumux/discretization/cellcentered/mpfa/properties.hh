@@ -63,7 +63,7 @@ NEW_TYPE_TAG(CCMpfaModel, INHERITS_FROM(FiniteVolumeModel));
 //! Set the corresponding discretization method property
 SET_PROP(CCMpfaModel, DiscretizationMethod)
 {
-    static const DiscretizationMethods value = DiscretizationMethods::CCMpfa;
+    static const DiscretizationMethod value = DiscretizationMethod::ccmpfa;
 };
 
 //! Set the index set type used on the dual grid nodes

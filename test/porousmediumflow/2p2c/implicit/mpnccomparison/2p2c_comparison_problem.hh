@@ -116,7 +116,7 @@ class TwoPTwoCComparisonProblem
     };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
 
 public:
     /*!

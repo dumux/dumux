@@ -32,7 +32,7 @@
 namespace Dumux
 {
 // forward declaration
-template<class TypeTag, DiscretizationMethods Method>
+template<class TypeTag, DiscretizationMethod Method>
 class PorousMediumFluxVariablesCacheImplementation;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,7 +54,7 @@ using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementat
 //! We only store discretization-related quantities for the box method.
 //! Thus, we need no physics-dependent specialization.
 template<class TypeTag>
-class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::Box>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::box>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -136,7 +136,7 @@ template<class TypeTag> class EnergyCacheChooser<TypeTag, true> : public GET_PRO
 
 // specialization for the cell centered tpfa method
 template<class TypeTag>
-class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CCTpfa>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::cctpfa>
 : public AdvectionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection)>
 , public DiffusionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>
 , public EnergyCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
@@ -145,7 +145,7 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
 //! specialization of the flux variables cache for the cell centered finite volume mpfa scheme
 //! stores data which is commonly used by all the different types of processes
 template<class TypeTag>
-class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CCMpfa>
+class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 : public AdvectionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection)>
 , public DiffusionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>
 , public EnergyCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>

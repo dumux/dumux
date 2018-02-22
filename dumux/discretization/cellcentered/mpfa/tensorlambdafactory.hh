@@ -50,7 +50,7 @@ namespace Dumux
  *        The interfaces of the lambdas are chosen such that all involved tensors can be extracted
  *        with the given arguments.
  */
-template<class TypeTag, DiscretizationMethods Method>
+template<class TypeTag, DiscretizationMethod Method>
 class TensorLambdaFactory
 {
 public:
@@ -97,7 +97,7 @@ public:
 
 //! Specialization for mpfa schemes
 template<class TypeTag>
-class TensorLambdaFactory<TypeTag, DiscretizationMethods::CCMpfa>
+class TensorLambdaFactory<TypeTag, DiscretizationMethod::ccmpfa>
 {
 public:
 

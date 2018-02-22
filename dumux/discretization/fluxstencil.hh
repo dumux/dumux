@@ -41,7 +41,7 @@ namespace Dumux
  *       since we use the flux stencil for matrix and assembly. This might lead to some zeros stored
  *       in the matrix.
  */
-template<class FVElementGeometry, DiscretizationMethods Method = FVElementGeometry::FVGridGeometry::discretizationMethod>
+template<class FVElementGeometry, DiscretizationMethod Method = FVElementGeometry::FVGridGeometry::discretizationMethod>
 class FluxStencil;
 
 /*
@@ -50,7 +50,7 @@ class FluxStencil;
  * \tparam FVElementGeometry The local view on the finite volume grid geometry
  */
 template<class FVElementGeometry>
-class FluxStencil<FVElementGeometry, DiscretizationMethods::CCTpfa>
+class FluxStencil<FVElementGeometry, DiscretizationMethod::cctpfa>
 {
     using FVGridGeometry = typename FVElementGeometry::FVGridGeometry;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
@@ -90,7 +90,7 @@ public:
  * \tparam FVElementGeometry The local view on the finite volume grid geometry
  */
 template<class FVElementGeometry>
-class FluxStencil<FVElementGeometry, DiscretizationMethods::CCMpfa>
+class FluxStencil<FVElementGeometry, DiscretizationMethod::ccmpfa>
 {
     using FVGridGeometry = typename FVElementGeometry::FVGridGeometry;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;

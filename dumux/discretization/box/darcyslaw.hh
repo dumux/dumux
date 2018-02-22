@@ -33,7 +33,7 @@
 namespace Dumux
 {
 // forward declaration
-template<class TypeTag, DiscretizationMethods discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class DarcysLawImplementation;
 
 /*!
@@ -41,7 +41,7 @@ class DarcysLawImplementation;
  * \brief Specialization of Darcy's Law for the box method.
  */
 template <class TypeTag>
-class DarcysLawImplementation<TypeTag, DiscretizationMethods::Box>
+class DarcysLawImplementation<TypeTag, DiscretizationMethod::box>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;

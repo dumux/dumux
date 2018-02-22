@@ -112,7 +112,7 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     enum { dofCodim = isBox ? dim : 0 };
