@@ -116,7 +116,7 @@ public:
  * \tparam DM The differentiation method to residual compute derivatives
  * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
-template<class TypeTag, class Assembler, DiffMethod DM = DiffMethod::numeric, bool implicit = true>
+template<class TypeTag, class Assembler, DiffMethod diffMethod = DiffMethod::numeric, bool implicit = true>
 class CCLocalAssembler;
 
 /*!
