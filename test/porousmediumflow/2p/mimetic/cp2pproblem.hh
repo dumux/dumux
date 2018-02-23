@@ -98,13 +98,13 @@ SET_BOOL_PROP(CPTwoPProblem, EnableGlobalVolumeVariablesCache, true);
 SET_BOOL_PROP(CPTwoPProblem, VtkWriteFaceData, false);
 
 // The geometry helper required for the stencils, etc.
-//SET_PROP(CPTwoPProblem, StaggeredGeometryHelper)
-//{
-//private:
-//    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-//public:
-//    using type = MimeticCPGeometryHelper<GridView>;
-//};
+SET_PROP(CPTwoPProblem, StaggeredGeometryHelper)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    using type = MimeticCPGeometryHelper<GridView>;
+};
 
 SET_TYPE_PROP(CPTwoPProblem, IntersectionMapper, Dumux::NonConformingGridIntersectionMapper<TypeTag>);
 }
