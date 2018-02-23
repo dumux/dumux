@@ -62,6 +62,7 @@ template<class TypeTag>
 class TestDiffusionSpatialParams3d: public SequentialFVSpatialParams<TypeTag>
 {
     using ParentType = SequentialFVSpatialParams<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -95,8 +96,8 @@ public:
             return materialLawParams_;
     }
 
-    TestDiffusionSpatialParams3d(const GridView& gridView)
-    : ParentType(gridView), permeability_(0)
+    TestDiffusionSpatialParams3d(const Problem& problem)
+    : ParentType(problem), permeability_(0)
     {
         // residual saturations
         materialLawParams_.setSwr(0.0);

@@ -62,6 +62,7 @@ public:
 template<class TypeTag>
 class TestIMPESAdaptiveSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -98,8 +99,8 @@ public:
     }
 
 
-    TestIMPESAdaptiveSpatialParams(const GridView& gridView)
-    : ParentType(gridView)
+    TestIMPESAdaptiveSpatialParams(const Problem& problem)
+    : ParentType(problem)
     {
         // residual saturations
         materialLawParams_.setSwr(0.2);

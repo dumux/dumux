@@ -77,7 +77,7 @@ public:
         : ParentType(timeManager, grid),
         gravity_(0)
     {
-        spatialParams_ = std::make_shared<SpatialParams>(grid.leafGridView());
+        spatialParams_ = std::make_shared<SpatialParams>(asImp_());
 
         gravity_ = 0;
         if (getParam<bool>("Problem.EnableGravity"))

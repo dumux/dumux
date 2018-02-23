@@ -37,6 +37,7 @@ template<class TypeTag>
 class TestOnePSpatialParams: public SequentialFVSpatialParamsOneP<TypeTag>
 {
     using ParentType = SequentialFVSpatialParamsOneP<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexSet = typename GridView::IndexSet;
@@ -74,8 +75,8 @@ public:
 
     }
 
-    TestOnePSpatialParams(const GridView& gridView)
-    : ParentType(gridView), gridView_(gridView), indexSet_(gridView.indexSet())
+    TestOnePSpatialParams(const Problem& problem)
+    : ParentType(problem), gridView_(problem.gridView()), indexSet_(problem.gridView().indexSet())
     { }
 
 private:

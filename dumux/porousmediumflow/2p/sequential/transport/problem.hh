@@ -98,7 +98,7 @@ public:
     {
         cFLFactor_ = getParam<Scalar>("Impet.CFLFactor");
 
-        spatialParams_ = std::make_shared<SpatialParams>(grid.leafGridView());
+        spatialParams_ = std::make_shared<SpatialParams>(asImp_());
 
         gravity_ = 0;
         if (getParam<bool>("Problem.EnableGravity"))
