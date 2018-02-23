@@ -284,16 +284,10 @@ public:
             const auto& normalFace = fvGeometry.scvf(eIdx, scvf.pairData()[localSubFaceIdx].localNormalFaceIdx);
 
             // Check if we have a symmetry boundary condition. If yes, the tangental part of the momentum flux can be neglected.
-            if(scvf.pairData()[localSubFaceIdx].outerParallelFaceDofIdx < 0)
+            if(!scvf.hasParallelNeighbor(localSubFaceIdx))
             {
-                // Lambda to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest.
-                auto makeGhostFace = [eIdx] (const GlobalPosition& pos)
-                {
-                    return SubControlVolumeFace(pos, std::vector<unsigned int>{eIdx,eIdx});
-                };
-
                 // Use the ghost face to check if there is a symmetry boundary condition and skip any further steps if yes.
-                const auto bcTypes = problem.boundaryTypes(element, makeGhostFace(scvf.pairData()[localSubFaceIdx].virtualOuterParallelFaceDofPos));
+                const auto bcTypes = problem.boundaryTypes(element, makeParallelGhostFace_(scvf, localSubFaceIdx));
                 if(bcTypes.isSymmetry())
                     continue;
             }
@@ -347,7 +341,18 @@ private:
 
         // Get the velocities at the current (own) scvf and at the parallel one at the neighboring scvf.
         const Scalar velocitySelf = faceVars.velocitySelf();
-        const Scalar velocityParallel = faceVars.velocityParallel(localSubFaceIdx);
+
+        // Lambda to conveniently get the outer parallel velocity for normal faces that are on the boundary
+        // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
+        auto getParallelVelocityFromBoundary = [&]()
+        {
+            const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
+            return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
+        };
+
+        const Scalar velocityParallel = scvf.hasParallelNeighbor(localSubFaceIdx) ?
+                                        faceVars.velocityParallel(localSubFaceIdx)
+                                      : getParallelVelocityFromBoundary();
 
         // Get the volume variables of the own and the neighboring element
         const auto& insideVolVars = elemVolVars[normalFace.insideScvIdx()];
@@ -421,7 +426,19 @@ private:
         // the outer one at the respective staggered face of the element on the other side of the
         // current scvf.
         const Scalar innerNormalVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
-        const Scalar outerNormalVelocity = faceVars.velocityNormalOutside(localSubFaceIdx);
+
+        // Lambda to conveniently get the outer normal velocity for faces that are on the boundary
+        // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
+        auto getNormalVelocityFromBoundary = [&]()
+        {
+            const auto ghostFace = makeNormalGhostFace_(scvf, localSubFaceIdx);
+            return problem.dirichlet(element, ghostFace)[Indices::velocity(normalFace.directionIndex())];
+        };
+
+        const Scalar outerNormalVelocity = scvf.hasFrontalNeighbor(localSubFaceIdx) ?
+                                           faceVars.velocityNormalOutside(localSubFaceIdx)
+                                         : getNormalVelocityFromBoundary();
+
 
         // Calculate the velocity gradient in positive coordinate direction.
         const Scalar normalDeltaV = scvf.normalInPosCoordDir() ?
@@ -436,7 +453,18 @@ private:
         // For the parallel derivative, get the velocities at the current (own) scvf
         // and at the parallel one at the neighboring scvf.
         const Scalar innerParallelVelocity = faceVars.velocitySelf();
-        const Scalar outerParallelVelocity = faceVars.velocityParallel(localSubFaceIdx);
+
+        // Lambda to conveniently get the outer parallel velocity for normal faces that are on the boundary
+        // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
+        auto getParallelVelocityFromBoundary = [&]()
+        {
+            const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
+            return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
+        };
+
+        const Scalar outerParallelVelocity = scvf.hasParallelNeighbor(localSubFaceIdx) ?
+                                             faceVars.velocityParallel(localSubFaceIdx)
+                                           : getParallelVelocityFromBoundary();
 
         // The velocity gradient already accounts for the orientation
         // of the staggered face's outer normal vector.
@@ -495,6 +523,27 @@ private:
         // Account for the orientation of the face at the boundary,
         return outflow * scvf.directionSign();
     }
+
+private:
+
+    //! helper functiuob to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
+    SubControlVolumeFace makeGhostFace_(const SubControlVolumeFace& ownScvf, const GlobalPosition& pos) const
+    {
+        return SubControlVolumeFace(pos, std::vector<unsigned int>{ownScvf.insideScvIdx(), ownScvf.outsideScvIdx()}, ownScvf.dofIndex());
+    };
+
+    //! helper functiuob to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
+    SubControlVolumeFace makeNormalGhostFace_(const SubControlVolumeFace& ownScvf, const int localSubFaceIdx) const
+    {
+        return makeGhostFace_(ownScvf, ownScvf.pairData(localSubFaceIdx).virtualOuterNormalFaceDofPos);
+    };
+
+    //! helper functiuob to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
+    SubControlVolumeFace makeParallelGhostFace_(const SubControlVolumeFace& ownScvf, const int localSubFaceIdx) const
+    {
+        return makeGhostFace_(ownScvf, ownScvf.pairData(localSubFaceIdx).virtualOuterParallelFaceDofPos);
+    };
+
 };
 
 } // end namespace
