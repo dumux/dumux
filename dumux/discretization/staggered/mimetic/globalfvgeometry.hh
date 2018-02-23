@@ -119,6 +119,7 @@ public:
         scvfIndicesOfScv_.clear();
         elementMap_.clear();
         intersectionMapper_.update();
+        useTPFA_.clear();
 
         // determine size of containers
         IndexType numScvs = gridView_.size(0);
@@ -132,6 +133,7 @@ public:
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
         localToGlobalScvfIndices_.resize(numScvs);
+        useTPFA_.resize(numScvs);
 
         // Build the scvs and scv faces
         IndexType scvfIdx = 0;
@@ -203,6 +205,7 @@ public:
             // Save the scvf indices belonging to this scv to build up fv element geometries fast
             scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
 
+            useTPFA_[eIdx] = calcNewCellCenter;
             //if(calcNewCellCenter)
             //    findNewCellCenter(eIdx);
         }
@@ -244,6 +247,11 @@ public:
     const SubControlVolumeFace& scvf(IndexType eIdx ,IndexType localScvfIdx) const
     {
         return scvf(localToGlobalScvfIndex(eIdx, localScvfIdx));
+    }
+
+    bool useTPFA(IndexType eIdx) const
+    {
+        return useTPFA_[eIdx];
     }
 
     void findNewCellCenter(int eIdx)
@@ -339,6 +347,7 @@ public:
     std::vector<SubControlVolumeFace> scvfs_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<std::vector<IndexType>> localToGlobalScvfIndices_;
+    std::vector<bool> useTPFA_;
     IndexType numBoundaryScvf_;
 };
 

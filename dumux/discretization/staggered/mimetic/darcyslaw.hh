@@ -167,82 +167,150 @@ public:
                                         return volVars.permeability();
                                };
 
-        const auto numFaces = fvGeometry.numScvf();
-        DynamicMatrix W(numFaces, numFaces, 0.0);
-        DynamicMatrix R(numFaces, dim, 0.0);
-        DynamicMatrix N(numFaces, dim, 0.0);
-        DynamicMatrix Id(numFaces, numFaces, 0.0);
-        DynamicMatrix C(numFaces, numFaces, 0.0);
-        std::vector<Scalar> coNormalNorms(numFaces);
-
-        for(int i=0; i<numFaces; i++)
-            Id[i][i] = 1.0;
-
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& insideVolVars = elemVolVars[insideScv];
-
-            int index = scvf.localFaceIdx();
-            auto coNormal = calculateCoNormal_(scvf, getPermeability(insideVolVars, scvf.ipGlobal()));
-            coNormalNorms[index] = coNormal.two_norm();
-            N[index] = coNormal;
-            //N[index] /= coNormalNorms[index];
-            //N[index] *= scvf.area();
-            R[index] =  scvf.ipGlobal();
-            R[index] -= insideScv.center();
-            C[index][index] = scvf.area();
-            R[index] *= scvf.area();
-        }
-
-        DynamicMatrix LocalR = multiplyMatrices(getTransposed(R),R);
-        LocalR.invert();
-        //DynamicMatrix DTrans = multiplyMatrices(C,C);
-        //DynamicMatrix DTrans_2 = multiplyMatrices(multiplyMatrices(R,LocalR),getTransposed(R));
-
-        DynamicMatrix DTrans = Id;
-        DTrans -= multiplyMatrices(multiplyMatrices(R,LocalR),getTransposed(R));
-
-        DynamicMatrix LocalK = multiplyMatrices(getTransposed(N),R);
-        LocalK.invert();
-        W = multiplyMatrices(multiplyMatrices(N,LocalK),getTransposed(N));
-        DynamicMatrix StabMatrix = DTrans; //multiplyMatrices(getTransposed(DTrans),DTrans);
-        StabMatrix *= 0.5*trace(W);
-        W += StabMatrix;
-
-        W.invert();
-        DynamicMatrix sol = multiplyMatrices(C,multiplyMatrices(W,C));
-
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& insideVolVars = elemVolVars[insideScv];
-
-            int index = scvf.localFaceIdx();
-
-//            const auto bcTypes = problem.boundaryTypes(element, scvf);
-//            if (bcTypes.hasNeumann())
-//            {
-//                for (auto&& scvfIt : scvfs(fvGeometry))
-//                {
-//                    int indexIt = scvfIt.localFaceIdx();
-//                    W[indexIt][index] = 0.0;
-//                }
-//            }
-            //W[index] *= coNormalNorms[index];
-        }
-
-
 //        const auto numFaces = fvGeometry.numScvf();
 //        DynamicMatrix W(numFaces, numFaces, 0.0);
+//        DynamicMatrix R(numFaces, dim, 0.0);
+//        DynamicMatrix N(numFaces, dim, 0.0);
+//        DynamicMatrix Id(numFaces, numFaces, 0.0);
+//        DynamicMatrix C(numFaces, numFaces, 0.0);
+//        std::vector<Scalar> coNormalNorms(numFaces);
+//
+//        for(int i=0; i<numFaces; i++)
+//            Id[i][i] = 1.0;
+//
 //        for (auto&& scvf : scvfs(fvGeometry))
 //        {
+//            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+//            const auto& insideVolVars = elemVolVars[insideScv];
+//
 //            int index = scvf.localFaceIdx();
-//            W[index][index] = 1.0/calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
+//            auto coNormal = calculateCoNormal_(scvf, getPermeability(insideVolVars, scvf.ipGlobal()));
+//            coNormalNorms[index] = coNormal.two_norm();
+//            N[index] = coNormal;
+//            //N[index] /= coNormalNorms[index];
+//            //N[index] *= scvf.area();
+//            R[index] =  scvf.ipGlobal();
+//            R[index] -= insideScv.center();
+//            C[index][index] = scvf.area();
+//            R[index] *= scvf.area();
+//        }
+//
+//        DynamicMatrix LocalR = multiplyMatrices(getTransposed(R),R);
+//        LocalR.invert();
+//        //DynamicMatrix DTrans = multiplyMatrices(C,C);
+//        //DynamicMatrix DTrans_2 = multiplyMatrices(multiplyMatrices(R,LocalR),getTransposed(R));
+//
+//        DynamicMatrix DTrans = Id;
+//        DTrans -= multiplyMatrices(multiplyMatrices(R,LocalR),getTransposed(R));
+//
+//        DynamicMatrix LocalK = multiplyMatrices(getTransposed(N),R);
+//        LocalK.invert();
+//        W = multiplyMatrices(multiplyMatrices(N,LocalK),getTransposed(N));
+//        DynamicMatrix StabMatrix = DTrans; //multiplyMatrices(getTransposed(DTrans),DTrans);
+//        StabMatrix *= 0.5*trace(W);
+//        W += StabMatrix;
+//
+//        W.invert();
+//        DynamicMatrix sol = multiplyMatrices(C,multiplyMatrices(W,C));
+//
+//        for (auto&& scvf : scvfs(fvGeometry))
+//        {
+//            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+//            const auto& insideVolVars = elemVolVars[insideScv];
+//
+//            int index = scvf.localFaceIdx();
+//
+////            const auto bcTypes = problem.boundaryTypes(element, scvf);
+////            if (bcTypes.hasNeumann())
+////            {
+////                for (auto&& scvfIt : scvfs(fvGeometry))
+////                {
+////                    int indexIt = scvfIt.localFaceIdx();
+////                    W[indexIt][index] = 0.0;
+////                }
+////            }
+//            //W[index] *= coNormalNorms[index];
 //        }
 
+        auto eIdx = problem.elementMapper().index(element);
+        bool useTPFA = problem.model().globalFvGeometry().useTPFA(eIdx);
+        const auto numFaces = fvGeometry.numScvf();
+        DynamicMatrix M(numFaces, numFaces, 0.0);
 
-        return W;
+        if(!useTPFA)
+        {
+            DynamicMatrix R(numFaces, dim, 0.0);
+            DynamicMatrix N(numFaces, dim, 0.0);
+            DynamicMatrix Id(numFaces, numFaces, 0.0);
+            DynamicMatrix C(numFaces, numFaces, 0.0);
+            std::vector<Scalar> coNormalNorms(numFaces);
+
+            for(int i=0; i<numFaces; i++)
+                Id[i][i] = 1.0;
+
+            const auto& insideScvFace = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& insideVolVarsFace = elemVolVars[insideScvFace];
+            auto K = getPermeability(insideVolVarsFace, scvf.ipGlobal());
+
+            Scalar KScale = 0.0;
+            for(int i=0; i<dim; i++)
+                KScale = std::max(KScale,K[i][i]);
+
+
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                const auto& insideVolVars = elemVolVars[insideScv];
+
+                int index = scvf.localFaceIdx();
+                auto coNormal = calculateCoNormal_(scvf, getPermeability(insideVolVars, scvf.ipGlobal()));
+                coNormal /= KScale;
+                coNormalNorms[index] = coNormal.two_norm();
+                N[index] = coNormal;
+                //N[index] /= coNormalNorms[index];
+                //N[index] *= scvf.area();
+                R[index] =  scvf.ipGlobal();
+                R[index] -= insideScv.center();
+                //C[index][index] = scvf.area();
+                R[index] *= scvf.area();
+            }
+
+            DynamicMatrix LocalN = multiplyMatrices(getTransposed(N),N);
+            LocalN.invert();
+
+            DynamicMatrix DTrans = Id;
+            DTrans -= multiplyMatrices(multiplyMatrices(N,LocalN),getTransposed(N));
+
+            DynamicMatrix LocalK = multiplyMatrices(getTransposed(R),N);
+            LocalK.invert();
+            M = multiplyMatrices(multiplyMatrices(R,LocalK),getTransposed(R));
+            DynamicMatrix StabMatrix = DTrans; //multiplyMatrices(getTransposed(DTrans),DTrans);
+            StabMatrix *= 0.5*trace(M);
+            M += StabMatrix;
+
+            for(int i=0; i<numFaces; i++)
+            {
+                for(int j=0; j<numFaces; j++)
+                {
+                    if(std::abs(M[i][j]) < 1.0e-8)
+                    {
+                        M[i][j] = 0.0;
+                    }
+                    else
+                        M[i][j] /= KScale;
+                }
+            }
+        }
+        else
+        {
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                int index = scvf.localFaceIdx();
+                M[index][index] = 1.0/calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
+            }
+        }
+
+        return M;
     }
 
     // The flux variables cache has to be bound to an element prior to flux calculations
@@ -253,8 +321,6 @@ public:
                                               const ElementVolumeVariables& elemVolVars,
                                               const SubControlVolumeFace& scvf)
     {
-        Scalar tij;
-
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
@@ -272,37 +338,7 @@ public:
         const Scalar ti = calculateOmega_(scvf, getPermeability(insideVolVars, scvf.ipGlobal()),
                                           insideScv, insideVolVars.extrusionFactor());
 
-        // for the boundary (dirichlet) or at branching points we only need ti
-//        if (scvf.boundary() || scvf.numOutsideScvs() > 1)
-//        {
-//            tij = scvf.area()*ti;
-//        }
-//
-//        // otherwise we compute a tpfa harmonic mean
-//        else
-//        {
-//            const auto outsideScvIdx = scvf.outsideScvIdx();
-//            // as we assemble fluxes from the neighbor to our element the outside index
-//            // refers to the scv of our element, so we use the scv method
-//            const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
-//            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-//
-//            const Scalar tj = [&]()
-//            {
-//                    return -1.0*calculateOmega_(scvf, getPermeability(outsideVolVars, scvf.ipGlobal()),
-//                                            outsideScv, outsideVolVars.extrusionFactor());
-//
-//            }();
-//
-//            // harmonic mean (check for division by zero!)
-//            if (ti*tj <= 0.0)
-//                tij = 0;
-//            else
-//                tij = scvf.area()*(ti * tj)/(ti + tj);
-//        }
-
-//        return scvf.area()*ti;
-        return ti/scvf.area();
+        return std::abs(ti/scvf.area());
     }
 
 private:
