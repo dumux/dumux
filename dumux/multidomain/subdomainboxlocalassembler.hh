@@ -446,7 +446,9 @@ public:
             {
                 auto evalCouplingResidual = [&](Scalar priVar)
                 {
-                    this->couplingManager().updateCouplingContext(domainI, domainJ, globalJ, priVar, this->assembler());
+                    auto deflectedPriVars = origPriVarsJ;
+                    deflectedPriVars[pvIdx] = priVar;
+                    this->couplingManager().updateCouplingContext(domainI, domainJ, globalJ, deflectedPriVars, this->assembler());
                     return this->couplingManager().evalCouplingResidual(element, *this);
                 };
 
