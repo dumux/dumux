@@ -138,9 +138,9 @@ public:
         // Build the scvs and scv faces
         IndexType scvfIdx = 0;
         numBoundaryScvf_ = 0;
-        bool calcNewCellCenter = false;
         for (const auto& element : elements(gridView_))
         {
+            bool calcNewCellCenter = false;
             auto eIdx = problem.elementMapper().index(element);
 
             // reserve memory for the localToGlobalScvfIdx map
