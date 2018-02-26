@@ -19,8 +19,11 @@
 /*!
  * \file
  *
- * \brief This file tests the vtmv function with
- *  vtmv(Vector, FieldScalar, Vector) and vtmv(Vector, Matrix, Vector).
+ * \brief This file tests several math functions:
+ *     the vtmv function with vtmv(Vector, FieldScalar, Vector) and vtmv(Vector, Matrix, Vector).
+ *     the trace function
+ *     the harmonicMean function
+ * \todo test more math functions!
  *
  * We declare some vectors and matrices and test the combinations of them
  * against a previously calculated result.
@@ -54,6 +57,11 @@ int main() try
     K[1][1] = k;
     K[2][2] = k;
     Dune::DynamicMatrix<double> K_dyn(K);
+
+
+    //////////////////////////////////////////////////////////////////
+    ///// Dumux::vtmv ////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
 
     //! Set reference result. Should be -15 for all combinations
     const double reference = -15;
@@ -90,6 +98,37 @@ int main() try
     //! Test vtmv function with DynamicVector v1_dyn and DynamicMatrix K_dyn and DynamicVector v2_dyn
     if (!Dune::FloatCmp::eq(reference, Dumux::vtmv(v1_dyn, K_dyn, v2_dyn), 1e-6))
         DUNE_THROW(Dune::Exception, "vtmv-result does not match reference");
+
+
+    //////////////////////////////////////////////////////////////////
+    ///// Dumux::trace ///////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
+
+    const auto t1 = Dumux::trace(K);
+    const auto t2 = Dumux::trace(K_dyn);
+    if (!Dune::FloatCmp::eq(t1, t2, 1e-30))
+        DUNE_THROW(Dune::Exception, "Traces do not match!");
+
+
+    //////////////////////////////////////////////////////////////////
+    ///// Dumux::harmonicMean ////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
+
+    constexpr auto mean = Dumux::harmonicMean(4.0, 5.0);
+    static_assert( (mean - 4.0*5.0*2.0/(4.0+5.0)) < 1e-30 && (mean - 4.0*5.0*2.0/(4.0+5.0)) > -1e-30 , "Wrong harmonic mean!");
+
+    //////////////////////////////////////////////////////////////////
+    ///// Dumux::sign ////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
+
+    static_assert(Dumux::sign(0.0) == 0, "Wrong sign!");
+    static_assert(Dumux::sign(-0.0) == 0, "Wrong sign!");
+    static_assert(Dumux::sign(0) == 0, "Wrong sign!");
+    static_assert(Dumux::sign(-0) == 0, "Wrong sign!");
+    static_assert(Dumux::sign(1) == 1, "Wrong sign!");
+    static_assert(Dumux::sign(2.0) == 1, "Wrong sign!");
+    static_assert(Dumux::sign(-2) == -1, "Wrong sign!");
+    static_assert(Dumux::sign(-3.5) == -1, "Wrong sign!");
 }
 catch (Dune::Exception& e) {
     std::cerr << e << std::endl;

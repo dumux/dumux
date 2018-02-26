@@ -42,8 +42,10 @@ namespace Dumux
  * \param y The second input value
  */
 template <class Scalar>
-Scalar harmonicMean(Scalar x, Scalar y)
+constexpr Scalar harmonicMean(Scalar x, Scalar y) noexcept
 {
+    static_assert(Dune::IsNumber<Scalar>::value, "The arguments x and y have to be numbers!");
+
     if (x*y <= 0)
         return 0;
     return (2*x*y)/(x + y);
@@ -55,10 +57,13 @@ Scalar harmonicMean(Scalar x, Scalar y)
  *
  * \param x The first input value
  * \param y The second input value
+ * \note as std::sqrt is not constexpr this function is not constexpr
  */
 template <class Scalar>
-Scalar geometricMean(Scalar x, Scalar y)
+Scalar geometricMean(Scalar x, Scalar y) noexcept
 {
+    static_assert(Dune::IsNumber<Scalar>::value, "The arguments x and y have to be numbers!");
+
     if (x*y <= 0)
         return 0;
     using std::sqrt;
@@ -496,7 +501,7 @@ Scalar antoine(Scalar temperature,
  * Returns 0 if the argument is zero.
  */
 template<class ValueType>
-int sign(const ValueType& value)
+constexpr int sign(const ValueType& value) noexcept
 {
     return (ValueType(0) < value) - (value < ValueType(0));
 }
@@ -632,20 +637,21 @@ Dune::FieldMatrix<Scalar, rows1, cols2> multiplyMatrices(const Dune::FieldMatrix
 
 /*!
  * \ingroup Common
- * \brief Trace of dynamic matrix
+ * \brief Trace of a dense matrix
  *
- * \param M The dynamic matrix
+ * \param M The dense matrix
  */
-template <class Scalar>
-Scalar trace(const Dune::DynamicMatrix<Scalar>& M)
+template <class MatrixType>
+typename Dune::DenseMatrix<MatrixType>::field_type
+trace(const Dune::DenseMatrix<MatrixType>& M)
 {
-    std::size_t rows_T = M.M();
+    const auto rows = M.N();
+    DUNE_ASSERT_BOUNDS(rows == M.M()); // rows == cols
 
-    DUNE_ASSERT_BOUNDS(rows_T == M.N());
+    using MatType = Dune::DenseMatrix<MatrixType>;
+    typename MatType::field_type trace = 0.0;
 
-    Scalar trace = 0.0;
-
-    for (std::size_t i = 0; i < rows_T; ++i)
+    for (typename MatType::size_type i = 0; i < rows; ++i)
         trace += M[i][i];
 
     return trace;
