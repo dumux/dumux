@@ -3,12 +3,12 @@ File = ./single_equi.msh
 DomainMarkers = true
 
 [SpatialParams]
-BottomLayerPermeability = 1e-14
+BottomLayerPermeability = 1e-12
 UpperLayerPermeability = 1e-13
-FracturePermeability = 1e-7
-BottomLayerPorosity = 0.15
+FracturePermeability = 1e-10
+BottomLayerPorosity = 0.25
 UpperLayerPorosity = 0.2
-FracturePorosity = 0.6
+FracturePorosity = 0.4
 
 [OutputFile]
 Name = single_reference.txt
