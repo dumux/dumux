@@ -455,7 +455,7 @@ public:
                     uGradient[coordDir].axpy(values[scalarDispLFS.localIndex(i)],vShapeGradient[i]);
             }
 
-            const Dune::FieldVector<Scalar,3> lameParams = this->problem_().spatialParams().lameParams(element, fvGeometry, 0);
+            const Dune::FieldVector<Scalar,4> lameParams = this->problem_().spatialParams().lameParams(element, fvGeometry, 0);
             //Young's modulus of the spring for the pure elastic model
             E[eIdx] = lameParams[0];
             //bulk modulus for both the pure elastic and the viscoelastic model

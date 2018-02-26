@@ -85,7 +85,7 @@ public:
         effFluidDensity_ = this->density(wPhaseIdx) * this->saturation(wPhaseIdx)
                         + this->density(nPhaseIdx) * this->saturation(nPhaseIdx);
 
-        const Dune::FieldVector<Scalar, 3> &lameParams =
+        const Dune::FieldVector<Scalar, 4> &lameParams =
                 problem.spatialParams().lameParams(element, fvGeometry, scvIdx);
 
         Scalar E = lameParams[0];

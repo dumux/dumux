@@ -148,7 +148,7 @@ public:
         FVElementGeometry fvGeometry;
         fvGeometry.update(model_.problem().gridView(), eg.entity());
         // retrieve lame parameters for calculation of effective stresses
-        const Dune::FieldVector<Scalar,3> lameParams = model_.problem().spatialParams().lameParams(eg.entity(), fvGeometry, 0);
+        const Dune::FieldVector<Scalar,4> lameParams = model_.problem().spatialParams().lameParams(eg.entity(), fvGeometry, 0);
 
         Scalar E = lameParams[0];
         //bulk modulus for both the pure elastic and the viscoelastic model

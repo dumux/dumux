@@ -188,40 +188,19 @@ public:
                     const FVElementGeometry &fvGeometry,
                     int scvIdx) const
     {
+        GlobalPosition center = element.geometry().center();
 
-            GlobalPosition center = element.geometry().center();
-
-            Scalar xCoord = center[0];
-            Scalar yCoord = center[1];
-
-            Scalar xCenterFault = 500.0;
-            Scalar yCenterFault = 1000.0;
-
-            Scalar xFaultDistanceCenterToBothTips = 87.5; // x-distance in m to both tips of the fault
-
-            Scalar yFaultBottom = yCenterFault - tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
-            Scalar yFaultTop = yCenterFault + tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
-
-            Scalar deltaX = xCenterFault - xCoord;
-    //         std::cout << "deltaX is " << deltaX << std::endl;
-
-            //Different E, but same during initialization
-
-            if (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
-                yCoord < yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX + spatialTolarance_ &&
-                yCoord > yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX - spatialTolarance_ &&
-                yCoord > yFaultBottom &&
-                yCoord < yFaultTop)
-            {
-                return phi_;
-            }
+        if (isInFault_(center))
+        {
+            return phi_;
+        }
 //             else if (xCoord > 487.5 && xCoord < 512.5 &&
 //                      yCoord > 987.5   && yCoord < 1012.5)
 //             {
 //                 return KFault_;
 //             }
-            else
-                return phi_;
+        else
+            return phi_;
 
     }
 
@@ -232,38 +211,17 @@ public:
      */
     double porosity(const GlobalPosition& globalPos) const
     {
-
-            Scalar xCoord = globalPos[0];
-            Scalar yCoord = globalPos[1];
-
-            Scalar xCenterFault = 500.0;
-            Scalar yCenterFault = 1000.0;
-
-            Scalar xFaultDistanceCenterToBothTips = 87.5; // x-distance in m to both tips of the fault
-
-            Scalar yFaultBottom = yCenterFault - tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
-            Scalar yFaultTop = yCenterFault + tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
-
-            Scalar deltaX = xCenterFault - xCoord;
-    //         std::cout << "deltaX is " << deltaX << std::endl;
-
-            //Different E, but same during initialization
-
-            if (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
-                yCoord < yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX + spatialTolarance_ &&
-                yCoord > yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX - spatialTolarance_ &&
-                yCoord > yFaultBottom &&
-                yCoord < yFaultTop)
-            {
+        if (isInFault_(globalPos))
+        {
                 return phi_;
-            }
+        }
 //             else if (xCoord > 487.5 && xCoord < 512.5 &&
 //                      yCoord > 987.5   && yCoord < 1012.5)
 //             {
 //                 return KFault_;
 //             }
-            else
-                return phi_;
+        else
+            return phi_;
 
     }
     /*!
@@ -288,27 +246,7 @@ public:
         {
             GlobalPosition center = element.geometry().center();
 
-            Scalar xCoord = center[0];
-            Scalar yCoord = center[1];
-
-            Scalar xCenterFault = 500.0;
-            Scalar yCenterFault = 1000.0;
-
-            Scalar xFaultDistanceCenterToBothTips = 87.5; // x-distance in m to both tips of the fault
-
-            Scalar yFaultBottom = yCenterFault - tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
-            Scalar yFaultTop = yCenterFault + tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
-
-            Scalar deltaX = xCenterFault - xCoord;
-    //         std::cout << "deltaX is " << deltaX << std::endl;
-
-            //Different E, but same during initialization
-
-            if (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
-                yCoord < yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX + spatialTolarance_ &&
-                yCoord > yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX - spatialTolarance_ &&
-                yCoord > yFaultBottom &&
-                yCoord < yFaultTop)
+            if (isInFault_(center))
             {
                 return KFault_;
             }
@@ -328,27 +266,7 @@ public:
             return Kinit_; // intrinsic permeability applied during initialization
         else
         {
-            Scalar xCoord = globalPos[0];
-            Scalar yCoord = globalPos[1];
-
-            Scalar xCenterFault = 500.0;
-            Scalar yCenterFault = 1000.0;
-
-            Scalar xFaultDistanceCenterToBothTips = 87.5; // x-distance in m to both tips of the fault
-
-            Scalar yFaultBottom = yCenterFault - tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
-            Scalar yFaultTop = yCenterFault + tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
-
-            Scalar deltaX = xCenterFault - xCoord;
-    //         std::cout << "deltaX is " << deltaX << std::endl;
-
-            //Different E, but same during initialization
-
-            if (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
-                yCoord < yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX + spatialTolarance_ &&
-                yCoord > yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX - spatialTolarance_ &&
-                yCoord > yFaultBottom &&
-                yCoord < yFaultTop)
+            if (isInFault_(globalPos))
             {
                 return KFault_;
             }
@@ -405,56 +323,29 @@ public:
         // Lame parameters
         Dune::FieldVector<Scalar, 4> param;
 
-        //Different E, but same during initialization
-//         if(episode_ <= 1)
-//         {
-//             param[0] = Ematrix_;
-//             param[1] = Bmatrix_;
-//         }
-//         else
-//         {
         GlobalPosition center = element.geometry().center();
 
-        Scalar xCoord = center[0];
-        Scalar yCoord = center[1];
-
-        Scalar xCenterFault = 500.0;
-        Scalar yCenterFault = 1000.0;
-
-        Scalar xFaultDistanceCenterToBothTips = 87.5; // x-distance in m to both tips of the fault
-
-        Scalar yFaultBottom = yCenterFault - tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
-        Scalar yFaultTop = yCenterFault + tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
-
-        Scalar deltaX = xCenterFault - xCoord;
-//         std::cout << "deltaX is " << deltaX << std::endl;
-
-            if (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
-                yCoord < yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX + spatialTolarance_ &&
-                yCoord > yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX - spatialTolarance_ &&
-                yCoord > yFaultBottom &&
-                yCoord < yFaultTop)
-
-            {
-    //             std::cout << "I am here!" << std::endl;
-                param[0] = Efault_;
-                param[1] = Bfault_;
-                param[2] = nuFault_;
-                param[3] = poreCompFault_;
-            }
+        if (isInFault_(center))
+        {
+//             std::cout << "I am here!" << std::endl;
+            param[0] = Efault_;
+            param[1] = Bfault_;
+            param[2] = nuFault_;
+            param[3] = poreCompFault_;
+        }
 //             else if (xCoord > 487.5 && xCoord < 512.5 &&
 //                      yCoord > 987.5   && yCoord < 1012.5)
 //             {
 //                 param[0] = Efault_;
 //                 param[1] = Bfault_;
 //             }
-            else
-            {
-                param[0] = Ematrix_;
-                param[1] = Bmatrix_;
-                param[2] = nuMatrix_;
-                param[3] = poreCompMatrix_;
-            }
+        else
+        {
+            param[0] = Ematrix_;
+            param[1] = Bmatrix_;
+            param[2] = nuMatrix_;
+            param[3] = poreCompMatrix_;
+        }
 //         }
 
         return param;
@@ -475,43 +366,14 @@ public:
         // Lame parameters
         Dune::FieldVector<Scalar, 2> failureCurveParams;
 
-        //Different E, but same during initialization
-//         if(episode_ <= 1)
-//         {
-//             failureCurveParams[0] = frictionAngleMatrix_;
-//             failureCurveParams[1] = cohesionMatrix_;
-//         }
-//         else
-//         {
-            GlobalPosition center = element.geometry().center();
+        GlobalPosition center = element.geometry().center();
 
-            Scalar xCoord = center[0];
-//             Scalar yCoord = center[1];
-            Scalar yCoord = center[1];
+        if (isInFault_(center))
+        {
 
-            Scalar xCenterFault = 500.0;
-            Scalar yCenterFault = 1000.0;
-
-            Scalar xFaultDistanceCenterToBothTips = 87.5; // x-distance in m to both tips of the fault
-
-            Scalar yFaultBottom = yCenterFault - tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
-            Scalar yFaultTop = yCenterFault + tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
-
-            Scalar deltaX = xCenterFault - xCoord;
-
-            if (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
-                yCoord < yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX + spatialTolarance_ &&
-                yCoord > yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX - spatialTolarance_ &&
-//                 yCoord < 50 &&
-//                 yCoord > 40 &&
-                yCoord > yFaultBottom &&
-                yCoord < yFaultTop)
-
-            {
-
-                failureCurveParams[0] = frictionAngleFault_;
-                failureCurveParams[1] = cohesionFault_;
-            }
+            failureCurveParams[0] = frictionAngleFault_;
+            failureCurveParams[1] = cohesionFault_;
+        }
 //             else if (xCoord > 487.5 && xCoord < 512.5 &&
 // //                      yCoord < 50 &&
 // //                      yCoord > 40 &&
@@ -520,9 +382,9 @@ public:
 //                 failureCurveParams[0] = frictionAngleFault_;
 //                 failureCurveParams[1] = cohesionFault_;
 //             }
-            else
-                failureCurveParams[0] = frictionAngleMatrix_;
-                failureCurveParams[1] = cohesionMatrix_;
+        else
+            failureCurveParams[0] = frictionAngleMatrix_;
+            failureCurveParams[1] = cohesionMatrix_;
 //         }
 
         return failureCurveParams;
@@ -556,6 +418,35 @@ public:
     }
 
 private:
+    bool isInFault_(const GlobalPosition &globalPos) const
+    {
+        Scalar xCoord = globalPos[0];
+        Scalar yCoord = globalPos[1];
+
+        Scalar xCenterFault = 500.0;
+        Scalar yCenterFault = 1000.0;
+
+        Scalar xFaultDistanceCenterToBothTips = 87.5; // x-distance in m to both tips of the fault
+
+        Scalar yFaultBottom = yCenterFault - tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
+        Scalar yFaultTop = yCenterFault + tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
+
+        Scalar deltaX = xCenterFault - xCoord;
+
+        if (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
+            yCoord < yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX + spatialTolarance_ &&
+            yCoord > yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX - spatialTolarance_ &&
+//                 yCoord < 50 &&
+//                 yCoord > 40 &&
+            yCoord > yFaultBottom &&
+            yCoord < yFaultTop)
+            return true;
+        else
+            return false;
+    }
+
+
+
     Scalar spatialTolarance_;
     Dune::FieldMatrix<Scalar,dim,dim> KFault_, KMatrix_, Kinit_;
     Scalar layerBottom_;
