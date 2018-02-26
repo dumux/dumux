@@ -19,7 +19,7 @@ NumOutputFiles = 20
 MaxTimeStepSize = 1e8
 
 [Problem]
-Name = singlefracture # name passed to the output routines
+Name = singlefracture_reference # name passed to the output routines
 OverPressure = 3e5
 BoundaryMoleFrac = 1e-2
 EnableGravity = false # disable gravity
