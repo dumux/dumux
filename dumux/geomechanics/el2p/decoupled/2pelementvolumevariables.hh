@@ -226,8 +226,8 @@ public:
 
             for (int j = 0; j < shapeVal.size(); ++j)
             {
-// //                 B += problem.getBNodeWiseAveraged(element, fvGeometry, j) * shapeVal[j];
-// //                B += shapeVal[j]/problem.getBNodeWiseAveraged(element, fvGeometry, j);
+    // //                 B += problem.getBNodeWiseAveraged(element, fvGeometry, j) * shapeVal[j];
+    // //                B += shapeVal[j]/problem.getBNodeWiseAveraged(element, fvGeometry, j);
                 pWCurrentIteration +=  (*this)[j].pressure(wPhaseIdx) * shapeVal[j];
                 pNCurrentIteration +=  (*this)[j].pressure(nPhaseIdx) * shapeVal[j];
                 sWCurrentIteration +=  (*this)[j].saturation(wPhaseIdx) * shapeVal[j];
@@ -260,10 +260,12 @@ public:
             Scalar effPressureOldIteration = pWOldIteration *  sWOldIteration +
                                                     pNOldIteration *  sNOldIteration;
 
-            // for fixed-stress
-            (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_ = 1.0/B * (effPressureCurrentIteration -   effPressureOldIteration) + (*this)[scvIdx].deltaVolumetricStrainOldIteration_;
             // for pore compressibility
-//             (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_ = (*this)[scvIdx].initialPorosity() * poreCompressibility * (effPressureCurrentIteration -   effPressureOldIteration);
+            if (GET_RUNTIME_PARAM(TypeTag, bool,PoreCompressibility.UsePoreCompressibility))
+                (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_ = (*this)[scvIdx].initialPorosity() * poreCompressibility * (effPressureCurrentIteration -   effPressureOldIteration);
+            // for fixed-stress
+            else
+                (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_ = 1.0/B * (effPressureCurrentIteration -   effPressureOldIteration) + (*this)[scvIdx].deltaVolumetricStrainOldIteration_;
 
             if(problem.coupled() == true)
             {

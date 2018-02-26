@@ -406,6 +406,16 @@ public:
                     << "----------------------------- \n"
                     << std::endl;
 
+
+//                     std::ofstream file2;
+//                     std::string outname2 = "bOutput.txt";
+//                     file2.open(outname2, std::ios::out);
+//                     if (file2.fail())
+//                         throw std::ios_base::failure(std::strerror(errno));
+//         //             for (int i = 0; i < b.base().size(); i++)
+//         //                 file2 << b.base()[i] << std::endl;
+//                     printvector(file2, b, "b", "row", 5, 1, 5);
+
                     // After last iteration of the initialization
                     if((time > tInitEnd_ - eps_) && (time < tInitEnd_ + eps_) && (iterator == numIterations_) )
                     {
@@ -637,11 +647,15 @@ public:
         MechanicsProblem().setRhon() = rhonVector_;
         MechanicsProblem().setRhow() = rhowVector_;
 
-        // commented for pore compressibility
-//         TranspProblem().setpWOldIteration_() = pwVector_;
-//         TranspProblem().setpNOldIteration_() = pnVector_;
-//         TranspProblem().setsWOldIteration_() = SwVector_;
-//         TranspProblem().setsNOldIteration_() = SnVector_;
+        // pwVector_ etc. is only updated for the fixed stress scheme
+        // When the pore compressibility is used, pwVector_ stores the initial values
+        if (!(GET_RUNTIME_PARAM(TypeTag, bool, PoreCompressibility.UsePoreCompressibility)))
+        {
+            TranspProblem().setpWOldIteration_() = pwVector_;
+            TranspProblem().setpNOldIteration_() = pnVector_;
+            TranspProblem().setsWOldIteration_() = SwVector_;
+            TranspProblem().setsNOldIteration_() = SnVector_;
+        }
 
 //         // check of get function
 //         for (const auto& element : elements(gridView_))
@@ -675,6 +689,27 @@ public:
 //         ElementVolumeVariablesMechanicsProblem elemVolVarsMechanicsProblem;
 
 
+//         ScalarField rank;
+//         rank.resize(numElements);
+//
+//         std::vector<Scalar> zerosNumVert(numVert, 0.0);
+//         std::vector<int> zerosNumVertInt(numVert, 0);
+//
+//         numScvOfNode_ = zerosNumVert;
+//
+//         std::ifstream inputfile("xOutput.txt");
+//         if (inputfile.fail())
+//             throw std::ios_base::failure(std::strerror(errno));
+//
+//         std::cout << "Read xOutput.txt" << std::endl;
+
+
+//         std::string line;
+//         std::vector<std::string> xOutput;
+//         while (std::getline(inputfile, line))
+//         {
+//             xOutput.push_back(line);
+//         }
 
         for (const auto& element : elements(gridView_))
         {
