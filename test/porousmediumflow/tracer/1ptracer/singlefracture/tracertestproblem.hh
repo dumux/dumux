@@ -50,7 +50,7 @@ NEW_TYPE_TAG(TracerTestProblem, INHERITS_FROM(Tracer));
 NEW_TYPE_TAG(TracerTestCCProblem, INHERITS_FROM(CCMpfaModel, TracerTestProblem));
 
 // enable caching
-SET_BOOL_PROP(TracerTestProblem, EnableGridVolumeVariablesCache, false);
+SET_BOOL_PROP(TracerTestProblem, EnableGridVolumeVariablesCache, true);
 SET_BOOL_PROP(TracerTestProblem, EnableGridFluxVariablesCache, false);
 SET_BOOL_PROP(TracerTestProblem, EnableFVGridGeometryCache, false);
 

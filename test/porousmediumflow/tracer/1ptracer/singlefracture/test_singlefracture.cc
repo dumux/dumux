@@ -86,7 +86,10 @@ int main(int argc, char** argv) try
     //! data necessary to transfer to tracer model
     using Scalar =  typename GET_PROP_TYPE(OnePTypeTag, Scalar);
     std::vector<Scalar> volumeFlux;
-    Scalar maxDt = std::numeric_limits<Scalar>::max();
+    Scalar maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+
+    // specify if implicit or explicit solve is to be done
+    constexpr bool solveImplicitTracer = false;
 
     //! use same solution vector for both sub-problems
     using JacobianMatrix = typename GET_PROP_TYPE(OnePTypeTag, JacobianMatrix);
@@ -253,12 +256,15 @@ int main(int argc, char** argv) try
             const auto eIdx = fvGridGeometry->elementMapper().index(element);
             v[eIdx] = scvVelocity;
 
-            // evaluate cfl crit for this element
-            using ElementSolution = typename GET_PROP_TYPE(OnePTypeTag, ElementSolutionVector);
-            const auto elemSol = ElementSolution(element, elemVolVars, fvGeometry);
-            const auto phi = problemOneP->spatialParams().porosity(element, fvGeometry.scv(eIdx), elemSol);
-            Scalar elemDt = 0.9*phi*eg.volume()/abs(sumInflux);
-            maxDt = min( maxDt, elemDt );
+            // maybe evaluate cfl crit for this element
+            if (!solveImplicitTracer)
+            {
+                using ElementSolution = typename GET_PROP_TYPE(OnePTypeTag, ElementSolutionVector);
+                const auto elemSol = ElementSolution(element, elemVolVars, fvGeometry);
+                const auto phi = problemOneP->spatialParams().porosity(element, fvGeometry.scv(eIdx), elemSol);
+                Scalar elemDt = 0.9*phi*eg.volume()/abs(sumInflux);
+                maxDt = min( maxDt, elemDt );
+            }
         }
 
         //! write output to vtk
@@ -318,13 +324,12 @@ int main(int argc, char** argv) try
 
     using std::min;
     maxDt = min(maxDt, deltaT);
-
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, maxDt, tEnd);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, /*dtInit*/maxDt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
     std::cout << "Maximum time step size was set to " << maxDt << std::endl;
 
     //! the assembler with time loop for instationary problem
-    using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
+    using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/solveImplicitTracer>;
     auto assembler = std::make_shared<TracerAssembler>(tracerProblem, tracerFvGridGeometry, gridVariables, timeLoop);
     assembler->setLinearSystem(A, r);
 
@@ -382,13 +387,13 @@ int main(int argc, char** argv) try
         tracerProblem->writeMassDistribution(timeLoop->time(), x, *tracerFvGridGeometry, *gridVariables);
 
         // write vtk output on check points
-        if (timeLoop->isCheckPoint())
+        if (timeLoop->isCheckPoint() || timeLoop->willBeFinished() || timeLoop->finished())
             vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        // set new dt as suggested by newton controller
+        // always try to use the maximum time step size
         timeLoop->setTimeStepSize(maxDt);
 
     } while (!timeLoop->finished());

@@ -15,7 +15,8 @@ Name = single_reference.txt
 
 [TimeLoop]
 TEnd = 1e8 # [s]
-NumOutputFiles = 50
+NumOutputFiles = 20
+MaxTimeStepSize = 1e8
 
 [Problem]
 Name = singlefracture # name passed to the output routines
