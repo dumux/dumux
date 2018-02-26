@@ -89,7 +89,7 @@ int main(int argc, char** argv) try
     Scalar maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
     // specify if implicit or explicit solve is to be done
-    constexpr bool solveImplicitTracer = false;
+    constexpr bool solveImplicitTracer = true;
 
     //! use same solution vector for both sub-problems
     using JacobianMatrix = typename GET_PROP_TYPE(OnePTypeTag, JacobianMatrix);
@@ -320,7 +320,7 @@ int main(int argc, char** argv) try
 
     //! instantiate time loop
     const int numOutputFiles = getParam<int>("TimeLoop.NumOutputFiles");
-    const Scalar deltaT = tEnd/numOutputFiles;
+    const Scalar deltaT = numOutputFiles < 2 ? tEnd : tEnd/numOutputFiles;
 
     using std::min;
     maxDt = min(maxDt, deltaT);
@@ -337,7 +337,10 @@ int main(int argc, char** argv) try
     VtkOutputModule<TracerTypeTag> vtkWriter(*tracerProblem, *tracerFvGridGeometry, *gridVariables, x, tracerProblem->name());
     using VtkOutputFields = typename GET_PROP_TYPE(TracerTypeTag, VtkOutputFields);
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
-    vtkWriter.write(0.0);
+
+    // write initial solution only if any output is desired
+    if (numOutputFiles > 0)
+        vtkWriter.write(0.0);
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // run instationary non-linear simulation
@@ -387,7 +390,7 @@ int main(int argc, char** argv) try
         tracerProblem->writeMassDistribution(timeLoop->time(), x, *tracerFvGridGeometry, *gridVariables);
 
         // write vtk output on check points
-        if (timeLoop->isCheckPoint() || timeLoop->willBeFinished() || timeLoop->finished())
+        if ((timeLoop->isCheckPoint() || timeLoop->finished()) && numOutputFiles > 0)
             vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
