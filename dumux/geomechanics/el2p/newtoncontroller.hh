@@ -53,14 +53,13 @@ class ElTwoPNewtonController : public NewtonController<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) LinearSolver;
 
 public:
     /*!
      * \brief Destructor
      */
     ElTwoPNewtonController(const Problem &problem)
-    : ParentType(problem),linearSolver_(problem)
+    : ParentType(problem)
     {
         this->setTargetSteps(9);
         this->setMaxSteps(18);
@@ -87,14 +86,20 @@ public:
             const SolutionVector &uLastIter,
             const SolutionVector &deltaU)
     {
-//        this->writeConvergence_(uLastIter, deltaU);
 
         newtonUpdateRelError(uLastIter, deltaU);
 
         uCurrentIter = uLastIter;
         uCurrentIter -= deltaU;
 
-//        printvector(std::cout, deltaU, "new solution", "row", 12, 1, 3);
+        if (this->enableResidualCriterion_)
+        {
+            SolutionVector tmp(uLastIter);
+            tmp.base() = 0;
+            this->residual_ = this->method().model().globalResidual(tmp, uCurrentIter);
+            this->reduction_ = this->residual_;
+            this->reduction_ /= this->initialResidual_;
+        }
     }
 
     /*!
@@ -120,11 +125,11 @@ public:
                     norm2 = this->gridView_().comm().sum(norm2);
 
                 using std::sqrt;
-                initialAbsoluteError_ = sqrt(norm2);
-                lastAbsoluteError_ = initialAbsoluteError_;
+                using std::max;
+                this->initialResidual_ = max(1e-20, sqrt(norm2));
             }
 
-            int converged = linearSolver_.solve(A.base(), x.base(), b.base());
+            int converged = this->linearSolver_.solve(A.base(), x.base(), b.base());
 //            printvector(std::cout, x.base(), "x", "row", 5, 1, 5);
 //            printvector(std::cout, b.base(), "rhs", "row", 5, 1, 5);
 //            Dune::writeMatrixToMatlab(A.base(), "matrix.txt");
@@ -167,16 +172,6 @@ public:
             throw p;
         }
     }
-
-    // absolute errors and tolerance
-    Scalar absoluteError_;
-    Scalar lastAbsoluteError_;
-    Scalar initialAbsoluteError_;
-    Scalar absoluteTolerance_;
-
-    // the linear solver
-    LinearSolver linearSolver_;
-
 };
 }
 

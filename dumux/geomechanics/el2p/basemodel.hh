@@ -202,6 +202,9 @@ public:
     Scalar globalResidual(SolutionVector &residual,
                           const SolutionVector &u)
     {
+        if (gridView_().comm().size() > 1)
+            DUNE_THROW(Dune::NotImplemented, "globalResidual method for the parallel case");
+
         jacAsm_->gridOperator().residual(u, residual);
 
         // calculate the square norm of the residual
@@ -210,13 +213,13 @@ public:
             result2 = gridView_().comm().sum(result2);
 
         // add up the residuals on the process borders
-        if (isBox && gridView_().comm().size() > 1) {
-            VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
-                sumHandle(residual, vertexMapper());
-            gridView_().communicate(sumHandle,
-                                    Dune::InteriorBorder_InteriorBorder_Interface,
-                                    Dune::ForwardCommunication);
-        }
+//         if (isBox && gridView_().comm().size() > 1) {
+//             VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
+//                 sumHandle(residual, vertexMapper());
+//             gridView_().communicate(sumHandle,
+//                                     Dune::InteriorBorder_InteriorBorder_Interface,
+//                                     Dune::ForwardCommunication);
+//         }
 
         using std::sqrt;
         return sqrt(result2);
