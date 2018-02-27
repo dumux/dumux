@@ -74,7 +74,7 @@ public:
     DiffusionProblem2P(TimeManager& timeManager, Grid& grid)
     : ParentType(timeManager, grid), gravity_(0)
     {
-        spatialParams_ = std::make_shared<SpatialParams>(grid.leafGridView());
+        spatialParams_ = std::make_shared<SpatialParams>(asImp_());
         gravity_ = 0;
         if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dim - 1] = -9.81;
@@ -107,7 +107,7 @@ public:
     DiffusionProblem2P(Grid& grid)
     : ParentType(grid, false), gravity_(0)
     {
-        spatialParams_ = std::make_shared<SpatialParams>(grid.leafGridView());
+        spatialParams_ = std::make_shared<SpatialParams>(asImp_());
         gravity_ = 0;
         if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dim - 1] = -9.81;

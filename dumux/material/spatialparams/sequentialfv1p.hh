@@ -46,6 +46,7 @@ NEW_PROP_TAG(SpatialParams);
 template<class TypeTag>
 class SequentialFVSpatialParamsOneP
 {
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Implementation = typename GET_PROP_TYPE(TypeTag, SpatialParams);
@@ -61,7 +62,7 @@ class SequentialFVSpatialParamsOneP
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
-    SequentialFVSpatialParamsOneP(const GridView &gridView)
+    SequentialFVSpatialParamsOneP(const Problem& problem)
     {
     }
     /*!

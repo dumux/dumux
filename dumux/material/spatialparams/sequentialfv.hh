@@ -38,6 +38,7 @@ namespace Dumux
 template<class TypeTag>
 class SequentialFVSpatialParams: public SequentialFVSpatialParamsOneP<TypeTag>
 {
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Implementation = typename GET_PROP_TYPE(TypeTag, SpatialParams);
@@ -54,8 +55,8 @@ class SequentialFVSpatialParams: public SequentialFVSpatialParamsOneP<TypeTag>
     /// @endcond
 
 public:
-    SequentialFVSpatialParams(const GridView &gridView)
-    :SequentialFVSpatialParamsOneP<TypeTag>(gridView)
+    SequentialFVSpatialParams(const Problem& problem)
+    :SequentialFVSpatialParamsOneP<TypeTag>(problem)
     {
     }
 

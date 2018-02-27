@@ -67,6 +67,7 @@ template<class TypeTag>
 class Test3d2pSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
     using ParentType = SequentialFVSpatialParams<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -110,8 +111,8 @@ public:
     }
 
 
-    Test3d2pSpatialParams(const GridView& gridView)
-    : ParentType(gridView), constPermeability_(0)
+    Test3d2pSpatialParams(const Problem& problem)
+    : ParentType(problem), constPermeability_(0)
     {
 
 
