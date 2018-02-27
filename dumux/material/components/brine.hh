@@ -396,7 +396,7 @@ Scalar Brine<Scalar, H2O>::constantSalinity = 0.1;
 
 } // end namespace Components
 
-template <class Scalar, class H2O>
+template <class Scalar, class H2O = TabulatedComponent<Scalar, H2O<Scalar>>>
 using Brine DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::Brine<Scalar, H2O>;
 
 } // end namespace Dumux
