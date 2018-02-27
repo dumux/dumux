@@ -75,12 +75,17 @@ public:
         return asImp_().getU();
     }
 
-    Scalar getVH(const element)
+    Scalar getV(const element)
     {
         return asImp_().getV();
     }
 
-    Scalar getVH(const element)
+    Scalar getZ(const element)
+    {
+        return asImp_().getZ();
+    }
+
+    Scalar getKs(const element)
     {
         return asImp_().getZ();
     }
@@ -92,10 +97,10 @@ public:
 
     Scalar getFrictionUstarH(const element)
     {
-        return asImp_().getFrictionH();
+        return asImp_().getFrictionUstarH();
     }
 
-    Scalar getFrictionUstarH(const element)
+    Scalar getGravity(const element)
     {
         return asImp_().getGravity();
     }

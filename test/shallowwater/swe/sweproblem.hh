@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup SWE Tests
- * \brief A water test for the SWEs.
+ * \brief A  simple dam break test for the SWEs.
  */
 #ifndef DUMUX_SWE_TEST_PROBLEM_HH
 #define DUMUX_SWE_TEST_PROBLEM_HH
@@ -28,6 +28,7 @@
 #include <dumux/shallowwater/properties.hh>
 #include <dumux/shallowwater/swe/problem.hh>
 #include <dumux/shallowwater/swe/model.hh>
+#include "swetestspatialparams.hh"
 
 
 namespace Dumux
@@ -43,6 +44,7 @@ class SweTestProblem;
 // Specify the properties for the problem
 namespace Properties
 {
+NEW_TYPE_TAG(SweTypeTag, INHERITS_FROM(Swe, SweTestSpatialParams));
 NEW_TYPE_TAG(SweTestProblem, INHERITS_FROM(CCTpfaModel, Swe));
 
 // Use 2d YaspGrid
