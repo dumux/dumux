@@ -144,7 +144,16 @@ SET_TYPE_PROP(NavierStokesNC, VolumeVariables, NavierStokesNCVolumeVariables<Typ
 SET_TYPE_PROP(NavierStokesNC, FluxVariables, NavierStokesNCFluxVariables<TypeTag>);
 
 //! The indices
-SET_TYPE_PROP(NavierStokesNC, Indices, NavierStokesNCIndices<TypeTag>);
+SET_PROP(NavierStokesNC, Indices)
+{
+private:
+    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+public:
+    using type = NavierStokesNCIndices<dim, numEq, phaseIdx, replaceCompEqIdx>;
+};
 
 //! The vtk output fields
 SET_TYPE_PROP(NavierStokesNC, VtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>);
@@ -171,7 +180,16 @@ SET_TYPE_PROP(NavierStokesNC, MolecularDiffusionType, FicksLaw<TypeTag>);
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 //! The isothermal indices
-SET_TYPE_PROP(NavierStokesNCNI, IsothermalIndices, NavierStokesNCIndices<TypeTag>);
+SET_PROP(NavierStokesNCNI, IsothermalIndices)
+{
+private:
+    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+public:
+    using type = NavierStokesNCIndices<dim, numEq, phaseIdx, replaceCompEqIdx>;
+};
 
 //! The isothermal vtk output fields
 SET_TYPE_PROP(NavierStokesNCNI, IsothermalVtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>);

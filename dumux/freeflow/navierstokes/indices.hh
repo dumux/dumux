@@ -26,16 +26,18 @@
 
 #include <dumux/common/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // \{
 /*!
  * \ingroup NavierStokesModel
  * \brief The common indices for the isothermal Navier-Stokes model.
  *
+ * \tparam dimension The dimension of the problem
+ * \tparam numEquations the number of model equations
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int PVOffset = 0>
+template <int dimension, int numEquations, int PVOffset = 0>
 struct NavierStokesIndices
 {
 
@@ -47,10 +49,9 @@ struct NavierStokesIndices
     static constexpr int conti0EqIdx = massBalanceIdx; //!< Index of the mass balance equation
     static constexpr int pressureIdx = massBalanceIdx; //!< Index of the pressure in a solution vector
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr auto dim = GridView::dimension;
-    static constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
-    static constexpr auto momentumBalanceOffset = GET_PROP_VALUE(TypeTag, NumEq) - dim;
+    static constexpr auto dim = dimension;
+    static constexpr auto numEq = numEquations;
+    static constexpr auto momentumBalanceOffset = numEquations - dim;
 
     static constexpr int momentumBalanceIdx = PVOffset + momentumBalanceOffset; //!< Index of the momentum balance equation
     static constexpr int momentumXBalanceIdx = momentumBalanceIdx; //!< Index of the momentum balance equation

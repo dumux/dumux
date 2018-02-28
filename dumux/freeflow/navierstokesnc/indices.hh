@@ -27,8 +27,8 @@
 #include <dumux/freeflow/navierstokes/indices.hh>
 #include <dumux/common/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // \{
 /*!
  * \ingroup NavierStokesNCModel
@@ -36,19 +36,21 @@ namespace Dumux
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int PVOffset = 0>
-struct NavierStokesNCIndices : public NavierStokesIndices<TypeTag, PVOffset>
+template <int dimension, int numEquations,
+          int thePhaseIdx, int theReplaceCompEqIdx,
+          int PVOffset = 0>
+struct NavierStokesNCIndices : public NavierStokesIndices<dimension, numEquations, PVOffset>
 {
 private:
-    using ParentType = NavierStokesIndices<TypeTag, PVOffset>;
+    using ParentType = NavierStokesIndices<dimension, numEquations, PVOffset>;
 
 public:
 
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx); //!< The phase index
+    static constexpr int phaseIdx = thePhaseIdx; //!< The phase index
     static constexpr int mainCompIdx = phaseIdx; //!< The index of the main component
 
     //! The index of the component whose mass balance will be replaced by the total one
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static constexpr int replaceCompEqIdx = theReplaceCompEqIdx;
 };
 
 // \}
