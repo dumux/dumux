@@ -55,7 +55,7 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the Swe inherits from shallow water
-NEW_TYPE_TAG(Swe, INHERITS_FROM(ModelProperties));
+NEW_TYPE_TAG(Swe, INHERITS_FROM(ShallowWater));
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values for shallow water model

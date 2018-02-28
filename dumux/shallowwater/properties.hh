@@ -34,7 +34,7 @@ namespace Dumux
 namespace Properties
 {
 //! Type tag for shallow water equation models
-//NEW_TYPE_TAG(ShallowWater, INHERITS_FROM(ModelProperties));
+NEW_TYPE_TAG(ShallowWater, INHERITS_FROM(ModelProperties));
 
 } // namespace Properties
 } // namespace Dumux

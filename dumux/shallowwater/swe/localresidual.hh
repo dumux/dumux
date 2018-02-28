@@ -35,7 +35,7 @@ namespace Dumux
 
 /*!
  * \ingroup SweModel
- * \brief Element-wise calculation of the Navier-Stokes residual for models using the staggered discretization
+ * \brief Element-wise calculation of the residual for the shallow water equations
  */
 template<class TypeTag>
 class SweResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
