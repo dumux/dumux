@@ -494,13 +494,22 @@ public:
     Scalar globalResidual(SolutionVector &residual)
     {
         residual = 0;
+        residual[cellCenterIdx].resize(asImp_().numCellCenterDofs());
+        residual[faceIdx].resize(asImp_().numFaceDofs());
 
         for (const auto& element : elements(this->gridView_())) {
             this->localResidual().eval(element);
 
+            int ccGlobalI_ = this->problem_().elementMapper().index(element);
+            residual[cellCenterIdx][ccGlobalI_] = this->localResidual().ccResidual();
 
-//             int globalI = this->elementMapper().index(element);
-//             residual[cellCenterIdx][globalI] = this->localResidual().residual(0);
+            auto fvGeometry = localView(this->globalFvGeometry());
+            fvGeometry.bind(element);
+
+            for(auto&& scvf : scvfs(fvGeometry))
+            {
+                residual[faceIdx][scvf.dofIndex()] += this->localResidual().faceResidual(scvf.localFaceIdx());
+            }
         }
 
         // calculate the square norm of the residual
