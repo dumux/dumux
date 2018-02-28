@@ -127,7 +127,6 @@ int main(int argc, char** argv) try
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
@@ -156,7 +155,7 @@ int main(int argc, char** argv) try
 
     // the non-linear solver
     using NewtonSolver = Dumux::RichardsNewtonSolver<TypeTag, Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, timeLoop);
+    NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
     timeLoop->start(); do
@@ -164,24 +163,8 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
-        // try solving the non-linear system
-        for (int i = 0; i < maxDivisions; ++i)
-        {
-            // linearize & solve
-            auto converged = nonLinearSolver.solve(x);
-
-            if (converged)
-                break;
-
-            if (!converged && i == maxDivisions-1)
-                DUNE_THROW(Dune::MathError,
-                            "Newton solver didn't converge after "
-                            << maxDivisions
-                            << " time-step divisions. dt="
-                            << timeLoop->timeStepSize()
-                            << ".\nThe solutions of the current and the previous time steps "
-                            << "have been saved to restart files.");
-        }
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(x, *timeLoop);
 
         // make the new solution the old solution
         xOld = x;
