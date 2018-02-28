@@ -374,14 +374,12 @@
     /*!
      * \ingroup Material
      * \defgroup Components Components
-     * \brief Components: building blocks for fluid systems
+     * \brief thermodynamics of single chemical species or fixed mixtures of species
      *
-     * Components are fluid systems which provide the
-     *  thermodynamic relations for the liquid and gas phase of a single
-     *  chemical species or a fixed mixture of species. Their main purpose
-     *  is to provide a convenient way to access these quantities from
-     *  full-fledged fluid systems. Components are not supposed to be used
-     *  by models directly.
+     * Components provide the thermodynamic relations for the liquid,
+     * gaseous and/or solid state of a single
+     * chemical species or a _fixed_ mixture of species.
+     * Fluid systems use components to compute thermodynamic quantities of phases.
      */
 		/*!
          * \ingroup Components
