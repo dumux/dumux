@@ -49,7 +49,7 @@ public:
     static void init(VtkOutputModule& vtk)
     {
         // use default fields from the 2p model
-        TwoPVtkOutputFields<TypeTag>::init(vtk);
+        TwoPVtkOutputFields<Indices>::init(vtk);
 
         //output additional to TwoP output:
         for (int i = 0; i < numPhases; ++i)

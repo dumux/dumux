@@ -183,7 +183,7 @@ SET_TYPE_PROP(TwoPOneCNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeT
 SET_TYPE_PROP(TwoPOneCNI, IsothermalIndices, TwoPOneCIndices<TypeTag, 0>);
 
 //! The isothermal vtk output fields.
-SET_TYPE_PROP(TwoPOneCNI, IsothermalVtkOutputFields, TwoPOneCVtkOutputFields<TypeTag>);
+SET_TYPE_PROP(TwoPOneCNI, IsothermalVtkOutputFields, TwoPOneCVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)>);
 
 //! Set isothermal NumEq.
 SET_INT_PROP(TwoPOneCNI, IsothermalNumEq, 1);

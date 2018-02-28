@@ -103,7 +103,9 @@ SET_BOOL_PROP(TwoP, EnableEnergyBalance, false);                              //
 SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //!< Use the immiscible local residual operator for the 2p model
 SET_TYPE_PROP(TwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);           //!< the VolumeVariables property
 SET_TYPE_PROP(TwoP, SpatialParams, FVSpatialParams<TypeTag>);                 //!< The spatial parameters. Use FVSpatialParams by default.
-SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields<TypeTag>);           //!< Set the vtk output fields specific to the twop model
+
+//! Set the vtk output fields specific to the twop model
+SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)>);
 
 SET_TYPE_PROP(TwoP,
               Indices,
@@ -125,7 +127,9 @@ public:
 SET_INT_PROP(TwoPNI, IsothermalNumEq, 2);                                         //!< set isothermal NumEq
 SET_TYPE_PROP(TwoPNI, IsothermalVolumeVariables, TwoPVolumeVariables<TypeTag>);   //!< set isothermal VolumeVariables
 SET_TYPE_PROP(TwoPNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>); //!< set isothermal LocalResidual
-SET_TYPE_PROP(TwoPNI, IsothermalVtkOutputFields, TwoPVtkOutputFields<TypeTag>);   //!< set isothermal output fields
+
+//! Set the vtk output fields specific to the isothermal twop model
+SET_TYPE_PROP(TwoPNI, IsothermalVtkOutputFields, TwoPVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)>);
 
 //! Set isothermal Indices
 SET_PROP(TwoPNI, IsothermalIndices)
