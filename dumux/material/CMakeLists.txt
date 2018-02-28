@@ -6,6 +6,7 @@ add_subdirectory("eos")
 add_subdirectory("fluidmatrixinteractions")
 add_subdirectory("fluidstates")
 add_subdirectory("fluidsystems")
+add_subdirectory("solidsystems")
 add_subdirectory("spatialparams")
 
 #install headers
