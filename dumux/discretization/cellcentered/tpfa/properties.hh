@@ -85,7 +85,7 @@ SET_TYPE_PROP(CCTpfaModel, GridVolumeVariables, CCGridVolumeVariables<TypeTag, G
 SET_TYPE_PROP(CCTpfaModel, ElementSolutionVector, CCElementSolution<TypeTag>);
 
 //! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
+SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes);
 
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCTpfaModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
