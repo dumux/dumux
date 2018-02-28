@@ -49,12 +49,15 @@ SET_TYPE_PROP(FractureSpatialParams, SpatialParams, Dumux::FractureSpatialParams
  *        two-phase fully implicit model
  */
 template<class TypeTag>
-class FractureSpatialParams : public FVSpatialParamsOneP<TypeTag>
+class FractureSpatialParams
+: public FVSpatialParamsOneP<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                             typename GET_PROP_TYPE(TypeTag, Scalar),
+                             FractureSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, FractureSpatialParams<TypeTag>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
@@ -68,8 +71,8 @@ public:
      *
      * \param gridView The grid view
      */
-    FractureSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    FractureSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {}
 
     /*!

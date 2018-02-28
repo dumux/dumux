@@ -42,17 +42,6 @@ NEW_TYPE_TAG(InjectionProblemSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(InjectionProblemSpatialParams, SpatialParams, Dumux::InjectionProblemSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(InjectionProblemSpatialParams, MaterialLaw)
-{
- private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffMaterialLaw = RegularizedVanGenuchten<Scalar>;
- public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<EffMaterialLaw>;
-};
 }
 
 /*!
@@ -60,24 +49,28 @@ SET_PROP(InjectionProblemSpatialParams, MaterialLaw)
  * \brief Definition of the spatial parameters for various steam injection problems
  */
 template<class TypeTag>
-class InjectionProblemSpatialParams : public FVSpatialParams<TypeTag>
+class InjectionProblemSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         InjectionProblemSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using CoordScalar = typename GridView::ctype;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, InjectionProblemSpatialParams<TypeTag>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+
+    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
@@ -86,8 +79,8 @@ public:
      *
      * \param gridView The grid view
      */
-    InjectionProblemSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    InjectionProblemSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         // set Van Genuchten Parameters
         materialParams_.setSwr(0.1);

@@ -254,8 +254,6 @@ public:
     using type = MPNCVolumeVariables<Traits>;
 };
 
-//! Use ImplicitSpatialParams by default.
-SET_TYPE_PROP(MPNC, SpatialParams, FVSpatialParams<TypeTag>);
 //! Per default, no component mass balance is replaced
 SET_INT_PROP(MPNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);
 //! Use mole fractions in the balance equations by default

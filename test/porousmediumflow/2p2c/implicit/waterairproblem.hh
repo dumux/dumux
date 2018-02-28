@@ -235,7 +235,7 @@ public:
 
             const auto initialValues = initial_(globalPos);
             const auto& mParams = this->spatialParams().materialLawParamsAtPos(globalPos);
-            using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+            using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
             const auto pn = initialValues[pressureIdx] + MaterialLaw::endPointPc(mParams);
             const auto t = initialValues[temperatureIdx];
 

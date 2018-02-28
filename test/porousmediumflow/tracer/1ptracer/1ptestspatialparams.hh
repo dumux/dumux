@@ -34,23 +34,26 @@ namespace Dumux {
  * \brief The spatial params the incompressible test
  */
 template<class TypeTag>
-class OnePTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
+class OnePTestSpatialParams
+: public FVSpatialParamsOneP<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                             typename GET_PROP_TYPE(TypeTag, Scalar),
+                             OnePTestSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, OnePTestSpatialParams<TypeTag>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     using PermeabilityType = Scalar;
-    OnePTestSpatialParams(const Problem& problem)
-    : ParentType(problem), K_(problem.fvGridGeometry().gridView().size(0), 0.0)
+    OnePTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry), K_(fvGridGeometry->gridView().size(0), 0.0)
     {
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");
@@ -62,9 +65,9 @@ public:
         std::mt19937 rand(0);
         std::lognormal_distribution<Scalar> K(std::log(permeability_), std::log(permeability_)*0.1);
         std::lognormal_distribution<Scalar> KLens(std::log(permeabilityLens_), std::log(permeabilityLens_)*0.1);
-        for (const auto& element : elements(problem.fvGridGeometry().gridView()))
+        for (const auto& element : elements(fvGridGeometry->gridView()))
         {
-            const auto eIdx = problem.fvGridGeometry().elementMapper().index(element);
+            const auto eIdx = fvGridGeometry->elementMapper().index(element);
             const auto globalPos = element.geometry().center();
             K_[eIdx] = isInLens_(globalPos) ? KLens(rand) : K(rand);
         }

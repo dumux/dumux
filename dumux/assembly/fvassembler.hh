@@ -50,7 +50,6 @@ namespace Dumux {
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
 class FVAssembler
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
@@ -69,6 +68,7 @@ public:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     using ResidualType = SolutionVector;
 

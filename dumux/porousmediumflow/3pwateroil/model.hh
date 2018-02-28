@@ -203,10 +203,6 @@ public:
     using type = ThreePWaterOilVolumeVariables<Traits>;
 };
 
-//! The spatial parameters to be employed.
-//! Use FVSpatialParams by default.
-SET_TYPE_PROP(ThreePWaterOilNI, SpatialParams, FVSpatialParams<TypeTag>);
-
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(ThreePWaterOilNI, EffectiveDiffusivityModel,
              DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);

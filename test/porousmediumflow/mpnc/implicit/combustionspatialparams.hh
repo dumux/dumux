@@ -49,23 +49,6 @@ NEW_TYPE_TAG(CombustionSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(CombustionSpatialParams, SpatialParams, CombustionSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(CombustionSpatialParams, MaterialLaw)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    enum {wPhaseIdx   = FluidSystem::wPhaseIdx};
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-
-//    actually other people call this Leverett
-    using EffectiveLaw = HeatPipeLaw<Scalar>;
-    using TwoPMaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    public:
-        using type = TwoPAdapter<wPhaseIdx, TwoPMaterialLaw>;
-};
-
-
 }// end namespace properties
 
 /**
@@ -73,28 +56,35 @@ private:
  *
  */
 template<class TypeTag>
-class CombustionSpatialParams : public FVSpatialParams<TypeTag>
+class CombustionSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         CombustionSpatialParams<TypeTag>>
 {
-
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, CombustionSpatialParams<TypeTag>>;
 
     enum {dimWorld = GridView::dimensionworld};
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+
+    using EffectiveLaw = HeatPipeLaw<Scalar>;
+
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
 
 public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;
     //! export the material law type used
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = TwoPAdapter<wPhaseIdx, EffToAbsLaw<EffectiveLaw>>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    CombustionSpatialParams(const Problem &problem) : ParentType(problem)
+    CombustionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         // this is the parameter value from file part
         porosity_ = getParam<Scalar>("SpatialParams.PorousMedium.porosity");

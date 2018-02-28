@@ -47,18 +47,6 @@ NEW_TYPE_TAG(RichardsLensSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(RichardsLensSpatialParams, SpatialParams, RichardsLensSpatialParams<TypeTag>);
-
-// Set the material law
-SET_PROP(RichardsLensSpatialParams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
-};
 }
 
 /*!
@@ -67,31 +55,30 @@ public:
  * \brief The spatial parameters for the RichardsLensProblem
  */
 template<class TypeTag>
-class RichardsLensSpatialParams : public FVSpatialParams<TypeTag>
+class RichardsLensSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         RichardsLensSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, RichardsLensSpatialParams<TypeTag>>;
 
     enum { dimWorld=GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
+    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     // export permeability type
     using PermeabilityType = Scalar;
 
-    /*!
-     * \brief Constructor
-     *
-     * \param gridView The DUNE GridView representing the spatial
-     *                 domain of the problem.
-     */
-    RichardsLensSpatialParams(const Problem& problem)
-        : ParentType(problem)
+    RichardsLensSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry)
     {
 
         lensLowerLeft_ = {1.0, 2.0};

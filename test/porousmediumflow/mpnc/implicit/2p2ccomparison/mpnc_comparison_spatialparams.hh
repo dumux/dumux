@@ -50,20 +50,6 @@ NEW_TYPE_TAG(MPNCComparisonSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(MPNCComparisonSpatialParams, SpatialParams, MPNCComparisonSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(MPNCComparisonSpatialParams, MaterialLaw)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
-    // define the material law
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffMaterialLaw = RegularizedBrooksCorey<Scalar>;
-    using TwoPMaterialLaw = EffToAbsLaw<EffMaterialLaw>;
-public:
-    using type = TwoPAdapter<liquidPhaseIdx, TwoPMaterialLaw>;
-};
 } // end namespace Properties
 
 /**
@@ -73,26 +59,32 @@ public:
  *
  */
 template<class TypeTag>
-class MPNCComparisonSpatialParams : public FVSpatialParams<TypeTag>
+class MPNCComparisonSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         MPNCComparisonSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, MPNCComparisonSpatialParams<TypeTag>>;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
-    enum {dimWorld=GridView::dimensionworld};
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
+
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
 
 public:
     using PermeabilityType = Scalar;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = TwoPAdapter<liquidPhaseIdx, EffToAbsLaw<EffectiveLaw>>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     //! The constructor
-    MPNCComparisonSpatialParams(const Problem &problem) : ParentType(problem)
+    MPNCComparisonSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;

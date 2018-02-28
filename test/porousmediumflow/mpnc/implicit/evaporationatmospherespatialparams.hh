@@ -63,56 +63,11 @@ NEW_TYPE_TAG(EvaporationAtmosphereSpatialParams);
 // Set the spatial parameters
 SET_TYPE_PROP(EvaporationAtmosphereSpatialParams, SpatialParams, EvaporationAtmosphereSpatialParams<TypeTag>);
 
-// Set the material Law
-SET_PROP(EvaporationAtmosphereSpatialParams, MaterialLaw)
-{
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    enum {liquidPhaseIdx   = FluidSystem::liquidPhaseIdx};
-
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    // select appropriate parametrization
-#define linear      0 // pc(S_w)
-#define RegVG       0 // pc(S_w)
-#define RegBC       1 // pc(S_w)
-#define RegVGofT    0 // pc(S_w, T) // adapt also the setting of the fluidstate
-#define VG          0 // pc(S_w)
-
-    // define the material law
-    #if linear
-        using EffectiveLaw = LinearMaterial<Scalar>;
-    #endif
-
-    #if RegVG
-        using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
-    #endif
-
-    #if RegBC
-        using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
-    #endif
-
-    #if RegVGofT
-        using EffectiveLaw =  RegularizedVanGenuchtenOfTemperature<Scalar>;
-    #endif
-
-    #if VG
-        using EffectiveLaw =  VanGenuchten<Scalar> ;
-    #endif
-
-    using TwoPMaterialLaw = EffToAbsLaw<EffectiveLaw>;
-    public:
-        using type = TwoPAdapter<liquidPhaseIdx, TwoPMaterialLaw>;
-};
-
-
-
 // Set the interfacial area relation: wetting -- non-wetting
 SET_PROP(EvaporationAtmosphereSpatialParams, AwnSurface)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
     using MaterialLawParams = typename MaterialLaw::Params;
     using EffectiveIALaw = AwnSurfacePcMaxFct<Scalar>;
 public:
@@ -124,7 +79,7 @@ public:
 SET_PROP(EvaporationAtmosphereSpatialParams, AwsSurface)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
     using MaterialLawParams = typename MaterialLaw::Params;
     using EffectiveIALaw = AwnSurfacePolynomial2ndOrder<Scalar>;
 public:
@@ -135,7 +90,7 @@ public:
 SET_PROP(EvaporationAtmosphereSpatialParams, AnsSurface)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
     using MaterialLawParams = typename MaterialLaw::Params;
     using EffectiveIALaw = AwnSurfaceExpSwPcTo3<Scalar>;
 public:
@@ -148,28 +103,33 @@ public:
  * \brief Definition of the spatial parameters for the evaporation atmosphere Problem (using a "poor man's coupling")
  */
 template<class TypeTag>
-class EvaporationAtmosphereSpatialParams : public FVSpatialParams<TypeTag>
+class EvaporationAtmosphereSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         EvaporationAtmosphereSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, EvaporationAtmosphereSpatialParams<TypeTag>>;
+
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
     enum { dimWorld = GridView::dimensionworld };
     enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
 
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
+    enum { liquidPhaseIdx   = FluidSystem::liquidPhaseIdx };
 public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;
     //! export the material law type used
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = TwoPAdapter<liquidPhaseIdx, EffToAbsLaw<RegularizedBrooksCorey<Scalar>>>;
     //! export the types used for interfacial area calculations
     using AwnSurface = typename GET_PROP_TYPE(TypeTag, AwnSurface);
     using AwsSurface = typename GET_PROP_TYPE(TypeTag, AwsSurface);
@@ -181,7 +141,7 @@ public:
     using AwsSurfaceParams = typename AwsSurface::Params;
     using AnsSurfaceParams = typename AnsSurface::Params;
 
-    EvaporationAtmosphereSpatialParams(const Problem &problem) : ParentType(problem)
+    EvaporationAtmosphereSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         heightPM_               = getParam<std::vector<Scalar>>("Grid.Positions1")[1];
         heightDomain_           = getParam<std::vector<Scalar>>("Grid.Positions1")[2];

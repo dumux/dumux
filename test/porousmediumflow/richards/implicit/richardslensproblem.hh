@@ -95,7 +95,6 @@ class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -240,6 +239,7 @@ private:
     {
         PrimaryVariables values(0.0);
         const Scalar sw = 0.0;
+        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
         values[pressureIdx] = nonWettingReferencePressure() - pc;
         values.setState(bothPhases);

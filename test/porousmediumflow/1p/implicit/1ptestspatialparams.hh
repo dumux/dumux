@@ -46,15 +46,18 @@ NEW_TYPE_TAG(OnePTestSpatialParams);
  *        1p box model
  */
 template<class TypeTag>
-class OnePTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
+class OnePTestSpatialParams
+: public FVSpatialParamsOneP<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                             typename GET_PROP_TYPE(TypeTag, Scalar),
+                             OnePTestSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexSet = typename GridView::IndexSet;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, OnePTestSpatialParams<TypeTag>>;
 
     enum {
         dim=GridView::dimension,
@@ -68,17 +71,17 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePTestSpatialParams(const Problem& problem)
-        : ParentType(problem),
-          randomPermeability_(problem.fvGridGeometry().gridView().size(dim), 0.0),
-          indexSet_(problem.fvGridGeometry().gridView().indexSet())
+    OnePTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry),
+          randomPermeability_(fvGridGeometry->gridView().size(dim), 0.0),
+          indexSet_(fvGridGeometry->gridView().indexSet())
     {
         randomField_ = getParam<bool>("SpatialParams.RandomField", false);
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         if(!randomField_)
             permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");
         else
-            initRandomField(problem.fvGridGeometry());
+            initRandomField(*fvGridGeometry);
 
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
@@ -120,7 +123,6 @@ public:
      *
      * \param gridView The GridView used by the problem
      */
-    template<class FVGridGeometry>
     void initRandomField(const FVGridGeometry& gg)
     {
         const auto& gridView = gg.gridView();

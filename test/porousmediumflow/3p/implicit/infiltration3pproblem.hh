@@ -136,9 +136,6 @@ class InfiltrationThreePProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
-
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
@@ -322,8 +319,10 @@ private:
     }
 
     // small solver inverting the pc curve
+    template<class MaterialLawParams>
     static Scalar invertPcgw_(Scalar pcIn, const MaterialLawParams &pcParams)
     {
+        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         Scalar lower,upper;
         int k;
         int maxIt = 50;

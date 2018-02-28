@@ -35,15 +35,18 @@ namespace Dumux {
  *        test problems.
  */
 template<class TypeTag>
-class OnePNCTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
+class OnePNCTestSpatialParams
+: public FVSpatialParamsOneP<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                             typename GET_PROP_TYPE(TypeTag, Scalar),
+                             OnePNCTestSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, OnePNCTestSpatialParams<TypeTag>>;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
@@ -52,8 +55,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePNCTestSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    OnePNCTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;

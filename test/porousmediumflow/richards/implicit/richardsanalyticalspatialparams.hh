@@ -50,16 +50,6 @@ NEW_TYPE_TAG(RichardsAnalyticalSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(RichardsAnalyticalSpatialParams, SpatialParams, RichardsAnalyticalSpatialParams<TypeTag>);
-
-// Set the material law
-SET_PROP(RichardsAnalyticalSpatialParams, MaterialLaw)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = LinearMaterial<Scalar>;
-public:
-    using type = EffToAbsLaw<EffectiveLaw>;
-};
 }
 
 /*!
@@ -68,33 +58,31 @@ public:
  * \brief The spatial parameters for the RichardsAnalyticalProblem
  */
 template<class TypeTag>
-class RichardsAnalyticalSpatialParams : public FVSpatialParams<TypeTag>
+class RichardsAnalyticalSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         RichardsAnalyticalSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, RichardsAnalyticalSpatialParams<TypeTag>>;
 
     enum { dimWorld=GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
+    using EffectiveLaw = LinearMaterial<Scalar>;
+
 public:
 
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     // export permeability type
     using PermeabilityType = Scalar;
 
-
-    /*!
-     * \brief Constructor
-     *
-     * \param gridView The DUNE GridView representing the spatial
-     *                 domain of the problem.
-     */
-    RichardsAnalyticalSpatialParams(const Problem& problem)
-        : ParentType(problem)
+    RichardsAnalyticalSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry)
     {
         K_ = 5e-12;
         materialParams_.setSwr(0.0);

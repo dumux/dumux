@@ -78,14 +78,10 @@ public:
      */
     PorousMediumFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                             const std::string& paramGroup = "")
-    : ParentType(fvGridGeometry, paramGroup)
-    , gravity_(0.0)
-    , spatialParams_(std::make_shared<SpatialParams>(this->asImp_()))
-    {
-        const bool enableGravity = getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity");
-        if (enableGravity)
-            gravity_[dimWorld-1]  = -9.81;
-    }
+    : PorousMediumFlowProblem(fvGridGeometry,
+                              std::make_shared<SpatialParams>(fvGridGeometry),
+                              paramGroup)
+    {}
 
     /*!
      * \name Physical parameters for porous media problems

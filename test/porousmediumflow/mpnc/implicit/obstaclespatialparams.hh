@@ -49,21 +49,7 @@ NEW_TYPE_TAG(ObstacleSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(ObstacleSpatialParams, SpatialParams, ObstacleSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(ObstacleSpatialParams, MaterialLaw)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    enum { liquidPhaseIdx = FluidSystem::liquidPhaseIdx };
-    // define the material law
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffMaterialLaw = RegularizedLinearMaterial<Scalar>;
-    using TwoPMaterialLaw = EffToAbsLaw<EffMaterialLaw>;
-public:
-    using type = TwoPAdapter<liquidPhaseIdx, TwoPMaterialLaw>;
-};
-}
+} // end namespace Properties
 
 /**
  * \ingroup MPNCModel
@@ -72,28 +58,36 @@ public:
  *
  */
 template<class TypeTag>
-class ObstacleSpatialParams : public FVSpatialParams<TypeTag>
+class ObstacleSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         ObstacleSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ObstacleSpatialParams<TypeTag>>;
 
     enum {dimWorld=GridView::dimensionworld};
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
+
+    using EffectiveLaw = RegularizedLinearMaterial<Scalar>;
 
 public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;
     //! export the material law type used
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = TwoPAdapter<liquidPhaseIdx, EffToAbsLaw<EffectiveLaw>>;
+    using MaterialLawParams = typename MaterialLaw::Params;
 
     //! the constructor
-    ObstacleSpatialParams(const Problem &problem) : ParentType(problem)
+    ObstacleSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;
@@ -115,9 +109,6 @@ public:
         fineMaterialParams_.setMaxPc(0.0);
         coarseMaterialParams_.setMaxPc(0.0);
     }
-
-    ~ObstacleSpatialParams()
-    {}
 
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
@@ -178,6 +169,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
 };
 
-}
+} // end namespace Dumux
 
 #endif

@@ -34,12 +34,15 @@ namespace Dumux
  * \brief Definition of the spatial parameters for the 1pni problems.
  */
 template<class TypeTag>
-class OnePNISpatialParams : public FVSpatialParamsOneP<TypeTag>
+class OnePNISpatialParams
+: public FVSpatialParamsOneP<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                             typename GET_PROP_TYPE(TypeTag, Scalar),
+                             OnePNISpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, OnePNISpatialParams<TypeTag>>;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
@@ -48,8 +51,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePNISpatialParams(const Problem& problem)
-    : ParentType(problem) {}
+    OnePNISpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry) {}
 
     /*!
      * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.

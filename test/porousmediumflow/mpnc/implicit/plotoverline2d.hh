@@ -50,7 +50,6 @@ namespace Properties
     NEW_PROP_TAG(FVElementGeometry);
     NEW_PROP_TAG(TwoPIAIndices);
     NEW_PROP_TAG(NumEq);
-    NEW_PROP_TAG(MaterialLaw);
     NEW_PROP_TAG(AwnSurface);
     NEW_PROP_TAG(AwnSurfaceParams);
 }
@@ -65,8 +64,6 @@ class PlotOverLine2D
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using DofMapper = typename GET_PROP_TYPE(TypeTag, DofMapper);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using aterialLawParams = typename MaterialLaw::Params;
 
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);

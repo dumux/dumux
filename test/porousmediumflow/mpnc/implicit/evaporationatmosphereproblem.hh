@@ -117,7 +117,6 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using ParameterCache = typename FluidSystem::ParameterCache;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
@@ -388,6 +387,7 @@ private:
         Scalar capPress[numPhases];
 
         //obtain pc according to saturation
+        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         MaterialLaw::capillaryPressures(capPress, materialParams, equilibriumFluidState);
 
         Scalar p[numPhases];

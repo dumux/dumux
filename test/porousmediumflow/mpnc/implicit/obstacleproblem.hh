@@ -121,7 +121,6 @@ class ObstacleProblem
     using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using ParameterCache = typename FluidSystem::ParameterCache;
 
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
@@ -343,9 +342,9 @@ private:
         fs.setSaturation(otherPhaseIdx, 1.0 - fs.saturation(refPhaseIdx));
 
         // calulate the capillary pressure
-        const auto& matParams =
-            this->spatialParams().materialLawParamsAtPos(globalPos);
+        const auto& matParams = this->spatialParams().materialLawParamsAtPos(globalPos);
         PhaseVector pc;
+        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         MaterialLaw::capillaryPressures(pc, matParams, fs);
         fs.setPressure(otherPhaseIdx,
                        fs.pressure(refPhaseIdx)

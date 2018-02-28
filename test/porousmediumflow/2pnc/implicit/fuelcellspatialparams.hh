@@ -48,21 +48,6 @@ NEW_TYPE_TAG(FuelCellSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(FuelCellSpatialParams, SpatialParams, FuelCellSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(FuelCellSpatialParams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffMaterialLaw = RegularizedVanGenuchten<Scalar>;
-
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<EffMaterialLaw>;
-};
-
 } // end namespace Properties
 
 /*!
@@ -71,23 +56,25 @@ public:
  *        problem which uses the isothermal 2p2c box model
  */
 template<class TypeTag>
-class FuelCellSpatialParams : public FVSpatialParams<TypeTag>
+class FuelCellSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         FuelCellSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using CoordScalar = typename GridView::ctype;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, FuelCellSpatialParams<TypeTag>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
+    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
@@ -96,8 +83,8 @@ public:
      *
      * \param gridView The grid view
      */
-    FuelCellSpatialParams(const Problem& problem)
-    : ParentType(problem), K_(0)
+    FuelCellSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry), K_(0)
     {
         // intrinsic permeabilities
         K_[0][0] = 5e-11;

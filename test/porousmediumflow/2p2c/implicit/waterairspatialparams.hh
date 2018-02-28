@@ -50,12 +50,6 @@ NEW_TYPE_TAG(WaterAirSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(WaterAirSpatialParams, SpatialParams, WaterAirSpatialParams<TypeTag>);
-
-
-// Set the material law parameterized by absolute saturations
-SET_TYPE_PROP(WaterAirSpatialParams,
-              MaterialLaw,
-              EffToAbsLaw<RegularizedBrooksCorey<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 }
 
 /*!
@@ -64,23 +58,29 @@ SET_TYPE_PROP(WaterAirSpatialParams,
  * \brief Definition of the spatial parameters for the water-air problem
  */
 template<class TypeTag>
-class WaterAirSpatialParams : public FVSpatialParams<TypeTag>
+class WaterAirSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         WaterAirSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using CoordScalar = typename GridView::ctype;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, WaterAirSpatialParams<TypeTag>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
 
 public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;
     //! export the type used for the material law
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     /*!
@@ -88,7 +88,7 @@ public:
      *
      * \param gridView The grid view
      */
-    WaterAirSpatialParams(const Problem& problem) : ParentType(problem)
+    WaterAirSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         layerBottom_ = 22.0;
 
