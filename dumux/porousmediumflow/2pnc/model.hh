@@ -85,6 +85,8 @@
 #ifndef DUMUX_2PNC_MODEL_HH
 #define DUMUX_2PNC_MODEL_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/properties.hh>
 
 #include <dumux/material/spatialparams/fv.hh>
@@ -115,7 +117,16 @@ NEW_TYPE_TAG(TwoPNCNI, INHERITS_FROM(TwoPNC, NonIsothermal));
 //////////////////////////////////////////////////////////////////
 // Properties for the isothermal 2pnc model
 //////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(TwoPNC, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);          //!< The primary variables vector for the 2pnc model
+//! The primary variables vector for the 2pnc model
+SET_PROP(TwoPNC, PrimaryVariables)
+{
+private:
+    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                     GET_PROP_VALUE(TypeTag, NumEq)>;
+public:
+    using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
+};
+
 SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);         //!< The primary variable switch for the 2pnc model
 SET_TYPE_PROP(TwoPNC, VolumeVariables, TwoPNCVolumeVariables<TypeTag>);                     //!< the VolumeVariables property
 SET_TYPE_PROP(TwoPNC, Indices, TwoPNCIndices <TypeTag, /*PVOffset=*/0>);                    //!< The indices required by the isothermal 2pnc model

@@ -91,6 +91,8 @@
 #ifndef DUMUX_RICHARDS_MODEL_HH
 #define DUMUX_RICHARDS_MODEL_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/properties.hh>
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
@@ -170,8 +172,15 @@ SET_BOOL_PROP(Richards, EnableEnergyBalance, false);
 //! The class with all index definitions for the model
 SET_TYPE_PROP(Richards, Indices, RichardsIndices);
 
-//! The class with all index definitions for the model
-SET_TYPE_PROP(Richards, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
+//! The primary variables vector for the richards model
+SET_PROP(Richards, PrimaryVariables)
+{
+private:
+    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                     GET_PROP_VALUE(TypeTag, NumEq)>;
+public:
+    using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
+};
 
 //! The primary variable switch for the richards model
 SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSwitch<TypeTag>);
