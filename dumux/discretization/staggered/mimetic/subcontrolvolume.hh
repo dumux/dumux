@@ -47,7 +47,8 @@ public:
     // the contructor in the cc case
     MimeticSubControlVolume(Geometry&& geometry,
                        IndexType elementIndex)
-    : ParentType(), geometry_(std::forward<Geometry>(geometry)), elementIndex_(elementIndex), center_(geometry.center())
+    : ParentType(), geometry_(std::forward<Geometry>(geometry)), elementIndex_(elementIndex),
+                    center_(geometry.center()), volume_(geometry.volume())
     {
     }
 
@@ -67,6 +68,7 @@ public:
         geometry_.emplace(other.geometry_.value());
         elementIndex_ = other.elementIndex_;
         center_ = geometry().center();
+        volume_ = geometry().volume();
         return *this;
     }
 
@@ -80,6 +82,7 @@ public:
         geometry_.emplace(other.geometry_.value());
         elementIndex_ = std::move(other.elementIndex_);
         center_ = geometry().center();
+        volume_ = geometry().volume();
         return *this;
     }
 
@@ -92,7 +95,7 @@ public:
     //! The volume of the sub control volume
     Scalar volume() const
     {
-        return geometry().volume();
+        return volume_;
     }
 
     //! The geometry of the sub control volume
@@ -139,11 +142,17 @@ public:
         center_ = center;
     }
 
+    void setCellVolume(Scalar volume)
+    {
+        volume_ = volume;
+    }
+
 private:
     // Work around the fact that geometry is not default constructible
     Optional<Geometry> geometry_;
     IndexType elementIndex_;
     GlobalPosition center_;
+    Scalar volume_;
 };
 } // end namespace
 

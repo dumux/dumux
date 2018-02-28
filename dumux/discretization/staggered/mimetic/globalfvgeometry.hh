@@ -307,6 +307,25 @@ public:
 
     }
 
+    void calculateNewCellVolume(int eIdx)
+    {
+        GlobalPosition center(scvs_[eIdx].center());
+        int numFaces = localToGlobalScvfIndices_[eIdx].size();
+        Scalar volume = 0;
+
+        for(int i=0; i<numFaces; i++)
+        {
+            auto scvfIdx = localToGlobalScvfIndices_[eIdx][i];
+            const auto scfv = scvfs_[scvfIdx];
+
+            auto di = scfv.ipGlobal();
+            di -= center;
+            volume += scfv.area()*(std::abs(scfv.unitOuterNormal()*di));
+        }
+        volume /= dim;
+        scvs_[eIdx].setCellVolume(volume);
+    }
+
     bool checkValidility(GlobalPosition& Point, int eIdx)
     {
         for(int i=0; i<localToGlobalScvfIndices_[eIdx].size(); i++)
