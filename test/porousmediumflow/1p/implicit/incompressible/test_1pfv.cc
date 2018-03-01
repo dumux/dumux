@@ -32,6 +32,7 @@
 #include <dune/grid/io/file/vtk.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/parsolverbackend.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
@@ -120,18 +121,22 @@ int main(int argc, char** argv) try
 
     // solve the linear system
     Dune::Timer solverTimer;
-    using LinearSolver = SSORCGBackend;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolver = ParallelSSORCGBackend<TypeTag>;
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     if (mpiHelper.rank() == 0) std::cout << "Solving linear system using " + linearSolver->name() + "..." << std::flush;
-    linearSolver->solve(*A, x, *r);
+    bool converged = linearSolver->solve(*A, x, *r);
+    bool convergedRemote = leafGridView.comm().max(converged);
+    if (!convergedRemote)
+        DUNE_THROW(NumericalProblem, "Linear solver did not converge!");
     solverTimer.stop();
     if (mpiHelper.rank() == 0) std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
 
     // the grid variables need to be up to date for subsequent output
-    Dune::Timer updateTimer; std::cout << "Updating variables ..." << std::flush;
+    Dune::Timer updateTimer;
+    if (mpiHelper.rank() == 0) std::cout << "Updating variables ..." << std::flush;
     gridVariables->update(x);
-    updateTimer.elapsed(); std::cout << " took " << updateTimer.elapsed() << std::endl;
+    if (mpiHelper.rank() == 0) std::cout << " took " << updateTimer.elapsed() << std::endl;
 
     // output result to vtk
     vtkWriter.write(1.0);
@@ -140,12 +145,13 @@ int main(int argc, char** argv) try
 
     const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
     if (mpiHelper.rank() == 0)
+    {
         std::cout << "Simulation took " << timer.elapsed() << " seconds on "
                   << comm.size() << " processes.\n"
                   << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
 
-    if (mpiHelper.rank() == 0)
         Parameters::print();
+    }
 
     return 0;
 
