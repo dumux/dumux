@@ -83,7 +83,14 @@ SET_TYPE_PROP(Swe, FluxVariables, SweFluxVariables<TypeTag>);
 SET_TYPE_PROP(Swe, FluxVariablesCache, SweFluxVariablesCache<TypeTag>);
 
 //! The indices required for the SWEs
-SET_TYPE_PROP(Swe, Indices, SweIndices<TypeTag>);
+SET_PROP(Swe, Indices)
+{
+private:
+    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
+public:
+    using type = SweIndices<dim, numEq>;
+};
 
 //! The specific vtk output fields
 SET_TYPE_PROP(Swe, VtkOutputFields, SweVtkOutputFields<TypeTag>);

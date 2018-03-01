@@ -165,6 +165,19 @@ public:
 
     }
 
+    //! set neumann condition for phases (flux, [kg/(m^2 s)])
+
+    void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
+    {
+
+        //we need the Riemann invariants to compute the values depending of the boundary type
+        //since we use a weak imposition we do not have a dirichlet value. We impose fluxes
+        //based on q,h, etc. computed with the Riemann invariants
+        values[massBalanceIdx] = 0.0;
+        values[velocityXIdx] = 0.0;
+        values[velocityYIdx] = 0.0;
+    }
+
 
     /*!
      * \name Volume terms
@@ -179,17 +192,12 @@ public:
      *
      * \param globalPos The position for which the boundary type is set
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    void initial(PrimaryVariables &values,
+        const Element& element) const
     {
-
-        PrimaryVariables values(0.0);
-
-        values[0] = 1.0;
-        values[1] = 0.0;
-        values[2] = 0.0;
-
-        return values;
-
+        values[massBalanceIdx] = 1.0;
+        values[velocityXIdx] = 0.0;
+        values[velocityYIdx] = 0.0;
     };
 
     // \}

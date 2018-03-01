@@ -35,7 +35,7 @@ namespace Dumux
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int PVOffset = 0>
+template <int dimension, int numEquations, int PVOffset = 0>
 struct SweIndices
 {
 
@@ -46,9 +46,8 @@ struct SweIndices
     static constexpr int momentumXBalanceIdx = PVOffset + 1; //!< Index of the x momentum balance equation
     static constexpr int momentumYBalanceIdx = PVOffset + 2; //!< Index of the y momentum balance equation
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr auto dim = GridView::dimension;
-    static constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr auto dim = dimension;
+    static constexpr auto numEq = numEquations;
 
     static constexpr int waterdepthXIdx = massBalanceIdx; //!< Index of the velocity in a solution vector
     static constexpr int velocityXIdx = momentumXBalanceIdx; //!< Index of the velocity in a solution vector
