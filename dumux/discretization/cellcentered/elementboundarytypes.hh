@@ -24,10 +24,7 @@
 #ifndef DUMUX_CC_ELEMENT_BOUNDARY_TYPES_HH
 #define DUMUX_CC_ELEMENT_BOUNDARY_TYPES_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup CCDiscretization
@@ -37,16 +34,9 @@ namespace Dumux
  *        a common base local residual, which passes an ElementBoundaryTypes
  *        object to the implemented interfaces.
  */
-template<class TypeTag>
 class CCElementBoundaryTypes
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using Element = typename GridView::template Codim<0>::Entity;
-
 public:
-
     /*!
      * \brief Update the boundary types for all vertices of an element.
      *
@@ -55,6 +45,7 @@ public:
      *                types should be collected
      * \param fvGeometry The element finite volume geometry
      */
+    template<class Problem, class Element, class FVElementGeometry>
     void update(const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvGeometry)

@@ -52,11 +52,10 @@
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declarations
-template<class TypeTag> class CCElementBoundaryTypes;
+class CCElementBoundaryTypes;
 
 namespace Properties
 {
@@ -100,7 +99,7 @@ SET_TYPE_PROP(StaggeredModel, ElementSolutionVector, Dune::BlockVector<typename 
 SET_TYPE_PROP(StaggeredModel, GridVariables, StaggeredGridVariables<TypeTag>);
 
 //! Use the cell center element boundary types per default
-SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
+SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, CCElementBoundaryTypes);
 
 //! Set the BaseLocalResidual to StaggeredLocalResidual
 SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, StaggeredLocalResidual<TypeTag>);
