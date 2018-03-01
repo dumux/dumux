@@ -107,7 +107,6 @@
      using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
      auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
      auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-     auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
      auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
      // intialize the vtk output module
@@ -129,7 +128,7 @@
      auto linearSolver = std::make_shared<LinearSolver>();
 
      // the non-linear solver
-     NewtonSolver<Assembler, LinearSolver> nonLinearSolver(assembler, linearSolver, timeLoop);
+     NewtonSolver<Assembler, LinearSolver> nonLinearSolver(assembler, linearSolver);
 
      // time loop
      timeLoop->start(); do
@@ -137,24 +136,8 @@
          // set previous solution for storage evaluations
          assembler->setPreviousSolution(xOld);
 
-         // try solving the non-linear system
-         for (int i = 0; i < maxDivisions; ++i)
-         {
-             // linearize & solve
-             auto converged = nonLinearSolver.solve(x);
-
-             if (converged)
-                 break;
-
-             if (!converged && i == maxDivisions-1)
-                 DUNE_THROW(Dune::MathError,
-                            "Newton solver didn't converge after "
-                            << maxDivisions
-                            << " time-step divisions. dt="
-                            << timeLoop->timeStepSize()
-                            << ".\nThe solutions of the current and the previous time steps "
-                            << "have been saved to restart files.");
-         }
+         // solve the non-linear system with time step control
+         nonLinearSolver.solve(x, *timeLoop);
 
          // make the new solution the old solution
          xOld = x;

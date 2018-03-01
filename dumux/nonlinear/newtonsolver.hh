@@ -39,7 +39,6 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/exceptions.hh>
-#include <dumux/common/timeloop.hh>
 #include <dumux/common/typetraits/vector.hh>
 #include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
@@ -91,38 +90,6 @@ public:
     , assembler_(assembler)
     , linearSolver_(linearSolver)
     , comm_(comm)
-    , paramGroup_(paramGroup)
-    {
-        initParams_(paramGroup);
-
-        // set the linear system (matrix & residual) in the assembler
-        assembler_->setLinearSystem();
-
-        // set a different default for the linear solver residual reduction
-        // within the Newton the linear solver doesn't need to solve too exact
-        linearSolver_->setResidualReduction(getParamFromGroup<Scalar>(paramGroup, "LinearSolver.ResidualReduction", 1e-6));
-
-        // initialize the partial reassembler
-        if (enablePartialReassembly_)
-        {
-            partialReassembler_ = std::make_unique<Reassembler>(assembler_->fvGridGeometry());
-            distanceFromLastLinearization_.resize(assembler_->fvGridGeometry().numDofs(), 0);
-        }
-    }
-
-    /*!
-     * \brief Constructor for instationary problems
-     */
-    NewtonSolver(std::shared_ptr<Assembler> assembler,
-                 std::shared_ptr<LinearSolver> linearSolver,
-                 std::shared_ptr<TimeLoop<Scalar>> timeLoop,
-                 const Communication& comm = Dune::MPIHelper::getCollectiveCommunication(),
-                 const std::string& paramGroup = "")
-    : endIterMsgStream_(std::ostringstream::out)
-    , assembler_(assembler)
-    , linearSolver_(linearSolver)
-    , comm_(comm)
-    , timeLoop_(timeLoop)
     , paramGroup_(paramGroup)
     {
         initParams_(paramGroup);
@@ -198,135 +165,60 @@ public:
 
     /*!
      * \brief Run the newton method to solve a non-linear system.
+     *        Does time step control when the newton fails to converge
+     */
+    template<class TimeLoop>
+    void solve(SolutionVector& uCurrentIter, TimeLoop& timeLoop,
+               const std::unique_ptr<ConvergenceWriter>& convWriter = nullptr)
+    {
+        if (assembler_->isStationaryProblem())
+            DUNE_THROW(Dune::InvalidStateException, "Using time step control with stationary problem makes no sense!");
+
+        // try solving the non-linear system
+        for (std::size_t i = 0; i <= maxTimeStepDivisions_; ++i)
+        {
+            // linearize & solve
+            const bool converged = solve_(uCurrentIter, convWriter);
+
+            if (converged)
+                return;
+
+            else if (!converged && i < maxTimeStepDivisions_)
+            {
+                // set solution to previous solution
+                uCurrentIter = assembler_->prevSol();
+
+                // reset the grid variables to the previous solution
+                assembler_->gridVariables().resetTimeStep(uCurrentIter);
+
+                if (verbose_)
+                    std::cout << "Newton solver did not converge with dt = "
+                              << timeLoop.timeStepSize() << " seconds. Retrying with time step of "
+                              << timeLoop.timeStepSize()/2 << " seconds\n";
+
+                // try again with dt = dt/2
+                timeLoop.setTimeStepSize(timeLoop.timeStepSize()/2);
+            }
+
+            else
+            {
+                DUNE_THROW(NumericalProblem, "Newton solver didn't converge after "
+                                             << maxTimeStepDivisions_ << " time-step divisions. dt="
+                                             << timeLoop.timeStepSize() << '\n');
+            }
+        }
+    }
+
+    /*!
+     * \brief Run the newton method to solve a non-linear system.
      *        The controller is responsible for all the strategic decisions.
      */
-    bool solve(SolutionVector& uCurrentIter, const std::unique_ptr<ConvergenceWriter>& convWriter = nullptr)
+    void solve(SolutionVector& uCurrentIter, const std::unique_ptr<ConvergenceWriter>& convWriter = nullptr)
     {
-        try
-        {
-            // the given solution is the initial guess
-            SolutionVector uLastIter(uCurrentIter);
-            SolutionVector deltaU(uCurrentIter);
-
-            Dune::Timer assembleTimer(false);
-            Dune::Timer solveTimer(false);
-            Dune::Timer updateTimer(false);
-
-            if (enablePartialReassembly_)
-            {
-                partialReassembler_->resetColors();
-                std::fill(distanceFromLastLinearization_.begin(),
-                          distanceFromLastLinearization_.end(), 0.0);
-            }
-            newtonBegin(uCurrentIter);
-
-            // execute the method as long as the controller thinks
-            // that we should do another iteration
-            while (newtonProceed(uCurrentIter, newtonConverged()))
-            {
-                // notify the controller that we're about to start
-                // a new timestep
-                newtonBeginStep(uCurrentIter);
-
-                // make the current solution to the old one
-                if (numSteps_ > 0)
-                    uLastIter = uCurrentIter;
-
-                if (verbose_) {
-                    std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r"
-                              << std::flush;
-                }
-
-                ///////////////
-                // assemble
-                ///////////////
-
-                // linearize the problem at the current solution
-                assembleTimer.start();
-                assembleLinearSystem(uCurrentIter);
-                assembleTimer.stop();
-
-                ///////////////
-                // linear solve
-                ///////////////
-
-                // Clear the current line using an ansi escape
-                // sequence.  for an explanation see
-                // http://en.wikipedia.org/wiki/ANSI_escape_code
-                const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
-
-                if (verbose_) {
-                    std::cout << "\rSolve: M deltax^k = r";
-                    std::cout << clearRemainingLine
-                              << std::flush;
-                }
-
-                // solve the resulting linear equation system
-                solveTimer.start();
-
-                // set the delta vector to zero before solving the linear system!
-                deltaU = 0;
-
-                solveLinearSystem(deltaU);
-                solveTimer.stop();
-
-                ///////////////
-                // update
-                ///////////////
-                if (verbose_) {
-                    std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
-                    std::cout << clearRemainingLine;
-                    std::cout.flush();
-                }
-
-                updateTimer.start();
-                // update the current solution (i.e. uOld) with the delta
-                // (i.e. u). The result is stored in u
-                newtonUpdate(uCurrentIter, uLastIter, deltaU);
-                updateTimer.stop();
-
-                // tell the controller that we're done with this iteration
-                newtonEndStep(uCurrentIter, uLastIter);
-
-                // if a convergence writer was specified compute residual and write output
-                if (convWriter)
-                {
-                    assembler_->assembleResidual(uCurrentIter);
-                    convWriter->write(uLastIter, deltaU, assembler_->residual());
-                }
-            }
-
-            // tell controller we are done
-            newtonEnd();
-
-            // reset state if newton failed
-            if (!newtonConverged())
-            {
-                newtonFail(uCurrentIter);
-                return false;
-            }
-
-            // tell controller we converged successfully
-            newtonSucceed();
-
-            if (verbose_) {
-                const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
-                std::cout << "Assemble/solve/update time: "
-                          <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
-                          <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
-                          <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
-                          << "\n";
-            }
-            return true;
-
-        }
-        catch (const NumericalProblem &e)
-        {
-            if (verbose_)
-                std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
-            newtonFail(uCurrentIter);
-            return false;
-        }
+        const bool converged = solve_(uCurrentIter, convWriter);
+        if (!converged)
+            DUNE_THROW(NumericalProblem, "Newton solver didn't converge after "
+                                         << numSteps_ << " iterations.\n");
     }
 
     /*!
@@ -626,29 +518,7 @@ public:
      * \brief Called if the Newton method broke down.
      * This method is called _after_ newtonEnd()
      */
-    virtual void newtonFail(SolutionVector& u)
-    {
-        if (!assembler_->isStationaryProblem())
-        {
-            // set solution to previous solution
-            u = assembler_->prevSol();
-
-            // reset the grid variables to the previous solution
-            assembler_->gridVariables().resetTimeStep(u);
-
-            if (verbose())
-            {
-                std::cout << "Newton solver did not converge with dt = "
-                          << timeLoop_->timeStepSize() << " seconds. Retrying with time step of "
-                          << timeLoop_->timeStepSize()/2 << " seconds\n";
-            }
-
-            // try again with dt = dt/2
-            timeLoop_->setTimeStepSize(timeLoop_->timeStepSize()/2);
-        }
-        else
-            DUNE_THROW(Dune::MathError, "Newton solver did not converge");
-    }
+    virtual void newtonFail(SolutionVector& u) {}
 
     /*!
      * \brief Called if the Newton method ended succcessfully
@@ -722,9 +592,6 @@ protected:
     Assembler& assembler()
     { return *assembler_; }
 
-    const TimeLoop<Scalar>& timeLoop() const
-    { return *timeLoop_; }
-
     //! optimal number of iterations we want to achieve
     int targetSteps_;
     //! maximum number of iterations we do before giving up
@@ -747,6 +614,140 @@ protected:
 
 
 private:
+
+    /*!
+     * \brief Run the newton method to solve a non-linear system.
+     *        The controller is responsible for all the strategic decisions.
+     */
+    bool solve_(SolutionVector& uCurrentIter, const std::unique_ptr<ConvergenceWriter>& convWriter = nullptr)
+    {
+        // the given solution is the initial guess
+        SolutionVector uLastIter(uCurrentIter);
+        SolutionVector deltaU(uCurrentIter);
+
+        Dune::Timer assembleTimer(false);
+        Dune::Timer solveTimer(false);
+        Dune::Timer updateTimer(false);
+
+        if (enablePartialReassembly_)
+        {
+            partialReassembler_->resetColors();
+            std::fill(distanceFromLastLinearization_.begin(),
+                      distanceFromLastLinearization_.end(), 0.0);
+        }
+
+        try
+        {
+            newtonBegin(uCurrentIter);
+
+            // execute the method as long as the controller thinks
+            // that we should do another iteration
+            while (newtonProceed(uCurrentIter, newtonConverged()))
+            {
+                // notify the controller that we're about to start
+                // a new timestep
+                newtonBeginStep(uCurrentIter);
+
+                // make the current solution to the old one
+                if (numSteps_ > 0)
+                    uLastIter = uCurrentIter;
+
+                if (verbose_) {
+                    std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r"
+                              << std::flush;
+                }
+
+                ///////////////
+                // assemble
+                ///////////////
+
+                // linearize the problem at the current solution
+                assembleTimer.start();
+                assembleLinearSystem(uCurrentIter);
+                assembleTimer.stop();
+
+                ///////////////
+                // linear solve
+                ///////////////
+
+                // Clear the current line using an ansi escape
+                // sequence.  for an explanation see
+                // http://en.wikipedia.org/wiki/ANSI_escape_code
+                const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
+
+                if (verbose_) {
+                    std::cout << "\rSolve: M deltax^k = r";
+                    std::cout << clearRemainingLine
+                              << std::flush;
+                }
+
+                // solve the resulting linear equation system
+                solveTimer.start();
+
+                // set the delta vector to zero before solving the linear system!
+                deltaU = 0;
+
+                solveLinearSystem(deltaU);
+                solveTimer.stop();
+
+                ///////////////
+                // update
+                ///////////////
+                if (verbose_) {
+                    std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
+                    std::cout << clearRemainingLine;
+                    std::cout.flush();
+                }
+
+                updateTimer.start();
+                // update the current solution (i.e. uOld) with the delta
+                // (i.e. u). The result is stored in u
+                newtonUpdate(uCurrentIter, uLastIter, deltaU);
+                updateTimer.stop();
+
+                // tell the controller that we're done with this iteration
+                newtonEndStep(uCurrentIter, uLastIter);
+
+                // if a convergence writer was specified compute residual and write output
+                if (convWriter)
+                {
+                    assembler_->assembleResidual(uCurrentIter);
+                    convWriter->write(uLastIter, deltaU, assembler_->residual());
+                }
+            }
+
+            // tell controller we are done
+            newtonEnd();
+
+            // reset state if newton failed
+            if (!newtonConverged())
+            {
+                newtonFail(uCurrentIter);
+                return false;
+            }
+
+            // tell controller we converged successfully
+            newtonSucceed();
+
+            if (verbose_) {
+                const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
+                std::cout << "Assemble/solve/update time: "
+                          <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
+                          <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
+                          <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
+                          << "\n";
+            }
+            return true;
+
+        }
+        catch (const NumericalProblem &e)
+        {
+            if (verbose_)
+                std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
+            newtonFail(uCurrentIter);
+            return false;
+        }
+    }
 
     //! assembleLinearSystem_ for assemblers that support partial reassembly
     template<class A = Assembler>
@@ -1017,6 +1018,8 @@ private:
         reassemblyMaxThreshold_ = getParamFromGroup<Scalar>(group, "Newton.ReassemblyMaxThreshold", 1e2*shiftTolerance_);
         reassemblyShiftWeight_ = getParamFromGroup<Scalar>(group, "Newton.ReassemblyShiftWeight", 1e-3);
 
+        maxTimeStepDivisions_ = getParamFromGroup<std::size_t>(group, "Newton.MaxTimeStepDivisions", 10);
+
         verbose_ = comm_.rank() == 0;
         numSteps_ = 0;
     }
@@ -1073,15 +1076,15 @@ private:
     //! The communication object
     Communication comm_;
 
-    //! The time loop for stationary simulations
-    std::shared_ptr<TimeLoop<Scalar>> timeLoop_;
-
     //! switches on/off verbosity
     bool verbose_;
 
     Scalar shiftTolerance_;
     Scalar reductionTolerance_;
     Scalar residualTolerance_;
+
+    // time step control
+    std::size_t maxTimeStepDivisions_;
 
     // further parameters
     bool useLineSearch_;
