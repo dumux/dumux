@@ -24,57 +24,60 @@
 #ifndef DUMUX_STAGGERED_GRID_VARIABLES_HH
 #define DUMUX_STAGGERED_GRID_VARIABLES_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/fvgridvariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
  * \brief Class storing data associated to scvs and scvfs
+ * \tparam GG the type of the grid geometry
+ * \tparam GVV the type of the grid volume variables
+ * \tparam GFVC the type of the grid flux variables cache
+ * \tparam GFV the type of the grid face variables
  */
-template<class TypeTag>
-class StaggeredGridVariables : public FVGridVariables<TypeTag>
+template<class GG, class GVV, class GFVC, class GFV>
+class StaggeredGridVariables : public FVGridVariables<GG, GVV, GFVC>
 {
-    using ParentType = FVGridVariables<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
-    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ParentType = FVGridVariables<GG, GVV, GFVC>;
+    using FVGridGeometry = GG;
+    using GridVolumeVariables = GVV;
+    using GridFluxVariablesCache = GFVC;
+    using GridFaceVariables = GFV;
 
 public:
     //! Constructor
-    StaggeredGridVariables(std::shared_ptr<const Problem> problem,
-                           std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    template<class Problem>
+    StaggeredGridVariables(std::shared_ptr<Problem> problem,
+                           std::shared_ptr<FVGridGeometry> fvGridGeometry)
     : ParentType(problem, fvGridGeometry)
-    , fvGridGeometry_(fvGridGeometry)
     , curGridFaceVariables_(*problem)
     , prevGridFaceVariables_(*problem)
     {}
 
     //! update all variables
+    template<class SolutionVector>
     void update(const SolutionVector& curSol)
     {
         ParentType::update(curSol);
-        curGridFaceVariables_.update(*fvGridGeometry_, curSol);
+        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol);
     }
 
     //! initialize all variables (stationary case)
+    template<class SolutionVector>
     void init(const SolutionVector& curSol)
     {
         ParentType::init(curSol);
-        curGridFaceVariables_.update(*fvGridGeometry_, curSol);
+        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol);
     }
 
     //! initialize all variables (instationary case)
+    template<class SolutionVector>
     void init(const SolutionVector& curSol, const SolutionVector& initSol)
     {
         ParentType::init(curSol, initSol);
-        curGridFaceVariables_.update(*fvGridGeometry_, curSol);
-        prevGridFaceVariables_.update(*fvGridGeometry_, initSol);
+        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol);
+        prevGridFaceVariables_.update(*this->fvGridGeometry_, initSol);
     }
 
     //! Sets the current state as the previous for next time step
@@ -86,6 +89,7 @@ public:
     }
 
     //! resets state to the one before time integration
+    template<class SolutionVector>
     void resetTimeStep(const SolutionVector& solution)
     {
         ParentType::resetTimeStep(solution);
@@ -109,9 +113,6 @@ public:
     { return prevGridFaceVariables_; }
 
 private:
-
-    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
-
     GridFaceVariables curGridFaceVariables_;
     GridFaceVariables prevGridFaceVariables_;
 };

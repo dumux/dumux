@@ -96,7 +96,16 @@ SET_TYPE_PROP(StaggeredModel, StaggeredFaceSolution, StaggeredFaceSolution<TypeT
 SET_TYPE_PROP(StaggeredModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables)>);
 
 //! Set the grid variables (volume, flux and face variables)
-SET_TYPE_PROP(StaggeredModel, GridVariables, StaggeredGridVariables<TypeTag>);
+SET_PROP(StaggeredModel, GridVariables)
+{
+private:
+    using GG = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GVV = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
+    using GFVC = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
+    using GFV = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
+public:
+    using type = StaggeredGridVariables<GG, GVV, GFVC, GFV>;
+};
 
 //! Use the cell center element boundary types per default
 SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, CCElementBoundaryTypes);

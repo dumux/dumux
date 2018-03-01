@@ -34,15 +34,22 @@
 
 #include <dumux/discretization/fvgridvariables.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
+
 //! Type tag for finite-volume schemes.
 NEW_TYPE_TAG(FiniteVolumeModel, INHERITS_FROM(GridProperties));
 
 //! The grid variables
-SET_TYPE_PROP(FiniteVolumeModel, GridVariables, FVGridVariables<TypeTag>);
+SET_PROP(FiniteVolumeModel, GridVariables)
+{
+private:
+    using GG = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GVV = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
+    using GFVC = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
+public:
+    using type = FVGridVariables<GG, GVV, GFVC>;
+};
 
 //! The type of a solution for a whole element
 SET_TYPE_PROP(FiniteVolumeModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
