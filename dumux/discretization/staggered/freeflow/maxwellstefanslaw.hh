@@ -81,8 +81,8 @@ public:
 
     //! state the type for the corresponding cache and its filler
     //! We don't cache anything for this law
-    using Cache = FluxVariablesCaching::EmptyDiffusionCache<TypeTag>;
-    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
+    using Cache = FluxVariablesCaching::EmptyDiffusionCache;
+    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller;
 
     static CellCenterPrimaryVariables diffusiveFluxForCellCenter(const Problem& problem,
                                                                  const FVElementGeometry& fvGeometry,

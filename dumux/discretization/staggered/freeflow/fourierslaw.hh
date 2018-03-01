@@ -61,7 +61,7 @@ public:
 
     //! state the type for the corresponding cache
     //! We don't cache anything for this law
-    using Cache = FluxVariablesCaching::EmptyDiffusionCache<TypeTag>;
+    using Cache = FluxVariablesCaching::EmptyDiffusionCache;
 
     //! calculate the molecular diffusive fluxes
     static Scalar diffusiveFluxForCellCenter(const Problem& problem,

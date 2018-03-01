@@ -79,7 +79,7 @@ public:
 
     //! state the type for the corresponding cache
     //! We don't cache anything for this law
-    using Cache = FluxVariablesCaching::EmptyDiffusionCache<TypeTag>;
+    using Cache = FluxVariablesCaching::EmptyDiffusionCache;
 
     static CellCenterPrimaryVariables diffusiveFluxForCellCenter(const Problem& problem,
                                                            const FVElementGeometry& fvGeometry,
