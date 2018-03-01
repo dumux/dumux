@@ -135,7 +135,14 @@ SET_TYPE_PROP(NavierStokes, FluxVariables, NavierStokesFluxVariables<TypeTag>);
 SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
 //! The indices required by the isothermal single-phase model
-SET_TYPE_PROP(NavierStokes, Indices, NavierStokesIndices<TypeTag>);
+SET_PROP(NavierStokes, Indices)
+{
+private:
+    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
+public:
+    using type = NavierStokesIndices<dim, numEq>;
+};
 
 //! The specific vtk output fields
 SET_TYPE_PROP(NavierStokes, VtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
@@ -144,7 +151,14 @@ SET_TYPE_PROP(NavierStokes, VtkOutputFields, NavierStokesVtkOutputFields<TypeTag
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 //! The indices required by the isothermal single-phase model
-SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesIndices<TypeTag>);
+SET_PROP(NavierStokesNI, IsothermalIndices)
+{
+private:
+    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
+public:
+    using type = NavierStokesIndices<dim, numEq>;
+};
 
 //! The specific isothermal vtk output fields
 SET_TYPE_PROP(NavierStokesNI, IsothermalVtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
