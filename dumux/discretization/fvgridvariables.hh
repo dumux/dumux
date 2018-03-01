@@ -25,35 +25,31 @@
 #define DUMUX_FV_GRID_VARIABLES_HH
 
 #include <memory>
-#include <dumux/common/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Discretization
  * \brief The grid variable class for finite volume schemes storing variables on scv and scvf (volume and flux variables)
+ * \tparam the type of the grid geometry
+ * \tparam the type of the grid volume variables
+ * \tparam the type of the grid flux variables cache
  */
-template<class TypeTag>
+template<class FVGridGeometry, class GridVolumeVariables, class GridFluxVariablesCache>
 class FVGridVariables
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-
 public:
-    FVGridVariables(std::shared_ptr<const Problem> problem,
-                    std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : problem_(problem)
-    , fvGridGeometry_(fvGridGeometry)
+    template<class Problem>
+    FVGridVariables(std::shared_ptr<Problem> problem,
+                    std::shared_ptr<FVGridGeometry> fvGridGeometry)
+    : fvGridGeometry_(fvGridGeometry)
     , curGridVolVars_(*problem)
     , prevGridVolVars_(*problem)
     , gridFluxVarsCache_(*problem)
     {}
 
     //! update all variables
+    template<class SolutionVector>
     void update(const SolutionVector& curSol)
     {
         // resize and update the volVars with the initial solution
@@ -64,6 +60,7 @@ public:
     }
 
     //! initialize all variables (stationary case)
+    template<class SolutionVector>
     void init(const SolutionVector& curSol)
     {
         // resize and update the volVars with the initial solution
@@ -74,6 +71,7 @@ public:
     }
 
     //! initialize all variables (instationary case)
+    template<class SolutionVector>
     void init(const SolutionVector& curSol, const SolutionVector& initSol)
     {
         // resize and update the volVars with the initial solution
@@ -96,6 +94,7 @@ public:
     }
 
     //! resets state to the one before time integration
+    template<class SolutionVector>
     void resetTimeStep(const SolutionVector& solution)
     {
         // set the new time step vol vars to old vol vars
@@ -129,10 +128,11 @@ public:
     GridVolumeVariables& prevGridVolVars()
     { return prevGridVolVars_; }
 
-private:
-    std::shared_ptr<const Problem> problem_; //!< pointer to the constant problem definition
+protected:
+
     std::shared_ptr<const FVGridGeometry> fvGridGeometry_; //!< pointer to the constant grid geometry
 
+private:
     GridVolumeVariables curGridVolVars_; //!< the current volume variables (primary and secondary variables)
     GridVolumeVariables prevGridVolVars_; //!< the previous time step's volume variables (primary and secondary variables)
 

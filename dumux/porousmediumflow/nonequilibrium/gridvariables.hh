@@ -38,31 +38,33 @@ namespace Dumux {
  * \brief This class stores the velocities which are used to compute reynoldsnumbers for the source terms of nonequilibrium models
  */
 template<class TypeTag>
-class NonEquilibriumGridVariables: public FVGridVariables<TypeTag>
+class NonEquilibriumGridVariables
+: public FVGridVariables<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, GridVolumeVariables),
+                         typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)>
 {
-    using ParentType = FVGridVariables<TypeTag>;
+    using ParentType = FVGridVariables<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                       typename GET_PROP_TYPE(TypeTag, GridVolumeVariables),
+                                       typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)>;
+
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
-
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename FVGridGeometry::GridView;
 
     enum { dim = GridView::dimension }; // Grid and world dimension
     enum { dimWorld = GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<typename GridView::Grid::ctype, dimWorld>;
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
+    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
 
 public:
     //! Constructor
-    NonEquilibriumGridVariables(std::shared_ptr<const Problem> problem,
-                                std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    NonEquilibriumGridVariables(std::shared_ptr<Problem> problem,
+                                std::shared_ptr<FVGridGeometry> fvGridGeometry)
     : ParentType(problem, fvGridGeometry)
     , problem_(problem)
-    , fvGridGeometry_(fvGridGeometry)
     {
         for (int phaseIdx =0; phaseIdx<numPhases; ++phaseIdx)
         {
@@ -70,24 +72,26 @@ public:
         }
     }
 
+    template<class SolutionVector>
     void calcVelocityAverage(const SolutionVector& curSol)
     {
         // instatiate the velocity output
-        VelocityOutput velocityOutput(*problem_, *fvGridGeometry_, *this, curSol);
+        using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+        VelocityOutput velocityOutput(*problem_, *this->fvGridGeometry_, *this, curSol);
         std::array<std::vector<GlobalPosition>, numPhases> velocity;
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             if(isBox && dim == 1)
-                velocity[phaseIdx].resize(fvGridGeometry_->gridView().size(0));
+                velocity[phaseIdx].resize(this->fvGridGeometry_->gridView().size(0));
             else
-                velocity[phaseIdx].resize(fvGridGeometry_->numDofs());
+                velocity[phaseIdx].resize(this->fvGridGeometry_->numDofs());
         }
-        for (const auto& element : elements(fvGridGeometry_->gridView(), Dune::Partitions::interior))
+        for (const auto& element : elements(this->fvGridGeometry_->gridView(), Dune::Partitions::interior))
         {
-            const auto eIdxGlobal = fvGridGeometry_->elementMapper().index(element);
+            const auto eIdxGlobal = this->fvGridGeometry_->elementMapper().index(element);
 
-            auto fvGeometry = localView(*fvGridGeometry_);
+            auto fvGeometry = localView(*this->fvGridGeometry_);
             auto elemVolVars = localView(this->curGridVolVars());
 
             fvGeometry.bind(element);
@@ -106,9 +110,9 @@ public:
                     else
                        velocityNorm_[phaseIdx][dofIdxGlobal] = velocity[phaseIdx][dofIdxGlobal].two_norm();
                 }
-            }//end phases
-        }//end elements
-  }// end calcVelocity
+            } //end phases
+        } //end elements
+    } // end calcVelocity
 
     /*!
      * \brief Access to the averaged (magnitude of) velocity for each vertex.
@@ -123,11 +127,9 @@ public:
 
 private:
     std::shared_ptr<const Problem> problem_;
-    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
     std::array<std::vector<Dune::FieldVector<Scalar, 1> > , numPhases> velocityNorm_;
-
-
 };
-} // end namespace
+
+} // end namespace Dumux
 
 #endif
