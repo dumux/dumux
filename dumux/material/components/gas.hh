@@ -31,6 +31,7 @@ namespace Components {
 template<class Scalar, class Component>
 class Gas
 {
+public:
     /*!
      * \brief the component has a gas state if it derives from Gas
      */

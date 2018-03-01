@@ -31,6 +31,7 @@ namespace Components {
 template<class Scalar, class Component>
 class Solid
 {
+public:
     /*!
      * \brief the component has a solid state if it derives from Solid
      */
