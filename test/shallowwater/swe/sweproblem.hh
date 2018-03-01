@@ -44,14 +44,14 @@ class SweTestProblem;
 // Specify the properties for the problem
 namespace Properties
 {
-NEW_TYPE_TAG(SweTypeTag, INHERITS_FROM(Swe, SweTestSpatialParams));
-NEW_TYPE_TAG(SweTestProblem, INHERITS_FROM(CCTpfaModel, Swe));
+NEW_TYPE_TAG(SweTestTypeTag, INHERITS_FROM(Swe, SweTestSpatialParams));
+NEW_TYPE_TAG(SweTestProblem, INHERITS_FROM(CCTpfaModel, SweTestTypeTag));
 
 // Use 2d YaspGrid
-SET_TYPE_PROP(SweTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(SweTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(SweTestProblem, Problem,SweTestProblem<TypeTag>);
+SET_TYPE_PROP(SweTestTypeTag, Problem,SweTestProblem<TypeTag>);
 
 } // end namespace Dumux
 
