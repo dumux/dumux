@@ -31,8 +31,8 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fluxvariablescaching.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Discretization
  * \brief Evaluates a user given velocity field
@@ -54,7 +54,7 @@ public:
     static const DiscretizationMethod discMethod = DiscretizationMethod::none;
 
     //! state the type for the corresponding cache
-    using Cache = FluxVariablesCaching::EmptyAdvectionCache<TypeTag>;
+    using Cache = FluxVariablesCaching::EmptyAdvectionCache;
 
     //! returns the volume flux given in the spatial params
     static Scalar flux(const Problem& problem,
