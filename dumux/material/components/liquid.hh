@@ -58,7 +58,7 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
-    { return Component::liquidDensity(temperature, pressure); }
+    { DUNE_THROW(Dune::NotImplemented, "Component::liquidDensity(t,p)"); }
 
     /*!
      * \brief The dynamic liquid viscosity \f$\mathrm{[Pa*s]}\f$ of the pure component.
@@ -67,7 +67,7 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
-    { return Component::liquidViscosity(temperature, pressure); }
+    { DUNE_THROW(Dune::NotImplemented, "Component::liquidViscosity(t,p)"); }
 
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of the pure component in liquid.
