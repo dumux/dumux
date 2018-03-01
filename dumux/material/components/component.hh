@@ -27,6 +27,7 @@
 
 #warning "This header is deprecated. Use base.hh/solid.hh/liquid.hh/gas.hh"
 #include <dune/common/stdstreams.hh>
+#include <dune/common/deprecated.hh>
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
