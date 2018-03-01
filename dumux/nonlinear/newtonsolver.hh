@@ -49,6 +49,20 @@
 
 namespace Dumux {
 
+//! helper function detecting if an assembler supports partial reassembly
+template<class Assembler>
+auto supportsPartialReassembly(const Assembler& assembler) noexcept
+{
+    using SolutionVector = typename Assembler::ResidualType;
+    using Reassembler = PartialReassembler<Assembler>;
+
+    return isValid([](auto&& a) -> decltype(
+        a.assembleJacobianAndResidual(std::declval<Assembler>(),
+                                      std::declval<const SolutionVector&>(),
+                                      std::declval<const Reassembler*>())
+    ){})(assembler);
+}
+
 /*!
  * \ingroup Nonlinear
  * \brief An implementation of a Newton controller
@@ -68,13 +82,6 @@ class NewtonSolver
     using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
     using Reassembler = PartialReassembler<Assembler>;
 
-    // TODO: Require Reassembler argument from the standard interface
-    static constexpr auto supportsPartialReassembly =
-                                Dumux::isValid([](auto&& a) -> decltype(
-                                    a.assembleJacobianAndResidual(std::declval<Assembler>(),
-                                                                  std::declval<const SolutionVector&>(),
-                                                                  std::declval<const Reassembler*>())
-                                ){});
 public:
 
     using Communication = Comm;
@@ -282,7 +289,7 @@ public:
      */
     virtual void assembleLinearSystem(const SolutionVector& uCurrentIter)
     {
-        assembleLinearSystem_(uCurrentIter);
+        assembleLinearSystem_(*assembler_, uCurrentIter);
 
         if (enablePartialReassembly_)
             partialReassembler_->report(comm_, endIterMsgStream_);
@@ -750,17 +757,17 @@ private:
     }
 
     //! assembleLinearSystem_ for assemblers that support partial reassembly
-    template<class A = Assembler>
-    auto assembleLinearSystem_(const SolutionVector& uCurrentIter)
-    -> typename std::enable_if_t<decltype(supportsPartialReassembly(std::declval<A>()))::value, void>
+    template<class A>
+    auto assembleLinearSystem_(const A& assembler, const SolutionVector& uCurrentIter)
+    -> typename std::enable_if_t<decltype(supportsPartialReassembly(assembler))::value, void>
     {
         assembler_->assembleJacobianAndResidual(uCurrentIter, partialReassembler_.get());
     }
 
     //! assembleLinearSystem_ for assemblers that don't support partial reassembly
-    template<class A = Assembler>
-    auto assembleLinearSystem_(const SolutionVector& uCurrentIter)
-    -> typename std::enable_if_t<!decltype(supportsPartialReassembly(std::declval<A>()))::value, void>
+    template<class A>
+    auto assembleLinearSystem_(const A& assembler, const SolutionVector& uCurrentIter)
+    -> typename std::enable_if_t<!decltype(supportsPartialReassembly(assembler))::value, void>
     {
         assembler_->assembleJacobianAndResidual(uCurrentIter);
     }

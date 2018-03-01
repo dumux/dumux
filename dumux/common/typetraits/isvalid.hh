@@ -80,8 +80,9 @@ public:
  * Usage:
  * If you want to test if a class has the member function resize(std::size_t) create a test functor
  * \code
- * constexpr auto hasResize = isValid([](auto&& c) -> decltype(c.resize(std::size_t(1))) {}; });
+ * auto hasResize = isValid([](auto&& c) -> decltype(c.resize(std::size_t(1))) {}; });
  * \endcode
+ * \note hasResize can be constexpr in C++17 which allows lambdas in constexpr functions
  * The you can use the test in compile time expressions
  * \code
  * template<class T>
