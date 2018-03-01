@@ -51,7 +51,7 @@ NEW_TYPE_TAG(SweTestProblem, INHERITS_FROM(CCTpfaModel, Swe));
 SET_TYPE_PROP(SweTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(SweTestProblem, Problem, Dumux::SweTestProblem<TypeTag>);
+SET_TYPE_PROP(SweTestProblem, Problem,SweTestProblem<TypeTag>);
 
 } // end namespace Dumux
 
