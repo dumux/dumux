@@ -29,8 +29,7 @@
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \brief Evaluates the gradient of a given box element solution to a given global position.
@@ -46,16 +45,14 @@ namespace Dumux
  *         the PrimaryVariables object (i.e. numEq). Each entry is
  *         a GlobalCoordinate object holding the priVar gradient.
  */
-template< class Element, class FVGridGeometry, class TypeTag >
-Dune::FieldVector<typename Element::Geometry::GlobalCoordinate,
-                  BoxElementSolution<TypeTag>::PrimaryVariables::dimension>
-evalGradients(const Element& element,
-              const typename Element::Geometry& geometry,
-              const FVGridGeometry& fvGridGeometry,
-              const BoxElementSolution<TypeTag>& elemSol,
-              const typename Element::Geometry::GlobalCoordinate& globalPos)
+template<class Element, class FVGridGeometry, class Sol>
+auto evalGradients(const Element& element,
+                   const typename Element::Geometry& geometry,
+                   const FVGridGeometry& fvGridGeometry,
+                   const BoxElementSolution<FVGridGeometry, Sol>& elemSol,
+                   const typename Element::Geometry::GlobalCoordinate& globalPos)
 {
-    using PrimaryVariables = typename BoxElementSolution<TypeTag>::PrimaryVariables;
+    using PrimaryVariables = typename BoxElementSolution<FVGridGeometry, Sol>::PrimaryVariables;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     // evaluate gradients using the local finite element basis
@@ -104,14 +101,18 @@ evalGradients(const Element& element,
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
  * \throws Dune::NotImplemented
+ *
+ * \return Dune::FieldVector with as many entries as dimension of
+ *         the PrimaryVariables object (i.e. numEq). Each entry is
+ *         a GlobalCoordinate object holding the priVar gradient.
  */
-template< class Element, class FVGridGeometry, class TypeTag >
+template<class Element, class FVGridGeometry, class Sol>
 Dune::FieldVector<typename Element::Geometry::GlobalCoordinate,
-                  CCElementSolution<TypeTag>::PrimaryVariables::dimension>
+                  CCElementSolution<FVGridGeometry, Sol>::PrimaryVariables::dimension>
 evalGradients(const Element& element,
               const typename Element::Geometry& geometry,
               const FVGridGeometry& fvGridGeometry,
-              const CCElementSolution<TypeTag>& elemSol,
+              const CCElementSolution<FVGridGeometry, Sol>& elemSol,
               const typename Element::Geometry::GlobalCoordinate& globalPos)
 { DUNE_THROW(Dune::NotImplemented, "General gradient evaluation for cell-centered methods"); }
 

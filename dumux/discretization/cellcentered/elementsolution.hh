@@ -25,28 +25,24 @@
 #define DUMUX_CC_ELEMENT_SOLUTION_HH
 
 #include <dune/istl/bvector.hh>
-#include <dumux/common/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup CCDiscretization
  * \brief The element solution vector
  */
-template<class TypeTag>
+template<class FVGridGeometry, class SolutionVector>
 class CCElementSolution
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
 
 public:
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using PrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[0])>;
 
+    //! default constructor
     CCElementSolution() = default;
 
     //! Constructor with element and solution
@@ -55,7 +51,14 @@ public:
     : CCElementSolution(sol[fvGridGeometry.elementMapper().index(element)])
     {}
 
+    //! Constructor with element and solution and element geometry
+    CCElementSolution(const Element& element, const SolutionVector& sol,
+                      const FVElementGeometry& fvGeometry)
+    : CCElementSolution(sol[fvGeometry.fvGridGeometry().elementMapper().index(element)])
+    {}
+
     //! Constructor with element and elemVolVars and fvGeometry
+    template<class ElementVolumeVariables>
     CCElementSolution(const Element& element, const ElementVolumeVariables& elemVolVars,
                       const FVElementGeometry& fvGeometry)
     {

@@ -170,7 +170,8 @@ SET_TYPE_PROP(CCMpfaModel,
 SET_TYPE_PROP(CCMpfaModel, GridVolumeVariables, CCGridVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
 
 //! Set the solution vector type for an element
-SET_TYPE_PROP(CCMpfaModel, ElementSolutionVector, CCElementSolution<TypeTag>);
+SET_TYPE_PROP(CCMpfaModel, ElementSolutionVector, CCElementSolution<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                                    typename GET_PROP_TYPE(TypeTag, SolutionVector)>);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(CCMpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes);
