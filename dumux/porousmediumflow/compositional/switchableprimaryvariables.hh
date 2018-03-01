@@ -25,8 +25,6 @@
 #define DUMUX_SWITCHABLE_PRIMARY_VARIABLES_HH
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/fvector.hh>
-#include <dumux/common/properties.hh>
 
 namespace Dumux {
 
@@ -34,12 +32,10 @@ namespace Dumux {
  * \ingroup PorousmediumCompositional
  * \brief A primary variable vector with a state to allow variable switches
  */
-template<class TypeTag, class StateType>
-class SwitchablePrimaryVariables : public Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                            GET_PROP_VALUE(TypeTag, NumEq)>
+template<class PrimaryVariables, class StateType>
+class SwitchablePrimaryVariables : public PrimaryVariables
 {
-    using ParentType = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                         GET_PROP_VALUE(TypeTag, NumEq)>;
+    using ParentType = PrimaryVariables;
 public:
     //! inherit the constructors
     using ParentType::ParentType;
@@ -74,7 +70,6 @@ public:
 private:
     StateType state_;
     bool stateIsSet_{false};
-
 };
 
 } // end namespace Dumux

@@ -78,6 +78,8 @@
 #ifndef DUMUX_3P3C_MODEL_HH
 #define DUMUX_3P3C_MODEL_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
@@ -165,7 +167,14 @@ SET_BOOL_PROP(ThreePThreeC, EnableEnergyBalance, false);
 SET_TYPE_PROP(ThreePThreeC, PrimaryVariableSwitch, ThreePThreeCPrimaryVariableSwitch<TypeTag>);
 
 //! The primary variables vector for the 3p3c model
-SET_TYPE_PROP(ThreePThreeC, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
+SET_PROP(ThreePThreeC, PrimaryVariables)
+{
+private:
+    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                     GET_PROP_VALUE(TypeTag, NumEq)>;
+public:
+    using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
+};
 
 //! the VolumeVariables property
 SET_TYPE_PROP(ThreePThreeC, VolumeVariables, ThreePThreeCVolumeVariables<TypeTag>);

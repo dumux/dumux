@@ -77,6 +77,8 @@
 #ifndef DUMUX_2P2C_MODEL_HH
 #define DUMUX_2P2C_MODEL_HH
 
+#include <dune/common/fvector.hh>
+
 // property forward declarations
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/properties.hh>
@@ -94,11 +96,9 @@
 #include "primaryvariableswitch.hh"
 #include "vtkoutputfields.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+namespace Properties {
 
-namespace Properties
-{
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
@@ -178,7 +178,14 @@ SET_BOOL_PROP(TwoPTwoC, EnableEnergyBalance, false);
 SET_TYPE_PROP(TwoPTwoC, PrimaryVariableSwitch, TwoPTwoCPrimaryVariableSwitch<TypeTag>);
 
 //! The primary variables vector for the 2p2c model
-SET_TYPE_PROP(TwoPTwoC, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
+SET_PROP(TwoPTwoC, PrimaryVariables)
+{
+private:
+    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                     GET_PROP_VALUE(TypeTag, NumEq)>;
+public:
+    using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
+};
 
 //! Use the 2p2c VolumeVariables
 SET_TYPE_PROP(TwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);

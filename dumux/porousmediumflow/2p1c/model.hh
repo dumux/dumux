@@ -57,6 +57,8 @@
 #ifndef DUMUX_2P1C_MODEL_HH
 #define DUMUX_2P1C_MODEL_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/properties.hh>
 
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
@@ -158,7 +160,14 @@ SET_TYPE_PROP(TwoPOneCNI, VolumeVariables, TwoPOneCVolumeVariables<TypeTag>);
 SET_TYPE_PROP(TwoPOneCNI, PrimaryVariableSwitch, TwoPOneCPrimaryVariableSwitch<TypeTag>);
 
 //! The primary variables vector for the 2p1cni model.
-SET_TYPE_PROP(TwoPOneCNI, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
+SET_PROP(TwoPOneCNI, PrimaryVariables)
+{
+private:
+    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                     GET_PROP_VALUE(TypeTag, NumEq)>;
+public:
+    using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
+};
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity.
 SET_PROP(TwoPOneCNI, ThermalConductivityModel)

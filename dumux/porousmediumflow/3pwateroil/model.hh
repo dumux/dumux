@@ -71,8 +71,9 @@
 #ifndef DUMUX_3P2CNI_MODEL_HH
 #define DUMUX_3P2CNI_MODEL_HH
 
-#include <dumux/common/properties.hh>
+#include <dune/common/fvector.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
@@ -171,7 +172,14 @@ SET_BOOL_PROP(ThreePWaterOilNI, EnableEnergyBalance, true);
 SET_TYPE_PROP(ThreePWaterOilNI, PrimaryVariableSwitch, ThreePWaterOilPrimaryVariableSwitch<TypeTag>);
 
 //! The primary variables vector for the 3p3c model
-SET_TYPE_PROP(ThreePWaterOilNI, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
+SET_PROP(ThreePWaterOilNI, PrimaryVariables)
+{
+private:
+    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                     GET_PROP_VALUE(TypeTag, NumEq)>;
+public:
+    using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
+};
 
 //! Determines whether a constraint solver should be used explicitly
 SET_BOOL_PROP(ThreePWaterOilNI, OnlyGasPhaseCanDisappear, true);
