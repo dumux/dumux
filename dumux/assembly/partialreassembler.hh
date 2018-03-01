@@ -380,6 +380,13 @@ public:
     using ParentType::ParentType;
 };
 
+//! helper function to determine whether the an engine class has vertex colors
+template<class Engine>
+auto hasVertexColor()
+{
+    return isValid([](auto&& a) -> decltype(a.vertexColor(0)) {}).template check<Engine>();
+}
+
 /*!
  * \ingroup Assembly
  * \brief detects which entries in the Jacobian have to be recomputed
@@ -395,9 +402,6 @@ class PartialReassembler
 
     static constexpr DiscretizationMethod discMethod = FVGridGeometry::discMethod;
     using Engine = PartialReassemblerEngine<Assembler, discMethod>;
-
-    static constexpr auto hasVertexColor = Dumux::isValid([](auto&& a) -> decltype(a.vertexColor(0)) {});
-    static constexpr bool engineHasVertexColor = decltype(hasVertexColor(std::declval<Engine>()))::value;
 
 public:
 
@@ -465,7 +469,8 @@ public:
     EntityColor dofColor(size_t idx) const
     { return engine_.dofColor(idx); }
 
-    template<bool enable = engineHasVertexColor, typename std::enable_if_t<enable, int> = 0>
+    template<bool enable = decltype(hasVertexColor<Engine>())::value,
+             typename std::enable_if_t<enable, int> = 0>
     EntityColor vertexColor(size_t idx) const
     { return engine_.vertexColor(idx); }
 

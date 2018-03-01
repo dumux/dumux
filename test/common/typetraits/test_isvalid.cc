@@ -19,7 +19,7 @@ struct MyOtherVector {
     double resize;
 };
 
-constexpr auto hasResize = Dumux::isValid([](auto&& a) -> decltype(a.resize(std::size_t(1))) { });
+const auto hasResize = isValid([](auto&& a) -> decltype(a.resize(std::size_t(1))) { });
 
 // using the check function
 template<class Vector, typename std::enable_if_t<hasResize.template check<Vector>(), int> = 0>
