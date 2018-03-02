@@ -73,6 +73,7 @@ auto supportsPartialReassembly(const Assembler& assembler) noexcept
  *       this class and simply overload the required methods.
  */
 template <class Assembler, class LinearSolver,
+          class Reassembler = PartialReassembler<Assembler>,
           class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> >
 class NewtonSolver
 {
@@ -80,7 +81,6 @@ class NewtonSolver
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using SolutionVector = typename Assembler::ResidualType;
     using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
-    using Reassembler = PartialReassembler<Assembler>;
 
 public:
 
@@ -110,10 +110,7 @@ public:
 
         // initialize the partial reassembler
         if (enablePartialReassembly_)
-        {
-            partialReassembler_ = std::make_unique<Reassembler>(assembler_->fvGridGeometry());
-            distanceFromLastLinearization_.resize(assembler_->fvGridGeometry().numDofs(), 0);
-        }
+            std::make_unique<Reassembler>(*assembler_);
     }
 
     //! the communicator for parallel runs
@@ -196,7 +193,7 @@ public:
                 uCurrentIter = assembler_->prevSol();
 
                 // reset the grid variables to the previous solution
-                assembler_->gridVariables().resetTimeStep(uCurrentIter);
+                assembler_->resetTimeStep(uCurrentIter);
 
                 if (verbose_)
                     std::cout << "Newton solver did not converge with dt = "
@@ -405,9 +402,9 @@ public:
                                                shift_*reassemblyShiftWeight_));
 
             updateDistanceFromLastLinearization_(uLastIter, deltaU);
-            partialReassembler_->computeColors(reassemblyThreshold,
-                                               assembler_->fvGridGeometry(),
-                                               distanceFromLastLinearization_);
+            partialReassembler_->computeColors(*assembler_,
+                                               distanceFromLastLinearization_,
+                                               reassemblyThreshold);
 
             // set the discrepancy of the red entities to zero
             for (unsigned int i = 0; i < distanceFromLastLinearization_.size(); i++)
@@ -639,8 +636,7 @@ private:
         if (enablePartialReassembly_)
         {
             partialReassembler_->resetColors();
-            std::fill(distanceFromLastLinearization_.begin(),
-                      distanceFromLastLinearization_.end(), 0.0);
+            resizeDistanceFromLastLinearization_(uCurrentIter, distanceFromLastLinearization_);
         }
 
         try
@@ -1031,9 +1027,8 @@ private:
         numSteps_ = 0;
     }
 
-    template<class SolVec>
-    void updateDistanceFromLastLinearization_(const SolVec &u,
-                                              const SolVec &uDelta)
+    template<class Sol>
+    void updateDistanceFromLastLinearization_(const Sol& u, const Sol& uDelta)
     {
         for (size_t i = 0; i < u.size(); ++i) {
             const auto& currentPriVars(u[i]);
@@ -1047,10 +1042,23 @@ private:
     }
 
     template<class ...Args>
-    void updateDistanceFromLastLinearization_(const Dune::MultiTypeBlockVector<Args...> &uLastIter,
-                                              const Dune::MultiTypeBlockVector<Args...> &deltaU)
+    void updateDistanceFromLastLinearization_(const Dune::MultiTypeBlockVector<Args...>& uLastIter,
+                                              const Dune::MultiTypeBlockVector<Args...>& deltaU)
     {
-        //! \todo implement the function for MultiTypeBlockVectors
+        DUNE_THROW(Dune::NotImplemented, "Reassembly for MultiTypeBlockVector");
+    }
+
+    template<class Sol>
+    void resizeDistanceFromLastLinearization_(const Sol& u, std::vector<Scalar>& dist)
+    {
+        dist.assign(u.size(), 0.0);
+    }
+
+    template<class ...Args>
+    void resizeDistanceFromLastLinearization_(const Dune::MultiTypeBlockVector<Args...>& u,
+                                              std::vector<Scalar>& dist)
+    {
+        DUNE_THROW(Dune::NotImplemented, "Reassembly for MultiTypeBlockVector");
     }
 
     /*!

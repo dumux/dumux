@@ -344,7 +344,7 @@ private:
         }
 
         if (partialReassembler)
-            partialReassembler->resetJacobian(*jacobian_, fvGridGeometry());
+            partialReassembler->resetJacobian(*this);
         else
             *jacobian_ = 0.0;
     }
