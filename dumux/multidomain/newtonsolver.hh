@@ -34,17 +34,17 @@ namespace Dumux {
  * \brief Newton sover for coupled problems
  */
 template <class Assembler, class LinearSolver, class CouplingManager,
+          class Reassembler = DefaultPartialReassembler,
           class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> >
-class MultiDomainNewtonSolver: public NewtonSolver<Assembler, LinearSolver, Comm>
+class MultiDomainNewtonSolver: public NewtonSolver<Assembler, LinearSolver, Reassembler, Comm>
 {
-    using ParentType = NewtonSolver<Assembler, LinearSolver, Comm>;
+    using ParentType = NewtonSolver<Assembler, LinearSolver, Reassembler, Comm>;
     using Scalar = typename Assembler::Scalar;
     using JacobianMatrix = typename Assembler::JacobianMatrix;
     using SolutionVector = typename Assembler::ResidualType;
     using ConvergenceWriter = ConvergenceWriterInterface<SolutionVector>;
 
 public:
-
 
     /*!
      * \brief Constructor for stationary problems

@@ -37,15 +37,13 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
-#include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvassembler.hh>
-#include <dumux/multidomain/newtoncontroller.hh>
+#include <dumux/multidomain/newtonsolver.hh>
 // #include <dumux/mixeddimension/embedded/cellcentered/bboxtreecouplingmanagersimple.hh>
 #include <dumux/mixeddimension/embedded/cellcentered/bboxtreecouplingmanager.hh>
 #include <dumux/mixeddimension/embedded/integrationpointsource.hh>
@@ -160,7 +158,6 @@ int main(int argc, char** argv) try
     // get some time loop parameters
     using Scalar = Traits::Scalar;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
@@ -203,10 +200,8 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonController = MultiDomainNewtonController<double, CouplingManager>;
-    auto newtonController = std::make_shared<NewtonController>(timeLoop, couplingManager);
-    using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
-    NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
+    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
     // time loop
     timeLoop->start();
@@ -215,50 +210,8 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(oldSol);
 
-        // try solving the non-linear system
-        for (int i = 0; i < maxDivisions; ++i)
-        {
-            // assemble
-            // assembler->assembleJacobianAndResidual(sol);
-            // auto& b = assembler->residual(); b *= -1.0;
-
-            // solve
-            // linearSolver->template solve<2>(assembler->jacobian(), sol, b);
-            auto converged = nonLinearSolver.solve(sol);
-            // auto converged = true;
-
-            // update
-            // couplingManager->updateSolution(sol);
-            // bulkGridVariables->update(sol[bulkIdx]);
-            // lowDimGridVariables->update(sol[lowDimIdx]);
-
-            const auto& jac = assembler->jacobian();
-            const auto& res = assembler->residual();
-            using namespace Dune::Indices;
-            if (jac[_0][_0].N() < 28)
-            {
-                Dune::printmatrix(std::cout, jac[_0][_0], "", "", 15, 15);
-                Dune::printmatrix(std::cout, jac[_0][_1], "", "", 15, 15);
-                Dune::printmatrix(std::cout, jac[_1][_0], "", "", 15, 15);
-                Dune::printmatrix(std::cout, jac[_1][_1], "", "", 15, 15);
-                Dune::printvector(std::cout, res[_0], "", "", 15, 15);
-                Dune::printvector(std::cout, res[_1], "", "", 15, 15);
-                Dune::printvector(std::cout, sol[_0], "", "", 15, 15);
-                Dune::printvector(std::cout, sol[_1], "", "", 15, 15);
-            }
-
-            if (converged)
-                break;
-
-            if (!converged && i == maxDivisions-1)
-                DUNE_THROW(Dune::MathError,
-                           "Newton solver didn't converge after "
-                           << maxDivisions
-                           << " time-step divisions. dt="
-                           << timeLoop->timeStepSize()
-                           << ".\nThe solutions of the current and the previous time steps "
-                           << "have been saved to restart files.");
-        }
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(sol, *timeLoop);
 
         // make the new solution the old solution
         oldSol = sol;

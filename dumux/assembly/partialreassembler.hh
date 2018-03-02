@@ -41,10 +41,24 @@ namespace Dumux {
 class DefaultPartialReassembler
 {
 public:
-    DefaultPartialReassembler() = delete;
+    template<typename... Args>
+    DefaultPartialReassembler(Args&&... args)
+    { DUNE_THROW(Dune::InvalidStateException, "DefaultPartialReassembler should be never constructed!"); }
+
+    template<typename... Args>
+    void report(Args&&... args) {}
 
     template<typename... Args>
     void resetJacobian(Args&&... args) const {}
+
+    template<typename... Args>
+    void computeColors(Args&&... args) {}
+
+    template<typename... Args>
+    void resetColors(Args&&... args) {}
+
+    EntityColor dofColor(size_t idx) const
+    { return EntityColor::red; }
 
     EntityColor elementColor(size_t idx) const
     { return EntityColor::red; }
@@ -58,7 +72,7 @@ template<class Assembler, DiscretizationMethod discMethod>
 class PartialReassemblerEngine
 {
 public:
-    PartialReassemblerEngine(const typename Assembler::FVGridGeometry&)
+    PartialReassemblerEngine(const Assembler&)
     { DUNE_THROW(Dune::NotImplemented, "PartialReassembler for this discretization method!"); }
 
     EntityColor elementColor(size_t idx) const
@@ -88,16 +102,17 @@ class PartialReassemblerEngine<Assembler, DiscretizationMethod::box>
     static constexpr int dim = FVGridGeometry::GridView::dimension;
 
 public:
-    PartialReassemblerEngine(const FVGridGeometry& fvGridGeometry)
-    : elementColor_(fvGridGeometry.elementMapper().size(), EntityColor::red)
-    , vertexColor_(fvGridGeometry.vertexMapper().size(), EntityColor::red)
+    PartialReassemblerEngine(const Assembler& assembler)
+    : elementColor_(assembler.fvGridGeometry().elementMapper().size(), EntityColor::red)
+    , vertexColor_(assembler.fvGridGeometry().vertexMapper().size(), EntityColor::red)
     {}
 
     // returns number of green elements
-    std::size_t computeColors(Scalar threshold,
-                              const FVGridGeometry& fvGridGeometry,
-                              const std::vector<Scalar>& distanceFromLastLinearization)
+    std::size_t computeColors(const Assembler& assembler,
+                              const std::vector<Scalar>& distanceFromLastLinearization,
+                              Scalar threshold)
     {
+        const auto& fvGridGeometry = assembler.fvGridGeometry();
         const auto& gridView = fvGridGeometry.gridView();
         const auto& elementMapper = fvGridGeometry.elementMapper();
         const auto& vertexMapper = fvGridGeometry.vertexMapper();
@@ -238,9 +253,10 @@ public:
                              [](EntityColor c){ return c == EntityColor::green; });
     }
 
-    void resetJacobian(JacobianMatrix& jacobian,
-                       const FVGridGeometry& fvGridGeometry) const
+    void resetJacobian(Assembler& assembler) const
     {
+        auto& jacobian = assembler.jacobian();
+
         // loop over all dofs
         for (unsigned int rowIdx = 0; rowIdx < jacobian.N(); ++rowIdx)
         {
@@ -287,15 +303,16 @@ class PartialReassemblerEngine<Assembler, DiscretizationMethod::cctpfa>
     using JacobianMatrix = typename Assembler::JacobianMatrix;
 
 public:
-    PartialReassemblerEngine(const FVGridGeometry& fvGridGeometry)
-    : elementColor_(fvGridGeometry.elementMapper().size(), EntityColor::red)
+    PartialReassemblerEngine(const Assembler& assembler)
+    : elementColor_(assembler.fvGridGeometry().elementMapper().size(), EntityColor::red)
     {}
 
     // returns number of green elements
-    std::size_t computeColors(Scalar threshold,
-                              const FVGridGeometry& fvGridGeometry,
-                              const std::vector<Scalar>& distanceFromLastLinearization)
+    std::size_t computeColors(const Assembler& assembler,
+                              const std::vector<Scalar>& distanceFromLastLinearization,
+                              Scalar threshold)
     {
+        const auto& fvGridGeometry = assembler.fvGridGeometry();
         const auto& gridView = fvGridGeometry.gridView();
         const auto& elementMapper = fvGridGeometry.elementMapper();
 
@@ -336,9 +353,11 @@ public:
 
     }
 
-    void resetJacobian(JacobianMatrix& jacobian,
-                       const FVGridGeometry& fvGridGeometry) const
+    void resetJacobian(Assembler& assembler) const
     {
+        auto& jacobian = assembler.jacobian();
+        const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
+
         // loop over all dofs
         for (unsigned int colIdx = 0; colIdx < jacobian.M(); ++colIdx)
         {
@@ -347,7 +366,6 @@ public:
             {
                 // set all matrix entries in the column to 0
                 jacobian[colIdx][colIdx] = 0;
-                const auto& connectivityMap = fvGridGeometry.connectivityMap();
                 for (const auto& dataJ : connectivityMap[colIdx])
                     jacobian[dataJ.globalJ][colIdx] = 0;
             }
@@ -407,12 +425,13 @@ public:
 
     /*!
      * \brief constructor
-     * \param fvGridGeometry the employed FVGridGeometry
+     * \param assembler the assembler
      */
-    PartialReassembler(const FVGridGeometry& fvGridGeometry)
-    : engine_(fvGridGeometry)
+    PartialReassembler(const Assembler& assembler)
+    : engine_(assembler)
     , greenElems_(0)
     {
+        const auto& fvGridGeometry = assembler.fvGridGeometry();
         totalElems_ = fvGridGeometry.elementMapper().size();
         totalElems_ = fvGridGeometry.gridView().comm().sum(totalElems_);
     }
@@ -430,11 +449,11 @@ public:
      * \param threshold Reassemble only if the distance from the last
      * linearization is above this value.
      */
-    void computeColors(Scalar threshold,
-                       const FVGridGeometry& fvGridGeometry,
-                       const std::vector<Scalar>& distanceFromLastLinearization)
+    void computeColors(const Assembler& assembler,
+                       const std::vector<Scalar>& distanceFromLastLinearization,
+                       Scalar threshold)
     {
-        greenElems_ = engine_.computeColors(threshold, fvGridGeometry, distanceFromLastLinearization);
+        greenElems_ = engine_.computeColors(assembler, distanceFromLastLinearization, threshold);
     }
 
     void resetColors()
@@ -442,9 +461,9 @@ public:
         engine_.resetColors();
     }
 
-    void resetJacobian(JacobianMatrix& jacobian, const FVGridGeometry& fvGridGeometry) const
+    void resetJacobian(Assembler& assembler) const
     {
-        engine_.resetJacobian(jacobian, fvGridGeometry);
+        engine_.resetJacobian(assembler);
     }
 
     /*!
