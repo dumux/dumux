@@ -36,8 +36,8 @@ namespace Dumux {
  *        for cell-centered schemes
  */
 template<bool isImplicit, class CouplingManager, class GridGeometry0, class GridGeometry1, std::size_t i, std::size_t j,
-         typename std::enable_if_t<( (GridGeometry0::discretizationMethod == DiscretizationMethods::CCTpfa)
-                                     || (GridGeometry0::discretizationMethod == DiscretizationMethods::CCMpfa) ), int> = 0>
+         typename std::enable_if_t<( (GridGeometry0::discMethod == DiscretizationMethod::cctpfa)
+                                     || (GridGeometry0::discMethod == DiscretizationMethod::ccmpfa) ), int> = 0>
 Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
                                                 Dune::index_constant<i> domainI,
                                                 const GridGeometry0& gridGeometry0,
@@ -74,7 +74,7 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
  *        for the box scheme
  */
 template<bool isImplicit, class CouplingManager, class GridGeometry0, class GridGeometry1, std::size_t i, std::size_t j,
-         typename std::enable_if_t<(GridGeometry0::discretizationMethod == DiscretizationMethods::Box), int> = 0>
+         typename std::enable_if_t<(GridGeometry0::discMethod == DiscretizationMethod::box), int> = 0>
 Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
                                                 Dune::index_constant<i> domainI,
                                                 const GridGeometry0& gridGeometry0,
