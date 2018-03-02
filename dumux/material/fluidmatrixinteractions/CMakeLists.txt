@@ -4,6 +4,7 @@ add_subdirectory("2pia")
 add_subdirectory("3p")
 add_subdirectory("mp")
 add_subdirectory("mineralization")
+add_subdirectory("frictionlaws")
 
 #install headers
 install(FILES

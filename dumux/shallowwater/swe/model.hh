@@ -70,6 +70,11 @@ SET_BOOL_PROP(Swe, EnableTurbulenceModel, false); //!< The turbulence model for 
 SET_INT_PROP(Swe, NumEq, 3);
 SET_INT_PROP(Swe, NumEqVector, 3);
 
+//! Set friciton law indices
+SET_INT_PROP(Swe, Manning, 1);
+SET_INT_PROP(Swe, Chezy, 2);
+SET_INT_PROP(Swe, Nikuradse, 3);
+
 //! The local residual
 SET_TYPE_PROP(Swe, LocalResidual, SweResidual<TypeTag>);
 
