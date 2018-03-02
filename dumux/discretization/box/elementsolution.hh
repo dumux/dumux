@@ -24,39 +24,34 @@
 #define DUMUX_BOX_ELEMENT_SOLUTION_HH
 
 #include <dune/istl/bvector.hh>
-#include <dumux/common/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup BoxModel
  * \brief The element solution vector
  */
-template<class TypeTag>
+template<class FVGridGeometry, class SolutionVector>
 class BoxElementSolution
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
 
 public:
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using PrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[0])>;
 
-    //! Default constructors
+    //! Default constructor
     BoxElementSolution() = default;
 
-    //! Constructor with element and solution and gridgeometry
+    //! Constructor with element and solution and grid geometry
     BoxElementSolution(const Element& element, const SolutionVector& sol,
                        const FVGridGeometry& fvGridGeometry)
     {
         update(element, sol, fvGridGeometry);
     }
 
-    //! Constructor with element and solution and elementgeometry (only works for box)
+    //! Constructor with element and solution and element geometry
     BoxElementSolution(const Element& element, const SolutionVector& sol,
                        const FVElementGeometry& fvGeometry)
     {
@@ -64,6 +59,7 @@ public:
     }
 
     //! Constructor with element and elemVolVars and fvGeometry
+    template<class ElementVolumeVariables>
     BoxElementSolution(const Element& element, const ElementVolumeVariables& elemVolVars,
                        const FVElementGeometry& fvGeometry)
     {
