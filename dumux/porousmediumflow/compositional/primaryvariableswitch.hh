@@ -29,27 +29,19 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup ImplicitModel
  * \brief Empty class for models without pri var switch
  */
-template<class TypeTag>
 class NoPrimaryVariableSwitch
 {
 public:
-    template<typename... Args>
-    void init(Args&&... args) {}
-
-    template<typename... Args>
-    bool wasSwitched(Args&&... args) const { return false; }
-
-    template<typename... Args>
-    bool update(Args&&... args) { return false; }
-
-    template<typename... Args>
-    bool update_(Args&&... args) {return false; }
+    void init(...) {}
+    bool wasSwitched(...) const { return false; }
+    bool update(...) { return false; }
+    bool update_(...) {return false; }
 };
 
 /*!
@@ -60,27 +52,17 @@ template<class TypeTag>
 class PrimaryVariableSwitch
 {
     using Implementation = typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
-
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
 
+    using GridView = typename FVGridGeometry::GridView;
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, GridView::dimensionworld>;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
+    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
     enum { dim = GridView::dimension };
 
 public:
@@ -104,6 +86,7 @@ public:
      * \param problem The problem
      * \param fvGridGeometry The finite-volume grid geometry
      */
+    template<class SolutionVector, class GridVariables, class Problem>
     bool update(SolutionVector& curSol,
                 GridVariables& gridVariables,
                 const Problem& problem,
@@ -160,6 +143,7 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
     // perform variable switch at a degree of freedom location
+    template<class PrimaryVariables, class VolumeVariables>
     bool update_(PrimaryVariables& priVars,
                  const VolumeVariables& volVars,
                  IndexType dofIdxGlobal,
@@ -174,14 +158,14 @@ protected:
     std::vector<bool> visited_;
 
 private:
-    template<class T = TypeTag>
-    static typename std::enable_if<!GET_PROP_VALUE(T, EnableGridVolumeVariablesCache), VolumeVariables&>::type
-    getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    template<class GridVolumeVariables, class ElementVolumeVariables>
+    static auto getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    -> std::enable_if_t<!GridVolumeVariables::cachingEnabled, decltype(elemVolVars[scv])>
     { return elemVolVars[scv]; }
 
-    template<class T = TypeTag>
-    static typename std::enable_if<GET_PROP_VALUE(T, EnableGridVolumeVariablesCache), VolumeVariables&>::type
-    getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    template<class GridVolumeVariables, class ElementVolumeVariables>
+    static auto getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    -> std::enable_if_t<GridVolumeVariables::cachingEnabled, decltype(gridVolVars.volVars(scv))>
     { return gridVolVars.volVars(scv); }
 };
 

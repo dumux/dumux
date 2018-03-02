@@ -63,6 +63,9 @@ public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = true;
+
     CCGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
@@ -147,6 +150,9 @@ class CCGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
 public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = false;
 
     CCGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 

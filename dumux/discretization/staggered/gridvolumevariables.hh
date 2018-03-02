@@ -71,6 +71,9 @@ public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = true;
+
     StaggeredGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     //! Update all volume variables
@@ -160,6 +163,9 @@ class StaggeredGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
 public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = false;
 
     StaggeredGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 

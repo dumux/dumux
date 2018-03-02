@@ -59,6 +59,9 @@ public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = true;
+
     BoxGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
@@ -114,6 +117,9 @@ class BoxGridVolumeVariables<TypeTag, /*enableGlobalVolVarCache*/false>
 public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = false;
 
     BoxGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 

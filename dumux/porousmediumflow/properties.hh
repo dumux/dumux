@@ -40,10 +40,9 @@
 #include <dumux/discretization/fickslaw.hh>
 #include <dumux/discretization/fourierslaw.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
+
 //! Type tag for models involving flow in porous media
 NEW_TYPE_TAG(PorousMediumFlow, INHERITS_FROM(ModelProperties));
 
@@ -77,7 +76,7 @@ SET_TYPE_PROP(PorousMediumFlow, EnergyLocalResidual, EnergyLocalResidual<TypeTag
 SET_TYPE_PROP(PorousMediumFlow, VelocityOutput, PorousMediumFlowVelocityOutput<TypeTag>);
 
 //! By default, we set an empty primary variables switch
-SET_TYPE_PROP(PorousMediumFlow, PrimaryVariableSwitch, NoPrimaryVariableSwitch<TypeTag>);
+SET_TYPE_PROP(PorousMediumFlow, PrimaryVariableSwitch, NoPrimaryVariableSwitch);
 
 SET_BOOL_PROP(PorousMediumFlow, EnableThermalNonEquilibrium, false);
 } // namespace Properties
