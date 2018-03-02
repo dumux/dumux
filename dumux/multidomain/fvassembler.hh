@@ -81,23 +81,23 @@ private:
     using TimeLoop = TimeLoopBase<Scalar>;
     using ThisType = MultiDomainFVAssembler<MDTraits, CouplingManager, diffMethod, isImplicit>;
 
-    template<DiscretizationMethods DiscMethod, std::size_t id>
+    template<DiscretizationMethod discMethod, std::size_t id>
     struct SubDomainAssemblerType;
 
     template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethods::CCTpfa, id>
+    struct SubDomainAssemblerType<DiscretizationMethod::cctpfa, id>
     {
         using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
     };
 
     template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethods::CCMpfa, id>
+    struct SubDomainAssemblerType<DiscretizationMethod::ccmpfa, id>
     {
         using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
     };
 
     template<std::size_t id>
-    struct SubDomainAssemblerType<DiscretizationMethods::Box, id>
+    struct SubDomainAssemblerType<DiscretizationMethod::box, id>
     {
         using type = SubDomainBoxLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
     };
@@ -106,7 +106,7 @@ private:
     using FVGridGeometry = typename std::tuple_element<id, FVGridGeometryTuple>::type::element_type;
 
     template<std::size_t id>
-    using SubDomainAssembler = typename SubDomainAssemblerType<FVGridGeometry<id>::discretizationMethod, id>::type;
+    using SubDomainAssembler = typename SubDomainAssemblerType<FVGridGeometry<id>::discMethod, id>::type;
 
 public:
 
