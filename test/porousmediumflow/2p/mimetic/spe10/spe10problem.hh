@@ -94,8 +94,8 @@ SET_TYPE_PROP(TwoPSpe10Problem, SpatialParams, Spe10SpatialParams<TypeTag> );
 NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(TwoPSpe10Problem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 
-//SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, SuperLUBackend<TypeTag> );
-SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, AMGBackend<TypeTag> );
+SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, SuperLUBackend<TypeTag> );
+//SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, AMGBackend<TypeTag> );
 //SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 
 // Enable gravity
@@ -366,7 +366,7 @@ public:
 #if PROBLEM==1
         Scalar pc = 0.0;
 
-        values[facePressureWIdx] = values[pwIdx];
+        values[facePressureWIdx] = 0.0;
         //values[facePressureNIdx] = pc + values[facePressureWIdx];
 #endif
 
