@@ -25,6 +25,7 @@
 #define DUMUX_EFFECTIVE_SOLID_DENSITY_HH
 
 #include <dumux/discretization/evalsolution.hh>
+#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -33,7 +34,7 @@ namespace Dumux {
  * \brief Calculates the effective solid density
  */
 template<class TypeTag>
-class EffectiveSolidDensity
+class DUNE_DEPRECATED_MSG("Implement SolidSystems instead!") EffectiveSolidDensity
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

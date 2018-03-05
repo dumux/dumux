@@ -25,6 +25,7 @@
 #define DUMUX_EFFECTIVE_SOLID_HEATCAPACITY_HH
 
 #include <dumux/discretization/evalsolution.hh>
+#include <dune/common/deprecated.hh>
 
 namespace Dumux {
 
@@ -33,7 +34,7 @@ namespace Dumux {
  * \brief Calculates the effective solid heat capacity
  */
 template<class TypeTag>
-class EffectiveSolidHeatCapacity
+class DUNE_DEPRECATED_MSG("Implement SolidSystems instead!") EffectiveSolidHeatCapacity
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
