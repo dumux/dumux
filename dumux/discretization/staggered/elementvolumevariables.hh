@@ -48,7 +48,6 @@ class StaggeredElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
@@ -59,6 +58,9 @@ class StaggeredElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    //! Export type of the solution vector
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+
     //! Constructor
     StaggeredElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
@@ -105,7 +107,6 @@ class StaggeredElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
@@ -124,6 +125,8 @@ class StaggeredElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
     static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
 public:
+    //! Export type of the solution vector
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     //! Constructor
     StaggeredElementVolumeVariables(const GridVolumeVariables& gridVolVars)

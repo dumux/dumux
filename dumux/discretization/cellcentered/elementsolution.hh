@@ -24,7 +24,10 @@
 #ifndef DUMUX_CC_ELEMENT_SOLUTION_HH
 #define DUMUX_CC_ELEMENT_SOLUTION_HH
 
-#include <dune/istl/bvector.hh>
+#include <cassert>
+#include <utility>
+#include <type_traits>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux {
 
@@ -100,6 +103,48 @@ public:
 private:
     PrimaryVariables priVars_;
 };
+
+/*!
+ * \ingroup CCDiscretization
+ * \brief  Make an element solution for cell-centered schemes
+ */
+template<class Element, class SolutionVector, class FVGridGeometry>
+auto elementSolution(const Element& element, const SolutionVector& sol, const FVGridGeometry& gg)
+-> std::enable_if_t<FVGridGeometry::discMethod == DiscretizationMethod::cctpfa ||
+                    FVGridGeometry::discMethod == DiscretizationMethod::ccmpfa,
+                    CCElementSolution<FVGridGeometry, SolutionVector>>
+{
+    return CCElementSolution<FVGridGeometry, SolutionVector>(element, sol, gg);
+}
+
+/*!
+* \ingroup CCDiscretization
+* \brief  Make an element solution for cell-centered schemes
+ */
+template<class Element, class ElementVolumeVariables, class FVElementGeometry>
+auto elementSolution(const Element& element, const ElementVolumeVariables& elemVolVars, const FVElementGeometry& gg)
+-> std::enable_if_t<FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::cctpfa ||
+                    FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::ccmpfa,
+                    CCElementSolution<typename FVElementGeometry::FVGridGeometry,
+                                       typename ElementVolumeVariables::SolutionVector>>
+{
+    return CCElementSolution<typename FVElementGeometry::FVGridGeometry,
+                             typename ElementVolumeVariables::SolutionVector>(element, elemVolVars, gg);
+}
+
+/*!
+ * \ingroup CCDiscretization
+ * \brief  Make an element solution for cell-centered schemes
+ * \note This is e.g. used to contruct an element solution at Dirichlet boundaries
+ */
+template<class SolutionVector, class FVGridGeometry, class PrimaryVariables>
+auto elementSolution(PrimaryVariables&& priVars)
+-> std::enable_if_t<FVGridGeometry::discMethod == DiscretizationMethod::cctpfa ||
+                    FVGridGeometry::discMethod == DiscretizationMethod::ccmpfa,
+                    CCElementSolution<FVGridGeometry, SolutionVector>>
+{
+    return CCElementSolution<FVGridGeometry, SolutionVector>(std::move(priVars));
+}
 
 } // end namespace Dumux
 
