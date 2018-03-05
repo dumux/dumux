@@ -70,7 +70,6 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
-#include <dumux/porousmediumflow/richards/newtoncontroller.hh>
 
 #include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>

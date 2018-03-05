@@ -149,7 +149,7 @@ public:
     LocalResidualValues evalLocalSourceResidual(const Element& neighbor, const ElementVolumeVariables& elemVolVars, const SubControlVolume& scv) const
     {
         const auto& curVolVars = elemVolVars[scv];
-        auto source = this->localResidual().computeSource(problem(), neighbor, this->fvGeometry(), elemVolVars, scv)[0];
+        auto source = this->localResidual().computeSource(problem(), neighbor, this->fvGeometry(), elemVolVars, scv);
         source *= scv.volume()*curVolVars.extrusionFactor();
         return source;
     }
@@ -592,7 +592,7 @@ public:
                 };
 
                 // derive the residuals numerically
-                LocalResidualValues partialDeriv = 0.0;
+                LocalResidualValues partialDeriv(0.0);
                 using CoupledDomainTypeTag = typename Assembler::Traits::template SubDomainTypeTag<domainJ>;
                 static const NumericEpsilon<Scalar, JacobianBlock::block_type::cols> epsCoupl_{GET_PROP_VALUE(CoupledDomainTypeTag, ModelParameterGroup)};
                 NumericDifferentiation::partialDerivative(evalCouplingResidual, elemSolJ[0][pvIdx], partialDeriv, origResidual,
