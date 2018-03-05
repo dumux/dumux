@@ -133,10 +133,18 @@ SET_PROP(SequentialModel, FVGridGeometry)
     : public DefaultMapperTraits<typename GET_PROP_TYPE(TypeTag, GridView)>
     {
         static constexpr DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+        using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     };
 
 public:
     using type = FVGridGeometry;
+};
+
+//! For compatibility with new style models we need a solution vector type
+SET_PROP(SequentialModel, SolutionVector)
+{
+public:
+    using type = typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution;
 };
 
 /*!

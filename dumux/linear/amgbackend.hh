@@ -224,7 +224,9 @@ namespace Dumux {
  * \note This is an adaptor using a TypeTag
  */
 template<class TypeTag>
-using AMGBackend = ParallelAMGBackend<typename GET_PROP_TYPE(TypeTag, GridView), AmgTraits<TypeTag>>;
+using AMGBackend = ParallelAMGBackend<typename GET_PROP_TYPE(TypeTag, GridView), AmgTraits<typename GET_PROP_TYPE(TypeTag, JacobianMatrix),
+                                                                                           typename GET_PROP_TYPE(TypeTag, SolutionVector),
+                                                                                           typename GET_PROP_TYPE(TypeTag, FVGridGeometry)>>;
 
 } // namespace Dumux
 
