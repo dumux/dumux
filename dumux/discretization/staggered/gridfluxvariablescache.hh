@@ -63,6 +63,9 @@ public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = true;
+
     StaggeredGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
@@ -120,6 +123,9 @@ class StaggeredGridFluxVariablesCache<TypeTag, false>
 public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = false;
 
     // When global flux variables caching is disabled, we don't need to update the cache
     void update(Problem& problem)
