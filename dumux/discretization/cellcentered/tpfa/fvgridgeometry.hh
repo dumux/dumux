@@ -61,7 +61,7 @@ struct CCTpfaDefaultGridGeometryTraits
     //! Per default, we allow for 8 branches on network/surface grids, where
     //! conformity is assumed. For normal grids, we allow a maximum of one
     //! hanging node per scvf. Use different traits if you need more.
-    static constexpr int maxNumScvfNeighbors = int(GridView::dimension)<int(GridView::dimensionworld) ? 8 : 2;
+    static constexpr int maxNumScvfNeighbors = int(GridView::dimension)<int(GridView::dimensionworld) ? 8 : 1<<(GridView::dimension-1);
 };
 
 /*!
