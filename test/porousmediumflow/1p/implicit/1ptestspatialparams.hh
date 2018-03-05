@@ -28,15 +28,14 @@
 #include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/material/spatialparams/gstatrandomfield.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 //forward declaration
 template<class TypeTag>
 class OnePTestSpatialParams;
 
-namespace Properties
-{
+namespace Properties {
+
 // The spatial parameters TypeTag
 NEW_TYPE_TAG(OnePTestSpatialParams);
 }
@@ -53,7 +52,6 @@ class OnePTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexSet = typename GridView::IndexSet;
@@ -94,9 +92,10 @@ public:
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         if (isInLens_(scv.dofPosition()))
         {

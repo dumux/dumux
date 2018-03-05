@@ -28,8 +28,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 //forward declaration
 template<class TypeTag>
@@ -71,7 +70,6 @@ class TwoPTestSpatialParams : public FVSpatialParams<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename MaterialLaw::Params;
 
@@ -113,9 +111,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         if (isInLens_(element.geometry().center()))
             return lensK_;
@@ -139,9 +138,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return the material parameters object
      */
+    template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,
                                                const SubControlVolume& scv,
-                                               const ElementSolutionVector& elemSol) const
+                                               const ElementSolution& elemSol) const
     {
         if (isInLens_(element.geometry().center()))
             return lensMaterialParams_;

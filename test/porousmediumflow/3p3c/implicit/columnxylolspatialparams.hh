@@ -29,8 +29,8 @@
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the column problem.
@@ -39,8 +39,8 @@ namespace Dumux
 template<class TypeTag>
 class ColumnSpatialParams;
 
-namespace Properties
-{
+namespace Properties {
+
 // The spatial parameters TypeTag
 NEW_TYPE_TAG(ColumnSpatialParams);
 
@@ -74,7 +74,6 @@ class ColumnSpatialParams : public FVSpatialParams<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 
@@ -139,9 +138,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
@@ -156,9 +156,10 @@ public:
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      */
+    template<class ElementSolution>
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
+                    const ElementSolution& elemSol) const
     {
         const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
@@ -176,9 +177,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return the material parameters object
      */
+    template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,
                                                const SubControlVolume& scv,
-                                               const ElementSolutionVector& elemSol) const
+                                               const ElementSolution& elemSol) const
     {
         const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
@@ -196,9 +198,10 @@ public:
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      */
+    template<class ElementSolution>
     Scalar solidHeatCapacity(const Element& element,
                              const SubControlVolume& scv,
-                             const ElementSolutionVector& elemSol) const
+                             const ElementSolution& elemSol) const
     {
         const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
@@ -216,9 +219,10 @@ public:
      * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume
      */
+    template<class ElementSolution>
     Scalar solidDensity(const Element &element,
                         const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+                        const ElementSolution& elemSol) const
     {
         return 2650; // density of sand [kg/m^3]
     }
@@ -231,9 +235,10 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the heat capacity needs to be defined
      */
+    template<class ElementSolution>
     Scalar solidThermalConductivity(const Element &element,
                                     const SubControlVolume& scv,
-                                    const ElementSolutionVector& elemSol) const
+                                    const ElementSolution& elemSol) const
     {
         return lambdaSolid_;
     }

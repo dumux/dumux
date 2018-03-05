@@ -27,8 +27,8 @@
 #include <random>
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup TracerTests
  * \brief The spatial params the incompressible test
@@ -43,7 +43,6 @@ class OnePTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
@@ -79,9 +78,10 @@ public:
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
+    template<class ElementSolution>
     const PermeabilityType& permeability(const Element& element,
                                          const SubControlVolume& scv,
-                                         const ElementSolutionVector& elemSol) const
+                                         const ElementSolution& elemSol) const
     {
         return K_[scv.dofIndex()];
 
@@ -100,9 +100,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return the porosity
      */
+    template<class ElementSolution>
     Scalar porosity(const Element &element,
                         const SubControlVolume &scv,
-                        const ElementSolutionVector &elemSol) const
+                        const ElementSolution &elemSol) const
     { return 0.2; }
 
     //! Reference to the k field

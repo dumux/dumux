@@ -31,6 +31,7 @@
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/constant.hh>
@@ -38,13 +39,13 @@
 
 #include "tubesspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 template <class TypeTag>
 class TubesTestProblem;
 
-namespace Properties
-{
+namespace Properties {
+
 NEW_TYPE_TAG(TubesTestTypeTag, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(TubesTestCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, TubesTestTypeTag));
 NEW_TYPE_TAG(TubesTestBoxTypeTag, INHERITS_FROM(BoxModel, TubesTestTypeTag));
@@ -78,7 +79,6 @@ class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     // Grid and world dimension
     static const int dim = GridView::dimension;
@@ -146,9 +146,10 @@ public:
      * thought as pipes with a cross section of 1 m^2 and 2D problems
      * are assumed to extend 1 m to the back.
      */
+    template<class ElementSolution>
     Scalar extrusionFactor(const Element &element,
                            const SubControlVolume &scv,
-                           const ElementSolutionVector& elemSol) const
+                           const ElementSolution& elemSol) const
     {
         const auto radius = this->spatialParams().radius(scv);
         return M_PI*radius*radius;
@@ -212,15 +213,15 @@ public:
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
     NumEqVector source(const Element &element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume &scv) const
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
     {
         NumEqVector source(0.0);
 
         const auto& globalPos = scv.center();
         const auto& volVars = elemVolVars[scv];
-        const auto K = this->spatialParams().permeability(element, scv, ElementSolutionVector());
+        const auto K = this->spatialParams().permeability(element, scv, EmptyElementSolution{});
 
         using std::sin;
         if (globalPos[2] > 0.5 - eps_)

@@ -27,8 +27,7 @@
 
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup OnePTests
@@ -43,7 +42,6 @@ class TubesTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -81,9 +79,10 @@ public:
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         const Scalar radius = this->radius(scv);
         const Scalar gamma = 2; // quadratic velocity profile (Poiseuille flow)
@@ -98,9 +97,10 @@ public:
      * \param elemSol The element solution vector
      * \return the porosity
      */
+    template<class ElementSolution>
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
+                    const ElementSolution& elemSol) const
     { return 1.0; }
 
 private:

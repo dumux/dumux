@@ -33,8 +33,8 @@
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup ThreePWaterOilTests
  * \brief Definition of the spatial parameters for the SAGD problem.
@@ -87,7 +87,6 @@ class SagdSpatialParams : public FVSpatialParams<TypeTag>
     using CoordScalar = typename Grid::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
 public:
     using PermeabilityType = Scalar;
@@ -146,9 +145,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {  return permeabilityAtPos(scv.dofPosition());}
 
     /*!
@@ -184,9 +184,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return the material parameters object
      */
+    template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,
                                                const SubControlVolume& scv,
-                                               const ElementSolutionVector& elemSol) const
+                                               const ElementSolution& elemSol) const
     {
         return materialLawParamsAtPos(scv.dofPosition());
     }

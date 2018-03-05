@@ -25,6 +25,7 @@
 #define DUMUX_THERMOCHEM_PROBLEM_HH
 
 #include <dumux/porousmediumflow/1pncmin/model.hh>
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
@@ -99,7 +100,6 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ReactionRate =ThermoChemReaction<TypeTag>;
 
     enum { dim = GridView::dimension };
@@ -291,7 +291,7 @@ public:
 
         Scalar qMass = rrate_.thermoChemReaction(volVars);
 
-        ElementSolutionVector elemSol(element, elemVolVars, fvGeometry);
+        const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
         Scalar qMole = qMass/FluidSystem::molarMass(firstMoleFracIdx)*(1-this->spatialParams().porosity(element, scv, elemSol));
 
         // make sure not more solid reacts than present
@@ -343,7 +343,7 @@ public:
     {
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            ElementSolutionVector elemSol(element, curSol, this->fvGridGeometry());
+            const auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
 
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);

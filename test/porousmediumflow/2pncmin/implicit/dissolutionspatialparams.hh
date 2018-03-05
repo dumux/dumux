@@ -32,14 +32,14 @@
 #include <dumux/material/fluidmatrixinteractions/porosityprecipitation.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 //forward declaration
 template<class TypeTag>
 class DissolutionSpatialparams;
 
-namespace Properties
-{
+namespace Properties {
+
 // The spatial parameters TypeTag
 NEW_TYPE_TAG(DissolutionSpatialparams);
 
@@ -73,7 +73,6 @@ class DissolutionSpatialparams : public FVSpatialParams<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using CoordScalar = typename GridView::ctype;
     enum { dimWorld=GridView::dimensionworld };
 
@@ -142,9 +141,10 @@ public:
      *  \param element The finite element
      *  \param scv The sub-control volume
      */
+    template<class ElementSolution>
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
+                    const ElementSolution& elemSol) const
     { return poroLaw_.evaluatePorosity(element, scv, elemSol); }
 
     /*!
@@ -165,9 +165,10 @@ public:
      *
      *  Solution dependent permeability function
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
-                        const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+                                  const SubControlVolume& scv,
+                                  const ElementSolution& elemSol) const
     { return permLaw_.evaluatePermeability(element, scv, elemSol); }
 
     Scalar solidity(const SubControlVolume &scv) const

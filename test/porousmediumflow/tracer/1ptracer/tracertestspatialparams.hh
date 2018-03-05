@@ -26,8 +26,8 @@
 
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup TracerTests
  * \brief Definition of the spatial parameters for the tracer problem
@@ -44,7 +44,6 @@ class TracerTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
@@ -69,9 +68,10 @@ public:
      * \param scv The sub-control volume
      * \param elemSol The solution for all dofs of the element
      */
+    template<class ElementSolution>
     Scalar dispersivity(const Element &element,
                         const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+                        const ElementSolution& elemSol) const
     { return 0; }
 
     //! Fluid properties that are spatial params in the tracer model

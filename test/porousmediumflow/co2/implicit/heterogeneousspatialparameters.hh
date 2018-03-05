@@ -33,8 +33,8 @@
 
 #include <dumux/porousmediumflow/co2/model.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup CO2Tests
  * \brief Definition of the spatial parameters for the heterogeneous
@@ -83,7 +83,6 @@ class HeterogeneousSpatialParams : public FVSpatialParams<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -148,9 +147,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return instrinsic permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         // Get the global index of the element
         const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);
@@ -181,9 +181,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return porosity
      */
+    template<class ElementSolution>
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
+                    const ElementSolution& elemSol) const
     {
         // Get the global index of the element
         const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);

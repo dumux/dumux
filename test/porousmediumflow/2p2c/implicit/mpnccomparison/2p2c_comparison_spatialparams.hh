@@ -31,8 +31,8 @@
 
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup MPNCTests
  * \brief The spatial parameters for the ObstacleProblem
@@ -41,8 +41,8 @@ namespace Dumux
 template<class TypeTag>
 class TwoPTwoCComparisonSpatialParams;
 
-namespace Properties
-{
+namespace Properties {
+
 // The spatial parameters TypeTag
 NEW_TYPE_TAG(TwoPTwoCComparisonSpatialParams);
 
@@ -79,7 +79,6 @@ class TwoPTwoCComparisonSpatialParams : public FVSpatialParams<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename MaterialLaw::Params;
@@ -113,11 +112,10 @@ public:
         coarseMaterialParams_.setLambda(2.0);
     }
 
-
-
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         if (isFineMaterial_(scv.dofPosition()))
             return fineK_;
@@ -133,9 +131,10 @@ public:
      * \param scvIdx      The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
+    template<class ElementSolution>
     Scalar porosity(const Element &element,
                     const SubControlVolume &scv,
-                    const ElementSolutionVector &elemSol) const
+                    const ElementSolution &elemSol) const
     {
         return porosity_;
     }
