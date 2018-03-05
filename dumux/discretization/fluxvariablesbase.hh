@@ -26,11 +26,10 @@
 
 #include <dumux/discretization/upwindscheme.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
-template<class TypeTag, class UpwindScheme>
+template<class TypeTag, class Impl, class UpwindScheme>
 class FluxVariablesBaseImplementation;
 
 /*!
@@ -38,17 +37,18 @@ class FluxVariablesBaseImplementation;
  * \brief Base class for the flux variables living on a sub control volume face
  * \note The upwind scheme is chosen depending on the discretization method
  */
-template<class TypeTag>
-using FluxVariablesBase = FluxVariablesBaseImplementation<TypeTag, UpwindScheme<TypeTag>>;
+template<class TypeTag, class Impl>
+using FluxVariablesBase = FluxVariablesBaseImplementation<TypeTag, Impl, UpwindScheme<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)>>;
 
 /*!
  * \ingroup Discretization
  * \brief Base class for the flux variables living on a sub control volume face
  *
  * \tparam TypeTag The type tag
+ * \tparam Implementation The implementation that uses this class as base (CRTP)
  * \tparam UpwindScheme The type of the upwind scheme used for upwinding of advective fluxes
  */
-template<class TypeTag, class UpwindScheme>
+template<class TypeTag, class Implementation, class UpwindScheme>
 class FluxVariablesBaseImplementation
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -103,10 +103,18 @@ public:
     Scalar applyUpwindScheme(const UpwindTermFunction& upwindTerm, Scalar flux, int phaseIdx) const
     {
         //! Give the upwind scheme access to the cached variables
-        return UpwindScheme::apply(*this, upwindTerm, flux, phaseIdx);
+        return UpwindScheme::apply(asImp_(), upwindTerm, flux, phaseIdx);
     }
 
 private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
     const Problem* problemPtr_;                             //!< Pointer to the problem
     const Element* elementPtr_;                             //!< Pointer to the element at hand
     const FVElementGeometry* fvGeometryPtr_;                //!< Pointer to the current FVElementGeometry

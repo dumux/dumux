@@ -23,11 +23,13 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_FLUXVARIABLES_HH
 #define DUMUX_POROUSMEDIUMFLOW_FLUXVARIABLES_HH
 
+#include <bitset>
+#include <array>
+
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxvariablesbase.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ImplicitModel
@@ -36,34 +38,36 @@ namespace Dumux
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>
-class PorousMediumFluxVariables : public FluxVariablesBase<TypeTag>
+class PorousMediumFluxVariables : public FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag>>
 {
-    using ParentType = FluxVariablesBase<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ThisType = PorousMediumFluxVariables<TypeTag>;
+    using ParentType = FluxVariablesBase<TypeTag, ThisType>;
+
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
-    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
 
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
            numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
+public:
+    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
+    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
+
     static constexpr bool enableAdvection = GET_PROP_VALUE(TypeTag, EnableAdvection);
     static constexpr bool enableMolecularDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
     static constexpr bool enableEnergyBalance = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
     static constexpr bool enableThermalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
-
-public:
 
     //! The constructor
     PorousMediumFluxVariables()
