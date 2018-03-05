@@ -285,7 +285,7 @@ class BoundingBoxTreePointSourceHelper
     static constexpr int dim = GridView::dimension;
     static constexpr int dimworld = GridView::dimensionworld;
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
+    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
     static constexpr int dofCodim = isBox ? dim : 0;
 
 public:

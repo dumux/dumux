@@ -54,7 +54,7 @@ PriVarSwitchNewtonController : public NewtonController<typename GET_PROP_TYPE(Ty
     using ParentType = NewtonController<Scalar>;
     using PrimaryVariableSwitch =  typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
+    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 
 public:
     using ParentType::ParentType;

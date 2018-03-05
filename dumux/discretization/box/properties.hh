@@ -53,12 +53,6 @@ namespace Properties
 //! Type tag for the box scheme.
 NEW_TYPE_TAG(BoxModel, INHERITS_FROM(FiniteVolumeModel));
 
-//! Set the corresponding discretization method property
-SET_PROP(BoxModel, DiscretizationMethod)
-{
-    static const DiscretizationMethod value = DiscretizationMethod::box;
-};
-
 //! Set the default for the global finite volume geometry
 SET_PROP(BoxModel, FVGridGeometry)
 {

@@ -60,12 +60,6 @@ namespace Properties
 //! Type tag for the cell-centered mpfa scheme.
 NEW_TYPE_TAG(CCMpfaModel, INHERITS_FROM(FiniteVolumeModel));
 
-//! Set the corresponding discretization method property
-SET_PROP(CCMpfaModel, DiscretizationMethod)
-{
-    static const DiscretizationMethod value = DiscretizationMethod::ccmpfa;
-};
-
 //! Set the index set type used on the dual grid nodes
 SET_PROP(CCMpfaModel, DualGridNodalIndexSet)
 {

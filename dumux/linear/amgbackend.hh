@@ -80,7 +80,6 @@ template <class GridView, class AmgTraits>
 class ParallelAMGBackend : public LinearSolver
 {
     using Grid = typename GridView::Grid;
-    enum { numEq = AmgTraits::numEq };
     using LinearOperator = typename AmgTraits::LinearOperator;
     using ScalarProduct = typename AmgTraits::ScalarProduct;
     using VType = typename AmgTraits::VType;

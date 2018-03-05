@@ -41,7 +41,7 @@ class UpwindSchemeImplementation;
  *        This depends on the chosen discretization method.
  */
 template<class TypeTag>
-using UpwindScheme = UpwindSchemeImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+using UpwindScheme = UpwindSchemeImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 //! Upwind scheme for the box method
 template<class TypeTag>

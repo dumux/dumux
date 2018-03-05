@@ -43,7 +43,7 @@ class NavierStokesResidualImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>
-using NavierStokesResidual = NavierStokesResidualImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+using NavierStokesResidual = NavierStokesResidualImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 }
 

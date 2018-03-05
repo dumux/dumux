@@ -43,7 +43,7 @@ class NavierStokesNCFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>
-using NavierStokesNCFluxVariables = NavierStokesNCFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+using NavierStokesNCFluxVariables = NavierStokesNCFluxVariablesImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 
 } // end namespace

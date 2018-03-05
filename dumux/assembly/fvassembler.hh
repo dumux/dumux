@@ -58,7 +58,7 @@ class FVAssembler
     using TimeLoop = TimeLoopBase<typename GET_PROP_TYPE(TypeTag, Scalar)>;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
-    static constexpr DiscretizationMethod discMethod = GET_PROP_VALUE(TypeTag, DiscretizationMethod);
+    static constexpr DiscretizationMethod discMethod = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod;
     static constexpr bool isBox = discMethod == DiscretizationMethod::box;
 
     using ThisType = FVAssembler<TypeTag, diffMethod, isImplicit>;

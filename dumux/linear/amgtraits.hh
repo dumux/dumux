@@ -42,7 +42,7 @@ template<class TypeTag, DiscretizationMethod discMethod> struct AmgTraitsImpl;
 
 //! The type traits required for using the AMG backend
 template<class TypeTag>
-using AmgTraits = AmgTraitsImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+using AmgTraits = AmgTraitsImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 //! NonoverlappingSolverTraits used by discretization with non-overlapping parallel model
 template <class MType, class VType, bool isParallel>
