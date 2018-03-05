@@ -29,8 +29,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup MineralizationModel
@@ -46,7 +45,6 @@ class MineralizationVolumeVariables : public GET_PROP_TYPE(TypeTag, NonMineraliz
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -61,7 +59,8 @@ public:
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     //! updates all required quantities inside the given scv
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)

@@ -29,10 +29,10 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup TwoPModel
@@ -47,10 +47,12 @@ class TwoPIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -188,10 +190,10 @@ public:
         const auto& outsideVolVars = curElemVolVars[outsideScvIdx];
         const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element,
                                                                                      insideScv,
-                                                                                     ElementSolutionVector({insideVolVars.priVars()}));
+                                                                                     elementSolution<SolutionVector, FVGridGeometry>(insideVolVars.priVars()));
         const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(outsideElement,
                                                                                       outsideScv,
-                                                                                      ElementSolutionVector({outsideVolVars.priVars()}));
+                                                                                      elementSolution<SolutionVector, FVGridGeometry>(outsideVolVars.priVars()));
 
         // get references to the two participating derivative matrices
         auto& dI_dI = derivativeMatrices[insideScvIdx];
@@ -302,9 +304,8 @@ public:
         const auto& insideVolVars = curElemVolVars[insideScv];
         const auto& outsideVolVars = curElemVolVars[outsideScv];
 
-        // we need the element solution for the material parameters
-        ElementSolutionVector elemSol(fvGeometry.numScv());
-        for (const auto& scv : scvs(fvGeometry)) elemSol[scv.indexInElement()] = curElemVolVars[scv].priVars();
+        const auto elemSol = elementSolution(element, curElemVolVars, fvGeometry);
+
         const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element, insideScv, elemSol);
         const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(element, outsideScv, elemSol);
 
@@ -449,7 +450,7 @@ public:
         const auto& outsideVolVars = curElemVolVars[scvf.outsideScvIdx()];
         const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element,
                                                                                      insideScv,
-                                                                                     ElementSolutionVector({insideVolVars.priVars()}));
+                                                                                     elementSolution<SolutionVector, FVGridGeometry>(insideVolVars.priVars()));
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho_w = insideVolVars.density(FluidSystem::wPhaseIdx);

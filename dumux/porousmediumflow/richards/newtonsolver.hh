@@ -26,6 +26,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/discretization/elementsolution.hh>
 
 namespace Dumux {
 /*!
@@ -46,7 +47,6 @@ class RichardsNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
     using SolutionVector = typename Assembler::ResidualType;
 
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using ElementSolution =  typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum { pressureIdx = Indices::pressureIdx };
 
@@ -88,7 +88,7 @@ private:
 
                     // calculate the old wetting phase saturation
                     const auto& spatialParams = this->assembler().problem().spatialParams();
-                    const ElementSolution elemSol(element, uCurrentIter, fvGridGeometry);
+                    const auto elemSol = elementSolution(element, uCurrentIter, fvGridGeometry);
                     const auto& materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
                     const Scalar pcMin = MaterialLaw::pc(materialLawParams, 1.0);
                     const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];

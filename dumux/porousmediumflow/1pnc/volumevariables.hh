@@ -29,8 +29,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup OnePNCModel
@@ -58,7 +57,6 @@ class OnePNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using PermeabilityType = typename SpatialParams::PermeabilityType;
 
@@ -90,7 +88,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume &scv)
@@ -135,7 +134,8 @@ public:
      * \param scv The sub-control volume
      * \param fluidState A container with the current (physical) state of the fluid
      */
-    static void completeFluidState(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    static void completeFluidState(const ElementSolution &elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume &scv,

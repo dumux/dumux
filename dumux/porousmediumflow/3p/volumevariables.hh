@@ -30,8 +30,7 @@
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ThreePModel
@@ -52,7 +51,6 @@ class ThreePVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -81,7 +79,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub control volume
     */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
@@ -123,7 +122,8 @@ public:
      *
      * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
      */
-    static void completeFluidState(const ElementSolutionVector& elemSol,
+    template<class ElementSolution>
+    static void completeFluidState(const ElementSolution& elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,

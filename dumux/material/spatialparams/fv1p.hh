@@ -49,7 +49,6 @@ class FVSpatialParamsOneP
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension };
@@ -122,10 +121,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return permeability
      */
-    decltype(auto)
-    permeability(const Element& element,
-                 const SubControlVolume& scv,
-                 const ElementSolutionVector& elemSol) const
+    template<class ElementSolution>
+    decltype(auto) permeability(const Element& element,
+                                const SubControlVolume& scv,
+                                const ElementSolution& elemSol) const
     {
         return asImp_().permeabilityAtPos(scv.center());
     }
@@ -153,9 +152,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return the porosity
      */
+    template<class ElementSolution>
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
+                    const ElementSolution& elemSol) const
     {
         return asImp_().porosityAtPos(scv.center());
     }
@@ -182,9 +182,10 @@ public:
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      */
+    template<class ElementSolution>
     Scalar solidHeatCapacity(const Element &element,
                              const SubControlVolume& scv,
-                             const ElementSolutionVector& elemSol) const
+                             const ElementSolution& elemSol) const
     {
         return asImp_().solidHeatCapacityAtPos(scv.center());
     }
@@ -212,9 +213,10 @@ public:
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      */
+    template<class ElementSolution>
     Scalar solidDensity(const Element &element,
                         const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+                        const ElementSolution& elemSol) const
     {
         return asImp_().solidDensityAtPos(scv.center());
     }
@@ -240,9 +242,10 @@ public:
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      */
+    template<class ElementSolution>
     Scalar solidThermalConductivity(const Element &element,
                                     const SubControlVolume& scv,
-                                    const ElementSolutionVector& elemSol) const
+                                    const ElementSolution& elemSol) const
     {
         return asImp_().solidThermalConductivityAtPos(scv.center());
     }

@@ -30,8 +30,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup RichardsNCModel
@@ -51,7 +50,6 @@ class RichardsBaseVolumeVariables : public PorousMediumFlowVolumeVariables<TypeT
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -76,7 +74,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
@@ -111,7 +110,8 @@ public:
      * \param scv The subcontrol volume.
      * \param fluidState The fluid state to fill.
      */
-    static void completeFluidState(const ElementSolutionVector& elemSol,
+    template<class ElementSolution>
+    static void completeFluidState(const ElementSolution& elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,
@@ -316,7 +316,6 @@ class RichardsNCVolumeVariables : public RichardsBaseVolumeVariables<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -346,7 +345,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume &scv)
@@ -386,7 +386,8 @@ public:
      * \param scv The subcontrol volume.
      * \param fluidState The fluid state to fill.
      */
-    static void completeFluidState(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    static void completeFluidState(const ElementSolution &elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume &scv,

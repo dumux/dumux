@@ -55,7 +55,6 @@ class TwoPTwoCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     // component indices
     enum
@@ -120,6 +119,7 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub control volume
     */
+    template<class ElementSolution>
     void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
@@ -175,6 +175,7 @@ public:
      *
      * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
      */
+    template<class ElementSolution>
     static void completeFluidState(const ElementSolution& elemSol,
                                    const Problem& problem,
                                    const Element& element,

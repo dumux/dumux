@@ -26,6 +26,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
+#include <dumux/discretization/elementsolution.hh>
 #include <dune/common/deprecated.hh>
 
 #warning "This file is deprecated. Use RichardsNewtonSolver instead."
@@ -49,7 +50,6 @@ RichardsNewtonController : public NewtonController<typename GET_PROP_TYPE(TypeTa
     using ParentType = NewtonController<Scalar>;
 
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using ElementSolution =  typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum { pressureIdx = Indices::pressureIdx };
 
@@ -94,7 +94,7 @@ public:
 
                     // calculate the old wetting phase saturation
                     const auto& spatialParams = assembler.problem().spatialParams();
-                    const ElementSolution elemSol(element, uCurrentIter, fvGridGeometry);
+                    const auto elemSol = elementSolution(element, uCurrentIter, fvGridGeometry);
                     const auto& materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
                     const Scalar pcMin = MaterialLaw::pc(materialLawParams, 1.0);
                     const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];

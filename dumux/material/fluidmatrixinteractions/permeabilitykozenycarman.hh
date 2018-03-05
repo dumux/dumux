@@ -46,7 +46,6 @@ class PermeabilityKozenyCarman
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -72,6 +71,7 @@ public:
      * \param elemSol the element solution
      * \param scv sub control volume
      */
+    template<class ElementSolution>
     PermType evaluatePermeability(const Element& element,
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const

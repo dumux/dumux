@@ -32,9 +32,9 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/elementsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \brief Velocity output for implicit (porous media) models
@@ -48,7 +48,6 @@ class PorousMediumFlowVelocityOutput
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -175,7 +174,7 @@ public:
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
                 flux /= problem_.extrusionFactor(element,
                                                  fvGeometry.scv(scvf.insideScvIdx()),
-                                                 ElementSolution(element, sol_, fvGridGeometry_));
+                                                 elementSolution(element, sol_, fvGridGeometry_));
                 tmpVelocity *= flux;
 
                 const int eIdxGlobal = fvGridGeometry_.elementMapper().index(element);
@@ -287,7 +286,7 @@ public:
                     scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                     scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
                                                                                             fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                            ElementSolution(element, sol_, fvGridGeometry_));
+                                                                                            elementSolution(element, sol_, fvGridGeometry_));
                 }
                 else
                 {
@@ -299,7 +298,7 @@ public:
                         scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                         scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
                                                                                                 fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                                ElementSolution(element, sol_, fvGridGeometry_));
+                                                                                                elementSolution(element, sol_, fvGridGeometry_));
                     }
                 }
 

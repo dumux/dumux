@@ -26,9 +26,9 @@
 
 #include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/staggered/elementsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -107,12 +107,12 @@ class StaggeredElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using IndexType = typename GridView::IndexSet::IndexType;
 
     static const int dim = GridView::dimension;
@@ -161,7 +161,7 @@ public:
             auto&& scvJ = fvGeometry.scv(globalJ);
             CellCenterPrimaryVariables priVars(0.0);
             priVars = sol[cellCenterIdx][globalJ];
-            ElementSolution elemSol{std::move(priVars)};
+            auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
             volumeVariables_[localIdx].update(elemSol,
                                               problem,
                                               elementJ,
@@ -197,7 +197,7 @@ public:
             volumeVariables_.resize(localIdx+1);
             volVarIndices_.resize(localIdx+1);
 
-            ElementSolution elemSol{std::move(boundaryPriVars)};
+            auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(boundaryPriVars));
             volumeVariables_[localIdx].update(elemSol,
                                               problem,
                                               element,
@@ -223,7 +223,7 @@ public:
         auto&& scv = fvGeometry.scv(eIdx);
         CellCenterPrimaryVariables priVars(0.0);
         priVars = sol[cellCenterIdx][eIdx];
-        ElementSolution elemSol{std::move(priVars)};
+        auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
         volumeVariables_[0].update(elemSol,
                                    gridVolVars().problem(),
                                    element,

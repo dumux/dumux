@@ -26,9 +26,9 @@
 
 #include <utility>
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/cellcentered/elementsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup CCMpfaDiscretization
@@ -102,13 +102,12 @@ class CCMpfaElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridIndexType = typename GridView::IndexSet::IndexType;
-
 
 public:
     //! Export type of the solution vector
@@ -141,7 +140,7 @@ public:
 
         // update the volume variables of the element at hand
         const auto& scvI = fvGeometry.scv(globalI);
-        volumeVariables_[localIdx].update(ElementSolution(sol[globalI]),
+        volumeVariables_[localIdx].update(elementSolution(element, sol, fvGridGeometry),
                                           problem,
                                           element,
                                           scvI);
@@ -153,7 +152,7 @@ public:
         {
             const auto& elementJ = fvGridGeometry.element(dataJ.globalJ);
             const auto& scvJ = fvGeometry.scv(dataJ.globalJ);
-            volumeVariables_[localIdx].update(ElementSolution(sol[dataJ.globalJ]),
+            volumeVariables_[localIdx].update(elementSolution(elementJ, sol, fvGridGeometry),
                                               problem,
                                               elementJ,
                                               scvJ);
@@ -183,7 +182,8 @@ public:
                 {
                     // boundary volume variables
                     VolumeVariables dirichletVolVars;
-                    dirichletVolVars.update(ElementSolution(problem.dirichlet(element, scvf)),
+                    dirichletVolVars.update(elementSolution<SolutionVector, FVGridGeometry>
+                                                (problem.dirichlet(element, scvf)),
                                             problem,
                                             element,
                                             scvI);
@@ -226,7 +226,7 @@ public:
         //         const auto& scvJ = fvGeometry.scv(globalJ);
 
         //         VolumeVariables additionalVolVars;
-        //         additionalVolVars.update(ElementSolution(elementJ, sol, fvGridGeometry),
+        //         additionalVolVars.update(elementSolution(elementJ, sol, fvGridGeometry),
         //                                  problem,
         //                                  elementJ,
         //                                  scvJ);
@@ -244,13 +244,14 @@ public:
     {
         clear();
 
-        auto eIdx = fvGeometry.fvGridGeometry().elementMapper().index(element);
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        auto eIdx = fvGridGeometry.elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
 
         // update the volume variables of the element
         const auto& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(ElementSolution(sol[scv.dofIndex()]),
+        volumeVariables_[0].update(elementSolution(element, sol, fvGridGeometry),
                                    gridVolVars().problem(),
                                    element,
                                    scv);
@@ -332,7 +333,8 @@ private:
             {
                 VolumeVariables dirichletVolVars;
                 const auto& ivScv = fvGeometry.scv(insideScvIdx);
-                dirichletVolVars.update(ElementSolution(problem.dirichlet(insideElement, ivScvf)),
+                dirichletVolVars.update(elementSolution<SolutionVector, FVGridGeometry>
+                                            (problem.dirichlet(insideElement, ivScvf)),
                                         problem,
                                         insideElement,
                                         ivScv);

@@ -31,17 +31,16 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup PorousmediumCompositional
  * \brief A newton controller that handles primary variable switches
  * \todo make this independent of TypeTag by making PrimaryVariableSwitch a template argument
  *       and extracting everything model specific from there
- * \todo Implement for volume variable caching enabled
  */
 template <class TypeTag, class Assembler, class LinearSolver>
 class PriVarSwitchNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
@@ -50,7 +49,6 @@ class PriVarSwitchNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
     using ParentType = NewtonSolver<Assembler, LinearSolver>;
     using SolutionVector = typename Assembler::ResidualType;
     using PrimaryVariableSwitch =  typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static constexpr auto discMethod = Assembler::FVGridGeometry::discMethod;
     static constexpr bool isBox = discMethod == DiscretizationMethod::box;
@@ -163,7 +161,7 @@ private:
             const auto dofIdxGlobal = scv.dofIndex();
             if (priVarSwitch_->wasSwitched(dofIdxGlobal))
             {
-                const ElementSolutionVector elemSol(element, uCurrentIter, fvGridGeometry);
+                const auto elemSol = elementSolution(element, uCurrentIter, fvGridGeometry);
                 auto& volVars = gridVariables.curGridVolVars().volVars(scv);
                 volVars.update(elemSol, problem, element, scv);
             }

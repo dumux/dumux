@@ -22,8 +22,8 @@
  * \ingroup Assembly
  * \brief An assembler for Jacobian and residual contribution per element (staggered FV method)
  */
-#ifndef DUMUX_CC_LOCAL_ASSEMBLER_HH
-#define DUMUX_CC_LOCAL_ASSEMBLER_HH
+#ifndef DUMUX_STAGGERED_LOCAL_ASSEMBLER_HH
+#define DUMUX_STAGGERED_LOCAL_ASSEMBLER_HH
 
 #include <dune/istl/matrixindexset.hh>
 #include <dune/istl/bvector.hh>
@@ -32,6 +32,7 @@
 #include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/discretization/staggered/facesolution.hh>
+#include <dumux/discretization/staggered/elementsolution.hh>
 
 #include <dune/common/version.hh>
 
@@ -69,12 +70,12 @@ class StaggeredLocalAssembler<TypeTag,
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -341,7 +342,7 @@ protected:
 
                const Scalar eps = numericEpsilon(priVars[pvIdx], cellCenterIdx, cellCenterIdx);
                priVars[pvIdx] += eps;
-               ElementSolutionVector elemSol{std::move(priVars)};
+               auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
                curVolVars.update(elemSol, problem, elementJ, scvJ);
 
                const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry, prevElemVolVars, curElemVolVars,
@@ -468,7 +469,7 @@ protected:
 
                    const Scalar eps = numericEpsilon(priVars[pvIdx], faceIdx, cellCenterIdx);
                    priVars[pvIdx] += eps;
-                   ElementSolutionVector elemSol{std::move(priVars)};
+                   auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
                    curVolVars.update(elemSol, problem, elementJ, scvJ);
 
                    const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,

@@ -36,6 +36,7 @@
 #include <dumux/assembly/fvlocalassemblerbase.hh>
 #include <dumux/assembly/partialreassembler.hh>
 #include <dumux/assembly/entitycolor.hh>
+#include <dumux/discretization/box/elementsolution.hh>
 
 namespace Dumux {
 
@@ -216,7 +217,6 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tr
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
@@ -260,7 +260,7 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
         // create the element solution
-        ElementSolutionVector elemSol(element, curSol, fvGeometry);
+        auto elemSol = elementSolution(element, curSol, fvGeometry.fvGridGeometry());
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(element.subEntities(dim));
@@ -336,7 +336,6 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fa
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
@@ -381,7 +380,7 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
         // create the element solution
-        ElementSolutionVector elemSol(element, curSol, fvGeometry);
+        auto elemSol = elementSolution(element, curSol, fvGeometry.fvGridGeometry());
 
         // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(element.subEntities(dim));

@@ -26,8 +26,7 @@
 
 #include <dumux/discretization/evalsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Fluidmatrixinteractions
@@ -40,7 +39,6 @@ class PorosityPrecipitation
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
@@ -63,6 +61,7 @@ public:
      * \param elemSol the element solution
      * \param scv sub control volume
      */
+    template<class ElementSolution>
     Scalar evaluatePorosity(const Element& element,
                             const SubControlVolume& scv,
                             const ElementSolution& elemSol) const

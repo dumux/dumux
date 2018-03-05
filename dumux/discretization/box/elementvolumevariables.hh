@@ -25,9 +25,9 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/box/elementsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ImplicitModel
@@ -106,7 +106,6 @@ class BoxElementVolumeVariables<TypeTag, /*enableGlobalVolVarCache*/false>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -133,7 +132,7 @@ public:
                      const SolutionVector& sol)
     {
         // get the solution at the dofs of the element
-        ElementSolutionVector elemSol(element, sol, fvGeometry);
+        auto elemSol = elementSolution(element, sol, fvGeometry.fvGridGeometry());
 
         // resize volume variables to the required size
         volumeVariables_.resize(fvGeometry.numScv());

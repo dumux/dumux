@@ -26,8 +26,7 @@
 
 #include <dumux/discretization/evalsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Fluidmatrixinteractions
@@ -40,7 +39,6 @@ class EffectiveSolidHeatCapacity
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
@@ -59,9 +57,10 @@ public:
 
     // calculates the effective solid heat capacity of multiple solid phases accordin to
     // their volume fractions
+    template<class ElementSolution>
     Scalar effectiveSolidHeatCapacity(const Element& element,
-                            const SubControlVolume& scv,
-                            const ElementSolution& elemSol) const
+                                      const SubControlVolume& scv,
+                                      const ElementSolution& elemSol) const
     {
         auto priVars = evalSolution(element, element.geometry(), elemSol, scv.center());
 

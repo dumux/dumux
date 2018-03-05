@@ -30,6 +30,7 @@
 #include <dune/grid/utility/persistentcontainer.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/adaptive/griddatatransfer.hh>
 
 namespace Dumux {
@@ -46,13 +47,16 @@ class TwoPGridDataTransfer : public GridDataTransfer
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using Element = typename Grid::template Codim<0>::Entity;
+    using ElementSolution = std::decay_t<decltype(elementSolution(std::declval<Element>(),
+                                                                  std::declval<SolutionVector>(),
+                                                                  std::declval<FVGridGeometry>()))>;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     struct AdaptedValues
