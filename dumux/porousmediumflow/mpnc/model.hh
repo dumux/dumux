@@ -253,7 +253,7 @@ private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    using type = ThermalConductivitySimpleFluidLumping<TypeTag, Scalar, Indices>;
+    using type = ThermalConductivitySimpleFluidLumping<Scalar, GET_PROP_VALUE(TypeTag, NumEnergyEqFluid), Indices>;
 };
 
 } //end namespace Properties

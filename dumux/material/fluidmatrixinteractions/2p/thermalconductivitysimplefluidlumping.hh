@@ -25,10 +25,9 @@
 #define THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
 
 #include <algorithm>
-#include <dumux/common/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 struct SimpleLumpingIndices
 {
     static const int wPhaseIdx = 0;
@@ -40,10 +39,9 @@ struct SimpleLumpingIndices
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  * \todo This shouldn't depend on TypeTag!!
  */
-template<class TypeTag, class Scalar, class Indices = SimpleLumpingIndices>
+template<class Scalar, int numEnergyEquationsFluid, class Indices = SimpleLumpingIndices>
 class ThermalConductivitySimpleFluidLumping
 {
-    enum { numEnergyEquationsFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)};
 
 public:
     /*!
