@@ -95,7 +95,7 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     // Select the electrochemistry method
-    using ElectroChemistry = typename Dumux::ElectroChemistry<TypeTag, ElectroChemistryModel::Ochs>;
+    using ElectroChemistry = typename Dumux::ElectroChemistry<Scalar, Indices, FVGridGeometry, ElectroChemistryModel::Ochs>;
 
     enum { numComponents = FluidSystem::numComponents };
 
@@ -112,7 +112,7 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
+    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     enum { dofCodim = isBox ? dim : 0 };
