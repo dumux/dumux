@@ -27,7 +27,6 @@
 #ifndef DUMUX_DISCRETIZATION_STATIONARY_VELOCITY_FIELD_HH
 #define DUMUX_DISCRETIZATION_STATIONARY_VELOCITY_FIELD_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fluxvariablescaching.hh>
 
@@ -37,18 +36,9 @@ namespace Dumux {
  * \ingroup Discretization
  * \brief Evaluates a user given velocity field
  */
-template <class TypeTag>
+template <class Scalar>
 class StationaryVelocityField
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using Element = typename GridView::template Codim<0>::Entity;
-
 public:
     //! state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::none;
@@ -57,11 +47,15 @@ public:
     using Cache = FluxVariablesCaching::EmptyAdvectionCache;
 
     //! returns the volume flux given in the spatial params
+    template<class Problem, class Element,
+             class FVElementGeometry,
+             class ElementVolumeVariables,
+             class ElementFluxVarsCache>
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolumeFace& scvf,
+                       const typename FVElementGeometry::SubControlVolumeFace& scvf,
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
