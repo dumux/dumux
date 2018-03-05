@@ -26,7 +26,6 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/elementsolution.hh>
 
@@ -49,11 +48,9 @@ public:
  * \ingroup PorousmediumCompositional
  * \brief The primary variable switch controlling the phase presence state variable
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Implementation>
 class PrimaryVariableSwitch
 {
-    using Implementation = typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
 
