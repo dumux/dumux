@@ -92,9 +92,6 @@ SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, StaggeredElementFluxVar
 //! Set the face solution type
 SET_TYPE_PROP(StaggeredModel, StaggeredFaceSolution, StaggeredFaceSolution<TypeTag>);
 
-//! Set the element solution type
-SET_TYPE_PROP(StaggeredModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables)>);
-
 //! Set the grid variables (volume, flux and face variables)
 SET_PROP(StaggeredModel, GridVariables)
 {
