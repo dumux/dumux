@@ -205,13 +205,9 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluate the boundary conditions for a Dirichlet boundary segment.
      *
-     * \param values The dirichlet values for the primary variables
-     * \param globalPos The position for which the bc type should be evaluated
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param globalPos The position for which the Dirichlet condition should be evaluated
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
@@ -219,38 +215,28 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluate the boundary conditions for a Neumann boundary segment.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param elemVolVars The stencil volume variables
-     * \param scvf The sub control volume boundary face
+     * \param globalPos The position for which the Neumann condition should be evaluated
      *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
+     * \return the mole/mass flux of each component. Negative values mean influx.
      *
-     * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
+     * The units must be according to using either mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
      */
-    NumEqVector neumann(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolumeFace& scvf) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
         NumEqVector values(0.0);
-
-        const auto& globalPos = scvf.ipGlobal();
 
         // we inject pure gasious nitrogen at the initial condition temperature and pressure  from the bottom (negative values mean injection)
         if (globalPos[0] > 14.8 - eps_ && globalPos[0] < 25.2 + eps_ && globalPos[1] < eps_)
         {
             values[contiNEqIdx] = useMoles ? -1e-3/FluidSystem::molarMass(nCompIdx) : -1e-3; // kg/(m^2*s) or mole/(m^2*s)
 
-            const auto initial = initial_(globalPos);
+            const auto initialValues = initial_(globalPos);
             const auto& mParams = this->spatialParams().materialLawParamsAtPos(globalPos);
             using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-            const auto pn = initial[pressureIdx] + MaterialLaw::endPointPc(mParams);
-            const auto t = initial[temperatureIdx];
+            const auto pn = initialValues[pressureIdx] + MaterialLaw::endPointPc(mParams);
+            const auto t = initialValues[temperatureIdx];
 
             // note: energy equation is always formulated in terms of mass specific quantities, not per mole
             values[energyEqIdx] = -1e-3*N2<Scalar>::gasEnthalpy(t, pn);
