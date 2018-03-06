@@ -48,7 +48,6 @@ class StaggeredElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
@@ -74,12 +73,14 @@ public:
 
     //! For compatibility reasons with the case of not storing the vol vars.
     //! function to be called before assembling an element, preparing the vol vars within the stencil
+    template<class SolutionVector>
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {}
 
     //! function to prepare the vol vars within the element
+    template<class SolutionVector>
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
@@ -105,7 +106,6 @@ class StaggeredElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
@@ -131,6 +131,7 @@ public:
 
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly
+    template<class SolutionVector>
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
@@ -206,6 +207,7 @@ public:
 
     //! Binding of an element, prepares only the volume variables of the element.
     //! Specialization for Staggered models
+    template<class SolutionVector>
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
