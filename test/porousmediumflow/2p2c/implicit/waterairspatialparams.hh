@@ -223,8 +223,7 @@ public:
 
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
-    { return true; }
-    //{ return globalPos[dimWorld-1] > layerBottom_; }
+    { return globalPos[dimWorld-1] > layerBottom_; }
 
     Scalar fineK_;
     Scalar coarseK_;
