@@ -40,6 +40,7 @@
 #include "couplingjacobianpattern.hh"
 #include "subdomaincclocalassembler.hh"
 #include "subdomainboxlocalassembler.hh"
+#include "subdomainstaggeredlocalassembler.hh"
 
 namespace Dumux {
 
@@ -100,6 +101,12 @@ private:
     struct SubDomainAssemblerType<DiscretizationMethod::box, id>
     {
         using type = SubDomainBoxLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
+    };
+
+    template<std::size_t id>
+    struct SubDomainAssemblerType<DiscretizationMethods::Staggered, id>
+    {
+        using type = SubDomainStaggeredLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
     };
 
     template<std::size_t id>
@@ -437,7 +444,7 @@ private:
     }
 
     // get diagonal block pattern
-    template<std::size_t i, std::size_t j, typename std::enable_if_t<(i==j), int> = 0>
+    template<std::size_t i, std::size_t j, typename std::enable_if_t<(i==j && FVGridGeometry<i>::discretizationMethod != DiscretizationMethods::Staggered), int> = 0>
     Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainI,
                                              Dune::index_constant<j> domainJ) const
     {
@@ -452,6 +459,26 @@ private:
             for (const auto globalJ : additionalDofDeps)
                 pattern.add(globalI, globalJ);
         }
+
+        return pattern;
+    }
+
+    // get diagonal block pattern
+    template<std::size_t i, std::size_t j, typename std::enable_if_t<(i==j && FVGridGeometry<i>::discretizationMethod == DiscretizationMethods::Staggered), int> = 0>
+    Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainI,
+                                             Dune::index_constant<j> domainJ) const
+    {
+        const auto& gg = fvGridGeometry(domainI);
+        auto pattern = getJacobianPattern<isImplicit>(gg, domainI, *couplingManager_);
+
+        // add additional dof dependencies
+        // for (const auto& element0 : elements(gg.gridView()))
+        // {
+        //     const auto globalI = gg.elementMapper().index(element0);
+        //     const auto& additionalDofDeps = couplingManager_->getAdditionalDofDependencies(domainI, globalI);
+        //     for (const auto globalJ : additionalDofDeps)
+        //         pattern.add(globalI, globalJ);
+        // }
 
         return pattern;
     }
