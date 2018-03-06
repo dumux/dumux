@@ -52,7 +52,6 @@ class StaggeredGridFluxVariablesCache<TypeTag, true>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using IndexType = typename GridView::IndexSet::IndexType;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
@@ -66,6 +65,7 @@ public:
     StaggeredGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
+    template<class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
