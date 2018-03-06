@@ -41,8 +41,11 @@ namespace Properties
     SET_TYPE_PROP(GridCreatorGmshTest, Grid, Dune::UGGrid<3>);
     SET_TYPE_PROP(GridCreatorGmshTest, Scalar, double);
     SET_STRING_PROP(GridCreatorGmshTest, ModelParameterGroup, "Bifurcation");
-    SET_PROP(GridCreatorGmshTest, DiscretizationMethod) {
-        static constexpr DiscretizationMethod value = DiscretizationMethod::cctpfa;
+    SET_PROP(GridCreatorGmshTest, FVGridGeometry) {
+        struct GG {
+            static constexpr DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+        };
+        using type = GG;
     };
 }
 

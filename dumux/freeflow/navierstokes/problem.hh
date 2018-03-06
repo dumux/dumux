@@ -46,7 +46,7 @@ struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethod::staggered>
 template<class TypeTag>
 using NavierStokesParentProblem =
       typename NavierStokesParentProblemImpl<TypeTag,
-      GET_PROP_VALUE(TypeTag, DiscretizationMethod)>::type;
+      GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>::type;
 
 /*!
  * \ingroup NavierStokesModel
@@ -120,7 +120,7 @@ public:
 
     //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
     template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethod::staggered, void>::type
+    typename std::enable_if<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::staggered, void>::type
     applyInititalFaceSolution(SolutionVector& sol,
                               const SubControlVolumeFace& scvf,
                               const PrimaryVariables& initSol) const

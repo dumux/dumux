@@ -104,7 +104,7 @@ SET_TYPE_PROP(Tracer, VtkOutputFields, TracerVtkOutputFields<TypeTag>);
 SET_TYPE_PROP(Tracer, VolumeVariables, TracerVolumeVariables<TypeTag>);
 
 //! We use darcy's law as the default for the advective fluxes
-SET_TYPE_PROP(Tracer, AdvectionType, StationaryVelocityField<TypeTag>);
+SET_TYPE_PROP(Tracer, AdvectionType, StationaryVelocityField<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //! Set the indices used by the tracer model
 SET_TYPE_PROP(Tracer, Indices, TracerIndices<TypeTag>);

@@ -26,17 +26,18 @@
 
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup ThreePWaterOilModel
  * \brief The primary variable switch controlling the phase presence state variable
  */
 template<class TypeTag>
-class ThreePWaterOilPrimaryVariableSwitch : public Dumux::PrimaryVariableSwitch<TypeTag>
+class ThreePWaterOilPrimaryVariableSwitch
+: public PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), ThreePWaterOilPrimaryVariableSwitch<TypeTag>>
 {
-    friend typename Dumux::PrimaryVariableSwitch<TypeTag>;
-    using ParentType = Dumux::PrimaryVariableSwitch<TypeTag>;
+    using ParentType = PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), ThreePWaterOilPrimaryVariableSwitch<TypeTag>>;
+    friend ParentType;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

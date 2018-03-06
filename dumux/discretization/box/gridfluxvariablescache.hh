@@ -61,6 +61,9 @@ public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = true;
+
     BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry,
@@ -128,6 +131,9 @@ class BoxGridFluxVariablesCache<TypeTag, false>
 public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = false;
 
     BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 

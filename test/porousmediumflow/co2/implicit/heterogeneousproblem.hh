@@ -167,7 +167,7 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     // the discretization method we are using
-    static constexpr auto discMethod = GET_PROP_VALUE(TypeTag, DiscretizationMethod);
+    static constexpr auto discMethod = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod;
 
 public:
     /*!

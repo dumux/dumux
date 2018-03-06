@@ -32,8 +32,8 @@
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
 #include <dumux/io/plotmateriallaw3p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the kuevette problem
@@ -82,7 +82,6 @@ class InfiltrationThreePThreeCSpatialParams : public FVSpatialParams<TypeTag>
     using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
@@ -129,9 +128,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))

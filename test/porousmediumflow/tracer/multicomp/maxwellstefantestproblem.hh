@@ -25,6 +25,7 @@
 #ifndef DUMUX_MAXWELL_STEFAN_TEST_PROBLEM_HH
 #define DUMUX_MAXWELL_STEFAN_TEST_PROBLEM_HH
 
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 
@@ -187,7 +188,6 @@ class MaxwellStefanTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
@@ -242,7 +242,7 @@ public:
                     auto fvGeometry = localView(this->fvGridGeometry());
                     fvGeometry.bindElement(element);
 
-                    ElementSolutionVector elemSol(element, curSol, this->fvGridGeometry());
+                    const auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
                     for (auto&& scv : scvs(fvGeometry))
                     {
                         const auto& globalPos = scv.dofPosition();

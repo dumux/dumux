@@ -41,7 +41,7 @@ class FouriersLawImplementation
  * \brief Evaluates the heat conduction flux according to Fouriers's law
  */
 template <class TypeTag>
-using FouriersLaw = FouriersLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+using FouriersLaw = FouriersLawImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 } // end namespace Dumux
 

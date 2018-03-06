@@ -16,36 +16,22 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup NavierStokesNCModel
-  * \copydoc Dumux::NavierStokesNCFluxVariables
-  */
-#ifndef DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
-#define DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
-
-#include <dumux/common/properties.hh>
-#include <dumux/freeflow/navierstokesnc/staggered/fluxvariables.hh>
-
-namespace Dumux
-{
-
-
-// forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
-class NavierStokesNCFluxVariablesImpl;
-
 /*!
- * \ingroup NavierStokesNCModel
- * \brief The flux variables class for the multi-componentNavier-Stokes model.
-          This is a convenience alias for that actual,
-          discretization-specific flux variables.
- * \note  Not all specializations are currently implemented
+ * \file
+ * \ingroup Discretization
+ * \brief Element solution classes and factory functions
  */
-template<class TypeTag>
-using NavierStokesNCFluxVariables = NavierStokesNCFluxVariablesImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+#ifndef DUMUX_DISCRETIZATION_ELEMENT_SOLUTION_HH
+#define DUMUX_DISCRETIZATION_ELEMENT_SOLUTION_HH
 
+#include <dumux/discretization/cellcentered/elementsolution.hh>
+#include <dumux/discretization/box/elementsolution.hh>
+#include <dumux/discretization/staggered/elementsolution.hh>
 
-} // end namespace
+namespace Dumux {
+
+struct EmptyElementSolution {};
+
+} // end namespace Dumux
 
 #endif

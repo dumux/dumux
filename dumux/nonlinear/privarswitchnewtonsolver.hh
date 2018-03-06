@@ -28,29 +28,25 @@
 
 #include <memory>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/nonlinear/newtonsolver.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup PorousmediumCompositional
  * \brief A newton controller that handles primary variable switches
  * \todo make this independent of TypeTag by making PrimaryVariableSwitch a template argument
  *       and extracting everything model specific from there
- * \todo Implement for volume variable caching enabled
  */
-template <class TypeTag, class Assembler, class LinearSolver>
+template <class Assembler, class LinearSolver, class PrimaryVariableSwitch>
 class PriVarSwitchNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
 {
     using Scalar =  typename Assembler::Scalar;
     using ParentType = NewtonSolver<Assembler, LinearSolver>;
     using SolutionVector = typename Assembler::ResidualType;
-    using PrimaryVariableSwitch =  typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static constexpr auto discMethod = Assembler::FVGridGeometry::discMethod;
     static constexpr bool isBox = discMethod == DiscretizationMethod::box;
@@ -106,17 +102,19 @@ public:
         switchedInLastIteration_ = priVarSwitch_->update(uCurrentIter, gridVariables,
                                                          problem, fvGridGeometry);
 
+        constexpr bool volVarCachingEnabled = std::decay_t<decltype(gridVariables.curGridVolVars())>::cachingEnabled;
+        constexpr bool fluxVarCachingEnabled = std::decay_t<decltype(gridVariables.gridFluxVarsCache())>::cachingEnabled;
         if(switchedInLastIteration_)
         {
             for (const auto& element : elements(fvGridGeometry.gridView()))
             {
                 // if the volume variables are cached globally, we need to update those where the primary variables have been switched
-                updateSwitchedVolVars_(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>(),
+                updateSwitchedVolVars_(std::integral_constant<bool, volVarCachingEnabled>(),
                                        element, assembler, uCurrentIter, uLastIter);
 
                 // if the flux variables are cached globally, we need to update those where the primary variables have been switched
                 // (not needed for box discretization)
-                updateSwitchedFluxVarsCache_(std::integral_constant<bool, (GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache) && !isBox)>(),
+                updateSwitchedFluxVarsCache_(std::integral_constant<bool, (fluxVarCachingEnabled && !isBox)>(),
                                              element, assembler, uCurrentIter, uLastIter);
             }
         }
@@ -163,7 +161,7 @@ private:
             const auto dofIdxGlobal = scv.dofIndex();
             if (priVarSwitch_->wasSwitched(dofIdxGlobal))
             {
-                const ElementSolutionVector elemSol(element, uCurrentIter, fvGridGeometry);
+                const auto elemSol = elementSolution(element, uCurrentIter, fvGridGeometry);
                 auto& volVars = gridVariables.curGridVolVars().volVars(scv);
                 volVars.update(elemSol, problem, element, scv);
             }

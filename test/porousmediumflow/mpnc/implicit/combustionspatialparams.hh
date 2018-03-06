@@ -32,8 +32,8 @@
 #include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
 #include <dumux/material/spatialparams/fv.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup MPNCTests
  * \brief Spatialparameters for the combustionproblem1c. Parameters for the actual simulation domain and an outflow region are provided.
@@ -42,8 +42,7 @@ namespace Dumux
 template<class TypeTag>
 class CombustionSpatialParams;
 
-namespace Properties
-{
+namespace Properties {
 
 // The spatial params TypeTag
 NEW_TYPE_TAG(CombustionSpatialParams);
@@ -84,7 +83,6 @@ class CombustionSpatialParams : public FVSpatialParams<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename MaterialLaw::Params;
 
@@ -128,13 +126,10 @@ public:
         materialParams_.setGamma(interfacialTension_); // interfacial tension of water-air at 100°C
     }
 
-    ~CombustionSpatialParams()
-    {}
-
-
-     PermeabilityType permeability(const Element& element,
+    template<class ElementSolution>
+    PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         const auto& globalPos =  scv.dofPosition();
         if ( inOutFlow(globalPos) )
@@ -151,9 +146,10 @@ public:
      * \param scvIdx      The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
+    template<class ElementSolution>
     Scalar porosity(const Element &element,
                     const SubControlVolume &scv,
-                    const ElementSolutionVector &elemSol) const
+                    const ElementSolution &elemSol) const
     {
         const auto& globalPos =  scv.dofPosition();
         if ( inOutFlow(globalPos) )
@@ -177,9 +173,10 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub control volume */
+    template<class ElementSolution>
     const Scalar characteristicLength(const Element & element,
                                       const SubControlVolume &scv,
-                                      const ElementSolutionVector &elemSol) const
+                                      const ElementSolution &elemSol) const
 
     {
         const auto& globalPos =  scv.center();
@@ -199,9 +196,10 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub control volume */
+    template<class ElementSolution>
     const Scalar factorEnergyTransfer(const Element &element,
                                       const SubControlVolume &scv,
-                                      const ElementSolutionVector &elemSol) const
+                                      const ElementSolution &elemSol) const
     {
        const auto& globalPos =  scv.dofPosition();
         return factorEnergyTransferAtPos(globalPos);
@@ -223,9 +221,10 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub control volume */
+    template<class ElementSolution>
     const Scalar factorMassTransfer(const Element &element,
                                     const SubControlVolume &scv,
-                                    const ElementSolutionVector &elemSol) const
+                                    const ElementSolution &elemSol) const
     {
        const auto& globalPos =  scv.dofPosition();
        return factorMassTransferAtPos(globalPos);
@@ -270,9 +269,10 @@ public:
      *
      * \param globalPos The global position
      */
+    template<class ElementSolution>
     Scalar solidThermalConductivity(const Element &element,
                                     const SubControlVolume &scv,
-                                    const ElementSolutionVector &elemSol) const
+                                    const ElementSolution &elemSol) const
     {
         const auto& globalPos =  scv.dofPosition();
         if ( inOutFlow(globalPos) )

@@ -37,10 +37,11 @@ namespace Dumux
  * (the phase which is not present) being greater that unity as done in the 2p2c model.
  */
 template<class TypeTag>
-class TwoPTwoCCO2PrimaryVariableSwitch : public PrimaryVariableSwitch<TypeTag>
+class TwoPTwoCCO2PrimaryVariableSwitch
+: public PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), TwoPTwoCCO2PrimaryVariableSwitch<TypeTag>>
 {
-    friend typename Dumux::PrimaryVariableSwitch<TypeTag>;
-    using ParentType = Dumux::PrimaryVariableSwitch<TypeTag>;
+    using ParentType = PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), TwoPTwoCCO2PrimaryVariableSwitch<TypeTag>>;;
+    friend ParentType;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

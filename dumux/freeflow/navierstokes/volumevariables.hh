@@ -28,8 +28,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template <class TypeTag, bool enableEnergyBalance>
@@ -54,7 +53,6 @@ class NavierStokesVolumeVariablesImplementation<TypeTag, false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -75,7 +73,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
@@ -88,14 +87,16 @@ public:
     /*!
      * \brief Returns the primary variables at the dof associated with a given scv.
      */
-    static const auto& extractDofPriVars(const ElementSolutionVector& elemSol,
+    template<class ElementSolution>
+    static const auto& extractDofPriVars(const ElementSolution& elemSol,
                                          const SubControlVolume& scv)
     { return elemSol[0]; }
 
     /*!
      * \brief Update the fluid state
      */
-    static void completeFluidState(const ElementSolutionVector& elemSol,
+    template<class ElementSolution>
+    static void completeFluidState(const ElementSolution& elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,
@@ -195,7 +196,8 @@ public:
     { return fluidState_; }
 
     //! The temperature is obtained from the problem as a constant for isothermal models
-    static Scalar temperature(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    static Scalar temperature(const ElementSolution &elemSol,
                               const Problem& problem,
                               const Element &element,
                               const SubControlVolume &scv)
@@ -231,7 +233,6 @@ class NavierStokesVolumeVariablesImplementation<TypeTag, true>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -254,7 +255,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume &scv)
@@ -267,7 +269,8 @@ public:
     /*!
      * \brief Update the fluid state
      */
-    static void completeFluidState(const ElementSolutionVector& elemSol,
+    template<class ElementSolution>
+    static void completeFluidState(const ElementSolution& elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,
@@ -325,7 +328,8 @@ public:
 
     //! The temperature is a primary variable for non-isothermal models
     using ParentType::temperature;
-    static Scalar temperature(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    static Scalar temperature(const ElementSolution &elemSol,
                               const Problem& problem,
                               const Element &element,
                               const SubControlVolume &scv)

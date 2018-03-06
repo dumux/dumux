@@ -23,7 +23,9 @@
 #ifndef DUMUX_BOX_ELEMENT_SOLUTION_HH
 #define DUMUX_BOX_ELEMENT_SOLUTION_HH
 
+#include <type_traits>
 #include <dune/istl/bvector.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux {
 
@@ -102,6 +104,32 @@ public:
 private:
     Dune::BlockVector<PrimaryVariables> priVars_;
 };
+
+/*!
+ * \ingroup BoxDiscretization
+ * \brief  Make an element solution for box schemes
+ */
+template<class Element, class SolutionVector, class FVGridGeometry>
+auto elementSolution(const Element& element, const SolutionVector& sol, const FVGridGeometry& gg)
+-> std::enable_if_t<FVGridGeometry::discMethod == DiscretizationMethod::box,
+                    BoxElementSolution<FVGridGeometry, SolutionVector>>
+{
+    return BoxElementSolution<FVGridGeometry, SolutionVector>(element, sol, gg);
+}
+
+/*!
+ * \ingroup BoxDiscretization
+ * \brief  Make an element solution for box schemes
+ */
+template<class Element, class ElementVolumeVariables, class FVElementGeometry>
+auto elementSolution(const Element& element, const ElementVolumeVariables& elemVolVars, const FVElementGeometry& gg)
+-> std::enable_if_t<FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::box,
+                    BoxElementSolution<typename FVElementGeometry::FVGridGeometry,
+                                       typename ElementVolumeVariables::SolutionVector>>
+{
+    return BoxElementSolution<typename FVElementGeometry::FVGridGeometry,
+                              typename ElementVolumeVariables::SolutionVector>(element, elemVolVars, gg);
+}
 
 } // end namespace Dumux
 

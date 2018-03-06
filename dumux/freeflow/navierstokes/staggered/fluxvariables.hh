@@ -28,8 +28,7 @@
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
@@ -42,7 +41,7 @@ class NavierStokesFluxVariablesImpl;
  */
 template<class TypeTag>
 class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
-: public FluxVariablesBase<TypeTag>
+: public FluxVariablesBase<TypeTag, NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

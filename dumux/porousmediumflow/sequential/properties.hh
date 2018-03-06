@@ -100,11 +100,6 @@ namespace Properties
 // Properties
 //////////////////////////////////////////////////////////////////
 
-SET_PROP(SequentialModel, DiscretizationMethod)
-{
-    static const DiscretizationMethod value = DiscretizationMethod::cctpfa;
-};
-
 //! Type of the jacobian matrix needed for compatibility with implicit models for the amg backend
 SET_TYPE_PROP(SequentialModel, JacobianMatrix, typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix));
 
@@ -132,7 +127,25 @@ public:
 };
 
 //! A simplified grid geometry for compatibility with new style models
-SET_TYPE_PROP(SequentialModel, FVGridGeometry, DefaultMapperTraits<typename GET_PROP_TYPE(TypeTag, GridView)>);
+SET_PROP(SequentialModel, FVGridGeometry)
+{
+    struct FVGridGeometry
+    : public DefaultMapperTraits<typename GET_PROP_TYPE(TypeTag, GridView)>
+    {
+        static constexpr DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
+        using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    };
+
+public:
+    using type = FVGridGeometry;
+};
+
+//! For compatibility with new style models we need a solution vector type
+SET_PROP(SequentialModel, SolutionVector)
+{
+public:
+    using type = typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution;
+};
 
 /*!
  * \brief Specifies the types which are assoicated with a solution.

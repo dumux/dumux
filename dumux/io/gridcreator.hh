@@ -380,9 +380,10 @@ class GridCreatorImpl : public GridCreatorBase<Grid> {};
  *        supported grid managers. It inherits the functionality of the base class.
  * \todo  TODO The grid creator is independent of TypeTag now,
  *        it would only need two template parameters, none of the functions use a TypeTag directly
+ * \todo  This shouldn't depend on FVGridGeometry, think about how to remove discMethod here, too
  */
 template <class TypeTag>
-using GridCreator = GridCreatorImpl<typename GET_PROP_TYPE(TypeTag, Grid), GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+using GridCreator = GridCreatorImpl<typename GET_PROP_TYPE(TypeTag, Grid), GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Specializations //////////////////////////////////////////////////////////////////////////////////////////////

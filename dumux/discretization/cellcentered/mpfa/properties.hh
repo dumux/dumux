@@ -60,12 +60,6 @@ namespace Properties
 //! Type tag for the cell-centered mpfa scheme.
 NEW_TYPE_TAG(CCMpfaModel, INHERITS_FROM(FiniteVolumeModel));
 
-//! Set the corresponding discretization method property
-SET_PROP(CCMpfaModel, DiscretizationMethod)
-{
-    static const DiscretizationMethod value = DiscretizationMethod::ccmpfa;
-};
-
 //! Set the index set type used on the dual grid nodes
 SET_PROP(CCMpfaModel, DualGridNodalIndexSet)
 {
@@ -168,10 +162,6 @@ SET_TYPE_PROP(CCMpfaModel,
 
 //! The global current volume variables vector class
 SET_TYPE_PROP(CCMpfaModel, GridVolumeVariables, CCGridVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
-
-//! Set the solution vector type for an element
-SET_TYPE_PROP(CCMpfaModel, ElementSolutionVector, CCElementSolution<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                                    typename GET_PROP_TYPE(TypeTag, SolutionVector)>);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(CCMpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes);

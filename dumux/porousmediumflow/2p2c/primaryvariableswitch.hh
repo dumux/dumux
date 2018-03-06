@@ -34,10 +34,11 @@ namespace Dumux
  * \brief The primary variable switch controlling the phase presence state variable
  */
 template<class TypeTag>
-class TwoPTwoCPrimaryVariableSwitch : public PrimaryVariableSwitch<TypeTag>
+class TwoPTwoCPrimaryVariableSwitch
+: public PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), TwoPTwoCPrimaryVariableSwitch<TypeTag>>
 {
-    friend typename Dumux::PrimaryVariableSwitch<TypeTag>;
-    using ParentType = Dumux::PrimaryVariableSwitch<TypeTag>;
+    using ParentType = PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), TwoPTwoCPrimaryVariableSwitch<TypeTag>>;
+    friend ParentType;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

@@ -29,8 +29,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 //forward declaration
 template<class TypeTag>
@@ -75,7 +74,6 @@ class InjectionProblemSpatialParams : public FVSpatialParams<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
@@ -144,9 +142,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol The element solution vector
      */
+    template<class ElementSolution>
     Scalar solidHeatCapacity(const Element &element,
                              const SubControlVolume& scv,
-                             const ElementSolutionVector& elemSol) const
+                             const ElementSolution& elemSol) const
     { return 850.0; /*specific heat capacity of granite [J / (kg K)]*/ }
 
     /*!
@@ -158,9 +157,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol The element solution vector
      */
+    template<class ElementSolution>
     Scalar solidDensity(const Element &element,
                         const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+                        const ElementSolution& elemSol) const
     { return 2650; /*density of granite [kg/m^3]*/ }
 
     /*!
@@ -170,9 +170,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol The element solution vector
      */
+    template<class ElementSolution>
     Scalar solidThermalConductivity(const Element &element,
                                     const SubControlVolume& scv,
-                                    const ElementSolutionVector& elemSol) const
+                                    const ElementSolution& elemSol) const
     { return 2.8; }
 
 private:

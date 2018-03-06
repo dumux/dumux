@@ -44,8 +44,8 @@
 
 #include <dune/common/parametertreeparser.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup MPNCTests
  * \brief spatialparameters for the kinetic test-case of the mpnc model. "Poor-mans" coupling of free-flow and porous medium.
@@ -55,8 +55,8 @@ namespace Dumux
 template<class TypeTag>
 class EvaporationAtmosphereSpatialParams;
 
-namespace Properties
-{
+namespace Properties {
+
 // The spatial params TypeTag
 NEW_TYPE_TAG(EvaporationAtmosphereSpatialParams);
 
@@ -157,7 +157,6 @@ class EvaporationAtmosphereSpatialParams : public FVSpatialParams<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename MaterialLaw::Params;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -274,13 +273,10 @@ public:
         aNonWettingSolidSurfaceParamsFreeFlow_.setA3(0.);
     }
 
-    ~EvaporationAtmosphereSpatialParams()
-    {}
-
-
-     PermeabilityType permeability(const Element& element,
+    template<class ElementSolution>
+    PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         const  auto & globalPos =  scv.dofPosition();
         if (inFF_(globalPos) )
@@ -298,9 +294,10 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume  */
+    template<class ElementSolution>
     Scalar porosity(const Element &element,
                     const SubControlVolume &scv,
-                    const ElementSolutionVector &elemSol) const
+                    const ElementSolution &elemSol) const
     {
         const auto& globalPos =  scv.dofPosition();
 
@@ -312,9 +309,10 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
+    template<class ElementSolution>
     const MaterialLawParams& materialLawParams(const Element& element,
                                                const SubControlVolume& scv,
-                                               const ElementSolutionVector& elemSol) const
+                                               const ElementSolution& elemSol) const
     {
         const auto& globalPos =  scv.dofPosition();
         if (inFF_(globalPos) )
@@ -344,9 +342,10 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume */
+    template<class ElementSolution>
     const AwnSurfaceParams & aWettingNonWettingSurfaceParams(const Element &element,
                                                              const SubControlVolume &scv,
-                                                             const ElementSolutionVector &elemSol) const
+                                                             const ElementSolution &elemSol) const
     {
         const auto& globalPos =  scv.dofPosition();
         if (inFF_(globalPos) )
@@ -364,9 +363,10 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume */
+    template<class ElementSolution>
     const AnsSurfaceParams & aNonWettingSolidSurfaceParams(const Element &element,
                                                              const SubControlVolume &scv,
-                                                             const ElementSolutionVector &elemSol) const
+                                                             const ElementSolution &elemSol) const
     {
         const auto& globalPos =  scv.dofPosition();
         if (inFF_(globalPos) )
@@ -388,9 +388,10 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume */
+    template<class ElementSolution>
     const Scalar pcMax(const Element &element,
                        const SubControlVolume &scv,
-                       const ElementSolutionVector &elemSol) const
+                       const ElementSolution &elemSol) const
     { return aWettingNonWettingSurfaceParams_.pcMax() ; }
 
 
@@ -401,9 +402,10 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub control volume */
+    template<class ElementSolution>
     const Scalar characteristicLength(const Element & element,
                                       const SubControlVolume &scv,
-                                      const ElementSolutionVector &elemSol) const
+                                      const ElementSolution &elemSol) const
 
     {
         const auto& globalPos =  scv.dofPosition();
@@ -428,9 +430,10 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub control volume */
+    template<class ElementSolution>
     const Scalar factorEnergyTransfer(const Element &element,
                                       const SubControlVolume &scv,
-                                      const ElementSolutionVector &elemSol) const
+                                      const ElementSolution &elemSol) const
     {
        const auto& globalPos =  scv.dofPosition();
        return factorEnergyTransferAtPos(globalPos);
@@ -454,9 +457,10 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub control volume */
+    template<class ElementSolution>
     const Scalar factorMassTransfer(const Element &element,
                                       const SubControlVolume &scv,
-                                      const ElementSolutionVector &elemSol) const
+                                      const ElementSolution &elemSol) const
     {
        const auto& globalPos =  scv.dofPosition();
         return factorMassTransferAtPos(globalPos);

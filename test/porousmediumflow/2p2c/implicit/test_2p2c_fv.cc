@@ -130,8 +130,9 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonMethod = Dumux::PriVarSwitchNewtonSolver<TypeTag, Assembler, LinearSolver>;
-    NewtonMethod nonLinearSolver(assembler, linearSolver);
+    using NewtonSolver = PriVarSwitchNewtonSolver<Assembler, LinearSolver,
+                                                 typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch)>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
     timeLoop->start(); do

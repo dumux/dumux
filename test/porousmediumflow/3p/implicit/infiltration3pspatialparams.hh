@@ -32,8 +32,8 @@
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/plotmateriallaw3p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup ThreePTests
  * \brief Definition of the spatial parameters for the kuevette problem, which
@@ -82,7 +82,6 @@ class InfiltrationThreePSpatialParams : public FVSpatialParams<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag,ElementSolutionVector);
     enum { dimWorld=GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
@@ -155,9 +154,10 @@ public:
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         if (isFineMaterial_(scv.dofPosition()))
             return fineK_;

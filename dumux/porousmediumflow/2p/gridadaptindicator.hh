@@ -31,10 +31,10 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!\ingroup TwoPModel
  * \brief  Class defining a standard, saturation dependent indicator for grid adaptation
@@ -48,7 +48,6 @@ class TwoPGridAdaptIndicator
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     enum { saturationIdx = Indices::saturationIdx };
 
@@ -140,7 +139,7 @@ public:
 
             //! obtain the saturation at the center of the element
             const auto geometry = element.geometry();
-            const ElementSolution elemSol(element, sol, *fvGridGeometry_);
+            const auto elemSol = elementSolution(element, sol, *fvGridGeometry_);
             const Scalar satI = evalSolution(element, geometry, *fvGridGeometry_, elemSol, geometry.center())[saturationIdx];
 
             //! maybe update the global minimum/maximum
@@ -164,7 +163,7 @@ public:
                     {
                         //! obtain saturation in the neighbor
                         const auto outsideGeometry = outside.geometry();
-                        const ElementSolution elemSolJ(outside, sol, *fvGridGeometry_);
+                        const auto elemSolJ = elementSolution(outside, sol, *fvGridGeometry_);
                         const Scalar satJ = evalSolution(outside, outsideGeometry, *fvGridGeometry_, elemSolJ, outsideGeometry.center())[saturationIdx];
 
                         using std::abs;

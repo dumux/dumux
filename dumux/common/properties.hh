@@ -55,7 +55,6 @@ NEW_PROP_TAG(BaseLocalResidual);      //!< The type of the base class of the loc
 NEW_PROP_TAG(JacobianMatrix);         //!< Type of the global jacobian matrix
 NEW_PROP_TAG(SolutionVector);         //!< Vector containing all primary variable vector of the grid
 NEW_PROP_TAG(BoundaryTypes);          //!< Stores the boundary types of a single degree of freedom
-NEW_PROP_TAG(DiscretizationMethod);   //!< Property for the used discretization method
 
 //! The type of the local residual function, i.e. the equation to be solved. Must inherit
 //! from the BaseLocalResidual property and fulfill its interfaces.
@@ -76,7 +75,6 @@ NEW_PROP_TAG(BalanceEqOpts);          //!< A class that collects options for the
 // Properties used by finite volume schemes:
 /////////////////////////////////////////////
 NEW_PROP_TAG(ElementBoundaryTypes);                //!< Stores the boundary types on an element
-NEW_PROP_TAG(ElementSolutionVector);               //!< A vector of primary variables within an element
 
 NEW_PROP_TAG(FVGridGeometry);                      //!< The type of the global finite volume geometry
 NEW_PROP_TAG(EnableFVGridGeometryCache);           //!< specifies if geometric data is saved (faster, but more memory consuming)

@@ -27,8 +27,7 @@
 
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup OnePNCTests
@@ -45,7 +44,6 @@ class OnePNCTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;
@@ -87,9 +85,10 @@ public:
      * \param scv The sub-control volume
      * \param elemSol The solution for all dofs of the element
      */
+    template<class ElementSolution>
     Scalar dispersivity(const Element &element,
                         const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+                        const ElementSolution& elemSol) const
     { return 0; }
 
     /*!
@@ -101,9 +100,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol The element solution vector
      */
+    template<class ElementSolution>
     Scalar solidHeatCapacity(const Element &element,
                              const SubControlVolume& scv,
-                             const ElementSolutionVector& elemSol) const
+                             const ElementSolution& elemSol) const
     { return 790; /*specific heat capacity of granite [J / (kg K)]*/ }
 
     /*!
@@ -115,9 +115,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol The element solution vector
      */
+    template<class ElementSolution>
     Scalar solidDensity(const Element &element,
                         const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+                        const ElementSolution& elemSol) const
     { return 2700; /*density of granite [kg/m^3]*/ }
 
     /*!
@@ -127,9 +128,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol The element solution vector
      */
+    template<class ElementSolution>
     Scalar solidThermalConductivity(const Element &element,
                                     const SubControlVolume& scv,
-                                    const ElementSolutionVector& elemSol) const
+                                    const ElementSolution& elemSol) const
     { return lambdaSolid_; }
 
 

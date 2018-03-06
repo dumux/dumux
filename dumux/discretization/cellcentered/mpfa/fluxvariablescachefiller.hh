@@ -430,7 +430,7 @@ private:
               typename std::enable_if_t<AdvectionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
     void fillAdvectionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
     {
-        using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethod::ccmpfa>;
+        using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
 
         // get instance of the interaction volume-local assembler
         static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
@@ -515,7 +515,7 @@ private:
                              bool forceUpdateAll,
                              int phaseIdx, int compIdx)
     {
-        using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethod::ccmpfa>;
+        using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
 
         // get instance of the interaction volume-local assembler
         static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
@@ -554,7 +554,7 @@ private:
               typename std::enable_if_t<HeatConductionType::discMethod == DiscretizationMethod::ccmpfa, int> = 0 >
     void fillHeatConductionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
     {
-        using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethod::ccmpfa>;
+        using LambdaFactory = TensorLambdaFactory<DiscretizationMethod::ccmpfa>;
 
         // get instance of the interaction volume-local assembler
         static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
@@ -567,11 +567,11 @@ private:
                 localAssembler.assemble( handle.heatConductionTout(),
                                          handle.heatConductionT(),
                                          iv,
-                                         LambdaFactory::getHeatConductionLambda() );
+                                         LambdaFactory::template getHeatConductionLambda<typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel)>() );
             else
                 localAssembler.assemble( handle.heatConductionT(),
                                          iv,
-                                         LambdaFactory::getHeatConductionLambda() );
+                                         LambdaFactory::template getHeatConductionLambda<typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel)>() );
         }
 
         // assemble vector of temperatures

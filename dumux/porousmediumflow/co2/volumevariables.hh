@@ -28,8 +28,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2p2c/volumevariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup CO2Model
  * \brief Contains the quantities which are are constant within a
@@ -45,7 +45,6 @@ class TwoPTwoCCO2VolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -86,6 +85,7 @@ public:
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     //! TODO: This is a lot of copy paste from the 2p2c: factor out code!
+    template<class ElementSolution>
     static void completeFluidState(const ElementSolution& elemSol,
                                    const Problem& problem,
                                    const Element& element,

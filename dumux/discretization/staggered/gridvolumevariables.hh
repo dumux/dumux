@@ -29,6 +29,7 @@
 
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
+#include <dumux/discretization/staggered/elementsolution.hh>
 
 namespace Dumux {
 
@@ -63,7 +64,6 @@ class StaggeredGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     enum { numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter) };
 
@@ -92,7 +92,7 @@ public:
             {
                 CellCenterPrimaryVariables priVars(0.0);
                 priVars = sol[cellCenterIdx][scv.dofIndex()];
-                ElementSolutionVector elemSol{std::move(priVars)};
+                auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
                 volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
             }
 
@@ -121,7 +121,7 @@ public:
                         if(eqIdx == Indices::pressureIdx)
                             DUNE_THROW(Dune::InvalidStateException, "Face at: " << scvf.center() << " has neither Dirichlet nor Neumann BC.");
                 }
-                ElementSolutionVector elemSol{std::move(boundaryPriVars)};
+                auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(boundaryPriVars));
                 volumeVariables_[scvf.outsideScvIdx()].update(elemSol, problem(), element, insideScv);
             }
         }

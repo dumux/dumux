@@ -24,6 +24,7 @@
 #ifndef DUMUX_FUELCELL_PROBLEM_HH
 #define DUMUX_FUELCELL_PROBLEM_HH
 
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/2pnc/model.hh>
@@ -33,8 +34,8 @@
 
 #include "fuelcellspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup TwoPNCTests
  * \brief Definition of a problem for water management in PEM fuel cells.
@@ -93,9 +94,8 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     // Select the electrochemistry method
-    using ElectroChemistry = typename Dumux::ElectroChemistry<TypeTag, ElectroChemistryModel::Ochs>;
+    using ElectroChemistry = typename Dumux::ElectroChemistry<Scalar, Indices, FVGridGeometry, ElectroChemistryModel::Ochs>;
 
     enum { numComponents = FluidSystem::numComponents };
 
@@ -112,7 +112,7 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
+    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     enum { dofCodim = isBox ? dim : 0 };
@@ -268,7 +268,7 @@ public:
     {
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            ElementSolutionVector elemSol(element, curSol, this->fvGridGeometry());
+            auto elemSol = elementSolution(element, curSol, this->fvGridGeometry());
 
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);

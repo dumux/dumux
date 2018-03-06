@@ -53,12 +53,6 @@ namespace Properties
 //! Type tag for the cell-centered tpfa scheme.
 NEW_TYPE_TAG(CCTpfaModel, INHERITS_FROM(FiniteVolumeModel));
 
-//! Set the corresponding discretization method property
-SET_PROP(CCTpfaModel, DiscretizationMethod)
-{
-    static const DiscretizationMethod value = DiscretizationMethod::cctpfa;
-};
-
 //! Set the default for the global finite volume geometry
 SET_PROP(CCTpfaModel, FVGridGeometry)
 {
@@ -80,10 +74,6 @@ SET_TYPE_PROP(CCTpfaModel, ElementFluxVariablesCache, CCTpfaElementFluxVariables
 
 //! The global current volume variables vector class
 SET_TYPE_PROP(CCTpfaModel, GridVolumeVariables, CCGridVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
-
-//! Set the solution vector type for an element
-SET_TYPE_PROP(CCTpfaModel, ElementSolutionVector, CCElementSolution<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                                    typename GET_PROP_TYPE(TypeTag, SolutionVector)>);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes);

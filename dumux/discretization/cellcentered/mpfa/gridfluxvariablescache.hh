@@ -87,6 +87,9 @@ public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = true;
+
     //! The constructor
     CCMpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
@@ -269,6 +272,9 @@ class CCMpfaGridFluxVariablesCache<TypeTag, false>
 public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
+    //! make it possible to query if caching is enabled
+    static constexpr bool cachingEnabled = false;
 
     //! export the data handle types used by the local view
     using PrimaryIvDataHandle = typename LocalView::PrimaryIvDataHandle;

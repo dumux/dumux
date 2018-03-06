@@ -57,7 +57,6 @@ class MPNCVolumeVariables
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using PermeabilityType = typename SpatialParams::PermeabilityType;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -95,6 +94,7 @@ public:
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
+    template<class ElementSolution>
     void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
@@ -155,6 +155,7 @@ public:
      * \copydoc ImplicitModel::completeFluidState
      * \param isOldSol Specifies whether this is the previous solution or the current one
      */
+     template<class ElementSolution>
      void completeFluidState(const ElementSolution& elemSol,
                                    const Problem& problem,
                                    const Element& element,

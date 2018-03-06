@@ -28,6 +28,7 @@
 
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
+#include <dumux/discretization/cellcentered/elementsolution.hh>
 
 namespace Dumux {
 
@@ -51,7 +52,6 @@ class CCGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -81,7 +81,7 @@ public:
 
             for (auto&& scv : scvs(fvGeometry))
             {
-                const ElementSolution elemSol({sol[scv.dofIndex()]});
+                const auto elemSol = elementSolution(element, sol, fvGridGeometry);
                 volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
             }
 
@@ -98,7 +98,7 @@ public:
                 {
                     const auto insideScvIdx = scvf.insideScvIdx();
                     const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                    const ElementSolution dirichletPriVars({problem().dirichlet(element, scvf)});
+                    const auto dirichletPriVars = elementSolution<SolutionVector, FVGridGeometry>(problem().dirichlet(element, scvf));
 
                     volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars,
                                                                   problem(),

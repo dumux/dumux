@@ -40,7 +40,7 @@ class FreeFlowFluxVariablesCacheImplementation
  *        Store flux stencils and data required for flux calculation
  */
 template<class TypeTag>
-using FreeFlowFluxVariablesCache = FreeFlowFluxVariablesCacheImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+using FreeFlowFluxVariablesCache = FreeFlowFluxVariablesCacheImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 /*!
  * \ingroup NavierStokesModel

@@ -31,13 +31,13 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/elementsolution.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dune/common/deprecated.hh>
 
 #warning "This file is deprecated. Use PriVarSwitchNewtonSolver instead."
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup PorousmediumCompositional
@@ -53,9 +53,8 @@ PriVarSwitchNewtonController : public NewtonController<typename GET_PROP_TYPE(Ty
     using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
     using ParentType = NewtonController<Scalar>;
     using PrimaryVariableSwitch =  typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
+    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 
 public:
     using ParentType::ParentType;
@@ -167,7 +166,7 @@ private:
             const auto dofIdxGlobal = scv.dofIndex();
             if (priVarSwitch_->wasSwitched(dofIdxGlobal))
             {
-                const ElementSolutionVector elemSol(element, uCurrentIter, fvGridGeometry);
+                const auto elemSol = elementSolution(element, uCurrentIter, fvGridGeometry);
                 auto& volVars = gridVariables.curGridVolVars().volVars(scv);
                 volVars.update(elemSol, problem, element, scv);
             }

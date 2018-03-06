@@ -29,8 +29,8 @@
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dune/common/fvector.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup TwoPModel
  * \brief Contains the quantities which are are constant within a
@@ -51,7 +51,6 @@ class TwoPVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     enum
     {
@@ -81,7 +80,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub control volume
     */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
@@ -117,7 +117,8 @@ public:
      *
      * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
      */
-    static void completeFluidState(const ElementSolutionVector& elemSol,
+    template<class ElementSolution>
+    static void completeFluidState(const ElementSolution& elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,

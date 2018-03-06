@@ -39,6 +39,7 @@
 #include <dumux/assembly/entitycolor.hh>
 #include <dumux/assembly/partialreassembler.hh>
 #include <dumux/discretization/fluxstencil.hh>
+#include <dumux/discretization/cellcentered/elementsolution.hh>
 
 namespace Dumux {
 
@@ -134,9 +135,8 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
@@ -219,7 +219,7 @@ public:
         const auto origVolVars = curVolVars;
 
         // element solution container to be deflected
-        ElementSolutionVector elemSol(origPriVars);
+        auto elemSol = elementSolution(element, curSol, fvGridGeometry);
 
         // derivatives in the neighbors with repect to the current elements
         // in index 0 we save the derivative of the element residual with respect to it's own dofs
@@ -313,7 +313,6 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fal
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
@@ -360,7 +359,8 @@ public:
         const auto origVolVars = curVolVars;
 
         // element solution container to be deflected
-        ElementSolutionVector elemSol(origPriVars);
+        auto elemSol = elementSolution(element, curSol, fvGridGeometry);
+
         LocalResidualValues partialDeriv;
 
         // derivatives in the neighbors with repect to the current elements

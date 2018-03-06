@@ -25,9 +25,9 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/box/elementsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ImplicitModel
@@ -43,7 +43,6 @@ class BoxElementVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
@@ -53,9 +52,12 @@ class BoxElementVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
+    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 
 public:
+    //! Export type of the solution vector
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+
     //! Constructor
     BoxElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
@@ -99,18 +101,19 @@ class BoxElementVolumeVariables<TypeTag, /*enableGlobalVolVarCache*/false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    //! Export type of the solution vector
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+
     //! Constructor
     BoxElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
@@ -129,7 +132,7 @@ public:
                      const SolutionVector& sol)
     {
         // get the solution at the dofs of the element
-        ElementSolutionVector elemSol(element, sol, fvGeometry);
+        auto elemSol = elementSolution(element, sol, fvGeometry.fvGridGeometry());
 
         // resize volume variables to the required size
         volumeVariables_.resize(fvGeometry.numScv());

@@ -33,15 +33,14 @@
 #include <dumux/material/fluidmatrixinteractions/mineralization/effectivesoliddensity.hh>
 #include <dumux/material/fluidmatrixinteractions/mineralization/effectivesolidheatcapacity.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 //forward declaration
 template<class TypeTag>
 class ThermoChemSpatialParams;
 
-namespace Properties
-{
+namespace Properties {
+
 // The spatial parameters TypeTag
 NEW_TYPE_TAG(ThermoChemSpatialParams);
 
@@ -65,7 +64,6 @@ class ThermoChemSpatialParams : public FVSpatialParamsOneP<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using CoordScalar = typename GridView::ctype;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     enum {
         dimWorld=GridView::dimensionworld,
@@ -138,9 +136,10 @@ public:
      *
      *  Solution dependent permeability function
      */
+    template<class ElementSolution>
     Scalar permeability(const Element& element,
                         const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+                        const ElementSolution& elemSol) const
     { return permLaw_.evaluatePermeability(element, scv, elemSol); }
 
     /*!
@@ -162,9 +161,10 @@ public:
      *  \param scv The sub-control volume
      *  \param elemSol The element solution
      */
+    template<class ElementSolution>
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
+                    const ElementSolution& elemSol) const
     {
 //         return poroLaw_.evaluatePorosity(element, scv, elemSol);
         return 0.8;
@@ -179,9 +179,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol The element solution vector
      */
+    template<class ElementSolution>
     Scalar solidHeatCapacity(const Element &element,
                              const SubControlVolume& scv,
-                             const ElementSolutionVector& elemSol) const
+                             const ElementSolution& elemSol) const
     {
         return effSolCp_.effectiveSolidHeatCapacity(element, scv, elemSol);
     }
@@ -189,13 +190,14 @@ public:
     /*!
      * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the pure solid phases.
      */
-     Scalar solidPhaseHeatCapacity(const Element &element,
-                                    const SubControlVolume& scv,
-                                    const ElementSolutionVector& elemSol,
-                                    int sPhaseIdx) const
-     {
-         return cp_[sPhaseIdx];
-     }
+    template<class ElementSolution>
+    Scalar solidPhaseHeatCapacity(const Element &element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolution& elemSol,
+                                  int sPhaseIdx) const
+    {
+        return cp_[sPhaseIdx];
+    }
 
     /*!
      * \brief Returns the average mass density \f$[kg / m^3]\f$ of the solid phases.
@@ -206,9 +208,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol The element solution vector
      */
+    template<class ElementSolution>
     Scalar solidDensity(const Element &element,
                         const SubControlVolume& scv,
-                        const ElementSolutionVector& elemSol) const
+                        const ElementSolution& elemSol) const
     {
         return effSolRho_.effectiveSolidDensity(element, scv, elemSol);
     }
@@ -216,9 +219,10 @@ public:
     /*!
      * \brief Returns the mass density \f$[kg / m^3]\f$ of the pure solid phases.
      */
+    template<class ElementSolution>
     Scalar solidPhaseDensity(const Element &element,
                              const SubControlVolume& scv,
-                             const ElementSolutionVector& elemSol,
+                             const ElementSolution& elemSol,
                              int sPhaseIdx) const
     {
         return rho_[sPhaseIdx];
@@ -231,9 +235,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol The element solution vector
      */
+    template<class ElementSolution>
     Scalar solidThermalConductivity(const Element &element,
                                     const SubControlVolume& scv,
-                                    const ElementSolutionVector& elemSol) const
+                                    const ElementSolution& elemSol) const
     { return lambdaSolid_; }
 
 private:

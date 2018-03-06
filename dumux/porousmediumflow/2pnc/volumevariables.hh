@@ -39,8 +39,7 @@
 
 #include "indices.hh" // for formulation
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup TwoPNCModel
@@ -59,7 +58,6 @@ class TwoPNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using PermeabilityType = typename SpatialParams::PermeabilityType;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -112,7 +110,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub control volume
     */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
@@ -174,7 +173,8 @@ public:
      *
      * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
      */
-    static void completeFluidState(const ElementSolutionVector& elemSol,
+    template<class ElementSolution>
+    static void completeFluidState(const ElementSolution& elemSol,
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,

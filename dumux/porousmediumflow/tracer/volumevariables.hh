@@ -29,13 +29,14 @@
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup TracerModel
  * \brief Contains the quantities which are constant within a
  *        finite volume for the tracer model.
+ * \todo: We need a scalar, vector, tensor type -> Scalar + dimWorld should be good template params
+ *        Furthermore, we need the fluid system and stuff like useMoles -> ModelTraits?
  */
 template <class TypeTag>
 class TracerVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
@@ -43,21 +44,14 @@ class TracerVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr int numComponents = FluidSystem::numComponents;
 
     using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
-    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
 
@@ -70,7 +64,9 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution, class Problem,
+             class Element, class SubControlVolume>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume &scv)

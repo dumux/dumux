@@ -30,13 +30,10 @@
 #ifndef DUMUX_DISCRETIZATION_MPFA_TENSOR_LAMBDA_FACTORY_HH
 #define DUMUX_DISCRETIZATION_MPFA_TENSOR_LAMBDA_FACTORY_HH
 
-#include <dumux/common/properties.hh>
-
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/tensorlambdafactory.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup CCMpfaDiscretization
@@ -50,54 +47,12 @@ namespace Dumux
  *        The interfaces of the lambdas are chosen such that all involved tensors can be extracted
  *        with the given arguments.
  */
-template<class TypeTag, DiscretizationMethod discMethod>
-class TensorLambdaFactory
-{
-public:
-
-    //! We return zero scalars here in the functions below.
-    //! We have to return something as the local systems expect a type
-    //! to perform actions on, thus a compiler error will occur.
-    //! We return 0.0 as this call should never happen for a tensor
-    //! which is not treated by an mpfa method anyway.
-
-    //! lambda for the law describing the advective term
-    static auto getAdvectionLambda()
-    {
-        return [] (const auto& problem,
-                   const auto& element,
-                   const auto& volVars,
-                   const auto& fvGeometry,
-                   const auto& scv)
-               { return 0.0; };
-    }
-
-    //! lambda for the diffusion coefficient/tensor
-    static auto getDiffusionLambda(unsigned int phaseIdx, unsigned int compIdx)
-    {
-        return [] (const auto& problem,
-                   const auto& element,
-                   const auto& volVars,
-                   const auto& fvGeometry,
-                   const auto& scv)
-               { return 0.0; };
-    }
-
-    //! lambda for the fourier coefficient
-    static auto getHeatConductionLambda()
-    {
-        return [] (const auto& problem,
-                   const auto& element,
-                   const auto& volVars,
-                   const auto& fvGeometry,
-                   const auto& scv)
-               { return 0.0; };
-    }
-};
+template<DiscretizationMethod discMethod>
+class TensorLambdaFactory;
 
 //! Specialization for mpfa schemes
-template<class TypeTag>
-class TensorLambdaFactory<TypeTag, DiscretizationMethod::ccmpfa>
+template<>
+class TensorLambdaFactory<DiscretizationMethod::ccmpfa>
 {
 public:
 
@@ -124,10 +79,9 @@ public:
     }
 
     //! return void lambda here
+    template<class ThermalConductivityModel>
     static auto getHeatConductionLambda()
     {
-        using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
-
         return [] (const auto& problem,
                    const auto& element,
                    const auto& volVars,

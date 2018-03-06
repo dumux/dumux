@@ -61,7 +61,7 @@ public:
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(); }, "p");
 
         // add discretization-specific fields
-        additionalOutput_(vtk, discMethodTag<GET_PROP_VALUE(TypeTag, DiscretizationMethod)>{});
+        additionalOutput_(vtk, discMethodTag<GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>{});
     }
 
 private:

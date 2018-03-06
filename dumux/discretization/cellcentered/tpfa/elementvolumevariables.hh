@@ -25,9 +25,9 @@
 #define DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_VOLUMEVARIABLES_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/cellcentered/elementsolution.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup CCTpfaDiscretization
@@ -48,8 +48,6 @@ class CCTpfaElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
@@ -60,6 +58,9 @@ class CCTpfaElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    //! Export type of the solution vector
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+
     //! Constructor
     CCTpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
@@ -101,18 +102,19 @@ class CCTpfaElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using IndexType = typename GridView::IndexSet::IndexType;
 
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    //! Export type of the solution vector
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     //! Constructor
     CCTpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
@@ -138,7 +140,7 @@ public:
 
         // update the volume variables of the element at hand
         auto&& scvI = fvGeometry.scv(globalI);
-        volumeVariables_[localIdx].update(ElementSolution(sol[globalI]),
+        volumeVariables_[localIdx].update(elementSolution(element, sol, fvGridGeometry),
                                           problem,
                                           element,
                                           scvI);
@@ -150,7 +152,7 @@ public:
         {
             const auto& elementJ = fvGridGeometry.element(dataJ.globalJ);
             auto&& scvJ = fvGeometry.scv(dataJ.globalJ);
-            volumeVariables_[localIdx].update(ElementSolution(sol[dataJ.globalJ]),
+            volumeVariables_[localIdx].update(elementSolution(elementJ, sol, fvGridGeometry),
                                               problem,
                                               elementJ,
                                               scvJ);
@@ -169,7 +171,8 @@ public:
             const auto bcTypes = problem.boundaryTypes(element, scvf);
             if (bcTypes.hasOnlyDirichlet())
             {
-                const ElementSolution dirichletPriVars({problem.dirichlet(element, scvf)});
+                const auto dirichletPriVars = elementSolution<SolutionVector, FVGridGeometry>
+                                               (problem.dirichlet(element, scvf));
 
                 volumeVariables_.resize(localIdx+1);
                 volVarIndices_.resize(localIdx+1);
@@ -194,7 +197,7 @@ public:
         //         const auto& elementJ = fvGridGeometry.element(globalJ);
         //         auto&& scvJ = fvGeometry.scv(globalJ);
 
-        //         volumeVariables_[localIdx].update(ElementSolution(sol[globalJ]),
+        //         volumeVariables_[localIdx].update(elementSolution(elementJ, sol, fvGridGeometry),
         //                                           problem,
         //                                           elementJ,
         //                                           scvJ);
@@ -217,7 +220,7 @@ public:
 
         // update the volume variables of the element
         auto&& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(ElementSolution(sol[eIdx]),
+        volumeVariables_[0].update(elementSolution(element, sol, fvGeometry.fvGridGeometry()),
                                    gridVolVars().problem(),
                                    element,
                                    scv);

@@ -49,7 +49,7 @@ class PorousMediumFluxVariablesCacheImplementation;
  *        cache class are provided for different combinations of processes.
  */
 template<class TypeTag>
-using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 //! We only store discretization-related quantities for the box method.
 //! Thus, we need no physics-dependent specialization.

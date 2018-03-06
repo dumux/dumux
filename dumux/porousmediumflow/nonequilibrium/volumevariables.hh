@@ -36,8 +36,8 @@
 #include <dumux/material/fluidstates/nonequilibrium.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \file
  * \ingroup PorousmediumNonEquilibriumModel
@@ -59,34 +59,36 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, false/*enableChemical
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using ParameterCache = typename FluidSystem::ParameterCache;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 public:
+    template<class ElementSolution>
     void updateInterfacialArea(const ElementSolution& elemSol,
                                const FluidState & fluidState,
                                const ParameterCache &paramCache,
                                const Problem &problem,
                                const Element & element,
                                const SubControlVolume& scv)
-     {}
+    {}
 
+    template<class ElementSolution>
     void updateTemperatures(const ElementSolution& elemSol,
                              const Problem &problem,
                              const Element& element,
                              const SubControlVolume& scv,
                              FluidState& fluidState)
-     {}
+    {}
 
 
     void updateMoleFraction(FluidState & actualFluidState,
                             ParameterCache & paramCache,
                             const PrimaryVariables & priVars)
-     { }
+    {}
 
 };
 
@@ -104,7 +106,6 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, /*enableChemicalNonEq
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using ParameterCache = typename FluidSystem::ParameterCache;
@@ -124,6 +125,7 @@ public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
      */
+    template<class ElementSolution>
     void updateInterfacialArea(const ElementSolution& elemSol,
                                const FluidState & fluidState,
                                const ParameterCache &paramCache,
@@ -177,6 +179,7 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
+    template<class ElementSolution>
     void updateTemperatures(const ElementSolution& elemSol,
                             const Problem &problem,
                             const Element& element,
@@ -282,7 +285,6 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalN
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using ParameterCache = typename FluidSystem::ParameterCache;
@@ -307,6 +309,7 @@ public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
      */
+    template<class ElementSolution>
     void updateInterfacialArea(const ElementSolution& elemSol,
                                const FluidState & fluidState,
                                const ParameterCache &paramCache,
@@ -499,7 +502,6 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalN
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using ParameterCache = typename FluidSystem::ParameterCache;
@@ -537,6 +539,7 @@ public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
      */
+    template<class ElementSolution>
     void updateInterfacialArea(const ElementSolution& elemSol,
                                 const FluidState & fluidState,
                                 const ParameterCache &paramCache,
@@ -720,6 +723,7 @@ public:
 
      }
 
+    template<class ElementSolution>
     void updateTemperatures(const ElementSolution& elemSol,
                             const Problem &problem,
                             const Element& element,

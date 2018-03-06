@@ -51,9 +51,6 @@ public:
     using type = FVGridVariables<GG, GVV, GFVC>;
 };
 
-//! The type of a solution for a whole element
-SET_TYPE_PROP(FiniteVolumeModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
-
 //! We do not store the FVGeometry by default
 SET_BOOL_PROP(FiniteVolumeModel, EnableFVGridGeometryCache, false);
 

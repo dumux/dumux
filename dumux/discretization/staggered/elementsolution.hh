@@ -16,36 +16,36 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup NavierStokesNCModel
-  * \copydoc Dumux::NavierStokesNCFluxVariables
-  */
-#ifndef DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
-#define DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
+/*!
+ * \file
+ * \ingroup StaggeredDiscretization
+ * \brief The local element solution class for staggered methods
+ */
+#ifndef DUMUX_STAGGERED_ELEMENT_SOLUTION_HH
+#define DUMUX_STAGGERED_ELEMENT_SOLUTION_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/freeflow/navierstokesnc/staggered/fluxvariables.hh>
+#include <type_traits>
+#include <dune/istl/bvector.hh>
+#include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
-
-// forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
-class NavierStokesNCFluxVariablesImpl;
+template<class PrimaryVariables>
+using StaggeredElementSolution = Dune::BlockVector<PrimaryVariables>;
 
 /*!
- * \ingroup NavierStokesNCModel
- * \brief The flux variables class for the multi-componentNavier-Stokes model.
-          This is a convenience alias for that actual,
-          discretization-specific flux variables.
- * \note  Not all specializations are currently implemented
+ * \ingroup StaggeredDiscretization
+ * \brief  Make an element solution for staggered schemes
+ * \note This is e.g. used to contruct an element solution at Dirichlet boundaries
  */
-template<class TypeTag>
-using NavierStokesNCFluxVariables = NavierStokesNCFluxVariablesImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+template<class SolutionVector, class FVGridGeometry, class PrimaryVariables>
+auto elementSolution(PrimaryVariables&& priVars)
+-> std::enable_if_t<FVGridGeometry::discMethod == DiscretizationMethod::staggered,
+                    StaggeredElementSolution<PrimaryVariables>>
+{
+    return StaggeredElementSolution<PrimaryVariables>({std::move(priVars)});
+}
 
-
-} // end namespace
+} // end namespace Dumux
 
 #endif

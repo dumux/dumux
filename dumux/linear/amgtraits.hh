@@ -32,17 +32,16 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/grid/common/capabilities.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux {
 
 //! The implementation is specialized for the different discretizations
-template<class TypeTag, DiscretizationMethod discMethod> struct AmgTraitsImpl;
+template<class MType, class VType, class FVGridGeometry, DiscretizationMethod discMethod> struct AmgTraitsImpl;
 
 //! The type traits required for using the AMG backend
-template<class TypeTag>
-using AmgTraits = AmgTraitsImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+template<class MType, class VType, class FVGridGeometry>
+using AmgTraits = AmgTraitsImpl<MType, VType, FVGridGeometry, FVGridGeometry::discMethod>;
 
 //! NonoverlappingSolverTraits used by discretization with non-overlapping parallel model
 template <class MType, class VType, bool isParallel>
@@ -68,27 +67,24 @@ public:
 #endif
 
 //! Box: use the non-overlapping AMG
-template<class TypeTag>
-struct AmgTraitsImpl<TypeTag, DiscretizationMethod::box>
+template<class Matrix, class Vector, class FVGridGeometry>
+struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::box>
 {
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using Grid = typename FVGridGeometry::GridView::Traits::Grid;
     enum {
-        numEq = JacobianMatrix::block_type::rows,
         dofCodim = Grid::dimension,
         isNonOverlapping = true,
         isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
     };
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MType = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> >;
-    using VType = Dune::BlockVector<Dune::FieldVector<Scalar,numEq> >;
+    using MType = Matrix;
+    using VType = Dune::BlockVector<Dune::FieldVector<typename Vector::block_type::value_type, Vector::block_type::dimension>>;
     using SolverTraits = NonoverlappingSolverTraits<MType, VType, isParallel>;
     using Comm = typename SolverTraits::Comm;
     using LinearOperator = typename SolverTraits::LinearOperator;
     using ScalarProduct = typename SolverTraits::ScalarProduct;
     using Smoother = typename SolverTraits::Smoother;
 
-    using DofMapper = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::VertexMapper;
+    using DofMapper = typename FVGridGeometry::VertexMapper;
 };
 
 //! OverlappingSolverTraits used by discretization with overlapping parallel model
@@ -115,33 +111,29 @@ public:
 #endif
 
 //! Cell-centered tpfa: use the overlapping AMG
-template<class TypeTag>
-struct AmgTraitsImpl<TypeTag, DiscretizationMethod::cctpfa>
+template<class Matrix, class Vector, class FVGridGeometry>
+struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::cctpfa>
 {
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using Grid = typename FVGridGeometry::GridView::Traits::Grid;
     enum {
-        numEq = JacobianMatrix::block_type::rows,
         dofCodim = 0,
         isNonOverlapping = false,
         isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
     };
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MType = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> >;
-    using VType = Dune::BlockVector<Dune::FieldVector<Scalar,numEq> >;
+    using MType = Matrix;
+    using VType = Dune::BlockVector<Dune::FieldVector<typename Vector::block_type::value_type, Vector::block_type::dimension>>;
     using SolverTraits = OverlappingSolverTraits<MType, VType, isParallel>;
     using Comm = typename SolverTraits::Comm;
     using LinearOperator = typename SolverTraits::LinearOperator;
     using ScalarProduct = typename SolverTraits::ScalarProduct;
     using Smoother = typename SolverTraits::Smoother;
 
-    using DofMapper = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::ElementMapper;
+    using DofMapper = typename FVGridGeometry::ElementMapper;
 };
 
-template<class TypeTag>
-struct AmgTraitsImpl<TypeTag, DiscretizationMethod::ccmpfa>
-: public AmgTraitsImpl<TypeTag, DiscretizationMethod::cctpfa> {};
+template<class Matrix, class Vector, class FVGridGeometry>
+struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::ccmpfa>
+: public AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::cctpfa> {};
 
 } // end namespace Dumux
 

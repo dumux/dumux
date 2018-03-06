@@ -27,8 +27,7 @@
 
 #include <dumux/common/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template <class TypeTag, bool enableEnergyBalance>
@@ -57,7 +56,6 @@ class PorousMediumFlowVolumeVariablesImplementation<TypeTag, false>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
 public:
 
@@ -70,7 +68,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume &scv)
@@ -82,7 +81,8 @@ public:
     /*!
      * \brief Returns the primary variables at the dof associated with a given scv.
      */
-    static const PrimaryVariables& extractDofPriVars(const ElementSolutionVector& elemSol,
+    template<class ElementSolution>
+    static const PrimaryVariables& extractDofPriVars(const ElementSolution& elemSol,
                                                      const SubControlVolume& scv)
     { return elemSol[scv.indexInElement()]; }
 
@@ -113,7 +113,8 @@ public:
     { return extrusionFactor_; }
 
     //! The temperature is obtained from the problem as a constant for isothermal models
-    static Scalar temperature(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    static Scalar temperature(const ElementSolution &elemSol,
                               const Problem& problem,
                               const Element &element,
                               const SubControlVolume &scv)
@@ -149,7 +150,6 @@ class PorousMediumFlowVolumeVariablesImplementation<TypeTag, true>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -167,7 +167,8 @@ public:
      * \param fvGeometry The finite volume geometry for the element
      * \param scvIdx Local index of the sub control volume which is inside the element
      */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume &scv)
@@ -226,7 +227,8 @@ public:
     { return solidThermalConductivity_; }
 
     //! The temperature is a primary variable for non-isothermal models
-    static Scalar temperature(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    static Scalar temperature(const ElementSolution &elemSol,
                               const Problem& problem,
                               const Element &element,
                               const SubControlVolume &scv)

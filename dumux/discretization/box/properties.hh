@@ -53,12 +53,6 @@ namespace Properties
 //! Type tag for the box scheme.
 NEW_TYPE_TAG(BoxModel, INHERITS_FROM(FiniteVolumeModel));
 
-//! Set the corresponding discretization method property
-SET_PROP(BoxModel, DiscretizationMethod)
-{
-    static const DiscretizationMethod value = DiscretizationMethod::box;
-};
-
 //! Set the default for the global finite volume geometry
 SET_PROP(BoxModel, FVGridGeometry)
 {
@@ -70,12 +64,8 @@ public:
     using type = BoxFVGridGeometry<Scalar, GridView, enableCache>;
 };
 
-//! Set the solution vector type for an element
-SET_TYPE_PROP(BoxModel, ElementSolutionVector, BoxElementSolution<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                                  typename GET_PROP_TYPE(TypeTag, SolutionVector)>);
-
 //! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<TypeTag>);
+SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<typename GET_PROP_TYPE(TypeTag, BoundaryTypes)>);
 
 //! The global volume variables vector class
 SET_TYPE_PROP(BoxModel, GridVolumeVariables, BoxGridVolumeVariables<TypeTag,

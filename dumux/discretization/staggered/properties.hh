@@ -62,12 +62,6 @@ namespace Properties
 //! Type tag for the staggered scheme.
 NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel));
 
-//! Set the corresponding discretization method property
-SET_PROP(StaggeredModel, DiscretizationMethod)
-{
-    static const DiscretizationMethod value = DiscretizationMethod::staggered;
-};
-
 //! Set the default global face variables cache vector class
 SET_TYPE_PROP(StaggeredModel, GridFaceVariables, StaggeredGridFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache)>);
 
@@ -91,9 +85,6 @@ SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, StaggeredElementFluxVar
 
 //! Set the face solution type
 SET_TYPE_PROP(StaggeredModel, StaggeredFaceSolution, StaggeredFaceSolution<TypeTag>);
-
-//! Set the element solution type
-SET_TYPE_PROP(StaggeredModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables)>);
 
 //! Set the grid variables (volume, flux and face variables)
 SET_PROP(StaggeredModel, GridVariables)

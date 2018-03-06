@@ -112,7 +112,6 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
 
     // copy some indices for convenience
@@ -130,7 +129,7 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static const auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static const bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethod::box;
+    static const bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
@@ -252,9 +251,9 @@ public:
         }
 
         // construct the element solution
-        const auto elementSolution = [&]()
+        const auto elemSol = [&]()
         {
-            ElementSolutionVector sol(element, elemVolVars, fvGeometry);
+            auto sol = elementSolution(element, elemVolVars, fvGeometry);
 
             if(isBox)
                 for(auto&& scvf : scvfs(fvGeometry))
@@ -269,14 +268,14 @@ public:
         {
             if(isBox)
             {
-                const auto grads = evalGradients(element, element.geometry(), fvGeometry.fvGridGeometry(), elementSolution, ipGlobal);
+                const auto grads = evalGradients(element, element.geometry(), fvGeometry.fvGridGeometry(), elemSol, ipGlobal);
                 return grads[pressureIdx];
             }
 
             else
             {
                 const auto& scvCenter = fvGeometry.scv(scvf.insideScvIdx()).center();
-                const Scalar scvCenterPresureSol = elementSolution[0][pressureIdx];
+                const Scalar scvCenterPresureSol = elemSol[0][pressureIdx];
                 auto grad = ipGlobal - scvCenter;
                 grad /= grad.two_norm2();
                 grad *= (dirichletPressure - scvCenterPresureSol);

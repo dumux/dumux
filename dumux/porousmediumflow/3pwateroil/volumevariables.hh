@@ -61,7 +61,6 @@ class ThreePWaterOilVolumeVariables : public PorousMediumFlowVolumeVariables<Typ
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
@@ -100,7 +99,8 @@ public:
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)

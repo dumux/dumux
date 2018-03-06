@@ -25,6 +25,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/box/elementvolumevariables.hh>
+#include <dumux/discretization/box/elementsolution.hh>
 
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
@@ -50,7 +51,6 @@ class BoxGridVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexType = typename GridView::IndexSet::IndexType;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -75,7 +75,7 @@ public:
             fvGeometry.bindElement(element);
 
             // get the element solution
-            ElementSolutionVector elemSol(element, sol, fvGeometry);
+            auto elemSol = elementSolution(element, sol, fvGridGeometry);
 
             // update the volvars of the element
             volumeVariables_[eIdx].resize(fvGeometry.numScv());
