@@ -46,7 +46,6 @@ class StaggeredElementFaceVariables<TypeTag, /*enableGridFaceVariablesCache*/tru
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
@@ -69,6 +68,7 @@ public:
 
     //! For compatibility reasons with the case of not storing the face vars.
     //! function to be called before assembling an element, preparing the vol vars within the stencil
+    template<class SolutionVector>
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
@@ -76,6 +76,7 @@ public:
 
     //! Binding of an element, prepares only the face variables of the element
     //! specialization for Staggered models
+    template<class SolutionVector>
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
@@ -100,7 +101,6 @@ class StaggeredElementFaceVariables<TypeTag, /*enableGridFaceVariablesCache*/fal
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
@@ -133,6 +133,7 @@ public:
 
     //! For compatibility reasons with the case of not storing the vol vars.
     //! function to be called before assembling an element, preparing the vol vars within the stencil
+    template<class SolutionVector>
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
@@ -149,6 +150,7 @@ public:
 
     //! Binding of an element, prepares only the face variables of the element
     //! specialization for Staggered models
+    template<class SolutionVector>
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
