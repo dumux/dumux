@@ -50,6 +50,9 @@ class StaggeredGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using CellCenterSolutionVector = typename GET_PROP_TYPE(TypeTag, CellCenterSolutionVector);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
@@ -60,21 +63,20 @@ class StaggeredGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
 
-    static const int dim = GridView::dimension;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-
-    enum { numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter) };
-
 public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
     StaggeredGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
-    //! Update all volume variables
+    //! update all volume variables using the complete solution vector
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
+    {
+        update(fvGridGeometry, sol[cellCenterIdx]);
+    }
+
+    //! update all volume variables using the sub vector for cell center dofs
+    void update(const FVGridGeometry& fvGridGeometry, const CellCenterSolutionVector& sol)
     {
         auto numScv = fvGridGeometry.numScv();
         auto numBoundaryScvf = fvGridGeometry.numBoundaryScvf();
@@ -88,7 +90,7 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 CellCenterPrimaryVariables priVars(0.0);
-                priVars = sol[cellCenterIdx][scv.dofIndex()];
+                priVars = sol[scv.dofIndex()];
                 ElementSolutionVector elemSol{std::move(priVars)};
                 volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
             }
@@ -106,12 +108,12 @@ public:
 
                 CellCenterPrimaryVariables boundaryPriVars(0.0);
 
-                for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
+                for(int eqIdx = 0; eqIdx < CellCenterPrimaryVariables::dimension; ++eqIdx)
                 {
                     if(bcTypes.isDirichlet(eqIdx) || bcTypes.isDirichletCell(eqIdx))
                         boundaryPriVars[eqIdx] = problem().dirichlet(element, scvf)[eqIdx];
                     else if(bcTypes.isNeumann(eqIdx) || bcTypes.isOutflow(eqIdx) || bcTypes.isSymmetry())
-                        boundaryPriVars[eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
+                        boundaryPriVars[eqIdx] = sol[scvf.insideScvIdx()][eqIdx];
                     //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary
                     // could be made more general by allowing a non-zero-gradient, provided in problem file
                     else
@@ -155,7 +157,6 @@ class StaggeredGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
 public:
     //! export the type of the local view
@@ -163,6 +164,7 @@ public:
 
     StaggeredGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
+    template<class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
     const Problem& problem() const
