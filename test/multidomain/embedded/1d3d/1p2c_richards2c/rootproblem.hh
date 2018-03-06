@@ -217,12 +217,8 @@ public:
             const Scalar value = transpirationRate_ * volVars.molarDensity(wPhaseIdx)/volVars.density(wPhaseIdx);
 
             values[conti0EqIdx] = value / volVars.extrusionFactor() / scvf.area();
-
-            const auto molarDensityH20 = 1000 / 0.018;
-            const auto molarDensityD20 = 1000 / 0.020;
             // use upwind mole fraction to get outflow condition for the tracer
-            values[transportEqIdx] = values[conti0EqIdx] / molarDensityH20 * molarDensityD20
-                                     * volVars.moleFraction(wPhaseIdx, transportCompIdx);
+            values[transportEqIdx] = values[conti0EqIdx] * volVars.moleFraction(wPhaseIdx, transportCompIdx);
         }
         return values;
 
@@ -287,8 +283,6 @@ public:
 
         // sink defined as radial flow Jr * density [m^2 s-1]* [kg m-3]
         const auto molarDensityH20 = 1000 / 0.018;
-        const auto molarDensityD20 = 1000 / 0.020;
-
         sourceValues[conti0EqIdx] = 2 * M_PI * rootRadius * Kr * (pressure3D - pressure1D) * molarDensityH20;
 
         const Scalar x3D = priVars3D[transportCompIdx];
@@ -297,11 +291,12 @@ public:
         //! advective transport over root wall
         // compute correct upwind concentration
         if (sourceValues[conti0EqIdx] > 0)
-            sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]*x3D/molarDensityH20*molarDensityD20;
+            sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]*x3D;
         else
-            sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]*x1D/molarDensityH20*molarDensityD20;
+            sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]*x1D;
 
         //! diffusive transport over root wall
+        const auto molarDensityD20 = 1000 / 0.020;
         sourceValues[transportEqIdx] += 2 * M_PI * rootRadius * 1.0e-8 * (x3D - x1D) * molarDensityD20;
 
         sourceValues *= source.quadratureWeight()*source.integrationElement();
@@ -318,36 +313,6 @@ public:
     { return PrimaryVariables({initPressure_, 0.0}); }
 
     // \}
-
-    //! Called after every time step
-    //! Output the total global exchange term
-    void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
-    {
-        PrimaryVariables source(0.0);
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(this->fvGridGeometry());
-            fvGeometry.bindElement(element);
-
-            auto elemVolVars = localView(gridVars.curGridVolVars());
-            elemVolVars.bindElement(element, fvGeometry, sol);
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                auto pointSources = this->scvPointSources(element, fvGeometry, elemVolVars, scv);
-                // conversion to kg/s
-                using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-                const auto& volVars = elemVolVars[scv];
-                pointSources *= scv.volume()*volVars.extrusionFactor()
-                                * volVars.density(FluidSystem::wPhaseIdx) / volVars.molarDensity(FluidSystem::wPhaseIdx);
-
-                source += pointSources;
-            }
-        }
-
-        std::cout << "Global integrated source (soil): " << source[conti0EqIdx] << " (kg/s) / "
-                  <<                           source[conti0EqIdx]*3600*24*1000 << " (g/day)" << '\n';
-    }
 
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
