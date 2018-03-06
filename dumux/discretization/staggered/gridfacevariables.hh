@@ -57,16 +57,26 @@ class StaggeredGridFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/true>
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::FaceIdx faceIdx;
 
+    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+
 public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
 
     StaggeredGridFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
 
-    //! Update all face variables
+
+    //! update all face variables using the complete solution vector
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
-        const auto& faceSol = sol[faceIdx];
+        // forward to the update method using the sub vector for face dofs
+        update(fvGridGeometry, sol[faceIdx]);
+    }
+
+    //! update all face variables using the sub vector for face dofs
+    void update(const FVGridGeometry& fvGridGeometry, const FaceSolutionVector& sol)
+    {
+        const auto& faceSol = sol;
         faceVariables_.resize(fvGridGeometry.numScvf());
 
         for(auto&& element : elements(fvGridGeometry.gridView()))
@@ -106,7 +116,6 @@ template<class TypeTag>
 class StaggeredGridFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
@@ -116,6 +125,7 @@ public:
     StaggeredGridFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     //! Do nothing here.
+    template<class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
     const Problem& problem() const
