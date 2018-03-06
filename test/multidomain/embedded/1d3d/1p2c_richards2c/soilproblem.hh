@@ -275,8 +275,6 @@ public:
 
         // sink defined as radial flow Jr * density [m^2 s-1]* [kg m-3]
         const auto molarDensityH20 = 1000 / 0.018;
-        const auto molarDensityD20 = 1000 / 0.020;
-
         sourceValues[conti0EqIdx] = 2 * M_PI * rootRadius * Kr * (pressure1D - pressure3D) * molarDensityH20;
 
         const Scalar x3D = priVars3D[transportCompIdx];
@@ -285,11 +283,12 @@ public:
         //! advective transport over root wall
         // compute correct upwind concentration
         if (sourceValues[conti0EqIdx] > 0)
-            sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]*x1D/molarDensityH20*molarDensityD20;
+            sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]*x1D;
         else
-            sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]*x3D/molarDensityH20*molarDensityD20;
+            sourceValues[transportEqIdx] = sourceValues[conti0EqIdx]*x3D;
 
         //! diffusive transport over root wall
+        const auto molarDensityD20 = 1000 / 0.020;
         sourceValues[transportEqIdx] += 2 * M_PI * rootRadius * 1.0e-8 * (x1D - x3D) * molarDensityD20;
 
         sourceValues *= source.quadratureWeight()*source.integrationElement();
@@ -308,15 +307,15 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         const auto& gg = this->fvGridGeometry();
+        static const Scalar extend = 0.15*(gg.bBoxMax()[0]-gg.bBoxMin()[0]);
         const auto xTracer = [&]()
         {
             auto contaminationPos = gg.bBoxMax()-gg.bBoxMin();
-            contaminationPos[0] *= 0.25;
-            contaminationPos[1] *= 0.55;
-            contaminationPos[2] *= 0.25;
+            contaminationPos[0] *= 0.26;
+            contaminationPos[1] *= 0.56;
+            contaminationPos[2] *= 0.26;
             contaminationPos += gg.bBoxMin();
 
-            static const Scalar extend = 0.15*(gg.bBoxMax()[0]-gg.bBoxMin()[0]);
             if ((globalPos - contaminationPos).infinity_norm() <  extend + eps_)
                 return contaminantMoleFraction_;
             else
@@ -329,36 +328,6 @@ public:
                                 -9.81*1000*(globalPos[dimWorld-1] - gg.bBoxMax()[dimWorld-1]);
         priVars[transportCompIdx] = xTracer;
         return priVars;
-    }
-
-    //! Called after every time step
-    //! Output the total global exchange term
-    void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
-    {
-        PrimaryVariables source(0.0);
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(this->fvGridGeometry());
-            fvGeometry.bindElement(element);
-
-            auto elemVolVars = localView(gridVars.curGridVolVars());
-            elemVolVars.bindElement(element, fvGeometry, sol);
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                auto pointSources = this->scvPointSources(element, fvGeometry, elemVolVars, scv);
-                // conversion to kg/s
-                using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-                const auto& volVars = elemVolVars[scv];
-                pointSources *= scv.volume()*volVars.extrusionFactor()
-                                * volVars.density(FluidSystem::wPhaseIdx) / volVars.molarDensity(FluidSystem::wPhaseIdx);
-
-                source += pointSources;
-            }
-        }
-
-        std::cout << "Global integrated source (soil): " << source[conti0EqIdx] << " (kg/s) / "
-                  <<                           source[conti0EqIdx]*3600*24*1000 << " (g/day)" << '\n';
     }
 
     //! Set the coupling manager

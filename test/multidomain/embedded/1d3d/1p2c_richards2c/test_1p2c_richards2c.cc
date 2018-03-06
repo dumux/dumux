@@ -313,9 +313,6 @@ int main(int argc, char** argv) try
         ldHMax = std::max(ldHMax, h);
     }
 
-    std::cout << "[3D] hMax: " << bulkHMax << ", hMin: " << bulkHMin << std::endl;
-    std::cout << "[1D] hMax: " << ldHMax << ", hMin: " << ldHMin << std::endl;
-
     // the solution vector
     Traits::SolutionVector sol;
     sol[bulkIdx].resize(bulkFvGridGeometry->numDofs());
@@ -381,14 +378,23 @@ int main(int argc, char** argv) try
     const auto outFileName = getParam<std::string>("Problem.OutFile");
     std::ofstream outFile(outFileName, std::ios::out);
 
-    const double initialMass = computeGlobalMass(*lowDimProblem, sol[lowDimIdx], *lowDimGridVariables) +
-                               computeGlobalMass(*bulkProblem, sol[bulkIdx], *bulkGridVariables);
+    outFile << "[3D] hMax: " << bulkHMax << ", hMin: " << bulkHMin << std::endl;
+    outFile << "[1D] hMax: " << ldHMax << ", hMin: " << ldHMin << std::endl << std::endl;
+
+    double lowDimMass = computeGlobalMass(*lowDimProblem, sol[lowDimIdx], *lowDimGridVariables);
+    double bulkMass = computeGlobalMass(*bulkProblem, sol[bulkIdx], *bulkGridVariables);
+    const double initialMass = lowDimMass + bulkMass;
+
+    std::cout << "\033[1;33m" << "The domain initially contains " << (lowDimMass + bulkMass)*1e12 << " ng tracer"
+              << " (root: " << lowDimMass*1e12 << ", soil: " << bulkMass*1e12 << ")\033[0m" << '\n';
 
     // time loop
     timeLoop->setPeriodicCheckPoint(episodeLength);
     timeLoop->start();
     while (!timeLoop->finished())
     {
+        std::cout << '\n' << "\033[1m" << "Simulation time in hours: " << timeLoop->time()/3600 << "\033[0m\n\n";
+
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(oldSol);
 
@@ -403,12 +409,8 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // output the source terms
-        // computeSourceIntegral(*bulkProblem, sol[bulkIdx], *bulkGridVariables);
-        // computeSourceIntegral(*lowDimProblem, sol[lowDimIdx], *lowDimGridVariables);
-
-        double lowDimMass = computeGlobalMass(*lowDimProblem, sol[lowDimIdx], *lowDimGridVariables);
-        double bulkMass = computeGlobalMass(*bulkProblem, sol[bulkIdx], *bulkGridVariables);
+        lowDimMass = computeGlobalMass(*lowDimProblem, sol[lowDimIdx], *lowDimGridVariables);
+        bulkMass = computeGlobalMass(*bulkProblem, sol[bulkIdx], *bulkGridVariables);
         massLeft += computeGlobalBoundaryMass(*lowDimProblem, sol[lowDimIdx], *lowDimGridVariables, timeLoop->timeStepSize());
 
         std::cout << "\033[1;33m" << "The domain contains " << (lowDimMass + bulkMass)*1e12 << " ng tracer"
@@ -417,7 +419,7 @@ int main(int argc, char** argv) try
         std::cout << "\033[1;33m" << massLeft*1e12 << " ng left domain over the root collar -> "
                   << ((lowDimMass + bulkMass) + massLeft)*1e12 << " ng balanced.\033[0m" << '\n';
 
-        std::cout << "\033[1;33m" << " Global mass balance error: "
+        std::cout << "\033[1;33m" << "Global mass balance error: "
                   << (lowDimMass + bulkMass + massLeft - initialMass)*1e12 << " ng.\033[0m" << '\n';
 
         outFile << timeLoop->time() << std::scientific << std::setprecision(8)

@@ -8,25 +8,27 @@ EpisodeLength = 8640 # [s]
 
 [Root.Grid]
 File = lupine.dgf
-Refinement = 2
+Refinement = 1
 
 [Soil.Grid]
 LowerLeft = -0.05 -0.05 -0.1
 UpperRight = 0.05 0.05 0
 Cells = 10 10 10
 ClosureType = None
-Refinement = 0
-LocalRefinement = 3
+Refinement = 2
+LocalRefinement = 0
 
 [Problem]
 Name = test_soilroot
 ContaminantMoleFraction = 3e-7
-OutFile = "tracermass.out"
+OutFile = "tracermass_fine.out"
 EnableVtkOutput = false
+EnableGravity = true
+InitTopSaturation = 0.3
 
 [Soil.SpatialParams]
 Permeability = 2.57e-12 # [m^2]
-Porosity = 0.3 # [-]
+Porosity = 0.4 # [-]
 
 [Root.SpatialParams]
 Kx = 5.0968e-17
