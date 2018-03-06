@@ -18,7 +18,7 @@ dune_add_test(SOURCES test_2pni_fv.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-cube-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_cube-00007.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_cube-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_cube test_2pni.input -Problem.Name test_2pni_box_cube")
 
 dune_add_test(SOURCES test_2pni_fv.cc
