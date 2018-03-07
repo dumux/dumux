@@ -322,6 +322,17 @@ public:
        return 0.025;
     }
 
+    /*!
+     * \brief Specific isobaric heat capacity of water steam \f$\mathrm{[J/(kg*K)}\f$.
+     *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
+     *        @ T= 372.76K (99.6°C) , p=0.1MPa)
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar gasHeatCapacity(Scalar temperature, Scalar pressure)
+    {
+        return 2.08e3;
+    }
 
 };
 

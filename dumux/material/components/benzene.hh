@@ -50,6 +50,12 @@ public:
     { return "benzene"; }
 
     /*!
+     * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of benzene
+     */
+    static Scalar molarMass()
+    { return 0.07811; }
+
+    /*!
      * \brief The density of benzene steam at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$

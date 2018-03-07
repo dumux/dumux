@@ -27,6 +27,8 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <dumux/common/typetraits/typetraits.hh>
+
 namespace Dumux {
 namespace Components {
 
@@ -43,14 +45,22 @@ public:
     /*!
      * \brief Returns true if the liquid phase is assumed to be compressible
      */
+    template<class C = Component>
     static constexpr bool liquidIsCompressible()
-    { return Component::liquidIsCompressible(); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: liquidIsCompressible()");
+        DUNE_THROW(Dune::NotImplemented, "liquidIsCompressible()");
+    }
 
     /*!
      * \brief Returns true if the liquid phase viscostiy is constant
      */
+    template<class C = Component>
     static constexpr bool liquidViscosityIsConstant()
-    { return Component::liquidViscosityIsConstant(); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: liquidViscosityIsConstant()");
+        DUNE_THROW(Dune::NotImplemented, "liquidViscosityIsConstant()");
+    }
 
     /*!
      * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the liquid component at a given pressure in
@@ -59,8 +69,12 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
+    template<class C = Component>
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::liquidDensity(t,p)"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: liquidDensity(t,p)");
+        DUNE_THROW(Dune::NotImplemented, "liquidDensity(t,p)");
+    }
 
     /*!
      * \brief The dynamic liquid viscosity \f$\mathrm{[Pa*s]}\f$ of the pure component.
@@ -68,8 +82,12 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
+    template<class C = Component>
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::liquidViscosity(t,p)"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: liquidViscosity(t,p)");
+        DUNE_THROW(Dune::NotImplemented, "liquidViscosity(t,p)");
+    }
 
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of the pure component in liquid.
@@ -77,8 +95,12 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
+    template<class C = Component>
     static const Scalar liquidEnthalpy(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::liquidEnthalpy()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: liquidEnthalpy(t,p)");
+        DUNE_THROW(Dune::NotImplemented, "liquidEnthalpy(t,p)");
+    }
 
     /*!
      * \brief Specific internal energy \f$\mathrm{[J/kg]}\f$ of pure the pure component in liquid.
@@ -86,24 +108,36 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
+    template<class C = Component>
     static const Scalar liquidInternalEnergy(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::liquidInternalEnergy()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: liquidInternalEnergy(t,p)");
+        DUNE_THROW(Dune::NotImplemented, "liquidInternalEnergy(t,p)");
+    }
 
     /*!
      * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a liquid.
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
+    template<class C = Component>
     static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::liquidThermalConductivity()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: liquidThermalConductivity(t,p)");
+        DUNE_THROW(Dune::NotImplemented, "liquidThermalConductivity(t,p)");
+    }
 
     /*!
      * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a liquid.
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
+    template<class C = Component>
     static Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::liquidHeatCapacity()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: liquidHeatCapacity(t,p)");
+        DUNE_THROW(Dune::NotImplemented, "liquidHeatCapacity(t,p)");
+    }
 };
 
 } // end namespace Components

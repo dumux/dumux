@@ -49,6 +49,49 @@ public:
     /*!
      * TODO: Implement the methods for the component data given in the exercise description.
      */
+
+    /*!
+     * \brief Returns true if the liquid phase is assumed to be compressible
+     */
+    static constexpr bool liquidIsCompressible()
+    {
+        // TODO: replace the line below by a meaningful return statement
+        DUNE_THROW(Dune::NotImplemented, "Todo: implement liquidIsCompressible()");
+    }
+
+    /*!
+     * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the component.
+     */
+    static Scalar molarMass()
+    {
+        // TODO: replace the line below by a meaningful return statement
+        DUNE_THROW(Dune::NotImplemented, "Todo: implement molarMass()");
+    }
+
+    /*!
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the liquid component at a given pressure in
+     *          \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidDensity(Scalar temperature, Scalar pressure)
+    {
+        // TODO: replace the line below by a meaningful return statement
+        DUNE_THROW(Dune::NotImplemented, "Todo: implement liquidDensity()");
+    }
+
+    /*!
+     * \brief The dynamic liquid viscosity \f$\mathrm{[Pa*s]}\f$ of the pure component.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
+    {
+        // TODO: replace the line below by a meaningful return statement
+        DUNE_THROW(Dune::NotImplemented, "Todo: implement liquidViscosity()");
+    }
 };
 
 } // end namespace

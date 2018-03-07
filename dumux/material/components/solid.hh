@@ -27,6 +27,8 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <dumux/common/typetraits/typetraits.hh>
+
 namespace Dumux {
 namespace Components {
 
@@ -43,8 +45,12 @@ public:
     /*!
      * \brief Returns true if the solid phase is assumed to be compressible
      */
+    template<class C = Component>
     static constexpr bool solidIsCompressible()
-    { return Component::solidIsCompressible(); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidIsCompressible()");
+        DUNE_THROW(Dune::NotImplemented, "solidIsCompressible()");
+    }
 
     /*!
      * \brief The density in \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure in
@@ -53,8 +59,12 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
+    template<class C = Component>
     static Scalar solidDensity(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::solidDensity()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidDensity(t,p)");
+        DUNE_THROW(Dune::NotImplemented, "solidDensity(t,p)");
+    }
 
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of the pure component in solid.
@@ -62,8 +72,12 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
+    template<class C = Component>
     static const Scalar solidEnthalpy(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::solidEnthalpy()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidEnthalpy(t,p)");
+        DUNE_THROW(Dune::NotImplemented, "solidEnthalpy(t,p)");
+    }
 
     /*!
      * \brief Specific internal energy \f$\mathrm{[J/kg]}\f$ of the pure component in solid.
@@ -71,24 +85,36 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
+    template<class C = Component>
     static const Scalar solidInternalEnergy(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::solidInternalEnergy()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidInternalEnergy(t,p)");
+        DUNE_THROW(Dune::NotImplemented, "solidInternalEnergy(t,p)");
+    }
 
     /*!
      * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a solid.
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
+    template<class C = Component>
     static Scalar solidThermalConductivity(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::solidThermalConductivity()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidThermalConductivity(t,p)");
+        DUNE_THROW(Dune::NotImplemented, "solidThermalConductivity(t,p)");
+    }
 
     /*!
      * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a solid.
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
+    template<class C = Component>
     static Scalar solidHeatCapacity(Scalar temperature, Scalar pressure)
-    { DUNE_THROW(Dune::NotImplemented, "Component::solidHeatCapacity()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidHeatCapacity(t,p)");
+        DUNE_THROW(Dune::NotImplemented, "solidHeatCapacity(t,p)");
+    }
 
 };
 

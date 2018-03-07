@@ -34,6 +34,8 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/stdstreams.hh>
 
+#include <dumux/common/typetraits/typetraits.hh>
+
 namespace Dumux {
 namespace Components {
 
@@ -63,38 +65,62 @@ public:
      * \brief A human readable name for the component.
      * \note Mandatory for all components
      */
+    template<class C = Implementation>
     static std::string name()
-    { return Implementation::name(); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: name()");
+        DUNE_THROW(Dune::NotImplemented, "name()");
+    }
 
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the component.
      */
+    template<class C = Implementation>
     static Scalar molarMass()
-    { DUNE_THROW(Dune::NotImplemented, "Component::molarMass()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: molarMass()");
+        DUNE_THROW(Dune::NotImplemented, "molarMass()");
+    }
 
     /*!
      * \brief Returns the critical temperature in \f$\mathrm{[K]}\f$ of the component.
      */
+    template<class C = Implementation>
     static Scalar criticalTemperature()
-    { DUNE_THROW(Dune::NotImplemented, "Component::criticalTemperature()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: criticalTemperature()");
+        DUNE_THROW(Dune::NotImplemented, "criticalTemperature()");
+    }
 
     /*!
      * \brief Returns the critical pressure in \f$\mathrm{[Pa]}\f$ of the component.
      */
+    template<class C = Implementation>
     static Scalar criticalPressure()
-    { DUNE_THROW(Dune::NotImplemented, "Component::criticalPressure()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: criticalPressure()");
+        DUNE_THROW(Dune::NotImplemented, "criticalPressure()");
+    }
 
     /*!
      * \brief Returns the temperature in \f$\mathrm{[K]}\f$ at the component's triple point.
      */
+    template<class C = Implementation>
     static Scalar tripleTemperature()
-    { DUNE_THROW(Dune::NotImplemented, "Component::tripleTemperature()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: tripleTemperature()");
+        DUNE_THROW(Dune::NotImplemented, "tripleTemperature()");
+    }
 
     /*!
      * \brief Returns the pressure in \f$\mathrm{[Pa]}\f$ at the component's triple point.
      */
+    template<class C = Implementation>
     static Scalar triplePressure()
-    { DUNE_THROW(Dune::NotImplemented, "Component::triplePressure()"); }
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: triplePressure()");
+        DUNE_THROW(Dune::NotImplemented, "triplePressure()");
+    }
 
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of the component at a given
@@ -102,8 +128,12 @@ public:
      *
      * \param T temperature of the component in \f$\mathrm{[K]}\f$
      */
-    static Scalar vaporPressure(Scalar T)
-    { DUNE_THROW(Dune::NotImplemented, "Component::vaporPressure()"); }
+    template<class C = Implementation>
+    static Scalar vaporPressure(Scalar t)
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: vaporPressure(t)");
+        DUNE_THROW(Dune::NotImplemented, "vaporPressure(t)");
+    }
 
 };
 
