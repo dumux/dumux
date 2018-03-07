@@ -204,8 +204,6 @@ public:
         else
             values.setAllNeumann();
 
-        //! Use Dirichlet BCs everywhere for the temperature
-        // values.setDirichlet(temperatureIdx);
         return values;
     }
 
@@ -233,21 +231,14 @@ public:
      *
      * \param values Stores the Neumann values for the conservation equations in
      *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param elemVolVars The element volume variables
-     * \param scvf The sub-control volume face on which the BC is evaluated
+     * \param globalPos The global position
      *
      * The \a values store the mass flux of each phase normal to the boundary.
      * Negative values indicate an inflow.
      */
-    NumEqVector neumann(const Element &element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolumeFace& scvf) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
         NumEqVector values(0.0);
-        const auto globalPos = scvf.ipGlobal();
 
         if (globalPos[1] < 13.75 + eps_ && globalPos[1] > 6.875 - eps_)
         {
@@ -258,10 +249,10 @@ public:
             using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
             FluidState fs;
 
-            const auto ic = initialAtPos(scvf.ipGlobal());
-            fs.setPressure(wPhaseIdx, ic[pressureIdx]);
-            fs.setPressure(nPhaseIdx, ic[pressureIdx]); // assume pressure equality here
-            fs.setTemperature(ic[temperatureIdx]);
+            const auto initialValues = initialAtPos(globalPos);
+            fs.setPressure(wPhaseIdx, initialValues[pressureIdx]);
+            fs.setPressure(nPhaseIdx, initialValues[pressureIdx]); // assume pressure equality here
+            fs.setTemperature(initialValues[temperatureIdx]);
 
             // energy flux is mass flux times specific enthalpy
             values[energyEqIdx] = values[contiNEqIdx]*FluidSystem::enthalpy(fs, nPhaseIdx);
