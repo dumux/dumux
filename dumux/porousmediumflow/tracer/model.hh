@@ -107,7 +107,7 @@ SET_TYPE_PROP(Tracer, VolumeVariables, TracerVolumeVariables<TypeTag>);
 SET_TYPE_PROP(Tracer, AdvectionType, StationaryVelocityField<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //! Set the indices used by the tracer model
-SET_TYPE_PROP(Tracer, Indices, TracerIndices<TypeTag>);
+SET_TYPE_PROP(Tracer, Indices, TracerIndices<>);
 
 //! Use FVSpatialParamsOneP by default.
 SET_TYPE_PROP(Tracer, SpatialParams, FVSpatialParamsOneP<TypeTag>);
