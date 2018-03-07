@@ -34,13 +34,14 @@ namespace Dumux
  * \ingroup OnePNCModel
  * \brief The indices for the isothermal one-phase n-component model.
  *
+ * \tparam phaseIndex The default phase index
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int PVOffset = 0>
+template <int phaseIndex, int PVOffset = 0>
 struct OnePNCIndices
 {
     //! Set the default phase used by the fluid system to the first one
-    static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static const int phaseIdx = phaseIndex;
 
     //! Component indices
     static const int phaseCompIdx = phaseIdx;//!< The index of the main component of the considered phase
