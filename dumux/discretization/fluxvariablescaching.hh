@@ -31,7 +31,10 @@ namespace FluxVariablesCaching {
 
 //! The empty filler class corresponding to EmptyCache
 struct EmptyCacheFiller
-{ static void fill(...) {} };
+{
+    template<typename... Args>
+    static void fill(Args&&... args) {}
+};
 
 // an empty cache filler
 // \note Never use the _EmptyCache directly as it lead to ambiguous definitions
