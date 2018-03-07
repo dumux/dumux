@@ -32,7 +32,7 @@ namespace Dumux
  * \ingroup ThreePWaterOilModel
  * \brief The indices for the isothermal 3p2cni model.
  *
- * \tparam formulation The formulation, only pgSwSn
+ * \tparam FluidSystem The fluid system class
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class FluidSystem, int PVOffset = 0>

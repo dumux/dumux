@@ -33,6 +33,7 @@ namespace Dumux
  * \ingroup ThreePThreeCModel
  * \brief The indices for the isothermal three-phase three-component model.
  *
+ * \tparam FluidSystem The fluid system class
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class FluidSystem, int PVOffset = 0>
