@@ -129,7 +129,6 @@ public:
 
 SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);         //!< The primary variable switch for the 2pnc model
 SET_TYPE_PROP(TwoPNC, VolumeVariables, TwoPNCVolumeVariables<TypeTag>);                     //!< the VolumeVariables property
-SET_TYPE_PROP(TwoPNC, Indices, TwoPNCIndices <TypeTag, /*PVOffset=*/0>);                    //!< The indices required by the isothermal 2pnc model
 SET_TYPE_PROP(TwoPNC, SpatialParams, FVSpatialParams<TypeTag>);                             //!< Use the FVSpatialParams by default
 SET_TYPE_PROP(TwoPNC, VtkOutputFields, TwoPNCVtkOutputFields<TypeTag>);                     //!< Set the vtk output fields specific to the TwoPNC model
 SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //!< Use the compositional local residual
@@ -145,6 +144,14 @@ SET_BOOL_PROP(TwoPNC, EnableMolecularDiffusion, true);         //!< Enable molec
 SET_BOOL_PROP(TwoPNC, EnableEnergyBalance, false);             //!< This is the isothermal variant of the model
 SET_BOOL_PROP(TwoPNC, UseMoles, true);                         //!< Use mole fractions in the balance equations by default
 
+//! The indices required by the isothermal 2pnc model
+SET_PROP(TwoPNC, Indices)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    using type = TwoPNCIndices<FluidSystem, /*PVOffset=*/0>;
+};
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(TwoPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
@@ -186,8 +193,17 @@ public:
 /////////////////////////////////////////////////
 SET_TYPE_PROP(TwoPNCNI, IsothermalVolumeVariables, TwoPNCVolumeVariables<TypeTag>);     //!< set isothermal VolumeVariables
 SET_TYPE_PROP(TwoPNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);  //!< set isothermal LocalResidual
-SET_TYPE_PROP(TwoPNCNI, IsothermalIndices, TwoPNCIndices<TypeTag, /*PVOffset=*/0>);     //!< set isothermal Indices
 SET_TYPE_PROP(TwoPNCNI, IsothermalVtkOutputFields, TwoPNCVtkOutputFields<TypeTag>);     //!< set isothermal output fields
+
+//! set isothermal Indices
+SET_PROP(TwoPNCNI, IsothermalIndices)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    using type = TwoPNCIndices<FluidSystem, /*PVOffset=*/0>;
+};
+
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNCNI, ThermalConductivityModel)
