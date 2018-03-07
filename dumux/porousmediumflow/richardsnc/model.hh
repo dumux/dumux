@@ -162,7 +162,7 @@ SET_PROP(RichardsNC, FluidState)
 SET_TYPE_PROP(RichardsNC, VtkOutputFields, RichardsNCVtkOutputFields<TypeTag>);           //!< Set the vtk output fields specific to the twop model
 
 //! Set the indices used
-SET_TYPE_PROP(RichardsNC, Indices, RichardsNCIndices<TypeTag>);
+SET_TYPE_PROP(RichardsNC, Indices, RichardsNCIndices<>);
 //! The spatial parameters to be employed.
 //! Use FVSpatialParamsOneP by default.
 SET_TYPE_PROP(RichardsNC, SpatialParams, FVSpatialParamsOneP<TypeTag>);
@@ -197,7 +197,7 @@ SET_TYPE_PROP(RichardsNCNI, IsothermalVolumeVariables, RichardsNCVolumeVariables
 SET_TYPE_PROP(RichardsNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);
 
 //set isothermal Indices
-SET_TYPE_PROP(RichardsNCNI, IsothermalIndices, RichardsNCIndices<TypeTag>);
+SET_TYPE_PROP(RichardsNCNI, IsothermalIndices, RichardsNCIndices<>);
 
 //set isothermal NumEq
 SET_PROP(RichardsNCNI, IsothermalNumEq)
