@@ -35,11 +35,9 @@ namespace Dumux
  * \tparam formulation The formulation, only pgSwSn
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int PVOffset = 0>
+template <class FluidSystem, int PVOffset = 0>
 class ThreePWaterOilIndices
 {
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
 public:
     // Phase indices
     static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< index of the wetting liquid phase
