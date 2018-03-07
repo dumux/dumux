@@ -199,6 +199,10 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
+    //! Get the coupling manager
+    CouplingManager& couplingManager()
+    { return *couplingManager_; }
+
 private:
     std::string name_;
     Scalar eps_;
