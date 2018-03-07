@@ -75,7 +75,17 @@ SET_TYPE_PROP(NonEquilibrium, HeatConductionType , FouriersLawNonEquilibrium<Typ
 SET_INT_PROP(NonEquilibrium, NumEq, GET_PROP_VALUE(TypeTag, NumEqBalance) +  GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) + GET_PROP_VALUE(TypeTag, NumEnergyEqSolid));
 
 //! indices for non-isothermal models
-SET_TYPE_PROP(NonEquilibrium, Indices, NonEquilbriumIndices<TypeTag, 0>);
+SET_PROP(NonEquilibrium, Indices)
+{
+private:
+    using EquilibriumIndices = typename GET_PROP_TYPE(TypeTag, EquilibriumIndices);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int numEnergyEquationFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid);
+    static constexpr int numEnergyEquationSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
+    static constexpr int numEquationBalance = GET_PROP_VALUE(TypeTag, NumEqBalance);
+public:
+    using type = NonEquilbriumIndices<EquilibriumIndices, FluidSystem, numEnergyEquationFluid, numEnergyEquationSolid, numEquationBalance, 0>;
+};
 
 SET_PROP(NonEquilibrium, FluidState)
 {
