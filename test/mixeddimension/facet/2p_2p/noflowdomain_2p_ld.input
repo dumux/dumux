@@ -1,0 +1,46 @@
+[TimeManager]
+DtInitial = 0.001 # [s]
+TEnd = 40000 # [s]
+MaxTimeStepSize = 250 # [s]
+DtInitialBulkProblem = 1 # [s]
+DtInitialLowDimProblem = 1 # [s]
+EpisodeTime = 1e6 # [s]
+
+[Grid]
+File = ./grids/singlefracturequadrilateral.msh
+
+[Problem]
+Name = noflowdomain_2p
+NumLowDimElements = 15
+OverPressure = 1e5
+TimeForFractureEdgePlots = 10000
+
+[MixedDimension]
+UseIterativeSolver = False
+
+[IterativeAlgorithm]
+MaxIterations = 100
+Tolerance = 1.0e-8
+Verbose = 1
+
+[SpatialParams]
+FractureAperture = 1e-2 # [m]
+MatrixPermeability = 1e-13
+FracturePermeability = 1e-9
+MatrixPorosity = 0.2
+FracturePorosity = 0.8
+MatrixPe = 1e4
+MatrixLambda = 2
+FracturePe = 1e3
+FractureLambda = 2
+
+[Mpfa]
+Q = 0.0
+Xi = 1.0
+
+[Vtk]
+AddVelocity = False
+
+[Newton]
+MaxRelativeShift = 1e-8
+MaxSteps = 60
