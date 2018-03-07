@@ -33,17 +33,19 @@ namespace Dumux
  * \ingroup NavierStokesNIModel
  * \brief Indices for the non-isothermal Navier-Stokes model.
  *
+ * \tparam dimension The dimension of the problem
+ * \tparam numEquations The number of model equations
+ * \tparam IsothermalIndices The isothermal indices class
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int PVOffset = 0>
-class NavierStokesNonIsothermalIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
+template <int dimension, int numEquations, class IsothermalIndices, int PVOffset = 0>
+class NavierStokesNonIsothermalIndices : public IsothermalIndices
 {
 public:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr auto dim = GridView::dimension;
-    static constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr auto dim = dimension;
+    static constexpr auto numEq = numEquations;
 
-    static constexpr auto energyBalanceIdx = PVOffset + GET_PROP_VALUE(TypeTag, NumEq) - dim - 1;
+    static constexpr auto energyBalanceIdx = PVOffset + numEq - dim - 1;
     static constexpr int temperatureIdx = energyBalanceIdx;
 };
 } // end namespace

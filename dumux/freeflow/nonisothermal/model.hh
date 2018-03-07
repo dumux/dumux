@@ -65,7 +65,15 @@ public:
 SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
 
 //! The non-isothermal indices
-SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
+SET_PROP(NavierStokesNonIsothermal, Indices)
+{
+private:
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
+    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    using IsothermalIndices = typename GET_PROP_TYPE(TypeTag, IsothermalIndices);
+public:
+    using type = NavierStokesNonIsothermalIndices<dim, numEq, IsothermalIndices>;
+};
 
 //! The non-isothermal vtk output fields
 SET_TYPE_PROP(NavierStokesNonIsothermal, VtkOutputFields, NavierStokesNonIsothermalVtkOutputFields<TypeTag>);
