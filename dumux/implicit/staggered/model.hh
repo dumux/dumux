@@ -480,8 +480,12 @@ public:
     {
         SolutionVector tmp(this->curSol());
         this->curSol() = u;
+        this->curGlobalVolVars_.update(this->problem_(), this->curSol());
+        curGlobalFaceVariables_.update(this->problem_(), this->curSol()[faceIdx]);
         Scalar res = globalResidual(residual);
         this->curSol() = tmp;
+        this->curGlobalVolVars_.update(this->problem_(), this->curSol());
+        curGlobalFaceVariables_.update(this->problem_(), this->curSol()[faceIdx]);
         return res;
     }
 
