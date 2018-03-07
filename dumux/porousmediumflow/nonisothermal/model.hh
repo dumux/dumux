@@ -68,7 +68,14 @@ SET_BOOL_PROP(NonIsothermal, EnableEnergyBalance, true);
 SET_INT_PROP(NonIsothermal, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq) + 1);
 
 //! indices for non-isothermal models
-SET_TYPE_PROP(NonIsothermal, Indices, EnergyIndices<TypeTag, 0>);
+SET_PROP(NonIsothermal, Indices)
+{
+private:
+    using IsothermalIndices = typename GET_PROP_TYPE(TypeTag, IsothermalIndices);
+    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+public:
+    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
+};
 
 //! indices for non-isothermal models
 SET_TYPE_PROP(NonIsothermal, VtkOutputFields, EnergyVtkOutputFields<TypeTag>);

@@ -37,11 +37,11 @@ namespace Dumux
  * \tparam formulation The formulation, either pwsn or pnsw.
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int PVOffset = 0>
-class EnergyIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
+template <class IsothermalIndices, int numEquation, int PVOffset = 0>
+class EnergyIndices : public IsothermalIndices
 {
 public:
-    static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static const int numEq = numEquation;
     static const int temperatureIdx = PVOffset + numEq -1; //!< The index for temperature in primary variable vectors.
     static const int energyEqIdx = PVOffset + numEq -1; //!< The index for energy in equation vectors.
 
