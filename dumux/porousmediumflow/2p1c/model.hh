@@ -189,7 +189,13 @@ SET_TYPE_PROP(TwoPOneCNI, IsothermalVolumeVariables, TwoPOneCVolumeVariables<Typ
 SET_TYPE_PROP(TwoPOneCNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
 //! Set isothermal Indices.
-SET_TYPE_PROP(TwoPOneCNI, IsothermalIndices, TwoPOneCIndices<TypeTag, 0>);
+SET_PROP(TwoPOneCNI, IsothermalIndices)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    using type = TwoPOneCIndices<FluidSystem, 0>;
+};
 
 //! The isothermal vtk output fields.
 SET_TYPE_PROP(TwoPOneCNI, IsothermalVtkOutputFields, TwoPOneCVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)>);
