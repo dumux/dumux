@@ -136,7 +136,14 @@ NEW_TYPE_TAG(MPNCNonequil, INHERITS_FROM(MPNC, NonEquilibrium));
 //////////////////////////////////////////////////////////////////
 
 //! The indices required by the mpnc model
-SET_TYPE_PROP(MPNC, Indices, MPNCIndices<TypeTag, 0>);
+SET_PROP(MPNC, Indices)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int numEquationBalance = GET_PROP_VALUE(TypeTag, NumEqBalance);
+public:
+    using type = MPNCIndices<FluidSystem, numEquationBalance, /*PVOffset=*/0>;
+};
 //! Use ImplicitSpatialParams by default.
 SET_TYPE_PROP(MPNC, SpatialParams, FVSpatialParams<TypeTag>);
 
@@ -231,7 +238,15 @@ SET_INT_PROP(MPNC, NumEnergyEqSolid, 0);
 /////////////////////////////////////////////////
 SET_TYPE_PROP(MPNCNI, IsothermalVolumeVariables, MPNCVolumeVariables<TypeTag>);    //! set isothermal VolumeVariables
 SET_TYPE_PROP(MPNCNI, IsothermalLocalResidual, MPNCLocalResidual<TypeTag>); //! set isothermal LocalResidual
-SET_TYPE_PROP(MPNCNI, IsothermalIndices, MPNCIndices<TypeTag, /*PVOffset=*/0>);    //! set isothermal Indices
+//! set isothermal Indices
+SET_PROP(MPNCNI, IsothermalIndices)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int numEquationBalance = GET_PROP_VALUE(TypeTag, NumEqBalance);
+public:
+    using type = MPNCIndices<FluidSystem, numEquationBalance, /*PVOffset=*/0>;
+};
 //! set isothermal NumEq
 SET_INT_PROP(MPNCNI, IsothermalNumEq, GET_PROP_VALUE(TypeTag, NumEq));
 
@@ -241,7 +256,15 @@ SET_INT_PROP(MPNCNI, IsothermalNumEq, GET_PROP_VALUE(TypeTag, NumEq));
 
 SET_TYPE_PROP(MPNCNonequil, EquilibriumLocalResidual, MPNCLocalResidual<TypeTag>);
 SET_TYPE_PROP(MPNCNonequil, EquilibriumVtkOutputFields, MPNCVtkOutputFields<TypeTag>);
-SET_TYPE_PROP(MPNCNonequil, EquilibriumIndices, MPNCIndices<TypeTag, /*PVOffset=*/0>);
+
+SET_PROP(MPNCNonequil, EquilibriumIndices)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int numEquationBalance = GET_PROP_VALUE(TypeTag, NumEqBalance);
+public:
+    using type = MPNCIndices<FluidSystem, numEquationBalance, /*PVOffset=*/0>;
+};
 
 //number of balance equations means all transport equations and the constraint equations, energy equations come on top of that
 SET_INT_PROP(MPNCNonequil, NumEqBalance, GET_PROP_VALUE(TypeTag, NumPhases)*GET_PROP_VALUE(TypeTag, NumComponents)+GET_PROP_VALUE(TypeTag, NumPhases));
