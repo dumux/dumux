@@ -46,6 +46,7 @@ struct MpNcPressureFormulation
  * \brief The primary variable and equation indices for the MpNc model.
  *
  * \tparam FluidSystem The fluid system class
+ * \tparam numEquationBalance Number of balance equations: all transport equations and the constraint equations
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class FluidSystem, int numEquationBalance, int BasePVOffset = 0>
