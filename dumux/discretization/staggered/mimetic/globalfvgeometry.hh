@@ -177,7 +177,7 @@ public:
 
                     auto di = scvfs_[scvfIdx].ipGlobal();
                     di -= element.geometry().center();
-                    if(scvfs_[scvfIdx].unitOuterNormal()*di < 0)
+                    if(scvfs_[scvfIdx].unitOuterNormal()*di < 1.0e-6)
                         calcNewCellCenter = true;
 
                     scvfsIndexSet.push_back(scvfIdx++);
@@ -195,7 +195,7 @@ public:
 
                     auto di = scvfs_[scvfIdx].ipGlobal();
                     di -= element.geometry().center();
-                    if(scvfs_[scvfIdx].unitOuterNormal()*di < 0)
+                    if(scvfs_[scvfIdx].unitOuterNormal()*di < 1.0e-6)
                         calcNewCellCenter = true;
 
                     scvfsIndexSet.push_back(scvfIdx++);
@@ -205,7 +205,7 @@ public:
             // Save the scvf indices belonging to this scv to build up fv element geometries fast
             scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
 
-            useTPFA_[eIdx] = calcNewCellCenter;
+            //useTPFA_[eIdx] = calcNewCellCenter;
             //if(calcNewCellCenter)
             //    findNewCellCenter(eIdx);
         }
@@ -347,7 +347,7 @@ public:
             auto scvfIdx = localToGlobalScvfIndices_[eIdx][i];
             const auto scfv = scvfs_[scvfIdx];
             Scalar val = scfv.unitOuterNormal() * (scfv.ipGlobal()- Point);
-            distFuncVal += 1.0/val*val;
+            distFuncVal += 1.0/(val*val);
         }
         return distFuncVal;
     }
