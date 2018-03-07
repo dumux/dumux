@@ -153,7 +153,6 @@ int main(int argc, char** argv) try
     // get some time loop parameters
     using Scalar = Traits::Scalar;
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     const auto episodeLength = getParam<Scalar>("TimeLoop.EpisodeLength");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
@@ -185,7 +184,7 @@ int main(int argc, char** argv) try
 
     // the non-linear solver
     using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager, timeLoop);
+    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
     // time loop
     timeLoop->setPeriodicCheckPoint(episodeLength);
@@ -196,22 +195,7 @@ int main(int argc, char** argv) try
         assembler->setPreviousSolution(oldSol);
 
         // try solving the non-linear system
-        for (int i = 0; i < maxDivisions; ++i)
-        {
-            auto converged = nonLinearSolver.solve(sol);
-
-            if (converged)
-                break;
-
-            if (!converged && i == maxDivisions-1)
-                DUNE_THROW(Dune::MathError,
-                           "Newton solver didn't converge after "
-                           << maxDivisions
-                           << " time-step divisions. dt="
-                           << timeLoop->timeStepSize()
-                           << ".\nThe solutions of the current and the previous time steps "
-                           << "have been saved to restart files.");
-        }
+        nonLinearSolver.solve(sol, *timeLoop);
 
         // make the new solution the old solution
         oldSol = sol;
