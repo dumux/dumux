@@ -144,7 +144,17 @@ SET_INT_PROP(Richards, NumComponents, 1);
 //! The local residual operator
 SET_TYPE_PROP(Richards, LocalResidual, RichardsLocalResidual<TypeTag>);
 
-SET_TYPE_PROP(Richards, VtkOutputFields, RichardsVtkOutputFields<TypeTag>);           //!< Set the vtk output fields specific to the twop model
+//! Set the vtk output fields specific to this model
+SET_PROP(Richards, VtkOutputFields)
+{
+private:
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+   static constexpr bool enableWaterDiffusionInAir
+        = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
+
+public:
+    using type = RichardsVtkOutputFields<Indices, enableWaterDiffusionInAir>;
+};
 
 //! The class for the volume averaged quantities
 SET_TYPE_PROP(Richards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
@@ -244,7 +254,16 @@ SET_TYPE_PROP(RichardsNI, IsothermalIndices, RichardsIndices);
 //set isothermal NumEq
 SET_INT_PROP(RichardsNI, IsothermalNumEq, 1);
 
-SET_TYPE_PROP(RichardsNI, IsothermalVtkOutputFields, RichardsVtkOutputFields<TypeTag>);
+//! Set the vtk output fields specific to this model
+SET_PROP(RichardsNI, IsothermalVtkOutputFields)
+{
+private:
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+   static constexpr bool enableWaterDiffusionInAir
+        = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
+public:
+    using type = RichardsVtkOutputFields<Indices, enableWaterDiffusionInAir>;
+};
 
 // \}
 } // end namespace Properties
