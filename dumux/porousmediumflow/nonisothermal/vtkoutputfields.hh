@@ -33,17 +33,16 @@ namespace Dumux
  * \ingroup NIModel
  * \brief Adds vtk output fields specific to non-isothermal models
  */
-template<class TypeTag>
+template<class IsothermalVtkOutputFields>
 class EnergyVtkOutputFields
 {
-    using IsothermalVtkOutputFields = typename GET_PROP_TYPE(TypeTag, IsothermalVtkOutputFields);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
         IsothermalVtkOutputFields::init(vtk);
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.temperature(); }, "temperature");
+        vtk.addVolumeVariable( [](const auto& v){ return v.temperature(); }, "temperature");
     }
 };
 
