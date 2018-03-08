@@ -89,9 +89,10 @@ public:
                     const GridVariables& gridVariables,
                     const SolutionVector& sol,
                     const std::string& name,
+                    const std::string& paramGroup = "",
                     bool verbose = true,
                     Dune::VTK::DataMode dm = Dune::VTK::conforming)
-    : ParentType(problem, fvGridGeometry, gridVariables, sol, name, verbose, dm)
+    : ParentType(problem, fvGridGeometry, gridVariables, sol, name, paramGroup, verbose, dm)
     , problem_(problem)
     , gridGeom_(fvGridGeometry)
     , gridVariables_(gridVariables)

@@ -36,18 +36,11 @@ namespace Dumux
  * \ingroup NavierStokesModel
  * \brief Adds vtk output fields for the Navier-Stokes model
  */
-template<class TypeTag>
+template<class FVGridGeometry>
 class NavierStokesVtkOutputFields
 {
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
-
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using ctype = typename FVGridGeometry::GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<ctype, FVGridGeometry::GridView::dimensionworld>;
 
     // Helper type used for tag dispatching (to add discretization-specific fields).
     template<DiscretizationMethod discMethod>
@@ -58,10 +51,10 @@ public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(); }, "p");
+        vtk.addVolumeVariable([](const auto& v){ return v.pressure(); }, "p");
 
         // add discretization-specific fields
-        additionalOutput_(vtk, discMethodTag<GET_PROP_VALUE(TypeTag, DiscretizationMethod)>{});
+        additionalOutput_(vtk, discMethodTag<FVGridGeometry::discMethod>{});
     }
 
 private:
@@ -75,13 +68,13 @@ private:
     template <class VtkOutputModule>
     static void additionalOutput_(VtkOutputModule& vtk, discMethodTag<DiscretizationMethod::staggered>)
     {
-        const bool writeFaceVars = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.WriteFaceData", false);
+        const bool writeFaceVars = getParamFromGroup<bool>(vtk.paramGroup(), "Vtk.WriteFaceData", false);
         if(writeFaceVars)
         {
-            auto faceVelocityVector = [](const SubControlVolumeFace& scvf, const FaceVariables& f)
+            auto faceVelocityVector = [](const typename FVGridGeometry::SubControlVolumeFace& scvf, const auto& faceVars)
                                       {
                                           GlobalPosition velocity(0.0);
-                                          velocity[scvf.directionIndex()] = f.velocitySelf();
+                                          velocity[scvf.directionIndex()] = faceVars.velocitySelf();
                                           return velocity;
                                       };
 

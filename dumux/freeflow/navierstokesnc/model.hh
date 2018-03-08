@@ -155,8 +155,16 @@ public:
     using type = NavierStokesNCIndices<dim, numEq, phaseIdx, replaceCompEqIdx>;
 };
 
-//! The vtk output fields
-SET_TYPE_PROP(NavierStokesNC, VtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>);
+//! The specific vtk output fields
+SET_PROP(NavierStokesNC, VtkOutputFields)
+{
+private:
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+public:
+     using type = NavierStokesNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>;
+};
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -192,7 +200,16 @@ public:
 };
 
 //! The isothermal vtk output fields
-SET_TYPE_PROP(NavierStokesNCNI, IsothermalVtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>);
+//! The specific vtk output fields
+SET_PROP(NavierStokesNCNI, IsothermalVtkOutputFields)
+{
+private:
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+public:
+     using type = NavierStokesNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>;
+};
 
 //! The number of equations for the isothermal model
 SET_PROP(NavierStokesNCNI, IsothermalNumEq)
