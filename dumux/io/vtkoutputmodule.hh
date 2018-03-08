@@ -253,6 +253,7 @@ public:
                     const GridVariables& gridVariables,
                     const SolutionVector& sol,
                     const std::string& name,
+                    const std::string& paramGroup = "",
                     bool verbose = true,
                     Dune::VTK::DataMode dm = Dune::VTK::conforming)
     : problem_(problem)
@@ -260,10 +261,15 @@ public:
     , gridVariables_(gridVariables)
     , sol_(sol)
     , name_(name)
+    , paramGroup_(paramGroup)
     , verbose_(fvGridGeometry.gridView().comm().rank() == 0 && verbose)
     , writer_(std::make_shared<Dune::VTKWriter<GridView>>(fvGridGeometry.gridView(), dm))
     , sequenceWriter_(writer_, name)
     {}
+
+    //! the parameter group for getting parameter from the parameter tree
+    const std::string& paramGroup() const
+    { return paramGroup_; }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     //! Methods to conveniently add primary and secondary variables upon initialization
@@ -356,8 +362,7 @@ public:
         std::array<std::vector<GlobalPosition>, numPhases> velocity;
 
         // process rank
-        static const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        static bool addProcessRank = getParamFromGroup<bool>(modelParamGroup, "Vtk.AddProcessRank");
+        static bool addProcessRank = getParamFromGroup<bool>(paramGroup_, "Vtk.AddProcessRank");
         std::vector<double> rank;
 
         // volume variable data
@@ -540,6 +545,7 @@ private:
     const SolutionVector& sol_;
 
     std::string name_;
+    std::string paramGroup_;
     bool verbose_;
 
     std::shared_ptr<Dune::VTKWriter<GridView>> writer_;
