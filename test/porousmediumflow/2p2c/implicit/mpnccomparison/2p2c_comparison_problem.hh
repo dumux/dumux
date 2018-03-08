@@ -72,7 +72,15 @@ SET_INT_PROP(TwoPTwoCComparisonTypeTag, Formulation, TwoPTwoCFormulation::pnsw);
 
 SET_BOOL_PROP(TwoPTwoCComparisonTypeTag, UseMoles, true);
 
-SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields<TypeTag>);
+SET_PROP(TwoPTwoCComparisonTypeTag, VtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+public:
+    using type = TwoPTwoCMPNCVtkOutputFields<FluidSystem, Indices>;
+};
 }
 
 
