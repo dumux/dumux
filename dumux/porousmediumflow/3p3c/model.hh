@@ -203,8 +203,15 @@ SET_PROP(ThreePThreeC, EffectiveDiffusivityModel)
     using type = DiffusivityMillingtonQuirk<Scalar>;
 };
 
-//! Set the vtk output fields specific to the ThreeP model
-SET_TYPE_PROP(ThreePThreeC, VtkOutputFields, ThreePThreeCVtkOutputFields<TypeTag>);
+//! Set the vtk output fields specific to this model
+SET_PROP(ThreePThreeC, VtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+public:
+    using type = ThreePThreeCVtkOutputFields<FluidSystem, Indices>;
+};
 
 //! Use mole fractions in the balance equations by default
 SET_BOOL_PROP(ThreePThreeC, UseMoles, true);
@@ -241,8 +248,16 @@ public:
 //! Set isothermal NumEq
 SET_INT_PROP(ThreePThreeCNI, IsothermalNumEq, 3);
 
-//! Set the vtk output fields specific to the ThreeP model
-SET_TYPE_PROP(ThreePThreeCNI, IsothermalVtkOutputFields, ThreePThreeCVtkOutputFields<TypeTag>);
+//! Set the isothermal vktoutputfields
+SET_PROP(ThreePThreeCNI, IsothermalVtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+public:
+    using type = ThreePThreeCVtkOutputFields<FluidSystem, Indices>;
+};
 
 } // end namespace Properties
 
