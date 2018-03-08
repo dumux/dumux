@@ -33,11 +33,10 @@ namespace Dumux
  * \ingroup TracerModel
  * \brief Adds vtk output fields specific to the tracer model
  */
-template<class TypeTag>
+template<class FluidSystem>
 class TracerVtkOutputFields
 {
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
@@ -45,12 +44,12 @@ public:
         // register standardized vtk output fields
         for (int compIdx = 0; compIdx < FluidSystem::numComponents; ++compIdx)
         {
-            vtk.addVolumeVariable( [compIdx](const VolumeVariables& v){  return v.moleFraction(0, compIdx); },
+            vtk.addVolumeVariable( [compIdx](const auto& v){  return v.moleFraction(0, compIdx); },
                                    "x_" + std::string(FluidSystem::componentName(compIdx)));
-            vtk.addVolumeVariable( [compIdx](const VolumeVariables& v){  return v.massFraction(0, compIdx); },
+            vtk.addVolumeVariable( [compIdx](const auto& v){  return v.massFraction(0, compIdx); },
                                    "X_" + std::string(FluidSystem::componentName(compIdx)));
         }
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.density(); }, "rho");
+        vtk.addVolumeVariable( [](const auto& v){ return v.density(); }, "rho");
     }
 };
 

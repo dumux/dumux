@@ -97,8 +97,15 @@ SET_BOOL_PROP(Tracer, UseMoles, true); //!< Define that mole fractions are used 
 //! Use the tracer local residual function for the tracer model
 SET_TYPE_PROP(Tracer, LocalResidual, TracerLocalResidual<TypeTag>);
 
-//! Set the default vtk output fields
-SET_TYPE_PROP(Tracer, VtkOutputFields, TracerVtkOutputFields<TypeTag>);
+//! Set the vtk output fields specific to this model
+SET_PROP(Tracer, VtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    using type = TracerVtkOutputFields<FluidSystem>;
+};
+
 
 //! define the VolumeVariables
 SET_TYPE_PROP(Tracer, VolumeVariables, TracerVolumeVariables<TypeTag>);
