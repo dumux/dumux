@@ -100,7 +100,17 @@ public:
 SET_TYPE_PROP(NonEquilibrium, GridVariables, NonEquilibriumGridVariables<TypeTag>);
 
 //! indices for non-isothermal models
-SET_TYPE_PROP(NonEquilibrium, VtkOutputFields, NonEquilibriumVtkOutputFields<TypeTag>);
+SET_PROP(NonEquilibrium, VtkOutputFields)
+{
+private:
+    using EquilibriumVtkOutputFields = typename GET_PROP_TYPE(TypeTag, EquilibriumVtkOutputFields);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+
+    static constexpr int numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid);
+    static constexpr int numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
+public:
+     using type = NonEquilibriumVtkOutputFields<EquilibriumVtkOutputFields, FluidSystem, numEnergyEqFluid, numEnergyEqSolid>;
+};
 
 SET_PROP(NonEquilibrium, NusseltFormulation )
 {
