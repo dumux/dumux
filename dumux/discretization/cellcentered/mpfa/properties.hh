@@ -37,19 +37,14 @@
 #include <dumux/discretization/cellcentered/gridvolumevariables.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
-#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
+#include <dumux/discretization/cellcentered/mpfa/fvgridgeometrytraits.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/gridfluxvariablescache.hh>
-#include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
-#include <dumux/discretization/cellcentered/mpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/cellcentered/mpfa/elementvolumevariables.hh>
 #include <dumux/discretization/cellcentered/mpfa/elementfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
-#include <dumux/discretization/cellcentered/mpfa/connectivitymap.hh>
-#include <dumux/discretization/cellcentered/mpfa/gridinteractionvolumeindexsets.hh>
-#include <dumux/discretization/cellcentered/mpfa/helper.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
 
@@ -98,32 +93,8 @@ private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using PrimaryIV = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using SecondaryIV = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
-
-    struct Traits : public DefaultMapperTraits<GridView>
-    {
-        using SubControlVolume = CCSubControlVolume<GridView>;
-        using SubControlVolumeFace = CCMpfaSubControlVolumeFace<GridView>;
-        using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
-
-        //! State the maximum admissible element stencil size
-        //! Per default, we use high values that are hopefully enough for all cases
-        //! We assume simplex grids where stencils can get quite large but the size is unknown
-        static constexpr int maxElementStencilSize = int(GridView::dimension) == 3 ? 150 :
-                                                     (int(GridView::dimension)<int(GridView::dimensionworld) ? 45 : 15);
-
-        //! type definitions depending on the FVGridGeometry itself
-        template< class FVGridGeom >
-        using MpfaHelper = CCMpfaHelper< FVGridGeom >;
-
-        template< class FVGridGeom >
-        using ConnectivityMap = CCMpfaConnectivityMap<FVGridGeom, FVGridGeom::GridIVIndexSets::PrimaryInteractionVolume::MpfaMethod>;
-
-        template< class FVGridGeom >
-        using GridIvIndexSets = CCMpfaGridInteractionVolumeIndexSets< FVGridGeom, NodalIndexSet, PrimaryIV, SecondaryIV >;
-
-        template< class FVGridGeom, bool enableCache >
-        using LocalView = CCMpfaFVElementGeometry<FVGridGeom, enableCache>;
-    };
+    using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+    using Traits = CCMpfaFVGridGeometryTraits<GridView, NodalIndexSet, PrimaryIV, SecondaryIV>;
 public:
     using type = CCMpfaFVGridGeometry<GridView, Traits, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>;
 };
