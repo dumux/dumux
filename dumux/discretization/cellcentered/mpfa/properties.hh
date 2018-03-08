@@ -63,26 +63,10 @@ NEW_TYPE_TAG(CCMpfaModel, INHERITS_FROM(FiniteVolumeModel));
 //! Set the index set type used on the dual grid nodes
 SET_PROP(CCMpfaModel, DualGridNodalIndexSet)
 {
-    using GV = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr int dim = GV::dimension;
-    static constexpr int dimWorld = GV::dimensionworld;
 private:
-    struct Traits
-    {
-        using GridView = GV;
-        using GridIndexType = typename GV::IndexSet::IndexType;
-        using LocalIndexType = std::uint8_t;
+    using GV = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Traits = NodalIndexSetDefaultTraits< GV >;
 
-        //! per default, we use dynamic data containers (iv size unknown)
-        template< class T > using NodalScvDataStorage = std::vector< T >;
-        template< class T > using NodalScvfDataStorage = std::vector< T >;
-
-        //! store data on neighbors of scvfs in static containers if possible
-        template< class T >
-        using ScvfNeighborDataStorage = typename std::conditional_t< (dim<dimWorld),
-                                                                     std::vector< T >,
-                                                                     Dune::ReservedVector< T, 2 > >;
-    };
 public:
     using type = CCMpfaDualGridNodalIndexSet< Traits >;
 };
