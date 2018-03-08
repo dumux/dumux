@@ -93,7 +93,6 @@ SET_TYPE_PROP(OnePNCMin, NonMineralizationVtkOutputFields, OnePNCVtkOutputFields
 SET_TYPE_PROP(OnePNCMinNI, IsothermalVolumeVariables, MineralizationVolumeVariables<TypeTag>);  //!< set isothermal VolumeVariables
 SET_TYPE_PROP(OnePNCMinNI, IsothermalVtkOutputFields, MineralizationVtkOutputFields<TypeTag>);  //!< set isothermal output fields
 SET_TYPE_PROP(OnePNCMinNI, IsothermalLocalResidual, MineralizationLocalResidual<TypeTag>);      //!< set isothermal output fields
-SET_TYPE_PROP(OnePNCMinNI, IsothermalIndices, OnePNCIndices <TypeTag, /*PVOffset=*/0>);         //!< use 1pnc indices for the isothermal indices
 
 SET_TYPE_PROP(OnePNCMinNI,
               ThermalConductivityModel,
@@ -104,6 +103,15 @@ private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
 public:
     static const int value = FluidSystem::numComponents + FluidSystem::numSPhases;
+};
+
+//! use 1pnc indices for the isothermal indices
+SET_PROP(OnePNCMinNI, IsothermalIndices)
+{
+private:
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+public:
+    using type = OnePNCIndices<phaseIdx>;
 };
 
 } // end namespace Properties

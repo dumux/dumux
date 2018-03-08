@@ -220,9 +220,10 @@ SET_TYPE_PROP(ThreePWaterOilNI, IsothermalVtkOutputFields, ThreePWaterOilVtkOutp
 //set isothermal Indices
 SET_PROP(ThreePWaterOilNI, IsothermalIndices)
 {
-
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    using type = ThreePWaterOilIndices<TypeTag, /*PVOffset=*/0>;
+    using type = ThreePWaterOilIndices<FluidSystem, /*PVOffset=*/0>;
 };
 
 //set isothermal NumEq

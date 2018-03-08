@@ -34,7 +34,7 @@ namespace Dumux
  * \ingroup RichardsNCModel
  * \brief The indices for the isothermal Richards, n-component model.
  */
-template <class TypeTag, int PVOffset = 0>
+template <int PVOffset = 0>
 struct RichardsNCIndices
 {
 

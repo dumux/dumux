@@ -33,13 +33,12 @@ namespace Dumux
  * \ingroup ThreePThreeCModel
  * \brief The indices for the isothermal three-phase three-component model.
  *
+ * \tparam FluidSystem The fluid system class
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int PVOffset = 0>
+template <class FluidSystem, int PVOffset = 0>
 class ThreePThreeCIndices
 {
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
 public:
     // Phase indices
     static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< index of the wetting liquid phase

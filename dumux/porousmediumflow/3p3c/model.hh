@@ -183,7 +183,13 @@ SET_TYPE_PROP(ThreePThreeC, VolumeVariables, ThreePThreeCVolumeVariables<TypeTag
 SET_BOOL_PROP(ThreePThreeC, UseConstraintSolver, false);
 
 //! The indices required by the isothermal 3p3c model
-SET_TYPE_PROP(ThreePThreeC, Indices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
+SET_PROP(ThreePThreeC, Indices)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    using type = ThreePThreeCIndices<FluidSystem, /*PVOffset=*/0>;
+};
 
 //! The spatial parameters to be employed.
 //! Use FVSpatialParams by default.
@@ -224,7 +230,13 @@ SET_TYPE_PROP(ThreePThreeCNI, IsothermalVolumeVariables, ThreePThreeCVolumeVaria
 SET_TYPE_PROP(ThreePThreeCNI, IsothermalLocalResidual, ThreePThreeCLocalResidual<TypeTag>);
 
 //! Set isothermal Indices
-SET_TYPE_PROP(ThreePThreeCNI, IsothermalIndices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
+SET_PROP(ThreePThreeCNI, IsothermalIndices)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    using type = ThreePThreeCIndices<FluidSystem, /*PVOffset=*/0>;
+};
 
 //! Set isothermal NumEq
 SET_INT_PROP(ThreePThreeCNI, IsothermalNumEq, 3);

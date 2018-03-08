@@ -33,22 +33,21 @@ namespace Dumux
  * \ingroup PorousmediumNonEquilibriumModel
  * \brief The primary variable and equation indices for the MpNc model.
  */
-template <class TypeTag, int BasePVOffset = 0>
-class NonEquilbriumIndices: public GET_PROP_TYPE(TypeTag, EquilibriumIndices)
+template <class EquilibriumIndices, class FluidSystem, int numEnergyEquationFluid, int numEnergyEquationSolid, int numEquationBalance, int BasePVOffset = 0>
+class NonEquilbriumIndices: public EquilibriumIndices
 {
 public:
-     using FluidSystem  = typename GET_PROP_TYPE(TypeTag, FluidSystem);
      enum { numPhases = FluidSystem::numPhases };
-     enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
-     enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
+     enum { numEnergyEqFluid = numEnergyEquationFluid };
+     enum { numEnergyEqSolid = numEnergyEquationSolid };
      /*! \todo Replacing the sum below with GET_PROP_VALUE(TypeTag, NumEq)
       *        yields a compilation error with clang, due to complex
       *        interdependencies of MPNC and NonEquilibrium type tags and
       *        Indices classes. This should be fixed.
       */
-     static const unsigned int numEq = GET_PROP_VALUE(TypeTag, NumEqBalance)
-                                     + GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)
-                                     + GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
+     static const unsigned int numEq = numEquationBalance
+                                     + numEnergyEqFluid
+                                     + numEnergyEqSolid;
 
     /*!
      * \brief Index for the temperature of the wetting phase in a vector of primary

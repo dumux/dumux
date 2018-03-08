@@ -44,13 +44,16 @@ struct MpNcPressureFormulation
 /*!
  * \ingroup MPNCModel
  * \brief The primary variable and equation indices for the MpNc model.
+ *
+ * \tparam FluidSystem The fluid system class
+ * \tparam numEquationBalance Number of balance equations: all transport equations and the constraint equations
+ * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int BasePVOffset = 0>
+template <class FluidSystem, int numEquationBalance, int BasePVOffset = 0>
 class MPNCIndices
 {
-     using FluidSystem  = typename GET_PROP_TYPE(TypeTag, FluidSystem);
      enum { numPhases = FluidSystem::numPhases };
-     static const int numEqBalance = GET_PROP_VALUE(TypeTag, NumEqBalance);
+     static const int numEqBalance = numEquationBalance;
 public:
 
         // Phase indices

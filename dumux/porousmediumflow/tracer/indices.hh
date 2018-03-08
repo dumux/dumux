@@ -33,7 +33,7 @@ namespace Dumux
  * \ingroup TracerModel
  * \brief Defines the primary variable and equation indices used by the isothermal tracer model.
  */
-template <class TypeTag, int PVOffset = 0>
+template <int PVOffset = 0>
 struct TracerIndices
 {
     /*!

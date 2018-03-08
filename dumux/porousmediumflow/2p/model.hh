@@ -107,9 +107,15 @@ SET_TYPE_PROP(TwoP, SpatialParams, FVSpatialParams<TypeTag>);                 //
 //! Set the vtk output fields specific to the twop model
 SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)>);
 
-SET_TYPE_PROP(TwoP,
-              Indices,
-              TwoPIndices<TypeTag, GET_PROP_VALUE(TypeTag, Formulation), 0>); //!< The indices required by the isothermal 2p model
+//! The indices required by the isothermal 2p model
+SET_PROP(TwoP, Indices)
+{
+private:
+    using Fluidsystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int formulation = GET_PROP_VALUE(TypeTag, Formulation);
+public:
+    using type = TwoPIndices<Fluidsystem, formulation, 0>;
+};
 
 //! The two-phase model uses the immiscible fluid state
 SET_PROP(TwoP, FluidState)
@@ -135,9 +141,10 @@ SET_TYPE_PROP(TwoPNI, IsothermalVtkOutputFields, TwoPVtkOutputFields<typename GE
 SET_PROP(TwoPNI, IsothermalIndices)
 {
 private:
-    enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int formulation = GET_PROP_VALUE(TypeTag, Formulation);
 public:
-    using type = TwoPIndices<TypeTag, Formulation, 0>;
+    using type = TwoPIndices<FluidSystem, formulation, 0>;
 };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity

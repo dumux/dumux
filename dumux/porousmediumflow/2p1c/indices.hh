@@ -33,13 +33,12 @@ namespace Dumux {
  * \ingroup TwoPOneCModel
  * \brief The indices for the two-phase one-component model.
  *
+ * \tparam FluidSystem The fluid system class
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int PVOffset = 0>
+template <class FluidSystem, int PVOffset = 0>
 class TwoPOneCIndices
 {
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
 public:
     // Phase indices
     static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase.
