@@ -130,7 +130,18 @@ public:
 SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);         //!< The primary variable switch for the 2pnc model
 SET_TYPE_PROP(TwoPNC, VolumeVariables, TwoPNCVolumeVariables<TypeTag>);                     //!< the VolumeVariables property
 SET_TYPE_PROP(TwoPNC, SpatialParams, FVSpatialParams<TypeTag>);                             //!< Use the FVSpatialParams by default
-SET_TYPE_PROP(TwoPNC, VtkOutputFields, TwoPNCVtkOutputFields<TypeTag>);                     //!< Set the vtk output fields specific to the TwoPNC model
+
+//! Set the vtk output fields specific to this model
+SET_PROP(TwoPNC, VtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+public:
+    using type = TwoPNCVtkOutputFields<FluidSystem, Indices>;
+};
+
 SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //!< Use the compositional local residual
 
 SET_INT_PROP(TwoPNC, NumComponents, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);    //!< Use the number of components of the fluid system
@@ -193,7 +204,17 @@ public:
 /////////////////////////////////////////////////
 SET_TYPE_PROP(TwoPNCNI, IsothermalVolumeVariables, TwoPNCVolumeVariables<TypeTag>);     //!< set isothermal VolumeVariables
 SET_TYPE_PROP(TwoPNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);  //!< set isothermal LocalResidual
-SET_TYPE_PROP(TwoPNCNI, IsothermalVtkOutputFields, TwoPNCVtkOutputFields<TypeTag>);     //!< set isothermal output fields
+
+//! Set isothermal output fields
+SET_PROP(TwoPNCNI, IsothermalVtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+public:
+    using type = TwoPNCVtkOutputFields<FluidSystem, Indices>;
+};
 
 //! set isothermal Indices
 SET_PROP(TwoPNCNI, IsothermalIndices)

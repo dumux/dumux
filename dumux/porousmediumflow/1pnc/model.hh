@@ -149,7 +149,17 @@ SET_TYPE_PROP(OnePNC, VolumeVariables, OnePNCVolumeVariables<TypeTag>);   //!< t
 SET_BOOL_PROP(OnePNC, EnableAdvection, true);                           //!< The one-phase model considers advection
 SET_BOOL_PROP(OnePNC, EnableMolecularDiffusion, true);                 //!< The one-phase model has no molecular diffusion
 SET_BOOL_PROP(OnePNC, EnableEnergyBalance, false);                      //!< Isothermal model by default
-SET_TYPE_PROP(OnePNC, VtkOutputFields, OnePNCVtkOutputFields<TypeTag>);   //!< Set the vtk output fields specific to this model
+
+
+//! Set the vtk output fields specific to this model
+SET_PROP(OnePNC, VtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+public:
+    using type = OnePNCVtkOutputFields<FluidSystem, phaseIdx>;
+};
 
 //! The indices required by the isothermal single-phase model
 SET_PROP(OnePNC, Indices)
@@ -176,7 +186,17 @@ public:
     static constexpr auto value = FluidSystem::numComponents;
 };
 SET_BOOL_PROP(OnePNCNI, EnableEnergyBalance, true);                                   //!< we do solve for the energy balance here
-SET_TYPE_PROP(OnePNCNI, IsothermalVtkOutputFields, OnePNCVtkOutputFields<TypeTag>);     //!< the isothermal vtk output fields
+
+//! the isothermal vtk output fields
+SET_PROP(OnePNCNI, IsothermalVtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+public:
+    using type = OnePNCVtkOutputFields<FluidSystem, phaseIdx>;
+};
+
 SET_TYPE_PROP(OnePNCNI, IsothermalVolumeVariables, OnePNCVolumeVariables<TypeTag>);     //!< Vol vars of the isothermal model
 SET_TYPE_PROP(OnePNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);   //!< Local residual of the isothermal model
 SET_TYPE_PROP(OnePNCNI,

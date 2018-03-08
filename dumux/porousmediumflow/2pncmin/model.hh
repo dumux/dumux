@@ -109,13 +109,33 @@ NEW_TYPE_TAG(TwoPNCMinNI, INHERITS_FROM(TwoPNCMin, NonIsothermal));
 // Property tags for the isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
 SET_TYPE_PROP(TwoPNCMin, NonMineralizationVolumeVariables, TwoPNCVolumeVariables<TypeTag>);     //!< the VolumeVariables property
-SET_TYPE_PROP(TwoPNCMin, NonMineralizationVtkOutputFields, TwoPNCVtkOutputFields<TypeTag>);     //!< Set the vtk output fields specific to the TwoPNCMin model
+
+//! Set the vtk output fields specific to this model
+SET_PROP(TwoPNCMin, NonMineralizationVtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+public:
+    using type = TwoPNCVtkOutputFields<FluidSystem, Indices>;
+};
 
 //////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
 SET_TYPE_PROP(TwoPNCMinNI, IsothermalVolumeVariables, MineralizationVolumeVariables<TypeTag>);  //!< set isothermal VolumeVariables
-SET_TYPE_PROP(TwoPNCMinNI, IsothermalVtkOutputFields, MineralizationVtkOutputFields<TypeTag>);  //!< set isothermal output fields
+
+//! isothermal vtkoutput
+SET_PROP(TwoPNCMinNI, IsothermalVtkOutputFields)
+{
+private:
+   using NonMineralizationVtkOutputFields =  typename GET_PROP_TYPE(TypeTag, NonMineralizationVtkOutputFields);
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+
+public:
+    using type = MineralizationVtkOutputFields<NonMineralizationVtkOutputFields, FluidSystem>;
+};
 } // end namespace Properties
 } // end namespace Dumux
 
