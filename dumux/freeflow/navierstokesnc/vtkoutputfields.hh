@@ -34,31 +34,24 @@ namespace Dumux
  * \ingroup NavierStokesNCModel
  * \brief Adds vtk output fields specific to the NavierStokesNC model
  */
-template<class TypeTag>
-class NavierStokesNCVtkOutputFields : NavierStokesVtkOutputFields<TypeTag>
+template<class FVGridGeometry, class FluidSystem, int phaseIdx>
+class NavierStokesNCVtkOutputFields
 {
-    using ParentType = NavierStokesVtkOutputFields<TypeTag>;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
 public:
     //! Initialize the Navier-StokesNC specific vtk output fields.
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        ParentType::init(vtk);
+        NavierStokesVtkOutputFields<FVGridGeometry>::init(vtk);
 
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.molarDensity(); }, "rhoMolar");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(); }, "rho");
+        vtk.addVolumeVariable([](const auto& v){ return v.molarDensity(); }, "rhoMolar");
+        vtk.addVolumeVariable([](const auto& v){ return v.density(); }, "rho");
 
-        for (int j = 0; j < numComponents; ++j)
+        for (int j = 0; j < FluidSystem::numComponents; ++j)
         {
-            vtk.addVolumeVariable([j](const VolumeVariables& v){ return v.massFraction(phaseIdx,j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            vtk.addVolumeVariable([j](const VolumeVariables& v){ return v.moleFraction(phaseIdx,j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+            vtk.addVolumeVariable([j](const auto& v){ return v.massFraction(phaseIdx,j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+            vtk.addVolumeVariable([j](const auto& v){ return v.moleFraction(phaseIdx,j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
         }
     }
 };
