@@ -86,24 +86,6 @@ public:
         velocitySelf_ = faceSol[scvf.dofIndex()];
         velocityOpposite_ = faceSol[scvf.dofIndexOpposingFace()];
 
-        // lambda to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
-        auto makeGhostFace = [](const auto& pos)
-        {
-            return SubControlVolumeFace(pos, std::vector<unsigned int>{0,0});
-        };
-
-        // lambda to check whether there is a parallel face neighbor
-        auto hasParallelNeighbor = [](const auto& subFaceData)
-        {
-            return subFaceData.outerParallelFaceDofIdx >= 0;
-        };
-
-        // lambda to check whether there is a normal face neighbor
-        auto hasNormalNeighbor = [](const auto& subFaceData)
-        {
-            return subFaceData.normalPair.second >= 0;
-        };
-
         // handle all sub faces
         for(int i = 0; i < scvf.pairData().size(); ++i)
         {
@@ -112,21 +94,12 @@ public:
             // treat the velocities normal to the face
             velocityNormalInside_[i] = faceSol[subFaceData.normalPair.first];
 
-            if(hasNormalNeighbor(subFaceData))
-            {
+            if(scvf.hasFrontalNeighbor(i))
                 velocityNormalOutside_[i] = faceSol[subFaceData.normalPair.second];
-            }
-            else
-            {
-                const auto& normalFace = fvGeometry.scvf(scvf.insideScvIdx(), subFaceData.localNormalFaceIdx);
-                const auto normalDirIdx = normalFace.directionIndex();
-                velocityNormalOutside_[i] = problem.dirichlet(element, makeGhostFace(subFaceData.virtualOuterNormalFaceDofPos))[Indices::velocity(normalDirIdx)];
-            }
 
             // treat the velocity parallel to the face
-            velocityParallel_[i] = hasParallelNeighbor(subFaceData) ?
-                                   velocityParallel_[i] = faceSol[subFaceData.outerParallelFaceDofIdx] :
-                                   problem.dirichlet(element, makeGhostFace(subFaceData.virtualOuterParallelFaceDofPos))[Indices::velocity(scvf.directionIndex())];
+            if(scvf.hasParallelNeighbor(i))
+                velocityParallel_[i] = faceSol[subFaceData.outerParallelFaceDofIdx];
         }
     }
 
