@@ -20,7 +20,7 @@ add_dumux_test(test_box3p3cnicolumnxylol test_box3p3cnicolumnxylol test_box3p3cn
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/column3p3cnibox-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/columnxylolbox-00062.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/columnxylolbox-00061.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3p3cnicolumnxylol")
 
 add_dumux_test(test_cc3p3cnicolumnxylol test_cc3p3cnicolumnxylol test_cc3p3cnicolumnxylol.cc

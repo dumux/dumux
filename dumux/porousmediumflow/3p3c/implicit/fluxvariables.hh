@@ -102,18 +102,44 @@ public:
                 const bool onBoundary = false)
     {
         BaseFluxVariables::update(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary);
-        calculatePorousDiffCoeff_(problem, element, elemVolVars);
+        calculateValues_(problem, element, elemVolVars);
     }
 
 private:
+    void calculateValues_(const Problem &problem,
+                          const Element &element,
+                          const ElementVolumeVariables &elemVolVars)
+    {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            density_[phaseIdx] = Scalar(0);
+            molarDensity_[phaseIdx] = Scalar(0);
+        }
+
+        // calculate densities at the integration points of the face
+        GlobalPosition tmp(0.0);
+        for (unsigned int idx = 0; idx < this->face().numFap; idx++) // loop over adjacent vertices
+        {
+            // index for the element volume variables
+            int volVarsIdx = this->face().fapIndices[idx];
+
+            for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
+            {
+                density_[phaseIdx] += elemVolVars[volVarsIdx].density(phaseIdx)*
+                    this->face().shapeValue[idx];
+                molarDensity_[phaseIdx] += elemVolVars[volVarsIdx].molarDensity(phaseIdx)*
+                    this->face().shapeValue[idx];
+            }
+        }
+
+        calculatePorousDiffCoeff_(problem, element, elemVolVars);
+    }
+
     void calculateGradients_(const Problem &problem,
                              const Element &element,
                              const ElementVolumeVariables &elemVolVars)
     {
         // initialize to zero
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            density_[phaseIdx] = Scalar(0);
-            molarDensity_[phaseIdx] = Scalar(0);
             massFractionCompWGrad_[phaseIdx] = Scalar(0);
             massFractionCompNGrad_[phaseIdx] = Scalar(0);
             massFractionCompGGrad_[phaseIdx] = Scalar(0);
