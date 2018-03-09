@@ -30,7 +30,6 @@ namespace Dumux {
  * \ingroup OnePModel
  * \brief Adds vtk output fields specific to the one phase model
  */
-template<class TypeTag>
 class OnePVtkOutputFields
 {
 public:

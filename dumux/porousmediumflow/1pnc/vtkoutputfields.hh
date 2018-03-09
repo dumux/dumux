@@ -32,14 +32,9 @@ namespace Dumux {
  * \ingroup OnePNCModel
  * \brief Adds vtk output fields specific to the OnePNC model
  */
-template<class TypeTag>
+template<class FluidSystem, int phaseIdx>
 class OnePNCVtkOutputFields
 {
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
 public:
     template <class VtkOutputModule>
@@ -50,11 +45,11 @@ public:
         vtk.addVolumeVariable([](const auto& volVars){ return volVars.viscosity(phaseIdx); }, "mu");
         vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(phaseIdx) - 1e5; }, "delp");
 
-        for (int i = 0; i < numComponents; ++i)
+        for (int i = 0; i < FluidSystem::numComponents; ++i)
            vtk.addVolumeVariable([i](const auto& volVars){ return volVars.moleFraction(phaseIdx, i); },
                                      "x_" + std::string(FluidSystem::componentName(i)));
 
-        for (int i = 0; i < numComponents; ++i)
+        for (int i = 0; i < FluidSystem::numComponents; ++i)
            vtk.addVolumeVariable([i](const auto& volVars){ return volVars.massFraction(phaseIdx,i); },
                                      "X_" + std::string(FluidSystem::componentName(i)));
     }

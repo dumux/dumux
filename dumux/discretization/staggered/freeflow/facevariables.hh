@@ -38,7 +38,6 @@ namespace Dumux
 template<class TypeTag>
 class StaggeredFaceVariables
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
@@ -49,7 +48,6 @@ class StaggeredFaceVariables
     static constexpr int dimWorld = GridView::dimensionworld;
     static constexpr int numPairs = (dimWorld == 2) ? 2 : 4;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -57,7 +55,7 @@ class StaggeredFaceVariables
     typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
-
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     /*!
     * \brief Partial update of the face variables. Only the face itself is considered.
     *

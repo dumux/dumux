@@ -214,8 +214,16 @@ public:
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
-//set isothermal output fields
-SET_TYPE_PROP(ThreePWaterOilNI, IsothermalVtkOutputFields, ThreePWaterOilVtkOutputFields<TypeTag>);
+//! Set the isothermal vktoutputfields
+SET_PROP(ThreePWaterOilNI, IsothermalVtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+public:
+    using type = ThreePWaterOilVtkOutputFields<FluidSystem, Indices>;
+};
 
 //set isothermal Indices
 SET_PROP(ThreePWaterOilNI, IsothermalIndices)

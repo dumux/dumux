@@ -220,7 +220,16 @@ SET_INT_PROP(MPNC,
              PressureFormulation,
              MpNcPressureFormulation::mostWettingFirst);
 
-SET_TYPE_PROP(MPNC, VtkOutputFields, MPNCVtkOutputFields<TypeTag>);           //! Set the vtk output fields specific to the mpnc model
+//! Set the vtk output fields specific to this model
+SET_PROP(MPNC, VtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+public:
+    using type = MPNCVtkOutputFields<FluidSystem, Indices>;
+};
 
 SET_BOOL_PROP(MPNC, EnableAdvection, true);                  //! Enable advection
 SET_BOOL_PROP(MPNC, EnableMolecularDiffusion, true);         //! Enable molecular diffusion
@@ -255,7 +264,17 @@ SET_INT_PROP(MPNCNI, IsothermalNumEq, GET_PROP_VALUE(TypeTag, NumEq));
 /////////////////////////////////////////////////
 
 SET_TYPE_PROP(MPNCNonequil, EquilibriumLocalResidual, MPNCLocalResidual<TypeTag>);
-SET_TYPE_PROP(MPNCNonequil, EquilibriumVtkOutputFields, MPNCVtkOutputFields<TypeTag>);
+
+//! Set the vtk output fields specific to this model
+SET_PROP(MPNCNonequil, EquilibriumVtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+public:
+    using type = MPNCVtkOutputFields<FluidSystem, Indices>;
+};
 
 SET_PROP(MPNCNonequil, EquilibriumIndices)
 {

@@ -33,41 +33,33 @@ namespace Dumux {
  * \ingroup RichardsModel
  * \brief Adds vtk output fields specific to the Richards model.
  */
-template<class TypeTag>
+template<class Indices, bool enableWaterDiffusionInAir>
 class RichardsVtkOutputFields
 {
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-
-    enum {
-        nPhaseIdx = Indices::nPhaseIdx,
-        wPhaseIdx = Indices::wPhaseIdx
-    };
-
-    static constexpr bool enableWaterDiffusionInAir = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
 
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(Indices::wPhaseIdx); }, "Sw");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(Indices::nPhaseIdx); }, "Sn");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(Indices::wPhaseIdx); }, "pw");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(Indices::nPhaseIdx); }, "pn");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.capillaryPressure(); }, "pc");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(Indices::wPhaseIdx); }, "density");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.mobility(Indices::wPhaseIdx); }, "mobility");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.relativePermeability(wPhaseIdx); }, "kr");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.porosity(); }, "porosity");
+        vtk.addVolumeVariable([](const auto& v){ return v.saturation(Indices::wPhaseIdx); }, "Sw");
+        vtk.addVolumeVariable([](const auto& v){ return v.saturation(Indices::nPhaseIdx); }, "Sn");
+        vtk.addVolumeVariable([](const auto& v){ return v.pressure(Indices::wPhaseIdx); }, "pw");
+        vtk.addVolumeVariable([](const auto& v){ return v.pressure(Indices::nPhaseIdx); }, "pn");
+        vtk.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); }, "pc");
+        vtk.addVolumeVariable([](const auto& v){ return v.density(Indices::wPhaseIdx); }, "density");
+        vtk.addVolumeVariable([](const auto& v){ return v.mobility(Indices::wPhaseIdx); }, "mobility");
+        vtk.addVolumeVariable([](const auto& v){ return v.relativePermeability(Indices::wPhaseIdx); }, "kr");
+        vtk.addVolumeVariable([](const auto& v){ return v.porosity(); }, "porosity");
 
-        static const bool gravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        static const bool gravity = getParamFromGroup<bool>(vtk.paramGroup(), "Problem.EnableGravity");
+
         if(gravity)
-            vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressureHead(wPhaseIdx); }, "pressure head");
+            vtk.addVolumeVariable([](const auto& v){ return v.pressureHead(Indices::wPhaseIdx); }, "pressure head");
         if (enableWaterDiffusionInAir)
-            vtk.addVolumeVariable([](const VolumeVariables& v){ return v.moleFraction(1, 0); }, "x^w_air");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.waterContent(wPhaseIdx); },"water content");
+            vtk.addVolumeVariable([](const auto& v){ return v.moleFraction(1, 0); }, "x^w_air");
+        vtk.addVolumeVariable([](const auto& v){ return v.waterContent(Indices::wPhaseIdx); },"water content");
 
-         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.priVars().state(); }, "phasePresence");
+         vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phasePresence");
 
     }
 };

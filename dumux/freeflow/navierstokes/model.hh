@@ -145,8 +145,13 @@ public:
 };
 
 //! The specific vtk output fields
-SET_TYPE_PROP(NavierStokes, VtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
-
+SET_PROP(NavierStokes, VtkOutputFields)
+{
+private:
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+public:
+     using type = NavierStokesVtkOutputFields<FVGridGeometry>;
+};
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
@@ -161,7 +166,13 @@ public:
 };
 
 //! The specific isothermal vtk output fields
-SET_TYPE_PROP(NavierStokesNI, IsothermalVtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
+SET_PROP(NavierStokesNI, IsothermalVtkOutputFields)
+{
+private:
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+public:
+     using type = NavierStokesVtkOutputFields<FVGridGeometry>;
+};
 
 //! The number of equations for the isothermal model
 SET_PROP(NavierStokesNI, IsothermalNumEq)

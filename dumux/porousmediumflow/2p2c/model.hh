@@ -138,8 +138,16 @@ SET_PROP(TwoPTwoC, NumPhases)
                   "Only fluid systems with 2 phases are supported by the 2p-2c model!");
 };
 
-//! Set the vtk output fields specific to the TwoPTwoC model
-SET_TYPE_PROP(TwoPTwoC, VtkOutputFields, TwoPTwoCVtkOutputFields<TypeTag>);
+//! Set the vtk output fields specific to this model
+SET_PROP(TwoPTwoC, VtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+public:
+    using type = TwoPTwoCVtkOutputFields<FluidSystem, Indices>;
+};
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -227,7 +235,15 @@ public:
 SET_TYPE_PROP(TwoPTwoCNI, IsothermalIndices, TwoPTwoCIndices<typename GET_PROP_TYPE(TypeTag, FluidSystem), /*PVOffset=*/0>);
 
 //! Set isothermal output fields
-SET_TYPE_PROP(TwoPTwoCNI, IsothermalVtkOutputFields, TwoPTwoCVtkOutputFields<TypeTag>);
+SET_PROP(TwoPTwoCNI, IsothermalVtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+public:
+    using type = TwoPTwoCVtkOutputFields<FluidSystem, Indices>;
+};
 
 // Set isothermal NumEq
 SET_INT_PROP(TwoPTwoCNI, IsothermalNumEq, 2);

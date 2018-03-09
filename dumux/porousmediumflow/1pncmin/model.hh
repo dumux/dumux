@@ -85,13 +85,33 @@ NEW_TYPE_TAG(OnePNCMinNI, INHERITS_FROM(OnePNCMin, NonIsothermal));
 // Property tags for the isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
 SET_TYPE_PROP(OnePNCMin, NonMineralizationVolumeVariables, OnePNCVolumeVariables<TypeTag>);     //!< the VolumeVariables property
-SET_TYPE_PROP(OnePNCMin, NonMineralizationVtkOutputFields, OnePNCVtkOutputFields<TypeTag>);     //!< Set the vtk output fields specific to the TwoPNCMin model
+
+//! Set the vtk output fields specific to this model
+SET_PROP(OnePNCMin, NonMineralizationVtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+public:
+    using type = OnePNCVtkOutputFields<FluidSystem, phaseIdx>;
+};
 
 //////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
 SET_TYPE_PROP(OnePNCMinNI, IsothermalVolumeVariables, MineralizationVolumeVariables<TypeTag>);  //!< set isothermal VolumeVariables
-SET_TYPE_PROP(OnePNCMinNI, IsothermalVtkOutputFields, MineralizationVtkOutputFields<TypeTag>);  //!< set isothermal output fields
+
+//! isothermal vtkoutput
+SET_PROP(OnePNCMinNI, IsothermalVtkOutputFields)
+{
+private:
+   using NonMineralizationVtkOutputFields =  typename GET_PROP_TYPE(TypeTag, NonMineralizationVtkOutputFields);
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+
+public:
+    using type = MineralizationVtkOutputFields<NonMineralizationVtkOutputFields, FluidSystem>;
+};
+
 SET_TYPE_PROP(OnePNCMinNI, IsothermalLocalResidual, MineralizationLocalResidual<TypeTag>);      //!< set isothermal output fields
 
 SET_TYPE_PROP(OnePNCMinNI,

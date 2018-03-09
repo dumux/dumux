@@ -34,15 +34,9 @@ namespace Dumux
  * \ingroup TwoPNCModel
  * \brief Adds vtk output fields specific to the TwoPNC model
  */
-template<class TypeTag>
+template<class FluidSystem, class Indices>
 class TwoPNCVtkOutputFields
 {
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
 
 public:
     template <class VtkOutputModule>
@@ -52,14 +46,14 @@ public:
         TwoPVtkOutputFields<Indices>::init(vtk);
 
         //output additional to TwoP output:
-        for (int i = 0; i < numPhases; ++i)
-            for (int j = 0; j < numComponents; ++j)
-                vtk.addVolumeVariable([i,j](const VolumeVariables& v){ return v.moleFraction(i,j); },"x_"+ FluidSystem::phaseName(i) + "^" + FluidSystem::componentName(j));
+        for (int i = 0; i < FluidSystem::numPhases; ++i)
+            for (int j = 0; j < FluidSystem::numComponents; ++j)
+                vtk.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },"x_"+ FluidSystem::phaseName(i) + "^" + FluidSystem::componentName(j));
 
-        for (int j = 0; j < numComponents; ++j)
-            vtk.addVolumeVariable([j](const VolumeVariables& v){ return v.molarity(Indices::wPhaseIdx,j); },"m_"+ FluidSystem::phaseName(Indices::wPhaseIdx) + "^" + FluidSystem::componentName(j));
+        for (int j = 0; j < FluidSystem::numComponents; ++j)
+            vtk.addVolumeVariable([j](const auto& v){ return v.molarity(Indices::wPhaseIdx,j); },"m_"+ FluidSystem::phaseName(Indices::wPhaseIdx) + "^" + FluidSystem::componentName(j));
 
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.priVars().state(); }, "phasePresence");
+        vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phasePresence");
     }
 };
 

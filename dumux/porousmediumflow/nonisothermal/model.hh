@@ -78,7 +78,13 @@ public:
 };
 
 //! indices for non-isothermal models
-SET_TYPE_PROP(NonIsothermal, VtkOutputFields, EnergyVtkOutputFields<TypeTag>);
+SET_PROP(NonIsothermal, VtkOutputFields)
+{
+private:
+    using IsothermalVtkOutputFields = typename GET_PROP_TYPE(TypeTag, IsothermalVtkOutputFields);
+public:
+    using type = EnergyVtkOutputFields<IsothermalVtkOutputFields>;
+};
 
 } // end namespace Properties
 } // end namespace Dumux

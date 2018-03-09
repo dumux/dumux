@@ -76,7 +76,13 @@ public:
 };
 
 //! The non-isothermal vtk output fields
-SET_TYPE_PROP(NavierStokesNonIsothermal, VtkOutputFields, NavierStokesNonIsothermalVtkOutputFields<TypeTag>);
+SET_PROP(NavierStokesNonIsothermal, VtkOutputFields)
+{
+private:
+    using IsothermalVtkOutputFields = typename GET_PROP_TYPE(TypeTag, IsothermalVtkOutputFields);
+public:
+    using type = NavierStokesNonIsothermalVtkOutputFields<IsothermalVtkOutputFields>;
+};
 
 //! Use Fourier's Law as default heat conduction type
 SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);

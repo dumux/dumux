@@ -165,8 +165,15 @@ public:
     using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
 
-//! Set the vtk output fields specific to the ThreeP model
-SET_TYPE_PROP(ThreeP, VtkOutputFields, ThreePVtkOutputFields<TypeTag>);
+//! Set the vtk output fields specific to this model
+SET_PROP(ThreeP, VtkOutputFields)
+{
+private:
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+public:
+    using type = ThreePVtkOutputFields<Indices>;
+};
 
 /////////////////////////////////////////////////
 // Properties for the non-isothermal 3p model
@@ -193,7 +200,15 @@ SET_TYPE_PROP(ThreePNI, IsothermalVolumeVariables, ThreePVolumeVariables<TypeTag
 SET_TYPE_PROP(ThreePNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
 //! Set isothermal output fields
-SET_TYPE_PROP(ThreePNI, IsothermalVtkOutputFields, ThreePVtkOutputFields<TypeTag>);
+SET_PROP(ThreePNI, IsothermalVtkOutputFields)
+{
+private:
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+public:
+    using type = ThreePVtkOutputFields<Indices>;
+};
+
 
 //! Set isothermal Indices
 SET_PROP(ThreePNI, IsothermalIndices)

@@ -34,15 +34,9 @@ namespace Dumux
  * \ingroup MineralizationModel
  * \brief Adds vtk output fields specific to a NCMin model
  */
-template<class TypeTag>
+template<class NonMineralizationVtkOutputFields, class FluidSystem>
 class MineralizationVtkOutputFields
 {
-    using NonMineralizationVtkOutputFields = typename GET_PROP_TYPE(TypeTag, NonMineralizationVtkOutputFields);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numSPhases = GET_PROP_VALUE(TypeTag, NumSPhases);
 
 public:
     template <class VtkOutputModule>
@@ -52,9 +46,9 @@ public:
         NonMineralizationVtkOutputFields::init(vtk);
 
         // additional output
-        for (int i = 0; i < numSPhases; ++i)
+        for (int i = 0; i < FluidSystem::numSPhases; ++i)
         {
-            vtk.addVolumeVariable([i](const VolumeVariables& v){ return v.precipitateVolumeFraction(numPhases + i); },"precipitateVolumeFraction_"+ FluidSystem::phaseName(numPhases + i));
+            vtk.addVolumeVariable([i](const auto& v){ return v.precipitateVolumeFraction(FluidSystem::numPhases + i); },"precipitateVolumeFraction_"+ FluidSystem::phaseName(FluidSystem::numPhases + i));
         }
     }
 };

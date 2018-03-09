@@ -73,7 +73,16 @@ SET_TYPE_PROP(MPNCComparisonTypeTag, Scalar, double);
 SET_BOOL_PROP(MPNCComparisonTypeTag, EnableMolecularDiffusion, true);
 
 SET_BOOL_PROP(MPNCComparisonTypeTag, UseMoles, true);
-SET_TYPE_PROP(MPNCComparisonTypeTag, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields<TypeTag>);
+
+SET_PROP(MPNCComparisonTypeTag, VtkOutputFields)
+{
+private:
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+public:
+    using type = TwoPTwoCMPNCVtkOutputFields<FluidSystem, Indices>;
+};
 
 }
 

@@ -33,11 +33,10 @@ namespace Dumux
  * \ingroup NavierStokesNIModel
  * \brief Adds vtk output fields specific to non-isothermal free-flow models
  */
-template<class TypeTag>
+template<class IsothermalVtkOutputFields>
 class NavierStokesNonIsothermalVtkOutputFields
 {
-    using IsothermalVtkOutputFields = typename GET_PROP_TYPE(TypeTag, IsothermalVtkOutputFields);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+
 public:
 
     //! Initialize the non-isothermal specific vtk output fields.
@@ -45,7 +44,7 @@ public:
     static void init(VtkOutputModule& vtk)
     {
         IsothermalVtkOutputFields::init(vtk);
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.temperature(); }, "temperature");
+        vtk.addVolumeVariable( [](const auto& v){ return v.temperature(); }, "temperature");
     }
 };
 

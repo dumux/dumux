@@ -49,7 +49,15 @@ SET_TYPE_PROP(Mineralization, VolumeVariables, MineralizationVolumeVariables<Typ
 SET_TYPE_PROP(Mineralization, LocalResidual, MineralizationLocalResidual<TypeTag>);
 
 //! VTK outputs for mineralization models
-SET_TYPE_PROP(Mineralization, VtkOutputFields, MineralizationVtkOutputFields<TypeTag>);
+SET_PROP(Mineralization, VtkOutputFields)
+{
+private:
+   using NonMineralizationVtkOutputFields =  typename GET_PROP_TYPE(TypeTag, NonMineralizationVtkOutputFields);
+   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+
+public:
+    using type = MineralizationVtkOutputFields<NonMineralizationVtkOutputFields, FluidSystem>;
+};
 
 //! Set the property for the number of solid phases, excluding the non-reactive matrix.
 SET_PROP(Mineralization, NumSPhases)
