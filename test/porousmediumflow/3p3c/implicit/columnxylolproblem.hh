@@ -184,7 +184,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    PrimaryVariables dirichletAtPos( const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
        return initial_(globalPos);
     }
@@ -202,13 +202,9 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    NumEqVector neumann(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolumeFace& scvf) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
         NumEqVector values(0.0);
-        const auto& globalPos = scvf.ipGlobal();
 
         // negative values for injection
         if (globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
