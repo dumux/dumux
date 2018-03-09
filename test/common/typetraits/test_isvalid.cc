@@ -22,7 +22,7 @@ struct MyOtherVector {
 const auto hasResize = isValid([](auto&& a) -> decltype(a.resize(std::size_t(1))) { });
 
 // using the check function
-template<class Vector, typename std::enable_if_t<hasResize.template check<Vector>(), int> = 0>
+template<class Vector, typename std::enable_if_t<decltype(hasResize.template check<Vector>())::value, int> = 0>
 void resize(const Vector& v, std::size_t size)
 {
     v.resize(size); std::cout << "-> resized resizeable vector! size: " << size << std::endl;
@@ -46,7 +46,7 @@ auto resize2(const Vector& v, std::size_t size)
 // using trailing return type and operator ()
 template<class Vector>
 auto resize2(const Vector& v, std::size_t size)
--> typename std::enable_if_t<!hasResize.template check<Vector>(), void>
+-> typename std::enable_if_t<!decltype(hasResize.template check<Vector>())::value, void>
 {
     std::cout << "-> Did not resize non-resizeable vector!" << std::endl;
 }
