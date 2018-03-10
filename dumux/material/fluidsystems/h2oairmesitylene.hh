@@ -390,9 +390,9 @@ public:
             }
             case wPhaseIdx:
             {
-                Scalar diffACl = 1.e-9; // BinaryCoeff::Air_Mesitylene::liquidDiffCoeff(temperature, pressure);
-                Scalar diffWCl = 1.e-9; // BinaryCoeff::H2O_Mesitylene::liquidDiffCoeff(temperature, pressure);
-                Scalar diffAWl = 1.e-9; // BinaryCoeff::H2O_Air::liquidDiffCoeff(temperature, pressure);
+                Scalar diffACl = BinaryCoeff::Air_Mesitylene::liquidDiffCoeff(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+                Scalar diffWCl = BinaryCoeff::H2O_Mesitylene::liquidDiffCoeff(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+                Scalar diffAWl = BinaryCoeff::H2O_Air::liquidDiffCoeff(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
 
                 Scalar xwa = fluidState.moleFraction(wPhaseIdx, airIdx);
                 Scalar xww = fluidState.moleFraction(wPhaseIdx, H2OIdx);
