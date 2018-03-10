@@ -24,9 +24,9 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_VOLUMEVARIABLES_HH
 
+#include <algorithm>
+#include <iterator>
 #include <dune/common/exceptions.hh>
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/staggered/elementsolution.hh>
 
 namespace Dumux {
 
@@ -34,7 +34,7 @@ namespace Dumux {
  * \ingroup StaggeredDiscretization
  * \brief Base class for the element volume variables vector for the staggered model
  */
-template<class TypeTag, bool enableGridVolVarsCache>
+template<class FVGridGeometry, class GridVolumeVariables, bool enableGridVolVarsCache>
 class StaggeredElementVolumeVariables
 {};
 
@@ -43,23 +43,18 @@ class StaggeredElementVolumeVariables
  * \brief Class for the element volume variables vector for the staggered model.
           Specialization in case the volume variables are stored globally.
  */
-template<class TypeTag>
-class StaggeredElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
+template<class FVGridGeometry, class GridVolumeVariables>
+class StaggeredElementVolumeVariables<FVGridGeometry, GridVolumeVariables, /*enableGridVolVarsCache*/true>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using VolumeVariables =  typename GridVolumeVariables::VolumeVariables;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexType = typename GridView::IndexSet::IndexType;
 
-    static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    //! Export type of the solution vector
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     //! Constructor
     StaggeredElementVolumeVariables(const GridVolumeVariables& gridVolVars)
@@ -76,12 +71,14 @@ public:
 
     //! For compatibility reasons with the case of not storing the vol vars.
     //! function to be called before assembling an element, preparing the vol vars within the stencil
+    template<class SolutionVector>
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {}
 
     //! function to prepare the vol vars within the element
+    template<class SolutionVector>
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
@@ -101,32 +98,21 @@ private:
  * \brief Class for the element volume variables vector for the staggered model.
           Specialization in case the volume variables are not stored globally.
  */
-template<class TypeTag>
-class StaggeredElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
+template<class FVGridGeometry, class GridVolumeVariables>
+class StaggeredElementVolumeVariables<FVGridGeometry, GridVolumeVariables, /*enableGridVolVarsCache*/false>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using CellCenterPrimaryVariables = typename GridVolumeVariables::CellCenterPrimaryVariables;
+    using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using VolumeVariables =  typename GridVolumeVariables::VolumeVariables;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexType = typename GridView::IndexSet::IndexType;
+    using Indices = typename GridVolumeVariables::Indices;
 
-    static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
-
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
-
-    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
 
 public:
-    //! Export type of the solution vector
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     //! Constructor
     StaggeredElementVolumeVariables(const GridVolumeVariables& gridVolVars)
@@ -134,6 +120,7 @@ public:
 
     //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly
+    template<class SolutionVector>
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
@@ -181,7 +168,7 @@ public:
 
             CellCenterPrimaryVariables boundaryPriVars(0.0);
 
-            for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
+            for(int eqIdx = 0; eqIdx < CellCenterPrimaryVariables::dimension; ++eqIdx)
             {
                 if(bcTypes.isDirichlet(eqIdx) || bcTypes.isDirichletCell(eqIdx))
                     boundaryPriVars[eqIdx] = problem.dirichlet(element, scvf)[cellCenterIdx][eqIdx];
@@ -209,6 +196,7 @@ public:
 
     //! Binding of an element, prepares only the volume variables of the element.
     //! Specialization for Staggered models
+    template<class SolutionVector>
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)

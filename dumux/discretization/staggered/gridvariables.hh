@@ -66,7 +66,7 @@ public:
     template<class SolutionVector>
     void update(const SolutionVector& curSol)
     {
-        ParentType::update(curSol);
+        ParentType::update(curSol[cellCenterIdx]);
         curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
     }
 
@@ -74,7 +74,7 @@ public:
     template<class SolutionVector>
     void init(const SolutionVector& curSol)
     {
-        ParentType::init(curSol);
+        ParentType::init(curSol[cellCenterIdx]);
         curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
     }
 
@@ -82,7 +82,7 @@ public:
     template<class SolutionVector>
     void init(const SolutionVector& curSol, const SolutionVector& initSol)
     {
-        ParentType::init(curSol, initSol);
+        ParentType::init(curSol[cellCenterIdx], initSol[cellCenterIdx]);
         curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
         prevGridFaceVariables_.update(*this->fvGridGeometry_, initSol[faceIdx]);
     }

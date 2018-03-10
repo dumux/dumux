@@ -83,10 +83,28 @@ public:
 SET_BOOL_PROP(StaggeredModel, EnableGridFaceVariablesCache, true);
 
 //! Set the default global volume variables cache vector class
-SET_TYPE_PROP(StaggeredModel, GridVolumeVariables, StaggeredGridVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
+SET_PROP(StaggeredModel, GridVolumeVariables)
+{
+private:
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+
+    static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
+
+    using Traits = StaggeredGridVolumeVariablesTraits<VolumeVariables, Problem, CellCenterPrimaryVariables, Indices>;
+
+public:
+    using type = StaggeredGridVolumeVariables<FVGridGeometry, Traits, enableCache>;
+};
 
 //! Set the element volume variables class
-SET_TYPE_PROP(StaggeredModel, ElementVolumeVariables, StaggeredElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
+SET_PROP(StaggeredModel, ElementVolumeVariables)
+{
+    using type = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+};
 
 //! Set the global flux variables cache vector class
 SET_TYPE_PROP(StaggeredModel, GridFluxVariablesCache, StaggeredGridFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
