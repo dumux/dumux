@@ -33,7 +33,7 @@ namespace Dumux {
  * \brief Stores the dof indices corresponding to the neighboring cell centers and faces
  *        that contribute to the derivative calculation. Specialization for the staggered free flow model.
  */
-template<class FVGridGeometry, class DofTypeIndices>
+template<class FVGridGeometry>
 class StaggeredFreeFlowConnectivityMap
 {
     using GridView = typename FVGridGeometry::GridView;
@@ -43,11 +43,8 @@ class StaggeredFreeFlowConnectivityMap
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
 
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
-
-    using CellCenterIdxType = typename DofTypeIndices::CellCenterIdx;
-    using FaceIdxType = typename DofTypeIndices::FaceIdx;
+    using CellCenterIdxType = typename FVGridGeometry::DofTypeIndices::CellCenterIdx;
+    using FaceIdxType = typename FVGridGeometry::DofTypeIndices::FaceIdx;
 
     using CellCenterToCellCenterMap = std::vector<std::vector<IndexType>>;
     using CellCenterToFaceMap = std::vector<std::vector<IndexType>>;

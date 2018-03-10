@@ -67,7 +67,7 @@ struct TestFVGGTraits : public DefaultMapperTraits<GridView>
     };
 
     template<class FVGridGeometry>
-    using ConnectivityMap = StaggeredFreeFlowConnectivityMap<FVGridGeometry, DofTypeIndices>;
+    using ConnectivityMap = StaggeredFreeFlowConnectivityMap<FVGridGeometry>;
 
     template<class FVGridGeometry, bool enableCache>
     using LocalView = StaggeredFVElementGeometry<FVGridGeometry, enableCache>;

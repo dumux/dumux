@@ -55,12 +55,6 @@ class StaggeredFVGridGeometry<GV, true, Traits>
     using IndexType = typename GV::IndexSet::IndexType;
     using Element = typename GV::template Codim<0>::Entity;
 
-    enum {
-        // Grid and world dimension
-        dim = GV::dimension,
-        dimWorld = GV::dimensionworld
-    };
-
     using IntersectionMapper = typename Traits::IntersectionMapper;
     using GeometryHelper = typename Traits::GeometryHelper;
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;

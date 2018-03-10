@@ -84,7 +84,13 @@ SET_TYPE_PROP(StaggeredModel, GridFluxVariablesCache, StaggeredGridFluxVariables
 SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, StaggeredElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
 
 //! Set the face solution type
-SET_TYPE_PROP(StaggeredModel, StaggeredFaceSolution, StaggeredFaceSolution<TypeTag>);
+SET_PROP(StaggeredModel, StaggeredFaceSolution)
+{
+private:
+    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+public:
+    using type = StaggeredFaceSolution<FaceSolutionVector>;
+};
 
 //! Set the grid variables (volume, flux and face variables)
 SET_PROP(StaggeredModel, GridVariables)

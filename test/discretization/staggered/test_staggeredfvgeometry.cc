@@ -58,6 +58,12 @@ struct TestFVGGTraits : public DefaultMapperTraits<GridView>
     using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
     using GeometryHelper = BaseStaggeredGeometryHelper<GridView>;
 
+    struct DofTypeIndices
+    {
+        using CellCenterIdx = Dune::index_constant<0>;
+        using FaceIdx = Dune::index_constant<1>;
+    };
+
     //! Dummy connectivity map, required by FVGridGeometry
     template<class FVGridGeometry>
     struct MockConnectivityMap
