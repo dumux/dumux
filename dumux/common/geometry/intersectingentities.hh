@@ -40,11 +40,11 @@ namespace Dumux {
 template<class EntitySet, class ctype, int dimworld>
 inline std::vector<std::size_t>
 intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
-                     const BoundingBoxTree<EntitySet>& tree)
+                     const BoundingBoxTree<EntitySet>& tree, bool isCartesian = false)
 {
     // Call the recursive find function to find candidates
     std::vector<std::size_t> entities;
-    intersectingEntities(point, tree, tree.numBoundingBoxes() - 1, entities);
+    intersectingEntities(point, tree, tree.numBoundingBoxes() - 1, entities, isCartesian);
     return entities;
 }
 
@@ -56,7 +56,8 @@ template<class EntitySet, class ctype, int dimworld>
 void intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
                           const BoundingBoxTree<EntitySet>& tree,
                           std::size_t node,
-                          std::vector<std::size_t>& entities)
+                          std::vector<std::size_t>& entities,
+                          bool isCartesian)
 {
     // Get the bounding box for the current node
     const auto& bBox = tree.getBoundingBoxNode(node);
@@ -69,17 +70,22 @@ void intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
     else if (tree.isLeaf(bBox, node))
     {
         const std::size_t entityIdx = bBox.child1;
-        const auto geometry = tree.entitySet().entity(entityIdx).geometry();
-        // if the primitive is positive it intersects the actual geometry, add the entity to the list
-        if (intersectsPointGeometry(point, geometry))
+        if (isCartesian)
             entities.push_back(entityIdx);
+        else
+        {
+            const auto geometry = tree.entitySet().entity(entityIdx).geometry();
+            // if the primitive is positive it intersects the actual geometry, add the entity to the list
+            if (intersectsPointGeometry(point, geometry))
+                entities.push_back(entityIdx);
+        }
     }
 
     // No leaf. Check both children nodes.
     else
     {
-        intersectingEntities(point, tree, bBox.child0, entities);
-        intersectingEntities(point, tree, bBox.child1, entities);
+        intersectingEntities(point, tree, bBox.child0, entities, isCartesian);
+        intersectingEntities(point, tree, bBox.child1, entities, isCartesian);
     }
 }
 
