@@ -106,7 +106,14 @@ public:
 };
 
 //! The variables living on the faces
-SET_TYPE_PROP(StaggeredFreeFlowModel, FaceVariables, StaggeredFaceVariables<TypeTag>);
+SET_PROP(StaggeredFreeFlowModel, FaceVariables)
+{
+private:
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    using type = StaggeredFaceVariables<FacePrimaryVariables, GridView::dimension>;
+};
 
 //! Boundary types at a single degree of freedom
 SET_PROP(StaggeredFreeFlowModel, BoundaryTypes)
