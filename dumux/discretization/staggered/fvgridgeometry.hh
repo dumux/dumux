@@ -158,6 +158,16 @@ public:
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
     //! export the grid view type
     using GridView = GV;
+    //! export the dof type indices
+    using DofTypeIndices = typename Traits::DofTypeIndices;
+
+    //! return a integral constant for cell center dofs
+    static constexpr auto cellCenterIdx()
+    { return typename DofTypeIndices::CellCenterIdx{}; }
+
+    //! return a integral constant for face dofs
+    static constexpr auto faceIdx()
+    { return typename DofTypeIndices::FaceIdx{}; }
 
     using CellCenterFVGridGeometryType = CellCenterFVGridGeometry<ThisType>;
     using FaceFVGridGeometryType = FaceFVGridGeometry<ThisType>;
