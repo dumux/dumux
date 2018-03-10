@@ -119,8 +119,8 @@ public:
     { return gravity_; }
 
     //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
-    template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::staggered, void>::type
+    template <class G = FVGridGeometry>
+    typename std::enable_if<G::discMethod == DiscretizationMethod::staggered, void>::type
     applyInititalFaceSolution(SolutionVector& sol,
                               const SubControlVolumeFace& scvf,
                               const PrimaryVariables& initSol) const
