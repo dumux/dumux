@@ -52,6 +52,8 @@
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
 
+#include <dumux/discretization/staggered/gridvariablestraits.hh>
+
 namespace Dumux {
 
 // forward declarations
@@ -63,10 +65,19 @@ namespace Properties
 NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel));
 
 //! Set the default global face variables cache vector class
-SET_TYPE_PROP(StaggeredModel, GridFaceVariables, StaggeredGridFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache)>);
+SET_PROP(StaggeredModel, GridFaceVariables)
+{
+private:
+    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache);
 
-//! Set the default element face variables
-SET_TYPE_PROP(StaggeredModel, ElementFaceVariables, StaggeredElementFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache)>);
+    using Traits = StaggeredGridFaceVariablesTraits<FaceVariables, Problem>;
+
+public:
+    using type = StaggeredGridFaceVariables<FVGridGeometry, Traits, enableCache>;
+};
 
 //! Cache the face variables per default
 SET_BOOL_PROP(StaggeredModel, EnableGridFaceVariablesCache, true);

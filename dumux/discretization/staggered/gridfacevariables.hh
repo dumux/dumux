@@ -24,9 +24,6 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GRID_FACEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GRID_FACEVARIABLES_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/staggered/facesolution.hh>
-
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 
@@ -36,7 +33,7 @@ namespace Dumux {
  * \ingroup StaggeredDiscretization
  * \brief Face variables cache class for staggered models
  */
-template<class TypeTag, bool enableGlobalFaceVarsCache>
+template<class FVGridGeometry, class Traits, bool enableGlobalFaceVarsCache>
 class StaggeredGridFaceVariables;
 
 /*!
@@ -44,29 +41,26 @@ class StaggeredGridFaceVariables;
  * \brief Face variables cache class for staggered models.
           Specialization in case of storing the face variables.
  */
-template<class TypeTag>
-class StaggeredGridFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/true>
+template<class FVGridGeometry, class Traits>
+class StaggeredGridFaceVariables<FVGridGeometry, Traits, /*enableGlobalFaceVarsCache*/true>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IndexType = typename GridView::IndexSet::IndexType;
-
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::FaceIdx faceIdx;
+    using ThisType = StaggeredGridFaceVariables<FVGridGeometry, Traits, true>;
+    using IndexType = typename FVGridGeometry::GridView::IndexSet::IndexType;
+    using Problem = typename Traits::Problem;
 
 public:
     //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
+    using LocalView = typename Traits::template LocalView<FVGridGeometry, ThisType, true>;
+    //! export the type of the face variables
+    using FaceVariables = typename Traits::FaceVariables;
 
     StaggeredGridFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     //! Update all face variables
-    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
+    template<class SolutionVector>
+    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& faceSol)
     {
-        const auto& faceSol = sol[faceIdx];
+
         faceVariables_.resize(fvGridGeometry.numScvf());
 
         for(auto&& element : elements(fvGridGeometry.gridView()))
@@ -102,20 +96,22 @@ private:
  * \brief Face variables cache class for staggered models.
           Specialization in case of not storing the face variables.
  */
-template<class TypeTag>
-class StaggeredGridFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/false>
+template<class FVGridGeometry, class Traits>
+class StaggeredGridFaceVariables<FVGridGeometry, Traits, /*enableGlobalFaceVarsCache*/false>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using ThisType = StaggeredGridFaceVariables<FVGridGeometry, Traits, false>;
+    using Problem = typename Traits::Problem;
 
 public:
     //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
+    using LocalView = typename Traits::template LocalView<FVGridGeometry, ThisType, false>;
+    //! export the type of the face variables
+    using FaceVariables = typename Traits::FaceVariables;
 
     StaggeredGridFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     //! Do nothing here.
+    template<class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
     const Problem& problem() const

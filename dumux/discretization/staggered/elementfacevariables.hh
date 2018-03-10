@@ -24,8 +24,6 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_ELEMENTFACEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_ELEMENTFACEVARIABLES_HH
 
-#include <dumux/common/properties.hh>
-
 namespace Dumux
 {
 
@@ -33,7 +31,7 @@ namespace Dumux
  * \ingroup StaggeredDiscretization
  * \brief Base class for the face variables vector
  */
-template<class TypeTag, bool enableGridFaceVariablesCache>
+template<class FVGridGeometry, class GridFaceVariables, bool enableGridFaceVariablesCache>
 class StaggeredElementFaceVariables
 {};
 
@@ -41,17 +39,15 @@ class StaggeredElementFaceVariables
  * \ingroup StaggeredDiscretization
  * \brief Class for the face variables vector. Specialization for the case of storing the face variables globally.
  */
-template<class TypeTag>
-class StaggeredElementFaceVariables<TypeTag, /*enableGridFaceVariablesCache*/true>
+template<class FVGridGeometry, class GridFaceVariables>
+class StaggeredElementFaceVariables<FVGridGeometry, GridFaceVariables, /*enableGridFaceVariablesCache*/true>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
-    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using IndexType = typename GridView::IndexSet::IndexType;
+    using FaceVariables = typename GridFaceVariables::FaceVariables;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
 
 public:
 
@@ -69,6 +65,7 @@ public:
 
     //! For compatibility reasons with the case of not storing the face vars.
     //! function to be called before assembling an element, preparing the vol vars within the stencil
+    template<class SolutionVector>
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
@@ -76,6 +73,7 @@ public:
 
     //! Binding of an element, prepares only the face variables of the element
     //! specialization for Staggered models
+    template<class SolutionVector>
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
@@ -95,21 +93,17 @@ private:
  * \ingroup StaggeredDiscretization
  * \brief Class for the face variables vector. Specialization for the case of not storing the face variables globally.
  */
-template<class TypeTag>
-class StaggeredElementFaceVariables<TypeTag, /*enableGridFaceVariablesCache*/false>
+template<class FVGridGeometry, class GridFaceVariables>
+class StaggeredElementFaceVariables<FVGridGeometry, GridFaceVariables, /*enableGridFaceVariablesCache*/false>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
-    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using IndexType = typename GridView::IndexSet::IndexType;
+    using FaceVariables = typename GridFaceVariables::FaceVariables;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
 
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
+    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
 public:
 
@@ -133,6 +127,7 @@ public:
 
     //! For compatibility reasons with the case of not storing the vol vars.
     //! function to be called before assembling an element, preparing the vol vars within the stencil
+    template<class SolutionVector>
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
@@ -149,6 +144,7 @@ public:
 
     //! Binding of an element, prepares only the face variables of the element
     //! specialization for Staggered models
+    template<class SolutionVector>
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
