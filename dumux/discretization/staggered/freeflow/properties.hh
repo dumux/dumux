@@ -83,7 +83,7 @@ SET_PROP(StaggeredFreeFlowModel, FVGridGeometry)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    using DofTypeIndicesType = typename GET_PROP(TypeTag, DofTypeIndices);
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
 
     struct Traits : public DefaultMapperTraits<GridView>
@@ -92,6 +92,7 @@ private:
         using SubControlVolumeFace = FreeFlowStaggeredSubControlVolumeFace<GridView>;
         using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
         using GeometryHelper = FreeFlowStaggeredGeometryHelper<GridView>;
+        using DofTypeIndices = DofTypeIndicesType;
 
         template<class FVGridGeometry>
         using ConnectivityMap = StaggeredFreeFlowConnectivityMap<FVGridGeometry, DofTypeIndices>;
