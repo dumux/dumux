@@ -32,6 +32,30 @@
 
 namespace Dumux
 {
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Default traits to be used in conjuntion
+ *        with the dual grid nodal index set.
+ *
+ * \tparam GV The grid view type
+ */
+template<class GV>
+struct NodalIndexSetDefaultTraits
+{
+    using GridView = GV;
+    using GridIndexType = typename GV::IndexSet::IndexType;
+    using LocalIndexType = std::uint8_t;
+
+    //! per default, we use dynamic data containers (iv size unknown)
+    template< class T > using NodalScvDataStorage = std::vector< T >;
+    template< class T > using NodalScvfDataStorage = std::vector< T >;
+
+    //! store data on neighbors of scvfs in static containers if possible
+    template< class T >
+    using ScvfNeighborDataStorage = typename std::conditional_t< (int(GV::dimension)<int(GV::dimensionworld)),
+                                                                 std::vector< T >,
+                                                                 Dune::ReservedVector< T, 2 > >;
+};
 
 /*!
  * \ingroup CCMpfaDiscretization
