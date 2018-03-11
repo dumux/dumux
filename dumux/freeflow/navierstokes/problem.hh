@@ -62,11 +62,10 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using ParentType = NavierStokesParentProblem<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Grid = typename GridView::Grid;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -74,10 +73,10 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
-        dim = Grid::dimension,
-        dimWorld = Grid::dimensionworld
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
       };
-    // TODO: dim or dimWorld appropriate here?
+
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:

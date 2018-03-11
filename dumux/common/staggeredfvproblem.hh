@@ -55,23 +55,15 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
-
     using CoordScalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, GridView::dimensionworld>;
 
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
+    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
+    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
 public:
     /*!
