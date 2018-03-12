@@ -24,9 +24,6 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GRID_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GRID_FLUXVARSCACHE_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/staggered/elementfluxvariablescache.hh>
-
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 
@@ -36,7 +33,7 @@ namespace Dumux {
  * \ingroup StaggeredDiscretization
  * \brief Flux variables cache class for staggered models
  */
-template<class TypeTag, bool EnableGridFluxVariablesCache>
+template<class FVGridGeometry, class Traits, bool EnableGridFluxVariablesCache>
 class StaggeredGridFluxVariablesCache;
 
 /*!
@@ -44,24 +41,18 @@ class StaggeredGridFluxVariablesCache;
  * \brief Flux variables cache class for staggered models.
           Specialization in case of storing the flux cache.
  */
-template<class TypeTag>
-class StaggeredGridFluxVariablesCache<TypeTag, true>
+template<class FVGridGeometry, class Traits>
+class StaggeredGridFluxVariablesCache<FVGridGeometry, Traits, true>
 {
-    // the local class needs access to the problem
-    friend StaggeredElementFluxVariablesCache<TypeTag, true>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using ThisType = StaggeredGridFluxVariablesCache<FVGridGeometry, Traits, true>;
+    using Problem = typename Traits::Problem;
+    using IndexType = typename FVGridGeometry::GridView::IndexSet::IndexType;
 
 public:
+    //! export the type of the flux variables cache
+    using FluxVariablesCache = typename Traits::FluxVariablesCache;
     //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using LocalView = typename Traits::template LocalView<FVGridGeometry, ThisType, true>;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = true;
@@ -69,6 +60,7 @@ public:
     StaggeredGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
+    template<class GridVolumeVariables, class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
@@ -94,13 +86,14 @@ public:
     const Problem& problem() const
     { return *problemPtr_; }
 
-private:
     // access operators in the case of caching
     const FluxVariablesCache& operator [](IndexType scvfIdx) const
     { return fluxVarsCache_[scvfIdx]; }
 
     FluxVariablesCache& operator [](IndexType scvfIdx)
     { return fluxVarsCache_[scvfIdx]; }
+
+private:
 
     const Problem* problemPtr_;
 
@@ -113,16 +106,17 @@ private:
  * \brief Flux variables cache class for staggered models.
           Specialization in case of not storing the flux cache.
  */
-template<class TypeTag>
-class StaggeredGridFluxVariablesCache<TypeTag, false>
+template<class FVGridGeometry, class Traits>
+class StaggeredGridFluxVariablesCache<FVGridGeometry, Traits, false>
 {
-    // the local class needs access to the problem
-    friend StaggeredElementFluxVariablesCache<TypeTag, false>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ThisType = StaggeredGridFluxVariablesCache<FVGridGeometry, Traits, false>;
+    using Problem = typename Traits::Problem;
 
 public:
+    //! export the type of the flux variables cache
+    using FluxVariablesCache = typename Traits::FluxVariablesCache;
     //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using LocalView = typename Traits::template LocalView<FVGridGeometry, ThisType, false>;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = false;

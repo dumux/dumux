@@ -107,10 +107,21 @@ SET_PROP(StaggeredModel, ElementVolumeVariables)
 };
 
 //! Set the global flux variables cache vector class
-SET_TYPE_PROP(StaggeredModel, GridFluxVariablesCache, StaggeredGridFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
-
+SET_PROP(StaggeredModel, GridFluxVariablesCache)
+{
+private:
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Traits = StaggeredGridFluxVariablesCacheTraits<FluxVariablesCache, Problem>;
+public:
+    using type = StaggeredGridFluxVariablesCache<FVGridGeometry, Traits, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>;
+};
 //! Set the local flux variables cache vector class
-SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, StaggeredElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
+SET_PROP(StaggeredModel, ElementFluxVariablesCache)
+{
+    using type = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
+};
 
 //! Set the face solution type
 SET_PROP(StaggeredModel, StaggeredFaceSolution)

@@ -24,7 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_FLUXVARSCACHE_HH
 
-#include <dumux/common/properties.hh>
+#include <algorithm>
+#include <iterator>
 
 namespace Dumux
 {
@@ -33,7 +34,7 @@ namespace Dumux
  * \ingroup StaggeredDiscretization
  * \brief Base class for the stencil local flux variables cache for the staggered model
  */
-template<class TypeTag, bool EnableGridFluxVariablesCache>
+template<class FVGridGeometry, class GridFluxVariablesCache, bool EnableGridFluxVariablesCache>
 class StaggeredElementFluxVariablesCache;
 
 /*!
@@ -41,17 +42,14 @@ class StaggeredElementFluxVariablesCache;
  * \brief Class for the stencil local flux variables cache for the staggered model.
           Specialization for the case of storing the fluxvars cache globally.
  */
-template<class TypeTag>
-class StaggeredElementFluxVariablesCache<TypeTag, true>
+template<class FVGridGeometry, class GridFluxVariablesCache>
+class StaggeredElementFluxVariablesCache<FVGridGeometry, GridFluxVariablesCache, true>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView =typename FVGridGeometry::GridView;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FluxVariablesCache = typename GridFluxVariablesCache::FluxVariablesCache;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
@@ -59,16 +57,19 @@ public:
     : gridFluxVarsCachePtr_(&global) {}
 
     //! Specialization for the global caching being enabled - do nothing here
+    template<class ElementVolumeVariables>
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars) {}
 
     //! Specialization for the global caching being enabled - do nothing here
+    template<class ElementVolumeVariables>
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars) {}
 
     //! Specialization for the global caching being enabled - do nothing here
+    template<class ElementVolumeVariables>
     void bindScvf(const Element& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
@@ -91,17 +92,14 @@ private:
  * \brief Class for the stencil local flux variables cache for the staggered model.
           Specialization for the case of not storing the fluxvars cache globally.
  */
-template<class TypeTag>
-class StaggeredElementFluxVariablesCache<TypeTag, false>
+template<class FVGridGeometry, class GridFluxVariablesCache>
+class StaggeredElementFluxVariablesCache<FVGridGeometry, GridFluxVariablesCache, false>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView =typename FVGridGeometry::GridView;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using FluxVariablesCache = typename GridFluxVariablesCache::FluxVariablesCache;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
@@ -110,6 +108,7 @@ public:
 
     //! This function has to be called prior to flux calculations on the element.
     //! Prepares the transmissibilities of the scv faces in an element. The FvGeometry is assumed to be bound.
+    template<class ElementVolumeVariables>
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars)
@@ -131,6 +130,7 @@ public:
 
     //! This function is called by the StaggeredLocalResidual before flux calculations during assembly.
     //! Prepares the transmissibilities of the scv faces in the stencil. The FvGeometries are assumed to be bound.
+    template<class ElementVolumeVariables>
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
@@ -174,6 +174,7 @@ public:
         }
     }
 
+    template<class ElementVolumeVariables>
     void bindScvf(const Element& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
