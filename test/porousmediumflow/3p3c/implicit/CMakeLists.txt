@@ -26,7 +26,7 @@ dune_add_test(NAME test_3p3cni_columnxylol_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/column3p3cnibox-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/columnxylol_box-00061.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/columnxylol_box-00062.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_3p3cni_columnxylol_box test_columnxylol_fv.input -Problem.Name columnxylol_box")
 
 dune_add_test(NAME test_3p3cni_columnxylol_tpfa
