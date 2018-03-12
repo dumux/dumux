@@ -49,19 +49,15 @@
 
 namespace Dumux {
 
-//! helper function detecting if an assembler supports partial reassembly
-template<class Assembler>
-auto supportsPartialReassembly(const Assembler& assembler) noexcept
+//! helper struct detecting if an assembler supports partial reassembly
+struct supportsPartialReassembly
 {
-    using SolutionVector = typename Assembler::ResidualType;
-    using Reassembler = PartialReassembler<Assembler>;
-
-    return isValid([](auto&& a) -> decltype(
-        a.assembleJacobianAndResidual(std::declval<Assembler>(),
-                                      std::declval<const SolutionVector&>(),
-                                      std::declval<const Reassembler*>())
-    ){})(assembler);
-}
+    template<class Assembler>
+    auto operator()(Assembler&& a)
+    -> decltype(a.assembleJacobianAndResidual(std::declval<const typename Assembler::ResidualType&>(),
+                                              std::declval<const PartialReassembler<Assembler>*>()))
+    {};
+};
 
 /*!
  * \ingroup Nonlinear
@@ -759,7 +755,7 @@ private:
     //! assembleLinearSystem_ for assemblers that support partial reassembly
     template<class A>
     auto assembleLinearSystem_(const A& assembler, const SolutionVector& uCurrentIter)
-    -> typename std::enable_if_t<decltype(supportsPartialReassembly(assembler))::value, void>
+    -> typename std::enable_if_t<decltype(isValid(supportsPartialReassembly())(assembler))::value, void>
     {
         assembler_->assembleJacobianAndResidual(uCurrentIter, partialReassembler_.get());
     }
@@ -767,7 +763,7 @@ private:
     //! assembleLinearSystem_ for assemblers that don't support partial reassembly
     template<class A>
     auto assembleLinearSystem_(const A& assembler, const SolutionVector& uCurrentIter)
-    -> typename std::enable_if_t<!decltype(supportsPartialReassembly(assembler))::value, void>
+    -> typename std::enable_if_t<!decltype(isValid(supportsPartialReassembly())(assembler))::value, void>
     {
         assembler_->assembleJacobianAndResidual(uCurrentIter);
     }
