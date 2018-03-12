@@ -103,6 +103,19 @@ namespace Properties
 //! Type of the jacobian matrix needed for compatibility with implicit models for the amg backend
 SET_TYPE_PROP(SequentialModel, JacobianMatrix, typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix));
 
+//! Dummy model traits for compatibility with the rest of dumux
+//! until the sequential models are incorporated into the general framework
+SET_PROP(SequentialModel, ModelTraits)
+{
+private:
+    struct DummyTraits
+    {
+        static constexpr int numEq() { return GET_PROP_VALUE(TypeTag, NumEq); }
+    };
+public:
+    using type = DummyTraits;
+};
+
 //! Use the leaf grid view if not defined otherwise
 SET_PROP(SequentialModel, GridView)
 {

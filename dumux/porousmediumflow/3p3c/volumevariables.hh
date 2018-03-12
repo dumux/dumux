@@ -59,8 +59,8 @@ class ThreePThreeCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeT
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
+        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
+        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
 
         wCompIdx = Indices::wCompIdx,
         gCompIdx = Indices::gCompIdx,

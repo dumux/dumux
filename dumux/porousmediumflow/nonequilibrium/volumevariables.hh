@@ -51,7 +51,7 @@ class NonEquilibriumVolumeVariablesImplementation;
 
 template <class TypeTag>
 using NonEquilibriumVolumeVariables =
-NonEquilibriumVolumeVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium), GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium)>;
+NonEquilibriumVolumeVariablesImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableChemicalNonEquilibrium(), GET_PROP_TYPE(TypeTag, ModelTraits)::enableThermalNonEquilibrium()>;
 
 template <class TypeTag>
 class NonEquilibriumVolumeVariablesImplementation<TypeTag, false/*enableChemicalNonEquilibrium*/, false/*enableThermalNonEquilibrium*/>
@@ -111,7 +111,7 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, /*enableChemicalNonEq
     using ParameterCache = typename FluidSystem::ParameterCache;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
     enum { nusseltFormulation = GET_PROP_VALUE(TypeTag, NusseltFormulation)} ;
     enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
     enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
@@ -290,8 +290,8 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalN
     using ParameterCache = typename FluidSystem::ParameterCache;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents() };
+    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
     enum { wPhaseIdx = FluidSystem::wPhaseIdx };
     enum { nPhaseIdx = FluidSystem::nPhaseIdx };
     enum { nCompIdx = FluidSystem::nCompIdx } ;
@@ -507,8 +507,8 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalN
     using ParameterCache = typename FluidSystem::ParameterCache;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents() };
+    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
     enum { wPhaseIdx = FluidSystem::wPhaseIdx };
     enum { nPhaseIdx = FluidSystem::nPhaseIdx };
     enum { sPhaseIdx = FluidSystem::sPhaseIdx };

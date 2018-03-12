@@ -64,8 +64,8 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box >
     enum { dimWorld = GridView::dimensionworld} ;
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag,NumComponents)
+        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
+        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()
     };
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;

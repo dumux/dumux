@@ -88,7 +88,7 @@ class StaggeredLocalAssembler<TypeTag,
     using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
     using FaceSolution = typename GET_PROP_TYPE(TypeTag, StaggeredFaceSolution);
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
 
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);

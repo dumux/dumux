@@ -115,6 +115,24 @@
 
 namespace Dumux
 {
+/*!
+ * \ingroup RichardsModel
+ * \brief Specifies a number properties of the Richards model.
+ *
+ * \tparam enableDiff specifies if diffusion of water in air is to be considered.
+ */
+template<bool enableDiff>
+struct RichardsModelTraits
+{
+    static constexpr int numEq() { return 1; }
+    static constexpr int numPhases() { return 2; }
+    static constexpr int numComponents() { return 1; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return enableDiff; }
+    static constexpr bool enableEnergyBalance() { return false; }
+};
+
 // \{
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal Richards model.
@@ -132,14 +150,6 @@ NEW_TYPE_TAG(RichardsNI, INHERITS_FROM(Richards, NonIsothermal));
 //////////////////////////////////////////////////////////////////
 // Properties values
 //////////////////////////////////////////////////////////////////
-//! Number of equations required by the model
-SET_INT_PROP(Richards, NumEq, 1);
-
-//! Number of fluid phases considered
-SET_INT_PROP(Richards, NumPhases, 2);
-
-//! Number of components considered (only water)
-SET_INT_PROP(Richards, NumComponents, 1);
 
 //! The local residual operator
 SET_TYPE_PROP(Richards, LocalResidual, RichardsLocalResidual<TypeTag>);
@@ -156,18 +166,15 @@ public:
     using type = RichardsVtkOutputFields<Indices, enableWaterDiffusionInAir>;
 };
 
+//! The model traits
+SET_TYPE_PROP(Richards, ModelTraits, RichardsModelTraits<GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir)>);
+
 //! The class for the volume averaged quantities
 SET_TYPE_PROP(Richards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
-
-//! Enable advection
-SET_BOOL_PROP(Richards, EnableAdvection, true);
 
 //! The default richards model computes no diffusion in the air phase
 //! Turning this on leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
 SET_BOOL_PROP(Richards, EnableWaterDiffusionInAir, false);
-
-//! we need to set this to true so that we can calculate the WaterDiffusionInAir whenever we want and still use the same fluxVarsCache for all models
-SET_BOOL_PROP(Richards, EnableMolecularDiffusion, GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir));
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(Richards, EffectiveDiffusivityModel,
@@ -175,9 +182,6 @@ SET_TYPE_PROP(Richards, EffectiveDiffusivityModel,
 
 //! The default is not to use the kelvin equation for the water vapor pressure (dependency on pc)
 SET_BOOL_PROP(Richards, UseKelvinEquation, false);
-
-//! Isothermal model by default
-SET_BOOL_PROP(Richards, EnableEnergyBalance, false);
 
 //! The class with all index definitions for the model
 SET_TYPE_PROP(Richards, Indices, RichardsIndices);
@@ -187,7 +191,7 @@ SET_PROP(Richards, PrimaryVariables)
 {
 private:
     using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_VALUE(TypeTag, NumEq)>;
+                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
@@ -242,17 +246,17 @@ public:
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
-//set isothermal VolumeVariables
+//! set isothermal model traits
+SET_TYPE_PROP(RichardsNI, IsothermalModelTraits, RichardsModelTraits<GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir)>);
+
+//! set isothermal VolumeVariables
 SET_TYPE_PROP(RichardsNI, IsothermalVolumeVariables, RichardsVolumeVariables<TypeTag>);
 
-//set isothermal LocalResidual
+//! set isothermal LocalResidual
 SET_TYPE_PROP(RichardsNI, IsothermalLocalResidual, RichardsLocalResidual<TypeTag>);
 
-//set isothermal Indices
+//! set isothermal Indices
 SET_TYPE_PROP(RichardsNI, IsothermalIndices, RichardsIndices);
-
-//set isothermal NumEq
-SET_INT_PROP(RichardsNI, IsothermalNumEq, 1);
 
 //! Set the vtk output fields specific to this model
 SET_PROP(RichardsNI, IsothermalVtkOutputFields)

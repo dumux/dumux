@@ -47,6 +47,7 @@ NEW_PROP_TAG(Indices);                //!< Enumerations for the numeric model
 NEW_PROP_TAG(PrimaryVariables);       //!< A vector of primary variables
 NEW_PROP_TAG(NumEqVector);            //!< A vector of size number equations that can be used for Neumann fluxes, sources, residuals, ...
 NEW_PROP_TAG(GridView);               //!< The type of the grid view according to the grid type
+NEW_PROP_TAG(ModelTraits);            //!< Traits class encapsulating model specifications
 NEW_PROP_TAG(Problem);                //!< Property to specify the type of a problem which has to be solved
 NEW_PROP_TAG(PointSource);            //!< Property defining the type of point source used
 NEW_PROP_TAG(PointSourceHelper);      //!< Property defining the class that computes which sub control volume point sources belong to
@@ -131,7 +132,7 @@ NEW_PROP_TAG(UseKelvinEquation);                   //!< If we use Kelvin equatio
 ////////////////////////////////////////////////////////////////////////////////
 // Properties used by models involving mineralization:
 ////////////////////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(NumSPhases);
+NEW_PROP_TAG(NonMineralizationModelTraits);
 NEW_PROP_TAG(NonMineralizationVtkOutputFields);
 NEW_PROP_TAG(NonMineralizationVolumeVariables);
 
@@ -143,6 +144,7 @@ NEW_PROP_TAG(IsothermalVolumeVariables);
 NEW_PROP_TAG(IsothermalLocalResidual);
 NEW_PROP_TAG(IsothermalIndices);
 NEW_PROP_TAG(IsothermalNumEq);
+NEW_PROP_TAG(IsothermalModelTraits);
 
 // specify if we evaluate the permeability in the volume (for discontinuous fields)
 // or at the scvf center for analytical permeability fields (e.g. convergence studies)
@@ -195,7 +197,7 @@ NEW_PROP_TAG(PressureFormulation); //! the formulation of the pressure e.g most 
 /////////////////////////////////////////////////////////////
 // Properties used by the nonequilibrium model
 /////////////////////////////////////////////////////////////
-
+NEW_PROP_TAG(EquilibriumModelTraits);
 NEW_PROP_TAG(EquilibriumLocalResidual);
 NEW_PROP_TAG(EquilibriumIndices);
 NEW_PROP_TAG(EquilibriumVtkOutputFields);

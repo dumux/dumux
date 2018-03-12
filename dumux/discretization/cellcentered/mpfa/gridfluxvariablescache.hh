@@ -49,6 +49,7 @@ class CCMpfaGridFluxVariablesCache;
 template<class TypeTag>
 class CCMpfaGridFluxVariablesCache<TypeTag, true>
 {
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -71,12 +72,12 @@ class CCMpfaGridFluxVariablesCache<TypeTag, true>
     //! physics traits class to define the data handles
     struct PhysicsTraits
     {
-        static constexpr bool enableAdvection = GET_PROP_VALUE(TypeTag, EnableAdvection);
-        static constexpr bool enableMolecularDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
-        static constexpr bool enableHeatConduction = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
+        static constexpr bool enableAdvection = ModelTraits::enableAdvection();
+        static constexpr bool enableMolecularDiffusion = ModelTraits::enableMolecularDiffusion();
+        static constexpr bool enableHeatConduction = ModelTraits::enableEnergyBalance();
 
-        static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-        static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+        static constexpr int numPhases = ModelTraits::numPhases();
+        static constexpr int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
     };
 
 public:

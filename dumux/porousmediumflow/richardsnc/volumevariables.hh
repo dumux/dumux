@@ -327,7 +327,7 @@ class RichardsNCVolumeVariables : public RichardsBaseVolumeVariables<TypeTag>
 
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static const int dimWorld = GridView::dimensionworld;
-    static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static const int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using Element = typename GridView::template Codim<0>::Entity;

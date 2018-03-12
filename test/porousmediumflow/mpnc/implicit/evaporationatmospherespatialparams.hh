@@ -162,7 +162,7 @@ class EvaporationAtmosphereSpatialParams : public FVSpatialParams<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum { dimWorld = GridView::dimensionworld };
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);

@@ -65,6 +65,7 @@
 #include <dumux/material/spatialparams/fv.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
+#include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 
@@ -74,6 +75,20 @@
 
 namespace Dumux
 {
+/*!
+ * \ingroup TwoPModel
+ * \brief Specifies a number properties of two-phase models.
+ */
+struct TwoPModelTraits
+{
+    static constexpr int numEq() { return 2; }
+    static constexpr int numPhases() { return 2; }
+    static constexpr int numComponents() { return 2; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return false; }
+    static constexpr bool enableEnergyBalance() { return false; }
+};
 
 ////////////////////////////////
 // properties
@@ -93,16 +108,13 @@ NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP, NonIsothermal));
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal two-phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_INT_PROP(TwoP, NumEq, 2);                                                 //!< Set the number of equations to 2
-SET_INT_PROP(TwoP, NumPhases, 2);                                             //!< The number of phases in the 2p model is 2
-SET_INT_PROP(TwoP, NumComponents, 2);                                         //!< The number of components in the 2p model is 2
 SET_INT_PROP(TwoP, Formulation, TwoPFormulation::pwsn);                       //!< Set the default formulation to pWsN
-SET_BOOL_PROP(TwoP, EnableAdvection, true);                                   //!< Enable advection
-SET_BOOL_PROP(TwoP, EnableMolecularDiffusion, false);                         //!< The two-phase model has no molecular diffusion
-SET_BOOL_PROP(TwoP, EnableEnergyBalance, false);                              //!< Isothermal model (non-isothermal type tag is below)
 SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //!< Use the immiscible local residual operator for the 2p model
 SET_TYPE_PROP(TwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);           //!< the VolumeVariables property
 SET_TYPE_PROP(TwoP, SpatialParams, FVSpatialParams<TypeTag>);                 //!< The spatial parameters. Use FVSpatialParams by default.
+
+//! The model traits class
+SET_TYPE_PROP(TwoP, ModelTraits, TwoPModelTraits);
 
 //! Set the vtk output fields specific to the twop model
 SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)>);
@@ -130,9 +142,11 @@ public:
 ////////////////////////////////////////////////////////
 // properties for the non-isothermal two-phase model
 ////////////////////////////////////////////////////////
-SET_INT_PROP(TwoPNI, IsothermalNumEq, 2);                                         //!< set isothermal NumEq
 SET_TYPE_PROP(TwoPNI, IsothermalVolumeVariables, TwoPVolumeVariables<TypeTag>);   //!< set isothermal VolumeVariables
 SET_TYPE_PROP(TwoPNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>); //!< set isothermal LocalResidual
+
+//! The isothermal model traits class
+SET_TYPE_PROP(TwoPNI, IsothermalModelTraits, TwoPModelTraits);
 
 //! Set the vtk output fields specific to the isothermal twop model
 SET_TYPE_PROP(TwoPNI, IsothermalVtkOutputFields, TwoPVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)>);

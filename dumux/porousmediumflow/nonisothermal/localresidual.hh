@@ -34,7 +34,7 @@ template<class TypeTag, bool enableEneryBalance>
 class EnergyLocalResidualImplementation;
 
 template<class TypeTag>
-using EnergyLocalResidual = EnergyLocalResidualImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+using EnergyLocalResidual = EnergyLocalResidualImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>;
 
 /*!
  * \ingroup NIModel

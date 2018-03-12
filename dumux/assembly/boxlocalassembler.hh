@@ -58,7 +58,7 @@ class BoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Im
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
 
 public:
 
@@ -223,7 +223,7 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tr
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
     enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
@@ -342,7 +342,7 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fa
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
     enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
 
 public:

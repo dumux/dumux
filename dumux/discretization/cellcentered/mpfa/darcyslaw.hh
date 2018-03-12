@@ -91,7 +91,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     {
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
-        static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+        static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
 
         using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
         using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;

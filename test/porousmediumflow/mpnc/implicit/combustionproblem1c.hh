@@ -99,7 +99,6 @@ SET_INT_PROP(CombustionOneComponentTypeTag, NumEnergyEqSolid, 1);
 
 // by default chemical non equilibrium is enabled in the nonequil model, switch that off here
 SET_BOOL_PROP(CombustionOneComponentTypeTag, EnableChemicalNonEquilibrium, false);
-SET_INT_PROP(CombustionOneComponentTypeTag, NumEqBalance, GET_PROP_VALUE(TypeTag, NumPhases)+GET_PROP_VALUE(TypeTag, NumPhases));
 //#################
 
 }
@@ -131,8 +130,8 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
     enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
-    enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
+    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
     enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
     enum {conti00EqIdx = Indices::conti0EqIdx};

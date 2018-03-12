@@ -234,7 +234,7 @@ class VtkOutputModule
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
     static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
     static constexpr int dofCodim = isBox ? dim : 0;
 

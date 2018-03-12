@@ -44,10 +44,11 @@ class MineralizationLocalResidual: public CompositionalLocalResidual<TypeTag>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numSPhases = GET_PROP_VALUE(TypeTag, NumSPhases);
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr int numPhases = ModelTraits::numPhases();
+    static constexpr int numSPhases = ModelTraits::numSPhases();
+    static constexpr int numComponents = ModelTraits::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     enum { conti0EqIdx = Indices::conti0EqIdx };

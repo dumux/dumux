@@ -106,6 +106,25 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup TwoPNCModel
+ * \brief Specifies a number properties of two-phase n-component models.
+ *
+ * \ţparam nComp the number of components to be considered.
+ */
+template<int nComp>
+struct TwoPNCModelTraits
+{
+    static constexpr int numEq() { return nComp; }
+    static constexpr int numPhases() { return 2; }
+    static constexpr int numComponents() { return nComp; }
+    static constexpr int numMajorComponents() { return 2; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return true; }
+    static constexpr bool enableEnergyBalance() { return false; }
+};
+
 namespace Properties
 {
 //////////////////////////////////////////////////////////////////
@@ -122,7 +141,7 @@ SET_PROP(TwoPNC, PrimaryVariables)
 {
 private:
     using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_VALUE(TypeTag, NumEq)>;
+                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
@@ -130,6 +149,17 @@ public:
 SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);         //!< The primary variable switch for the 2pnc model
 SET_TYPE_PROP(TwoPNC, VolumeVariables, TwoPNCVolumeVariables<TypeTag>);                     //!< the VolumeVariables property
 SET_TYPE_PROP(TwoPNC, SpatialParams, FVSpatialParams<TypeTag>);                             //!< Use the FVSpatialParams by default
+
+//! Set the model traits
+SET_PROP(TwoPNC, ModelTraits)
+{
+private:
+    //! we use the number of components specified by the fluid system here
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
+public:
+    using type = TwoPNCModelTraits<FluidSystem::numComponents>;
+};
 
 //! Set the vtk output fields specific to this model
 SET_PROP(TwoPNC, VtkOutputFields)
@@ -144,15 +174,10 @@ public:
 
 SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //!< Use the compositional local residual
 
-SET_INT_PROP(TwoPNC, NumComponents, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);    //!< Use the number of components of the fluid system
 SET_INT_PROP(TwoPNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents); //!< Per default, no component mass balance is replaced
-SET_INT_PROP(TwoPNC, NumEq, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);            //!< We solve one equation per component
 SET_INT_PROP(TwoPNC, Formulation, TwoPNCFormulation::pwsn);                                 //!< Default formulation is pw-Sn, overwrite if necessary
 
 SET_BOOL_PROP(TwoPNC, SetMoleFractionsForWettingPhase, true);  //!< Set the primary variables mole fractions for the wetting or non-wetting phase
-SET_BOOL_PROP(TwoPNC, EnableAdvection, true);                  //!< Enable advection
-SET_BOOL_PROP(TwoPNC, EnableMolecularDiffusion, true);         //!< Enable molecular diffusion
-SET_BOOL_PROP(TwoPNC, EnableEnergyBalance, false);             //!< This is the isothermal variant of the model
 SET_BOOL_PROP(TwoPNC, UseMoles, true);                         //!< Use mole fractions in the balance equations by default
 
 //! The indices required by the isothermal 2pnc model
@@ -166,28 +191,6 @@ public:
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(TwoPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-//! The major components belonging to the existing phases, e.g. 2 for water and air being the major components in a liquid-gas-phase system
-SET_PROP(TwoPNC, NumMajorComponents)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-public:
-    static const int value = FluidSystem::numPhases;
-    static_assert(value == 2, "The model is restricted to two phases, thus number of major components must also be two.");
-};
-
-//! We use the number of phases of the fluid system. Make sure it is 2!
-SET_PROP(TwoPNC, NumPhases)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-public:
-    static const int value = FluidSystem::numPhases;
-    static_assert(value == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
-};
 
 //! This model uses the compositional fluid state
 SET_PROP(TwoPNC, FluidState)
@@ -204,6 +207,17 @@ public:
 /////////////////////////////////////////////////
 SET_TYPE_PROP(TwoPNCNI, IsothermalVolumeVariables, TwoPNCVolumeVariables<TypeTag>);     //!< set isothermal VolumeVariables
 SET_TYPE_PROP(TwoPNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);  //!< set isothermal LocalResidual
+
+//! Set the isothermal model traits
+SET_PROP(TwoPNCNI, IsothermalModelTraits)
+{
+private:
+    //! we use the number of components specified by the fluid system here
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
+public:
+    using type = TwoPNCModelTraits<FluidSystem::numComponents>;
+};
 
 //! Set isothermal output fields
 SET_PROP(TwoPNCNI, IsothermalVtkOutputFields)
@@ -234,16 +248,6 @@ private:
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
     using type = ThermalConductivitySomerton<Scalar, Indices>;
-};
-
-//! set isothermal NumEq
-SET_PROP(TwoPNCNI, IsothermalNumEq)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-
-public:
-    static const int value = FluidSystem::numComponents;
 };
 
 } // end namespace Properties

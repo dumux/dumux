@@ -64,12 +64,13 @@ class ThermoChemSpatialParams : public FVSpatialParamsOneP<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using CoordScalar = typename GridView::ctype;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
     enum {
         dimWorld=GridView::dimensionworld,
 
-        numSPhases =  GET_PROP_VALUE(TypeTag, NumSPhases),
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numSPhases =  ModelTraits::numSPhases(),
+        numPhases = ModelTraits::numPhases(),
         cPhaseIdx = FluidSystem::cPhaseIdx,
         hPhaseIdx = FluidSystem::hPhaseIdx
     };

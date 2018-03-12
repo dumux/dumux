@@ -54,7 +54,7 @@ class TwoPOneCLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     // first index for the mass balance
     enum { conti0EqIdx = Indices::conti0EqIdx };
 
-    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static const int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
 
 public:
     //! Use the parent type's constructor

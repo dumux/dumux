@@ -55,7 +55,7 @@ class ThreePVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     enum {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
 
         wPhaseIdx = Indices::wPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,

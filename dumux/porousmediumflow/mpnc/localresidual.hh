@@ -52,7 +52,7 @@ class MPNCLocalResidual : public CompositionalLocalResidual<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
+    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
     enum {phase0NcpIdx = Indices::phase0NcpIdx};
 
 public:

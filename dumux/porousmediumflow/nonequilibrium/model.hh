@@ -46,6 +46,31 @@
  */
 namespace Dumux
 {
+
+/*!
+ * \ingroup PorousmediumNonEquilibriumModel
+ * \brief Specifies a number properties of porous-medium flow non-equilibrium models.
+ *
+ * \tparam ET The model traits of the underlying model assuming equilibrium
+ * \tparam chem Boolean to indicate if chemical non-equilibrium is to be considered
+ * \tparam therm Boolean to indicate if thermal non-equilibrium is to be considered
+ * \tparam numEF Number of energy balance equations to be solved for the fluids
+ * \tparam numES Number of energy balance equations to be solved for the solids
+ */
+template<class ET, bool chem, bool therm, int numEF, int numES>
+struct NonEquilibriumModelTraits : public ET
+{
+    static constexpr int numEq() { return numEnergyEqFluid()+numEnergyEqSolid()+numTransportEq()+ET::numConstraintEq(); }
+    static constexpr int numTransportEq() { return chem ? ET::numPhases()*ET::numComponents() : ET::numPhases(); }
+
+    static constexpr int numEnergyEqFluid() { return therm ? numEF : 0; }
+    static constexpr int numEnergyEqSolid() { return therm ? numES : 0; }
+
+    static constexpr bool enableEnergyBalance() { return ET::enableEnergyBalance() || therm; }
+    static constexpr bool enableThermalNonEquilibrium() { return therm; }
+    static constexpr bool enableChemicalNonEquilibrium() { return chem; }
+};
+
 namespace Properties
 {
 
@@ -58,21 +83,36 @@ NEW_TYPE_TAG(NonEquilibrium);
 // Properties for the non-equilibrium mpnc model
 /////////////////////////////////////////////////
 
+//! Set the model traits
+SET_PROP(NonEquilibrium, ModelTraits)
+{
+private:
+    using EquiTraits = typename GET_PROP_TYPE(TypeTag, EquilibriumModelTraits);
+    static constexpr bool enableTNE = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
+    static constexpr bool enableCNE = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
+    static constexpr int numEF = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid);
+    static constexpr int numES = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
+public:
+    using type = NonEquilibriumModelTraits<EquiTraits, enableCNE, enableTNE, numEF, numES>;
+};
+
+//! Per default, we consider both thermal and chemical non-equilibrium
 SET_BOOL_PROP(NonEquilibrium, EnableThermalNonEquilibrium, true);
-//TODO: make that more logical: when enableEnergyBalance is false, thermalnonequilibrium should also not be computed.
-SET_BOOL_PROP(NonEquilibrium, EnableEnergyBalance, true);
 SET_BOOL_PROP(NonEquilibrium, EnableChemicalNonEquilibrium, true);
 
-SET_INT_PROP(NonEquilibrium, NumEnergyEqFluid, GET_PROP_VALUE(TypeTag, NumPhases));
+//! Default values for the number of energy balance equations
 SET_INT_PROP(NonEquilibrium, NumEnergyEqSolid, 1);
+SET_PROP(NonEquilibrium, NumEnergyEqFluid)
+{
+private:
+    using EquiTraits = typename GET_PROP_TYPE(TypeTag, EquilibriumModelTraits);
+public:
+    static const int value = EquiTraits::numPhases();
+};
 
 SET_TYPE_PROP(NonEquilibrium, EnergyLocalResidual, EnergyLocalResidualNonEquilibrium<TypeTag, GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)>);
 SET_TYPE_PROP(NonEquilibrium, LocalResidual, NonEquilibriumLocalResidual<TypeTag>);
-
-SET_TYPE_PROP(NonEquilibrium, HeatConductionType , FouriersLawNonEquilibrium<TypeTag>);
-
-//! add the energy balances and chemical nonequilibrium numeq = numPhases*numComp+numEnergy
-SET_INT_PROP(NonEquilibrium, NumEq, GET_PROP_VALUE(TypeTag, NumEqBalance) +  GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) + GET_PROP_VALUE(TypeTag, NumEnergyEqSolid));
+SET_TYPE_PROP(NonEquilibrium, HeatConductionType, FouriersLawNonEquilibrium<TypeTag>);
 
 //! indices for non-isothermal models
 SET_PROP(NonEquilibrium, Indices)
@@ -80,11 +120,12 @@ SET_PROP(NonEquilibrium, Indices)
 private:
     using EquilibriumIndices = typename GET_PROP_TYPE(TypeTag, EquilibriumIndices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int numEnergyEquationFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid);
-    static constexpr int numEnergyEquationSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
-    static constexpr int numEquationBalance = GET_PROP_VALUE(TypeTag, NumEqBalance);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    static constexpr int numEF = ModelTraits::numEnergyEqFluid();
+    static constexpr int numES = ModelTraits::numEnergyEqSolid();
+    static constexpr int numEq = ModelTraits::numEq();
 public:
-    using type = NonEquilbriumIndices<EquilibriumIndices, FluidSystem, numEnergyEquationFluid, numEnergyEquationSolid, numEquationBalance, 0>;
+    using type = NonEquilbriumIndices<EquilibriumIndices, FluidSystem, numEF, numES, numEq, 0>;
 };
 
 SET_PROP(NonEquilibrium, FluidState)
@@ -106,13 +147,13 @@ private:
     using EquilibriumVtkOutputFields = typename GET_PROP_TYPE(TypeTag, EquilibriumVtkOutputFields);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-    static constexpr int numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid);
-    static constexpr int numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
+    static constexpr int numEF = GET_PROP_TYPE(TypeTag, ModelTraits)::numEnergyEqFluid();
+    static constexpr int numES = GET_PROP_TYPE(TypeTag, ModelTraits)::numEnergyEqSolid();
 public:
-     using type = NonEquilibriumVtkOutputFields<EquilibriumVtkOutputFields, FluidSystem, numEnergyEqFluid, numEnergyEqSolid>;
+     using type = NonEquilibriumVtkOutputFields<EquilibriumVtkOutputFields, FluidSystem, numEF, numES>;
 };
 
-SET_PROP(NonEquilibrium, NusseltFormulation )
+SET_PROP(NonEquilibrium, NusseltFormulation)
 {
     private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

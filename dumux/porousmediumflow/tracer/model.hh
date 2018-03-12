@@ -63,6 +63,24 @@
 
 namespace Dumux
 {
+/*!
+ * \ingroup RichardsNCModel
+ * \brief Specifies a number properties of the Richards n-components model.
+ *
+ * \tparam nComp the number of components to be considered.
+ */
+template<int nComp>
+struct TracerModelTraits
+{
+    static constexpr int numEq() { return nComp; }
+    static constexpr int numPhases() { return 1; }
+    static constexpr int numComponents() { return nComp; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return true; }
+    static constexpr bool enableEnergyBalance() { return false; }
+};
+
 // \{
 namespace Properties
 {
@@ -77,22 +95,18 @@ NEW_TYPE_TAG(Tracer, INHERITS_FROM(PorousMediumFlow));
 ///////////////////////////////////////////////////////////////////////////
 // properties for the tracer model
 ///////////////////////////////////////////////////////////////////////////
-SET_INT_PROP(Tracer, NumPhases, 1); //!< The number of phases
 
-SET_PROP(Tracer, NumEq) //!< set the number of equations
+//! Define that mole fractions are used in the balance equations
+SET_BOOL_PROP(Tracer, UseMoles, true);
+
+//! set the model traits
+SET_PROP(Tracer, ModelTraits)
 {
+private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static const int value = FluidSystem::numComponents;
-    static_assert(GET_PROP_VALUE(TypeTag, NumComponents) == value, "Number of equation has to be equal to number of components.");
+public:
+    using type = TracerModelTraits<FluidSystem::numComponents>;
 };
-
-SET_PROP(Tracer, NumComponents) //!< set the number of components
-{
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static const int value = FluidSystem::numComponents;
-};
-
-SET_BOOL_PROP(Tracer, UseMoles, true); //!< Define that mole fractions are used in the balance equations
 
 //! Use the tracer local residual function for the tracer model
 SET_TYPE_PROP(Tracer, LocalResidual, TracerLocalResidual<TypeTag>);
@@ -105,7 +119,6 @@ private:
 public:
     using type = TracerVtkOutputFields<FluidSystem>;
 };
-
 
 //! define the VolumeVariables
 SET_TYPE_PROP(Tracer, VolumeVariables, TracerVolumeVariables<TypeTag>);
@@ -121,11 +134,6 @@ SET_TYPE_PROP(Tracer, SpatialParams, FVSpatialParamsOneP<TypeTag>);
 
 //! Use simple model with constant tortuosity as pm diffusivity model
 SET_TYPE_PROP(Tracer, EffectiveDiffusivityModel, DiffusivityConstantTortuosity<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-// physical processes to be considered by the isothermal model
-SET_BOOL_PROP(Tracer, EnableAdvection, true);
-SET_BOOL_PROP(Tracer, EnableMolecularDiffusion, true);
-SET_BOOL_PROP(Tracer, EnableEnergyBalance, false);
 } // end namespace Properties
 // \}
 } // end namespace Dumux

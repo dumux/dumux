@@ -120,6 +120,30 @@
  */
 namespace Dumux
 {
+
+/*!
+ * \ingroup MPNCModel
+ * \brief Specifies a number properties of the m-phase n-component model.
+ *
+ * \tparam nPhases the number of phases to be considered
+ * \tparam nComp the number of components to be considered
+ */
+template<int nPhases, int nComp>
+struct MPNCModelTraits
+{
+    static constexpr int numEq() { return numTransportEq()+numConstraintEq(); }
+    static constexpr int numPhases() { return nPhases; }
+    static constexpr int numComponents() { return nComp; }
+    static constexpr int numTransportEq() { return nComp;}
+    static constexpr int numConstraintEq() { return nPhases; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return true; }
+    static constexpr bool enableEnergyBalance() { return false; }
+    static constexpr bool enableThermalNonEquilibrium() { return false; }
+    static constexpr bool enableChemicalNonEquilibrium() { return false; }
+};
+
 namespace Properties
 {
 
@@ -140,62 +164,24 @@ SET_PROP(MPNC, Indices)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int numEquationBalance = GET_PROP_VALUE(TypeTag, NumEqBalance);
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
 public:
-    using type = MPNCIndices<FluidSystem, numEquationBalance, /*PVOffset=*/0>;
+    using type = MPNCIndices<FluidSystem, numEq, /*PVOffset=*/0>;
 };
-//! Use ImplicitSpatialParams by default.
-SET_TYPE_PROP(MPNC, SpatialParams, FVSpatialParams<TypeTag>);
 
 //! Use the MpNc local residual for the MpNc model
 SET_TYPE_PROP(MPNC,
               LocalResidual,
               MPNCLocalResidual<TypeTag>);
-/*!
- * \brief Set the property for the number of equations and primary variables.
- */
-SET_PROP(MPNC, NumEq)
-{
-private:
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-public:
-    static const unsigned int value = Indices::numPrimaryVars;
-};
-/*!
- * \brief Set the property for the number of components.
- *
- * We just forward the number from the fluid system.
- */
-SET_PROP(MPNC, NumComponents)
+//! Set the model traits property
+SET_PROP(MPNC, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
 public:
-    static const unsigned int value = FluidSystem::numComponents;
+    using type = MPNCModelTraits<FluidSystem::numPhases, FluidSystem::numComponents>;
 };
-
-/*!
- * \brief Set the property for the number of fluid phases.
- */
-SET_PROP(MPNC, NumPhases)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-public:
-    static const unsigned int value = FluidSystem::numPhases;
-};
-
-/*!
- * \brief Set the property for the number of equations without energyEquations.
- * In other models this would just be number of mass balance equations. but in Mpnc we have additional ncp-equations which also need to be added
- */
-SET_INT_PROP(MPNC, NumEqBalance, GET_PROP_VALUE(TypeTag, NumPhases)+GET_PROP_VALUE(TypeTag, NumPhases));
-
-//! the VolumeVariables property
-SET_TYPE_PROP(MPNC, VolumeVariables, MPNCVolumeVariables<TypeTag>);
 
 //! This model uses the compositional fluid state
 SET_PROP(MPNC, FluidState)
@@ -207,14 +193,16 @@ public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
-SET_INT_PROP(MPNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents); //! Per default, no component mass balance is replaced
-
-SET_BOOL_PROP(MPNC, UseMoles, true);                         //! Use mole fractions in the balance equations by default
-
+//! Use ImplicitSpatialParams by default.
+SET_TYPE_PROP(MPNC, SpatialParams, FVSpatialParams<TypeTag>);
+//! the VolumeVariables property
+SET_TYPE_PROP(MPNC, VolumeVariables, MPNCVolumeVariables<TypeTag>);
+//! Per default, no component mass balance is replaced
+SET_INT_PROP(MPNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);
+//! Use mole fractions in the balance equations by default
+SET_BOOL_PROP(MPNC, UseMoles, true);
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(MPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-
 //! Set the default pressure formulation to the pressure of the (most) wetting phase
 SET_INT_PROP(MPNC,
              PressureFormulation,
@@ -231,33 +219,30 @@ public:
     using type = MPNCVtkOutputFields<FluidSystem, Indices>;
 };
 
-SET_BOOL_PROP(MPNC, EnableAdvection, true);                  //! Enable advection
-SET_BOOL_PROP(MPNC, EnableMolecularDiffusion, true);         //! Enable molecular diffusion
-SET_BOOL_PROP(MPNC, EnableEnergyBalance, false);             //! This is the isothermal variant of the model
-
-SET_BOOL_PROP(MPNC, EnableThermalNonEquilibrium, false);
-SET_BOOL_PROP(MPNC, EnableChemicalNonEquilibrium, false);
-
-SET_INT_PROP(MPNC, NumEnergyEqFluid, 0);
-SET_INT_PROP(MPNC, NumEnergyEqSolid, 0);
-
-
 /////////////////////////////////////////////////
 // Properties for the non-isothermal mpnc model
 /////////////////////////////////////////////////
 SET_TYPE_PROP(MPNCNI, IsothermalVolumeVariables, MPNCVolumeVariables<TypeTag>);    //! set isothermal VolumeVariables
 SET_TYPE_PROP(MPNCNI, IsothermalLocalResidual, MPNCLocalResidual<TypeTag>); //! set isothermal LocalResidual
+
+//! set the isothermal model traits
+SET_PROP(MPNCNI, IsothermalModelTraits)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    using type = MPNCModelTraits<FluidSystem::numPhases, FluidSystem::numComponents>;
+};
+
 //! set isothermal Indices
 SET_PROP(MPNCNI, IsothermalIndices)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int numEquationBalance = GET_PROP_VALUE(TypeTag, NumEqBalance);
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, IsothermalModelTraits)::numEq();
 public:
-    using type = MPNCIndices<FluidSystem, numEquationBalance, /*PVOffset=*/0>;
+    using type = MPNCIndices<FluidSystem, numEq, /*PVOffset=*/0>;
 };
-//! set isothermal NumEq
-SET_INT_PROP(MPNCNI, IsothermalNumEq, GET_PROP_VALUE(TypeTag, NumEq));
 
 /////////////////////////////////////////////////
 // Properties for the non-equilibrium mpnc model
@@ -271,7 +256,6 @@ SET_PROP(MPNCNonequil, EquilibriumVtkOutputFields)
 private:
    using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
 public:
     using type = MPNCVtkOutputFields<FluidSystem, Indices>;
 };
@@ -280,13 +264,23 @@ SET_PROP(MPNCNonequil, EquilibriumIndices)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int numEquationBalance = GET_PROP_VALUE(TypeTag, NumEqBalance);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    //! the mpnc indices need the number of all transport equations plus constraint equations
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numTransportEq()
+                                 +GET_PROP_TYPE(TypeTag, ModelTraits)::numConstraintEq();
 public:
-    using type = MPNCIndices<FluidSystem, numEquationBalance, /*PVOffset=*/0>;
+    using type = MPNCIndices<FluidSystem, numEq, /*PVOffset=*/0>;
 };
 
-//number of balance equations means all transport equations and the constraint equations, energy equations come on top of that
-SET_INT_PROP(MPNCNonequil, NumEqBalance, GET_PROP_VALUE(TypeTag, NumPhases)*GET_PROP_VALUE(TypeTag, NumComponents)+GET_PROP_VALUE(TypeTag, NumPhases));
+//! set equilibrium model traits
+SET_PROP(MPNCNonequil, EquilibriumModelTraits)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    using type = MPNCModelTraits<FluidSystem::numPhases, FluidSystem::numComponents>;
+};
 
 //! in case we do not assume full non-equilibrium one needs a thermal conductivity
 SET_PROP(MPNCNonequil, ThermalConductivityModel)

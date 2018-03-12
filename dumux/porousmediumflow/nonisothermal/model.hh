@@ -57,22 +57,42 @@
 #include "indices.hh"
 #include "vtkoutputfields.hh"
 
-namespace Dumux {
+namespace Dumux
+{
+/*!
+ * \ingroup OnePModel
+ * \brief Specifies a number properties of non-isothermal porous medium
+ *        flow models based on the specifics of a given isothermal model.
+ * \tparam IsothermalTraits Model traits of the isothermal model
+ */
+template<class IsothermalTraits>
+struct PorousMediumFlowNIModelTraits : public IsothermalTraits
+{
+    //! We solve for one more equation, i.e. the energy balance
+    static constexpr int numEq() { return IsothermalTraits::numEq()+1; }
+    //! We additionally solve for the equation balance
+    static constexpr bool enableEnergyBalance() { return true; }
+};
+
 namespace Properties {
 
 NEW_TYPE_TAG(NonIsothermal);
 
-SET_BOOL_PROP(NonIsothermal, EnableEnergyBalance, true);
-
-//! add the energy balance
-SET_INT_PROP(NonIsothermal, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq) + 1);
+//! use the non-isothermal model traits
+SET_PROP(NonIsothermal, ModelTraits)
+{
+private:
+    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, IsothermalModelTraits);
+public:
+    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
+};
 
 //! indices for non-isothermal models
 SET_PROP(NonIsothermal, Indices)
 {
 private:
     using IsothermalIndices = typename GET_PROP_TYPE(TypeTag, IsothermalIndices);
-    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
 public:
     using type = EnergyIndices<IsothermalIndices, numEq, 0>;
 };

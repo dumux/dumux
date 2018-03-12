@@ -100,8 +100,8 @@ class TwoPTwoCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem, useKelvinEquation>;
 
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
+    static constexpr int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
 public:
     //! The type of the object returned by the fluidState() method
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);

@@ -97,6 +97,22 @@
 #include "localresidual.hh"
 
 namespace Dumux {
+
+/*!
+ * \ingroup ThreePThreeCModel
+ * \brief Specifies a number properties of two-phase models.
+ */
+struct ThreePThreeCModelTraits
+{
+    static constexpr int numEq() { return 3; }
+    static constexpr int numPhases() { return 3; }
+    static constexpr int numComponents() { return 3; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return true; }
+    static constexpr bool enableEnergyBalance() { return false; }
+};
+
 namespace Properties {
 //! The type tags for the isothermal three-phase three-component model
 NEW_TYPE_TAG(ThreePThreeC, INHERITS_FROM(PorousMediumFlow));
@@ -106,34 +122,20 @@ NEW_TYPE_TAG(ThreePThreeCNI, INHERITS_FROM(ThreePThreeC, NonIsothermal));
 //////////////////////////////////////////////////////////////////
 // Property values
 //////////////////////////////////////////////////////////////////
-/*!
- * \brief Set the property for the number of components.
- *
- * We just forward the number from the fluid system and use an static
- * assert to make sure it is 3.
- */
-SET_PROP(ThreePThreeC, NumComponents)
-{
-    static const int value = 3;
-    static_assert(value == GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents,
-                  "Only fluid systems with 3 components are supported by the 3p3c model!");
-};
 
-/*!
- * \brief Set the property for the number of fluid phases.
- *
- * We just forward the number from the fluid system and use an static
- * assert to make sure it is 3.
- */
-SET_PROP(ThreePThreeC, NumPhases)
+//! Set the model traits
+SET_PROP(ThreePThreeC, ModelTraits)
 {
-    static const int value = 3;
-    static_assert(value == GET_PROP_TYPE(TypeTag, FluidSystem)::numPhases,
-                  "Only fluid systems with 3 phases are supported by the 3p3c model!");
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p3c model!");
+    static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p3c model!");
+public:
+    using type = ThreePThreeCModelTraits;
 };
 
 //! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(ThreePThreeC, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, NumComponents));
+SET_INT_PROP(ThreePThreeC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());
 /*!
  * \brief The fluid state which is used by the volume variables to
  *        store the thermodynamic state. This should be chosen
@@ -148,20 +150,8 @@ SET_PROP(ThreePThreeC, FluidState){
         using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
-//! Set the number of equations to 3
-SET_INT_PROP(ThreePThreeC, NumEq, 3);
-
 //! The local residual function of the conservation equations
 SET_TYPE_PROP(ThreePThreeC, LocalResidual, ThreePThreeCLocalResidual<TypeTag>);
-
-//! Enable advection
-SET_BOOL_PROP(ThreePThreeC, EnableAdvection, true);
-
-//! Enable molecular diffusion
-SET_BOOL_PROP(ThreePThreeC, EnableMolecularDiffusion, true);
-
-//! Isothermal model by default
-SET_BOOL_PROP(ThreePThreeC, EnableEnergyBalance, false);
 
 //! The primary variable switch for the 3p3c model
 SET_TYPE_PROP(ThreePThreeC, PrimaryVariableSwitch, ThreePThreeCPrimaryVariableSwitch<TypeTag>);
@@ -171,7 +161,7 @@ SET_PROP(ThreePThreeC, PrimaryVariables)
 {
 private:
     using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_VALUE(TypeTag, NumEq)>;
+                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
@@ -246,7 +236,15 @@ public:
 };
 
 //! Set isothermal NumEq
-SET_INT_PROP(ThreePThreeCNI, IsothermalNumEq, 3);
+SET_PROP(ThreePThreeCNI, IsothermalModelTraits)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p3c model!");
+    static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p3c model!");
+public:
+    using type = ThreePThreeCModelTraits;
+};
 
 //! Set the isothermal vktoutputfields
 SET_PROP(ThreePThreeCNI, IsothermalVtkOutputFields)

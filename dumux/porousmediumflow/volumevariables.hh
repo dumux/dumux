@@ -40,7 +40,7 @@ class PorousMediumFlowVolumeVariablesImplementation;
  *        is specialized for isothermal and non-isothermal models.
  */
 template <class TypeTag>
-using PorousMediumFlowVolumeVariables = PorousMediumFlowVolumeVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+using PorousMediumFlowVolumeVariables = PorousMediumFlowVolumeVariablesImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>;
 
 /*!
  * \ingroup PorousmediumFlow

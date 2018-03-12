@@ -62,8 +62,8 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static const int numComponents = GET_PROP_VALUE(TypeTag,NumComponents);
+    static const int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
+    static const int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
