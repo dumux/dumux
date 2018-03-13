@@ -45,16 +45,14 @@ template<class TypeTag>
 class NavierStokesNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
 : public NavierStokesFluxVariables<TypeTag>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ParentType = NavierStokesFluxVariables<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
@@ -62,18 +60,13 @@ class NavierStokesNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
 
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
-    // The index of the component balance equation that gets replaced with the total mass balance
-    static const int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-
-    using ParentType = NavierStokesFluxVariables<TypeTag>;
-
-    enum { conti0EqIdx = Indices::conti0EqIdx };
 
 public:
 
     /*!
     * \brief Computes the flux for the cell center residual.
     */
+    template<class ElementVolumeVariables, class ElementFaceVariables, class FluxVariablesCache>
     CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
                                                         const Element &element,
                                                         const FVElementGeometry& fvGeometry,
@@ -87,7 +80,7 @@ public:
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             // get equation index
-            const auto eqIdx = conti0EqIdx + compIdx;
+            const auto eqIdx = Indices::conti0EqIdx + compIdx;
 
             bool isOutflow = false;
             if(scvf.boundary())
@@ -108,9 +101,9 @@ public:
         }
 
         // in case one balance is substituted by the total mass balance
-        if (replaceCompEqIdx < numComponents)
+        if (Indices::replaceCompEqIdx < numComponents)
         {
-            flux[replaceCompEqIdx] = std::accumulate(flux.begin(), flux.end(), 0.0);
+            flux[Indices::replaceCompEqIdx] = std::accumulate(flux.begin(), flux.end(), 0.0);
         }
 
         flux += MolecularDiffusionType::diffusiveFluxForCellCenter(problem, fvGeometry, elemVolVars, scvf);

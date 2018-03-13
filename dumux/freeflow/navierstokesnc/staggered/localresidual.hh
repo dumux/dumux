@@ -24,7 +24,6 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
 
-#include <dune/common/hybridutilities.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/freeflow/navierstokes/localresidual.hh>
@@ -53,20 +52,8 @@ class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-
-    enum {
-        conti0EqIdx = Indices::conti0EqIdx,
-
-        // The index of the component balance equation
-        // that gets replaced with the total mass balance
-        replaceCompEqIdx = Indices::replaceCompEqIdx
-    };
-
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using CellCenterResidual = CellCenterPrimaryVariables;
 
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
@@ -77,6 +64,7 @@ public:
     using ParentType::ParentType;
 
     //! Evaluate fluxes entering or leaving the cell center control volume.
+    template<class VolumeVariables>
     CellCenterPrimaryVariables computeStorageForCellCenter(const Problem& problem,
                                                            const SubControlVolume& scv,
                                                            const VolumeVariables& volVars) const
@@ -88,18 +76,18 @@ public:
         // compute storage term of all components
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            const int eqIdx = conti0EqIdx + compIdx;
+            const int eqIdx = Indices::conti0EqIdx + compIdx;
 
             const Scalar massOrMoleFraction = useMoles ? volVars.moleFraction(compIdx) : volVars.massFraction(compIdx);
             const Scalar s =  density * massOrMoleFraction;
 
-            if (eqIdx != replaceCompEqIdx)
+            if (eqIdx != Indices::replaceCompEqIdx)
                 storage[eqIdx] += s;
         }
 
         // in case one balance is substituted by the total mass balance
-        if(replaceCompEqIdx < numComponents)
-            storage[replaceCompEqIdx] = density;
+        if(Indices::replaceCompEqIdx < numComponents)
+            storage[Indices::replaceCompEqIdx] = density;
 
         this->computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, ModelTraits::enableEnergyBalance() >(),
                                                         problem, scv, volVars, storage);
@@ -113,6 +101,7 @@ protected:
      * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
      *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
      */
+    template<class ElementVolumeVariables, class BoundaryTypes>
     void setFixedCell_(CellCenterResidual& residual,
                        const Problem& problem,
                        const SubControlVolume& insideScv,
@@ -124,10 +113,10 @@ protected:
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             // get equation index
-            const auto eqIdx = conti0EqIdx + compIdx;
+            const auto eqIdx = Indices::conti0EqIdx + compIdx;
 
             // set a fixed mole fraction for cells
-            if(eqIdx != conti0EqIdx && bcTypes.isDirichletCell(eqIdx))
+            if(eqIdx != Indices::conti0EqIdx && bcTypes.isDirichletCell(eqIdx))
             {
                 const auto& insideVolVars = elemVolVars[insideScv];
                 const Scalar massOrMoleFraction = useMoles ? insideVolVars.moleFraction(compIdx) : insideVolVars.massFraction(compIdx);
