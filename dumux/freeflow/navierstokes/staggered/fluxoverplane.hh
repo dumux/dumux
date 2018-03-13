@@ -271,7 +271,7 @@ public:
      */
     void calculateVolumeFluxes()
     {
-        const auto isCompositional = std::integral_constant<bool, (GET_PROP_VALUE(TypeTag, NumComponents) > 1) >();
+        const auto isCompositional = std::integral_constant<bool, (GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents() > 1) >();
         calculateVolumeFluxesImpl_(isCompositional);
     }
 

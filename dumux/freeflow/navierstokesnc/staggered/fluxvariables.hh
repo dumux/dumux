@@ -58,7 +58,7 @@ class NavierStokesNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
 
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
-    static constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr auto numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
 
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 

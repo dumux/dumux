@@ -60,6 +60,7 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
 
     static constexpr bool enableInertiaTerms = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
+    static constexpr bool normalizePressure = GET_PROP_VALUE(TypeTag, NormalizePressure);
 
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
@@ -224,7 +225,7 @@ public:
         // The pressure term.
         // If specified, the pressure can be normalized using the initial value on the scfv of interest.
         // Can potentially help to improve the condition number of the system matrix.
-        const Scalar pressure = GET_PROP_VALUE(TypeTag, NormalizePressure) ?
+        const Scalar pressure = normalizePressure ?
                                 insideVolVars.pressure() - problem.initialAtPos(scvf.center())[Indices::pressureIdx]
                               : insideVolVars.pressure();
 
@@ -513,7 +514,7 @@ private:
         }
 
         // Apply a pressure at the boudary.
-        const Scalar boundaryPressure = GET_PROP_VALUE(TypeTag, NormalizePressure) ?
+        const Scalar boundaryPressure = normalizePressure ?
                                         (problem.dirichlet(element, scvf)[Indices::pressureIdx] -
                                          problem.initialAtPos(scvf.center())[Indices::pressureIdx])
                                       : problem.dirichlet(element, scvf)[Indices::pressureIdx];

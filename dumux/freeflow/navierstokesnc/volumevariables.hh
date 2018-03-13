@@ -51,7 +51,7 @@ class NavierStokesNCVolumeVariables : public NavierStokesVolumeVariables<TypeTag
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
+    enum { numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
            numPhases = FluidSystem::numPhases,
            mainCompIdx = Indices::mainCompIdx,
            pressureIdx = Indices::pressureIdx

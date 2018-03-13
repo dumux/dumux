@@ -79,6 +79,8 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
 public:
 
     //! Use the parent type's constructor
@@ -97,7 +99,7 @@ public:
         CellCenterPrimaryVariables flux = fluxVars.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars,
                                                  elemFaceVars, scvf, elemFluxVarsCache[scvf]);
 
-        computeFluxForCellCenterNonIsothermal_(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>(),
+        computeFluxForCellCenterNonIsothermal_(std::integral_constant<bool, ModelTraits::enableEnergyBalance()>(),
                                                problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache, flux);
 
         return flux;
@@ -132,7 +134,7 @@ public:
         CellCenterPrimaryVariables storage;
         storage[massBalanceIdx] = volVars.density();
 
-        computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance) >(),
+        computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, ModelTraits::enableEnergyBalance() >(),
                                                   problem, scv, volVars, storage);
 
         return storage;

@@ -40,7 +40,7 @@ class NavierStokesVolumeVariablesImplementation;
  *        The class is specialized for isothermal and non-isothermal models.
  */
 template <class TypeTag>
-using NavierStokesVolumeVariables = NavierStokesVolumeVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+using NavierStokesVolumeVariables = NavierStokesVolumeVariablesImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>;
 
 /*!
  * \ingroup NavierStokesModel

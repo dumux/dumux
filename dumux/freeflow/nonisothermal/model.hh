@@ -40,8 +40,22 @@
 #include <dumux/discretization/fourierslaw.hh>
 
 
-namespace Dumux
+namespace Dumux {
+
+/*!
+ * \ingroup NavierStokesNIModel
+ * \brief Specifies a number properties of non-isothermal free flow
+ *        flow models based on the specifics of a given isothermal model.
+ * \tparam IsothermalTraits Model traits of the isothermal model
+ */
+template<class IsothermalTraits>
+struct NavierStokesNIModelTraits : public IsothermalTraits
 {
+    //! We solve for one more equation, i.e. the energy balance
+    static constexpr int numEq() { return IsothermalTraits::numEq()+1; }
+    //! We additionally solve for the equation balance
+    static constexpr bool enableEnergyBalance() { return true; }
+};
 
 namespace Properties {
 
@@ -52,24 +66,21 @@ NEW_TYPE_TAG(NavierStokesNonIsothermal);
 // default property values for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
-//! The non-isothermal model has one more balance equation (energy balance) compared to the non-isothermal ones
-SET_PROP(NavierStokesNonIsothermal, NumEq)
+//! use the non-isothermal model traits
+SET_PROP(NavierStokesNonIsothermal, ModelTraits)
 {
 private:
-    static constexpr auto isothermalNumEq = GET_PROP_VALUE(TypeTag, IsothermalNumEq);
+    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, IsothermalModelTraits);
 public:
-    static constexpr int value = isothermalNumEq + 1;
+    using type = NavierStokesNIModelTraits<IsothermalTraits>;
 };
-
-//! Enable the energy balance
-SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
 
 //! The non-isothermal indices
 SET_PROP(NavierStokesNonIsothermal, Indices)
 {
 private:
     static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
     using IsothermalIndices = typename GET_PROP_TYPE(TypeTag, IsothermalIndices);
 public:
     using type = NavierStokesNonIsothermalIndices<dim, numEq, IsothermalIndices>;
@@ -89,6 +100,6 @@ SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag
 
 } // end namespace Properties
 
-}
+} // end  namespace Dumux
 
 #endif

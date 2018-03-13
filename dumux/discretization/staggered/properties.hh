@@ -86,20 +86,6 @@ SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, StaggeredElementFluxVar
 //! Set the face solution type
 SET_TYPE_PROP(StaggeredModel, StaggeredFaceSolution, StaggeredFaceSolution<TypeTag>);
 
-//! Dummy model traits struct until the model traits
-//! are actually implemented for models using staggered grid
-SET_PROP(StaggeredModel, ModelTraits)
-{
-private:
-    struct DummyTraits
-    {
-        static constexpr int numEq() { return GET_PROP_VALUE(TypeTag, NumEq); }
-        static constexpr int numPhases() { return GET_PROP_VALUE(TypeTag, NumPhases); }
-    };
-public:
-    using type = DummyTraits;
-};
-
 //! Set the grid variables (volume, flux and face variables)
 SET_PROP(StaggeredModel, GridVariables)
 {

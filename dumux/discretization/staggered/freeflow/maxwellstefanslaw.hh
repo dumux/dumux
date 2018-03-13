@@ -60,13 +60,15 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    static const int numComponents = GET_PROP_VALUE(TypeTag,NumComponents);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    static const int numComponents = ModelTraits::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;
 
-    static_assert(GET_PROP_VALUE(TypeTag, NumPhases) == 1, "Only one phase allowed supported!");
+    static_assert(ModelTraits::numPhases() == 1, "Only one phase allowed supported!");
 
     enum {
         pressureIdx = Indices::pressureIdx,
