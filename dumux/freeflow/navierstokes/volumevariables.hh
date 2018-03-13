@@ -225,11 +225,6 @@ class NavierStokesVolumeVariablesImplementation<TypeTag, true>
 {
     using ParentType = NavierStokesVolumeVariablesImplementation<TypeTag, false>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using GridView = typename FVGridGeometry::GridView;
-    using Element = typename GridView::template Codim<0>::Entity;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
