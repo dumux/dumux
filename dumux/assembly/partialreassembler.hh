@@ -380,12 +380,12 @@ public:
     using ParentType::ParentType;
 };
 
-//! helper function to determine whether the an engine class has vertex colors
-template<class Engine>
-auto hasVertexColor()
+//! helper struct to determine whether the an engine class has vertex colors
+struct hasVertexColor
 {
-    return isValid([](auto&& a) -> decltype(a.vertexColor(0)) {}).template check<Engine>();
-}
+    template<class Engine>
+    auto operator()(Engine&& e) -> decltype(e.vertexColor(0)) {};
+};
 
 /*!
  * \ingroup Assembly
@@ -469,7 +469,7 @@ public:
     EntityColor dofColor(size_t idx) const
     { return engine_.dofColor(idx); }
 
-    template<bool enable = decltype(hasVertexColor<Engine>())::value,
+    template<bool enable = decltype(isValid(hasVertexColor()).template check<Engine>())::value,
              typename std::enable_if_t<enable, int> = 0>
     EntityColor vertexColor(size_t idx) const
     { return engine_.vertexColor(idx); }
