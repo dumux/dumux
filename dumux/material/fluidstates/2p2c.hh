@@ -120,8 +120,12 @@ public:
     Scalar density(int phaseIdx) const
     { return density_[phaseIdx]; }
 
-    /*!
-     * \brief The dynamic viscosity \f$\mu_\alpha\f$ of fluid phase \f$\alpha\f$ in \f$\mathrm{[Pa s]}\f$
+    /*! @copydoc CompositionalFluidState::molarDensity()
+     */
+    Scalar molarDensity(int phaseIdx) const
+    { return molarDensity_[phaseIdx]; }
+
+    /*! @copydoc CompositionalFluidState::viscosity()
      */
     Scalar viscosity(int phaseIdx) const
     { return viscosity_[phaseIdx]; }
@@ -246,6 +250,13 @@ public:
      */
     void setDensity(int phaseIdx, Scalar value)
     { density_[phaseIdx] = value; }
+
+    /*!
+     * \brief Set the molar density of a phase \f$\mathrm{[mol / m^3]}\f$
+     */
+    void setMolarDensity(int phaseIdx, Scalar value)
+    { molarDensity_[phaseIdx] = value; }
+
     /*!
      * \brief Sets the saturation of a phase.
      * Internally, only the wetting saturation is stored.
@@ -299,6 +310,7 @@ protected:
     Scalar sw_;
     PhaseVector nu_; //phase mass fraction
     Scalar density_[numPhases];
+    Scalar molarDensity_[numPhases];
     Scalar viscosity_[numPhases];
     Scalar massFraction_[numPhases][numComponents];
     Scalar moleFraction_[numPhases][numComponents];
