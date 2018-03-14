@@ -384,7 +384,9 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar molarDensity(int phaseIdx) const
-    { return fluidState_.molarDensity(phaseIdx); }
+    {
+        return fluidState_.molarDensity(phaseIdx);
+    }
 
     /*!
      * \brief Returns the effective pressure of a given phase within

@@ -89,9 +89,10 @@ public:
      */
     static std::string phaseName(int phaseIdx)
     {
-        switch (phaseIdx) {
-        case liquidPhaseIdx: return "liquid";
-        case gasPhaseIdx: return "gas";
+        switch (phaseIdx)
+        {
+            case liquidPhaseIdx: return "liquid";
+            case gasPhaseIdx: return "gas";
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -194,8 +195,8 @@ public:
     {
         switch (compIdx)
         {
-        case H2OIdx: return H2O::name();
-        case AirIdx: return Air::name();
+            case H2OIdx: return H2O::name();
+            case AirIdx: return Air::name();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
@@ -209,12 +210,11 @@ public:
     {
         switch (compIdx)
         {
-        case H2OIdx: return H2O::molarMass();
-        case AirIdx: return Air::molarMass();
+            case H2OIdx: return H2O::molarMass();
+            case AirIdx: return Air::molarMass();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
-
 
     /*!
      * \brief Critical temperature of a component \f$\mathrm{[K]}\f$.
@@ -351,7 +351,7 @@ public:
                       << " entries).\n";
 
             H2O::init(tempMin, tempMax, nTemp,
-                               pressMin, pressMax, nPress);
+                      pressMin, pressMax, nPress);
         }
     }
 
@@ -378,12 +378,7 @@ public:
         const Scalar T = fluidState.temperature(phaseIdx);
         const Scalar p = fluidState.pressure(phaseIdx);
 
-
-        Scalar sumMoleFrac = 0;
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            sumMoleFrac += fluidState.moleFraction(phaseIdx, compIdx);
-
-        if (phaseIdx == liquidPhaseIdx)
+        if (phaseIdx == phase0Idx)
         {
             if (!useComplexRelations)
                 // assume pure water
@@ -391,34 +386,63 @@ public:
             else
             {
                 // See: Eq. (7) in Class et al. (2002a)
-                const Scalar rholH2O = H2O::liquidDensity(T, p);
-                const Scalar clH2O = rholH2O/H2O::molarMass();
-
-                return
-                    clH2O
-                    * (H2O::molarMass()*fluidState.moleFraction(liquidPhaseIdx, H2OIdx)
-                           +
-                           Air::molarMass()*fluidState.moleFraction(liquidPhaseIdx, AirIdx))
-                   / sumMoleFrac;
+                // This assumes each gas molecule displaces exactly one
+                // molecule in the liquid.
+                return H2O::liquidMolarDensity(T, p)
+                       * (H2O::molarMass()*fluidState.moleFraction(liquidPhaseIdx, H2OIdx)
+                          + Air::molarMass()*fluidState.moleFraction(liquidPhaseIdx, AirIdx));
             }
         }
         else if (phaseIdx == gasPhaseIdx)
         {
-            using std::max;
             if (!useComplexRelations)
                 // for the gas phase assume an ideal gas
-                return
-                    IdealGas::molarDensity(T, p)
-                    * fluidState.averageMolarMass(gasPhaseIdx)
-                    / max(1e-5, sumMoleFrac);
+            {
+                const Scalar averageMolarMass = fluidState.averageMolarMass(gasPhaseIdx);
+                return IdealGas::density(averageMolarMass, T, p);
+            }
 
-            return
-                H2O::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, H2OIdx)) +
-                Air::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, AirIdx));
+            return H2O::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, H2OIdx))
+                   + Air::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, AirIdx));
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
+    using Base::molarDensity;
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density for the simple relation is defined by the
+     * mass density \f$\rho_\alpha\f$ and the molar mass of the main component \f$M_\kappa\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\kappa} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+        assert(0 <= phaseIdx  && phaseIdx < numPhases);
+
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
+
+        if (phaseIdx == phase0Idx)
+        {
+            // assume pure water or that each gas molecule displaces exactly one
+            // molecule in the liquid.
+            return H2O::liquidMolarDensity(T, p);
+        }
+        else if (phaseIdx == phase1Idx)
+        {
+            if (!useComplexRelations)
+                // for the gas phase assume an ideal gas
+            { return IdealGas::molarDensity(T, p); }
+
+            return H2O::gasMolarDensity(T, fluidState.partialPressure(phase1Idx, H2OIdx))
+                   + Air::gasMolarDensity(T, fluidState.partialPressure(phase1Idx, AirIdx));
+        }
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+    }
 
     using Base::viscosity;
     /*!

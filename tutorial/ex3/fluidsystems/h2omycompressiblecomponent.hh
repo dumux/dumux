@@ -234,6 +234,41 @@ public:
         }
     }
 
+    using Base::molarDensity;
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density for the simple relation is defined by the
+     * mass density \f$\rho_\alpha\f$ and the molar mass of the main component
+     *
+     * The molar density for the complrex relation is defined by the
+     * mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+        assert(0 <= phaseIdx  && phaseIdx < numPhases);
+
+        Scalar T = fluidState.temperature(phaseIdx);
+        Scalar p = fluidState.pressure(phaseIdx);
+
+        // liquid phase
+        if (phaseIdx == phase0Idx)
+        {
+            // assume pure water or that each gas molecule displaces exactly one
+            // molecule in the liquid.
+            return H2O::liquidMolarDensity(T, p);
+        }
+        else{
+            // assume the molar density of the fictious component to be independent of the composition
+            Scalar pressure = MyCompressibleComponent::liquidIsCompressible()?fluidState.pressure(phaseIdx):1e100;
+            return MyCompressibleComponent::liquidMolarDensity(fluidState.temperature(phaseIdx), pressure);
+        }
+    }
+
     /*!
      * \brief Return the viscosity of a phase.
      */

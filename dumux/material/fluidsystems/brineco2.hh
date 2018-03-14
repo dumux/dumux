@@ -287,24 +287,33 @@ public:
         else {
             assert(phaseIdx == gasPhaseIdx);
 
-            // use normalized composition for to calculate the density
-            // (the relations don't seem to take non-normalized
-            // compositions too well...)
-            using std::min;
-            using std::max;
-            Scalar xgBrine = min(1.0, max(0.0, fluidState.moleFraction(gasPhaseIdx, BrineIdx)));
-            Scalar xgCO2 = min(1.0, max(0.0, fluidState.moleFraction(gasPhaseIdx, CO2Idx)));
-            Scalar sumx = xgBrine + xgCO2;
-            xgBrine /= sumx;
-            xgCO2 /= sumx;
-
-            Scalar result = gasDensity_(temperature,
-                                        pressure,
-                                        xgBrine,
-                                        xgCO2);
-            Valgrind::CheckDefined(result);
-            return result;
+            //in the end it comes down to a simplification of just CO2
+            return CO2::gasDensity(temperature, pressure);
         }
+    }
+
+    using Base::molarDensity;
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density is defined by the
+     * mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+        Scalar temperature = fluidState.temperature(phaseIdx);
+        Scalar pressure = fluidState.pressure(phaseIdx);
+
+        if (phaseIdx == liquidPhaseIdx)
+        {
+            return density(fluidState, phaseIdx)/fluidState.averageMolarMass(phaseIdx);
+        }
+        else
+            return CO2::gasMolarDensity(temperature,pressure);
     }
 
     using Base::viscosity;
@@ -623,19 +632,6 @@ public:
     }
 
 private:
-    static Scalar gasDensity_(Scalar T,
-                              Scalar pg,
-                              Scalar xgH2O,
-                              Scalar xgCO2)
-    {
-        Valgrind::CheckDefined(T);
-        Valgrind::CheckDefined(pg);
-        Valgrind::CheckDefined(xgH2O);
-        Valgrind::CheckDefined(xgCO2);
-
-        Scalar gasDensity = CO2::gasDensity(T, pg);
-        return gasDensity;
-    }
 
     /***********************************************************************/
     /*                                                                     */

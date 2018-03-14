@@ -125,6 +125,17 @@ public:
     }
 
     /*!
+     * \brief Return whether a phase is gaseous
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr bool isGas(int phaseIdx)
+    {
+        assert(0 <= phaseIdx && phaseIdx < numPhases);
+        return phaseIdx == phase0Idx;
+    }
+
+    /*!
      * \brief Returns true if and only if a fluid phase is assumed to
      *        be an ideal mixture.
      *
@@ -224,9 +235,9 @@ public:
      * \param Temperature temperature of the liquid phase
      * \param salinity salinity (salt mass fraction) of the liquid phase
      */
-     static Scalar vaporPressure(Scalar Temperature, Scalar salinity) //Vapor pressure dependence on Osmosis
+     static Scalar vaporPressure(Scalar temperature, Scalar salinity) //Vapor pressure dependence on Osmosis
      {
-       return vaporPressure_(Temperature,salinity);
+        return Brine::vaporPressure(temperature, salinity);
      }
 
 
@@ -279,7 +290,7 @@ public:
     }
 
     using Base::density;
-    /*!
+     /*!
      * \brief Given a phase's composition, temperature, pressure, and
      *        the partial pressures of all components, return its
      *        density \f$\mathrm{[kg/m^3]}\f$.
@@ -301,20 +312,71 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
 
-        switch (phaseIdx) {
-            case liquidPhaseIdx:
+        if (phaseIdx == phase0Idx){
+            if (!useComplexRelations)
+                // assume pure brine
                 return Brine::liquidDensity(temperature,
-                              pressure,
-                              fluidState.massFraction(liquidPhaseIdx, NaClIdx));
-            case gasPhaseIdx:
-                return gasDensity_(temperature,
-                            pressure,
-                            fluidState.moleFraction(gasPhaseIdx, H2OIdx));
-
-            default:
-                DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+                                            pressure,
+                                            fluidState.massFraction(phase0Idx, NaClIdx));
+            else
+            {
+                return Brine::liquidMolarDensity(temperature,
+                        pressure,
+                        fluidState.massFraction(phase0Idx, NaClIdx))
+                        *(Brine::molarMass()*fluidState.moleFraction(liquidPhaseIdx, H2OIdx)
+                        + Brine::molarMass()*fluidState.moleFraction(liquidPhaseIdx, NaClIdx)
+                        + Air::molarMass()*fluidState.moleFraction(liquidPhaseIdx, AirIdx));
             }
-      }
+        }
+        else if (phaseIdx == phase1Idx){
+            if (!useComplexRelations)
+                // for the gas phase assume an ideal gas
+                {
+                const Scalar averageMolarMass = fluidState.averageMolarMass(phase1Idx);
+                return IdealGas::density(averageMolarMass, temperature, pressure);
+                }
+            return
+                    Brine::gasDensity(temperature, fluidState.partialPressure(phase1Idx, H2OIdx)) +
+                    Air::gasDensity(temperature, fluidState.partialPressure(phase1Idx, AirIdx));
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+    }
+
+    using Base::molarDensity;
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density for the complex relation is defined by the
+     * mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+        const Scalar temperature = fluidState.temperature(phaseIdx);
+        const Scalar pressure = fluidState.pressure(phaseIdx);
+        if (phaseIdx == liquidPhaseIdx)
+        {
+            // assume pure water or that each gas molecule displaces exactly one
+            // molecule in the liquid.
+            Scalar salinity = fluidState.massFraction(liquidPhaseIdx, NaClIdx);
+            return Brine::liquidMolarDensity(temperature, pressure, salinity);
+        }
+        else if (phaseIdx == phase1Idx)
+        {
+            if (!useComplexRelations)
+                // for the gas phase assume an ideal gas
+                { return IdealGas::molarDensity(temperature, pressure); }
+            return
+                    Brine::gasMolarDensity(temperature, fluidState.partialPressure(phase1Idx, H2OIdx)) +
+                    Air::gasMolarDensity(temperature, fluidState.partialPressure(phase1Idx, AirIdx));
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+    }
 
     using Base::viscosity;
     /*!
@@ -343,7 +405,7 @@ public:
             Scalar XNaCl = fluidState.massFraction(liquidPhaseIdx, NaClIdx);
             result = Brine::liquidViscosity(temperature, pressure, XNaCl);
         }
-        else if (phaseIdx == gasPhaseIdx)
+        else if (phaseIdx == phase1Idx)
         {
             result = Air::gasViscosity(temperature, pressure);
         }
@@ -392,12 +454,13 @@ public:
         if (phaseIdx == gasPhaseIdx)
             return 1.0;
 
-        else if (phaseIdx == liquidPhaseIdx)
+        else if (phaseIdx == phase0Idx)
         {
-        if (compIdx == H2OIdx)
-            return Brine::vaporPressure(T)/p;
-        else if (compIdx == AirIdx)
-            return BinaryCoeff::H2O_Air::henry(T)/p;
+            if (compIdx == H2OIdx)
+                return H2O::vaporPressure(T)/p;
+
+            else if (compIdx == AirIdx)
+                return BinaryCoeff::H2O_Air::henry(T)/p;
         else
             return 1/p;
         }
@@ -625,17 +688,6 @@ public:
         return Brine_Air::molalityNaCl(salinity);
       }
 
-private:
-    static Scalar gasDensity_(Scalar T, Scalar pg, Scalar xgH2O)
-    {
-        //Dalton' Law
-        const Scalar pH2O = xgH2O*pg;
-        const Scalar pAir = pg - pH2O;
-        const Scalar gasDensityAir = Air::gasDensity(T, pAir);
-        const Scalar gasDensityH2O = H2O::gasDensity(T, pH2O);
-        const Scalar gasDensity = gasDensityAir + gasDensityH2O;
-        return gasDensity;
-    }
 };
 
 } // end namespace FluidSystems

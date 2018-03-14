@@ -191,6 +191,29 @@ public:
                        fluidState.pressure(phaseIdx));
     }
 
+    using Base::molarDensity;
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density is defined by the
+     * mass density \f$\rho_\alpha\f$ and the main component molar mass \f$M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, const int phaseIdx)
+    {
+        return molarDensity(fluidState.temperature(phaseIdx),
+                            fluidState.pressure(phaseIdx));
+    }
+
+    /*!
+     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure and temperature.
+     */
+    static Scalar molarDensity(Scalar temperature, Scalar pressure)
+    {  return Component::liquidMolarDensity(temperature, pressure); }
+
     /*!
      * \brief The pressure \f$\mathrm{[Pa]}\f$ of the component at a given density and temperature.
      */

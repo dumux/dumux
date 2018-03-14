@@ -127,7 +127,21 @@ public:
     }
 
     /*!
-     * \brief Calculate the fugacity coefficient \f$\mathrm{[-]}\f$ of an individual
+     * \brief Calculate the molar density \f$\mathrm{[mol/m^3]}\f$ of a fluid phase
+     * \param fluidState The fluid state
+     * \param paramCache mutable parameters
+     * \param phaseIdx Index of the fluid phase
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState,
+                          const ParameterCache &paramCache,
+                          int phaseIdx)
+    {
+        return Implementation::molarDensity(fluidState, phaseIdx);
+    }
+
+    /*!
+     * \brief Calculate the fugacity coefficient \f$\mathrm{[Pa]}\f$ of an individual
      *        component in a fluid phase
      *
      * The fugacity coefficient \f$\mathrm{\phi^\kappa_\alpha}\f$ is connected to the
