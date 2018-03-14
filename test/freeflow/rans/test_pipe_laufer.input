@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 1 # [s]
+DtInitial = 1e-1 # [s]
 TEnd = 100 # [s]
 
 [Grid]
@@ -23,6 +23,7 @@ EddyViscosityModel = 1
 [Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-5
+TargetSteps = 8
 
 [Vtk]
 AddVelocity = true

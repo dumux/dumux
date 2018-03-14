@@ -116,12 +116,15 @@ public:
         // update size and initial values of the global vectors
         wallElementIDs_.resize(this->fvGridGeometry().elementMapper().size());
         wallDistances_.resize(this->fvGridGeometry().elementMapper().size());
+        neighborIDs_.resize(this->fvGridGeometry().elementMapper().size());
+        cellCenters_.resize(this->fvGridGeometry().elementMapper().size());
         velocity_.resize(this->fvGridGeometry().elementMapper().size());
         velocityGradients_.resize(this->fvGridGeometry().elementMapper().size());
         kinematicViscosity_.resize(this->fvGridGeometry().elementMapper().size());
         for (unsigned int i = 0; i < wallElementIDs_.size(); ++i)
         {
             wallDistances_[i] = std::numeric_limits<Scalar>::max();
+            cellCenters_[i] = GlobalPosition(0.0);
             velocity_[i] = DimVector(0.0);
             velocityGradients_[i] = DimMatrix(0.0);
             kinematicViscosity_[i] = 0.0;
@@ -148,15 +151,60 @@ public:
         // search for shortest distance to wall for each element
         for (const auto& element : elements(gridView))
         {
+            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            cellCenters_[elementID] = element.geometry().center();
             for (unsigned int i = 0; i < wallPositions.size(); ++i)
             {
                 GlobalPosition global = element.geometry().center();
                 global -= wallPositions[i];
-                unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
                 if (global.two_norm() < wallDistances_[elementID])
                 {
                     wallDistances_[elementID] = global.two_norm();
                     wallElementIDs_[elementID] = wallElements[i];
+                }
+            }
+        }
+
+        // search for neighbor IDs
+        for (const auto& element : elements(gridView))
+        {
+            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            std::array<std::array<Scalar, 2>, dim> distances;
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                neighborIDs_[elementID][dimIdx][0] = elementID;
+                neighborIDs_[elementID][dimIdx][1] = elementID;
+                distances[dimIdx][0] = std::numeric_limits<Scalar>::max();
+                distances[dimIdx][1] = -std::numeric_limits<Scalar>::max();
+            }
+            for (const auto& neighbor : elements(gridView))
+            {
+                unsigned int neighborID = this->fvGridGeometry().elementMapper().index(neighbor);
+                for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                {
+                    if (elementID == neighborID)
+                        continue;
+//                     std::cout << elementID << " " << neighborID << std::endl;
+
+                    for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                    {
+                        Scalar distanceTemp = cellCenters_[elementID][dimIdx] - cellCenters_[neighborID][dimIdx];
+//                         std::cout << distanceTemp
+//                                   << " " << distances[dimIdx][0]
+//                                   << " " << distances[dimIdx][1]
+//                                   << std::endl;
+                        if (distanceTemp < distances[dimIdx][0] && distanceTemp > 1e-8)
+                        {
+                            neighborIDs_[elementID][dimIdx][0] = neighborID;
+                            distances[dimIdx][0] = distanceTemp;
+                        }
+
+                        if (distanceTemp > distances[dimIdx][1] && distanceTemp < -1e-8)
+                        {
+                            neighborIDs_[elementID][dimIdx][1] = neighborID;
+                            distances[dimIdx][1] = distanceTemp;
+                        }
+                    }
                 }
             }
         }
@@ -186,7 +234,29 @@ public:
             }
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
                 velocity_[elementID][dimIdx] = velocityTemp[dimIdx] * 0.5; // faces are equidistant to cell center
+        }
 
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                {
+                    velocityGradients_[elementID][velIdx][dimIdx]
+                        = (velocity_[neighborIDs_[elementID][dimIdx][1]][velIdx]
+                              - velocity_[neighborIDs_[elementID][dimIdx][0]][velIdx])
+                          / (cellCenters_[neighborIDs_[elementID][dimIdx][1]][dimIdx]
+                              - cellCenters_[neighborIDs_[elementID][dimIdx][0]][dimIdx]);
+//                     std::cout << " velocity_[1][velIdx] " << velocity_[neighborIDs_[elementID][dimIdx][1]][velIdx]
+//                               << " velocity_[0][velIdx] " << velocity_[neighborIDs_[elementID][dimIdx][0]][velIdx]
+//                               << " cellCenters_[1][velIdx] " << cellCenters_[neighborIDs_[elementID][dimIdx][1]][dimIdx]
+//                               << " cellCenters_[0][velIdx] " << cellCenters_[neighborIDs_[elementID][dimIdx][0]][dimIdx]
+//                               << " velocityGradients_[elementID][" << velIdx << "][" << dimIdx << "] " << velocityGradients_[elementID][velIdx][dimIdx];
+                }
+            }
+//             std::cout << std::endl;
+        }
 //             // TODO: calculate velocity gradients
 //             for (auto&& scv : scvs(fvGeometry))
 //             {
@@ -218,12 +288,15 @@ public:
 //                     velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
 //                 }
 //             }
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
-                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
-                    velocityGradients_[elementID][velIdx][dimIdx] = 0.12345;
+//             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+//                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+//                     velocityGradients_[elementID][velIdx][dimIdx] = 0.12345;
 
 //             // TODO calculate or call all secondary variables
 //             // TODO call kinematic viscosity value from vol vars
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
             kinematicViscosity_[elementID] = 15e-6;
         }
     }
@@ -231,7 +304,7 @@ public:
     /*!
      * \brief Returns whether a given point is on a wall
      */
-    const bool isOnWall(GlobalPosition &globalPos) const
+    bool isOnWall(const GlobalPosition &globalPos) const
     {
         // Throw an exception if no walls are implemented
         DUNE_THROW(Dune::InvalidStateException,
@@ -281,6 +354,8 @@ public:
 public:
     mutable std::vector<unsigned int> wallElementIDs_;
     mutable std::vector<Scalar> wallDistances_;
+    mutable std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIDs_;
+    mutable std::vector<GlobalPosition> cellCenters_;
     mutable std::vector<DimVector> velocity_;
     mutable std::vector<DimMatrix> velocityGradients_;
     mutable std::vector<Scalar> kinematicViscosity_;

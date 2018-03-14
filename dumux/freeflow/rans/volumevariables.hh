@@ -87,6 +87,8 @@ public:
                 const Element &element,
                 const SubControlVolume& scv)
     {
+        using std::abs;
+        using std::max;
         using std::sqrt;
         ParentType::update(elemSol, problem, element, scv);
 
@@ -95,10 +97,11 @@ public:
         wallElementID_ = problem.wallElementIDs_[elementID_];
         wallDistance_ = problem.wallDistances_[elementID_];
         velocity_ = problem.velocity_[elementID_];
+        velocityGradients_ = problem.velocityGradients_[elementID_];
         Scalar uStar = sqrt(problem.kinematicViscosity_[wallElementID_]
-                            * problem.velocityGradients_[wallElementID_][0][1]); // TODO: flow and wallnormalaxis
+                            * abs(problem.velocityGradients_[wallElementID_][0][1])); // TODO: flow and wallnormalaxis
         yPlus_ = wallDistance_ * uStar / asImp_().kinematicViscosity();
-        uPlus_ = velocity_[0] / uStar; // TODO: flow and wallnormalaxis
+        uPlus_ = velocity_[0] / max(uStar, 1e-8); // TODO: flow and wallnormalaxis
 
         // calculate the eddy viscosity based on the implemented RANS model
         asImp_().calculateEddyViscosity(elemSol, problem, element, scv);

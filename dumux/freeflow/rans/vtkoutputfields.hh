@@ -52,6 +52,8 @@ public:
     static void init(VtkOutputModule& vtk)
     {
         vtk.addVolumeVariable([](const auto& v){ return v.velocity()[0]; }, "v_x [m/s]");
+        vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0][0]; }, "dv_x/dx [m/s]");
+        vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0][1]; }, "dv_x/dy [m/s]");
         vtk.addVolumeVariable([](const auto& v){ return v.pressure(); }, "p [Pa]");
         vtk.addVolumeVariable([](const auto& v){ return v.pressure() - 1e5; }, "p_rel [Pa]");
         vtk.addVolumeVariable([](const auto& v){ return v.density(); }, "rho [kg/m^3]");

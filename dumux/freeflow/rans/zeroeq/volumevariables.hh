@@ -105,9 +105,12 @@ public:
                                 const Element &element,
                                 const SubControlVolume& scv)
     {
+        using std::abs;
         using std::exp;
+        using std::sqrt;
         Scalar kinematicEddyViscosity = 0.0;
         const Scalar karmanConstant = 0.41; // TODO make karman constant a property
+        Scalar velGrad = abs(asImp_().velocityGradients()[0][1]); // TODO: flow and wallnormalaxis
         if (eddyViscosityModel_ == Indices::noEddyViscosityModel)
         {
             // kinematicEddyViscosity = 0.0
@@ -115,14 +118,13 @@ public:
         else if (eddyViscosityModel_ == Indices::prandtl)
         {
             Scalar mixingLength = karmanConstant * asImp_().wallDistance();
-            Scalar velGrad = asImp_().velocityGradients()[0][1]; // TODO: flow and wallnormalaxis
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
         else if (eddyViscosityModel_ == Indices::modifiedVanDriest)
         {
             Scalar mixingLength = karmanConstant * asImp_().wallDistance()
-                                  * (1.0 - exp(-asImp_().yPlus() / 26.0));
-            Scalar velGrad = asImp_().velocityGradients()[0][1]; // TODO: flow and wallnormalaxis
+                                  * (1.0 - exp(-asImp_().yPlus() / 26.0))
+                                  / sqrt(1.0 - exp(-0.26 * asImp_().yPlus()));
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
         else

@@ -112,7 +112,7 @@ public:
      */
     // \{
 
-    const bool isOnWall(GlobalPosition &globalPos) const
+    bool isOnWall(const GlobalPosition &globalPos) const
     {
         Scalar localEps_ = 1e-6; // cannot use the epsilon, because ParentType is initialized first
         return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + localEps_
@@ -180,14 +180,7 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values = initialAtPos(globalPos);
-
-        if(isInlet(globalPos))
-        {
-            values[velocityXIdx] = inletVelocity_;
-        }
-
-        return values;
+        return initialAtPos(globalPos);
     }
 
     // \}
@@ -204,13 +197,12 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values;
+        PrimaryVariables values(0.0);
         values[pressureIdx] = 1.0e+5;
-        if(isInlet(globalPos))
+        if(!isOnWall(globalPos))
         {
             values[velocityXIdx] = inletVelocity_;
         }
-        values[velocityYIdx] = 0.0;
 
         return values;
     }
