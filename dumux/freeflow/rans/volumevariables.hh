@@ -101,7 +101,8 @@ public:
         Scalar uStar = sqrt(problem.kinematicViscosity_[wallElementID_]
                             * abs(problem.velocityGradients_[wallElementID_][0][1])); // TODO: flow and wallnormalaxis
         yPlus_ = wallDistance_ * uStar / asImp_().kinematicViscosity();
-        uPlus_ = velocity_[0] / max(uStar, 1e-8); // TODO: flow and wallnormalaxis
+        yPlus_ = max(yPlus_, 1e-10); // zero values lead to numerical problems in some turbulence models
+        uPlus_ = velocity_[0] / max(uStar, 1e-10); // TODO: flow and wallnormalaxis
 
         // calculate the eddy viscosity based on the implemented RANS model
         asImp_().calculateEddyViscosity(elemSol, problem, element, scv);

@@ -6,9 +6,12 @@ TEnd = 100 # [s]
 Verbosity = true
 Positions0 = 0.0 10.0
 Positions1 = 0.0 0.12345 0.2469
-Cells0 = 16
-Cells1 = 8 8
-Grading1 = 1.4 -1.4
+Cells0 = 25
+Cells1 = 25 25
+Grading1 = 1.25 -1.25
+# Cells0 = 16
+# Cells1 = 8 8
+# Grading1 = 1.4 -1.4
 
 Cells = 0 # TODO Remove this requirement
 
@@ -18,7 +21,7 @@ InletVelocity = 2.5 # [m/s]
 EnableGravity = false
 
 [FreeFlow]
-EddyViscosityModel = 1
+EddyViscosityModel = 2
 
 [Newton]
 MaxSteps = 10

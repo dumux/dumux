@@ -72,25 +72,9 @@ class RANSProblem : public NavierStokesParentProblem<TypeTag>
 
     enum {
         massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx/*,
-        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
-        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
-        pressureIdx = Indices::pressureIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx*/
+        momentumBalanceIdx = Indices::momentumBalanceIdx
     };
 
-//     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-//
-//     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-//
-//     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-//
-//     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-//     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-//
-//     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-//
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
@@ -111,6 +95,7 @@ public:
      */
     void updateStaticWallProperties() const
     {
+        using std::abs;
         std::cout << "Update static wall properties. ";
 
         // update size and initial values of the global vectors
@@ -175,38 +160,45 @@ public:
                 neighborIDs_[elementID][dimIdx][0] = elementID;
                 neighborIDs_[elementID][dimIdx][1] = elementID;
                 distances[dimIdx][0] = std::numeric_limits<Scalar>::max();
-                distances[dimIdx][1] = -std::numeric_limits<Scalar>::max();
+                distances[dimIdx][1] = std::numeric_limits<Scalar>::max();
             }
             for (const auto& neighbor : elements(gridView))
             {
                 unsigned int neighborID = this->fvGridGeometry().elementMapper().index(neighbor);
+                if (elementID == neighborID)
+                    continue;
+
                 for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
                 {
-                    if (elementID == neighborID)
-                        continue;
-//                     std::cout << elementID << " " << neighborID << std::endl;
+                    GlobalPosition globalTemp = cellCenters_[elementID];
+                    globalTemp -= cellCenters_[neighborID];
+                    Scalar distanceReal = globalTemp.two_norm();
+                    Scalar distanceAxis = abs(cellCenters_[elementID][dimIdx] - cellCenters_[neighborID][dimIdx]);
 
-                    for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                    // only use element which are aligned to the one of interest
+                    if (abs(distanceReal - distanceAxis) < 1e-8)
                     {
-                        Scalar distanceTemp = cellCenters_[elementID][dimIdx] - cellCenters_[neighborID][dimIdx];
-//                         std::cout << distanceTemp
-//                                   << " " << distances[dimIdx][0]
-//                                   << " " << distances[dimIdx][1]
-//                                   << std::endl;
-                        if (distanceTemp < distances[dimIdx][0] && distanceTemp > 1e-8)
+                        if (cellCenters_[elementID][dimIdx] > cellCenters_[neighborID][dimIdx]
+                            && distanceAxis < distances[dimIdx][0])
                         {
                             neighborIDs_[elementID][dimIdx][0] = neighborID;
-                            distances[dimIdx][0] = distanceTemp;
+                            distances[dimIdx][0] = distanceAxis;
                         }
-
-                        if (distanceTemp > distances[dimIdx][1] && distanceTemp < -1e-8)
+                        if (cellCenters_[elementID][dimIdx] < cellCenters_[neighborID][dimIdx]
+                            && distanceAxis < distances[dimIdx][1])
                         {
                             neighborIDs_[elementID][dimIdx][1] = neighborID;
-                            distances[dimIdx][1] = distanceTemp;
+                            distances[dimIdx][1] = distanceAxis;
                         }
                     }
                 }
             }
+//             std::cout << " " << elementID
+//                       << " " << neighborIDs_[elementID][0][0]
+//                       << " " << neighborIDs_[elementID][0][1]
+//                       << " " << neighborIDs_[elementID][1][0]
+//                       << " " << neighborIDs_[elementID][1][1]
+//                       << std::endl;
         }
     }
 
@@ -257,43 +249,9 @@ public:
             }
 //             std::cout << std::endl;
         }
-//             // TODO: calculate velocity gradients
-//             for (auto&& scv : scvs(fvGeometry))
-//             {
-//                 // treat cell-center dofs
-//                 const auto dofIdxCellCenter = scv.dofIndex();
-//                 const auto& posCellCenter = scv.dofPosition();
-//                 const auto analyticalSolutionCellCenter = analyticalSolution(posCellCenter)[pressureIdx];
-//                 const auto numericalSolutionCellCenter = curSol[cellCenterIdx][dofIdxCellCenter][pressureIdx];
-//                 sumError[pressureIdx] += squaredDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter) * scv.volume();
-//                 sumReference[pressureIdx] += analyticalSolutionCellCenter * analyticalSolutionCellCenter * scv.volume();
-//                 totalVolume += scv.volume();
-//
-//
-//                 // treat face dofs
-//                 for (auto&& scvf : scvfs(fvGeometry))
-//                 {
-//                     const int dofIdxFace = scvf.dofIndex();
-//                     const int dirIdx = scvf.directionIndex();
-//                     const auto analyticalSolutionFace = analyticalSolution(scvf.center())[Indices::velocity(dirIdx)];
-//                     const auto numericalSolutionFace = curSol[faceIdx][dofIdxFace][momentumBalanceIdx];
-//                     directionIndex[dofIdxFace] = dirIdx;
-//                     errorVelocity[dofIdxFace] = squaredDiff_(analyticalSolutionFace, numericalSolutionFace);
-//                     velocityReference[dofIdxFace] = squaredDiff_(analyticalSolutionFace, 0.0);
-//                     const Scalar staggeredHalfVolume = 0.5 * scv.volume();
-//                     staggeredVolume[dofIdxFace] = staggeredVolume[dofIdxFace] + staggeredHalfVolume;
-//                     const int dofIdxFace = scvf.dofIndex();
-//                     const int dirIdx = scvf.directionIndex();
-//                     const auto numericalSolutionFace = curSol[faceIdx][dofIdxFace][momentumBalanceIdx];
-//                     velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
-//                 }
-//             }
-//             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
-//                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
-//                     velocityGradients_[elementID][velIdx][dimIdx] = 0.12345;
 
-//             // TODO calculate or call all secondary variables
-//             // TODO call kinematic viscosity value from vol vars
+        // TODO calculate or call all secondary variables
+        // TODO call kinematic viscosity value from vol vars
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);

@@ -87,7 +87,7 @@ public:
                 const SubControlVolume& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
-    };
+    }
 
 
     /*!
