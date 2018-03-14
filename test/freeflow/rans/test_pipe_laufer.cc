@@ -152,6 +152,7 @@ int main(int argc, char** argv) try
     x[cellCenterIdx].resize(numDofsCellCenter);
     x[faceIdx].resize(numDofsFace);
     problem->applyInitialSolution(x);
+    problem->updateDynamicWallProperties(x);
     auto xOld = x;
 
     // the grid variables
@@ -191,7 +192,7 @@ int main(int argc, char** argv) try
         gridVariables->advanceTimeStep();
 
         // update wall properties
-        problem->updateDynamicWallProperties();
+        problem->updateDynamicWallProperties(x);
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();

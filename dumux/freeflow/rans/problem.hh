@@ -26,6 +26,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
+#include <dumux/discretization/localview.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
@@ -66,7 +67,33 @@ class RANSProblem : public NavierStokesParentProblem<TypeTag>
       };
     // TODO: dim or dimWorld appropriate here?
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+
+    enum {
+        massBalanceIdx = Indices::massBalanceIdx,
+        momentumBalanceIdx = Indices::momentumBalanceIdx/*,
+        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
+        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
+        pressureIdx = Indices::pressureIdx,
+        velocityXIdx = Indices::velocityXIdx,
+        velocityYIdx = Indices::velocityYIdx*/
+    };
+
+//     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+//
+//     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+//
+//     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+//
+//     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+//     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+//
+//     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+//
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
     //! The constructor sets the gravity, if desired by the user.
@@ -77,7 +104,6 @@ public:
             gravity_[dim-1]  = -9.81;
 
         asImp_().updateStaticWallProperties();
-        asImp_().updateDynamicWallProperties();
     }
 
     /*!
@@ -90,11 +116,13 @@ public:
         // update size and initial values of the global vectors
         wallElementIDs_.resize(this->fvGridGeometry().elementMapper().size());
         wallDistances_.resize(this->fvGridGeometry().elementMapper().size());
+        velocity_.resize(this->fvGridGeometry().elementMapper().size());
         velocityGradients_.resize(this->fvGridGeometry().elementMapper().size());
         kinematicViscosity_.resize(this->fvGridGeometry().elementMapper().size());
         for (unsigned int i = 0; i < wallElementIDs_.size(); ++i)
         {
             wallDistances_[i] = std::numeric_limits<Scalar>::max();
+            velocity_[i] = DimVector(0.0);
             velocityGradients_[i] = DimMatrix(0.0);
             kinematicViscosity_[i] = 0.0;
         }
@@ -137,17 +165,65 @@ public:
     /*!
      * \brief \todo please doc me
      */
-    void updateDynamicWallProperties() const
+    void updateDynamicWallProperties(const SolutionVector& curSol) const
     {
         std::cout << "Update dynamic wall properties." << std::endl;
 
-        auto& gridView(this->fvGridGeometry().gridView());
-        for (const auto& element : elements(gridView))
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            // TODO call calculate velocity gradients from vol vars
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            velocityGradients_[elementID] = DimMatrix(0.1);
-            // TODO call kinematic viscosity value from vol vars
+
+            // calculate velocities
+            DimVector velocityTemp(0.0);
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                const int dofIdxFace = scvf.dofIndex();
+                const int dirIdx = scvf.directionIndex();
+                const auto numericalSolutionFace = curSol[faceIdx][dofIdxFace][momentumBalanceIdx];
+                velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
+            }
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                velocity_[elementID][dimIdx] = velocityTemp[dimIdx] * 0.5; // faces are equidistant to cell center
+
+//             // TODO: calculate velocity gradients
+//             for (auto&& scv : scvs(fvGeometry))
+//             {
+//                 // treat cell-center dofs
+//                 const auto dofIdxCellCenter = scv.dofIndex();
+//                 const auto& posCellCenter = scv.dofPosition();
+//                 const auto analyticalSolutionCellCenter = analyticalSolution(posCellCenter)[pressureIdx];
+//                 const auto numericalSolutionCellCenter = curSol[cellCenterIdx][dofIdxCellCenter][pressureIdx];
+//                 sumError[pressureIdx] += squaredDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter) * scv.volume();
+//                 sumReference[pressureIdx] += analyticalSolutionCellCenter * analyticalSolutionCellCenter * scv.volume();
+//                 totalVolume += scv.volume();
+//
+//
+//                 // treat face dofs
+//                 for (auto&& scvf : scvfs(fvGeometry))
+//                 {
+//                     const int dofIdxFace = scvf.dofIndex();
+//                     const int dirIdx = scvf.directionIndex();
+//                     const auto analyticalSolutionFace = analyticalSolution(scvf.center())[Indices::velocity(dirIdx)];
+//                     const auto numericalSolutionFace = curSol[faceIdx][dofIdxFace][momentumBalanceIdx];
+//                     directionIndex[dofIdxFace] = dirIdx;
+//                     errorVelocity[dofIdxFace] = squaredDiff_(analyticalSolutionFace, numericalSolutionFace);
+//                     velocityReference[dofIdxFace] = squaredDiff_(analyticalSolutionFace, 0.0);
+//                     const Scalar staggeredHalfVolume = 0.5 * scv.volume();
+//                     staggeredVolume[dofIdxFace] = staggeredVolume[dofIdxFace] + staggeredHalfVolume;
+//                     const int dofIdxFace = scvf.dofIndex();
+//                     const int dirIdx = scvf.directionIndex();
+//                     const auto numericalSolutionFace = curSol[faceIdx][dofIdxFace][momentumBalanceIdx];
+//                     velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
+//                 }
+//             }
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                    velocityGradients_[elementID][velIdx][dimIdx] = 0.12345;
+
+//             // TODO calculate or call all secondary variables
+//             // TODO call kinematic viscosity value from vol vars
             kinematicViscosity_[elementID] = 15e-6;
         }
     }
@@ -192,7 +268,7 @@ public:
 
     //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
     template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethod::staggered, void>::type
+    typename std::enable_if<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::staggered, void>::type
     applyInititalFaceSolution(SolutionVector& sol,
                               const SubControlVolumeFace& scvf,
                               const PrimaryVariables& initSol) const
@@ -205,6 +281,7 @@ public:
 public:
     mutable std::vector<unsigned int> wallElementIDs_;
     mutable std::vector<Scalar> wallDistances_;
+    mutable std::vector<DimVector> velocity_;
     mutable std::vector<DimMatrix> velocityGradients_;
     mutable std::vector<Scalar> kinematicViscosity_;
 

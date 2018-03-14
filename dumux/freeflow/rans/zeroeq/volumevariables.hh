@@ -57,7 +57,6 @@ class ZeroEqVolumeVariablesImplementation<TypeTag, false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -81,7 +80,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
@@ -99,7 +99,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    void calculateEddyViscosity(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void calculateEddyViscosity(const ElementSolution &elemSol,
                                 const Problem &problem,
                                 const Element &element,
                                 const SubControlVolume& scv)

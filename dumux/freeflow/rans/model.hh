@@ -129,7 +129,13 @@ SET_TYPE_PROP(RANS, VolumeVariables, RANSVolumeVariables<TypeTag>);
 // SET_TYPE_PROP(RANS, Indices, RANSIndices<TypeTag>);
 
 //! The specific vtk output fields
-SET_TYPE_PROP(RANS, VtkOutputFields, RANSVtkOutputFields<TypeTag>);
+SET_PROP(RANS, VtkOutputFields)
+{
+private:
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+public:
+     using type = RANSVtkOutputFields<FVGridGeometry>;
+};
 //
 // //////////////////////////////////////////////////////////////////
 // // Property values for isothermal model required for the general non-isothermal model

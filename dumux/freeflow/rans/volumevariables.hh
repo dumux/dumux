@@ -57,7 +57,6 @@ class RANSVolumeVariablesImplementation<TypeTag, false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -82,7 +81,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
@@ -90,53 +90,19 @@ public:
         using std::sqrt;
         ParentType::update(elemSol, problem, element, scv);
 
-        asImp_().calculateVelocity(elemSol, problem, element, scv);
-        asImp_().calculateVelocityGradients(elemSol, problem, element, scv);
-
         // calculate characteristic properties of the turbulent flow
         elementID_ = problem.fvGridGeometry().elementMapper().index(element);
         wallElementID_ = problem.wallElementIDs_[elementID_];
         wallDistance_ = problem.wallDistances_[elementID_];
+        velocity_ = problem.velocity_[elementID_];
         Scalar uStar = sqrt(problem.kinematicViscosity_[wallElementID_]
-                       * problem.velocityGradients_[wallElementID_][0][1]); // TODO: flow and wallnormalaxis
+                            * problem.velocityGradients_[wallElementID_][0][1]); // TODO: flow and wallnormalaxis
         yPlus_ = wallDistance_ * uStar / asImp_().kinematicViscosity();
         uPlus_ = velocity_[0] / uStar; // TODO: flow and wallnormalaxis
 
         // calculate the eddy viscosity based on the implemented RANS model
         asImp_().calculateEddyViscosity(elemSol, problem, element, scv);
     };
-
-
-    /*!
-     * \brief Calculate the velocity vector at the cell center
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to
-     *                be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
-     */
-    void calculateVelocity(const ElementSolutionVector &elemSol,
-                           const Problem &problem,
-                           const Element &element,
-                           const SubControlVolume& scv)
-    { velocity_ = DimVector(1.0); /* TODO */ }
-
-
-    /*!
-     * \brief Calculate the velocity gradient tensor at the cell center
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to
-     *                be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
-     */
-    void calculateVelocityGradients(const ElementSolutionVector &elemSol,
-                                    const Problem &problem,
-                                    const Element &element,
-                                    const SubControlVolume& scv)
-    { velocityGradients_ = DimMatrix(1.0); /* TODO */ }
 
 
     /*!
@@ -148,7 +114,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    void calculateEddyViscosity(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void calculateEddyViscosity(const ElementSolution &elemSol,
                                 const Problem &problem,
                                 const Element &element,
                                 const SubControlVolume& scv)
@@ -157,6 +124,13 @@ public:
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide an calculateEddyViscosity(...) method.");
     }
+
+
+    /*!
+     * \brief Return the velocity vector \f$\mathrm{[m/s]}\f$ at the control volume center.
+     */
+    DimVector velocity() const
+    { return velocity_; }
 
     /*!
      * \brief Return the velocity gradients \f$\mathrm{[1/s]}\f$ at the control volume center.
@@ -245,7 +219,6 @@ class RANSVolumeVariablesImplementation<TypeTag, true>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -267,7 +240,8 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    void update(const ElementSolutionVector &elemSol,
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume &scv)
