@@ -64,7 +64,8 @@ class RANSVolumeVariablesImplementation<TypeTag, false>
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dimWorld = GridView::dimensionworld };
-    using FieldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
     static const int defaultPhaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
@@ -86,12 +87,20 @@ public:
                 const Element &element,
                 const SubControlVolume& scv)
     {
+        using std::sqrt;
         ParentType::update(elemSol, problem, element, scv);
 
-        elementID_ = problem.fvGridGeometry().elementMapper().index(element);
-        wallDistance_ = problem.wallDistances_[elementID_];
-
+        asImp_().calculateVelocity(elemSol, problem, element, scv);
         asImp_().calculateVelocityGradients(elemSol, problem, element, scv);
+
+        // calculate characteristic properties of the turbulent flow
+        elementID_ = problem.fvGridGeometry().elementMapper().index(element);
+        wallElementID_ = problem.wallElementIDs_[elementID_];
+        wallDistance_ = problem.wallDistances_[elementID_];
+        Scalar uStar = sqrt(problem.kinematicViscosity_[wallElementID_]
+                       * problem.velocityGradients_[wallElementID_][0][1]); // TODO: flow and wallnormalaxis
+        yPlus_ = wallDistance_ * uStar / asImp_().kinematicViscosity();
+        uPlus_ = velocity_[0] / uStar; // TODO: flow and wallnormalaxis
 
         // calculate the eddy viscosity based on the implemented RANS model
         asImp_().calculateEddyViscosity(elemSol, problem, element, scv);
@@ -99,7 +108,23 @@ public:
 
 
     /*!
-     * \brief Calculate the velocity gradients at the cell center
+     * \brief Calculate the velocity vector at the cell center
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    void calculateVelocity(const ElementSolutionVector &elemSol,
+                           const Problem &problem,
+                           const Element &element,
+                           const SubControlVolume& scv)
+    { velocity_ = DimVector(1.0); /* TODO */ }
+
+
+    /*!
+     * \brief Calculate the velocity gradient tensor at the cell center
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -111,7 +136,7 @@ public:
                                     const Problem &problem,
                                     const Element &element,
                                     const SubControlVolume& scv)
-    { velocityGradients_ = FieldMatrix(1.0); }
+    { velocityGradients_ = DimMatrix(1.0); /* TODO */ }
 
 
     /*!
@@ -136,7 +161,7 @@ public:
     /*!
      * \brief Return the velocity gradients \f$\mathrm{[1/s]}\f$ at the control volume center.
      */
-    FieldMatrix velocityGradients() const
+    DimMatrix velocityGradients() const
     { return velocityGradients_; }
 
     /*!
@@ -144,6 +169,18 @@ public:
      */
     Scalar wallDistance() const
     { return wallDistance_; }
+
+    /*!
+     * \brief Return the dimensionless wall distance \f$\mathrm{[-]}\f$.
+     */
+    Scalar yPlus() const
+    { return yPlus_; }
+
+    /*!
+     * \brief Return the dimensionless velocity \f$\mathrm{[-]}\f$.
+     */
+    Scalar uPlus() const
+    { return uPlus_; }
 
     /*!
      * \brief Set the values of the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ within the
@@ -163,8 +200,15 @@ public:
      * \brief Return the effective dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
      */
-    Scalar effectiveViscosity(int phaseIdx = 0) const
-    { return asImp_().viscosity(defaultPhaseIdx) + dynamicEddyViscosity(); }
+    Scalar effectiveViscosity() const
+    { return asImp_().viscosity() + dynamicEddyViscosity(); }
+
+    /*!
+     * \brief Return the kinematic eddy viscosity \f$\mathrm{[m^2/s]}\f$ of the fluid within the
+     *        control volume.
+     */
+    Scalar kinematicViscosity() const
+    { return asImp_().viscosity() / asImp_().density(); }
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
@@ -176,11 +220,14 @@ private:
     { return *static_cast<const Implementation *>(this); }
 
 protected:
-    FieldMatrix velocityGradients_;
+    DimVector velocity_;
+    DimMatrix velocityGradients_;
     Scalar dynamicEddyViscosity_;
     unsigned int elementID_;
     unsigned int wallElementID_;
     Scalar wallDistance_;
+    Scalar yPlus_;
+    Scalar uPlus_;
 };
 
 /*!
@@ -248,9 +295,9 @@ public:
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
      *        of the fluid-flow in the sub-control volume.
      */
-    Scalar effectiveThermalConductivity(int phaseIdx = 0) const
+    Scalar effectiveThermalConductivity() const
     {
-        return FluidSystem::thermalConductivity(this->fluidState_, defaultPhaseIdx)
+        return FluidSystem::thermalConductivity(this->fluidState_)
                + eddyThermalConductivity();
     }
 

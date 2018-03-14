@@ -66,6 +66,7 @@ class RANSProblem : public NavierStokesParentProblem<TypeTag>
       };
     // TODO: dim or dimWorld appropriate here?
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
     //! The constructor sets the gravity, if desired by the user.
@@ -84,12 +85,18 @@ public:
      */
     void updateStaticWallProperties() const
     {
+        std::cout << "Update static wall properties. ";
+
         // update size and initial values of the global vectors
         wallElementIDs_.resize(this->fvGridGeometry().elementMapper().size());
         wallDistances_.resize(this->fvGridGeometry().elementMapper().size());
-            for (unsigned int i = 0; i < wallElementIDs_.size(); ++i)
+        velocityGradients_.resize(this->fvGridGeometry().elementMapper().size());
+        kinematicViscosity_.resize(this->fvGridGeometry().elementMapper().size());
+        for (unsigned int i = 0; i < wallElementIDs_.size(); ++i)
         {
             wallDistances_[i] = std::numeric_limits<Scalar>::max();
+            velocityGradients_[i] = DimMatrix(0.0);
+            kinematicViscosity_[i] = 0.0;
         }
 
         // retrieve all wall intersections and corresponding elements
@@ -108,7 +115,7 @@ public:
                 }
             }
         }
-        std::cout << "numWallIntersections: " << wallPositions.size() << std::endl;
+        std::cout << "NumWallIntersections=" << wallPositions.size() << std::endl;
 
         // search for shortest distance to wall for each element
         for (const auto& element : elements(gridView))
@@ -132,7 +139,17 @@ public:
      */
     void updateDynamicWallProperties() const
     {
-        return;
+        std::cout << "Update dynamic wall properties." << std::endl;
+
+        auto& gridView(this->fvGridGeometry().gridView());
+        for (const auto& element : elements(gridView))
+        {
+            // TODO call calculate velocity gradients from vol vars
+            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            velocityGradients_[elementID] = DimMatrix(0.1);
+            // TODO call kinematic viscosity value from vol vars
+            kinematicViscosity_[elementID] = 15e-6;
+        }
     }
 
     /*!
@@ -188,6 +205,8 @@ public:
 public:
     mutable std::vector<unsigned int> wallElementIDs_;
     mutable std::vector<Scalar> wallDistances_;
+    mutable std::vector<DimMatrix> velocityGradients_;
+    mutable std::vector<Scalar> kinematicViscosity_;
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)

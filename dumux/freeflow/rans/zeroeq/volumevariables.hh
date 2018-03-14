@@ -104,14 +104,32 @@ public:
                                 const Element &element,
                                 const SubControlVolume& scv)
     {
+        using std::exp;
         Scalar kinematicEddyViscosity = 0.0;
-        if (eddyViscosityModel_ == Indices::prandtl)
+        const Scalar karmanConstant = 0.41; // TODO make karman constant a property
+        if (eddyViscosityModel_ == Indices::noEddyViscosityModel)
         {
-            Scalar mixingLength = 0.41 * asImp_().wallDistance_;
-            Scalar velGrad = asImp_().velocityGradients()[0][1];
+            // kinematicEddyViscosity = 0.0
+        }
+        else if (eddyViscosityModel_ == Indices::prandtl)
+        {
+            Scalar mixingLength = karmanConstant * asImp_().wallDistance();
+            Scalar velGrad = asImp_().velocityGradients()[0][1]; // TODO: flow and wallnormalaxis
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
-        asImp_().setDynamicEddyViscosity(kinematicEddyViscosity * asImp_().density(defaultPhaseIdx));
+        else if (eddyViscosityModel_ == Indices::modifiedVanDriest)
+        {
+            Scalar mixingLength = karmanConstant * asImp_().wallDistance()
+                                  * (1.0 - exp(-asImp_().yPlus() / 26.0));
+            Scalar velGrad = asImp_().velocityGradients()[0][1]; // TODO: flow and wallnormalaxis
+            kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
+        }
+        else
+        {
+            DUNE_THROW(Dune::NotImplemented,
+                       "This eddy viscosity model is not implemented: " << eddyViscosityModel_);
+        }
+        asImp_().setDynamicEddyViscosity(kinematicEddyViscosity * asImp_().density());
     }
 
 private:

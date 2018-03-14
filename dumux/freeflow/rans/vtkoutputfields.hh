@@ -64,6 +64,8 @@ public:
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.viscosity() / v.density(); }, "nu [m^2/s]");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.dynamicEddyViscosity() / v.density(); }, "nu_t [m^2/s]");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.wallDistance(); }, "l_w [m]");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.yPlus(); }, "y^+ [-]");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.uPlus(); }, "u^+ [-]");
 
         // add discretization-specific fields
         additionalOutput_(vtk, discMethodTag<GET_PROP_VALUE(TypeTag, DiscretizationMethod)>{});

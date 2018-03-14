@@ -33,6 +33,8 @@ namespace Dumux
  * \ingroup ZeroEqModel
  * \brief The common indices for the isothermal ZeroEq model.
  *
+ * \tparam dimension The dimension of the problem
+ * \tparam numEquations the number of model equations
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int dimension, int numEquations, int PVOffset = 0>
@@ -41,6 +43,7 @@ struct ZeroEqIndices
 {
     static constexpr int noEddyViscosityModel = 0;
     static constexpr int prandtl = 1;
+    static constexpr int modifiedVanDriest = 2;
 };
 
 // \}
