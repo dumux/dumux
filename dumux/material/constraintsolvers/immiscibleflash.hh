@@ -140,7 +140,9 @@ public:
             paramCache.updateAll(fluidState);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+                Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
                 fluidState.setDensity(phaseIdx, rho);
+                fluidState.setMolarDensity(phaseIdx, rhoMolar);
 
                 Scalar saturation =
                     globalMolarities[/*compIdx=*/phaseIdx]
@@ -403,7 +405,9 @@ protected:
         // update all densities
         for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
             Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+            Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
             fluidState.setDensity(phaseIdx, rho);
+            fluidState.setMolarDensity(phaseIdx, rhoMolar);
         }
     }
 
@@ -455,7 +459,9 @@ protected:
             // update all densities
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 Scalar rho = FluidSystem::density(fs, paramCache, phaseIdx);
+                Scalar rhoMolar = FluidSystem::molarDensity(fs, paramCache, phaseIdx);
                 fs.setDensity(phaseIdx, rho);
+                fs.setMolarDensity(phaseIdx, rhoMolar);
             }
         }
         else {
@@ -483,7 +489,10 @@ protected:
             // update all densities
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 Scalar rho = FluidSystem::density(fs, paramCache, phaseIdx);
+                Scalar rhoMolar = FluidSystem::molarDensity(fs, paramCache, phaseIdx);
                 fs.setDensity(phaseIdx, rho);
+                fs.setMolarDensity(phaseIdx, rhoMolar);
+
             }
         }
     }
