@@ -157,6 +157,21 @@ public:
                        "Binary diffusion coefficient of components "
                        << compIIdx << " and " << compJIdx << " is undefined!\n");
     }
+
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density for the simple relation is defined by the
+     * mass density \f$\rho_\alpha\f$ and the molar mass of the main component \f$M_\kappa\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\kappa} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+        return density(fluidState, phaseIdx)/molarMass(0);
+    }
 };
 
 SET_TYPE_PROP(MaxwellStefanTestTypeTag, FluidSystem, H2N2CO2FluidSystem<TypeTag>);
