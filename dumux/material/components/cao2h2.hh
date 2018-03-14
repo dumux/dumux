@@ -71,6 +71,15 @@ public:
     }
 
     /*!
+     * \brief The molar density \f$\mathrm{[mol/m^3]}\f$ of CaO2H2.
+     * Molar density at 293 K. Literature value from Shao et al. (2013).
+     */
+    static Scalar solidMolarDensity(Scalar temperature)
+    {
+        return solidDensity(temperature)/molarMass();
+    }
+
+    /*!
      * \brief The specific heat capacity \f$\mathrm{[J/kgK]}\f$ of CaO2H2.
      */
     static Scalar solidHeatCapacity(Scalar temperature)

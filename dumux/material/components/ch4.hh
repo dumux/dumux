@@ -111,6 +111,15 @@ public:
     }
 
     /*!
+     * \brief The molar density of \f$CH_4\f$ gas in \f$\mathrm{[mol/m^3]}\f$,
+     *   depending on pressure and temperature.
+     * \param temperature The temperature of the gas
+     * \param pressure The pressure of the gas
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
+
+    /*!
      * \brief Returns true if the gas phase is assumed to be ideal
      */
     static bool gasIsIdeal()

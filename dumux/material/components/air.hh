@@ -88,6 +88,15 @@ public:
     }
 
     /*!
+     * \brief The molar density of air in \f$\mathrm{[mol/m^3]}\f$,
+     *   depending on pressure and temperature.
+     * \param temperature The temperature of the gas
+     * \param pressure The pressure of the gas
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
+
+    /*!
      * \brief Returns true, the gas phase is assumed to be compressible
      */
     static bool gasIsCompressible()

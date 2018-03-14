@@ -82,6 +82,14 @@ public:
     }
 
     /*!
+     * \brief The mass density \f$\mathrm{[kg/m^3]}\f$ of NaCl.
+     */
+    static Scalar solidMolarDensity(Scalar temperature)
+    {
+        return solidDensity(temperature)/molarMass();
+    }
+
+    /*!
      * \brief The specific heat capacity \f$\mathrm{[J/molK]}\f$ of NaCl.
      */
     static Scalar solidHeatCapacity(Scalar temperature)

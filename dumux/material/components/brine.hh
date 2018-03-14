@@ -57,6 +57,9 @@ public:
     //HACK: If salinity is a pseudo-component, a constat value is used
     static Scalar constantSalinity;
 
+    //! The ideal gas constant \f$\mathrm{[J/mol/K]}\f$
+    static constexpr Scalar R = Constants<Scalar>::R;
+
     /*!
      * \brief A human readable name for the brine.
      */
@@ -72,8 +75,7 @@ public:
    {
        const Scalar M1 = H2O::molarMass();
        const Scalar M2 = Components::NaCl<Scalar>::molarMass(); // molar mass of NaCl [kg/mol]
-       const Scalar X2 = salinity; // mass fraction of salt in brine
-       return M1*M2/(M2 + X2*(M1 - M2));
+       return M1*M2/(M2 + salinity*(M1 - M2));
    };
 
     /*!
@@ -106,8 +108,19 @@ public:
      *
      * \param T temperature of component in \f$\mathrm{[K]}\f$
      */
-    static Scalar vaporPressure(Scalar T)
-    { return H2O::vaporPressure(T); }
+    static Scalar vaporPressure(Scalar temperature, Scalar salinity = constantSalinity)
+    {
+        Scalar ps = H2O::vaporPressure(temperature); //Saturation vapor pressure for pure water
+        Scalar pi = 0;
+        using std::log;
+        if (salinity < 0.26) // here we have hard coded the solubility limit for NaCl
+            pi = (R * temperature * log(1- salinity)); // simplified version of Eq 2.29 in Vishal Jambhekar's Promo
+        else
+            pi = (R * temperature * log(0.74));
+        using std::exp;
+        ps *= exp((pi)/(R*temperature));// Kelvin's law for reduction in saturation vapor pressure due to osmotic potential
+        return ps;
+    }
 
     /*!
      * \brief Specific enthalpy of gaseous brine \f$\mathrm{[J/kg]}\f$.
@@ -241,8 +254,8 @@ public:
                                              Scalar pressure, Scalar salinity = constantSalinity)
     {
         return
-            liquidEnthalpy(temperature, pressure) -
-            pressure/liquidDensity(temperature, pressure);
+            liquidEnthalpy(temperature, pressure, salinity) -
+            pressure/liquidDensity(temperature, pressure, salinity);
     }
 
     /*!
@@ -253,6 +266,17 @@ public:
      */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     { return H2O::gasDensity(temperature, pressure); }
+
+    /*!
+     *  \brief The molar density of steam in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *  We take the value of the H2O gas molar density here because salt is not in the gas phase.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return H2O::gasMolarDensity(temperature, pressure); }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be ideal
@@ -309,6 +333,16 @@ public:
         return density;
     }
 
+    /*!
+     * \brief The molar density of brine in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure, Scalar salinity = constantSalinity)
+    { return liquidDensity(temperature, pressure, salinity)/molarMass(salinity); }
+
    /*!
     * \brief The pressure of steam in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
     *
@@ -331,18 +365,18 @@ public:
        // We use the Newton method for this. For the initial value we
        // assume the pressure to be 10% higher than the vapor
        // pressure
-       Scalar pressure = 1.1*vaporPressure(temperature);
+       Scalar pressure = 1.1*vaporPressure(temperature, salinity);
        const Scalar eps = pressure*1e-7;
 
        Scalar deltaP = pressure*2;
 
        using std::abs;
        for (int i = 0; i < 5 && abs(pressure*1e-9) < abs(deltaP); ++i) {
-           Scalar f = liquidDensity(temperature, pressure) - density;
+           Scalar f = liquidDensity(temperature, pressure, salinity) - density;
 
            Scalar df_dp;
-           df_dp = liquidDensity(temperature, pressure + eps);
-           df_dp -= liquidDensity(temperature, pressure - eps);
+           df_dp = liquidDensity(temperature, pressure + eps, salinity);
+           df_dp -= liquidDensity(temperature, pressure - eps, salinity);
            df_dp /= 2*eps;
 
            deltaP = - f/df_dp;

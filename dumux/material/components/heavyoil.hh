@@ -48,7 +48,7 @@ class HeavyOil
 , public Components::Gas<Scalar, HeavyOil<Scalar> >
 {
     using Consts = Dumux::Constants<Scalar>;
-
+    using IdealGas = Dumux::IdealGas<Scalar>;
 public:
     /*!
      * \brief A human readable name for heavyoil
@@ -340,10 +340,19 @@ public:
      */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
-        return IdealGas<Scalar>::density(molarMass(),
+        return IdealGas::density(molarMass(),
                                          temperature,
                                          pressure);
     }
+
+    /*!
+     * \brief The molar density of pure heavyoil in \f$\mathrm{[mol/m^3]}\f$,
+     *   depending on pressure and temperature.
+     * \param temperature The temperature of the gas
+     * \param pressure The pressure of the gas
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
 
     /*!
      * \brief The density of pure heavyoil at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
@@ -363,6 +372,16 @@ public:
 
         return rho; // [kg/m^3]
     }
+
+    /*!
+     * \brief The molar density of pure heavyoil in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    { return liquidDensity(temperature, pressure)/molarMass(); }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be compressible
@@ -464,31 +483,6 @@ public:
     {
         return 0.127;
     }
-
-protected:
-    /*!
-     * \brief The molar density of pure heavyoil at a given pressure and temperature
-     * \f$\mathrm{[mol/m^3]}\f$.
-     *
-     * source : Reid et al. (fourth edition): Modified Racket technique (chap. 3-11, eq. 3-11.9)
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     */
-    static Scalar molarLiquidDensity_(Scalar temperature)
-    {
-        using std::min;
-        using std::max;
-        temperature = min(temperature, 500.0); // regularization
-        temperature = max(temperature, 250.0);
-
-        using std::pow;
-        const Scalar Z_RA = 0.2556; // from equation
-        const Scalar expo = 1.0 + pow(1.0 - temperature/criticalTemperature(), 2.0/7.0);
-        Scalar V = Consts::R*criticalTemperature()/criticalPressure()*pow(Z_RA, expo); // liquid molar volume [cm^3/mol]
-
-        return 1.0/V; // molar density [mol/m^3]
-    }
-
 };
 
 } // end namespace Components
