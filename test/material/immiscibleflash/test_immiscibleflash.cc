@@ -142,7 +142,9 @@ void completeReferenceFluidState(FluidState &fs,
     paramCache.updateAll(fs);
     for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
         Scalar rho = FluidSystem::density(fs, paramCache, phaseIdx);
+        Scalar rhoMolar = FluidSystem::molarDensity(fs, paramCache, phaseIdx);
         fs.setDensity(phaseIdx, rho);
+        fs.setMolarDensity(phaseIdx, rhoMolar);
     }
 }
 

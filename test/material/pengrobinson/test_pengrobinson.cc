@@ -71,6 +71,7 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
                                                   reservoirFluidState.moleFraction(phaseIdx, compIdx));
             }
             surfaceFluidState.setDensity(phaseIdx, reservoirFluidState.density(phaseIdx));
+            surfaceFluidState.setMolarDensity(phaseIdx, reservoirFluidState.molarDensity(phaseIdx));
             surfaceFluidState.setPressure(phaseIdx, reservoirFluidState.pressure(phaseIdx));
             surfaceFluidState.setSaturation(phaseIdx, 0.0);
         }
@@ -189,7 +190,9 @@ int main(int argc, char** argv)
     // density
     paramCache.updatePhase(fluidState, oPhaseIdx);
     Scalar rho = FluidSystem::density(fluidState, paramCache, oPhaseIdx);
+    Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, oPhaseIdx);
     fluidState.setDensity(oPhaseIdx, rho);
+    fluidState.setMolarDensity(oPhaseIdx, rhoMolar);
 
     ////////////
     // Calculate the total molarities of the components

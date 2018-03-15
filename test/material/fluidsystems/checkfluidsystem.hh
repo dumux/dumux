@@ -86,6 +86,7 @@ public:
             BaseFluidState::setSaturation(phaseIdx, 1.0 / numPhases);
             BaseFluidState::setPressure(phaseIdx, 1e5);
             BaseFluidState::setDensity(phaseIdx, 1.0);
+            BaseFluidState::setMolarDensity(phaseIdx, 1.0);
 
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
