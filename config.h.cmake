@@ -40,6 +40,9 @@
 /* Define to the revision of dumux */
 #define DUMUX_VERSION_REVISION ${DUMUX_VERSION_REVISION}
 
+/* Define the path to dumux */
+#define DUMUX_SOURCE_DIR "${CMAKE_SOURCE_DIR}"
+
 /* Define to 1 if Valgrind was found */
 #cmakedefine HAVE_VALGRIND 1
 
