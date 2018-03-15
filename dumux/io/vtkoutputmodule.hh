@@ -239,6 +239,7 @@ class VtkOutputModule
     static constexpr int dofCodim = isBox ? dim : 0;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VolumeVariables&)> get; std::string name; };
+    struct VolVarVectorDataInfo { std::function<GlobalPosition(const VolumeVariables&)> get; std::string name; };
     using Field = Vtk::template Field<GridView>;
 
 public:
@@ -291,6 +292,16 @@ public:
     void addVolumeVariable(std::function<Scalar(const VolumeVariables&)>&& f, const std::string& name)
     {
         volVarScalarDataInfo_.push_back(VolVarScalarDataInfo{f, name});
+    }
+
+    //! Add a vector-valued variable
+    //! \param f A function taking a VolumeVariables object and returning the desired vector
+    //! \param name The name of the vtk field
+    //! \note This method is only available for dimWorld > 1. For 1-D problems, the overload for volVar methods returning a Scalar will be used.
+    template<class G = GlobalPosition, typename std::enable_if_t<(G::dimension > 1), int> = 0>
+    void addVolumeVariable(std::function<GlobalPosition(const VolumeVariables&)>&& f, const std::string& name)
+    {
+        volVarVectorDataInfo_.push_back(VolVarVectorDataInfo{f, name});
     }
 
     //! Add a scalar or vector valued vtk field
@@ -367,9 +378,11 @@ public:
 
         // volume variable data
         std::vector<std::vector<Scalar>> volVarScalarData;
+        std::vector<std::vector<GlobalPosition>> volVarVectorData;
 
         //! Abort if no data was registered
         if (!volVarScalarDataInfo_.empty()
+            || !volVarVectorDataInfo_.empty()
             || !fields_.empty()
             || velocityOutput.enableOutput()
             || addProcessRank)
@@ -380,6 +393,8 @@ public:
             // get fields for all volume variables
             if (!volVarScalarDataInfo_.empty())
                 volVarScalarData.resize(volVarScalarDataInfo_.size(), std::vector<Scalar>(numDofs));
+            if (!volVarVectorDataInfo_.empty())
+                volVarVectorData.resize(volVarVectorDataInfo_.size(), std::vector<GlobalPosition>(numDofs));
 
             if (velocityOutput.enableOutput())
             {
@@ -416,15 +431,21 @@ public:
                 else if (!volVarScalarDataInfo_.empty())
                     elemVolVars.bindElement(element, fvGeometry, sol_);
 
-                if (!volVarScalarDataInfo_.empty())
+                if (!volVarScalarDataInfo_.empty()
+                    || !volVarVectorDataInfo_.empty())
                 {
                     for (auto&& scv : scvs(fvGeometry))
                     {
                         const auto dofIdxGlobal = scv.dofIndex();
                         const auto& volVars = elemVolVars[scv];
 
+                        // get the scalar-valued data
                         for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
                             volVarScalarData[i][dofIdxGlobal] = volVarScalarDataInfo_[i].get(volVars);
+
+                        // get the vector-valued data
+                        for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+                            volVarVectorData[i][dofIdxGlobal] = volVarVectorDataInfo_[i].get(volVars);
                     }
                 }
 
@@ -445,6 +466,12 @@ public:
             // volume variables if any
             for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
                 addDofDataForWriter_(sequenceWriter_, volVarScalarData[i], volVarScalarDataInfo_[i].name);
+            for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+            {
+
+                sequenceWriter_.addCellData(Field(gridGeom_.gridView(), gridGeom_.elementMapper(), volVarVectorData[i],
+                                                  volVarVectorDataInfo_[i].name, dimWorld, 0).get());
+            }
 
             // the velocity field
             if (velocityOutput.enableOutput())
@@ -551,7 +578,9 @@ private:
     std::shared_ptr<Dune::VTKWriter<GridView>> writer_;
     Dune::VTKSequenceWriter<GridView> sequenceWriter_;
 
-    std::vector<VolVarScalarDataInfo> volVarScalarDataInfo_; //!< Registered volume variables
+    std::vector<VolVarScalarDataInfo> volVarScalarDataInfo_; //!< Registered volume variables (scalar)
+    std::vector<VolVarVectorDataInfo> volVarVectorDataInfo_; //!< Registered volume variables (vector)
+
     std::vector<Field> fields_; //!< Registered scalar and vector fields
 };
 
