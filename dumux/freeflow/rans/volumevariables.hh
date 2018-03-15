@@ -101,41 +101,14 @@ public:
         wallDistance_ = problem.wallDistances_[elementID_];
         velocity_ = problem.velocity_[elementID_];
         velocityGradients_ = problem.velocityGradients_[elementID_];
-        static const int flowNormalAxis = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
-                                                                 "RANS.FlowNormalAxis");
-        static const int wallNormalAxis = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
-                                                                 "RANS.WallNormalAxis");
+        unsigned int flowNormalAxis = problem.flowNormalAxis_[elementID_];
+        unsigned int wallNormalAxis = problem.wallNormalAxis_[elementID_];
         Scalar uStar = sqrt(problem.kinematicViscosity_[wallElementID_]
                             * abs(problem.velocityGradients_[wallElementID_][flowNormalAxis][wallNormalAxis]));
         yPlus_ = wallDistance_ * uStar / asImp_().kinematicViscosity();
         yPlus_ = max(yPlus_, 1e-10); // zero values lead to numerical problems in some turbulence models
         uPlus_ = velocity_[flowNormalAxis] / max(uStar, 1e-10);
-
-        // calculate the eddy viscosity based on the implemented RANS model
-        asImp_().calculateEddyViscosity(elemSol, problem, element, scv);
     };
-
-
-    /*!
-     * \brief Dummy function to calculate the dynamic eddy viscosity.
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to
-     *                be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
-     */
-    template<class ElementSolution>
-    void calculateEddyViscosity(const ElementSolution &elemSol,
-                                const Problem &problem,
-                                const Element &element,
-                                const SubControlVolume& scv)
-    {
-        // Throw an exception if no eddy viscosity is calculated
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide an calculateEddyViscosity(...) method.");
-    }
-
 
     /*!
      * \brief Return the velocity vector \f$\mathrm{[m/s]}\f$ at the control volume center.
@@ -261,13 +234,6 @@ public:
         ParentTypeNonIsothermal::update(elemSol, problem, element, scv);
         // TODO: convert eddyViscosity to eddyThermalConductivity
     }
-
-    /*!
-     * \brief Sets the eddy thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
-     *        of the flow phase in the sub-control volume.
-     */
-    void setEddyThermalConductivity(Scalar value)
-    { eddyThermalConductivity_ = value; }
 
     /*!
      * \brief Returns the eddy thermal conductivity \f$\mathrm{[W/(m*K)]}\f$

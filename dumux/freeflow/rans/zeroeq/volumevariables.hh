@@ -81,6 +81,7 @@ public:
                 const SubControlVolume& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
+        calculateEddyViscosity(elemSol, problem, element, scv);
     }
 
 
@@ -105,14 +106,13 @@ public:
         Scalar kinematicEddyViscosity = 0.0;
         static const Scalar karmanConstant
             = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.KarmanConstant");
-        static const int flowNormalAxis
-            = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.FlowNormalAxis");
-        static const int wallNormalAxis
-            = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.WallNormalAxis");
         static const int eddyViscosityModel
             = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.EddyViscosityModel");
-
+        unsigned int elementID = problem.fvGridGeometry().elementMapper().index(element);
+        unsigned int flowNormalAxis = problem.flowNormalAxis_[elementID];
+        unsigned int wallNormalAxis = problem.wallNormalAxis_[elementID];
         Scalar velGrad = abs(asImp_().velocityGradients()[flowNormalAxis][wallNormalAxis]);
+
         if (eddyViscosityModel == Indices::noEddyViscosityModel)
         {
             // kinematicEddyViscosity = 0.0
@@ -131,7 +131,6 @@ public:
         }
         else if (eddyViscosityModel == Indices::baldwinLomax)
         {
-            unsigned int elementID = problem.fvGridGeometry().elementMapper().index(element);
             kinematicEddyViscosity = problem.kinematicEddyViscosity_[elementID];
         }
         else

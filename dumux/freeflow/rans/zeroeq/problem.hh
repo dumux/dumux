@@ -40,8 +40,8 @@ namespace Dumux
  * \ingroup ZeroEqModel
  * \brief Zero-equation turbulence problem base class.
  *
- * This implements some base functionality for zero-equation models.
- * \todo please doc me
+ * This implements some base functionality for zero-equation models
+ * and a routine for the determining the eddy viscosity of the Baldwin-Lomax model.
  */
 template<class TypeTag>
 class ZeroEqProblem : public RANSProblem<TypeTag>
@@ -83,40 +83,28 @@ public:
     ZeroEqProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        if (getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity"))
-            gravity_[dim-1]  = -9.81;
-
         updateStaticWallProperties();
     }
 
     /*!
-     * \brief Update the static (solution independent) relations to the walls
-     *
-     * This function determines all element with a wall intersection,
-     * the wall distances and the relation to the neighboring elements.
+     * \brief Correct size of the static (solution independent) wall variables
      */
-    void updateStaticWallProperties() const
+    void updateStaticWallProperties()
     {
-        std::cout << "Update static wall properties2. " << this->fvGridGeometry().elementMapper().size();
         // update size and initial values of the global vectors
         kinematicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        std::cout << " " << kinematicEddyViscosity_.size();
     }
 
     /*!
      * \brief Update the dynamic (solution dependent) relations to the walls
      *
-     * \todo please doc me
+     * This calculate all necessary information for the Baldwin-Lomax turbulence model
      *
      * \param curSol The solution vector.
      */
-    void updateDynamicWallProperties(const SolutionVector& curSol) const
+    void updateDynamicWallProperties(const SolutionVector& curSol)
     {
         ParentType::updateDynamicWallProperties(curSol);
-
-        std::cout << "Update dynamic wall properties2. " << kinematicEddyViscosity_.size() << std::endl << std::flush;
-
-//         kinematicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
 
         std::vector<Scalar> kinematicEddyViscosityInner(this->fvGridGeometry().elementMapper().size(), 0.0);
         std::vector<Scalar> kinematicEddyViscosityOuter(this->fvGridGeometry().elementMapper().size(), 0.0);
@@ -141,10 +129,6 @@ public:
 
         static const Scalar karmanConstant
             = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.KarmanConstant");
-        static const int flowNormalAxis
-            = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.FlowNormalAxis");
-        static const int wallNormalAxis
-            = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.WallNormalAxis");
 
         std::vector<Scalar> storedFMax;
         std::vector<Scalar> storedYFMax;
@@ -157,6 +141,8 @@ public:
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
             unsigned int wallElementID = this->wallElementIDs_[elementID];
             Scalar wallDistance = this->wallDistances_[elementID];
+            unsigned int flowNormalAxis = this->flowNormalAxis_[elementID];
+            unsigned int wallNormalAxis = this->wallNormalAxis_[elementID];
 
             Scalar omegaAbs = abs(this->velocityGradients_[elementID][flowNormalAxis][wallNormalAxis]
                                   - this->velocityGradients_[elementID][wallNormalAxis][flowNormalAxis]);
@@ -230,48 +216,8 @@ public:
         }
     }
 
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
-     *
-     * This is not specific to the discretization. By default it just
-     * calls temperature().
-     *
-     * \param globalPos The position in global coordinates where the temperature should be specified.
-     */
-    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
-    { return asImp_().temperature(); }
-
-    /*!
-     * \brief Returns the temperature within the domain.
-     *
-     * This method MUST be overwritten by the actual problem.
-     */
-    Scalar temperature() const
-    { DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem"); }
-
-    /*!
-     * \brief Returns the acceleration due to gravity.
-     *
-     * If the <tt>Problem.EnableGravity</tt> parameter is true, this means
-     * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
-     */
-    const GlobalPosition &gravity() const
-    { return gravity_; }
-
-    //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
-    template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::staggered, void>::type
-    applyInititalFaceSolution(SolutionVector& sol,
-                              const SubControlVolumeFace& scvf,
-                              const PrimaryVariables& initSol) const
-    {
-        typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx faceIdx;
-        const auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-        sol[faceIdx][scvf.dofIndex()][numEqCellCenter] = initSol[Indices::velocity(scvf.directionIndex())];
-    }
-
 public:
-    mutable std::vector<Scalar> kinematicEddyViscosity_;
+    std::vector<Scalar> kinematicEddyViscosity_;
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
@@ -281,8 +227,6 @@ private:
     //! \copydoc asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
-
-    GlobalPosition gravity_;
 };
 
 }

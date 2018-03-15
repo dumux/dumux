@@ -87,9 +87,6 @@ public:
     RANSProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        if (getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity"))
-            gravity_[dim-1]  = -9.81;
-
         updateStaticWallProperties();
     }
 
@@ -99,7 +96,7 @@ public:
      * This function determines all element with a wall intersection,
      * the wall distances and the relation to the neighboring elements.
      */
-    void updateStaticWallProperties() const
+    void updateStaticWallProperties()
     {
         using std::abs;
         std::cout << "Update static wall properties. ";
@@ -113,11 +110,14 @@ public:
         velocityMaximum_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
         velocityMinimum_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(std::numeric_limits<Scalar>::max()));
         velocityGradients_.resize(this->fvGridGeometry().elementMapper().size(), DimMatrix(0.0));
+        flowNormalAxis_.resize(this->fvGridGeometry().elementMapper().size(), 0);
+        wallNormalAxis_.resize(this->fvGridGeometry().elementMapper().size(), 1);
         kinematicViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
 
         // retrieve all wall intersections and corresponding elements
         std::vector<unsigned int> wallElements;
         std::vector<GlobalPosition> wallPositions;
+        std::vector<unsigned int> wallNormalAxisTemp;
         auto& gridView(this->fvGridGeometry().gridView());
         for (const auto& element : elements(gridView))
         {
@@ -128,6 +128,11 @@ public:
                 {
                     wallElements.push_back(this->fvGridGeometry().elementMapper().index(element));
                     wallPositions.push_back(global);
+                    for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+                    {
+                        if (abs(intersection.centerUnitOuterNormal()[dimIdx]) > 1e-10)
+                            wallNormalAxisTemp.push_back(dimIdx);
+                    }
                 }
             }
         }
@@ -140,12 +145,26 @@ public:
             cellCenters_[elementID] = element.geometry().center();
             for (unsigned int i = 0; i < wallPositions.size(); ++i)
             {
+                static const int problemWallNormalAxis
+                    = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.WallNormalAxis", -1);
+                int searchAxis = problemWallNormalAxis;
+
+                // search along wall normal axis of the intersection
+                if (problemWallNormalAxis < 0 || problemWallNormalAxis >= dim)
+                {
+                    searchAxis = wallNormalAxisTemp[i];
+                }
+
                 GlobalPosition global = element.geometry().center();
                 global -= wallPositions[i];
-                if (global.two_norm() < wallDistances_[elementID])
+                // second and argument ensures to use only aligned elements
+                if (abs(global[searchAxis]) < wallDistances_[elementID]
+                    && abs(global[searchAxis]) < global.two_norm() + 1e-8
+                    && abs(global[searchAxis]) > global.two_norm() - 1e-8)
                 {
-                    wallDistances_[elementID] = global.two_norm();
+                    wallDistances_[elementID] = abs(global[searchAxis]);
                     wallElementIDs_[elementID] = wallElements[i];
+                    wallNormalAxis_[elementID] = searchAxis;
                 }
             }
         }
@@ -193,11 +212,15 @@ public:
      *
      * \param curSol The solution vector.
      */
-    void updateDynamicWallProperties(const SolutionVector& curSol) const
+    void updateDynamicWallProperties(const SolutionVector& curSol)
     {
+        using std::abs;
         using std::max;
         using std::min;
         std::cout << "Update dynamic wall properties." << std::endl;
+
+        static const int flowNormalAxis
+            = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.FlowNormalAxis", -1);
 
         // calculate cell-center-averaged velocities
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
@@ -224,6 +247,7 @@ public:
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
             unsigned int wallElementID = wallElementIDs_[elementID];
 
+            Scalar maxVelocity = 0.0;
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
@@ -243,6 +267,16 @@ public:
                 {
                     velocityMinimum_[wallElementID][dimIdx] = velocity_[elementID][dimIdx];
                 }
+
+                if (0 <= flowNormalAxis && flowNormalAxis < dim)
+                {
+                    flowNormalAxis_[elementID] = flowNormalAxis;
+                }
+                else if (abs(maxVelocity) < abs(velocity_[elementID][dimIdx]))
+                {
+                    maxVelocity = abs(velocity_[elementID][dimIdx]);
+                    flowNormalAxis_[elementID] = dimIdx;
+                }
             }
         }
 
@@ -259,7 +293,7 @@ public:
                 CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][dofIdx]);
                 auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
                 VolumeVariables volVars;
-                volVars.update(elemSol, asImp_(), element,scv);
+                volVars.update(elemSol, asImp_(), element, scv);
                 kinematicViscosity_[elementID] = volVars.viscosity() / volVars.density();
             }
         }
@@ -277,56 +311,18 @@ public:
                    "The problem does not provide an isOnWall() method.");
     }
 
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
-     *
-     * This is not specific to the discretization. By default it just
-     * calls temperature().
-     *
-     * \param globalPos The position in global coordinates where the temperature should be specified.
-     */
-    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
-    { return asImp_().temperature(); }
-
-    /*!
-     * \brief Returns the temperature within the domain.
-     *
-     * This method MUST be overwritten by the actual problem.
-     */
-    Scalar temperature() const
-    { DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem"); }
-
-    /*!
-     * \brief Returns the acceleration due to gravity.
-     *
-     * If the <tt>Problem.EnableGravity</tt> parameter is true, this means
-     * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
-     */
-    const GlobalPosition &gravity() const
-    { return gravity_; }
-
-    //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
-    template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_TYPE(T, FVGridGeometry)::discMethod == DiscretizationMethod::staggered, void>::type
-    applyInititalFaceSolution(SolutionVector& sol,
-                              const SubControlVolumeFace& scvf,
-                              const PrimaryVariables& initSol) const
-    {
-        typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx faceIdx;
-        const auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-        sol[faceIdx][scvf.dofIndex()][numEqCellCenter] = initSol[Indices::velocity(scvf.directionIndex())];
-    }
-
 public:
-    mutable std::vector<unsigned int> wallElementIDs_;
-    mutable std::vector<Scalar> wallDistances_;
-    mutable std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIDs_;
-    mutable std::vector<GlobalPosition> cellCenters_;
-    mutable std::vector<DimVector> velocity_;
-    mutable std::vector<DimVector> velocityMaximum_;
-    mutable std::vector<DimVector> velocityMinimum_;
-    mutable std::vector<DimMatrix> velocityGradients_;
-    mutable std::vector<Scalar> kinematicViscosity_;
+    std::vector<unsigned int> wallElementIDs_;
+    std::vector<Scalar> wallDistances_;
+    std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIDs_;
+    std::vector<GlobalPosition> cellCenters_;
+    std::vector<DimVector> velocity_;
+    std::vector<DimVector> velocityMaximum_;
+    std::vector<DimVector> velocityMinimum_;
+    std::vector<DimMatrix> velocityGradients_;
+    std::vector<unsigned int> wallNormalAxis_;
+    std::vector<unsigned int> flowNormalAxis_;
+    std::vector<Scalar> kinematicViscosity_;
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
@@ -336,8 +332,6 @@ private:
     //! \copydoc asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
-
-    GlobalPosition gravity_;
 };
 
 }

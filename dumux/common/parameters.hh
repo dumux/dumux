@@ -262,8 +262,6 @@ private:
 
         // parameters in the RANS group
         params["RANS.KarmanConstant"] = "0.41";
-        params["RANS.FlowNormalAxis"] = "0";
-        params["RANS.WallNormalAxis"] = "1";
         params["RANS.EddyViscosityModel"] = "1";
     }
 };
