@@ -260,8 +260,10 @@ private:
         // parameters in the mpfa group
         params["Mpfa.Q"] = "0.0";
 
-        // parameters in the freeflow group
-        params["FreeFlow.EddyViscosityModel"] = "1";
+        // parameters in the RANS group
+        params["RANS.KarmanConstant"] = "0.41";
+        params["RANS.FlowNormalAxis"] = "0";
+        params["RANS.WallNormalAxis"] = "1";
     }
 };
 

@@ -65,12 +65,6 @@ class ZeroEqVolumeVariablesImplementation<TypeTag, false>
     static const int defaultPhaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
 public:
-    ZeroEqVolumeVariablesImplementation()
-    {
-        eddyViscosityModel_ = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
-                                                     "FreeFlow.EddyViscosityModel");
-    }
-
     /*!
      * \brief Update all quantities for a given control volume
      *
@@ -109,18 +103,25 @@ public:
         using std::exp;
         using std::sqrt;
         Scalar kinematicEddyViscosity = 0.0;
-        const Scalar karmanConstant = 0.41; // TODO make karman constant a property
-        Scalar velGrad = abs(asImp_().velocityGradients()[0][1]); // TODO: flow and wallnormalaxis
-        if (eddyViscosityModel_ == Indices::noEddyViscosityModel)
+        static const Scalar karmanConstant = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
+                                                                       "RANS.KarmanConstant");
+        static const int flowNormalAxis = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
+                                                                 "RANS.FlowNormalAxis");
+        static const int wallNormalAxis = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
+                                                                 "RANS.WallNormalAxis");
+        static const int eddyViscosityModel = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
+                                                                     "RANS.EddyViscosityModel", 1);
+        Scalar velGrad = abs(asImp_().velocityGradients()[flowNormalAxis][wallNormalAxis]);
+        if (eddyViscosityModel == Indices::noEddyViscosityModel)
         {
             // kinematicEddyViscosity = 0.0
         }
-        else if (eddyViscosityModel_ == Indices::prandtl)
+        else if (eddyViscosityModel == Indices::prandtl)
         {
             Scalar mixingLength = karmanConstant * asImp_().wallDistance();
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
-        else if (eddyViscosityModel_ == Indices::modifiedVanDriest)
+        else if (eddyViscosityModel == Indices::modifiedVanDriest)
         {
             Scalar mixingLength = karmanConstant * asImp_().wallDistance()
                                   * (1.0 - exp(-asImp_().yPlus() / 26.0))
@@ -130,7 +131,7 @@ public:
         else
         {
             DUNE_THROW(Dune::NotImplemented,
-                       "This eddy viscosity model is not implemented: " << eddyViscosityModel_);
+                       "This eddy viscosity model is not implemented: " << eddyViscosityModel);
         }
         asImp_().setDynamicEddyViscosity(kinematicEddyViscosity * asImp_().density());
     }
@@ -143,9 +144,6 @@ private:
     //! \copydoc asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
-
-protected:
-    int eddyViscosityModel_;
 };
 
 /*!

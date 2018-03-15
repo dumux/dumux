@@ -101,11 +101,15 @@ public:
         wallDistance_ = problem.wallDistances_[elementID_];
         velocity_ = problem.velocity_[elementID_];
         velocityGradients_ = problem.velocityGradients_[elementID_];
+        static const int flowNormalAxis = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
+                                                                 "RANS.FlowNormalAxis");
+        static const int wallNormalAxis = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
+                                                                 "RANS.WallNormalAxis");
         Scalar uStar = sqrt(problem.kinematicViscosity_[wallElementID_]
-                            * abs(problem.velocityGradients_[wallElementID_][0][1])); // TODO: flow and wallnormalaxis
+                            * abs(problem.velocityGradients_[wallElementID_][flowNormalAxis][wallNormalAxis]));
         yPlus_ = wallDistance_ * uStar / asImp_().kinematicViscosity();
         yPlus_ = max(yPlus_, 1e-10); // zero values lead to numerical problems in some turbulence models
-        uPlus_ = velocity_[0] / max(uStar, 1e-10); // TODO: flow and wallnormalaxis
+        uPlus_ = velocity_[flowNormalAxis] / max(uStar, 1e-10);
 
         // calculate the eddy viscosity based on the implemented RANS model
         asImp_().calculateEddyViscosity(elemSol, problem, element, scv);

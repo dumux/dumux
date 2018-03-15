@@ -15,7 +15,7 @@ Name = pipe_laufer_zeroeq
 InletVelocity = 2.5 # [m/s]
 EnableGravity = false
 
-[FreeFlow]
+[RANS]
 EddyViscosityModel = 2
 
 [Newton]
