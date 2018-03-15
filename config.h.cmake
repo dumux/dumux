@@ -55,6 +55,12 @@
 /* Define path to gstat executable */
 #cmakedefine GSTAT_EXECUTABLE "@GSTAT_EXECUTABLE@"
 
+/* Defines whether pvpython has been found */
+#cmakedefine HAVE_PVPYTHON 1
+
+/* Define the path to pvpython */
+#define PVPYTHON_EXECUTABLE "${PVPYTHON_EXECUTABLE}"
+
 /* end dumux
    Everything below here will be overwritten
 */
