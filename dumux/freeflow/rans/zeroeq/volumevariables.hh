@@ -20,7 +20,7 @@
  * \file
  * \ingroup ZeroEqModel
  *
- * \copydoc Dumux::ZEROEQVolumeVariables
+ * \copydoc Dumux::ZeroEqVolumeVariables
  */
 #ifndef DUMUX_ZEROEQ_VOLUME_VARIABLES_HH
 #define DUMUX_ZEROEQ_VOLUME_VARIABLES_HH
@@ -36,16 +36,16 @@ template <class TypeTag, bool enableEnergyBalance>
 class ZeroEqVolumeVariablesImplementation;
 
 /*!
- * \ingroup Reynolds-Averaged NavierStokesModel
- * \brief Volume variables for the single-phase Reynolds-Averaged Navier-Stokes model.
+ * \ingroup ZeroEqModel
+ * \brief Volume variables for the single-phase 0-Eq. model.
  *        The class is specialized for isothermal and non-isothermal models.
  */
 template <class TypeTag>
 using ZeroEqVolumeVariables = ZeroEqVolumeVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
 
 /*!
- * \ingroup Reynolds-Averaged NavierStokesModel
- * \brief Volume variables for the isothermal single-phase Reynolds-Averaged Navier-Stokes model.
+ * \ingroup ZeroEqModel
+ * \brief Volume variables for the isothermal single-phase 0-Eq. model.
  */
 template <class TypeTag>
 class ZeroEqVolumeVariablesImplementation<TypeTag, false>
@@ -91,7 +91,7 @@ public:
 
 
     /*!
-     * \brief Calculate the eddy viscosity
+     * \brief Calculate and set the dynamic eddy viscosity.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -150,7 +150,7 @@ protected:
 
 /*!
  * \ingroup ZeroEqModel
- * \brief Volume variables for the non-isothermal single-phase Reynolds-Averaged Navier-Stokes model.
+ * \brief Volume variables for the non-isothermal single-phase 0-Eq. model.
  */
 template <class TypeTag>
 class ZeroEqVolumeVariablesImplementation<TypeTag, true>

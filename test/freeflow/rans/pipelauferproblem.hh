@@ -212,7 +212,7 @@ public:
     {
         timeLoop_ = timeLoop;
         if(inletVelocity_ > eps_)
-            timeLoop_->setCheckPoint({200.0, 210.0});
+            timeLoop_->setCheckPoint({10.0, 50.0, 100.});
     }
 
     Scalar time() const
@@ -221,20 +221,9 @@ public:
     }
 
 private:
-
-    bool isInlet(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < eps_;
-    }
-
     bool isOutlet(const GlobalPosition& globalPos) const
     {
         return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
-    }
-
-    bool isWall(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > eps_ || globalPos[0] < this->fvGridGeometry().bBoxMax()[0] - eps_;
     }
 
     Scalar eps_;

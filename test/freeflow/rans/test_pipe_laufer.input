@@ -10,8 +10,6 @@ Cells0 = 25
 Cells1 = 25 25
 Grading1 = 1.2 -1.2
 
-Cells = 0 # TODO Remove this requirement
-
 [Problem]
 Name = pipe_laufer_zeroeq
 InletVelocity = 2.5 # [m/s]

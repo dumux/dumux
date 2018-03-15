@@ -22,10 +22,13 @@
  *
  * \brief A single-phase, isothermal Reynolds-Averaged Navier-Stokes 0-Eq. model
  *
+ * \copydoc RANSModel
+ *
  * These models calculate the eddy viscosity without solving additional PDEs,
  * only based on the wall distance and the velocity gradient.
  * The following models are available:
- * \todo list implemented 0-Eq. models
+ *  -# Prandtl's mixing length, e.g. \cite Oertel2012a
+ *  -# Van-Driest modification, \cite vanDriest1956a and \cite Hanna1981a
  */
 
 #ifndef DUMUX_ZEROEQ_MODEL_HH
@@ -37,7 +40,6 @@
 
 #include "indices.hh"
 #include "volumevariables.hh"
-// #include "vtkoutputfields.hh"
 
 namespace Dumux
 {
@@ -61,9 +63,6 @@ NEW_TYPE_TAG(ZeroEqNI, INHERITS_FROM(ZeroEq, RANSNI));
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-
-//! use the global group as default for the model's parameter group
-// SET_STRING_PROP(ModelProperties, ModelParameterGroup, "ZeroEq");
 
 //! The indices
 SET_PROP(ZeroEq, Indices)

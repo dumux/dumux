@@ -39,10 +39,12 @@ namespace Dumux
  * \ingroup RANSModel
  * \brief Reynolds-Averaged Navier-Stokes problem base class.
  *
+ * This implements some base functionality for RANS models.
+ * Especially vectors containing all wall-relevant properties, which are accessed
+ * by the volumevariables.
+ * \todo inherit all functions (especially gravity and temperature from Navier-Stokes)
  * This implements gravity (if desired) and a function returning the temperature.
  * Includes a specialized method used only by the staggered grid discretization.
- *
- * \todo inherit all functions (especially gravity and temperature from Navier-Stokes)
  */
 template<class TypeTag>
 class RANSProblem : public NavierStokesParentProblem<TypeTag>
@@ -63,12 +65,10 @@ class RANSProblem : public NavierStokesParentProblem<TypeTag>
 
     enum {
         dim = Grid::dimension,
-        dimWorld = Grid::dimensionworld
       };
-    // TODO: dim or dimWorld appropriate here?
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
-    using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dim>;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
     enum {
         massBalanceIdx = Indices::massBalanceIdx,
@@ -91,7 +91,10 @@ public:
     }
 
     /*!
-     * \brief \todo please doc me
+     * \brief Update the static (solution independent) relations to the walls
+     *
+     * This function determines all element with a wall intersection,
+     * the wall distances and the relation to the neighboring elements.
      */
     void updateStaticWallProperties() const
     {
@@ -181,17 +184,19 @@ public:
                     }
                 }
             }
-//             std::cout << " " << elementID
-//                       << " " << neighborIDs_[elementID][0][0]
-//                       << " " << neighborIDs_[elementID][0][1]
-//                       << " " << neighborIDs_[elementID][1][0]
-//                       << " " << neighborIDs_[elementID][1][1]
-//                       << std::endl;
         }
     }
 
+
+
     /*!
-     * \brief \todo please doc me
+     * \brief Update the dynamic (solution dependent) relations to the walls
+     *
+     * The basic function calcuates the cell-centered velocities and
+     * the respective gradients.
+     * Further, the kinematic viscosity at the wall is stored.
+     *
+     * \param curSol The solution vector.
      */
     void updateDynamicWallProperties(const SolutionVector& curSol) const
     {
@@ -208,7 +213,6 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 const int dofIdxFace = scvf.dofIndex();
-                const int dirIdx = scvf.directionIndex();
                 const auto numericalSolutionFace = curSol[faceIdx][dofIdxFace][momentumBalanceIdx];
                 velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
             }
@@ -228,14 +232,8 @@ public:
                               - velocity_[neighborIDs_[elementID][dimIdx][0]][velIdx])
                           / (cellCenters_[neighborIDs_[elementID][dimIdx][1]][dimIdx]
                               - cellCenters_[neighborIDs_[elementID][dimIdx][0]][dimIdx]);
-//                     std::cout << " velocity_[1][velIdx] " << velocity_[neighborIDs_[elementID][dimIdx][1]][velIdx]
-//                               << " velocity_[0][velIdx] " << velocity_[neighborIDs_[elementID][dimIdx][0]][velIdx]
-//                               << " cellCenters_[1][velIdx] " << cellCenters_[neighborIDs_[elementID][dimIdx][1]][dimIdx]
-//                               << " cellCenters_[0][velIdx] " << cellCenters_[neighborIDs_[elementID][dimIdx][0]][dimIdx]
-//                               << " velocityGradients_[elementID][" << velIdx << "][" << dimIdx << "] " << velocityGradients_[elementID][velIdx][dimIdx];
                 }
             }
-//             std::cout << std::endl;
         }
 
         // TODO calculate or call all secondary variables
@@ -249,6 +247,8 @@ public:
 
     /*!
      * \brief Returns whether a given point is on a wall
+     *
+     * \param globalPos The position in global coordinates where the temperature should be specified.
      */
     bool isOnWall(const GlobalPosition &globalPos) const
     {

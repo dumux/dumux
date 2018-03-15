@@ -36,16 +36,16 @@ template <class TypeTag, bool enableEnergyBalance>
 class RANSVolumeVariablesImplementation;
 
 /*!
- * \ingroup Reynolds-Averaged NavierStokesModel
- * \brief Volume variables for the single-phase Reynolds-Averaged Navier-Stokes model.
+ * \ingroup RANSModel
+ * \brief Volume variables for the single-phase Reynolds-Averaged Navier-Stokes models.
  *        The class is specialized for isothermal and non-isothermal models.
  */
 template <class TypeTag>
 using RANSVolumeVariables = RANSVolumeVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
 
 /*!
- * \ingroup Reynolds-Averaged NavierStokesModel
- * \brief Volume variables for the isothermal single-phase Reynolds-Averaged Navier-Stokes model.
+ * \ingroup RANSModel
+ * \brief Volume variables for the isothermal single-phase Reynolds-Averaged Navier-Stokes models.
  */
 template <class TypeTag>
 class RANSVolumeVariablesImplementation<TypeTag, false>
@@ -74,6 +74,9 @@ public:
 
     /*!
      * \brief Update all quantities for a given control volume
+     *
+     * Wall related quantities are stored and the calculateEddyViscosity(...)
+     * function of the turbulence model implementation is called.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -110,7 +113,7 @@ public:
 
 
     /*!
-     * \brief Calculate the eddy viscosity
+     * \brief Dummy function to calculate the dynamic eddy viscosity.
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to
@@ -210,7 +213,7 @@ protected:
 
 /*!
  * \ingroup RANSModel
- * \brief Volume variables for the non-isothermal single-phase Reynolds-Averaged Navier-Stokes model.
+ * \brief Volume variables for the non-isothermal single-phase Reynolds-Averaged Navier-Stokes models.
  */
 template <class TypeTag>
 class RANSVolumeVariablesImplementation<TypeTag, true>

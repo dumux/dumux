@@ -65,26 +65,15 @@
  */
 void usage(const char *progName, const std::string &errorMsg)
 {
-//     if (errorMsg.size() > 0) {
-//         std::string errorMessageOut = "\nUsage: ";
-//                     errorMessageOut += progName;
-//                     errorMessageOut += " [options]\n";
-//                     errorMessageOut += errorMsg;
-//                     errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
-//                                         "\t-TimeManager.TEnd               End of the simulation [s] \n"
-//                                         "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
-//                                         "\t-Grid.File                      Name of the file containing the grid \n"
-//                                         "\t                                definition in DGF format\n"
-//                                         "\t-SpatialParams.LensLowerLeftX   x-coordinate of the lower left corner of the lens [m] \n"
-//                                         "\t-SpatialParams.LensLowerLeftY   y-coordinate of the lower left corner of the lens [m] \n"
-//                                         "\t-SpatialParams.LensUpperRightX  x-coordinate of the upper right corner of the lens [m] \n"
-//                                         "\t-SpatialParams.LensUpperRightY  y-coordinate of the upper right corner of the lens [m] \n"
-//                                         "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
-//                                         "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
-//
-//         std::cout << errorMessageOut
-//                   << "\n";
-//     }
+    if (errorMsg.size() > 0) {
+        std::string errorMessageOut = "\nUsage: ";
+                    errorMessageOut += progName;
+                    errorMessageOut += " [options]\n";
+                    errorMessageOut += errorMsg;
+                    errorMessageOut += "\nPlease use the provided input files.\n";
+        std::cout << errorMessageOut
+                  << "\n";
+    }
 }
 
 int main(int argc, char** argv) try
