@@ -103,14 +103,15 @@ public:
         using std::exp;
         using std::sqrt;
         Scalar kinematicEddyViscosity = 0.0;
-        static const Scalar karmanConstant = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
-                                                                       "RANS.KarmanConstant");
-        static const int flowNormalAxis = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
-                                                                 "RANS.FlowNormalAxis");
-        static const int wallNormalAxis = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
-                                                                 "RANS.WallNormalAxis");
-        static const int eddyViscosityModel = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
-                                                                     "RANS.EddyViscosityModel", 1);
+        static const Scalar karmanConstant
+            = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.KarmanConstant");
+        static const int flowNormalAxis
+            = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.FlowNormalAxis");
+        static const int wallNormalAxis
+            = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.WallNormalAxis");
+        static const int eddyViscosityModel
+            = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.EddyViscosityModel");
+
         Scalar velGrad = abs(asImp_().velocityGradients()[flowNormalAxis][wallNormalAxis]);
         if (eddyViscosityModel == Indices::noEddyViscosityModel)
         {
@@ -127,6 +128,11 @@ public:
                                   * (1.0 - exp(-asImp_().yPlus() / 26.0))
                                   / sqrt(1.0 - exp(-0.26 * asImp_().yPlus()));
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
+        }
+        else if (eddyViscosityModel == Indices::baldwinLomax)
+        {
+            unsigned int elementID = problem.fvGridGeometry().elementMapper().index(element);
+            kinematicEddyViscosity = problem.kinematicEddyViscosity_[elementID];
         }
         else
         {

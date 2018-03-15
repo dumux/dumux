@@ -48,9 +48,9 @@ namespace Dumux
  * Includes a specialized method used only by the staggered grid discretization.
  */
 template<class TypeTag>
-class RANSProblem : public NavierStokesParentProblem<TypeTag>
+class RANSProblem : public NavierStokesProblem<TypeTag>
 {
-    using ParentType = NavierStokesParentProblem<TypeTag>;
+    using ParentType = NavierStokesProblem<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -90,7 +90,7 @@ public:
         if (getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity"))
             gravity_[dim-1]  = -9.81;
 
-        asImp_().updateStaticWallProperties();
+        updateStaticWallProperties();
     }
 
     /*!
@@ -106,20 +106,14 @@ public:
 
         // update size and initial values of the global vectors
         wallElementIDs_.resize(this->fvGridGeometry().elementMapper().size());
-        wallDistances_.resize(this->fvGridGeometry().elementMapper().size());
+        wallDistances_.resize(this->fvGridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
         neighborIDs_.resize(this->fvGridGeometry().elementMapper().size());
-        cellCenters_.resize(this->fvGridGeometry().elementMapper().size());
-        velocity_.resize(this->fvGridGeometry().elementMapper().size());
-        velocityGradients_.resize(this->fvGridGeometry().elementMapper().size());
-        kinematicViscosity_.resize(this->fvGridGeometry().elementMapper().size());
-        for (unsigned int i = 0; i < wallElementIDs_.size(); ++i)
-        {
-            wallDistances_[i] = std::numeric_limits<Scalar>::max();
-            cellCenters_[i] = GlobalPosition(0.0);
-            velocity_[i] = DimVector(0.0);
-            velocityGradients_[i] = DimMatrix(0.0);
-            kinematicViscosity_[i] = 0.0;
-        }
+        cellCenters_.resize(this->fvGridGeometry().elementMapper().size(), GlobalPosition(0.0));
+        velocity_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
+        velocityMaximum_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
+        velocityMinimum_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(std::numeric_limits<Scalar>::max()));
+        velocityGradients_.resize(this->fvGridGeometry().elementMapper().size(), DimMatrix(0.0));
+        kinematicViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
 
         // retrieve all wall intersections and corresponding elements
         std::vector<unsigned int> wallElements;
@@ -190,8 +184,6 @@ public:
         }
     }
 
-
-
     /*!
      * \brief Update the dynamic (solution dependent) relations to the walls
      *
@@ -203,6 +195,8 @@ public:
      */
     void updateDynamicWallProperties(const SolutionVector& curSol) const
     {
+        using std::max;
+        using std::min;
         std::cout << "Update dynamic wall properties." << std::endl;
 
         // calculate cell-center-averaged velocities
@@ -224,10 +218,12 @@ public:
                 velocity_[elementID][dimIdx] = velocityTemp[dimIdx] * 0.5; // faces are equidistant to cell center
         }
 
-        // calculate cell-center-averaged velocity gradients
+        // calculate cell-center-averaged velocity gradients, maximum, and minimum values
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int wallElementID = wallElementIDs_[elementID];
+
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
@@ -237,6 +233,15 @@ public:
                               - velocity_[neighborIDs_[elementID][dimIdx][0]][velIdx])
                           / (cellCenters_[neighborIDs_[elementID][dimIdx][1]][dimIdx]
                               - cellCenters_[neighborIDs_[elementID][dimIdx][0]][dimIdx]);
+                }
+
+                if (abs(velocity_[elementID][dimIdx]) > abs(velocityMaximum_[wallElementID][dimIdx]))
+                {
+                    velocityMaximum_[wallElementID][dimIdx] = velocity_[elementID][dimIdx];
+                }
+                if (abs(velocity_[elementID][dimIdx]) < abs(velocityMinimum_[wallElementID][dimIdx]))
+                {
+                    velocityMinimum_[wallElementID][dimIdx] = velocity_[elementID][dimIdx];
                 }
             }
         }
@@ -318,6 +323,8 @@ public:
     mutable std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIDs_;
     mutable std::vector<GlobalPosition> cellCenters_;
     mutable std::vector<DimVector> velocity_;
+    mutable std::vector<DimVector> velocityMaximum_;
+    mutable std::vector<DimVector> velocityMinimum_;
     mutable std::vector<DimMatrix> velocityGradients_;
     mutable std::vector<Scalar> kinematicViscosity_;
 

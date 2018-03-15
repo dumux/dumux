@@ -228,7 +228,7 @@ int main(int argc, char** argv) try
 
 
         char gnuplotFileName[255];
-        Dumux::GnuplotInterface<double> gnuplot;
+        Dumux::GnuplotInterface<Scalar> gnuplot;
         sprintf(gnuplotFileName, fileNameFormat.c_str(), "velProfiles", timeLoop->timeStepIndex());
         gnuplot.setOpenPlotWindow(shouldPlot);
         gnuplot.setDatafileSeparator(',');

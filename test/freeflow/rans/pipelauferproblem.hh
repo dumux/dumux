@@ -31,7 +31,7 @@
 #include <dumux/material/components/air.hh>
 
 #include <dumux/freeflow/rans/zeroeq/model.hh>
-#include <dumux/freeflow/rans/problem.hh>
+#include <dumux/freeflow/rans/zeroeq/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
 namespace Dumux
@@ -71,9 +71,9 @@ SET_BOOL_PROP(PipeLauferProblem, EnableGridVolumeVariablesCache, true);
  * John Laufers experiments in 1954 \cite Laufer1954a.
  */
 template <class TypeTag>
-class PipeLauferProblem : public RANSProblem<TypeTag>
+class PipeLauferProblem : public ZeroEqProblem<TypeTag>
 {
-    using ParentType = RANSProblem<TypeTag>;
+    using ParentType = ZeroEqProblem<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

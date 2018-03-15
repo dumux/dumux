@@ -44,6 +44,7 @@ struct ZeroEqIndices
     static constexpr int noEddyViscosityModel = 0;
     static constexpr int prandtl = 1;
     static constexpr int modifiedVanDriest = 2;
+    static constexpr int baldwinLomax = 3;
 };
 
 // \}

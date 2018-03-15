@@ -19,7 +19,7 @@ InletVelocity = 2.5 # [m/s]
 EnableGravity = false
 
 [RANS]
-EddyViscosityModel = 2
+EddyViscosityModel = 3
 
 [Newton]
 MaxSteps = 10

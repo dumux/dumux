@@ -29,6 +29,7 @@
  * The following models are available:
  *  -# Prandtl's mixing length, e.g. \cite Oertel2012a
  *  -# Van-Driest modification, \cite vanDriest1956a and \cite Hanna1981a
+ *  -# Baldwin-Lomax, \cite Baldwin1978a
  */
 
 #ifndef DUMUX_ZEROEQ_MODEL_HH
