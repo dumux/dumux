@@ -42,7 +42,6 @@ NEW_PROP_TAG(ModelParameterGroup);    //!< Property which defines the group that
 NEW_PROP_TAG(ModelDefaultParameters); //!< Property which defines the group that is queried for parameters by default
 NEW_PROP_TAG(GridCreator);            //!< Property which provides a GridCreator (manages grids)
 NEW_PROP_TAG(Grid);                   //!< The DUNE grid type
-NEW_PROP_TAG(NumEq);                  //!< The number of equations to solve (equal to number of primary variables)
 NEW_PROP_TAG(Indices);                //!< Enumerations for the numeric model
 NEW_PROP_TAG(PrimaryVariables);       //!< A vector of primary variables
 NEW_PROP_TAG(NumEqVector);            //!< A vector of size number equations that can be used for Neumann fluxes, sources, residuals, ...
@@ -102,19 +101,14 @@ NEW_PROP_TAG(DualGridNodalIndexSet);               //!< The type used for the no
 // Properties used by models involving flow in porous media:
 /////////////////////////////////////////////////////////////
 NEW_PROP_TAG(EnergyLocalResidual);                 //!< The local residual of the energy equation
-NEW_PROP_TAG(EnableAdvection);                     //!< specifies if advection is considered in the model
 NEW_PROP_TAG(AdvectionType);                       //!< The type for the calculation the advective fluxes
 NEW_PROP_TAG(SolutionDependentAdvection);          //!< specifies if the parameters for the advective fluxes depend on the solution
-NEW_PROP_TAG(EnableMolecularDiffusion);            //!< specifies if molecular diffusive fluxes are considered in the model
 NEW_PROP_TAG(MolecularDiffusionType);              //!< The type for the calculation of the molecular diffusion fluxes
 NEW_PROP_TAG(SolutionDependentMolecularDiffusion); //!< specifies if the parameters for the diffusive fluxes depend on the solution
-NEW_PROP_TAG(EnableEnergyBalance);                 //!< Specifies if the model solves an energy equation
 NEW_PROP_TAG(HeatConductionType);                  //!< The type for the calculation of the heat conduction fluxes
 NEW_PROP_TAG(SolutionDependentHeatConduction);     //!< specifies if the parameters for the heat conduction fluxes depend on the solution
 
-NEW_PROP_TAG(NumPhases);                           //!< Number of fluid phases in the system
 NEW_PROP_TAG(PhaseIdx);                            //!< A phase index to allow using a two-phase fluidsystem for one-phase models
-NEW_PROP_TAG(NumComponents);                       //!< Number of fluid phases in the system
 NEW_PROP_TAG(SpatialParams);                       //!< The type of the spatial parameters object
 NEW_PROP_TAG(FluidSystem);                         //!< The type of the fluid system to use
 NEW_PROP_TAG(FluidState);                          //!< The type of the fluid state to use
@@ -143,7 +137,6 @@ NEW_PROP_TAG(IsothermalVtkOutputFields);
 NEW_PROP_TAG(IsothermalVolumeVariables);
 NEW_PROP_TAG(IsothermalLocalResidual);
 NEW_PROP_TAG(IsothermalIndices);
-NEW_PROP_TAG(IsothermalNumEq);
 NEW_PROP_TAG(IsothermalModelTraits);
 
 // specify if we evaluate the permeability in the volume (for discontinuous fields)

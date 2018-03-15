@@ -44,6 +44,13 @@ namespace Dumux
 template<class TypeTag>
 class CombustionProblemOneComponent;
 
+//! Custom model traits to deactivate diffusion for this test
+template<int numP, int numC>
+struct CombustionModelTraits : public MPNCModelTraits<numP, numC>
+{
+    static constexpr bool enableMolecularDiffusion() { return false; }
+};
+
 namespace Properties
 {
 NEW_TYPE_TAG(CombustionOneComponentTypeTag, INHERITS_FROM(MPNCNonequil, CombustionSpatialParams));
@@ -70,8 +77,14 @@ SET_INT_PROP(CombustionOneComponentTypeTag,
 SET_TYPE_PROP(CombustionOneComponentTypeTag, Scalar, double );
 // quad / double
 
-// Specify whether diffusion is enabled
-SET_BOOL_PROP(CombustionOneComponentTypeTag, EnableMolecularDiffusion, false);
+// We use different model traits for the equilibrium part because we want to deactivate diffusion
+SET_PROP(CombustionOneComponentTypeTag, EquilibriumModelTraits)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    using type = CombustionModelTraits<FluidSystem::numPhases, FluidSystem::numComponents>;
+};
 
 //! Franz Lindners simple lumping
 SET_PROP(CombustionOneComponentTypeTag, ThermalConductivityModel)

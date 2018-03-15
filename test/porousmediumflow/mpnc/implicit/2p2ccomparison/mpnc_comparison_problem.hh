@@ -70,8 +70,6 @@ SET_TYPE_PROP(MPNCComparisonTypeTag,
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(MPNCComparisonTypeTag, Scalar, double);
 
-SET_BOOL_PROP(MPNCComparisonTypeTag, EnableMolecularDiffusion, true);
-
 SET_BOOL_PROP(MPNCComparisonTypeTag, UseMoles, true);
 
 SET_PROP(MPNCComparisonTypeTag, VtkOutputFields)

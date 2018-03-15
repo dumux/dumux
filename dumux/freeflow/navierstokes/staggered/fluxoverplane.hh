@@ -400,7 +400,7 @@ private:
             const auto avgDensity = 0.5*density(insideVolVars) + 0.5*density(outsideVolVars);
 
             constexpr auto replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-            constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+            constexpr auto numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
 
             const Scalar cumulativeFlux = [replaceCompEqIdx, numComponents, &massOrMoleFlux]()
             {
