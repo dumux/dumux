@@ -333,6 +333,10 @@ public:
                 dummyCache,
                 wPhaseIdx);
         fluidState.setDensity(wPhaseIdx, density);
+        const Scalar molarDensity = FluidSystem::molarDensity(fluidState,
+                dummyCache,
+                wPhaseIdx);
+        fluidState.setMolarDensity(wPhaseIdx, molarDensity);
 
         for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++) {
             const Scalar h = FluidSystem::enthalpy(fluidState,

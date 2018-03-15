@@ -333,9 +333,13 @@ public:
 
         // compute density of injection phase
         const Scalar density = FluidSystem::density(fluidState,
-                                                     dummyCache,
-                                                     gasPhaseIdx);
+                                                    dummyCache,
+                                                    gasPhaseIdx);
         fluidState.setDensity(gasPhaseIdx, density);
+        const Scalar molarDensity = FluidSystem::molarDensity(fluidState,
+                                                              dummyCache,
+                                                              gasPhaseIdx);
+        fluidState.setMolarDensity(gasPhaseIdx, molarDensity);
 
         for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
         {
