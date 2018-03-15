@@ -238,7 +238,7 @@ int main(int argc, char** argv) try
         gnuplot.setOption("set log x");
         gnuplot.setOption("set xrange [1:3000]");
         gnuplot.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer1954a, Re=50000'");
-        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 13:14 w l");
+        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 10:11 w l");
         gnuplot.plot(std::string(gnuplotFileName));
     }
 #endif
