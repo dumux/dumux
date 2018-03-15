@@ -27,6 +27,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
+#include <dumux/discretization/staggered/elementsolution.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
@@ -59,8 +60,10 @@ class RANSProblem : public NavierStokesParentProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
@@ -202,6 +205,7 @@ public:
     {
         std::cout << "Update dynamic wall properties." << std::endl;
 
+        // calculate cell-center-averaged velocities
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             auto fvGeometry = localView(this->fvGridGeometry());
@@ -220,6 +224,7 @@ public:
                 velocity_[elementID][dimIdx] = velocityTemp[dimIdx] * 0.5; // faces are equidistant to cell center
         }
 
+        // calculate cell-center-averaged velocity gradients
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
@@ -236,12 +241,22 @@ public:
             }
         }
 
-        // TODO calculate or call all secondary variables
-        // TODO call kinematic viscosity value from vol vars
+        // calculate or call all secondary variables
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            kinematicViscosity_[elementID] = 15e-6;
+
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                const int dofIdx = scv.dofIndex();
+                CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][dofIdx]);
+                auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
+                VolumeVariables volVars;
+                volVars.update(elemSol, asImp_(), element,scv);
+                kinematicViscosity_[elementID] = volVars.viscosity() / volVars.density();
+            }
         }
     }
 
