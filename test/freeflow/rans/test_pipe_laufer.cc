@@ -51,6 +51,7 @@
 
 #include <dumux/discretization/methods.hh>
 
+#include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 
 #include <dumux/freeflow/navierstokes/staggered/fluxoverplane.hh>
@@ -202,6 +203,45 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////
+
+#if HAVE_PVPYTHON
+    bool shouldPlot = getParam<bool>("Output.PlotVelocityProfiles", false);
+    if (shouldPlot)
+    {
+        char fileName[255];
+        std::string fileNameFormat = "%s-%05d";
+        sprintf(fileName, fileNameFormat.c_str(), problem->name().c_str(), timeLoop->timeStepIndex());
+        std::cout << fileName << std::endl;
+        std::string vtuFileName = std::string(fileName) + ".vtu";
+        std::string script = std::string(DUMUX_SOURCE_DIR) + "/bin/postprocessing/extractlinedata.py";
+        std::string syscom;
+
+        // execute the pvpython script
+        std::string command = std::string(PVPYTHON_EXECUTABLE) + " " + script
+                              + " -f " + vtuFileName
+                              + " -v 1"
+                              + " -r 10000";
+        syscom =  command + " -p1 8.0 0.0 0.0"
+                          + " -p2 8.0 0.2469 0.0"
+                          + " -of " + std::string(fileName) + "\n";
+        system(syscom.c_str());
+
+
+        char gnuplotFileName[255];
+        Dumux::GnuplotInterface<double> gnuplot;
+        sprintf(gnuplotFileName, fileNameFormat.c_str(), "velProfiles", timeLoop->timeStepIndex());
+        gnuplot.setOpenPlotWindow(shouldPlot);
+        gnuplot.setDatafileSeparator(',');
+        gnuplot.resetPlot();
+        gnuplot.setXlabel("y^+ [-]");
+        gnuplot.setYlabel("u_+ [-]");
+        gnuplot.setOption("set log x");
+        gnuplot.setOption("set xrange [1:3000]");
+        gnuplot.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer1954a, Re=50000'");
+        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 13:14 w l");
+        gnuplot.plot(std::string(gnuplotFileName));
+    }
+#endif
 
     // print dumux end message
     if (mpiHelper.rank() == 0)
