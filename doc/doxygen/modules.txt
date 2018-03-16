@@ -170,26 +170,38 @@
 /* ***************** FreeflowModels ******************/
 /*!
  * \defgroup FreeflowModels Free Flow Models
- * \brief Single-phase Navier Stokes / Stokes model
+ * \brief Single-phase Navier-Stokes / Stokes model
  */
 	/*!
      * \ingroup FreeflowModels
-     * \defgroup NavierStokesModel NavierStokes
-     * \brief Single-phase Navier Stokes flow
+     * \defgroup NavierStokesModel Navier-Stokes
+     * \brief Single-phase Navier-Stokes flow
      * \copydetails ./freeflow/navierstokes/model.hh
      */
     /*!
      * \ingroup FreeflowModels
-     * \defgroup NavierStokesNCModel NavierStokes nc
-     * \brief Single-phase multi-component Navier Stokes flow
+     * \defgroup NavierStokesNCModel Navier-Stokes nc
+     * \brief Single-phase multi-component Navier-Stokes flow
      * \copydetails ./freeflow/navierstokesnc/model.hh
      */
     /*!
      * \ingroup FreeflowModels
      * \defgroup NavierStokesNIModel nonisothermal
-     * \brief An energy equation adaptor for isothermal Navier Stokes models
+     * \brief An energy equation adaptor for isothermal Navier-Stokes models
      * \copydetails ./freeflow/nonisothermal/model.hh
      */
+    /*!
+     * \ingroup FreeflowModels
+     * \defgroup RANSModel Reynolds-Averaged Navier-Stokes
+     * \brief Single-phase Reynolds-Averaged Navier-Stokes flow
+     * \copydetails ./freeflow/rans/model.hh
+     */
+      /*!
+      * \ingroup RANSModel
+      * \defgroup ZeroEqModel 0-Eq. Models
+      * \brief Zero-equation or algebraic turbulence models
+      * \copydetails ./freeflow/rans/model.hh
+      */
 
 /* ***************** Benchmarks and Tests ******************/
 /*!
@@ -284,17 +296,17 @@
 	/*!  
  	 * \ingroup BenchmarksAndTests
  	 * \defgroup FreeflowTests Free Flow Tests
- 	 * \brief Varios tests for single-phase Navier Stokes / Stokes tests
+ 	 * \brief Varios tests for single-phase Navier-Stokes / Stokes tests
  	 */
  	  	/*!  
  	     * \ingroup FreeflowTests
-	 	 * \defgroup NavierStokesTests Single-phase Navier Stokes tests
-	 	 * \brief Various tests using a Single-phase Navier Stokes flow. The files are listed below.
+	 	 * \defgroup NavierStokesTests Single-phase Navier-Stokes tests
+	 	 * \brief Various tests using a Single-phase Navier-Stokes flow. The files are listed below.
 	 	 */
 	   	/*!  
  	     * \ingroup FreeflowTests
-	 	 * \defgroup NavierStokesNCTests Single-phase Navier Stokes nc tests
-	 	 * \brief Various tests using a Single-phase Navier Stokes flow. The files are listed below.
+	 	 * \defgroup NavierStokesNCTests Single-phase Navier-Stokes nc tests
+	 	 * \brief Various tests using a Single-phase Navier-Stokes flow. The files are listed below.
 	 	 */
 	/*!  
  	 * \ingroup BenchmarksAndTests

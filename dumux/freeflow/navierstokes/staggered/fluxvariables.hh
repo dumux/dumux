@@ -207,6 +207,7 @@ public:
                 return (upwindWeight * upstreamVelocity + (1.0 - upwindWeight) * downstreamVelocity) * insideVolVars.density();
             };
 
+
             // Get the momentum that is advectively transported and account for the flow direction.
             const Scalar momentum = selfIsUpstream ? computeMomentum(velocitySelf, velocityOpposite)
                                                    : computeMomentum(velocityOpposite, velocitySelf);
@@ -220,7 +221,7 @@ public:
         // The velocity gradient already accounts for the orientation
         // of the staggered face's outer normal vector.
         const Scalar gradV = (velocityOpposite - velocitySelf) / scvf.selfToOppositeDistance();
-        normalFlux -= insideVolVars.viscosity() * 2.0 * gradV;
+        normalFlux -= insideVolVars.effectiveViscosity() * 2.0 * gradV;
 
         // The pressure term.
         // If specified, the pressure can be normalized using the initial value on the scfv of interest.
@@ -419,7 +420,7 @@ private:
         const auto& outsideVolVars = elemVolVars[normalFace.outsideScvIdx()];
 
         // Get the averaged viscosity at the staggered face normal to the current scvf.
-        const Scalar muAvg = (insideVolVars.viscosity() + outsideVolVars.viscosity()) * 0.5;
+        const Scalar muAvg = (insideVolVars.effectiveViscosity() + outsideVolVars.effectiveViscosity()) * 0.5;
 
         // For the normal gradient, get the velocities perpendicular to the velocity at the current scvf.
         // The inner one is located at staggered face within the own element,

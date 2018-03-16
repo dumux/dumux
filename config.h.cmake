@@ -40,6 +40,9 @@
 /* Define to the revision of dumux */
 #define DUMUX_VERSION_REVISION ${DUMUX_VERSION_REVISION}
 
+/* Define the path to dumux */
+#define DUMUX_SOURCE_DIR "${CMAKE_SOURCE_DIR}"
+
 /* Define to 1 if Valgrind was found */
 #cmakedefine HAVE_VALGRIND 1
 
@@ -54,6 +57,12 @@
 
 /* Define path to gstat executable */
 #cmakedefine GSTAT_EXECUTABLE "@GSTAT_EXECUTABLE@"
+
+/* Defines whether pvpython has been found */
+#cmakedefine HAVE_PVPYTHON 1
+
+/* Define the path to pvpython */
+#define PVPYTHON_EXECUTABLE "${PVPYTHON_EXECUTABLE}"
 
 /* end dumux
    Everything below here will be overwritten

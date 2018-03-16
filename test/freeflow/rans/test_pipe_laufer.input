@@ -1,0 +1,30 @@
+[TimeLoop]
+DtInitial = 1e-1 # [s]
+TEnd = 100 # [s]
+
+[Grid]
+Verbosity = true
+Positions0 = 0.0 10.0
+Positions1 = 0.0 0.12345 0.2469
+Cells0 = 25
+Cells1 = 25 25
+Grading1 = 1.2 -1.2
+
+[Output]
+PlotVelocityProfiles = true
+
+[Problem]
+Name = pipe_laufer_zeroeq
+InletVelocity = 2.5 # [m/s]
+EnableGravity = false
+
+[RANS]
+EddyViscosityModel = 3
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Vtk]
+AddVelocity = true
+WriteFaceData = false

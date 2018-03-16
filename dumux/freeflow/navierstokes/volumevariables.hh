@@ -152,12 +152,6 @@ public:
     { return fluidState_.pressure(defaultPhaseIdx); }
 
     /*!
-     * \brief Return the saturation
-     */
-    Scalar saturation(int phaseIdx = 0) const
-    { return 1.0; }
-
-    /*!
      * \brief Return the mass density \f$\mathrm{[kg/m^3]}\f$ of a given phase within the
      *        control volume.
      */
@@ -188,6 +182,13 @@ public:
      */
     Scalar viscosity(int phaseIdx = 0) const
     { return fluidState_.viscosity(defaultPhaseIdx); }
+
+    /*!
+     * \brief Return the effective dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
+     *        control volume.
+     */
+    Scalar effectiveViscosity(int phaseIdx = 0) const
+    { return viscosity(defaultPhaseIdx); }
 
     /*!
      * \brief Return the fluid state of the control volume.
