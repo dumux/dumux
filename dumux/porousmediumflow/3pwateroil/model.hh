@@ -80,6 +80,8 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 
 #include "indices.hh"
@@ -109,21 +111,21 @@ struct ThreePWaterOilModelTraits
 
 namespace Properties {
 
-NEW_TYPE_TAG(ThreePWaterOilNI, INHERITS_FROM(PorousMediumFlow, NonIsothermal));
+NEW_TYPE_TAG(ThreePWaterOilNI, INHERITS_FROM(PorousMediumFlow));
 
 //////////////////////////////////////////////////////////////////
 // Property values
 //////////////////////////////////////////////////////////////////
 
-//! Set the isothermal model traits property
-SET_PROP(ThreePWaterOilNI, IsothermalModelTraits)
+//! Set the non-isothermal model traits property
+SET_PROP(ThreePWaterOilNI, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 3p2cni model!");
     static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p2cni model!");
 public:
-    using type = ThreePWaterOilModelTraits;
+    using type = PorousMediumFlowNIModelTraits<ThreePWaterOilModelTraits>;
 };
 
 /*!
@@ -173,9 +175,8 @@ SET_TYPE_PROP(ThreePWaterOilNI, SpatialParams, FVSpatialParams<TypeTag>);
 SET_TYPE_PROP(ThreePWaterOilNI, EffectiveDiffusivityModel,
              DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
-// disable velocity output by default
-
-SET_BOOL_PROP(ThreePWaterOilNI, UseMoles, true); //!< Define that mole fractions are used in the balance equations per default
+// Define that mole fractions are used in the balance equations per default
+SET_BOOL_PROP(ThreePWaterOilNI, UseMoles, true);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(ThreePWaterOilNI, ThermalConductivityModel)
@@ -187,29 +188,26 @@ public:
     using type = ThermalConductivitySomerton<Scalar, Indices>;
 };
 
-
-//////////////////////////////////////////////////////////////////
-// Property values for isothermal model required for the general non-isothermal model
-//////////////////////////////////////////////////////////////////
-
-//! Set the isothermal vktoutputfields
-SET_PROP(ThreePWaterOilNI, IsothermalVtkOutputFields)
+//! Set the non-isothermal vkt output fields
+SET_PROP(ThreePWaterOilNI, VtkOutputFields)
 {
 private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
+    using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using IsothermalFields = ThreePWaterOilVtkOutputFields<FluidSystem, Indices>;
 public:
-    using type = ThreePWaterOilVtkOutputFields<FluidSystem, Indices>;
+    using type = EnergyVtkOutputFields<IsothermalFields>;
 };
 
-//set isothermal Indices
-SET_PROP(ThreePWaterOilNI, IsothermalIndices)
+//set non-isothermal Indices
+SET_PROP(ThreePWaterOilNI, Indices)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using IsothermalIndices =  ThreePWaterOilIndices<FluidSystem, /*PVOffset=*/0>;
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
 public:
-    using type = ThreePWaterOilIndices<FluidSystem, /*PVOffset=*/0>;
+    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
 };
 
 }

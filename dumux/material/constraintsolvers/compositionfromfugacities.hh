@@ -27,6 +27,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/version.hh>
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/valgrind.hh>

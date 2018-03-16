@@ -83,6 +83,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
@@ -119,7 +121,7 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 NEW_TYPE_TAG(TwoPTwoC, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(TwoPTwoCNI, INHERITS_FROM(TwoPTwoC, NonIsothermal));
+NEW_TYPE_TAG(TwoPTwoCNI, INHERITS_FROM(TwoPTwoC));
 
 //////////////////////////////////////////////////////////////////
 // Property values
@@ -222,31 +224,37 @@ public:
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
-//! Set isothermal Indices
-SET_TYPE_PROP(TwoPTwoCNI, IsothermalIndices, TwoPTwoCIndices<typename GET_PROP_TYPE(TypeTag, FluidSystem), /*PVOffset=*/0>);
+//! Set non-isothermal Indices
+SET_PROP(TwoPTwoCNI, Indices)
+{
+private:
+    using IsothermalIndices = TwoPTwoCIndices<typename GET_PROP_TYPE(TypeTag, FluidSystem), /*PVOffset=*/0>;
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+public:
+    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
+};
 
-//! Set the isothermal model traits
-SET_PROP(TwoPTwoCNI, IsothermalModelTraits)
+//! Set the non-isothermal model traits
+SET_PROP(TwoPTwoCNI, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
 public:
-    using type = TwoPTwoCModelTraits;
+    using type = PorousMediumFlowNIModelTraits<TwoPTwoCModelTraits>;
 };
 
-//! Set isothermal output fields
-SET_PROP(TwoPTwoCNI, IsothermalVtkOutputFields)
+//! Set non-isothermal output fields
+SET_PROP(TwoPTwoCNI, VtkOutputFields)
 {
 private:
    using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
+   using IsothermalFields = TwoPTwoCVtkOutputFields<FluidSystem, Indices>;
 public:
-    using type = TwoPTwoCVtkOutputFields<FluidSystem, Indices>;
+    using type = EnergyVtkOutputFields<IsothermalFields>;
 };
-
 
 } // end namespace Properties
 } // end namespace Dumux

@@ -53,10 +53,6 @@
 #ifndef DUMUX_NONISOTHERMAL_MODEL_HH
 #define DUMUX_NONISOTHERMAL_MODEL_HH
 
-#include <dumux/common/properties.hh>
-#include "indices.hh"
-#include "vtkoutputfields.hh"
-
 namespace Dumux
 {
 /*!
@@ -74,39 +70,6 @@ struct PorousMediumFlowNIModelTraits : public IsothermalTraits
     static constexpr bool enableEnergyBalance() { return true; }
 };
 
-namespace Properties {
-
-NEW_TYPE_TAG(NonIsothermal);
-
-//! use the non-isothermal model traits
-SET_PROP(NonIsothermal, ModelTraits)
-{
-private:
-    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, IsothermalModelTraits);
-public:
-    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
-};
-
-//! indices for non-isothermal models
-SET_PROP(NonIsothermal, Indices)
-{
-private:
-    using IsothermalIndices = typename GET_PROP_TYPE(TypeTag, IsothermalIndices);
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-public:
-    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
-};
-
-//! indices for non-isothermal models
-SET_PROP(NonIsothermal, VtkOutputFields)
-{
-private:
-    using IsothermalVtkOutputFields = typename GET_PROP_TYPE(TypeTag, IsothermalVtkOutputFields);
-public:
-    using type = EnergyVtkOutputFields<IsothermalVtkOutputFields>;
-};
-
-} // end namespace Properties
 } // end namespace Dumux
 
 #endif

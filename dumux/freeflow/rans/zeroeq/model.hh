@@ -58,9 +58,6 @@ namespace Properties {
 //! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes 0-Eq. model
 NEW_TYPE_TAG(ZeroEq, INHERITS_FROM(RANS));
 
-//! The type tag for the corresponding non-isothermal model
-NEW_TYPE_TAG(ZeroEqNI, INHERITS_FROM(ZeroEq, RANSNI));
-
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
@@ -69,7 +66,7 @@ NEW_TYPE_TAG(ZeroEqNI, INHERITS_FROM(ZeroEq, RANSNI));
 SET_PROP(ZeroEq, Indices)
 {
 private:
-    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
     static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
 public:
     using type = ZeroEqIndices<dim, numEq>;

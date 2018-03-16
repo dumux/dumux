@@ -50,6 +50,8 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -77,7 +79,7 @@ namespace Properties {
 //! The type tags for the isothermal single phase model
 NEW_TYPE_TAG(OneP, INHERITS_FROM(PorousMediumFlow));
 //! The type tags for the non-isothermal single phase model
-NEW_TYPE_TAG(OnePNI, INHERITS_FROM(OneP, NonIsothermal));
+NEW_TYPE_TAG(OnePNI, INHERITS_FROM(OneP));
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal single phase model
@@ -106,11 +108,15 @@ public:
 ///////////////////////////////////////////////////////////////////////////
 // properties for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(OnePNI, IsothermalVtkOutputFields, OnePVtkOutputFields);              //!< the isothermal vtk output fields
-SET_TYPE_PROP(OnePNI, IsothermalVolumeVariables, OnePVolumeVariables<TypeTag>);     //!< Vol vars of the isothermal model
-SET_TYPE_PROP(OnePNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);   //!< Local residual of the isothermal model
-SET_TYPE_PROP(OnePNI, IsothermalIndices, OnePIndices);                              //!< Indices of the isothermal model
-SET_TYPE_PROP(OnePNI, IsothermalModelTraits, OnePModelTraits);                      //!< The model traits of the isothermal model
+SET_TYPE_PROP(OnePNI, VtkOutputFields, EnergyVtkOutputFields<OnePVtkOutputFields>); //!< Add temperature to the output
+SET_TYPE_PROP(OnePNI, ModelTraits, PorousMediumFlowNIModelTraits<OnePModelTraits>); //!< The model traits of the non-isothermal model
+SET_PROP(OnePNI, Indices)                                                           //!< Indices of the non-isothermal model
+{
+private:
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+public:
+    using type = EnergyIndices<OnePIndices, numEq, 0>;
+};
 SET_TYPE_PROP(OnePNI,
               ThermalConductivityModel,
               ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>); //!< Use the average for effective conductivities

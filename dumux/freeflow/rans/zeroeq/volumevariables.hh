@@ -41,7 +41,7 @@ class ZeroEqVolumeVariablesImplementation;
  *        The class is specialized for isothermal and non-isothermal models.
  */
 template <class TypeTag>
-using ZeroEqVolumeVariables = ZeroEqVolumeVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+using ZeroEqVolumeVariables = ZeroEqVolumeVariablesImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>;
 
 /*!
  * \ingroup ZeroEqModel

@@ -82,6 +82,8 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
 #include "volumevariables.hh"
 #include "indices.hh"
@@ -116,7 +118,7 @@ namespace Properties
 
 //! The type tags for the implicit isothermal one-phase two-component problems
 NEW_TYPE_TAG(RichardsNC, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(RichardsNCNI, INHERITS_FROM(RichardsNC, NonIsothermal));
+NEW_TYPE_TAG(RichardsNCNI, INHERITS_FROM(RichardsNC));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
@@ -201,25 +203,26 @@ SET_PROP(RichardsNCNI, ThermalConductivityModel)
 };
 
 //////////////////////////////////////////////////////////////////
-// Property values for isothermal model required for the general non-isothermal model
+// Property values for non-isothermal Richards n-components model
 //////////////////////////////////////////////////////////////////
 
-//! set isothermal VolumeVariables
-SET_TYPE_PROP(RichardsNCNI, IsothermalVolumeVariables, RichardsNCVolumeVariables<TypeTag>);
+//! set non-isothermal Indices
+SET_PROP(RichardsNCNI, Indices)
+{
+private:
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+public:
+    using type = EnergyIndices<RichardsNCIndices<>, numEq, 0>;
+};
 
-//! set isothermal LocalResidual
-SET_TYPE_PROP(RichardsNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);
-
-//! set isothermal Indices
-SET_TYPE_PROP(RichardsNCNI, IsothermalIndices, RichardsNCIndices<>);
-
-//! set isothermal model traits
-SET_PROP(RichardsNCNI, IsothermalModelTraits)
+//! set non-isothermal model traits
+SET_PROP(RichardsNCNI, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using IsothermalTraits = RichardsNCModelTraits<FluidSystem::numComponents>;
 public:
-    using type = RichardsNCModelTraits<FluidSystem::numComponents>;
+    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
 } // end namespace Properties

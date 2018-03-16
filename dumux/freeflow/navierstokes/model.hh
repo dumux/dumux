@@ -51,6 +51,8 @@
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/nonisothermal/model.hh>
+#include <dumux/freeflow/nonisothermal/indices.hh>
+#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
@@ -61,6 +63,7 @@
 
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/fourierslaw.hh>
 
 namespace Dumux
 {
@@ -106,7 +109,7 @@ namespace Properties {
 NEW_TYPE_TAG(NavierStokes, INHERITS_FROM(FreeFlow));
 
 //! The type tag for the corresponding non-isothermal model
-NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NavierStokesNonIsothermal));
+NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes));
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
@@ -170,37 +173,43 @@ public:
      using type = NavierStokesVtkOutputFields<FVGridGeometry>;
 };
 //////////////////////////////////////////////////////////////////
-// Property values for isothermal model required for the general non-isothermal model
+// Property values for non-isothermal Navier-Stokes model
 //////////////////////////////////////////////////////////////////
 
-//! The model traits of the isothermal model
-SET_PROP(NavierStokesNI, IsothermalModelTraits)
+//! The model traits of the non-isothermal model
+SET_PROP(NavierStokesNI, ModelTraits)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr int dim = GridView::dimension;
+    using IsothermalTraits = NavierStokesModelTraits<dim>;
 public:
-    using type = NavierStokesModelTraits<dim>;
+    using type = NavierStokesNIModelTraits<IsothermalTraits>;
 };
 
-//! The indices required by the isothermal single-phase model
-SET_PROP(NavierStokesNI, IsothermalIndices)
+//! The indices required by the non-isothermal single-phase model
+SET_PROP(NavierStokesNI, Indices)
 {
 private:
     static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
     static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
+    using IsothermalIndices = NavierStokesIndices<dim, numEq>;
 public:
-    using type = NavierStokesIndices<dim, numEq>;
+    using type = NavierStokesNonIsothermalIndices<dim, numEq, IsothermalIndices>;
 };
 
-//! The specific isothermal vtk output fields
-SET_PROP(NavierStokesNI, IsothermalVtkOutputFields)
+//! The specific non-isothermal vtk output fields
+SET_PROP(NavierStokesNI, VtkOutputFields)
 {
 private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+     using IsothermalFields = NavierStokesVtkOutputFields<FVGridGeometry>;
 public:
-     using type = NavierStokesVtkOutputFields<FVGridGeometry>;
+     using type = NavierStokesNonIsothermalVtkOutputFields<IsothermalFields>;
 };
+
+//! Use Fourier's Law as default heat conduction type
+SET_TYPE_PROP(NavierStokesNI, HeatConductionType, FouriersLaw<TypeTag>);
 
  // \}
 }

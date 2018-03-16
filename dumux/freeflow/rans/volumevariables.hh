@@ -41,7 +41,7 @@ class RANSVolumeVariablesImplementation;
  *        The class is specialized for isothermal and non-isothermal models.
  */
 template <class TypeTag>
-using RANSVolumeVariables = RANSVolumeVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+using RANSVolumeVariables = RANSVolumeVariablesImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>;
 
 /*!
  * \ingroup RANSModel
