@@ -93,7 +93,13 @@
 #define DUMUX_2PNCMIN_MODEL_HH
 
 #include <dumux/porousmediumflow/2pnc/model.hh>
+#include <dumux/porousmediumflow/2pnc/volumevariables.hh>
+
 #include <dumux/porousmediumflow/mineralization/model.hh>
+#include <dumux/porousmediumflow/mineralization/localresidual.hh>
+#include <dumux/porousmediumflow/mineralization/volumevariables.hh>
+#include <dumux/porousmediumflow/mineralization/vtkoutputfields.hh>
+
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
@@ -104,34 +110,46 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(TwoPNCMin, INHERITS_FROM(TwoPNC, Mineralization));
+NEW_TYPE_TAG(TwoPNCMin, INHERITS_FROM(TwoPNC));
 NEW_TYPE_TAG(TwoPNCMinNI, INHERITS_FROM(TwoPNCMin));
 
 //////////////////////////////////////////////////////////////////
 // Property tags for the isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(TwoPNCMin, NonMineralizationVolumeVariables, TwoPNCVolumeVariables<TypeTag>);     //!< the VolumeVariables property
+
+// use the mineralization local residual
+SET_TYPE_PROP(TwoPNCMin, LocalResidual, MineralizationLocalResidual<TypeTag>);
+
+//! use the mineralization volume variables together with the 2pnc vol vars
+SET_PROP(TwoPNCMin, VolumeVariables)
+{
+private:
+    using NonMinVolVars = TwoPNCVolumeVariables<TypeTag>;
+public:
+    using type = MineralizationVolumeVariables<TypeTag, NonMinVolVars>;
+};
 
 //! Set the vtk output fields specific to this model
-SET_PROP(TwoPNCMin, NonMineralizationVtkOutputFields)
+SET_PROP(TwoPNCMin, VtkOutputFields)
 {
 private:
    using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
+   using NonMineralizationFields = TwoPNCVtkOutputFields<FluidSystem, Indices>;
 public:
-    using type = TwoPNCVtkOutputFields<FluidSystem, Indices>;
+    using type = MineralizationVtkOutputFields<NonMineralizationFields, FluidSystem>;
 };
 
 //! The 2pnc model traits define the non-mineralization part
-SET_PROP(TwoPNCMin, NonMineralizationModelTraits)
+SET_PROP(TwoPNCMin, ModelTraits)
 {
 private:
     //! we use the number of components specified by the fluid system here
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
+    using NonMineralizationTraits = TwoPNCModelTraits<FluidSystem::numComponents>;
 public:
-    using type = TwoPNCModelTraits<FluidSystem::numComponents>;
+    using type = MineralizationModelTraits<NonMineralizationTraits, FluidSystem::numSPhases>;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -156,8 +174,9 @@ public:
 SET_PROP(TwoPNCMinNI, VtkOutputFields)
 {
 private:
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using NonMineralizationFields =  typename GET_PROP_TYPE(TypeTag, NonMineralizationVtkOutputFields);
+    using NonMineralizationFields = TwoPNCVtkOutputFields<FluidSystem, Indices>;
     using IsothermalFields = MineralizationVtkOutputFields<NonMineralizationFields, FluidSystem>;
 public:
     using type = EnergyVtkOutputFields<IsothermalFields>;
