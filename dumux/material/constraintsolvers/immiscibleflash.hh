@@ -120,7 +120,9 @@ public:
                       const typename MaterialLaw::Params &matParams,
                       const ComponentVector &globalMolarities)
     {
+#if !DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         Dune::FMatrixPrecision<Scalar>::set_singular_limit(1e-25);
+#endif
 
         /////////////////////////
         // Check if all fluid phases are incompressible
