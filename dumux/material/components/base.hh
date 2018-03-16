@@ -33,7 +33,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/stdstreams.hh>
-
+#include <dune/common/exceptions.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux {
