@@ -24,8 +24,11 @@
 #ifndef DUMUX_EFFECTIVE_SOLID_DENSITY_HH
 #define DUMUX_EFFECTIVE_SOLID_DENSITY_HH
 
-#include <dumux/discretization/evalsolution.hh>
 #include <dune/common/deprecated.hh>
+
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/evalsolution.hh>
+
 
 namespace Dumux {
 
