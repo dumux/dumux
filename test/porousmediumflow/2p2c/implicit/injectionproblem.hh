@@ -37,6 +37,10 @@
 namespace Dumux
 {
 
+#ifndef ENABLECACHING
+#define ENABLECACHING 0
+#endif
+
 template <class TypeTag>
 class InjectionProblem;
 
