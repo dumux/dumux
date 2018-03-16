@@ -107,6 +107,8 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 #include <dumux/porousmediumflow/nonequilibrium/model.hh>
 
 #include "indices.hh"
@@ -152,7 +154,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 //! The type tags for the isothermal & non-isothermal two-phase model
 NEW_TYPE_TAG(MPNC, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(MPNCNI, INHERITS_FROM(MPNC, NonIsothermal));
+NEW_TYPE_TAG(MPNCNI, INHERITS_FROM(MPNC));
 NEW_TYPE_TAG(MPNCNonequil, INHERITS_FROM(MPNC, NonEquilibrium));
 
 /////////////////////////////////////////////////////////////////
@@ -222,26 +224,29 @@ public:
 /////////////////////////////////////////////////
 // Properties for the non-isothermal mpnc model
 /////////////////////////////////////////////////
-SET_TYPE_PROP(MPNCNI, IsothermalVolumeVariables, MPNCVolumeVariables<TypeTag>);    //! set isothermal VolumeVariables
-SET_TYPE_PROP(MPNCNI, IsothermalLocalResidual, MPNCLocalResidual<TypeTag>); //! set isothermal LocalResidual
 
-//! set the isothermal model traits
-SET_PROP(MPNCNI, IsothermalModelTraits)
+//! set the non-isothermal model traits
+SET_PROP(MPNCNI, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using IsothermalTraits = MPNCModelTraits<FluidSystem::numPhases, FluidSystem::numComponents>;
 public:
-    using type = MPNCModelTraits<FluidSystem::numPhases, FluidSystem::numComponents>;
+    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
-//! set isothermal Indices
-SET_PROP(MPNCNI, IsothermalIndices)
+//! set non-isothermal Indices
+SET_PROP(MPNCNI, Indices)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, IsothermalModelTraits)::numEq();
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+
+    //! The mpnc indices require to be passed the number of equations without energy balance
+    //! TODO can the mpnc model/indexing be realized in a more transparent way?
+    using IsothermalIndices = MPNCIndices<FluidSystem, numEq-1, /*PVOffset=*/0>;
 public:
-    using type = MPNCIndices<FluidSystem, numEq, /*PVOffset=*/0>;
+    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
 };
 
 /////////////////////////////////////////////////

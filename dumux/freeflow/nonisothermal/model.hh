@@ -34,12 +34,6 @@
 #ifndef DUMUX_STAGGERED_NI_MODEL_HH
 #define DUMUX_STAGGERED_NI_MODEL_HH
 
-#include <dumux/common/properties.hh>
-#include "indices.hh"
-#include "vtkoutputfields.hh"
-#include <dumux/discretization/fourierslaw.hh>
-
-
 namespace Dumux {
 
 /*!
@@ -56,49 +50,6 @@ struct NavierStokesNIModelTraits : public IsothermalTraits
     //! We additionally solve for the equation balance
     static constexpr bool enableEnergyBalance() { return true; }
 };
-
-namespace Properties {
-
-//! The type tags for the non-isothermal Navier Stokes model
-NEW_TYPE_TAG(NavierStokesNonIsothermal);
-
-///////////////////////////////////////////////////////////////////////////
-// default property values for the non-isothermal single phase model
-///////////////////////////////////////////////////////////////////////////
-
-//! use the non-isothermal model traits
-SET_PROP(NavierStokesNonIsothermal, ModelTraits)
-{
-private:
-    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, IsothermalModelTraits);
-public:
-    using type = NavierStokesNIModelTraits<IsothermalTraits>;
-};
-
-//! The non-isothermal indices
-SET_PROP(NavierStokesNonIsothermal, Indices)
-{
-private:
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-    using IsothermalIndices = typename GET_PROP_TYPE(TypeTag, IsothermalIndices);
-public:
-    using type = NavierStokesNonIsothermalIndices<dim, numEq, IsothermalIndices>;
-};
-
-//! The non-isothermal vtk output fields
-SET_PROP(NavierStokesNonIsothermal, VtkOutputFields)
-{
-private:
-    using IsothermalVtkOutputFields = typename GET_PROP_TYPE(TypeTag, IsothermalVtkOutputFields);
-public:
-    using type = NavierStokesNonIsothermalVtkOutputFields<IsothermalVtkOutputFields>;
-};
-
-//! Use Fourier's Law as default heat conduction type
-SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
-
-} // end namespace Properties
 
 } // end  namespace Dumux
 

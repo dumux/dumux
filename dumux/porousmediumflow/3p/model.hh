@@ -65,6 +65,8 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -95,7 +97,7 @@ namespace Properties {
 //! The type tags for the isothermal three-phase model
 NEW_TYPE_TAG(ThreeP, INHERITS_FROM(PorousMediumFlow));
 //! The type tags for the non-isothermal three-phase model
-NEW_TYPE_TAG(ThreePNI, INHERITS_FROM(ThreeP, NonIsothermal));
+NEW_TYPE_TAG(ThreePNI, INHERITS_FROM(ThreeP));
 
 //////////////////////////////////////////////////////////////////
 // Properties for the isothermal 3p model
@@ -171,45 +173,36 @@ public:
     using type = ThermalConductivitySomerton<Scalar, Indices>;
 };
 
-//////////////////////////////////////////////////////////////////
-// Property values for isothermal model required for the general non-isothermal model
-//////////////////////////////////////////////////////////////////
-
-//! Set isothermal VolumeVariables
-SET_TYPE_PROP(ThreePNI, IsothermalVolumeVariables, ThreePVolumeVariables<TypeTag>);
-
-//! Set isothermal LocalResidual
-SET_TYPE_PROP(ThreePNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
-
-//! Set isothermal output fields
-SET_PROP(ThreePNI, IsothermalVtkOutputFields)
+//! Set non-isothermal output fields
+SET_PROP(ThreePNI, VtkOutputFields)
 {
 private:
-   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using IsothermalFields = ThreePVtkOutputFields<Indices>;
 public:
-    using type = ThreePVtkOutputFields<Indices>;
+    using type = EnergyVtkOutputFields<IsothermalFields>;
 };
 
-
-//! Set isothermal Indices
-SET_PROP(ThreePNI, IsothermalIndices)
+//! Set non-isothermal Indices
+SET_PROP(ThreePNI, Indices)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using IsothermalIndices = ThreePIndices<FluidSystem,/*PVOffset=*/0>;
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
 public:
-    using type = ThreePIndices<FluidSystem,/*PVOffset=*/0>;
+    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
 };
 
-//! Set isothermal model traits
-SET_PROP(ThreePNI, IsothermalModelTraits)
+//! Set non-isothermal model traits
+SET_PROP(ThreePNI, ModelTraits)
 {
 private:
    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
    static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p model!");
    static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p model!");
 public:
-   using type = ThreePModelTraits;
+   using type = PorousMediumFlowNIModelTraits<ThreePModelTraits>;
 };
 
 } // end namespace Properties

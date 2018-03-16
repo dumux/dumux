@@ -67,6 +67,8 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
 #include "darcyslaw.hh"
 #include "vtkoutputfields.hh"
@@ -97,7 +99,7 @@ struct TwoPOneCModelTraits
 namespace Properties
 {
 //! The type tag for the non-isothermal two-phase one-component model.
-NEW_TYPE_TAG(TwoPOneCNI, INHERITS_FROM(PorousMediumFlow, NonIsothermal));
+NEW_TYPE_TAG(TwoPOneCNI, INHERITS_FROM(PorousMediumFlow));
 
 //////////////////////////////////////////////////////////////////
 // Properties
@@ -159,34 +161,37 @@ public:
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
-//! Set isothermal VolumeVariables.
-SET_TYPE_PROP(TwoPOneCNI, IsothermalVolumeVariables, TwoPOneCVolumeVariables<TypeTag>);
 
-//! Set isothermal LocalResidual.
-SET_TYPE_PROP(TwoPOneCNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
-
-//! Set the isothermal model traits
-SET_PROP(TwoPOneCNI, IsothermalModelTraits)
+//! Set the non-isothermal model traits
+SET_PROP(TwoPOneCNI, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numComponents == 1, "Only fluid systems with 1 component are supported by the 2p1cni model!");
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p1cni model!");
 public:
-    using type = TwoPOneCModelTraits;
+    using type = PorousMediumFlowNIModelTraits<TwoPOneCModelTraits>;
 };
 
-//! Set isothermal Indices.
-SET_PROP(TwoPOneCNI, IsothermalIndices)
+//! Set non-isothermal Indices.
+SET_PROP(TwoPOneCNI, Indices)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using IsothermalIndices = TwoPOneCIndices<FluidSystem, 0>;
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
 public:
-    using type = TwoPOneCIndices<FluidSystem, 0>;
+    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
 };
 
-//! The isothermal vtk output fields.
-SET_TYPE_PROP(TwoPOneCNI, IsothermalVtkOutputFields, TwoPOneCVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)>);
+//! The non-isothermal vtk output fields.
+SET_PROP(TwoPOneCNI, VtkOutputFields)
+{
+private:
+    using IsothermalFields = TwoPOneCVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)>;
+public:
+    using type = EnergyVtkOutputFields<IsothermalFields>;
+};
 
 } // end namespace Properties
 } // end namespace Dumux

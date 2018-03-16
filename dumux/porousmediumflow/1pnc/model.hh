@@ -66,6 +66,8 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
 #include "indices.hh"
@@ -101,7 +103,7 @@ namespace Properties
 
 //! The type tag for the implicit the isothermal & non-isothermal one phase n component problems
 NEW_TYPE_TAG(OnePNC, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(OnePNCNI, INHERITS_FROM(OnePNC, NonIsothermal));
+NEW_TYPE_TAG(OnePNCNI, INHERITS_FROM(OnePNC));
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal single phase model
@@ -144,8 +146,9 @@ SET_TYPE_PROP(OnePNC, EffectiveDiffusivityModel,
               DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 SET_INT_PROP(OnePNC, PhaseIdx, 0); //!< The default phase index
-SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>); //!< The local residual function
-SET_TYPE_PROP(OnePNC, VolumeVariables, OnePNCVolumeVariables<TypeTag>);   //!< the VolumeVariables property
+SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>);        //!< The local residual function
+SET_TYPE_PROP(OnePNC, VolumeVariables, OnePNCVolumeVariables<TypeTag>);           //!< the VolumeVariables property
+SET_TYPE_PROP(OnePNC, Indices, OnePNCIndices<GET_PROP_VALUE(TypeTag, PhaseIdx)>); //! The type encapsulating indices
 
 //! Set the vtk output fields specific to this model
 SET_PROP(OnePNC, VtkOutputFields)
@@ -157,52 +160,44 @@ public:
     using type = OnePNCVtkOutputFields<FluidSystem, phaseIdx>;
 };
 
-//! The indices required by the isothermal single-phase model
-SET_PROP(OnePNC, Indices)
-{
-private:
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-public:
-    using type = OnePNCIndices<phaseIdx>;
-};
-
-
 ///////////////////////////////////////////////////////////////////////////
 // properties for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
-//! the isothermal vtk output fields
-SET_PROP(OnePNCNI, IsothermalVtkOutputFields)
-{
-private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-   static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-public:
-    using type = OnePNCVtkOutputFields<FluidSystem, phaseIdx>;
-};
-
-SET_TYPE_PROP(OnePNCNI, IsothermalVolumeVariables, OnePNCVolumeVariables<TypeTag>);     //!< Vol vars of the isothermal model
-SET_TYPE_PROP(OnePNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);   //!< Local residual of the isothermal model
-SET_TYPE_PROP(OnePNCNI,
-              ThermalConductivityModel,
-              ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>); //!< Use the average for effective conductivities
-
-//! Indices of the isothermal model
-SET_PROP(OnePNCNI, IsothermalIndices)
+//! the non-isothermal vtk output fields
+SET_PROP(OnePNCNI, VtkOutputFields)
 {
 private:
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using IsothermalFields = OnePNCVtkOutputFields<FluidSystem, phaseIdx>;
 public:
-    using type = OnePNCIndices<phaseIdx>;
+    using type = EnergyVtkOutputFields<IsothermalFields>;
 };
 
-//! model traits of the isothermal model.
-SET_PROP(OnePNCNI, IsothermalModelTraits)
+//! Use the average for effective conductivities
+SET_TYPE_PROP(OnePNCNI,
+              ThermalConductivityModel,
+              ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
+//! Indices of the non-isothermal model
+SET_PROP(OnePNCNI, Indices)
+{
+private:
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+    using IsothermalIndices = OnePNCIndices<GET_PROP_VALUE(TypeTag, PhaseIdx)>;
+public:
+    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
+};
+
+//! model traits of the non-isothermal model.
+SET_PROP(OnePNCNI, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
+    using IsothermalTraits = OnePNCModelTraits<FluidSystem::numComponents>;
 public:
-    using type = OnePNCModelTraits<FluidSystem::numComponents>;
+    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
 } // end namespace Properties

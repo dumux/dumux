@@ -24,7 +24,9 @@
 #ifndef DUMUX_NAVIERSTOKES_STAGGERED_FLUXVARIABLES_HH
 #define DUMUX_NAVIERSTOKES_STAGGERED_FLUXVARIABLES_HH
 
+#include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
+
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include <dumux/discretization/methods.hh>
 

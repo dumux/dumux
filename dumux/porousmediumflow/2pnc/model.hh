@@ -97,6 +97,8 @@
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -131,7 +133,7 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 NEW_TYPE_TAG(TwoPNC, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(TwoPNCNI, INHERITS_FROM(TwoPNC, NonIsothermal));
+NEW_TYPE_TAG(TwoPNCNI, INHERITS_FROM(TwoPNC));
 
 //////////////////////////////////////////////////////////////////
 // Properties for the isothermal 2pnc model
@@ -205,38 +207,39 @@ public:
 /////////////////////////////////////////////////
 // Properties for the non-isothermal 2pnc model
 /////////////////////////////////////////////////
-SET_TYPE_PROP(TwoPNCNI, IsothermalVolumeVariables, TwoPNCVolumeVariables<TypeTag>);     //!< set isothermal VolumeVariables
-SET_TYPE_PROP(TwoPNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);  //!< set isothermal LocalResidual
 
-//! Set the isothermal model traits
-SET_PROP(TwoPNCNI, IsothermalModelTraits)
+//! Set the non-isothermal model traits
+SET_PROP(TwoPNCNI, ModelTraits)
 {
 private:
     //! we use the number of components specified by the fluid system here
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
+    using IsothermalTraits = TwoPNCModelTraits<FluidSystem::numComponents>;
 public:
-    using type = TwoPNCModelTraits<FluidSystem::numComponents>;
+    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
-//! Set isothermal output fields
-SET_PROP(TwoPNCNI, IsothermalVtkOutputFields)
+//! Set non-isothermal output fields
+SET_PROP(TwoPNCNI, VtkOutputFields)
 {
 private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
+    using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using IsothermalFields = TwoPNCVtkOutputFields<FluidSystem, Indices>;
 public:
-    using type = TwoPNCVtkOutputFields<FluidSystem, Indices>;
+    using type = EnergyVtkOutputFields<IsothermalFields>;
 };
 
-//! set isothermal Indices
-SET_PROP(TwoPNCNI, IsothermalIndices)
+//! set non-isothermal Indices
+SET_PROP(TwoPNCNI, Indices)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using IsothermalIndices = TwoPNCIndices<FluidSystem, /*PVOffset=*/0>;
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
 public:
-    using type = TwoPNCIndices<FluidSystem, /*PVOffset=*/0>;
+    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
 };
 
 

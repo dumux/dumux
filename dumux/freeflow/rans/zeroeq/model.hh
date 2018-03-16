@@ -58,9 +58,6 @@ namespace Properties {
 //! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes 0-Eq. model
 NEW_TYPE_TAG(ZeroEq, INHERITS_FROM(RANS));
 
-//! The type tag for the corresponding non-isothermal model
-NEW_TYPE_TAG(ZeroEqNI, INHERITS_FROM(ZeroEq, RANSNI));
-
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////

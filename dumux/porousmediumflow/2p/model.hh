@@ -68,6 +68,8 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -103,7 +105,7 @@ namespace Properties
 //! The type tag for the isothermal two-phase model
 NEW_TYPE_TAG(TwoP, INHERITS_FROM(PorousMediumFlow));
 //! The type tag for the non-isothermal two-phase model
-NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP, NonIsothermal));
+NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP));
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal two-phase model
@@ -142,23 +144,23 @@ public:
 ////////////////////////////////////////////////////////
 // properties for the non-isothermal two-phase model
 ////////////////////////////////////////////////////////
-SET_TYPE_PROP(TwoPNI, IsothermalVolumeVariables, TwoPVolumeVariables<TypeTag>);   //!< set isothermal VolumeVariables
-SET_TYPE_PROP(TwoPNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>); //!< set isothermal LocalResidual
 
-//! The isothermal model traits class
-SET_TYPE_PROP(TwoPNI, IsothermalModelTraits, TwoPModelTraits);
+//! The non-isothermal model traits class
+SET_TYPE_PROP(TwoPNI, ModelTraits, PorousMediumFlowNIModelTraits<TwoPModelTraits>);
 
-//! Set the vtk output fields specific to the isothermal twop model
-SET_TYPE_PROP(TwoPNI, IsothermalVtkOutputFields, TwoPVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)>);
+//! Set the vtk output fields specific to the non-isothermal twop model
+SET_TYPE_PROP(TwoPNI, VtkOutputFields, EnergyVtkOutputFields< TwoPVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)> >);
 
-//! Set isothermal Indices
-SET_PROP(TwoPNI, IsothermalIndices)
+//! Set non-isothermal Indices
+SET_PROP(TwoPNI, Indices)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int formulation = GET_PROP_VALUE(TypeTag, Formulation);
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using IsothermalIndices = TwoPIndices<FluidSystem, formulation, 0>;
 public:
-    using type = TwoPIndices<FluidSystem, formulation, 0>;
+    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
 };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity

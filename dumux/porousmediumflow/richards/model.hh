@@ -106,6 +106,8 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -145,7 +147,7 @@ namespace Properties {
 
 //! The type tags for the implicit isothermal one-phase two-component problems
 NEW_TYPE_TAG(Richards, INHERITS_FROM(PorousMediumFlow));
-NEW_TYPE_TAG(RichardsNI, INHERITS_FROM(Richards, NonIsothermal));
+NEW_TYPE_TAG(RichardsNI, INHERITS_FROM(Richards));
 
 //////////////////////////////////////////////////////////////////
 // Properties values
@@ -242,31 +244,38 @@ public:
     using type = ThermalConductivitySomerton<Scalar, Indices>;
 };
 
-//////////////////////////////////////////////////////////////////
-// Property values for isothermal model required for the general non-isothermal model
-//////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+// Property values for non-isothermal Richars model
+/////////////////////////////////////////////////////
 
-//! set isothermal model traits
-SET_TYPE_PROP(RichardsNI, IsothermalModelTraits, RichardsModelTraits<GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir)>);
+//! set non-isothermal model traits
+SET_PROP(RichardsNI, ModelTraits)
+{
+private:
+    using IsothermalTraits = RichardsModelTraits<GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir)>;
+public:
+    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
+};
 
-//! set isothermal VolumeVariables
-SET_TYPE_PROP(RichardsNI, IsothermalVolumeVariables, RichardsVolumeVariables<TypeTag>);
+//! set non-isothermal Indices
+SET_PROP(RichardsNI, Indices)
+{
+private:
+    using IsothermalIndices = RichardsIndices;
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+public:
+    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
+};
 
-//! set isothermal LocalResidual
-SET_TYPE_PROP(RichardsNI, IsothermalLocalResidual, RichardsLocalResidual<TypeTag>);
-
-//! set isothermal Indices
-SET_TYPE_PROP(RichardsNI, IsothermalIndices, RichardsIndices);
-
-//! Set the vtk output fields specific to this model
-SET_PROP(RichardsNI, IsothermalVtkOutputFields)
+//! Set the vtk output fields specific to th non-isothermal model
+SET_PROP(RichardsNI, VtkOutputFields)
 {
 private:
    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-   static constexpr bool enableWaterDiffusionInAir
-        = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
+   static constexpr bool enableWaterDiffusionInAir = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
+   using IsothermalFields = RichardsVtkOutputFields<Indices, enableWaterDiffusionInAir>;
 public:
-    using type = RichardsVtkOutputFields<Indices, enableWaterDiffusionInAir>;
+    using type = EnergyVtkOutputFields<IsothermalFields>;
 };
 
 // \}
