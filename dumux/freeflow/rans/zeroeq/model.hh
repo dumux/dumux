@@ -69,7 +69,7 @@ NEW_TYPE_TAG(ZeroEqNI, INHERITS_FROM(ZeroEq, RANSNI));
 SET_PROP(ZeroEq, Indices)
 {
 private:
-    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
     static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
 public:
     using type = ZeroEqIndices<dim, numEq>;
