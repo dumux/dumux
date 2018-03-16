@@ -82,7 +82,7 @@ class RichardsVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     static constexpr bool useKelvinVaporPressure
         = GET_PROP_VALUE(TypeTag, UseKelvinEquation);
 
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
 
 public:
 

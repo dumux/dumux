@@ -60,7 +60,7 @@ class TwoPVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
         saturationIdx = Indices::saturationIdx,
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
         formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 

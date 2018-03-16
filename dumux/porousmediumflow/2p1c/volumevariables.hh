@@ -51,7 +51,7 @@ class TwoPOneCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
 
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,

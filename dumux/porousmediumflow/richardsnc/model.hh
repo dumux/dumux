@@ -89,6 +89,24 @@
 
 namespace Dumux
 {
+/*!
+ * \ingroup RichardsNCModel
+ * \brief Specifies a number properties of the Richards n-components model.
+ *
+ * \tparam nComp the number of components to be considered.
+ */
+template<int nComp>
+struct RichardsNCModelTraits
+{
+    static constexpr int numEq() { return nComp; }
+    static constexpr int numPhases() { return 2; }
+    static constexpr int numComponents() { return nComp; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return true; }
+    static constexpr bool enableEnergyBalance() { return false; }
+};
+
 namespace Properties
 {
 
@@ -105,26 +123,18 @@ NEW_TYPE_TAG(RichardsNCNI, INHERITS_FROM(RichardsNC, NonIsothermal));
 //////////////////////////////////////////////////////////////////
 // Property values
 //////////////////////////////////////////////////////////////////
-SET_PROP(RichardsNC, NumEq)
+
+//! Set the model traits class
+SET_PROP(RichardsNC, ModelTraits)
 {
+private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static const int value = FluidSystem::numComponents;
+public:
+    using type = RichardsNCModelTraits<FluidSystem::numComponents>;
 };
 
-SET_PROP(RichardsNC, NumPhases)
-{
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static const int value = FluidSystem::numPhases;
-    static_assert(value == 1, "You can only use one-phasic fluid systems with the Richards n-component model!");
-};
-
-SET_PROP(RichardsNC, NumComponents)
-{
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static const int value = FluidSystem::numComponents;
-};
-
-SET_BOOL_PROP(RichardsNC, UseMoles, true); //!< Define that per default mole fractions are used in the balance equations
+//! Define that per default mole fractions are used in the balance equations
+SET_BOOL_PROP(RichardsNC, UseMoles, true);
 
 //! Use the dedicated local residual
 SET_TYPE_PROP(RichardsNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
@@ -183,11 +193,6 @@ SET_PROP(RichardsNC, EffectiveDiffusivityModel)
     using type = DiffusivityMillingtonQuirk<Scalar>;
 };
 
-//physical processes to be considered by the isothermal model
-SET_BOOL_PROP(RichardsNC, EnableAdvection, true);
-SET_BOOL_PROP(RichardsNC, EnableMolecularDiffusion, true);
-SET_BOOL_PROP(RichardsNC, EnableEnergyBalance, false);
-
 //! average is used as default model to compute the effective thermal heat conductivity
 SET_PROP(RichardsNCNI, ThermalConductivityModel)
 {
@@ -199,20 +204,22 @@ SET_PROP(RichardsNCNI, ThermalConductivityModel)
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
-//set isothermal VolumeVariables
+//! set isothermal VolumeVariables
 SET_TYPE_PROP(RichardsNCNI, IsothermalVolumeVariables, RichardsNCVolumeVariables<TypeTag>);
 
-//set isothermal LocalResidual
+//! set isothermal LocalResidual
 SET_TYPE_PROP(RichardsNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);
 
-//set isothermal Indices
+//! set isothermal Indices
 SET_TYPE_PROP(RichardsNCNI, IsothermalIndices, RichardsNCIndices<>);
 
-//set isothermal NumEq
-SET_PROP(RichardsNCNI, IsothermalNumEq)
+//! set isothermal model traits
+SET_PROP(RichardsNCNI, IsothermalModelTraits)
 {
+private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static const int value = FluidSystem::numComponents;
+public:
+    using type = RichardsNCModelTraits<FluidSystem::numComponents>;
 };
 
 } // end namespace Properties

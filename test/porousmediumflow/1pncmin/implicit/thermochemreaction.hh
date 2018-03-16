@@ -46,8 +46,8 @@ class ThermoChemReaction
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-    static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static const int numSolidPhases = GET_PROP_VALUE(TypeTag, NumSPhases);
+    static const int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
+    static const int numSolidPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numSPhases();
 
     enum{
         // Indices of the primary variables

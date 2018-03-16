@@ -63,7 +63,7 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
+    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()} ;
     enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
     enum {sPhaseIdx = FluidSystem::sPhaseIdx};
 

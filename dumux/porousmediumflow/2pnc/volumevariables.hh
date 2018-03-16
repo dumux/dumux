@@ -64,9 +64,9 @@ class TwoPNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
-        numMajorComponents = GET_PROP_VALUE(TypeTag, NumMajorComponents),
+        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
+        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
+        numMajorComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numMajorComponents(),
 
         // formulations
         formulation = GET_PROP_VALUE(TypeTag, Formulation),

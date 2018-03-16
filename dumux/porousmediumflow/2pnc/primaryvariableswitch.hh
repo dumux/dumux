@@ -50,8 +50,8 @@ class TwoPNCPrimaryVariableSwitch
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static const int numMajorComponents = GET_PROP_VALUE(TypeTag, NumMajorComponents);
+    static const int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
+    static const int numMajorComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numMajorComponents();
 
     enum {
 

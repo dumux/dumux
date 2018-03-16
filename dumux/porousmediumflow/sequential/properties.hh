@@ -76,6 +76,12 @@ NEW_PROP_TAG( TimeManager );  //!< Manages the simulation time
 NEW_PROP_TAG( BoundaryTypes ); //!< Stores the boundary types of a single degree of freedom
 NEW_PROP_TAG( MaxIntersections ); //!< Gives maximum number of intersections of an element and neighboring elements
 NEW_PROP_TAG( PressureCoefficientMatrix ); //!< Gives maximum number of intersections of an element and neighboring elements
+
+//! Some properties that became obsolete in dumux, but are still necessary
+//! for sequential models until they are integrated in the general framework
+NEW_PROP_TAG( NumEq );         //!< The number of equations to solve (equal to number of primary variables)
+NEW_PROP_TAG( NumPhases );     //!< Number of fluid phases in the system
+NEW_PROP_TAG( NumComponents ); //!< Number of fluid components in the system
 }
 }
 
@@ -102,6 +108,19 @@ namespace Properties
 
 //! Type of the jacobian matrix needed for compatibility with implicit models for the amg backend
 SET_TYPE_PROP(SequentialModel, JacobianMatrix, typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix));
+
+//! Dummy model traits for compatibility with the rest of dumux
+//! until the sequential models are incorporated into the general framework
+SET_PROP(SequentialModel, ModelTraits)
+{
+private:
+    struct DummyTraits
+    {
+        static constexpr int numEq() { return GET_PROP_VALUE(TypeTag, NumEq); }
+    };
+public:
+    using type = DummyTraits;
+};
 
 //! Use the leaf grid view if not defined otherwise
 SET_PROP(SequentialModel, GridView)

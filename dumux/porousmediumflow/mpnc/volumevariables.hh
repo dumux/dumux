@@ -67,16 +67,15 @@ class MPNCVolumeVariables
         leastWettingFirst   = MpNcPressureFormulation::leastWettingFirst
     };
 
-    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
-    enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
+    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
     enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
     enum {fug0Idx = Indices::fug0Idx};
 
-    static constexpr bool enableThermalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
-    static constexpr bool enableChemicalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
-
-    static constexpr bool enableDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
+    static constexpr bool enableThermalNonEquilibrium = GET_PROP_TYPE(TypeTag, ModelTraits)::enableThermalNonEquilibrium();
+    static constexpr bool enableChemicalNonEquilibrium = GET_PROP_TYPE(TypeTag, ModelTraits)::enableChemicalNonEquilibrium();
+    static constexpr bool enableDiffusion = GET_PROP_TYPE(TypeTag, ModelTraits)::enableMolecularDiffusion();
 
 
     using ComponentVector = Dune::FieldVector<Scalar, numComponents>;

@@ -78,8 +78,34 @@
 
 #include <dumux/material/fluidstates/compositional.hh>
 
-namespace Dumux
+namespace Dumux {
+
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Traits for the Navier-Stokes multi-component model
+ */
+template<int dim, int nComp>
+struct NavierStokesNCModelTraits
 {
+    //! There are as many momentum balance equations as dimensions
+    //! and as many balance equations as components.
+    static constexpr int numEq() { return dim+nComp; }
+
+    //! The number of phases is always 1
+    static constexpr int numPhases() { return 1; }
+
+    //! The number of components
+    static constexpr int numComponents() { return nComp; }
+
+    //! Enable advection
+    static constexpr bool enableAdvection() { return true; }
+
+    //! The one-phase model has no molecular diffusion
+    static constexpr bool enableMolecularDiffusion() { return true; }
+
+    //! The model is isothermal
+    static constexpr bool enableEnergyBalance() { return false; }
+};
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the single-phase, multi-component Navier-Stokes model
@@ -100,37 +126,19 @@ NEW_TYPE_TAG(NavierStokesNCNI, INHERITS_FROM(NavierStokesNC, NavierStokesNonIsot
 // default property values
 ///////////////////////////////////////////////////////////////////////////
 
-/*!
-* \brief Set the property for the number of components.
-*
-* We just forward the number from the fluid system
-*
-*/
-SET_PROP(NavierStokesNC, NumComponents)
+//!< states some specifics of the Navier-Stokes model
+SET_PROP(NavierStokesNC, ModelTraits)
 {
 private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    static constexpr int dim = GridView::dimension;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int numComponents = FluidSystem::numComponents;
 public:
-    static constexpr int value = FluidSystem::numComponents;
-};
-
-/*!
-* \brief The number of equations.
-*         There are as many momentum balance equations as dimensions
-*         and as many balance equations as components.
-*/
-SET_PROP(NavierStokesNC, NumEq)
-{
-private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr auto dim = GridView::dimension;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-public:
-    static constexpr int value = dim + FluidSystem::numComponents;
+    using type = NavierStokesNCModelTraits<dim, numComponents>;
 };
 
 SET_INT_PROP(NavierStokesNC, PhaseIdx, 0); //!< Defines the phaseIdx
-SET_BOOL_PROP(NavierStokesNC, EnableMolecularDiffusion, true); //!< Enable molecular diffusion
 SET_BOOL_PROP(NavierStokesNC, UseMoles, false); //!< Defines whether molar (true) or mass (false) density is used
 SET_INT_PROP(NavierStokesNC, ReplaceCompEqIdx, 0); //<! Set the ReplaceCompEqIdx to 0 by default
 
@@ -147,7 +155,7 @@ SET_TYPE_PROP(NavierStokesNC, FluxVariables, NavierStokesNCFluxVariables<TypeTag
 SET_PROP(NavierStokesNC, Indices)
 {
 private:
-    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
     static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
@@ -187,11 +195,24 @@ SET_TYPE_PROP(NavierStokesNC, MolecularDiffusionType, FicksLaw<TypeTag>);
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
+
+//! The model traits of the isothermal model
+SET_PROP(NavierStokesNCNI, IsothermalModelTraits)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    static constexpr int dim = GridView::dimension;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int numComponents = FluidSystem::numComponents;
+public:
+    using type = NavierStokesNCModelTraits<dim, numComponents>;
+};
+
 //! The isothermal indices
 SET_PROP(NavierStokesNCNI, IsothermalIndices)
 {
 private:
-    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
     static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
@@ -209,17 +230,6 @@ private:
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 public:
      using type = NavierStokesNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>;
-};
-
-//! The number of equations for the isothermal model
-SET_PROP(NavierStokesNCNI, IsothermalNumEq)
-{
-private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr auto dim = GridView::dimension;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-public:
-    static constexpr int value = dim + FluidSystem::numComponents;
 };
 
 // \}

@@ -184,7 +184,7 @@ protected:
     static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx)
     {
         constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-        constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
+        constexpr auto numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return Dune::range(numEqCellCenter, numEq);
 #else

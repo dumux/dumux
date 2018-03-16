@@ -71,6 +71,22 @@
 #include "vtkoutputfields.hh"
 
 namespace Dumux {
+
+/*!
+ * \ingroup ThreePModel
+ * \brief Specifies a number properties of three-phase models.
+ */
+struct ThreePModelTraits
+{
+    static constexpr int numEq() { return 3; }
+    static constexpr int numPhases() { return 3; }
+    static constexpr int numComponents() { return 3; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return false; }
+    static constexpr bool enableEnergyBalance() { return false; }
+};
+
 namespace Properties {
 
 //////////////////////////////////////////////////////////////////
@@ -84,54 +100,20 @@ NEW_TYPE_TAG(ThreePNI, INHERITS_FROM(ThreeP, NonIsothermal));
 //////////////////////////////////////////////////////////////////
 // Properties for the isothermal 3p model
 //////////////////////////////////////////////////////////////////
-/*!
- * \brief Set the property for the number of fluid phases.
- *
- * We just forward the number from the fluid system and use an static
- * assert to make sure it is 3.
- */
-SET_PROP(ThreeP, NumPhases)
+
+//! Set the model traits
+SET_PROP(ThreeP, ModelTraits)
 {
  private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
+    static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p model!");
+    static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p model!");
  public:
-    static const int value = FluidSystem::numPhases;
-    static_assert(value == 3,
-                  "Only fluid systems with 3 phases are supported by the 3p model!");
+    using type = ThreePModelTraits;
 };
-
-/*!
- * \brief Set the property for the number of components.
- *
- *  We just forward the number from the fluid system and use an static
- *  assert to make sure it is 3.
- */
-SET_PROP(ThreeP, NumComponents)
-{
- private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
- public:
-    static const int value = FluidSystem::numComponents;
-    static_assert(value == 3,
-                  "Only fluid systems with 3 components are supported by the 3p model!");
-};
-
-//! Set the number of equations to 3
-SET_INT_PROP(ThreeP, NumEq, 3);
 
 //! The local residual function of the conservation equations
 SET_TYPE_PROP(ThreeP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
-
-//! Enable advection
-SET_BOOL_PROP(ThreeP, EnableAdvection, true);
-
-//! Disable molecular diffusion for the 3p model
-SET_BOOL_PROP(ThreeP, EnableMolecularDiffusion, false);
-
-//! Isothermal model by default
-SET_BOOL_PROP(ThreeP, EnableEnergyBalance, false);
 
 //! The VolumeVariables property
 SET_TYPE_PROP(ThreeP, VolumeVariables, ThreePVolumeVariables<TypeTag>);
@@ -219,9 +201,16 @@ public:
     using type = ThreePIndices<FluidSystem,/*PVOffset=*/0>;
 };
 
-
-//! Set isothermal NumEq
-SET_INT_PROP(ThreePNI, IsothermalNumEq, 3);
+//! Set isothermal model traits
+SET_PROP(ThreePNI, IsothermalModelTraits)
+{
+private:
+   using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+   static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p model!");
+   static_assert(FluidSystem::numComponents == 3, "Only fluid systems with 3 components are supported by the 3p model!");
+public:
+   using type = ThreePModelTraits;
+};
 
 } // end namespace Properties
 } // end namespace Dumux

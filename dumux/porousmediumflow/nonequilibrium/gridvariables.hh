@@ -56,7 +56,7 @@ class NonEquilibriumGridVariables
     enum { dimWorld = GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<typename GridView::Grid::ctype, dimWorld>;
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
 
 public:

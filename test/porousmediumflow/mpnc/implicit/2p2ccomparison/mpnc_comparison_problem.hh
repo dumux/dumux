@@ -70,8 +70,6 @@ SET_TYPE_PROP(MPNCComparisonTypeTag,
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(MPNCComparisonTypeTag, Scalar, double);
 
-SET_BOOL_PROP(MPNCComparisonTypeTag, EnableMolecularDiffusion, true);
-
 SET_BOOL_PROP(MPNCComparisonTypeTag, UseMoles, true);
 
 SET_PROP(MPNCComparisonTypeTag, VtkOutputFields)
@@ -115,8 +113,8 @@ class MPNCComparisonProblem
 
     // world dimension
     enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
-    enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
+    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     enum {wCompIdx = FluidSystem::wCompIdx};

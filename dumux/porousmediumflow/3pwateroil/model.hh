@@ -91,11 +91,22 @@
 
 namespace Dumux
 {
+
 /*!
  * \ingroup ThreePWaterOilModel
- * \brief Adaption of the fully implicit scheme to the three-phase two-component flow model.
- *
+ * \brief Specifies a number properties of the three-phase two-component model.
  */
+struct ThreePWaterOilModelTraits
+{
+ static constexpr int numEq() { return 2; }
+ static constexpr int numPhases() { return 3; }
+ static constexpr int numComponents() { return 2; }
+
+ static constexpr bool enableAdvection() { return true; }
+ static constexpr bool enableMolecularDiffusion() { return true; }
+ static constexpr bool enableEnergyBalance() { return false; }
+};
+
 namespace Properties {
 
 NEW_TYPE_TAG(ThreePWaterOilNI, INHERITS_FROM(PorousMediumFlow, NonIsothermal));
@@ -104,39 +115,15 @@ NEW_TYPE_TAG(ThreePWaterOilNI, INHERITS_FROM(PorousMediumFlow, NonIsothermal));
 // Property values
 //////////////////////////////////////////////////////////////////
 
-/*!
- * \brief Set the property for the number of components.
- *
- * We just forward the number from the fluid system and use an static
- * assert to make sure it is 2.
- */
-SET_PROP(ThreePWaterOilNI, NumComponents)
+//! Set the isothermal model traits property
+SET_PROP(ThreePWaterOilNI, IsothermalModelTraits)
 {
- private:
+private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
- public:
-    static const int value = FluidSystem::numComponents;
-
-    static_assert(value == 2,
-                  "Only fluid systems with 2 components are supported by the 3p2cni model!");
-};
-
-/*!
- * \brief Set the property for the number of fluid phases.
- *
- * We just forward the number from the fluid system and use an static
- * assert to make sure it is 2.
- */
-SET_PROP(ThreePWaterOilNI, NumPhases)
-{
- private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
- public:
-    static const int value = FluidSystem::numPhases;
-    static_assert(value == 3,
-                  "Only fluid systems with 3 phases are supported by the 3p2cni model!");
+    static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 3p2cni model!");
+    static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p2cni model!");
+public:
+    using type = ThreePWaterOilModelTraits;
 };
 
 /*!
@@ -157,16 +144,7 @@ SET_PROP(ThreePWaterOilNI, FluidState){
 SET_TYPE_PROP(ThreePWaterOilNI, LocalResidual, ThreePWaterOilLocalResidual<TypeTag>);
 
 //! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(ThreePWaterOilNI, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, NumComponents));
-
-//! Enable advection
-SET_BOOL_PROP(ThreePWaterOilNI, EnableAdvection, true);
-
-//! disable molecular diffusion for the 3p model
-SET_BOOL_PROP(ThreePWaterOilNI, EnableMolecularDiffusion, true);
-
-//! Isothermal model by default
-SET_BOOL_PROP(ThreePWaterOilNI, EnableEnergyBalance, true);
+SET_INT_PROP(ThreePWaterOilNI, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());
 
 //! The primary variable switch for the 3p3c model
 SET_TYPE_PROP(ThreePWaterOilNI, PrimaryVariableSwitch, ThreePWaterOilPrimaryVariableSwitch<TypeTag>);
@@ -176,7 +154,7 @@ SET_PROP(ThreePWaterOilNI, PrimaryVariables)
 {
 private:
     using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_VALUE(TypeTag, NumEq)>;
+                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
@@ -234,11 +212,6 @@ public:
     using type = ThreePWaterOilIndices<FluidSystem, /*PVOffset=*/0>;
 };
 
-//set isothermal NumEq
-SET_INT_PROP(ThreePWaterOilNI, IsothermalNumEq, 2);
-
 }
-
- }
-
+}
 #endif

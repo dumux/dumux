@@ -61,7 +61,7 @@ SET_BOOL_PROP(FiniteVolumeModel, EnableGridVolumeVariablesCache, false);
 SET_BOOL_PROP(FiniteVolumeModel, EnableGridFluxVariablesCache, false);
 
 //! Boundary types at a single degree of freedom
-SET_TYPE_PROP(FiniteVolumeModel, BoundaryTypes, BoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
+SET_TYPE_PROP(FiniteVolumeModel, BoundaryTypes, BoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
 
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits
@@ -74,7 +74,7 @@ SET_PROP(FiniteVolumeModel, JacobianMatrix)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
     using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
 public:
     using type = typename Dune::BCRSMatrix<MatrixBlock>;

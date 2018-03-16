@@ -63,8 +63,8 @@ class ThreePWaterOilVolumeVariables : public PorousMediumFlowVolumeVariables<Typ
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     enum {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
+        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
+        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
 
         wCompIdx = Indices::wCompIdx,
         nCompIdx = Indices::nCompIdx,

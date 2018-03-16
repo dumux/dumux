@@ -33,21 +33,13 @@ namespace Dumux
  * \ingroup PorousmediumNonEquilibriumModel
  * \brief The primary variable and equation indices for the MpNc model.
  */
-template <class EquilibriumIndices, class FluidSystem, int numEnergyEquationFluid, int numEnergyEquationSolid, int numEquationBalance, int BasePVOffset = 0>
+template <class EquilibriumIndices, class FluidSystem, int numEnergyEquationFluid, int numEnergyEquationSolid, int numEq, int BasePVOffset = 0>
 class NonEquilbriumIndices: public EquilibriumIndices
 {
 public:
      enum { numPhases = FluidSystem::numPhases };
      enum { numEnergyEqFluid = numEnergyEquationFluid };
      enum { numEnergyEqSolid = numEnergyEquationSolid };
-     /*! \todo Replacing the sum below with GET_PROP_VALUE(TypeTag, NumEq)
-      *        yields a compilation error with clang, due to complex
-      *        interdependencies of MPNC and NonEquilibrium type tags and
-      *        Indices classes. This should be fixed.
-      */
-     static const unsigned int numEq = numEquationBalance
-                                     + numEnergyEqFluid
-                                     + numEnergyEqSolid;
 
     /*!
      * \brief Index for the temperature of the wetting phase in a vector of primary

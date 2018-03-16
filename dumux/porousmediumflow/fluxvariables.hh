@@ -44,6 +44,7 @@ class PorousMediumFluxVariables : public FluxVariablesBase<TypeTag, PorousMedium
     using ParentType = FluxVariablesBase<TypeTag, ThisType>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
@@ -55,8 +56,10 @@ class PorousMediumFluxVariables : public FluxVariablesBase<TypeTag, PorousMedium
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-           numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
+    enum
+    {
+        numPhases = ModelTraits::numPhases(),
+        numComponents = ModelTraits::numComponents()
     };
 
 public:
@@ -64,9 +67,9 @@ public:
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
 
-    static constexpr bool enableAdvection = GET_PROP_VALUE(TypeTag, EnableAdvection);
-    static constexpr bool enableMolecularDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
-    static constexpr bool enableEnergyBalance = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
+    static constexpr bool enableAdvection = ModelTraits::enableAdvection();
+    static constexpr bool enableMolecularDiffusion = ModelTraits::enableMolecularDiffusion();
+    static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
     static constexpr bool enableThermalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
 
     //! The constructor

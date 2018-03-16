@@ -49,7 +49,7 @@ class TwoPTwoCCO2VolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
 
     enum {
         wCompIdx = Indices::wCompIdx,

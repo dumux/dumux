@@ -62,7 +62,7 @@ class OnePNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 
     enum
     {
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
+        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
 
         phaseIdx = Indices::phaseIdx,
         phaseCompIdx = Indices::phaseCompIdx,

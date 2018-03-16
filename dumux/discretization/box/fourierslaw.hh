@@ -60,7 +60,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::box>
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
+    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()} ;
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;

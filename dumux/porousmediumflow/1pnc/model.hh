@@ -63,6 +63,7 @@
 #include <dumux/material/fluidstates/compositional.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
+#include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
@@ -73,6 +74,24 @@
 
 namespace Dumux
 {
+/*!
+ * \ingroup OnePNCModel
+ * \brief Specifies a number properties of models that
+ *        consider a single-phase with multiple components.
+ *
+ * \ţparam nComp the number of components to be considered.
+ */
+template<int nComp>
+struct OnePNCModelTraits
+{
+    static constexpr int numEq() { return nComp; }
+    static constexpr int numPhases() { return 1; }
+    static constexpr int numComponents() { return nComp; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return true; }
+    static constexpr bool enableEnergyBalance() { return false; }
+};
 
 namespace Properties
 {
@@ -88,30 +107,13 @@ NEW_TYPE_TAG(OnePNCNI, INHERITS_FROM(OnePNC, NonIsothermal));
 // properties for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
-/*!
- * \brief Set the property for the number of components.
- *
- * We just forward the number from the fluid system
- *
- */
-SET_PROP(OnePNC, NumComponents)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-
-public:
-    static constexpr auto value = FluidSystem::numComponents;
-};
-
-/*!
- * \brief Set the property for the number of equations: For each existing component one equation has to be solved.
- */
-SET_PROP(OnePNC, NumEq)
+//! The model traits. Per default, we use the number of components of the fluid system.
+SET_PROP(OnePNC, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
 public:
-    static constexpr auto value = FluidSystem::numComponents;
+    using type = OnePNCModelTraits<FluidSystem::numComponents>;
 };
 
 //! Set as default that no component mass balance is replaced by the total mass balance
@@ -139,17 +141,11 @@ SET_PROP(OnePNC, FluidState){
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(OnePNC, EffectiveDiffusivityModel,
-             DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
-
-SET_INT_PROP(OnePNC, NumPhases, 1); //!< The number of phases in the 1pnc model is 1
 SET_INT_PROP(OnePNC, PhaseIdx, 0); //!< The default phase index
 SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>); //!< The local residual function
 SET_TYPE_PROP(OnePNC, VolumeVariables, OnePNCVolumeVariables<TypeTag>);   //!< the VolumeVariables property
-SET_BOOL_PROP(OnePNC, EnableAdvection, true);                           //!< The one-phase model considers advection
-SET_BOOL_PROP(OnePNC, EnableMolecularDiffusion, true);                 //!< The one-phase model has no molecular diffusion
-SET_BOOL_PROP(OnePNC, EnableEnergyBalance, false);                      //!< Isothermal model by default
-
 
 //! Set the vtk output fields specific to this model
 SET_PROP(OnePNC, VtkOutputFields)
@@ -175,18 +171,6 @@ public:
 // properties for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
-/*!
- * \brief Set the property for the number of equations: For each existing component one equation has to be solved.
- */
-SET_PROP(OnePNCNI, IsothermalNumEq)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-public:
-    static constexpr auto value = FluidSystem::numComponents;
-};
-SET_BOOL_PROP(OnePNCNI, EnableEnergyBalance, true);                                   //!< we do solve for the energy balance here
-
 //! the isothermal vtk output fields
 SET_PROP(OnePNCNI, IsothermalVtkOutputFields)
 {
@@ -210,6 +194,15 @@ private:
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 public:
     using type = OnePNCIndices<phaseIdx>;
+};
+
+//! model traits of the isothermal model.
+SET_PROP(OnePNCNI, IsothermalModelTraits)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
+public:
+    using type = OnePNCModelTraits<FluidSystem::numComponents>;
 };
 
 } // end namespace Properties

@@ -45,8 +45,8 @@ class DUNE_DEPRECATED_MSG("Implement SolidSystems instead!") EffectiveSolidHeatC
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static const int numSolidPhases = GET_PROP_VALUE(TypeTag, NumSPhases);
+    static const int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
+    static const int numSolidPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numSPhases();
 
     using Element = typename GridView::template Codim<0>:: Entity;
 

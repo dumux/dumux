@@ -137,18 +137,18 @@ template<class TypeTag> class EnergyCacheChooser<TypeTag, true> : public GET_PRO
 // specialization for the cell centered tpfa method
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::cctpfa>
-: public AdvectionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection)>
-, public DiffusionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>
-, public EnergyCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
+: public AdvectionCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableAdvection()>
+, public DiffusionCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableMolecularDiffusion()>
+, public EnergyCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>
 {};
 
 //! specialization of the flux variables cache for the cell centered finite volume mpfa scheme
 //! stores data which is commonly used by all the different types of processes
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::ccmpfa>
-: public AdvectionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection)>
-, public DiffusionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>
-, public EnergyCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
+: public AdvectionCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableAdvection()>
+, public DiffusionCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableMolecularDiffusion()>
+, public EnergyCacheChooser<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>
 {
     using GridIndexType = typename GET_PROP_TYPE(TypeTag, GridView)::IndexSet::IndexType;
 

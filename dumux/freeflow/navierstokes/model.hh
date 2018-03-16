@@ -65,6 +65,33 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Traits for the Navier-Stokes model
+ */
+template<int dim>
+struct NavierStokesModelTraits
+{
+    //! There are as many momentum balance equations as dimensions
+    //! and one mass balance equation.
+    static constexpr int numEq() { return dim+1; }
+
+    //! The number of phases is 1
+    static constexpr int numPhases() { return 1; }
+
+    //! The number of components is 1
+    static constexpr int numComponents() { return 1; }
+
+    //! Enable advection
+    static constexpr bool enableAdvection() { return true; }
+
+    //! The one-phase model has no molecular diffusion
+    static constexpr bool enableMolecularDiffusion() { return false; }
+
+    //! The model is isothermal
+    static constexpr bool enableEnergyBalance() { return false; }
+};
+
 // \{
 ///////////////////////////////////////////////////////////////////////////
 // properties for the single-phase Navier-Stokes model
@@ -84,28 +111,18 @@ NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NavierStokesNonIsotherm
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_INT_PROP(NavierStokes, NumPhases, 1); //!< The number of phases in the 1p model is 1
-SET_INT_PROP(NavierStokes, NumComponents, 1); //!< The number of components in the 1p model is 1
 SET_INT_PROP(NavierStokes, PhaseIdx, 0); //!< The default phase index
-
-SET_BOOL_PROP(NavierStokes, EnableAdvection, true); //!< Enable advection
-SET_BOOL_PROP(NavierStokes, EnableMolecularDiffusion, false); //!< The one-phase model has no molecular diffusion
-SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, false); //!< The model is isothermal
 SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true); //!< Consider inertia terms by default
 SET_BOOL_PROP(NavierStokes, NormalizePressure, true); //!< Normalize the pressure term in the momentum balance by default
 
-/*!
-* \brief The number of equations.
-*         There are as many momentum balance equations as dimensions
-*         and one mass balance equation.
-*/
-SET_PROP(NavierStokes, NumEq)
+//!< states some specifics of the Navier-Stokes model
+SET_PROP(NavierStokes, ModelTraits)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr auto dim = GridView::dimension;
+    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    static constexpr int dim = GridView::dimension;
 public:
-    static constexpr int value = dim + 1;
+    using type = NavierStokesModelTraits<dim>;
 };
 
 /*!
@@ -138,7 +155,7 @@ SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeT
 SET_PROP(NavierStokes, Indices)
 {
 private:
-    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
     static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
 public:
     using type = NavierStokesIndices<dim, numEq>;
@@ -155,11 +172,22 @@ public:
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
+
+//! The model traits of the isothermal model
+SET_PROP(NavierStokesNI, IsothermalModelTraits)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    static constexpr int dim = GridView::dimension;
+public:
+    using type = NavierStokesModelTraits<dim>;
+};
+
 //! The indices required by the isothermal single-phase model
 SET_PROP(NavierStokesNI, IsothermalIndices)
 {
 private:
-    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
     static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
 public:
     using type = NavierStokesIndices<dim, numEq>;
@@ -174,15 +202,6 @@ public:
      using type = NavierStokesVtkOutputFields<FVGridGeometry>;
 };
 
-//! The number of equations for the isothermal model
-SET_PROP(NavierStokesNI, IsothermalNumEq)
-{
-private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr auto dim = GridView::dimension;
-public:
-    static constexpr int value = dim + 1;
-};
  // \}
 }
 

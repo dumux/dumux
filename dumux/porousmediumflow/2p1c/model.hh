@@ -78,6 +78,22 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup TwoPOneCModel
+ * \brief Specifies a number properties of models
+ *        considering two phases with water as a single component.
+ */
+struct TwoPOneCModelTraits
+{
+    static constexpr int numEq() { return 1; }
+    static constexpr int numPhases() { return 2; }
+    static constexpr int numComponents() { return 1; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return false; }
+    static constexpr bool enableEnergyBalance() { return false; }
+};
+
 namespace Properties
 {
 //! The type tag for the non-isothermal two-phase one-component model.
@@ -89,39 +105,6 @@ NEW_TYPE_TAG(TwoPOneCNI, INHERITS_FROM(PorousMediumFlow, NonIsothermal));
 
 //! Determines whether Blocking ofspurious flow is used.
 NEW_PROP_TAG(UseBlockingOfSpuriousFlow);
-
-/*!
- * \brief Set the property for the number of components.
- *
- * We just forward the number from the fluid system and use an static
- * assert to make sure it is 1.
- */
-SET_PROP(TwoPOneCNI, NumComponents)
-{
- private:
-     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
- public:
-     static constexpr auto value = FluidSystem::numComponents;
-
-     static_assert(value == 1,
-                   "Only fluid systems with 1 component are supported by the 2p1cni model!");
-};
-
-/*!
- * \brief Set the property for the number of fluid phases.
- *
- * We just forward the number from the fluid system and use an static
- * assert to make sure it is 2.
- */
-SET_PROP(TwoPOneCNI, NumPhases)
-{
- private:
-     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
- public:
-     static constexpr auto value = FluidSystem::numPhases;
-     static_assert(value == 2,
-                   "Only fluid systems with 2 phases are supported by the 2p1cni model!");
-};
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -137,12 +120,6 @@ private:
 public:
      using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
-
-//! The two-phase one-component model considers advection.
-SET_BOOL_PROP(TwoPOneCNI, EnableAdvection, true);
-
- //! The two-phase one-component model has no molecular diffusion.
-SET_BOOL_PROP(TwoPOneCNI, EnableMolecularDiffusion, false);
 
 //! Do not block spurious flows by default.
 SET_BOOL_PROP(TwoPOneCNI, UseBlockingOfSpuriousFlow, false);
@@ -164,7 +141,7 @@ SET_PROP(TwoPOneCNI, PrimaryVariables)
 {
 private:
     using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_VALUE(TypeTag, NumEq)>;
+                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
@@ -188,6 +165,17 @@ SET_TYPE_PROP(TwoPOneCNI, IsothermalVolumeVariables, TwoPOneCVolumeVariables<Typ
 //! Set isothermal LocalResidual.
 SET_TYPE_PROP(TwoPOneCNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
+//! Set the isothermal model traits
+SET_PROP(TwoPOneCNI, IsothermalModelTraits)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static_assert(FluidSystem::numComponents == 1, "Only fluid systems with 1 component are supported by the 2p1cni model!");
+    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p1cni model!");
+public:
+    using type = TwoPOneCModelTraits;
+};
+
 //! Set isothermal Indices.
 SET_PROP(TwoPOneCNI, IsothermalIndices)
 {
@@ -199,9 +187,6 @@ public:
 
 //! The isothermal vtk output fields.
 SET_TYPE_PROP(TwoPOneCNI, IsothermalVtkOutputFields, TwoPOneCVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)>);
-
-//! Set isothermal NumEq.
-SET_INT_PROP(TwoPOneCNI, IsothermalNumEq, 1);
 
 } // end namespace Properties
 } // end namespace Dumux

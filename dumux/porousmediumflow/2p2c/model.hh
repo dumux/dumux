@@ -97,6 +97,22 @@
 #include "vtkoutputfields.hh"
 
 namespace Dumux {
+
+/*!
+ * \ingroup TwoPTwoCModel
+ * \brief Specifies a number properties of two-phase two-component models.
+ */
+struct TwoPTwoCModelTraits
+{
+    static constexpr int numEq() { return 2; }
+    static constexpr int numPhases() { return 2; }
+    static constexpr int numComponents() { return 2; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return true; }
+    static constexpr bool enableEnergyBalance() { return false; }
+};
+
 namespace Properties {
 
 //////////////////////////////////////////////////////////////////
@@ -109,33 +125,17 @@ NEW_TYPE_TAG(TwoPTwoCNI, INHERITS_FROM(TwoPTwoC, NonIsothermal));
 // Property values
 //////////////////////////////////////////////////////////////////
 
-//! Set the number of equations to 2
-SET_INT_PROP(TwoPTwoC, NumEq, 2);
-
 /*!
- * \brief Set the property for the number of components.
- *
- * We just forward the number from the fluid system and use a static
- * assert to make sure it is 2.
+ * \brief Set the model traits property.
  */
-SET_PROP(TwoPTwoC, NumComponents)
+SET_PROP(TwoPTwoC, ModelTraits)
 {
-    static constexpr int value = 2;
-    static_assert(GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents == value,
-                  "Only fluid systems with 2 components are supported by the 2p-2c model!");
-};
-
-/*!
- * \brief Set the property for the number of fluid phases.
- *
- * We just forward the number from the fluid system and use a static
- * assert to make sure it is 2.
- */
-SET_PROP(TwoPTwoC, NumPhases)
-{
-    static constexpr int value = 2;
-    static_assert(GET_PROP_TYPE(TypeTag, FluidSystem)::numPhases == value,
-                  "Only fluid systems with 2 phases are supported by the 2p-2c model!");
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
+    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
+public:
+    using type = TwoPTwoCModelTraits;
 };
 
 //! Set the vtk output fields specific to this model
@@ -168,19 +168,10 @@ public:
 SET_INT_PROP(TwoPTwoC, Formulation, TwoPTwoCFormulation::pwsn);
 
 //! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, NumComponents));
+SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());
 
 //! Use the compositional local residual operator
 SET_TYPE_PROP(TwoPTwoC, LocalResidual, CompositionalLocalResidual<TypeTag>);
-
-//! Enable advection
-SET_BOOL_PROP(TwoPTwoC, EnableAdvection, true);
-
-//! Enable molecular diffusion
-SET_BOOL_PROP(TwoPTwoC, EnableMolecularDiffusion, true);
-
-//! Isothermal model by default
-SET_BOOL_PROP(TwoPTwoC, EnableEnergyBalance, false);
 
 //! The primary variable switch for the 2p2c model
 SET_TYPE_PROP(TwoPTwoC, PrimaryVariableSwitch, TwoPTwoCPrimaryVariableSwitch<TypeTag>);
@@ -190,7 +181,7 @@ SET_PROP(TwoPTwoC, PrimaryVariables)
 {
 private:
     using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_VALUE(TypeTag, NumEq)>;
+                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
 public:
     using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
 };
@@ -234,6 +225,17 @@ public:
 //! Set isothermal Indices
 SET_TYPE_PROP(TwoPTwoCNI, IsothermalIndices, TwoPTwoCIndices<typename GET_PROP_TYPE(TypeTag, FluidSystem), /*PVOffset=*/0>);
 
+//! Set the isothermal model traits
+SET_PROP(TwoPTwoCNI, IsothermalModelTraits)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
+    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
+public:
+    using type = TwoPTwoCModelTraits;
+};
+
 //! Set isothermal output fields
 SET_PROP(TwoPTwoCNI, IsothermalVtkOutputFields)
 {
@@ -245,8 +247,6 @@ public:
     using type = TwoPTwoCVtkOutputFields<FluidSystem, Indices>;
 };
 
-// Set isothermal NumEq
-SET_INT_PROP(TwoPTwoCNI, IsothermalNumEq, 2);
 
 } // end namespace Properties
 } // end namespace Dumux

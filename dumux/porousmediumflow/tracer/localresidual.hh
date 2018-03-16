@@ -56,7 +56,7 @@ class TracerLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static constexpr int phaseIdx = 0;
 

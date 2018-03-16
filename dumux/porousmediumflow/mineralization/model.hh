@@ -36,11 +36,40 @@
 #include "vtkoutputfields.hh"
 
 namespace Dumux {
+
+/*!
+ * \ingroup OnePModel
+ * \brief Specifies a number properties of
+ *        models that consider mineralization proceses.
+ *
+ * \ţparam NonMinTraits traits class of the underlying model
+ *                      not considering mineralization.
+ * \tparam numPS number of precipitating solid phases to be considered.
+ */
+template<class NonMinTraits, int numPS>
+struct MineralizationModelTraits : public NonMinTraits
+{
+    //! the number of precipitating mineral phases
+    static constexpr int numSPhases() { return numPS; }
+    //! we additionally solve one equation per precipitating mineral phase
+    static constexpr int numEq() { return NonMinTraits::numEq() + numPS; }
+};
+
 namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
 NEW_TYPE_TAG(Mineralization);
+
+//! Set the model traits class
+SET_PROP(Mineralization, ModelTraits)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using NonMinTraits = typename GET_PROP_TYPE(TypeTag, NonMineralizationModelTraits);
+public:
+    using type = MineralizationModelTraits<NonMinTraits, FluidSystem::numSPhases>;
+};
 
 //! Set the general mineralization volume variables
 SET_TYPE_PROP(Mineralization, VolumeVariables, MineralizationVolumeVariables<TypeTag>);
@@ -57,25 +86,6 @@ private:
 
 public:
     using type = MineralizationVtkOutputFields<NonMineralizationVtkOutputFields, FluidSystem>;
-};
-
-//! Set the property for the number of solid phases, excluding the non-reactive matrix.
-SET_PROP(Mineralization, NumSPhases)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-public:
-    static const int value = FluidSystem::numSPhases;
-};
-
-//! Set the property for the number of equations. For each component and each
-//precipitated mineral/solid phase one equation has to be solved.
-SET_PROP(Mineralization, NumEq)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-public:
-    static const int value = FluidSystem::numComponents + FluidSystem::numSPhases;
 };
 
 } // end namespace Properties

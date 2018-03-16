@@ -35,7 +35,7 @@ template<class TypeTag, bool enableThermalNonEquilibrium, bool enableChemicalNon
 class NonEquilibriumLocalResidualImplementation;
 
 template <class TypeTag>
-using NonEquilibriumLocalResidual = NonEquilibriumLocalResidualImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium), GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium)>;
+using NonEquilibriumLocalResidual = NonEquilibriumLocalResidualImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableThermalNonEquilibrium(), GET_PROP_TYPE(TypeTag, ModelTraits)::enableChemicalNonEquilibrium()>;
 
 /*!
  * \ingroup PorousmediumNonEquilibriumModel
@@ -59,8 +59,8 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, false>: public GE
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
 
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
+    static constexpr int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
     enum { conti0EqIdx = Indices::conti0EqIdx };
 public:
     using ParentType::ParentType;
@@ -174,8 +174,8 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, true>: public GET
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
+    static constexpr int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 

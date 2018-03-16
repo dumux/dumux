@@ -69,7 +69,9 @@ class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    static constexpr int numComponents =ModelTraits::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
@@ -100,7 +102,7 @@ public:
         if(replaceCompEqIdx < numComponents)
             storage[replaceCompEqIdx] = density;
 
-        this->computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance) >(),
+        this->computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, ModelTraits::enableEnergyBalance() >(),
                                                         problem, scv, volVars, storage);
 
         return storage;

@@ -71,10 +71,11 @@ SET_PROP(StaggeredFreeFlowModel, NumEqCellCenter)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     static constexpr auto dim = GridView::dimension;
-    static constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr auto numEq = ModelTraits::numEq();
 public:
-    static constexpr int value = GET_PROP_VALUE(TypeTag, NumEq) - dim;
+    static constexpr int value = numEq - dim;
 };
 
 //! The default fv grid geometry

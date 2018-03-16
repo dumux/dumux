@@ -60,8 +60,8 @@ protected:
 
 
     enum {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
+        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
+        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
 
         conti0EqIdx = Indices::conti0EqIdx,//!< Index of the mass conservation equation for the water component
         conti1EqIdx = Indices::conti1EqIdx,//!< Index of the mass conservation equation for the contaminant component

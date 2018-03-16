@@ -223,7 +223,7 @@ int main(int argc, char** argv) try
 
         // calculate and print mass fluxes over the planes
         flux.calculateMassOrMoleFluxes();
-        if(GET_PROP_VALUE(TypeTag, EnableEnergyBalance))
+        if(GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance())
         {
             std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
             std::cout << "mass / energy flux at outlet is: " << flux.netFlux("outlet") << std::endl;

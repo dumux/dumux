@@ -55,7 +55,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
 
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag,NumComponents);
+    static constexpr int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
     //! Class that fills the cache corresponding to mpfa Fick's Law
@@ -111,7 +111,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
 
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
-        static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+        static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
 
     public:
         // export filler type

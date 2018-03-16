@@ -44,6 +44,13 @@ namespace Dumux
 template<class TypeTag>
 class CombustionProblemOneComponent;
 
+//! Custom model traits to deactivate diffusion for this test
+template<int numP, int numC>
+struct CombustionModelTraits : public MPNCModelTraits<numP, numC>
+{
+    static constexpr bool enableMolecularDiffusion() { return false; }
+};
+
 namespace Properties
 {
 NEW_TYPE_TAG(CombustionOneComponentTypeTag, INHERITS_FROM(MPNCNonequil, CombustionSpatialParams));
@@ -70,8 +77,14 @@ SET_INT_PROP(CombustionOneComponentTypeTag,
 SET_TYPE_PROP(CombustionOneComponentTypeTag, Scalar, double );
 // quad / double
 
-// Specify whether diffusion is enabled
-SET_BOOL_PROP(CombustionOneComponentTypeTag, EnableMolecularDiffusion, false);
+// We use different model traits for the equilibrium part because we want to deactivate diffusion
+SET_PROP(CombustionOneComponentTypeTag, EquilibriumModelTraits)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    using type = CombustionModelTraits<FluidSystem::numPhases, FluidSystem::numComponents>;
+};
 
 //! Franz Lindners simple lumping
 SET_PROP(CombustionOneComponentTypeTag, ThermalConductivityModel)
@@ -99,7 +112,6 @@ SET_INT_PROP(CombustionOneComponentTypeTag, NumEnergyEqSolid, 1);
 
 // by default chemical non equilibrium is enabled in the nonequil model, switch that off here
 SET_BOOL_PROP(CombustionOneComponentTypeTag, EnableChemicalNonEquilibrium, false);
-SET_INT_PROP(CombustionOneComponentTypeTag, NumEqBalance, GET_PROP_VALUE(TypeTag, NumPhases)+GET_PROP_VALUE(TypeTag, NumPhases));
 //#################
 
 }
@@ -131,8 +143,8 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
     enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
-    enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
+    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
     enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
     enum {conti00EqIdx = Indices::conti0EqIdx};

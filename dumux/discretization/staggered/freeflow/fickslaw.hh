@@ -60,11 +60,13 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered >
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    static constexpr int numComponents = ModelTraits::numComponents();
+    static constexpr int phaseIdx = Indices::phaseIdx;
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
-    static_assert(GET_PROP_VALUE(TypeTag, NumPhases) == 1, "Only one phase allowed supported!");
+    static_assert(ModelTraits::numPhases() == 1, "Only one phase allowed supported!");
 
     enum {
         pressureIdx = Indices::pressureIdx,

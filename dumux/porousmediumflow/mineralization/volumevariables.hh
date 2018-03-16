@@ -47,12 +47,12 @@ class MineralizationVolumeVariables : public GET_PROP_TYPE(TypeTag, NonMineraliz
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Element = typename GridView::template Codim<0>::Entity;
-
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numSPhases =  GET_PROP_VALUE(TypeTag, NumSPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
+        numPhases = ModelTraits::numPhases(),
+        numSPhases =  ModelTraits::numSPhases(),
+        numComponents = ModelTraits::numComponents()
     };
 
 public:

@@ -109,8 +109,8 @@ class TwoPTwoCComparisonProblem
 
     // world dimension
     enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
-    enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
+    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     enum {wCompIdx = FluidSystem::wCompIdx};
