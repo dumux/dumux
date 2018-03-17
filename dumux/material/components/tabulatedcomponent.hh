@@ -438,6 +438,10 @@ public:
         {
             if (!liquidDensityInitialized_)
             {
+                // TODO: we could get rid of the lambdas and pass the functor irectly. But,
+                //       currently Brine is a component (and not a fluid system) expecting a
+                //       third argument with a default, which cannot be wrapped in a function pointer.
+                //       For this reason we have to wrap this into a lambda here.
                 auto liqRho = [] (auto T, auto p) { return RawComponent::liquidDensity(T, p); };
                 initTPArray_(liqRho, minLiquidPressure_, maxLiquidPressure_, liquidDensity_);
                 liquidDensityInitialized_ = true;
