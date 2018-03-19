@@ -192,7 +192,7 @@ public:
     }
 
      /*!
-     * \brief Returns the diffusion coeffiecient
+     * \brief Returns the diffusion coefficient
      */
     Scalar diffusionCoefficient(int pIdx, int compIdx) const
     {
@@ -202,7 +202,7 @@ public:
         else if (compIdx > pIdx)
             return diffCoefficient_[pIdx][compIdx-1];
         else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient called for phaseIdx = compIdx");
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
 
 protected:
@@ -221,7 +221,7 @@ protected:
         else if (compIdx > pIdx)
             diffCoefficient_[pIdx][compIdx-1] = std::move(d);
         else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
     }
 
     std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;

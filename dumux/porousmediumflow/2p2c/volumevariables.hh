@@ -558,7 +558,7 @@ public:
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
         if(phaseIdx == compIdx)
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient called for phaseIdx = compIdx");
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
         else
             return diffCoeff_[phaseIdx];
     }
