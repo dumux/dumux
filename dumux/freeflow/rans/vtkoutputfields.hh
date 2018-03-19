@@ -24,10 +24,7 @@
 #ifndef DUMUX_RANS_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_RANS_VTK_OUTPUT_FIELDS_HH
 
-#include <dune/common/fvector.hh>
-#include <dumux/common/properties.hh>
-#include <dumux/common/parameters.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/freeflow/navierstokes/vtkoutputfields.hh>
 
 namespace Dumux
 {
@@ -37,59 +34,29 @@ namespace Dumux
  * \brief Adds vtk output fields for the Reynolds-Averaged Navier-Stokes model
  */
 template<class FVGridGeometry>
-class RANSVtkOutputFields
+class RANSVtkOutputFields : public NavierStokesVtkOutputFields<FVGridGeometry>
 {
-    using ctype = typename FVGridGeometry::GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<ctype, FVGridGeometry::GridView::dimensionworld>;
-
-    // Helper type used for tag dispatching (to add discretization-specific fields).
-    template<DiscretizationMethod discMethod>
-    using discMethodTag = std::integral_constant<DiscretizationMethod, discMethod>;
+    enum { dim = FVGridGeometry::GridView::dimension };
 
 public:
     //! Initialize the Navier-Stokes specific vtk output fields.
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        vtk.addVolumeVariable([](const auto& v){ return v.velocity()[0]; }, "v_x [m/s]");
-        vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0][0]; }, "dv_x/dx [m/s]");
-        vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0][1]; }, "dv_x/dy [m/s]");
-        vtk.addVolumeVariable([](const auto& v){ return v.pressure(); }, "p [Pa]");
-        vtk.addVolumeVariable([](const auto& v){ return v.pressure() - 1e5; }, "p_rel [Pa]");
-        vtk.addVolumeVariable([](const auto& v){ return v.density(); }, "rho [kg/m^3]");
-        vtk.addVolumeVariable([](const auto& v){ return v.viscosity() / v.density(); }, "nu [m^2/s]");
-        vtk.addVolumeVariable([](const auto& v){ return v.dynamicEddyViscosity() / v.density(); }, "nu_t [m^2/s]");
-        vtk.addVolumeVariable([](const auto& v){ return v.wallDistance(); }, "l_w [m]");
-        vtk.addVolumeVariable([](const auto& v){ return v.yPlus(); }, "y^+ [-]");
-        vtk.addVolumeVariable([](const auto& v){ return v.uPlus(); }, "u^+ [-]");
+        NavierStokesVtkOutputFields<FVGridGeometry>::init(vtk);
 
-        // add discretization-specific fields
-        additionalOutput_(vtk, discMethodTag<FVGridGeometry::discMethod>{});
-    }
-
-private:
-
-    //! Adds discretization-specific fields (nothing by default).
-    template <class VtkOutputModule, class AnyMethod>
-    static void additionalOutput_(VtkOutputModule& vtk, AnyMethod)
-    { }
-
-    //! Adds discretization-specific fields (velocity vectors on the faces for the staggered discretization).
-    template <class VtkOutputModule>
-    static void additionalOutput_(VtkOutputModule& vtk, discMethodTag<DiscretizationMethod::staggered>)
-    {
-        const bool writeFaceVars = getParamFromGroup<bool>(vtk.paramGroup(), "Vtk.WriteFaceData", false);
-        if(writeFaceVars)
-        {
-            auto faceVelocityVector = [](const typename FVGridGeometry::SubControlVolumeFace& scvf, const auto& faceVars)
-                                      {
-                                          GlobalPosition velocity(0.0);
-                                          velocity[scvf.directionIndex()] = faceVars.velocitySelf();
-                                          return velocity;
-                                      };
-
-            vtk.addFaceVariable(faceVelocityVector, "faceVelocity");
-        }
+        vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0]; }, "dv_x/dx_");
+        if (dim > 1)
+            vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[1]; }, "dv_y/dx_");
+        if (dim > 2)
+            vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[2]; }, "dv_z/dx_");
+        vtk.addVolumeVariable([](const auto& v){ return v.pressure() - 1e5; }, "p_rel");
+        vtk.addVolumeVariable([](const auto& v){ return v.density(); }, "rho");
+        vtk.addVolumeVariable([](const auto& v){ return v.viscosity() / v.density(); }, "nu");
+        vtk.addVolumeVariable([](const auto& v){ return v.dynamicEddyViscosity() / v.density(); }, "nu_t");
+        vtk.addVolumeVariable([](const auto& v){ return v.wallDistance(); }, "l_w");
+        vtk.addVolumeVariable([](const auto& v){ return v.yPlus(); }, "y^+");
+        vtk.addVolumeVariable([](const auto& v){ return v.uPlus(); }, "u^+");
     }
 };
 

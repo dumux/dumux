@@ -59,8 +59,7 @@ public:
             vtk.addVolumeVariable([](const auto& v){ return v.moleFraction(1, 0); }, "x^w_air");
         vtk.addVolumeVariable([](const auto& v){ return v.waterContent(Indices::wPhaseIdx); },"water content");
 
-         vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phasePresence");
-
+        vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phasePresence");
     }
 };
 
