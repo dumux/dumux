@@ -30,11 +30,6 @@
 #ifndef DUMUX_MINERALIZATION_MODEL_HH
 #define DUMUX_MINERALIZATION_MODEL_HH
 
-#include <dumux/common/properties.hh>
-#include "localresidual.hh"
-#include "volumevariables.hh"
-#include "vtkoutputfields.hh"
-
 namespace Dumux {
 
 /*!
@@ -55,40 +50,6 @@ struct MineralizationModelTraits : public NonMinTraits
     static constexpr int numEq() { return NonMinTraits::numEq() + numPS; }
 };
 
-namespace Properties {
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(Mineralization);
-
-//! Set the model traits class
-SET_PROP(Mineralization, ModelTraits)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using NonMinTraits = typename GET_PROP_TYPE(TypeTag, NonMineralizationModelTraits);
-public:
-    using type = MineralizationModelTraits<NonMinTraits, FluidSystem::numSPhases>;
-};
-
-//! Set the general mineralization volume variables
-SET_TYPE_PROP(Mineralization, VolumeVariables, MineralizationVolumeVariables<TypeTag>);
-
-//! Set the general mineralization compositional local residual
-SET_TYPE_PROP(Mineralization, LocalResidual, MineralizationLocalResidual<TypeTag>);
-
-//! VTK outputs for mineralization models
-SET_PROP(Mineralization, VtkOutputFields)
-{
-private:
-   using NonMineralizationVtkOutputFields =  typename GET_PROP_TYPE(TypeTag, NonMineralizationVtkOutputFields);
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-public:
-    using type = MineralizationVtkOutputFields<NonMineralizationVtkOutputFields, FluidSystem>;
-};
-
-} // end namespace Properties
 } // end namespace Dumux
 
 #endif

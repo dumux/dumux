@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 #define DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/upwindscheme.hh>
 
 namespace Dumux {

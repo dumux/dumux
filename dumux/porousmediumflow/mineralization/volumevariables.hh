@@ -36,10 +36,10 @@ namespace Dumux {
  * \brief Contains the quantities which are are constant within a sub-control volume
  *        of the finite volume grid in an m-phase, n-component, mineralization model.
  */
-template <class TypeTag>
-class MineralizationVolumeVariables : public GET_PROP_TYPE(TypeTag, NonMineralizationVolumeVariables)
+template <class TypeTag, class NonMineralizationVolVars>
+class MineralizationVolumeVariables : public NonMineralizationVolVars
 {
-    using ParentType = typename GET_PROP_TYPE(TypeTag, NonMineralizationVolumeVariables);
+    using ParentType = NonMineralizationVolVars;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

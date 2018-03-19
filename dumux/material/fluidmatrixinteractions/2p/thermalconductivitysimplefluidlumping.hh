@@ -24,6 +24,7 @@
 #ifndef THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
 #define THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
 
+#include <assert.h>
 #include <algorithm>
 
 namespace Dumux {

@@ -24,6 +24,7 @@
 #ifndef DUMUX_POROSITY_PRECIPITATION_HH
 #define DUMUX_POROSITY_PRECIPITATION_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/evalsolution.hh>
 
 namespace Dumux {

@@ -24,6 +24,7 @@
 #ifndef DUMUX_POROSITY_REACTIVE_BED_HH
 #define DUMUX_POROSITY_REACTIVE_BED_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/evalsolution.hh>
 
 namespace Dumux {

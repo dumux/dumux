@@ -25,8 +25,12 @@
 #ifndef DUMUX_RANS_VOLUME_VARIABLES_HH
 #define DUMUX_RANS_VOLUME_VARIABLES_HH
 
+#include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
+#include <dumux/freeflow/navierstokes/volumevariables.hh>
 
 namespace Dumux
 {
