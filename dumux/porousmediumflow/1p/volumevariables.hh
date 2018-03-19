@@ -122,6 +122,9 @@ public:
         Scalar value = FluidSystem::density(fluidState, paramCache, /*phaseIdx=*/0);
         fluidState.setDensity(/*phaseIdx=*/0, value);
 
+        value = FluidSystem::molarDensity(fluidState, paramCache, /*phaseIdx=*/0);
+        fluidState.setMolarDensity(/*phaseIdx=*/0, value);
+
         value = FluidSystem::viscosity(fluidState, paramCache, /*phaseIdx=*/0);
         fluidState.setViscosity(/*phaseIdx=*/0, value);
 

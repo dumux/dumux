@@ -187,7 +187,9 @@ public:
 
             // compute and set the density
             Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+            Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
             fluidState.setDensity(phaseIdx, rho);
+            fluidState.setMolarDensity(phaseIdx, rhoMolar);
 
             // compute and set the enthalpy
             Scalar h = EnergyVolVars::enthalpy(fluidState, paramCache, phaseIdx);
@@ -251,6 +253,15 @@ public:
      */
     Scalar temperature() const
     { return fluidState_.temperature(/*phaseIdx=*/0); }
+
+        /*!
+     * \brief Returns the mass density of a given phase within the
+     *        control volume in \f$[mol/m^3]\f$.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar molarDensity(const int phaseIdx) const
+    { return fluidState_.molarDensity(phaseIdx); }
 
     /*!
      * \brief Returns the dynamic viscosity of the fluid within the

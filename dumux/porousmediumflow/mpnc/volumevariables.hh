@@ -748,6 +748,8 @@ public:
             for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx){
                 const Scalar rho = FluidSystem::density(actualFluidState, paramCache, phaseIdx);
                 actualFluidState.setDensity(phaseIdx, rho);
+                const Scalar rhoMolar = FluidSystem::molarDensity(actualFluidState, paramCache, phaseIdx);
+                actualFluidState.setMolarDensity(phaseIdx, rhoMolar);
             }
 
         }

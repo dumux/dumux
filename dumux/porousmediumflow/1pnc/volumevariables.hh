@@ -169,9 +169,11 @@ public:
         paramCache.updateAll(fluidState);
 
         Scalar rho = FluidSystem::density(fluidState, paramCache, fluidSystemPhaseIdx);
+        Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, fluidSystemPhaseIdx);
         Scalar mu = FluidSystem::viscosity(fluidState, paramCache, fluidSystemPhaseIdx);
 
         fluidState.setDensity(fluidSystemPhaseIdx, rho);
+        fluidState.setMolarDensity(fluidSystemPhaseIdx, rhoMolar);
         fluidState.setViscosity(fluidSystemPhaseIdx, mu);
 
         // compute and set the enthalpy

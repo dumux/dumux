@@ -178,7 +178,9 @@ public:
 
             // compute and set the density
             const Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+            const Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
             fluidState.setDensity(phaseIdx, rho);
+            fluidState.setMolarDensity(phaseIdx, rhoMolar);
 
             // compute and set the enthalpy
             const Scalar h = EnergyVolVars::enthalpy(fluidState, paramCache, phaseIdx);

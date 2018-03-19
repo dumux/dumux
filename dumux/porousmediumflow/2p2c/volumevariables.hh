@@ -385,6 +385,8 @@ public:
                 paramCache.updateComposition(fluidState, phaseIdx);
                 const Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
                 fluidState.setDensity(phaseIdx, rho);
+                Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
+                fluidState.setMolarDensity(phaseIdx, rhoMolar);
                 const Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
                 fluidState.setViscosity(phaseIdx,mu);
             }
@@ -461,7 +463,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar molarDensity(const int phaseIdx) const
-    { return fluidState_.density(phaseIdx) / fluidState_.averageMolarMass(phaseIdx); }
+    { return fluidState_.molarDensity(phaseIdx); }
 
     /*!
      * \brief Returns the effective pressure of a given phase within
