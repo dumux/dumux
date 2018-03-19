@@ -43,14 +43,14 @@ public:
         for (int i = 0; i < FluidSystem::numPhases; ++i)
             vtk.addVolumeVariable([i](const auto& v){ return v.saturation(i); }, "S_"+ FluidSystem::phaseName(i));
 
-       for (int i = 0; i < FluidSystem::numPhases; ++i)
+        for (int i = 0; i < FluidSystem::numPhases; ++i)
             vtk.addVolumeVariable([i](const auto& v){ return v.pressure(i); }, "p_"+ FluidSystem::phaseName(i));
 
-       for (int i = 0; i < FluidSystem::numPhases; ++i)
+        for (int i = 0; i < FluidSystem::numPhases; ++i)
             vtk.addVolumeVariable([i](const auto& v){ return v.density(i); }, "rho_"+ FluidSystem::phaseName(i));
 
-       for (int i = 0; i < FluidSystem::numPhases; ++i)
-                  vtk.addVolumeVariable([i](const auto& v){ return v.mobility(i); },"lambda_"+ FluidSystem::phaseName(i));
+        for (int i = 0; i < FluidSystem::numPhases; ++i)
+            vtk.addVolumeVariable([i](const auto& v){ return v.mobility(i); },"lambda_"+ FluidSystem::phaseName(i));
 
         vtk.addVolumeVariable([](const auto& v){ return v.porosity(); }, "porosity");
 

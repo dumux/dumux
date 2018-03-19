@@ -42,14 +42,14 @@ public:
     static void init(VtkOutputModule& vtk)
     {
         EquilibriumVtkOutputFields::init(vtk);
-         for (int i = 0; i < numEnergyEqFluid; ++i)
-        vtk.addVolumeVariable( [i](const auto& v){ return v.temperature(i); }, "T_" + FluidSystem::phaseName(i) );
-         for (int i = 0; i < numEnergyEqSolid; ++i)
-        vtk.addVolumeVariable( [i](const auto& v){ return v.temperatureSolid(); }, "T_solid" );
+        for (int i = 0; i < numEnergyEqFluid; ++i)
+            vtk.addVolumeVariable( [i](const auto& v){ return v.temperature(i); }, "T_" + FluidSystem::phaseName(i) );
+        for (int i = 0; i < numEnergyEqSolid; ++i)
+            vtk.addVolumeVariable( [i](const auto& v){ return v.temperatureSolid(); }, "T_solid" );
         for (int i = 0; i < FluidSystem::numPhases; ++i){
-        vtk.addVolumeVariable( [i](const auto& v){ return v.reynoldsNumber(i); }, "reynoldsNumber_" + FluidSystem::phaseName(i) );
-        vtk.addVolumeVariable( [i](const auto& v){ return v.nusseltNumber(i); }, "nusseltNumber_" + FluidSystem::phaseName(i) );
-        vtk.addVolumeVariable( [i](const auto& v){ return v.prandtlNumber(i); }, "prandtlNumber_" + FluidSystem::phaseName(i) );
+            vtk.addVolumeVariable( [i](const auto& v){ return v.reynoldsNumber(i); }, "reynoldsNumber_" + FluidSystem::phaseName(i) );
+            vtk.addVolumeVariable( [i](const auto& v){ return v.nusseltNumber(i); }, "nusseltNumber_" + FluidSystem::phaseName(i) );
+            vtk.addVolumeVariable( [i](const auto& v){ return v.prandtlNumber(i); }, "prandtlNumber_" + FluidSystem::phaseName(i) );
         }
     }
 };
