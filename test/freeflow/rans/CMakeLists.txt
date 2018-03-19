@@ -1,5 +1,5 @@
 add_input_file_links()
-dune_symlink_to_source_files(FILES laufer_re50000_u+y+.csv)
+dune_symlink_to_source_files(FILES laufer_re50000.csv laufer_re50000_u+y+.csv)
 
 dune_add_test(NAME test_pipe_laufer
               SOURCES test_pipe_laufer.cc

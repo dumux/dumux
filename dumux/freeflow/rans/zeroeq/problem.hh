@@ -82,23 +82,24 @@ public:
     //! The constructor sets the gravity, if desired by the user.
     ZeroEqProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
-    {
-        updateStaticWallProperties();
-    }
+    { }
 
     /*!
      * \brief Correct size of the static (solution independent) wall variables
      */
     void updateStaticWallProperties()
     {
+        ParentType::updateStaticWallProperties();
+
         // update size and initial values of the global vectors
         kinematicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        additionalRoughnessLength_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
     }
 
     /*!
      * \brief Update the dynamic (solution dependent) relations to the walls
      *
-     * This calculate all necessary information for the Baldwin-Lomax turbulence model
+     * This calculates the roughness related properties
      *
      * \param curSol The solution vector.
      */
@@ -106,15 +107,66 @@ public:
     {
         ParentType::updateDynamicWallProperties(curSol);
 
+        static const int eddyViscosityModel
+            = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.EddyViscosityModel");
+
+        // calculate additional roughness
+        bool printedRangeWarning = false;
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                using std::sqrt;
+                using std::exp;
+
+                const int dofIdx = scv.dofIndex();
+                CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][dofIdx]);
+                auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
+                VolumeVariables volVars;
+                volVars.update(elemSol, asImp_(), element, scv);
+
+                Scalar ksPlus = this->sandGrainRoughness_[elementID] * volVars.uStar() / volVars.kinematicViscosity();
+                if (ksPlus > 0 && eddyViscosityModel == Indices::baldwinLomax)
+                {
+                    DUNE_THROW(Dune::NotImplemented, "Roughness is not implemented for the Baldwin-Lomax model.");
+                }
+                if (ksPlus > 2000.)
+                {
+                    std::cout << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << this->cellCenter_[this->wallElementID_[elementID]]
+                              << " is not in the valid range (ksPlus < 2000),"
+                              << " for high ksPlus values the roughness function reaches a turning point."<< std::endl;
+                    DUNE_THROW(Dune::InvalidStateException, "Unphysical roughness behavior.");
+                }
+                else if (ksPlus > 0.0 && ksPlus < 4.535 && !printedRangeWarning)
+                {
+                    Dune::dinfo << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << this->cellCenter_[this->wallElementID_[elementID]]
+                                << " is not in the valid range (ksPlus > 4.535) and now set to 0.0"<< std::endl;
+                    ksPlus = 0.0;
+                    printedRangeWarning = true;
+                }
+                additionalRoughnessLength_[elementID] = 0.9 / (volVars.uStar() / volVars.kinematicViscosity())
+                                                        * (sqrt(ksPlus) - ksPlus * exp(-ksPlus / 6.0));
+            }
+        }
+
+        // update routine for specfic models
+        if (eddyViscosityModel == Indices::baldwinLomax)
+            updateBaldwinLomaxProperties();
+    }
+
+    /*!
+     * \brief Update the relations and coefficients for the Baldwin-Lomax turbulence model
+     */
+    void updateBaldwinLomaxProperties()
+    {
         std::vector<Scalar> kinematicEddyViscosityInner(this->fvGridGeometry().elementMapper().size(), 0.0);
         std::vector<Scalar> kinematicEddyViscosityOuter(this->fvGridGeometry().elementMapper().size(), 0.0);
         std::vector<Scalar> kinematicEddyViscosityDifference(this->fvGridGeometry().elementMapper().size(), 0.0);
         std::vector<Scalar> switchingPosition(this->fvGridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
-
-        static const int eddyViscosityModel
-            = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.EddyViscosityModel");
-        if (eddyViscosityModel != Indices::baldwinLomax)
-            return;
 
         using std::abs;
         using std::exp;
@@ -139,8 +191,8 @@ public:
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementID = this->wallElementIDs_[elementID];
-            Scalar wallDistance = this->wallDistances_[elementID];
+            unsigned int wallElementID = this->wallElementID_[elementID];
+            Scalar wallDistance = this->wallDistance_[elementID] + additionalRoughnessLength_[elementID];
             unsigned int flowNormalAxis = this->flowNormalAxis_[elementID];
             unsigned int wallNormalAxis = this->wallNormalAxis_[elementID];
 
@@ -164,8 +216,8 @@ public:
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementID = this->wallElementIDs_[elementID];
-            Scalar wallDistance = this->wallDistances_[elementID];
+            unsigned int wallElementID = this->wallElementID_[elementID];
+            Scalar wallDistance = this->wallDistance_[elementID] + additionalRoughnessLength_[elementID];
 
             Scalar maxVelocityNorm = 0.0;
             Scalar minVelocityNorm = 0.0;
@@ -191,8 +243,8 @@ public:
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementID = this->wallElementIDs_[elementID];
-            Scalar wallDistance = this->wallDistances_[elementID];
+            unsigned int wallElementID = this->wallElementID_[elementID];
+            Scalar wallDistance = this->wallDistance_[elementID] + additionalRoughnessLength_[elementID];
 
             // checks if sign switches, by multiplication
             Scalar check = kinematicEddyViscosityDifference[wallElementID] * kinematicEddyViscosityDifference[elementID];
@@ -207,17 +259,20 @@ public:
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementID = this->wallElementIDs_[elementID];
-            Scalar wallDistance = this->wallDistances_[elementID];
+            unsigned int wallElementID = this->wallElementID_[elementID];
+            Scalar wallDistance = this->wallDistance_[elementID] + additionalRoughnessLength_[elementID];
 
-            kinematicEddyViscosity_[elementID] = (wallDistance >= switchingPosition[wallElementID])
-                                                 ? kinematicEddyViscosityOuter[elementID]
-                                                 : kinematicEddyViscosityInner[elementID];
+            kinematicEddyViscosity_[elementID] = kinematicEddyViscosityInner[elementID];
+            if (wallDistance >= switchingPosition[wallElementID])
+            {
+                kinematicEddyViscosity_[elementID] = kinematicEddyViscosityOuter[elementID];
+            }
         }
     }
 
 public:
     std::vector<Scalar> kinematicEddyViscosity_;
+    std::vector<Scalar> additionalRoughnessLength_;
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)

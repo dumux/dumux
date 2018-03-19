@@ -45,6 +45,7 @@ public:
     {
         NavierStokesVtkOutputFields<FVGridGeometry>::init(vtk);
 
+        vtk.addVolumeVariable([](const auto& v){ return v.velocity()[0] / v.velocityMaximum()[0]; }, "v_x/v_x,max");
         vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0]; }, "dv_x/dx_");
         if (dim > 1)
             vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[1]; }, "dv_y/dx_");
