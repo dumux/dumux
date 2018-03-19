@@ -66,7 +66,8 @@ class FacetCouplingGmshReader
     static_assert(minGridDim >= 1, "Grids with dim < 1 cannot be read!");
 
     // structure to store data on an element
-    using VertexIndexSet = std::vector<typename GCTraits::IndexType>;
+    using IndexType = typename GCTraits::IndexType;
+    using VertexIndexSet = std::vector<IndexType>;
     struct ElementData
     {
         Dune::GeometryType gt;
@@ -139,9 +140,11 @@ public:
         // indices to lowDim vertex indices. -1 indicates non-initialized status
         std::size_t elemCount = 0;
         std::array<std::size_t, numGrids-1> lowDimVertexCount;
-        std::array<std::vector<int>, numGrids-1> lowDimVertexMap;
+        std::array<std::vector<IndexType>, numGrids-1> lowDimVertexMap;
+        std::array<std::vector<bool>, numGrids-1> idxIsAssigned;
         std::fill(lowDimVertexCount.begin(), lowDimVertexCount.end(), 0);
-        std::fill(lowDimVertexMap.begin(), lowDimVertexMap.end(), std::vector<int>(vertexCount, -1));
+        std::fill(lowDimVertexMap.begin(), lowDimVertexMap.end(), std::vector<IndexType>(vertexCount));
+        std::fill(idxIsAssigned.begin(), idxIsAssigned.end(), std::vector<bool>(vertexCount, false));
         std::getline(gridFile, line);
         while (line.find("$EndElements") == std::string::npos)
         {
@@ -173,9 +176,10 @@ public:
                         if (geoDim+1 < bulkDim) // modify and obtain from next level grid vertex map
                         {
                             // insert map if vertex is not inserted yet
-                            if (lowDimVertexMap[idxInLowDimGrids][*it] == -1)
+                            if (!idxIsAssigned[idxInLowDimGrids][*it])
                             {
                                 lowDimVertexMap[idxInLowDimGrids][*it] = lowDimVertexCount[idxInLowDimGrids]++;
+                                idxIsAssigned[idxInLowDimGrids][*it] = true;
                                 lowDimGridVertexIndices_[idxInLowDimGrids].push_back(*it);
                             }
                             corners.push_back(lowDimVertexMap[idxInLowDimGrids][*it]);
@@ -203,15 +207,33 @@ public:
                         if (geoDim < bulkDim) // lower-dimensional element
                         {
                             // insert map, if vertex is not inserted yet
-                            if (lowDimVertexMap[idxInLowDimGrids][*it] == -1)
+                            if (!idxIsAssigned[idxInLowDimGrids][*it])
                             {
                                 lowDimVertexMap[idxInLowDimGrids][*it] = lowDimVertexCount[idxInLowDimGrids]++;
+                                idxIsAssigned[idxInLowDimGrids][*it] = true;
                                 lowDimGridVertexIndices_[idxInLowDimGrids].push_back(*it);
                             }
                             corners.push_back(lowDimVertexMap[idxInLowDimGrids][*it]);
                         }
                         else // bulk element
                             corners.push_back(*it);
+                    }
+
+                    // add data to embedments/embeddings
+                    if (geoDim > minGridDim)
+                    {
+                        const auto gridElemCount = elementData_[gridIdx].size();
+                        const auto& embeddedVIndices = lowDimGridVertexIndices_[gridIdx];
+                        const auto& idxIsAssignedMap = idxIsAssigned[gridIdx];
+                        if (geoDim == bulkDim)
+                            addEmbeddings(corners, gridIdx, gridElemCount, embeddedVIndices, idxIsAssignedMap);
+                        else
+                        {
+                            VertexIndexSet cornerBulkIndices(corners.size());
+                            for (unsigned int i = 0; i < corners.size(); ++i)
+                                cornerBulkIndices[i] = lowDimGridVertexIndices_[idxInLowDimGrids][corners[i]];
+                            addEmbeddings(cornerBulkIndices, gridIdx, gridElemCount, embeddedVIndices, idxIsAssignedMap);
+                        }
                     }
 
                     // insert element data to grid's container
@@ -286,6 +308,20 @@ public:
         return boundaryMarkerMaps_[id];
     }
 
+    //! Returns the maps of the embedded entities
+    typename GCTraits::EmbeddedEntityMap& embeddedEntityMap(std::size_t id)
+    {
+        assert(id < numGrids && "Index exceeds number of grids provided");
+        return embeddedEntityMaps_[id];
+    }
+
+    //! Returns the maps of the embedments
+    typename GCTraits::EmbedmentMap& embedmentMap(std::size_t id)
+    {
+        assert(id < numGrids && "Index exceeds number of grids provided");
+        return embedmentMaps_[id];
+    }
+
 private:
     //! converts a value contained in a string
     template<class T>
@@ -313,6 +349,42 @@ private:
             case 5:  return Dune::GeometryTypes::hexahedron;    // hexahedron
             default:
                 DUNE_THROW(Dune::NotImplemented, "FacetCoupling gmsh reader for gmsh element type " << gmshElemType);
+        }
+    }
+
+    //! adds embeddings/embedments to the map for a given element
+    void addEmbeddings(const VertexIndexSet& corners,
+                       unsigned int gridIdx,
+                       std::size_t curElemIdx,
+                       const std::vector<IndexType>& lowDimVIndices,
+                       const std::vector<bool>& idxIsAssigned)
+    {
+        const unsigned int embeddedGridIdx = gridIdx+1;
+
+        // check for embedments only if a vertex is
+        // already contained in the lower-dimensional grid
+        for (auto cIdx : corners)
+        {
+            if (idxIsAssigned[cIdx]) // vertex is part of the lower-dimensional grid
+            {
+                for (std::size_t i = 0; i < elementData_[embeddedGridIdx].size(); ++i)
+                {
+                    const auto& e = elementData_[embeddedGridIdx][i];
+
+                    // if all corners are contained within this element, it is embedded
+                    auto vertIsContained = [&lowDimVIndices, &corners] (auto eCornerIdx)
+                                           { return std::find(corners.begin(),
+                                                              corners.end(),
+                                                              lowDimVIndices[eCornerIdx]) != corners.end(); };
+                    if ( std::all_of(e.cornerIndices.begin(), e.cornerIndices.end(), vertIsContained) )
+                    {
+                        embeddedEntityMaps_[gridIdx][curElemIdx].push_back(i);
+                        embedmentMaps_[embeddedGridIdx][i].push_back(curElemIdx);
+                    }
+                }
+
+                return;
+            }
         }
     }
 
