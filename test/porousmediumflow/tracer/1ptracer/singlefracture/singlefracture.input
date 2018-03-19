@@ -15,7 +15,7 @@ Name = single_reference.txt
 
 [TimeLoop]
 TEnd = 1e8 # [s]
-NumOutputFiles = 20
+NumOutputFiles = 1
 MaxTimeStepSize = 1e8
 
 [Problem]
@@ -25,7 +25,7 @@ BoundaryMoleFrac = 1e-2
 EnableGravity = false # disable gravity
 
 [LinearSolver]
-ResidualReduction = 1e-15
+ResidualReduction = 1e-20
 
 [Vtk]
 AddVelocity = false # mpfa vel output not yet implemented

@@ -51,8 +51,8 @@ NEW_TYPE_TAG(TracerTestCCProblem, INHERITS_FROM(CCMpfaModel, TracerTestProblem))
 
 // enable caching
 SET_BOOL_PROP(TracerTestProblem, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(TracerTestProblem, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(TracerTestProblem, EnableFVGridGeometryCache, false);
+SET_BOOL_PROP(TracerTestProblem, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(TracerTestProblem, EnableFVGridGeometryCache, true);
 
 // Set the grid type
 SET_TYPE_PROP(TracerTestProblem, Grid, Dune::UGGrid<3>);

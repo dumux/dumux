@@ -272,7 +272,7 @@ int main(int argc, char** argv) try
         Dune::VTKWriter<GridView> onepWriter(leafGridView);
         onepWriter.addCellData(p, "pressure");
         onepWriter.addCellData(Field(leafGridView, fvGridGeometry->elementMapper(), v, "velocity", dimWorld, 0).get());
-        onepWriter.write("1p");
+        onepWriter.write("1p_" + problemOneP->name());
 
         //! write influx/outflux (should be the same) into output file
         const auto fileName = getParam<std::string>("OutputFile.Name");

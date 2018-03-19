@@ -66,8 +66,8 @@ SET_PROP(IncompressibleTestProblem, FluidSystem)
 
 // Enable caching
 SET_BOOL_PROP(IncompressibleTestProblem, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableFVGridGeometryCache, false);
+SET_BOOL_PROP(IncompressibleTestProblem, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(IncompressibleTestProblem, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(IncompressibleTestProblem, SolutionDependentAdvection, false);
 

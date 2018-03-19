@@ -97,7 +97,7 @@ public:
     Scalar fluidDensity(const Element &element, const SubControlVolume& scv) const { return fluidDensity(); }
 
     //! fluid molar mass
-    static constexpr Scalar fluidMolarMass() { return 18.0; }
+    static constexpr Scalar fluidMolarMass() { return 18.0e-3; }
     Scalar fluidMolarMass(const Element &element, const SubControlVolume& scv) const { return fluidMolarMass(); }
     Scalar fluidMolarMass(const GlobalPosition &globalPos) const { return fluidMolarMass(); }
 
