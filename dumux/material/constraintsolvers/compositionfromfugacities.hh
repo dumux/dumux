@@ -107,7 +107,7 @@ public:
             solveIdealMix_(fluidState, paramCache, phaseIdx, targetFug);
             return;
         }
-#if !DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+#if !DUNE_VERSION_NEWER(DUNE_COMMON,2,7)
         Dune::FMatrixPrecision<Scalar>::set_singular_limit(1e-25);
 #endif
         // save initial composition in case something goes wrong
