@@ -122,6 +122,20 @@ public:
         return boundaryMarkerMaps_[id];
     }
 
+    //! Returns the maps of the embedded entities
+    typename Traits::EmbeddedEntityMap& embeddedEntityMap(std::size_t id)
+    {
+        assert(id < numGrids && "Index exceeds number of grids provided");
+        return embeddedEntityMaps_[id];
+    }
+
+    //! Returns the maps of the embedments
+    typename Traits::EmbedmentMap& embedmentMap(std::size_t id)
+    {
+        assert(id < numGrids && "Index exceeds number of grids provided");
+        return embedmentMaps_[id];
+    }
+
     //! creates the grids from a given grid file using the parameter tree
     void makeGrids(const std::string& fileName, const std::string& paramGroup = "")
     {
@@ -190,6 +204,10 @@ private:
             // maybe copy domain marker map
             if (domainMarkers)
                 std::swap(elementMarkerMaps_[id], reader.elementMarkerMap(id));
+
+            // copy the embedments
+            std::swap(embeddedEntityMaps_[id], reader.embeddedEntityMap(id));
+            std::swap(embedmentMaps_[id], reader.embedmentMap(id));
 
             // make grid
             std::get<id>(gridPtrTuple_) = std::shared_ptr<Grid<id>>(factory.createGrid());
