@@ -85,8 +85,7 @@ public:
         ParentType::update(elemSol, problem, element, scv);
         additionalRoughnessLength_ = problem.additionalRoughnessLength_[this->elementID()];
         yPlusRough_ = wallDistanceRough() * this->uStar() / this->kinematicViscosity();
-
-        calculateEddyViscosity(elemSol, problem, element, scv);
+        dynamicEddyViscosity_ = calculateEddyViscosity(elemSol, problem, element, scv);
     }
 
     /*!
@@ -99,10 +98,10 @@ public:
      * \param scv The sub-control volume
      */
     template<class ElementSolution>
-    void calculateEddyViscosity(const ElementSolution &elemSol,
-                                const Problem &problem,
-                                const Element &element,
-                                const SubControlVolume& scv)
+    Scalar calculateEddyViscosity(const ElementSolution &elemSol,
+                                  const Problem &problem,
+                                  const Element &element,
+                                  const SubControlVolume& scv)
     {
         using std::abs;
         using std::exp;
@@ -142,7 +141,7 @@ public:
             DUNE_THROW(Dune::NotImplemented,
                        "This eddy viscosity model is not implemented: " << eddyViscosityModel);
         }
-        asImp_().setDynamicEddyViscosity(kinematicEddyViscosity * asImp_().density());
+        return kinematicEddyViscosity * asImp_().density();
     }
 
     /*!
@@ -157,6 +156,13 @@ public:
     Scalar yPlusRough() const
     { return yPlusRough_; }
 
+    /*!
+     * \brief Return the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow within the
+     *        control volume.
+     */
+    Scalar dynamicEddyViscosity() const
+    { return dynamicEddyViscosity_; }
+
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
@@ -169,6 +175,7 @@ private:
 protected:
     Scalar additionalRoughnessLength_;
     Scalar yPlusRough_;
+    Scalar dynamicEddyViscosity_;
 };
 
 /*!

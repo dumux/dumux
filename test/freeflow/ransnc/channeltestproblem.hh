@@ -24,14 +24,11 @@
 #ifndef DUMUX_RANS_NC_TEST_PROBLEM_HH
 #define DUMUX_RANS_NC_TEST_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
-#include <dumux/freeflow/rans/problem.hh>
+#include <dumux/freeflow/rans/zeroeq/problem.hh>
 #include <dumux/freeflow/ransnc/model.hh>
 
 namespace Dumux
@@ -45,7 +42,7 @@ namespace Properties
 #if !NONISOTHERMAL
 NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC));
 #else
-NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, RANSNCNI));
+NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI));
 #endif
 
 NEW_PROP_TAG(FluidSystem);
@@ -55,12 +52,13 @@ SET_TYPE_PROP(ChannelNCTestTypeTag, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 SET_INT_PROP(ChannelNCTestTypeTag, PhaseIdx,
-             GET_PROP_TYPE(TypeTag, FluidSystem)::nPhaseIdx);
+             GET_PROP_TYPE(TypeTag, FluidSystem)::wPhaseIdx);
 
-SET_INT_PROP(ChannelNCTestTypeTag, ReplaceCompEqIdx, 0);
+SET_INT_PROP(ChannelNCTestTypeTag, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, PhaseIdx));
 
 // Set the grid type
-SET_TYPE_PROP(ChannelNCTestTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ChannelNCTestTypeTag, Grid,
+              Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
 SET_TYPE_PROP(ChannelNCTestTypeTag, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
@@ -80,9 +78,9 @@ SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, true);
  * \todo doc me!
  */
 template <class TypeTag>
-class ChannelNCTestProblem : public RANSProblem<TypeTag>
+class ChannelNCTestProblem : public ZeroEqProblem<TypeTag>
 {
-    using ParentType = RANSProblem<TypeTag>;
+    using ParentType = ZeroEqProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -92,7 +90,7 @@ class ChannelNCTestProblem : public RANSProblem<TypeTag>
     enum { dimWorld = GridView::dimensionworld };
     enum {
         totalMassBalanceIdx = Indices::totalMassBalanceIdx,
-        transportEqIdx = 1,
+        transportEqIdx = 1-GET_PROP_VALUE(TypeTag, PhaseIdx),
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         pressureIdx = Indices::pressureIdx,
         velocityXIdx = Indices::velocityXIdx,
@@ -101,7 +99,7 @@ class ChannelNCTestProblem : public RANSProblem<TypeTag>
         temperatureIdx = Indices::temperatureIdx,
         energyBalanceIdx = Indices::energyBalanceIdx,
 #endif
-        transportCompIdx = 1/*FluidSystem::wCompIdx*/
+        transportCompIdx = 1-GET_PROP_VALUE(TypeTag, PhaseIdx)
     };
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -124,13 +122,17 @@ public:
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         FluidSystem::init();
         deltaP_.resize(this->fvGridGeometry().numCellCenterDofs());
+
+        std::cout << " massBalanceIdx " << massBalanceIdx
+                  << " transportEqIdx " << transportEqIdx
+                  << " momentumBalanceIdx " << momentumBalanceIdx
+                  << std::endl;
     }
 
    /*!
      * \name Problem parameters
      */
     // \{
-
 
     bool shouldWriteRestartFile() const
     {
@@ -154,6 +156,7 @@ public:
     {
         return NumEqVector(0.0);
     }
+
     // \}
    /*!
      * \name Boundary conditions
@@ -169,6 +172,13 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
+
+        values.setDirichlet(momentumBalanceIdx);
+        values.setOutflow(massBalanceIdx);
+        values.setOutflow(transportEqIdx);
+#if NONISOTHERMAL
+        values.setOutflow(energyBalanceIdx);
+#endif
 
         if(isInlet(globalPos))
         {
@@ -188,16 +198,19 @@ public:
             values.setOutflow(energyBalanceIdx);
 #endif
         }
-
-        else
+        else if (isOnWall(globalPos))
         {
-            // set Dirichlet values for the velocity everywhere
-            values.setDirichlet(momentumBalanceIdx);
+            values.setDirichlet(velocityXIdx);
+            values.setOutflow(velocityYIdx);
             values.setOutflow(totalMassBalanceIdx);
             values.setOutflow(transportEqIdx);
 #if NONISOTHERMAL
             values.setOutflow(energyBalanceIdx);
 #endif
+        }
+        else if (isSymmetry(globalPos))
+        {
+            values.isSymmetry();
         }
 
         return values;
@@ -213,16 +226,9 @@ public:
     {
         PrimaryVariables values = initialAtPos(globalPos);
 
-        // give the system some time so that the pressure can equilibrate, then start the injection of the tracer
-        if(isInlet(globalPos))
+        if(isInlet(globalPos) && globalPos[1] > 0.75 * this->fvGridGeometry().bBoxMax()[1])
         {
-            if(time() >= 10.0 || inletVelocity_  < eps_)
-            {
-                values[transportCompIdx] = 1e-3;
-#if NONISOTHERMAL
-                values[temperatureIdx] = 293.15;
-#endif
-            }
+            values[transportCompIdx] = 1e-3;
         }
 
         return values;
@@ -242,17 +248,17 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values;
+        PrimaryVariables values(0.0);
         values[pressureIdx] = 1.1e+5;
         values[transportCompIdx] = 0.0;
 #if NONISOTHERMAL
         values[temperatureIdx] = 283.15;
 #endif
 
-        // parabolic velocity profile
-        values[velocityXIdx] =  inletVelocity_*(globalPos[1] - this->fvGridGeometry().bBoxMin()[1])*(this->fvGridGeometry().bBoxMax()[1] - globalPos[1])
-                               / (0.25*(this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1])*(this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]));
-
+        // block velocity profile
+        values[velocityXIdx] = 0.0;
+        if (!isOnWall(globalPos))
+            values[velocityXIdx] =  inletVelocity_;
         values[velocityYIdx] = 0.0;
 
         return values;
@@ -299,7 +305,12 @@ public:
 
     bool isOnWall(const GlobalPosition& globalPos) const
     {
-        return globalPos[0] > eps_ || globalPos[0] < this->fvGridGeometry().bBoxMax()[0] - eps_;
+        return globalPos[1] < eps_;
+    }
+
+    bool isSymmetry(const GlobalPosition& globalPos) const
+    {
+        return globalPos[1] > this->fvGridGeometry().bBoxMax()[0] - eps_;
     }
 
 private:

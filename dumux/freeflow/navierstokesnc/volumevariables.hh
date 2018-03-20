@@ -38,7 +38,7 @@ namespace Dumux {
  * \brief Volume variables for the single-phase, multi-component Navier-Stokes model.
  */
 template <class TypeTag>
-class NavierStokesNCVolumeVariables : public NavierStokesVolumeVariables<TypeTag>
+class NavierStokesNCVolumeVariables : virtual public NavierStokesVolumeVariables<TypeTag>
 {
     using ParentType = NavierStokesVolumeVariables<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);

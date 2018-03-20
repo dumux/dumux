@@ -240,7 +240,7 @@ int main(int argc, char** argv) try
         gnuplot.setOption("set log x");
         gnuplot.setOption("set xrange [1:3000]");
         gnuplot.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer 1954, Re=50000'");
-        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l");
+        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l");
         gnuplot.plot(std::string(gnuplotFileName));
 
         sprintf(gnuplotFileName, fileNameFormat.c_str(), "velProfile", timeLoop->timeStepIndex());
@@ -251,7 +251,7 @@ int main(int argc, char** argv) try
         gnuplot.setYRange(0.0, 1.0);
         gnuplot.setYlabel("y [-]");
         gnuplot.addFileToPlot("laufer_re50000.csv", "u 2:1 w p t 'Laufer 1954, Re=50000'");
-        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 5:($23/0.2456) w l");
+        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 7:($24/0.2456) w l");
         gnuplot.plot(std::string(gnuplotFileName));
     }
 #endif

@@ -44,7 +44,13 @@ public:
     static void init(VtkOutputModule& vtk)
     {
         NavierStokesVtkOutputFields<FVGridGeometry>::init(vtk);
+        add(vtk);
+    }
 
+    //! Initialize the Navier-Stokes specific vtk output fields.
+    template <class VtkOutputModule>
+    static void add(VtkOutputModule& vtk)
+    {
         vtk.addVolumeVariable([](const auto& v){ return v.velocity()[0] / v.velocityMaximum()[0]; }, "v_x/v_x,max");
         vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0]; }, "dv_x/dx_");
         if (dim > 1)
@@ -52,9 +58,8 @@ public:
         if (dim > 2)
             vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[2]; }, "dv_z/dx_");
         vtk.addVolumeVariable([](const auto& v){ return v.pressure() - 1e5; }, "p_rel");
-        vtk.addVolumeVariable([](const auto& v){ return v.density(); }, "rho");
         vtk.addVolumeVariable([](const auto& v){ return v.viscosity() / v.density(); }, "nu");
-        vtk.addVolumeVariable([](const auto& v){ return v.dynamicEddyViscosity() / v.density(); }, "nu_t");
+        vtk.addVolumeVariable([](const auto& v){ return v.kinematicEddyViscosity(); }, "nu_t");
         vtk.addVolumeVariable([](const auto& v){ return v.wallDistance(); }, "l_w");
         vtk.addVolumeVariable([](const auto& v){ return v.yPlus(); }, "y^+");
         vtk.addVolumeVariable([](const auto& v){ return v.uPlus(); }, "u^+");

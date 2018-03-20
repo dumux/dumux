@@ -38,10 +38,10 @@ namespace Dumux {
  */
 template <class TypeTag>
 class RANSNCVolumeVariables
-      : public RANSVolumeVariables<TypeTag>,
+      : public GET_PROP_TYPE(TypeTag, SinglePhaseVolumeVariables),
         public NavierStokesNCVolumeVariables<TypeTag>
 {
-    using ParentTypeSinglePhase = RANSVolumeVariables<TypeTag>;
+    using ParentTypeSinglePhase = typename GET_PROP_TYPE(TypeTag, SinglePhaseVolumeVariables);
     using ParentTypeCompositional = NavierStokesNCVolumeVariables<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -70,25 +70,26 @@ public:
     {
         this->extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
 
-        ParentTypeSinglePhase::update(elemSol, problem, element, scv, this->fluidState_);
-        ParentTypeCompositional::update(elemSol, problem, element, scv, this->fluidState_);
+        // NOTE: the ParentTypeCompositional has to be called first
+        ParentTypeCompositional::update(elemSol, problem, element, scv);
+        ParentTypeSinglePhase::update(elemSol, problem, element, scv);
 
-        static const int turbulentSchmidtNumber
+        static const Scalar turbulentSchmidtNumber
             = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
                                         "RANS.TurbulentSchmidtNumber", 1.0);
-        eddyDiffusivity_ = ParentTypeSinglePhase::kinematicViscosity()
+        eddyDiffusivity_ = ParentTypeSinglePhase::kinematicEddyViscosity()
                            / turbulentSchmidtNumber;
     }
 
-     /*!
+    /*!
      * \brief Returns the eddy diffusivity \f$\mathrm{[m^2/s]}\f$
      */
     Scalar eddyDiffusivity() const
     {
-        eddyDiffusivity_;
+        return eddyDiffusivity_;
     }
 
-     /*!
+    /*!
      * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
      */
     Scalar effectiveDiffusivity(int pIdx, int compIdx) const

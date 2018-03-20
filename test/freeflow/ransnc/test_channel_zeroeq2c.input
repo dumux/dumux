@@ -1,0 +1,28 @@
+[TimeLoop]
+DtInitial = 10 # [s]
+TEnd = 100000 # [s]
+
+[Grid]
+Verbosity = true
+Positions0 = 0.0 6.0
+Positions1 = 0.0 0.5
+Cells0 = 10
+Cells1 = 20
+Grading1 = 1.4
+
+[Problem]
+Name = test_channel_zeroeq2c # name passed to the output routines
+InletVelocity = 0.01 # [m/s]
+EnableGravity = false
+
+[RANS]
+EddyViscosityModel = 3
+TurbulentSchmidtNumber = 0.7
+
+[Newton]
+MaxSteps = 10
+TargetSteps = 8
+MaxRelativeShift = 1e-5
+
+[Vtk]
+AddVelocity = true

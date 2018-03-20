@@ -34,17 +34,18 @@ namespace Dumux
  * \ingroup RANSNCModel
  * \brief Adds vtk output fields specific to the RANSNC model
  */
-template<class FVGridGeometry, class FluidSystem, int phaseIdx>
+template<class FVGridGeometry, class FluidSystem, int phaseIdx, class SinglePhaseVtkOutputFields>
 class RANSNCVtkOutputFields
 {
+    enum { dim = FVGridGeometry::GridView::dimension };
 
 public:
     //! Initialize the RANSNC specific vtk output fields.
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        RANSVtkOutputFields<FVGridGeometry>::init(vtk);
         NavierStokesNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>::init(vtk);
+        SinglePhaseVtkOutputFields::add(vtk);
         vtk.addVolumeVariable([](const auto& v){ return v.eddyDiffusivity(); }, "D_t");
     }
 };

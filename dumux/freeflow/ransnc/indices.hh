@@ -18,45 +18,39 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesNCModel
- * \copydoc Dumux::NavierStokesNCVtkOutputFields
+ * \ingroup RANSNCModel
+ * \copydoc Dumux::RANSNCIndices
  */
-#ifndef DUMUX_NAVIER_STOKES_NC_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_NAVIER_STOKES_NC_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_STAGGERED_RANS_NC_INDICES_HH
+#define DUMUX_STAGGERED_RANS_NC_INDICES_HH
 
+#include <dumux/freeflow/navierstokesnc/indices.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/freeflow/navierstokes/vtkoutputfields.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
+// \{
 /*!
- * \ingroup NavierStokesNCModel
- * \brief Adds vtk output fields specific to the NavierStokesNC model
+ * \ingroup RANSNCModel
+ * \brief The common indices for the isothermal multi-component Reynolds-averaged Navier-Stokes model.
+ *
+ * \tparam PVOffset The first index in a primary variable vector.
+ *
+ * TODO inherit from single phase baseindices
  */
-template<class FVGridGeometry, class FluidSystem, int phaseIdx>
-class NavierStokesNCVtkOutputFields
+template <int dimension, int numEquations,
+          int thePhaseIdx, int theReplaceCompEqIdx,
+          int PVOffset = 0>
+struct RANSNCIndices : public NavierStokesNCIndices<dimension, numEquations, thePhaseIdx,
+                                                    theReplaceCompEqIdx, PVOffset>
 {
-
-public:
-    //! Initialize the Navier-StokesNC specific vtk output fields.
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
-    {
-        NavierStokesVtkOutputFields<FVGridGeometry>::init(vtk);
-
-        for (int j = 0; j < FluidSystem::numComponents; ++j)
-        {
-            vtk.addVolumeVariable([j](const auto& v){ return v.massFraction(phaseIdx,j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            vtk.addVolumeVariable([j](const auto& v){ return v.moleFraction(phaseIdx,j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            if (j != phaseIdx)
-            {
-                vtk.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(phaseIdx,j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            }
-        }
-    }
+    static constexpr int noEddyViscosityModel = 0;
+    static constexpr int prandtl = 1;
+    static constexpr int modifiedVanDriest = 2;
+    static constexpr int baldwinLomax = 3;
 };
 
-} // end namespace Dumux
+// \}
+} // end namespace
 
 #endif

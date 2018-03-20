@@ -65,6 +65,7 @@
 #include <dumux/discretization/fickslaw.hh>
 #include <dumux/discretization/fourierslaw.hh>
 
+#include "indices.hh"
 #include "volumevariables.hh"
 #include "vtkoutputfields.hh"
 
@@ -95,7 +96,7 @@ namespace Properties {
 
 //! The type tag for the single-phase, multi-component isothermal Reynolds-averaged Navier-Stokes model
 NEW_TYPE_TAG(RANSNC, INHERITS_FROM(RANS, NavierStokesNC));
-NEW_TYPE_TAG(ZeroEqNC, INHERITS_FROM(RANSNC, NavierStokesNC));
+NEW_TYPE_TAG(ZeroEqNC, INHERITS_FROM(ZeroEq, RANSNC));
 
 // //! The type tag for the single-phase, multi-component non-isothermal Reynolds-averaged Navier-Stokes model
 // NEW_TYPE_TAG(RANSNCNI, INHERITS_FROM(RANS, NavierStokesNC));
@@ -104,18 +105,29 @@ NEW_TYPE_TAG(ZeroEqNC, INHERITS_FROM(RANSNC, NavierStokesNC));
 // default property values
 ///////////////////////////////////////////////////////////////////////////
 
-//! The volume variables
-SET_TYPE_PROP(RANSNC, VolumeVariables, RANSNCVolumeVariables<TypeTag>);
+// TODO Use only RANSNC indices
+//! The indices
+SET_PROP(ZeroEqNC, Indices)
+{
+private:
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+public:
+    using type = RANSNCIndices<dim, numEq, phaseIdx, replaceCompEqIdx>;
+};
 
 //! The specific vtk output fields
-SET_PROP(RANSNC, VtkOutputFields)
+SET_PROP(ZeroEqNC, VtkOutputFields)
 {
 private:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    using SinglePhaseVtkOutputFields = RANSVtkOutputFields<FVGridGeometry>;
 public:
-     using type = RANSNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>;
+    using type = RANSNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx, SinglePhaseVtkOutputFields>;
 };
 
 //////////////////////////////////////////////////////////////////////////
