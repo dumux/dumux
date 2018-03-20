@@ -204,6 +204,14 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
 
+     /*!
+     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+     */
+    Scalar effectiveDiffusivity(int pIdx, int compIdx) const
+    {
+        return diffusionCoefficient(pIdx, compIdx);
+    }
+
 protected:
 
     Implementation &asImp_()
