@@ -170,7 +170,7 @@
 /* ***************** FreeflowModels ******************/
 /*!
  * \defgroup FreeflowModels Free Flow Models
- * \brief Single-phase Navier-Stokes / Stokes model
+ * \brief Single-phase models basing on the Navier-Stokes equation
  */
 	/*!
      * \ingroup FreeflowModels
@@ -197,11 +197,17 @@
      * \copydetails ./freeflow/rans/model.hh
      */
       /*!
-      * \ingroup RANSModel
-      * \defgroup ZeroEqModel 0-Eq. Models
-      * \brief Zero-equation or algebraic turbulence models
-      * \copydetails ./freeflow/rans/model.hh
-      */
+       * \ingroup RANSModel
+       * \defgroup ZeroEqModel 0-Eq. Models
+       * \brief Zero-equation or algebraic turbulence models
+       * \copydetails ./freeflow/rans/model.hh
+       */
+    /*!
+     * \ingroup FreeflowModels
+     * \defgroup RANSNCModel Reynolds-Averaged Navier-Stokes nc
+     * \brief Single-phase multi-component Reynolds-Averaged Navier-Stokes flow
+     * \copydetails ./freeflow/ransnc/model.hh
+     */
 
 /* ***************** Benchmarks and Tests ******************/
 /*!

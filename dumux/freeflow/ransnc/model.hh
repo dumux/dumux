@@ -42,8 +42,8 @@
  *    - q = 0
  * \f]
  *
- * The eddy diffusivity \$[ D_\text{t} \$] is related to the eddy viscosity by the turbulent
- * Schmidt number:
+ * The eddy diffusivity \f$ D_\text{t} \f$ is related to the eddy viscosity \f$ \nu_\text{t} \f$
+ * by the turbulent Schmidt number:
  * \f[ D_\text{t} = \frac{\nu_\text{t}}{\mathrm{Sc}_\text{t}} \f]
  *
  * So far, only the staggered grid spatial discretization (for structured grids) is available.

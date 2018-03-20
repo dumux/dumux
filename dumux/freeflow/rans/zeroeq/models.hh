@@ -19,52 +19,31 @@
 /*!
  * \file
  * \ingroup ZeroEqModel
- *
- * \brief A single-phase, isothermal Reynolds-Averaged Navier-Stokes 0-Eq. model
- *
- * \copydoc RANSModel
- *
- * These models calculate the eddy viscosity without solving additional PDEs,
- * only based on the wall distance and the velocity gradient.
- *
  * \copydoc Dumux::EddyViscosityModels
  */
+#ifndef DUMUX_EDDYVISCOSITY_MODELS_HH
+#define DUMUX_EDDYVISCOSITY_MODELS_HH
 
-#ifndef DUMUX_ZEROEQ_MODEL_HH
-#define DUMUX_ZEROEQ_MODEL_HH
+namespace Dumux {
 
-#include <dumux/common/properties.hh>
-#include <dumux/freeflow/properties.hh>
-#include <dumux/freeflow/rans/model.hh>
-
-#include "volumevariables.hh"
-
-namespace Dumux
+/*!
+ * \ingroup ZeroEqModel
+ * \brief The available eddy viscosity models
+ *
+ * The following models are available:
+ *  -# Prandtl's mixing length, e.g. \cite Oertel2012a
+ *  -# Van-Driest modification, \cite vanDriest1956a and \cite Hanna1981a
+ *  -# Baldwin-Lomax, \cite Baldwin1978a
+ */
+class EddyViscosityModels
 {
+public:
+    static constexpr int none = 0;
+    static constexpr int prandtl = 1;
+    static constexpr int modifiedVanDriest = 2;
+    static constexpr int baldwinLomax = 3;
+};
 
-// \{
-///////////////////////////////////////////////////////////////////////////
-// properties for the single-phase Reynolds-Averaged Navier-Stokes 0-Eq. model
-///////////////////////////////////////////////////////////////////////////
-namespace Properties {
+} // end namespace Dumux
 
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
-
-//! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes 0-Eq. model
-NEW_TYPE_TAG(ZeroEq, INHERITS_FROM(RANS));
-
-///////////////////////////////////////////////////////////////////////////
-// default property values for the isothermal single phase model
-///////////////////////////////////////////////////////////////////////////
-
-//! The volume variables
-SET_TYPE_PROP(ZeroEq, VolumeVariables, ZeroEqVolumeVariables<TypeTag>);
-
-// \}
-}
-
-} // end namespace
-
-#endif // DUMUX_ZEROEQ_MODEL_HH
+#endif

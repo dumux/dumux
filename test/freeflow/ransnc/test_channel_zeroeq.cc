@@ -149,7 +149,6 @@ int main(int argc, char** argv) try
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     StaggeredVtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
-    vtkWriter.addField(problem->getDeltaP(), "deltaP");
     vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
@@ -179,8 +178,6 @@ int main(int argc, char** argv) try
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
-
-        problem->calculateDeltaP(*gridVariables, x);
 
         // update wall properties
         problem->updateDynamicWallProperties(x);

@@ -43,9 +43,6 @@ namespace Dumux
  * This implements some base functionality for RANS models.
  * Especially vectors containing all wall-relevant properties, which are accessed
  * by the volumevariables.
- * \todo inherit all functions (especially gravity and temperature from Navier-Stokes)
- * This implements gravity (if desired) and a function returning the temperature.
- * Includes a specialized method used only by the staggered grid discretization.
  */
 template<class TypeTag>
 class RANSProblem : public NavierStokesProblem<TypeTag>

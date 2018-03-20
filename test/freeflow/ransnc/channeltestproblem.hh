@@ -75,7 +75,11 @@ SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, true);
 /*!
  * \ingroup RANSNCTests
  * \brief  Test problem for the one-phase model.
- * \todo doc me!
+ *
+ * Dry air is entering the channel, in 2-D a flat plate, from the left side.
+ * In the middle of the inlet, water vapor is injected, which spreads by turbulent diffusion.
+ * For the nonisothermal model the bottom has a constant temperature
+ * which is \f$ \unit[30]{K} \f$ higher than the initial and inlet temperature.
  */
 template <class TypeTag>
 class ChannelNCTestProblem : public ZeroEqProblem<TypeTag>
@@ -121,12 +125,6 @@ public:
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
         FluidSystem::init();
-        deltaP_.resize(this->fvGridGeometry().numCellCenterDofs());
-
-        std::cout << " massBalanceIdx " << massBalanceIdx
-                  << " transportEqIdx " << transportEqIdx
-                  << " momentumBalanceIdx " << momentumBalanceIdx
-                  << std::endl;
     }
 
    /*!
@@ -174,7 +172,7 @@ public:
         BoundaryTypes values;
 
         values.setDirichlet(momentumBalanceIdx);
-        values.setOutflow(massBalanceIdx);
+        values.setOutflow(totalMassBalanceIdx);
         values.setOutflow(transportEqIdx);
 #if NONISOTHERMAL
         values.setOutflow(energyBalanceIdx);
@@ -217,8 +215,7 @@ public:
     }
 
    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluate the boundary conditions for a Dirichlet control volume.
      *
      * \param globalPos The center of the finite volume which ought to be set.
      */
@@ -226,10 +223,18 @@ public:
     {
         PrimaryVariables values = initialAtPos(globalPos);
 
-        if(isInlet(globalPos) && globalPos[1] > 0.75 * this->fvGridGeometry().bBoxMax()[1])
+        if (isInlet(globalPos)
+            && globalPos[1] > 0.4 * this->fvGridGeometry().bBoxMax()[1]
+            && globalPos[1] < 0.6 * this->fvGridGeometry().bBoxMax()[1])
         {
             values[transportCompIdx] = 1e-3;
         }
+#if NONISOTHERMAL
+        if (isOnWall(globalPos))
+        {
+            values[temperatureIdx] += 30.;
+        }
+#endif
 
         return values;
     }
@@ -249,10 +254,10 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.1e+5;
+        values[pressureIdx] = 1.0e+5;
         values[transportCompIdx] = 0.0;
 #if NONISOTHERMAL
-        values[temperatureIdx] = 283.15;
+        values[temperatureIdx] = temperature();
 #endif
 
         // block velocity profile
@@ -263,33 +268,6 @@ public:
 
         return values;
     }
-
-   /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     *
-     * \param gridVariables The grid variables
-     * \param sol The solution vector
-     */
-    void calculateDeltaP(const GridVariables& gridVariables, const SolutionVector& sol)
-    {
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(this->fvGridGeometry());
-            fvGeometry.bindElement(element);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                auto ccDofIdx = scv.dofIndex();
-
-                auto elemVolVars = localView(gridVariables.curGridVolVars());
-                elemVolVars.bind(element, fvGeometry, sol);
-
-                deltaP_[ccDofIdx] = elemVolVars[scv].pressure() - 1.1e5;
-            }
-        }
-    }
-
-    auto& getDeltaP() const
-    { return deltaP_; }
 
     // \}
 
@@ -328,7 +306,6 @@ private:
     const Scalar eps_;
     Scalar inletVelocity_;
     TimeLoopPtr timeLoop_;
-    std::vector<Scalar> deltaP_;
 };
 } //end namespace
 
