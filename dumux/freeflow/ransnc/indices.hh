@@ -29,26 +29,27 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup RANSNCModel
+ * \brief Dummy indices for the ZeroEqNC model
+ */
+class DummyIndices
+{ };
+
 // \{
 /*!
  * \ingroup RANSNCModel
  * \brief The common indices for the isothermal multi-component Reynolds-averaged Navier-Stokes model.
  *
  * \tparam PVOffset The first index in a primary variable vector.
- *
- * TODO inherit from single phase baseindices
  */
 template <int dimension, int numEquations,
           int thePhaseIdx, int theReplaceCompEqIdx,
-          int PVOffset = 0>
-struct RANSNCIndices : public NavierStokesNCIndices<dimension, numEquations, thePhaseIdx,
-                                                    theReplaceCompEqIdx, PVOffset>
-{
-    static constexpr int noEddyViscosityModel = 0;
-    static constexpr int prandtl = 1;
-    static constexpr int modifiedVanDriest = 2;
-    static constexpr int baldwinLomax = 3;
-};
+          class SinglePhaseIndices = DummyIndices, int PVOffset = 0>
+struct RANSNCIndices
+    : public NavierStokesNCIndices<dimension, numEquations, thePhaseIdx, theReplaceCompEqIdx, PVOffset>,
+      public SinglePhaseIndices
+{ };
 
 // \}
 } // end namespace

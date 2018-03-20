@@ -30,6 +30,8 @@
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/freeflow/rans/volumevariables.hh>
 
+#include "models.hh"
+
 namespace Dumux
 {
 
@@ -107,32 +109,32 @@ public:
         using std::exp;
         using std::sqrt;
         Scalar kinematicEddyViscosity = 0.0;
-        static const Scalar karmanConstant
+        static const auto karmanConstant
             = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.KarmanConstant");
-        static const int eddyViscosityModel
+        static const auto eddyViscosityModel
             = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.EddyViscosityModel");
         unsigned int elementID = problem.fvGridGeometry().elementMapper().index(element);
         unsigned int flowNormalAxis = problem.flowNormalAxis_[elementID];
         unsigned int wallNormalAxis = problem.wallNormalAxis_[elementID];
         Scalar velGrad = abs(asImp_().velocityGradients()[flowNormalAxis][wallNormalAxis]);
 
-        if (eddyViscosityModel == Indices::noEddyViscosityModel)
+        if (eddyViscosityModel == EddyViscosityModels::none)
         {
             // kinematicEddyViscosity = 0.0
         }
-        else if (eddyViscosityModel == Indices::prandtl)
+        else if (eddyViscosityModel == EddyViscosityModels::prandtl)
         {
             Scalar mixingLength = karmanConstant * asImp_().wallDistanceRough();
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
-        else if (eddyViscosityModel == Indices::modifiedVanDriest)
+        else if (eddyViscosityModel == EddyViscosityModels::modifiedVanDriest)
         {
             Scalar mixingLength = karmanConstant * asImp_().wallDistanceRough()
                                   * (1.0 - exp(-asImp_().yPlusRough() / 26.0))
                                   / sqrt(1.0 - exp(-0.26 * asImp_().yPlusRough()));
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
-        else if (eddyViscosityModel == Indices::baldwinLomax)
+        else if (eddyViscosityModel == EddyViscosityModels::baldwinLomax)
         {
             kinematicEddyViscosity = problem.kinematicEddyViscosity_[elementID];
         }

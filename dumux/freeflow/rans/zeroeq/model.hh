@@ -39,7 +39,6 @@
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/rans/model.hh>
 
-#include "indices.hh"
 #include "volumevariables.hh"
 
 namespace Dumux
@@ -61,16 +60,6 @@ NEW_TYPE_TAG(ZeroEq, INHERITS_FROM(RANS));
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-
-//! The indices
-SET_PROP(ZeroEq, Indices)
-{
-private:
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-public:
-    using type = ZeroEqIndices<dim, numEq>;
-};
 
 //! The volume variables
 SET_TYPE_PROP(ZeroEq, VolumeVariables, ZeroEqVolumeVariables<TypeTag>);

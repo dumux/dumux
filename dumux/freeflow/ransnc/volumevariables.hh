@@ -74,7 +74,7 @@ public:
         ParentTypeCompositional::update(elemSol, problem, element, scv);
         ParentTypeSinglePhase::update(elemSol, problem, element, scv);
 
-        static const Scalar turbulentSchmidtNumber
+        static const auto turbulentSchmidtNumber
             = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
                                         "RANS.TurbulentSchmidtNumber", 1.0);
         eddyDiffusivity_ = ParentTypeSinglePhase::kinematicEddyViscosity()

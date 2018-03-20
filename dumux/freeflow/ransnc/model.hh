@@ -23,7 +23,7 @@
  * \brief A single-phase, multi-component isothermal Navier-Stokes model
  *
  * \copydoc RANSModel
- * *
+ *
  * The system is closed by a <B> component mass/mole balance equation </B> for each component \f$\kappa\f$:
  * \f[
  *    \frac{\partial \left(\varrho X^\kappa\right)}{\partial t}
@@ -52,8 +52,6 @@
 #ifndef DUMUX_RANS_NC_MODEL_HH
 #define DUMUX_RANS_NC_MODEL_HH
 
-
-// TODO: remove unused headers
 #include <dumux/common/properties.hh>
 
 #include <dumux/freeflow/rans/model.hh>
@@ -62,18 +60,10 @@
 #include <dumux/freeflow/nonisothermal/model.hh>
 #include <dumux/freeflow/nonisothermal/indices.hh>
 #include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
-#include <dumux/discretization/fickslaw.hh>
-#include <dumux/discretization/fourierslaw.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "vtkoutputfields.hh"
-
-#include <dumux/assembly/staggeredlocalresidual.hh>
-#include <dumux/material/fluidsystems/gasphase.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
-
-#include <dumux/material/fluidstates/compositional.hh>
 
 namespace Dumux {
 
@@ -105,9 +95,12 @@ NEW_TYPE_TAG(ZeroEqNC, INHERITS_FROM(ZeroEq, RANSNC));
 // default property values
 ///////////////////////////////////////////////////////////////////////////
 
-// TODO Use only RANSNC indices
+//! The volume variables
+SET_TYPE_PROP(RANSNC, VolumeVariables, RANSNCVolumeVariables<TypeTag>);
+SET_TYPE_PROP(ZeroEqNC, SinglePhaseVolumeVariables, ZeroEqVolumeVariables<TypeTag>);
+
 //! The indices
-SET_PROP(ZeroEqNC, Indices)
+SET_PROP(RANSNC, Indices)
 {
 private:
     static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
