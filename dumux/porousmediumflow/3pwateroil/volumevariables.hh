@@ -790,7 +790,7 @@ public:
     }
 
     /*!
-     * \brief Returns the diffusion coeffiecient
+     * \brief Returns the diffusion coefficient
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {

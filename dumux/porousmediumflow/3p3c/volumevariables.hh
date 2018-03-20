@@ -666,7 +666,7 @@ public:
     { return permeability_; }
 
     /*!
-     * \brief Returns the diffusion coeffiecient
+     * \brief Returns the diffusion coefficient
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
@@ -675,7 +675,7 @@ public:
         else if (compIdx > phaseIdx)
             return diffCoefficient_[phaseIdx][compIdx-1];
         else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient called for phaseIdx = compIdx");
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
 
 protected:
@@ -701,7 +701,7 @@ private:
         else if (phaseIdx == nPhaseIdx)
             diffCoefficient_[phaseIdx][compIdx-1] = 0;
         else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
     }
 
     std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
