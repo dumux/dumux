@@ -156,7 +156,7 @@ public:
 
 
      /*!
-      * \brief Returns the mass fraction of a component in the phase
+      * \brief Returns the mass fraction of a component in the phase \f$\mathrm{[-]}\f$
       *
       * \param pIdx the index of the fluid phase
       * \param compIdx the index of the component
@@ -168,7 +168,7 @@ public:
      }
 
      /*!
-      * \brief Returns the mole fraction of a component in the phase
+      * \brief Returns the mole fraction of a component in the phase \f$\mathrm{[-]}\f$
       *
       * \param pIdx the index of the fluid phase
       * \param compIdx the index of the component
@@ -180,10 +180,9 @@ public:
      }
 
     /*!
-     * \brief Returns the mass density of a given phase within the
-     *        control volume.
+     * \brief Returns the mass density of a given phase \f$\mathrm{[kg/m^3]}\f$
      *
-      * \param pIdx the index of the fluid phase
+     * \param pIdx the index of the fluid phase
      */
     Scalar molarDensity(int pIdx = phaseIdx) const
     {
@@ -192,7 +191,7 @@ public:
     }
 
      /*!
-     * \brief Returns the diffusion coefficient
+     * \brief Returns the diffusion coefficient \f$\mathrm{[m^2/s]}\f$
      */
     Scalar diffusionCoefficient(int pIdx, int compIdx) const
     {
