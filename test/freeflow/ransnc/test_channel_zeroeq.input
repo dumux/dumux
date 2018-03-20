@@ -1,0 +1,42 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 1000 # [s]
+
+[Grid]
+UpperRight = 5 1
+Cells = 50 10
+
+[Problem]
+Name = test_channel_zeroeq # name passed to the output routines
+InletVelocity = 0
+EnableGravity = false
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[Vtk]
+AddVelocity = true
+WriteFaceData = false
+
+# ADVECTION
+# [TimeLoop]
+# DtInitial = 5 # [s]
+# TEnd = 400 # [s]
+#
+# [Grid]
+# UpperRight = 5 1
+# Cells = 50 25
+#
+# [Problem]
+# Name = test_advection # name passed to the output routines
+# InletVelocity = 1e-2
+# EnableGravity = false
+#
+# [ Newton ]
+# MaxSteps = 10
+# MaxRelativeShift = 1e-8
+#
+# [Vtk]
+# AddVelocity = true
+# WriteFaceData = false
