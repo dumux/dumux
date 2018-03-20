@@ -91,7 +91,7 @@ class ChannelNCTestProblem : public RANSProblem<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum { dimWorld = GridView::dimensionworld };
     enum {
-        massBalanceIdx = Indices::massBalanceIdx,
+        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
         transportEqIdx = 1,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         pressureIdx = Indices::pressureIdx,
@@ -173,7 +173,7 @@ public:
         if(isInlet(globalPos))
         {
             values.setDirichlet(momentumBalanceIdx);
-            values.setOutflow(massBalanceIdx);
+            values.setOutflow(totalMassBalanceIdx);
             values.setDirichlet(transportEqIdx);
 #if NONISOTHERMAL
             values.setDirichlet(energyBalanceIdx);
@@ -182,7 +182,7 @@ public:
         else if(isOutlet(globalPos))
         {
             values.setOutflow(momentumBalanceIdx);
-            values.setDirichlet(massBalanceIdx);
+            values.setDirichlet(totalMassBalanceIdx);
             values.setOutflow(transportEqIdx);
 #if NONISOTHERMAL
             values.setOutflow(energyBalanceIdx);
@@ -193,7 +193,7 @@ public:
         {
             // set Dirichlet values for the velocity everywhere
             values.setDirichlet(momentumBalanceIdx);
-            values.setOutflow(massBalanceIdx);
+            values.setOutflow(totalMassBalanceIdx);
             values.setOutflow(transportEqIdx);
 #if NONISOTHERMAL
             values.setOutflow(energyBalanceIdx);

@@ -54,15 +54,10 @@ NEW_PROP_TAG(FluidSystem);
 SET_TYPE_PROP(ChannelNCTestTypeTag, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true*/>);
 
-SET_PROP(ChannelNCTestTypeTag, PhaseIdx)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-public:
-    static constexpr int value = FluidSystem::wPhaseIdx;
-};
+SET_INT_PROP(ChannelNCTestTypeTag, PhaseIdx,
+             GET_PROP_TYPE(TypeTag, FluidSystem)::wPhaseIdx);
 
-SET_INT_PROP(ChannelNCTestTypeTag, ReplaceCompEqIdx, 0);
+SET_INT_PROP(ChannelNCTestTypeTag, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, PhaseIdx));
 
 // Set the grid type
 SET_TYPE_PROP(ChannelNCTestTypeTag, Grid, Dune::YaspGrid<2>);
@@ -102,8 +97,8 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum { dimWorld = GridView::dimensionworld };
     enum {
-        massBalanceIdx = Indices::massBalanceIdx,
-        transportEqIdx = 1,
+        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
+        transportEqIdx = 1-GET_PROP_VALUE(TypeTag, PhaseIdx),
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         pressureIdx = Indices::pressureIdx,
         velocityXIdx = Indices::velocityXIdx,
@@ -112,7 +107,7 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
         temperatureIdx = Indices::temperatureIdx,
         energyBalanceIdx = Indices::energyBalanceIdx,
 #endif
-        transportCompIdx = 1/*FluidSystem::wCompIdx*/
+        transportCompIdx = 1-GET_PROP_VALUE(TypeTag, PhaseIdx)
     };
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -142,7 +137,6 @@ public:
      */
     // \{
 
-
     bool shouldWriteRestartFile() const
     {
         return false;
@@ -165,6 +159,7 @@ public:
     {
         return NumEqVector(0.0);
     }
+
     // \}
    /*!
      * \name Boundary conditions
@@ -184,7 +179,7 @@ public:
         if(isInlet(globalPos))
         {
             values.setDirichlet(momentumBalanceIdx);
-            values.setOutflow(massBalanceIdx);
+            values.setOutflow(totalMassBalanceIdx);
             values.setDirichlet(transportEqIdx);
 #if NONISOTHERMAL
             values.setDirichlet(energyBalanceIdx);
@@ -193,18 +188,17 @@ public:
         else if(isOutlet(globalPos))
         {
             values.setOutflow(momentumBalanceIdx);
-            values.setDirichlet(massBalanceIdx);
+            values.setDirichlet(totalMassBalanceIdx);
             values.setOutflow(transportEqIdx);
 #if NONISOTHERMAL
             values.setOutflow(energyBalanceIdx);
 #endif
         }
-
         else
         {
             // set Dirichlet values for the velocity everywhere
             values.setDirichlet(momentumBalanceIdx);
-            values.setOutflow(massBalanceIdx);
+            values.setOutflow(totalMassBalanceIdx);
             values.setOutflow(transportEqIdx);
 #if NONISOTHERMAL
             values.setOutflow(energyBalanceIdx);

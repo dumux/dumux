@@ -73,7 +73,7 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     enum {
         pressureIdx = Indices::pressureIdx,
 
-        massBalanceIdx = Indices::massBalanceIdx,
+        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx
     };
 
@@ -132,7 +132,7 @@ public:
                                                            const VolumeVariables& volVars) const
     {
         CellCenterPrimaryVariables storage;
-        storage[massBalanceIdx] = volVars.density();
+        storage[totalMassBalanceIdx] = volVars.density();
 
         computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, ModelTraits::enableEnergyBalance() >(),
                                                   problem, scv, volVars, storage);
@@ -251,7 +251,7 @@ protected:
                        const BoundaryTypes& bcTypes) const
     {
         // set a fixed pressure for cells adjacent to a wall
-        if(bcTypes.isDirichletCell(massBalanceIdx))
+        if(bcTypes.isDirichletCell(totalMassBalanceIdx))
         {
             const auto& insideVolVars = elemVolVars[insideScv];
             residual[pressureIdx] = insideVolVars.pressure() - problem.dirichletAtPos(insideScv.center())[pressureIdx];
@@ -297,7 +297,7 @@ protected:
             // outflow condition for the momentum balance equation
             if(bcTypes.isOutflow(momentumBalanceIdx))
             {
-                if(bcTypes.isDirichlet(massBalanceIdx))
+                if(bcTypes.isDirichlet(totalMassBalanceIdx))
                     residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars, elemFluxVarsCache);
                 else
                     DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");

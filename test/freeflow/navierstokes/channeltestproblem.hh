@@ -92,7 +92,7 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum { dimWorld = GridView::dimensionworld };
     enum {
-        massBalanceIdx = Indices::massBalanceIdx,
+        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         pressureIdx = Indices::pressureIdx,
 #if NONISOTHERMAL
@@ -178,11 +178,11 @@ public:
         // set a fixed pressure in one cell
         if (isOutlet(globalPos))
         {
-            values.setDirichlet(massBalanceIdx);
+            values.setDirichlet(totalMassBalanceIdx);
             values.setOutflow(momentumBalanceIdx);
         }
         else
-            values.setOutflow(massBalanceIdx);
+            values.setOutflow(totalMassBalanceIdx);
 
         return values;
     }

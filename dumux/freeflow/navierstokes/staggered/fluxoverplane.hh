@@ -417,7 +417,7 @@ private:
             }();
 
             CellCenterPrimaryVariables tmp(0.0);
-            tmp[Indices::conti0EqIdx] = cumulativeFlux / avgDensity;
+            tmp[Indices::totalMassBalanceIdx] = cumulativeFlux / avgDensity;
             return tmp;
         };
 
@@ -438,7 +438,9 @@ private:
                                const auto& scvf,
                                const auto& elemFluxVarsCache)
         {
-            const Scalar massFlux = localResidual_.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache)[Indices::conti0EqIdx];
+            const Scalar totalMassFlux = localResidual_.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars,
+                                                                                 elemFaceVars, scvf, elemFluxVarsCache)
+                                                                                [Indices::totalMassBalanceIdx];
 
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
@@ -446,7 +448,7 @@ private:
             const auto avgDensity = 0.5*insideVolVars.density() + 0.5*outsideVolVars.density();
 
             CellCenterPrimaryVariables tmp(0.0);
-            tmp[Indices::conti0EqIdx] = massFlux / avgDensity;
+            tmp[Indices::totalMassBalanceIdx] = totalMassFlux / avgDensity;
             return tmp;
         };
 
