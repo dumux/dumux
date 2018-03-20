@@ -106,7 +106,7 @@ public:
         ParentType::update(elemSol, problem, element, scv);
 
         // calculate the remaining quantities
-        auto&& priVars = isBox ? elemSol[scv.index()] : elemSol[0];
+        auto&& priVars = ParentType::extractDofPriVars(elemSol, scv);
 
         // porosity evaluation
         initialPorosity_ = problem.spatialParams().initialPorosity(element, scv);
