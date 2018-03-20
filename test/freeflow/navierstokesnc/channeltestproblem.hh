@@ -75,7 +75,7 @@ SET_BOOL_PROP(ChannelNCTestTypeTag, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridVolumeVariablesCache, true);
 
-// Enable gravity
+// Use mole fraction formulation
 SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, true);
 
 // #if ENABLE_NAVIERSTOKES

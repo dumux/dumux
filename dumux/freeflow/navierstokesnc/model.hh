@@ -220,7 +220,7 @@ private:
     static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-    using IsothermalIndices = NavierStokesNCIndices<dim, numEq, phaseIdx, replaceCompEqIdx>;;
+    using IsothermalIndices = NavierStokesNCIndices<dim, numEq, phaseIdx, replaceCompEqIdx>;
 public:
     using type = NavierStokesNonIsothermalIndices<dim, numEq, IsothermalIndices>;
 };

@@ -100,7 +100,7 @@ public:
                                                                                  compJIdx));
             }
         }
-    };
+    }
 
     /*!
      * \brief Update the fluid state
