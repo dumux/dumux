@@ -542,6 +542,33 @@ public:
     }
 
     /*!
+    * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component at a given temperature.
+    * This is used to for the boundry condition, to inject fluid at agiven temperature.
+    * \param fluidState The fluid state
+    * \param phaseIdx The index of the phase
+    * \param componentIdx The index of the component
+    */
+    template <class FluidState>
+    static Scalar componentEnthalpyBorder(const FluidState &fluidState,
+                                    int phaseIdx,
+                                    int componentIdx,
+                                    int temperature)
+    {
+        Scalar T = temperature; //the temperature of the boundary condition
+        Scalar p = fluidState.pressure(nPhaseIdx);
+        Valgrind::CheckDefined(T);
+        Valgrind::CheckDefined(p);
+
+        if (componentIdx ==  H2OIdx)
+        {
+            return H2O::gasEnthalpy(T, p);
+        }
+        else if (componentIdx == AirIdx)
+        {
+            return Air::gasEnthalpy(T, p);
+        }
+    }
+    /*!
      * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
      * \param phaseIdx The index of the fluid phase to consider
      *
