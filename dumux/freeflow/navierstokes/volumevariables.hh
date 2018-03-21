@@ -326,6 +326,12 @@ public:
     Scalar thermalConductivity() const
     { return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); }
 
+    /*!
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$.
+     */
+    Scalar effectiveThermalConductivity() const
+    { return thermalConductivity(); }
+
     //! The temperature is a primary variable for non-isothermal models
     using ParentType::temperature;
     template<class ElementSolution>

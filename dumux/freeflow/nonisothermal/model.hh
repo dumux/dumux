@@ -26,9 +26,18 @@
  * \f[
  *    \frac{\partial (\varrho  v)}{\partial t}
  *    + \nabla \cdot \left( \varrho h {\boldsymbol{v}}
- *    - \lambda \textbf{grad}\, T \right) - q_T = 0
+ *    - \lambda_\text{eff} \textbf{grad}\, T \right) - q_T = 0
  * \f]
  *
+ *
+ * For laminar Navier-Stokes flow the effective thermal conductivity is the fluid
+ * thermal conductivity: \f$ \lambda_\text{eff} = \lambda \f$.
+ *
+ * For turbulent Reynolds-averaged Navier-Stokes flow the eddy thermal conductivity is added:
+ *  \f$ \lambda_\text{eff} = \lambda + \lambda_\text{t} \f$.
+ * The eddy thermal conductivity \f$ \lambda_\text{t} \f$ is related to the eddy viscosity \f$ \nu_\text{t} \f$
+ * by the turbulent Prandtl number:
+ * \f[ \lambda_\text{t} = \frac{\nu_\text{t} \varrho c_\text{p}}{\mathrm{Pr}_\text{t}} \f]
  */
 
 #ifndef DUMUX_STAGGERED_NI_MODEL_HH
