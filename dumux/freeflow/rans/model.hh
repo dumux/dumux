@@ -41,7 +41,8 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
-#include <dumux/freeflow/nonisothermal/model.hh>
+#include <dumux/freeflow/navierstokes/indices.hh>
+#include <dumux/freeflow/nonisothermal/indices.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 
 #include "volumevariables.hh"
@@ -79,6 +80,49 @@ private:
 public:
      using type = RANSVtkOutputFields<FVGridGeometry>;
 };
+
+//////////////////////////////////////////////////////////////////
+// Property values for non-isothermal Reynolds-averaged Navier-Stokes model
+//////////////////////////////////////////////////////////////////
+
+//! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes model
+NEW_TYPE_TAG(RANSNI, INHERITS_FROM(RANS));
+
+//! The model traits of the non-isothermal model
+SET_PROP(RANSNI, ModelTraits)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    static constexpr int dim = GridView::dimension;
+    using IsothermalTraits = NavierStokesModelTraits<dim>;
+public:
+    using type = NavierStokesNIModelTraits<IsothermalTraits>;
+};
+
+//! The indices required by the non-isothermal single-phase model
+SET_PROP(RANSNI, Indices)
+{
+private:
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
+    using IsothermalIndices = NavierStokesIndices<dim, numEq>;
+public:
+    using type = NavierStokesNonIsothermalIndices<dim, numEq, IsothermalIndices>;
+};
+
+//! The specific non-isothermal vtk output fields
+// SET_PROP(RANSNI, VtkOutputFields)
+// {
+// private:
+//      using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+//      using IsothermalFields = NavierStokesVtkOutputFields<FVGridGeometry>;
+// public:
+//      using type = NavierStokesNonIsothermalVtkOutputFields<IsothermalFields>;
+// };
+
+//! Use Fourier's Law as default heat conduction type
+SET_TYPE_PROP(RANSNI, HeatConductionType, FouriersLaw<TypeTag>);
+
 // \}
 }
 

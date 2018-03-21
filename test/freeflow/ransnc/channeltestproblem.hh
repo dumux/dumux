@@ -39,10 +39,10 @@ class ChannelNCTestProblem;
 namespace Properties
 {
 
-#if !NONISOTHERMAL
-NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC));
-#else
+#if NONISOTHERMAL
 NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI));
+#else
+NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC));
 #endif
 
 NEW_PROP_TAG(FluidSystem);
@@ -203,7 +203,7 @@ public:
             values.setOutflow(totalMassBalanceIdx);
             values.setOutflow(transportEqIdx);
 #if NONISOTHERMAL
-            values.setOutflow(energyBalanceIdx);
+            values.setDirichlet(energyBalanceIdx);
 #endif
         }
         else if (isSymmetry(globalPos))
@@ -223,18 +223,21 @@ public:
     {
         PrimaryVariables values = initialAtPos(globalPos);
 
-        if (isInlet(globalPos)
-            && globalPos[1] > 0.4 * this->fvGridGeometry().bBoxMax()[1]
-            && globalPos[1] < 0.6 * this->fvGridGeometry().bBoxMax()[1])
+        if (time() > 10.0)
         {
-            values[transportCompIdx] = 1e-3;
-        }
+            if (isInlet(globalPos)
+                && globalPos[1] > 0.4 * this->fvGridGeometry().bBoxMax()[1]
+                && globalPos[1] < 0.6 * this->fvGridGeometry().bBoxMax()[1])
+            {
+                values[transportCompIdx] = 1e-3;
+            }
 #if NONISOTHERMAL
-        if (isOnWall(globalPos))
-        {
-            values[temperatureIdx] += 30.;
-        }
+            if (isOnWall(globalPos))
+            {
+                values[temperatureIdx] += 30.;
+            }
 #endif
+        }
 
         return values;
     }

@@ -22,7 +22,7 @@
  *
  * \brief A single-phase, multi-component isothermal Navier-Stokes model
  *
- * \copydoc RANSModel
+ * \copydoc Dumux::RANSModel
  *
  * The system is closed by a <B> component mass/mole balance equation </B> for each component \f$\kappa\f$:
  * \f[
@@ -69,14 +69,14 @@ namespace Dumux {
 
 /*!
  * \ingroup RANSModel
- * \brief Traits for the Reynolds-averaged Navier-Stokes multi-component model
+ * \brief Traits for the RANS multi-component model
  */
 template<int dim, int nComp>
 struct RANSNCModelTraits : NavierStokesNCModelTraits<dim, nComp>
 { };
 
 ///////////////////////////////////////////////////////////////////////////
-// properties for the single-phase, multi-component Reynolds-averaged Navier-Stokes model
+// properties for the single-phase, multi-component RANS model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 
@@ -84,12 +84,9 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the single-phase, multi-component isothermal Reynolds-averaged Navier-Stokes model
+//! The type tags for the single-phase, multi-component isothermal RANS model
 NEW_TYPE_TAG(RANSNC, INHERITS_FROM(RANS, NavierStokesNC));
 NEW_TYPE_TAG(ZeroEqNC, INHERITS_FROM(ZeroEq, RANSNC));
-
-// //! The type tag for the single-phase, multi-component non-isothermal Reynolds-averaged Navier-Stokes model
-// NEW_TYPE_TAG(RANSNCNI, INHERITS_FROM(RANS, NavierStokesNC));
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values
@@ -124,8 +121,54 @@ public:
 };
 
 //////////////////////////////////////////////////////////////////////////
-// Property values for non-isothermal multi-component Reynolds-averaged Navier-Stokes model
+// Property values for non-isothermal multi-component RANS model
 //////////////////////////////////////////////////////////////////////////
+
+//! The type tags for the single-phase, multi-component non-isothermal RANS models
+NEW_TYPE_TAG(RANSNCNI, INHERITS_FROM(RANSNI, NavierStokesNC));
+NEW_TYPE_TAG(ZeroEqNCNI, INHERITS_FROM(ZeroEqNI, RANSNCNI));
+
+//! The volume variables
+SET_TYPE_PROP(RANSNCNI, VolumeVariables, RANSNCVolumeVariables<TypeTag>);
+SET_TYPE_PROP(ZeroEqNCNI, SinglePhaseVolumeVariables, ZeroEqVolumeVariables<TypeTag>);
+
+//! The model traits of the non-isothermal model
+SET_PROP(RANSNCNI, ModelTraits)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    static constexpr int dim = GridView::dimension;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int numComponents = FluidSystem::numComponents;
+    using IsothermalModelTraits = NavierStokesNCModelTraits<dim, numComponents>;
+public:
+    using type = NavierStokesNIModelTraits<IsothermalModelTraits>;
+};
+
+//! The indices
+SET_PROP(RANSNCNI, Indices)
+{
+private:
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    using IsothermalIndices = NavierStokesNCIndices<dim, numEq, phaseIdx, replaceCompEqIdx>;
+public:
+    using type = NavierStokesNonIsothermalIndices<dim, numEq, IsothermalIndices>;
+};
+
+//! The specific vtk output fields
+SET_PROP(ZeroEqNCNI, VtkOutputFields)
+{
+private:
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    using SinglePhaseVtkOutputFields = RANSVtkOutputFields<FVGridGeometry>;
+public:
+    using type = RANSNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx, SinglePhaseVtkOutputFields>;
+};
 
 // //! The non-isothermal vtk output fields
 // SET_PROP(RANSNCNI, VtkOutputFields)

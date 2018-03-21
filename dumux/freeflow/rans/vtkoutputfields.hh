@@ -63,6 +63,10 @@ public:
         vtk.addVolumeVariable([](const auto& v){ return v.wallDistance(); }, "l_w");
         vtk.addVolumeVariable([](const auto& v){ return v.yPlus(); }, "y^+");
         vtk.addVolumeVariable([](const auto& v){ return v.uPlus(); }, "u^+");
+#if NONISOTHERMAL
+        vtk.addVolumeVariable( [](const auto& v){ return v.temperature(); }, "temperature");
+        vtk.addVolumeVariable( [](const auto& v){ return v.eddyThermalConductivity(); }, "lambda_t");
+#endif
     }
 };
 

@@ -41,7 +41,11 @@ class PipeLauferProblem;
 
 namespace Properties
 {
+#if NONISOTHERMAL
+NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNI));
+#else
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEq));
+#endif
 
 // the fluid system
 SET_PROP(PipeLauferProblem, FluidSystem)
@@ -82,6 +86,10 @@ class PipeLauferProblem : public ZeroEqProblem<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum { dimWorld = GridView::dimensionworld };
     enum {
+#if NONISOTHERMAL
+        temperatureIdx = Indices::temperatureIdx,
+        energyBalanceIdx = Indices::energyBalanceIdx,
+#endif
         totalMassBalanceIdx = Indices::totalMassBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         pressureIdx = Indices::pressureIdx,
@@ -105,6 +113,8 @@ public:
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
+        inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 283.15);
+        wallTemperature_ = getParam<Scalar>("Problem.WallTemperature", 323.15);
         sandGrainRoughness_ = getParam<Scalar>("Problem.SandGrainRoughness", 0.0);
     }
 
@@ -115,9 +125,8 @@ public:
 
     bool isOnWall(const GlobalPosition &globalPos) const
     {
-        Scalar localEps_ = 1e-6; // cannot use the epsilon, because ParentType is initialized first
-        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + localEps_
-              || globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - localEps_;
+        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_
+               || globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
     }
 
     Scalar sandGrainRoughnessAtPos(const GlobalPosition &globalPos) const
@@ -131,12 +140,10 @@ public:
     }
 
    /*!
-     * \brief Return the temperature within the domain in [K].
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
+     * \brief Return the temperature [K] within the domain for the isothermal model.
      */
     Scalar temperature() const
-    { return 273.15 + 10; } // 10C
+    { return inletTemperature_; }
 
    /*!
      * \brief Return the sources within the domain.
@@ -165,6 +172,13 @@ public:
 
         // set Dirichlet values for the velocity everywhere
         values.setDirichlet(momentumBalanceIdx);
+#if NONISOTHERMAL
+        values.setDirichlet(energyBalanceIdx);
+        if (isOutlet(globalPos))
+        {
+            values.setOutflow(energyBalanceIdx);
+        }
+#endif
 
         // set a fixed pressure in one cell
         if (isOutlet(globalPos))
@@ -186,7 +200,18 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        return initialAtPos(globalPos);
+        PrimaryVariables values(initialAtPos(globalPos));
+#if NONISOTHERMAL
+        if (time() > 10.0)
+        {
+            values[temperatureIdx] = inletTemperature_;
+            if (isOnWall(globalPos))
+            {
+                values[temperatureIdx] = wallTemperature_;
+            }
+        }
+#endif
+        return values;
     }
 
     // \}
@@ -205,9 +230,17 @@ public:
     {
         PrimaryVariables values(0.0);
         values[pressureIdx] = 1.0e+5;
-        if(!isOnWall(globalPos))
+        values[velocityXIdx] = inletVelocity_;
+#if NONISOTHERMAL
+        values[temperatureIdx] = inletTemperature_;
+        if (isOnWall(globalPos))
         {
-            values[velocityXIdx] = inletVelocity_;
+            values[temperatureIdx] = wallTemperature_;
+        }
+#endif
+        if (isOnWall(globalPos))
+        {
+            values[velocityXIdx] = 0.0;
         }
 
         return values;
@@ -217,8 +250,6 @@ public:
     void setTimeLoop(TimeLoopPtr timeLoop)
     {
         timeLoop_ = timeLoop;
-        if(inletVelocity_ > eps_)
-            timeLoop_->setCheckPoint({10.0, 50.0, 100.});
     }
 
     Scalar time() const
@@ -227,6 +258,11 @@ public:
     }
 
 private:
+    bool isInlet(const GlobalPosition& globalPos) const
+    {
+        return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;
+    }
+
     bool isOutlet(const GlobalPosition& globalPos) const
     {
         return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
@@ -234,6 +270,8 @@ private:
 
     Scalar eps_;
     Scalar inletVelocity_;
+    Scalar inletTemperature_;
+    Scalar wallTemperature_;
     Scalar sandGrainRoughness_;
     TimeLoopPtr timeLoop_;
 };

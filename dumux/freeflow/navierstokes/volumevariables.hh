@@ -226,7 +226,7 @@ protected:
  */
 template <class TypeTag>
 class NavierStokesVolumeVariablesImplementation<TypeTag, true>
-: public NavierStokesVolumeVariablesImplementation<TypeTag, false>
+: virtual public NavierStokesVolumeVariablesImplementation<TypeTag, false>
 {
     using ParentType = NavierStokesVolumeVariablesImplementation<TypeTag, false>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
