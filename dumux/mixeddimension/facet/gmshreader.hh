@@ -16,9 +16,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Reads elements of several dimensions from 1 to 3 from a gmsh file to
- *        be used for the creation of several grids from one file in the context
- *        of models using facet coupling.
+ * \ingroup FacetCoupling
+ * \copydoc Dumux::FacetCouplingGmshReader.
  */
 #ifndef DUMUX_FACETCOUPLING_GMSH_READER_HH
 #define DUMUX_FACETCOUPLING_GMSH_READER_HH
@@ -35,7 +34,8 @@
 
 namespace Dumux
 {
-/*!
+/*
+ * \ingroup FacetCoupling
  * \brief Reads gmsh files where (n-1)-dimensional grids are defined on the faces
  *        or edges of n-dimensional grids.
  *
