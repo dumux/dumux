@@ -193,7 +193,7 @@ private:
                 factory.insertElement(e.gt, e.cornerIndices);
 
             // insert boundary segments
-            if (domainMarkers)
+            if (boundarySegments)
             {
                 const auto& segments = reader.boundarySegmentData(id);
                 for (const auto& bs : segments)
