@@ -200,6 +200,59 @@ int main (int argc, char *argv[]) try
     if (singleEmbeddings != 48) DUNE_THROW(Dune::InvalidStateException, "Found " << singleEmbeddings << " instead of 48 bulk elements with 1 embedding");
     if (doubleEmbeddings != 8) DUNE_THROW(Dune::InvalidStateException, "Found " << doubleEmbeddings << " instead of 8 bulk elements with 2 embeddings");
 
+    // test access to embeddings for single elements
+    singleEmbeddings = 0;
+    doubleEmbeddings = 0;
+    for (const auto& e : elements(bulkGridView))
+    {
+        if (gridCreator.embeddedEntityIndices<0>(e).size() == 1)
+            singleEmbeddings++;
+        else if (gridCreator.embeddedEntityIndices<0>(e).size() == 2)
+            doubleEmbeddings++;
+        else if (gridCreator.embeddedEntityIndices<0>(e).size() != 0)
+            DUNE_THROW(Dune::InvalidStateException, "wrong number of embeddings!");
+
+        if (gridCreator.embedmentEntityIndices<0>(e).size() != 0)
+            DUNE_THROW(Dune::InvalidStateException, "bulk grid can't be embedded anywhere!");
+    }
+
+    if (singleEmbeddings != 48) DUNE_THROW(Dune::InvalidStateException, "Found " << singleEmbeddings << " instead of 48 bulk elements with 1 embedding");
+    if (doubleEmbeddings != 8) DUNE_THROW(Dune::InvalidStateException, "Found " << doubleEmbeddings << " instead of 8 bulk elements with 2 embeddings");
+
+    std::size_t embeddings = 0;
+    std::size_t embedments = 0;
+    for (const auto& e : elements(facetGridView))
+    {
+        if (gridCreator.embeddedEntityIndices<1>(e).size() == 1)
+            embeddings++;
+        else if (gridCreator.embeddedEntityIndices<1>(e).size() != 0)
+            DUNE_THROW(Dune::InvalidStateException, "wrong number of embeddings!");
+
+        if (gridCreator.embedmentEntityIndices<1>(e).size() == 2)
+            embedments++;
+        else if (gridCreator.embedmentEntityIndices<1>(e).size() != 0)
+            DUNE_THROW(Dune::InvalidStateException, "wrong number of embedments!");
+    }
+
+    if (embeddings != 8) DUNE_THROW(Dune::InvalidStateException, "Found " << embeddings << " instead of 8 embeddings in facet grid");
+    if (embedments != 32) DUNE_THROW(Dune::InvalidStateException, "Found " << embedments << " instead of 32 facet element embedments");
+
+    embeddings = 0;
+    embedments = 0;
+    for (const auto& e : elements(edgeGridView))
+    {
+        if (gridCreator.embeddedEntityIndices<2>(e).size() != 0)
+            DUNE_THROW(Dune::InvalidStateException, "wrong number of embeddings!");
+
+        if (gridCreator.embedmentEntityIndices<2>(e).size() == 4)
+            embedments++;
+        else if (gridCreator.embedmentEntityIndices<2>(e).size() != 0)
+            DUNE_THROW(Dune::InvalidStateException, "wrong number of embedments!");
+    }
+
+    if (embeddings != 0) DUNE_THROW(Dune::InvalidStateException, "The grid with lowest dimension can't have embedded entities");
+    if (embedments!= 2) DUNE_THROW(Dune::InvalidStateException, "Found " << edgeEmbedments.size() << " instead of 2 edge element embedments");
+
     // write .vtk file for each grid
     using BulkWriter = Dune::VTKWriter<typename BulkGrid::LeafGridView>;
     BulkWriter bulkWriter(bulkGridView); bulkWriter.write("bulkgrid");
