@@ -112,6 +112,10 @@ public:
         {
             for (const auto& intersection : intersections(gridView, element))
             {
+                // only search for walls at a global boundary
+                if (!intersection.boundary())
+                    continue;
+
                 GlobalPosition global = intersection.geometry().center();
                 if (asImp_().isOnWall(global))
                 {
