@@ -118,7 +118,7 @@ public:
         forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& i)
         {
             if (i != domainId)
-                assembleJacobianCoupling(i, jacRow, res[globalI], gridVariables);
+                this->assembleJacobianCoupling(i, jacRow, res[globalI], gridVariables);
         });
     }
 
