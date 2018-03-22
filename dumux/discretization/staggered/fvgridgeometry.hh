@@ -46,8 +46,16 @@ public:
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
     using LocalView = typename ActualFVGridGeometry::LocalView;
 
-    static constexpr bool isCellCenter = false;
-    static constexpr bool isFace = false;
+    static constexpr bool isCellCenter() { return false; }
+    static constexpr bool isFace() {return false; }
+
+    //! return a integral constant for cell center dofs
+    static constexpr auto cellCenterIdx()
+    { return typename ActualFVGridGeometry::DofTypeIndices::CellCenterIdx{}; }
+
+    //! return a integral constant for face dofs
+    static constexpr auto faceIdx()
+    { return typename ActualFVGridGeometry::DofTypeIndices::FaceIdx{}; }
 
     const auto& gridView() const
     { return fvGridGeometry_->gridView(); }
@@ -82,7 +90,7 @@ public:
 
     using ParentType::ParentType;
 
-    static constexpr bool isCellCenter = true;
+    static constexpr bool isCellCenter() { return true; }
 
     std::size_t numDofs() const
     { return this->fvGridGeometry_->numCellCenterDofs(); }
@@ -102,7 +110,7 @@ public:
 
     using ParentType::ParentType;
 
-    static constexpr bool isFace = true;
+    static constexpr bool isFace() {return true; }
 
     std::size_t numDofs() const
     { return this->fvGridGeometry_->numFaceDofs(); }
