@@ -315,6 +315,12 @@ public:
         return 0.0;
     }
 
+    /*!
+     * \brief Returns the Karman constant
+     */
+    const Scalar karmanConstant() const
+    { return 0.41; }
+
 public:
     std::vector<unsigned int> wallElementID_;
     std::vector<Scalar> wallDistance_;
