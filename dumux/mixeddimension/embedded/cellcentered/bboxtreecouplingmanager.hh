@@ -382,7 +382,7 @@ public:
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(problemTuple_)), [&](const auto domainIdx)
         {
-            for (auto&& stencil : couplingStencils(domainIdx))
+            for (auto&& stencil : this->couplingStencils(domainIdx))
             {
                 std::sort(stencil.second.begin(), stencil.second.end());
                 stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
