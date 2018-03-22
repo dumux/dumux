@@ -469,7 +469,7 @@ private:
                                              Dune::index_constant<j> domainJ) const
     {
         const auto& gg = fvGridGeometry(domainI);
-        auto pattern = getJacobianPattern<isImplicit>(gg, domainI, *couplingManager_);
+        auto pattern = getJacobianPattern<isImplicit>(gg);
 
         // add additional dof dependencies
         // for (const auto& element0 : elements(gg.gridView()))
