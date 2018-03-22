@@ -523,6 +523,14 @@ public:
     const std::vector<std::size_t>& getAdditionalDofDependenciesInverse(Dune::index_constant<1> lowDimDomain, std::size_t lowDimElementIdx) const
     { return emptyStencil_; }
 
+    //! Return a map containing additional dof dependencies
+    const CouplingStencils& additionalDofDependicies(Dune::index_constant<0> bulkDomain)
+    { return bulkCircleStencils_; }
+
+    //! Return a map containing additional dof dependencies
+    CouplingStencils additionalDofDependicies(Dune::index_constant<1> lowDimDomain)
+    { return CouplingStencils(); }
+
     //! Return reference to point source data vector member
     const std::vector<PointSourceData>& pointSourceData() const
     { return pointSourceData_; }

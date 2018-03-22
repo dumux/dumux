@@ -51,6 +51,13 @@ public:
         return asImp_().couplingStencil(element, domainI, domainJ);
     }
 
+    // Return an empty list of additional dof dependencies per default
+    template<std::size_t id>
+    std::vector<std::vector<std::size_t>> additionalDofDependicies(Dune::index_constant<id>)
+    {
+        return std::vector<std::vector<std::size_t>>();
+    }
+
     /*!
      * \brief The coupling stencil, i.e. which dofs of domain i are in the stencil of the element
      */
