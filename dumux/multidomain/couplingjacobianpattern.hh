@@ -124,7 +124,7 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
 
     for (const auto& element0 : elements(gridGeometry0.gridView()))
     {
-        if(gridGeometry0.isCellCenter)
+        if(gridGeometry0.isCellCenter())
         {
             const auto ccGlobalI = gridGeometry0.elementMapper().index(element0);
             for (auto&& faceGlobalJ : couplingManager.couplingStencil(element0, domainI, domainJ))
