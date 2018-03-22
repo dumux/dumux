@@ -83,16 +83,15 @@ public:
 
         completeFluidState(elemSol, problem, element, scv, this->fluidState_);
 
-
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(this->fluidState_);
-        int compIIdx = phaseIdx;
+        int compIIdx = mainCompIdx;
         for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
         {
             // binary diffusion coefficents
             if(compIIdx!= compJIdx)
             {
-                setDiffusionCoefficient_(phaseIdx, compJIdx,
+                setDiffusionCoefficient_(compJIdx,
                                          FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
                                                                                  paramCache,
                                                                                  phaseIdx,
@@ -152,7 +151,7 @@ public:
         fluidState.setViscosity(phaseIdx, value);
 
         // compute and set the enthalpy
-        const Scalar h = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
+        const Scalar h = ParentType::enthalpy(fluidState, paramCache);
         fluidState.setEnthalpy(phaseIdx, h);
     }
 
@@ -160,58 +159,54 @@ public:
      /*!
       * \brief Returns the mass fraction of a component in the phase \f$\mathrm{[-]}\f$
       *
-      * \param pIdx the index of the fluid phase
       * \param compIdx the index of the component
       */
-     Scalar massFraction(int pIdx, int compIdx) const
+     Scalar massFraction(int compIdx) const
      {
-         assert(pIdx == phaseIdx);
-         return this->fluidState_.massFraction(pIdx, compIdx);
+         return this->fluidState_.massFraction(phaseIdx, compIdx);
      }
 
      /*!
       * \brief Returns the mole fraction of a component in the phase \f$\mathrm{[-]}\f$
       *
-      * \param pIdx the index of the fluid phase
       * \param compIdx the index of the component
       */
-     Scalar moleFraction(int pIdx, int compIdx) const
+     Scalar moleFraction(int compIdx) const
      {
-         assert(pIdx == phaseIdx);
-         return this->fluidState_.moleFraction(pIdx, compIdx);
+         return this->fluidState_.moleFraction(phaseIdx, compIdx);
      }
 
     /*!
      * \brief Returns the mass density of a given phase \f$\mathrm{[kg/m^3]}\f$
-     *
-     * \param pIdx the index of the fluid phase
      */
-    Scalar molarDensity(int pIdx = phaseIdx) const
+    Scalar molarDensity() const
     {
-        assert(pIdx == phaseIdx);
-        return this->fluidState_.molarDensity(pIdx);
+        return this->fluidState_.molarDensity(phaseIdx);
     }
 
      /*!
      * \brief Returns the diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+     *
+     * \param compIdx the index of the component
      */
-    Scalar diffusionCoefficient(int pIdx, int compIdx) const
+    Scalar diffusionCoefficient(int compIdx) const
     {
-        assert(pIdx == phaseIdx);
-        if (compIdx < pIdx)
-            return diffCoefficient_[pIdx][compIdx];
-        else if (compIdx > pIdx)
-            return diffCoefficient_[pIdx][compIdx-1];
+        if (compIdx < phaseIdx)
+            return diffCoefficient_[phaseIdx][compIdx];
+        else if (compIdx > phaseIdx)
+            return diffCoefficient_[phaseIdx][compIdx-1];
         else
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
 
      /*!
      * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+     *
+     * \param compIdx the index of the component
      */
-    Scalar effectiveDiffusivity(int pIdx, int compIdx) const
+    Scalar effectiveDiffusivity(int compIdx) const
     {
-        return diffusionCoefficient(pIdx, compIdx);
+        return diffusionCoefficient(compIdx);
     }
 
 protected:
@@ -222,13 +217,12 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    void setDiffusionCoefficient_(int pIdx, int compIdx, Scalar d)
+    void setDiffusionCoefficient_(int compIdx, Scalar d)
     {
-        assert(pIdx == phaseIdx);
-        if (compIdx < pIdx)
-            diffCoefficient_[pIdx][compIdx] = std::move(d);
-        else if (compIdx > pIdx)
-            diffCoefficient_[pIdx][compIdx-1] = std::move(d);
+        if (compIdx < phaseIdx)
+            diffCoefficient_[phaseIdx][compIdx] = std::move(d);
+        else if (compIdx > phaseIdx)
+            diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
         else
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
     }

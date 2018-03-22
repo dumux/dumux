@@ -70,8 +70,6 @@ class RANSVolumeVariablesImplementation<TypeTag, false>
     using DimVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
-    static const int defaultPhaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-
 public:
 
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -236,7 +234,6 @@ class RANSVolumeVariablesImplementation<TypeTag, true>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    static const int defaultPhaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 //     static const int temperatureIdx = Indices::temperatureIdx;
 
 public:

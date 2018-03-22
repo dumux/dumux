@@ -63,7 +63,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered >
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
     static constexpr int numComponents = ModelTraits::numComponents();
-    static constexpr int phaseIdx = Indices::phaseIdx;
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     static_assert(ModelTraits::numPhases() == 1, "Only one phase allowed supported!");
@@ -112,11 +111,11 @@ public:
             }
 
             const Scalar tij = transmissibility_(problem, fvGeometry, elemVolVars, scvf, compIdx);
-            const Scalar insideMoleFraction = insideVolVars.moleFraction(phaseIdx, compIdx);
+            const Scalar insideMoleFraction = insideVolVars.moleFraction(compIdx);
 
             const Scalar outsideMolarDensity = scvf.boundary() ? insideVolVars.molarDensity() : outsideVolVars.molarDensity();
             const Scalar avgDensity = 0.5*(insideMolarDensity + outsideMolarDensity);
-            const Scalar outsideMoleFraction = outsideVolVars.moleFraction(phaseIdx, compIdx);
+            const Scalar outsideMoleFraction = outsideVolVars.moleFraction(compIdx);
             flux[compIdx] = avgDensity * tij * (insideMoleFraction - outsideMoleFraction);
         }
 
@@ -161,7 +160,7 @@ public:
         const auto& insideVolVars = elemVolVars[insideScv];
 
         const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-        const Scalar insideD = insideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
+        const Scalar insideD = insideVolVars.effectiveDiffusivity(compIdx);
         const Scalar ti = calculateOmega_(insideDistance, insideD, 1.0);
 
         if(scvf.boundary())
@@ -171,7 +170,7 @@ public:
             const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
             const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-            const Scalar outsideD = outsideVolVars.effectiveDiffusivity(phaseIdx, compIdx);
+            const Scalar outsideD = outsideVolVars.effectiveDiffusivity(compIdx);
             const Scalar tj = calculateOmega_(outsideDistance, outsideD, 1.0);
 
             tij = scvf.area()*(ti * tj)/(ti + tj);

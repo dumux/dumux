@@ -253,17 +253,16 @@ public:
 
                     if (globalPos[0] < 0.5)
                     {
-                        x_co2_left += elemVolVars[scv].moleFraction(0,2);
-
-                        x_n2_left += elemVolVars[scv].moleFraction(0,1);
-                        x_h2_left += elemVolVars[scv].moleFraction(0,0);
+                        x_co2_left += elemVolVars[scv].moleFraction(FluidSystem::CO2Idx);
+                        x_n2_left += elemVolVars[scv].moleFraction(FluidSystem::N2Idx);
+                        x_h2_left += elemVolVars[scv].moleFraction(FluidSystem::H2Idx);
                         i +=1;
                     }
                     else
                     {
-                        x_co2_right += elemVolVars[scv].moleFraction(0,2);
-                        x_n2_right += elemVolVars[scv].moleFraction(0,1);
-                        x_h2_right += elemVolVars[scv].moleFraction(0,0);
+                        x_co2_right += elemVolVars[scv].moleFraction(FluidSystem::CO2Idx);
+                        x_n2_right += elemVolVars[scv].moleFraction(FluidSystem::N2Idx);
+                        x_h2_right += elemVolVars[scv].moleFraction(FluidSystem::H2Idx);
                         j +=1;
                     }
 

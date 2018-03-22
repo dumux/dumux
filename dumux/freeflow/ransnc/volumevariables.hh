@@ -51,6 +51,8 @@ class RANSNCVolumeVariables
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
+    static constexpr auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+
 public:
 
     /*!
@@ -91,10 +93,12 @@ public:
 
     /*!
      * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+     *
+     * \param compIdx the index of the component
      */
-    Scalar effectiveDiffusivity(int pIdx, int compIdx) const
+    Scalar effectiveDiffusivity(int compIdx) const
     {
-        return ParentTypeCompositional::diffusionCoefficient(pIdx, compIdx)
+        return ParentTypeCompositional::diffusionCoefficient(compIdx)
                + eddyDiffusivity();
     }
 

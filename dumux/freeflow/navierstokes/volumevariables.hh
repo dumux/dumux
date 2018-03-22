@@ -58,7 +58,7 @@ class NavierStokesVolumeVariablesImplementation<TypeTag, false>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static const int defaultPhaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
 public:
 
@@ -82,7 +82,7 @@ public:
         extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
 
         completeFluidState(elemSol, problem, element, scv, fluidState_);
-    };
+    }
 
     /*!
      * \brief Returns the primary variables at the dof associated with a given scv.
@@ -105,21 +105,21 @@ public:
         const Scalar t = problem.temperatureAtPos(scv.dofPosition());
         fluidState.setTemperature(t);
 
-        fluidState.setPressure(defaultPhaseIdx, elemSol[0][Indices::pressureIdx]);
+        fluidState.setPressure(phaseIdx, elemSol[0][Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the
         // immiscible multi-phase models, so we have to set it here...
-        fluidState.setSaturation(defaultPhaseIdx, 1.0);
+        fluidState.setSaturation(phaseIdx, 1.0);
 
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState, defaultPhaseIdx);
+        paramCache.updatePhase(fluidState, phaseIdx);
 
-        Scalar value = FluidSystem::density(fluidState, paramCache, defaultPhaseIdx);
-        fluidState.setDensity(defaultPhaseIdx, value);
+        Scalar value = FluidSystem::density(fluidState, paramCache, phaseIdx);
+        fluidState.setDensity(phaseIdx, value);
 
-        value = FluidSystem::viscosity(fluidState, paramCache, defaultPhaseIdx);
-        fluidState.setViscosity(defaultPhaseIdx, value);
+        value = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+        fluidState.setViscosity(phaseIdx, value);
     }
 
     /*!
@@ -148,47 +148,47 @@ public:
      * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      */
-    Scalar pressure(int phaseIdx = 0) const
-    { return fluidState_.pressure(defaultPhaseIdx); }
+    Scalar pressure() const
+    { return fluidState_.pressure(phaseIdx); }
 
     /*!
      * \brief Return the mass density \f$\mathrm{[kg/m^3]}\f$ of a given phase within the
      *        control volume.
      */
-    Scalar density(int phaseIdx = 0) const
-    { return fluidState_.density(defaultPhaseIdx); }
+    Scalar density() const
+    { return fluidState_.density(phaseIdx); }
 
     /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume.
      */
-    Scalar molarDensity(int phaseIdx = 0) const
+    Scalar molarDensity() const
     {
-        return fluidState_.molarDensity(defaultPhaseIdx);
+        return fluidState_.molarDensity(phaseIdx);
     }
 
     /*!
      * \brief Returns the molar mass of a given phase within the
      *        control volume.
      */
-    Scalar molarMass(int phaseIdx = 0) const
+    Scalar molarMass() const
     {
-        return fluidState_.averageMolarMass(defaultPhaseIdx);
+        return fluidState_.averageMolarMass(phaseIdx);
     }
 
     /*!
      * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
      */
-    Scalar viscosity(int phaseIdx = 0) const
-    { return fluidState_.viscosity(defaultPhaseIdx); }
+    Scalar viscosity() const
+    { return fluidState_.viscosity(phaseIdx); }
 
     /*!
      * \brief Return the effective dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
      */
-    Scalar effectiveViscosity(int phaseIdx = 0) const
-    { return viscosity(defaultPhaseIdx); }
+    Scalar effectiveViscosity() const
+    { return viscosity(); }
 
     /*!
      * \brief Return the fluid state of the control volume.
@@ -210,8 +210,7 @@ public:
     //! This is needed for completing the fluid state
     template<class FluidState, class ParameterCache>
     static Scalar enthalpy(const FluidState& fluidState,
-                           const ParameterCache& paramCache,
-                           const int defaultPhaseIdx)
+                           const ParameterCache& paramCache)
     {
         return 0;
     }
@@ -239,7 +238,7 @@ class NavierStokesVolumeVariablesImplementation<TypeTag, true>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    static const int defaultPhaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static const int temperatureIdx = Indices::temperatureIdx;
 
 
@@ -278,25 +277,25 @@ public:
                                    FluidState& fluidState)
     {
         fluidState.setTemperature(elemSol[0][Indices::temperatureIdx]);
-        fluidState.setPressure(defaultPhaseIdx, elemSol[0][Indices::pressureIdx]);
+        fluidState.setPressure(phaseIdx, elemSol[0][Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the
         // immiscible multi-phase models, so we have to set it here...
-        fluidState.setSaturation(defaultPhaseIdx, 1.0);
+        fluidState.setSaturation(phaseIdx, 1.0);
 
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState, defaultPhaseIdx);
+        paramCache.updatePhase(fluidState, phaseIdx);
 
-        Scalar value = FluidSystem::density(fluidState, paramCache, defaultPhaseIdx);
-        fluidState.setDensity(defaultPhaseIdx, value);
+        Scalar value = FluidSystem::density(fluidState, paramCache, phaseIdx);
+        fluidState.setDensity(phaseIdx, value);
 
-        value = FluidSystem::viscosity(fluidState, paramCache, defaultPhaseIdx);
-        fluidState.setViscosity(defaultPhaseIdx, value);
+        value = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+        fluidState.setViscosity(phaseIdx, value);
 
         // compute and set the enthalpy
-        value = FluidSystem::enthalpy(fluidState, paramCache, defaultPhaseIdx);
-        fluidState.setEnthalpy(defaultPhaseIdx, value);
+        value = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
+        fluidState.setEnthalpy(phaseIdx, value);
     }
 
     /*!
@@ -304,28 +303,28 @@ public:
      *        sub-control volume.
      */
     Scalar internalEnergy() const
-    { return this->fluidState_.internalEnergy(defaultPhaseIdx); }
+    { return this->fluidState_.internalEnergy(phaseIdx); }
 
     /*!
      * \brief Returns the total enthalpy of the fluid phase in the sub-control
      *        volume.
      */
     Scalar enthalpy() const
-    { return this->fluidState_.enthalpy(defaultPhaseIdx); }
+    { return this->fluidState_.enthalpy(phaseIdx); }
 
     /*!
      * \brief Return the specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$
      *        in the sub-control volume.
      */
     Scalar heatCapacity() const
-    { return FluidSystem::heatCapacity(this->fluidState_, defaultPhaseIdx); }
+    { return FluidSystem::heatCapacity(this->fluidState_, phaseIdx); }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
      *        of the fluid phase in the sub-control volume.
      */
     Scalar thermalConductivity() const
-    { return FluidSystem::thermalConductivity(this->fluidState_, defaultPhaseIdx); }
+    { return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); }
 
     //! The temperature is a primary variable for non-isothermal models
     using ParentType::temperature;
@@ -342,10 +341,9 @@ public:
     //! This is needed for completing the fluid state
     template<class FluidState, class ParameterCache>
     static Scalar enthalpy(const FluidState& fluidState,
-                           const ParameterCache& paramCache,
-                           const int defaultPhaseIdx)
+                           const ParameterCache& paramCache)
     {
-        return FluidSystem::enthalpy(fluidState, paramCache, defaultPhaseIdx);
+        return FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
     }
 
 };
