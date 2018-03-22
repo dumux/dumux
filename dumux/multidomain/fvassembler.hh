@@ -444,43 +444,12 @@ private:
     }
 
     // get diagonal block pattern
-    template<std::size_t i, std::size_t j, typename std::enable_if_t<(i==j && FVGridGeometry<i>::discMethod != DiscretizationMethod::staggered), int> = 0>
+    template<std::size_t i, std::size_t j, typename std::enable_if_t<(i==j), int> = 0>
     Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainI,
                                              Dune::index_constant<j> domainJ) const
     {
-        const auto& gg = fvGridGeometry(domainI);
-        auto pattern = getJacobianPattern<isImplicit>(gg);
-
-        // add additional dof dependencies
-        for (const auto& element0 : elements(gg.gridView()))
-        {
-            const auto globalI = gg.elementMapper().index(element0);
-            const auto& additionalDofDeps = couplingManager_->getAdditionalDofDependencies(domainI, globalI);
-            for (const auto globalJ : additionalDofDeps)
-                pattern.add(globalI, globalJ);
-        }
-
-        return pattern;
-    }
-
-    // get diagonal block pattern
-    template<std::size_t i, std::size_t j, typename std::enable_if_t<(i==j && FVGridGeometry<i>::discMethod == DiscretizationMethod::staggered), int> = 0>
-    Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainI,
-                                             Dune::index_constant<j> domainJ) const
-    {
-        const auto& gg = fvGridGeometry(domainI);
-        auto pattern = getJacobianPattern<isImplicit>(gg);
-
-        // add additional dof dependencies
-        // for (const auto& element0 : elements(gg.gridView()))
-        // {
-        //     const auto globalI = gg.elementMapper().index(element0);
-        //     const auto& additionalDofDeps = couplingManager_->getAdditionalDofDependencies(domainI, globalI);
-        //     for (const auto globalJ : additionalDofDeps)
-        //         pattern.add(globalI, globalJ);
-        // }
-
-        return pattern;
+        const auto& additionalDofDependicies = this->couplingManager_->additionalDofDependicies(domainI);
+        return getJacobianPattern<isImplicit>(fvGridGeometry(domainI), additionalDofDependicies);
     }
 
     // get coupling block pattern

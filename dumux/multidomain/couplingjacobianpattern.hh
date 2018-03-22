@@ -27,8 +27,51 @@
 #include <type_traits>
 #include <dune/istl/matrixindexset.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/assembly/jacobianpattern.hh>
 
 namespace Dumux {
+
+/*!
+ * \ingroup Assembly
+ * \brief Helper function to generate Jacobian pattern (diagonal blocks)
+ *        for coupled models, accepting a map storing additional dof dependencies.
+ */
+template<bool isImplicit, class GridGeometry, class KeyType, class ValueType>
+Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry,
+                                        const std::unordered_map<KeyType, ValueType>& additionalDofDependencies)
+{
+    Dune::MatrixIndexSet pattern = getJacobianPattern<isImplicit>(gridGeometry);
+
+    for(const auto& entry : additionalDofDependencies)
+    {
+        const auto globalI = entry.first;
+        for(const auto globalJ : entry.second)
+            pattern.add(globalI, globalJ);
+    }
+
+    return pattern;
+}
+
+/*!
+ * \ingroup Assembly
+ * \brief Helper function to generate Jacobian pattern (diagonal blocks)
+ *        for coupled models, accepting a vector like container type storing additional dof dependencies.
+ */
+template<bool isImplicit, class GridGeometry, class Vector>
+Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry,
+                                        const Vector& additionalDofDependencies)
+{
+    Dune::MatrixIndexSet pattern = getJacobianPattern<isImplicit>(gridGeometry);
+
+    for(std::size_t i = 0; i < additionalDofDependencies.size(); ++i)
+    {
+        const auto globalI = i;
+        for(const auto globalJ : additionalDofDependencies[i])
+            pattern.add(globalI, globalJ);
+    }
+
+    return pattern;
+}
 
 /*!
  * \ingroup Assembly
