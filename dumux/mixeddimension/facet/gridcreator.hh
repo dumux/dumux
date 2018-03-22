@@ -110,33 +110,51 @@ public:
         using BoundarySegmentToMarkerMap = std::vector<int>;
     };
 
-    //! Returns the maps of element markers
-    typename Traits::ElementToDomainMarkerMap& elementMarkerMap(std::size_t id)
+    //! Returns domain marker of an element
+    template<std::size_t id>
+    typename Traits::ElementToDomainMarkerMap::value_type
+    getElementDomainMarker(const typename Grid<id>::template Codim<0>::Entity& element)
+    { return elementMarkerMaps_[id][gridFactory<id>().insertionIndex(element)]; }
+
+    //! Returns the boundary marker of an intersection
+    template<std::size_t id>
+    typename Traits::BoundarySegmentToMarkerMap::value_type
+    getBoundaryDomainMarker(const typename Grid<id>::LeafGridView::Intersection& is)
     {
-        assert(id < numGrids && "Index exceeds number of grids provided");
-        return elementMarkerMaps_[id];
+        // this should only be called for intersections that were inserted
+        assert(gridFactory<id>().wasInserted(is) && "Can't obtain boundary markers for intersections that weren't inserted!");
+        return boundaryMarkerMaps_[id][gridFactory<id>().insertionIndex(is)];
     }
 
-    //! Returns the maps of domain markers
-    typename Traits::BoundarySegmentToMarkerMap& boundaryMarkerMap(std::size_t id)
+    //! Returns the insertion indices of the entities embedded in given element
+    template<std::size_t id>
+    const typename Traits::EmbeddedEntityMap::mapped_type
+    embeddedEntityIndices(const typename Grid<id>::template Codim<0>::Entity& element)
     {
-        assert(id < numGrids && "Index exceeds number of grids provided");
-        return boundaryMarkerMaps_[id];
+        const auto& map = embeddedEntityMaps_[id];
+        auto it = map.find( gridFactory<id>().insertionIndex(element) );
+        if (it != map.end()) return it->second;
+        else return typename Traits::EmbeddedEntityMap::mapped_type();
+    }
+
+    //! Returns the insertion indices of the entities in which the element is embedded
+    template<std::size_t id>
+    const typename Traits::EmbedmentMap::mapped_type
+    embedmentEntityIndices(const typename Grid<id>::template Codim<0>::Entity& element)
+    {
+        const auto& map = embedmentMaps_[id];
+        auto it = map.find( gridFactory<id>().insertionIndex(element) );
+        if (it != map.end()) return it->second;
+        else return typename Traits::EmbedmentMap::mapped_type();
     }
 
     //! Returns the maps of the embedded entities
     typename Traits::EmbeddedEntityMap& embeddedEntityMap(std::size_t id)
-    {
-        assert(id < numGrids && "Index exceeds number of grids provided");
-        return embeddedEntityMaps_[id];
-    }
+    { assert(id < numGrids); return embeddedEntityMaps_[id]; }
 
     //! Returns the maps of the embedments
     typename Traits::EmbedmentMap& embedmentMap(std::size_t id)
-    {
-        assert(id < numGrids && "Index exceeds number of grids provided");
-        return embedmentMaps_[id];
-    }
+    { assert(id < numGrids); return embedmentMaps_[id]; }
 
     //! creates the grids from a given grid file using the parameter tree
     void makeGrids(const std::string& fileName, const std::string& paramGroup = "")

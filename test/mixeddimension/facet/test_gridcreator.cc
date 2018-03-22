@@ -78,38 +78,28 @@ int main (int argc, char *argv[]) try
     // all entities should have the domain index 10
     for (const auto& e : elements(bulkGridView))
     {
-        const auto insertionIdx = gridCreator.gridFactory<0>().insertionIndex(e);
-        const auto domainMarker = gridCreator.elementMarkerMap(0)[insertionIdx];
+        const auto domainMarker = gridCreator.getElementDomainMarker<0>(e);
         if (domainMarker != 10)
             DUNE_THROW(Dune::InvalidStateException, "Bulk element has domain marker " << domainMarker << " instead of 10");
     }
 
     for (const auto& e : elements(facetGridView))
     {
-        const auto insertionIdx = gridCreator.gridFactory<1>().insertionIndex(e);
-        const auto domainMarker = gridCreator.elementMarkerMap(1)[insertionIdx];
+        const auto domainMarker = gridCreator.getElementDomainMarker<1>(e);
         if (domainMarker != 10)
             DUNE_THROW(Dune::InvalidStateException, "Facet element has domain marker " << domainMarker << " instead of 10");
     }
 
     for (const auto& e : elements(edgeGridView))
     {
-        const auto insertionIdx = gridCreator.gridFactory<2>().insertionIndex(e);
-        const auto domainMarker = gridCreator.elementMarkerMap(2)[insertionIdx];
+        const auto domainMarker = gridCreator.getElementDomainMarker<2>(e);
         if (domainMarker != 10)
             DUNE_THROW(Dune::InvalidStateException, "Edge element has domain marker " << domainMarker << " instead of 10");
     }
 
-    // we have defined boundary segments for the bulk grid
-    if (gridCreator.boundaryMarkerMap(0).size() != 200)
-        DUNE_THROW(Dune::InvalidStateException, "Bulk grid has " << gridCreator.boundaryMarkerMap(0).size() << " instead of 200 boundary segments");
-    if (gridCreator.boundaryMarkerMap(1).size() != 0)
-        DUNE_THROW(Dune::InvalidStateException, "Facet grid has " << gridCreator.boundaryMarkerMap(1).size() << " instead of 0 boundary segments");
-    if (gridCreator.boundaryMarkerMap(2).size() != 0)
-        DUNE_THROW(Dune::InvalidStateException, "Edge grid has " << gridCreator.boundaryMarkerMap(3).size() << " instead of 0 boundary segments");
-
     // Check boundary boundary segments. There should be mesh
     // file-defined segments on all sides except the positive x-direction
+    std::size_t bSegmentCount = 0;
     std::size_t negXCount, posYCount, negYCount, posZCount, negZCount;
     negXCount = posYCount = negYCount = posZCount = negZCount = 0;
     for (const auto& e : elements(bulkGridView))
@@ -122,8 +112,8 @@ int main (int argc, char *argv[]) try
 
                 if (gridCreator.gridFactory<0>().wasInserted(is))
                 {
-                    const auto insIdx = gridCreator.gridFactory<0>().insertionIndex(is);
-                    const auto marker = gridCreator.boundaryMarkerMap(0)[insIdx];
+                    bSegmentCount++;
+                    const auto marker = gridCreator.getBoundaryDomainMarker<0>(is);
                     if (Dune::FloatCmp::eq(n[0], -1.0, 1e-6)) // neg x-dir
                     {
                         if (marker != 4)
@@ -165,11 +155,12 @@ int main (int argc, char *argv[]) try
     }
 
     //! make sure we found the right number of boundary segments
-    if (negXCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << negXCount << " instead of 0 boundary segments in neg x-direction");
-    if (posYCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << posYCount << " instead of 0 boundary segments in pos y-direction");
-    if (negYCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << negYCount << " instead of 0 boundary segments in neg y-direction");
-    if (posZCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << posZCount << " instead of 0 boundary segments in pos z-direction");
-    if (negZCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << negZCount << " instead of 0 boundary segments in neg z-direction");
+    if (bSegmentCount != 200) DUNE_THROW(Dune::InvalidStateException, "Found " << bSegmentCount << " instead of 200 boundary segments");
+    if (negXCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << negXCount << " instead of 40 boundary segments in neg x-direction");
+    if (posYCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << posYCount << " instead of 40 boundary segments in pos y-direction");
+    if (negYCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << negYCount << " instead of 40 boundary segments in neg y-direction");
+    if (posZCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << posZCount << " instead of 40 boundary segments in pos z-direction");
+    if (negZCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << negZCount << " instead of 40 boundary segments in neg z-direction");
 
     //! check if we found the right number of embeddings
     const auto& edgeEmbeddings = gridCreator.embeddedEntityMap(2);
