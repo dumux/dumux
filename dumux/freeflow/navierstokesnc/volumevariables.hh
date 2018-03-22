@@ -88,7 +88,7 @@ public:
         int compIIdx = mainCompIdx;
         for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
         {
-            // binary diffusion coefficents
+            // binary diffusion coefficients
             if(compIIdx!= compJIdx)
             {
                 setDiffusionCoefficient_(compJIdx,
