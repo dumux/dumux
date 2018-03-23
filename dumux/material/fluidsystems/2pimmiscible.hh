@@ -296,7 +296,7 @@ public:
      * \brief Calculate the fugacity coefficient \f$\mathrm{[-]}\f$ of an individual
      *        component in a fluid phase
      *
-     * The fugacity coefficient \f$\mathrm{\phi_\kappa_\alpha}\f$ is connected to the
+     * The fugacity coefficient \f$\mathrm{\phi^\kappa_\alpha}\f$ is connected to the
      * fugacity \f$\mathrm{f^\kappa_\alpha}\f$ and the component's mole
      * fraction \f$\mathrm{x^\kappa_\alpha}\f$ by means of the relation
      *
