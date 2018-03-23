@@ -239,6 +239,7 @@ public:
         ScalarField &rhoN = *writer.allocateManagedBuffer(numVertices);
         ScalarField &Te = *writer.allocateManagedBuffer(numVertices);
 
+        ScalarField &E = *writer.allocateManagedBuffer(numElements);
         // create the required fields for element data
         // effective stresses
         VectorField &deltaEffStressX = *writer.template allocateManagedBuffer<Scalar,
@@ -248,11 +249,11 @@ public:
         VectorField &deltaEffStressZ = *writer.template allocateManagedBuffer<Scalar,
                 dim>(numElements);
         // total stresses
-        VectorField &totalStressX = *writer.template allocateManagedBuffer<
+        VectorField &totalEffStressX = *writer.template allocateManagedBuffer<
                 Scalar, dim>(numElements);
-        VectorField &totalStressY = *writer.template allocateManagedBuffer<
+        VectorField &totalEffStressY = *writer.template allocateManagedBuffer<
                 Scalar, dim>(numElements);
-        VectorField &totalStressZ = *writer.template allocateManagedBuffer<
+        VectorField &totalEffStressZ = *writer.template allocateManagedBuffer<
                 Scalar, dim>(numElements);
         // initial stresses
         VectorField &initStressX = *writer.template allocateManagedBuffer<
@@ -274,6 +275,8 @@ public:
         ScalarField &effPorosity = *writer.allocateManagedBuffer(numElements);
         ScalarField &effectivePressure = *writer.allocateManagedBuffer(numElements);
         ScalarField &deltaEffPressure = *writer.allocateManagedBuffer(numElements);
+        ScalarField &initialPressure = *writer.allocateManagedBuffer(numElements);
+        ScalarField &pInit = *writer.allocateManagedBuffer(numVertices);
 
 
         ScalarField &Pcrtens = *writer.allocateManagedBuffer(numElements);
@@ -289,11 +292,11 @@ public:
             if (dim >= 3)
                 deltaEffStressZ[eIdx] = Scalar(0.0);
 
-            totalStressX[eIdx] = Scalar(0.0);
+            totalEffStressX[eIdx] = Scalar(0.0);
             if (dim >= 2)
-                totalStressY[eIdx] = Scalar(0.0);
+                totalEffStressY[eIdx] = Scalar(0.0);
             if (dim >= 3)
-                totalStressZ[eIdx] = Scalar(0.0);
+                totalEffStressZ[eIdx] = Scalar(0.0);
 
             initStressX[eIdx] = Scalar(0.0);
             if (dim >= 2)
@@ -311,10 +314,17 @@ public:
             effKx[eIdx] = Scalar(0.0);
             effectivePressure[eIdx] = Scalar(0.0);
             deltaEffPressure[eIdx] = Scalar(0.0);
+            initialPressure[eIdx] = Scalar(0.0);
+            pInit[eIdx] = Scalar(0.0);
 
             Pcrtens[eIdx] = Scalar(0.0);
             Pcrshe[eIdx] = Scalar(0.0);
         }
+
+        // calculate principal stresses i.e. the eigenvalues of the total stress tensor
+        Scalar a1, a2, a3;
+        DimMatrix totalEffStress;
+        DimVector eigenValues;
 
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
 
@@ -405,7 +415,8 @@ public:
             const GlobalPosition& cellCenter = geometry.center();
             const GlobalPosition& cellCenterLocal = geometry.local(cellCenter);
 
-            deltaEffPressure[eIdx] = effectivePressure[eIdx] + this->problem().pInit(cellCenter, cellCenterLocal, element);
+            deltaEffPressure[eIdx] = effectivePressure[eIdx] + this->problem_().pInit(cellCenter, cellCenterLocal, element);
+            initialPressure[eIdx] = -1.0 * this->problem().pInit(cellCenter, cellCenterLocal, element);
             // determin changes in effective stress from current solution
             // evaluate gradient of displacement shape functions
             std::vector<JacobianType_V> vRefShapeGradient(dispSize);
@@ -472,7 +483,7 @@ public:
             }
 
             // retrieve prescribed initial stresses from problem file
-            DimVector tmpInitStress = this->problem_().initialStress(cellCenter, 0);
+            DimVector tmpInitStress = this->problem_().initialStress(cellCenter);
             if(rockMechanicsSignConvention_){
                 initStressX[eIdx][0] = tmpInitStress[0];
                 if (dim >= 2) {
@@ -496,54 +507,46 @@ public:
             // in case of rock mechanics sign convention compressive stresses
             // are defined to be positive and total stress is calculated by adding the pore pressure
             if(rockMechanicsSignConvention_){
-                totalStressX[eIdx][0] = initStressX[eIdx][0] + deltaEffStressX[eIdx][0]    + deltaEffPressure[eIdx];
+                totalEffStressX[eIdx][0] = initStressX[eIdx][0] + deltaEffStressX[eIdx][0]    - initialPressure[eIdx];
                 if (dim >= 2) {
-                    totalStressX[eIdx][1] = initStressX[eIdx][1] + deltaEffStressX[eIdx][1];
-                    totalStressY[eIdx][0] = initStressY[eIdx][0] + deltaEffStressY[eIdx][0];
-                    totalStressY[eIdx][1] = initStressY[eIdx][1] + deltaEffStressY[eIdx][1]    + deltaEffPressure[eIdx];
+                    totalEffStressX[eIdx][1] = initStressX[eIdx][1] + deltaEffStressX[eIdx][1];
+                    totalEffStressY[eIdx][0] = initStressY[eIdx][0] + deltaEffStressY[eIdx][0];
+                    totalEffStressY[eIdx][1] = initStressY[eIdx][1] + deltaEffStressY[eIdx][1]    - initialPressure[eIdx];
                 }
                 if (dim >= 3) {
-                    totalStressX[eIdx][2] = initStressX[eIdx][2] + deltaEffStressX[eIdx][2];
-                    totalStressY[eIdx][2] = initStressY[eIdx][2] + deltaEffStressY[eIdx][2];
-                    totalStressZ[eIdx][0] = initStressZ[eIdx][0] + deltaEffStressZ[eIdx][0];
-                    totalStressZ[eIdx][1] = initStressZ[eIdx][1] + deltaEffStressZ[eIdx][1];
-                    totalStressZ[eIdx][2] = initStressZ[eIdx][2] + deltaEffStressZ[eIdx][2]    + deltaEffPressure[eIdx];
+                    totalEffStressX[eIdx][2] = initStressX[eIdx][2] + deltaEffStressX[eIdx][2];
+                    totalEffStressY[eIdx][2] = initStressY[eIdx][2] + deltaEffStressY[eIdx][2];
+                    totalEffStressZ[eIdx][0] = initStressZ[eIdx][0] + deltaEffStressZ[eIdx][0];
+                    totalEffStressZ[eIdx][1] = initStressZ[eIdx][1] + deltaEffStressZ[eIdx][1];
+                    totalEffStressZ[eIdx][2] = initStressZ[eIdx][2] + deltaEffStressZ[eIdx][2]    - initialPressure[eIdx];
                 }
             }
             else{
-                totalStressX[eIdx][0] = initStressX[eIdx][0] + deltaEffStressX[eIdx][0]    - deltaEffPressure[eIdx];
+                totalEffStressX[eIdx][0] = initStressX[eIdx][0] + deltaEffStressX[eIdx][0]    + initialPressure[eIdx];
                 if (dim >= 2) {
-                    totalStressX[eIdx][1] = initStressX[eIdx][1] + deltaEffStressX[eIdx][1];
-                    totalStressY[eIdx][0] = initStressY[eIdx][0] + deltaEffStressY[eIdx][0];
-                    totalStressY[eIdx][1] = initStressY[eIdx][1] + deltaEffStressY[eIdx][1]    - deltaEffPressure[eIdx];
+                    totalEffStressX[eIdx][1] = initStressX[eIdx][1] + deltaEffStressX[eIdx][1];
+                    totalEffStressY[eIdx][0] = initStressY[eIdx][0] + deltaEffStressY[eIdx][0];
+                    totalEffStressY[eIdx][1] = initStressY[eIdx][1] + deltaEffStressY[eIdx][1]    + initialPressure[eIdx];
                 }
                 if (dim >= 3) {
-                    totalStressX[eIdx][2] = initStressX[eIdx][2] + deltaEffStressX[eIdx][2];
-                    totalStressY[eIdx][2] = initStressY[eIdx][2] + deltaEffStressY[eIdx][2];
-                    totalStressZ[eIdx][0] = initStressZ[eIdx][0] + deltaEffStressZ[eIdx][0];
-                    totalStressZ[eIdx][1] = initStressZ[eIdx][1] + deltaEffStressZ[eIdx][1];
-                    totalStressZ[eIdx][2] = initStressZ[eIdx][2] + deltaEffStressZ[eIdx][2]    - deltaEffPressure[eIdx];
+                    totalEffStressX[eIdx][2] = initStressX[eIdx][2] + deltaEffStressX[eIdx][2];
+                    totalEffStressY[eIdx][2] = initStressY[eIdx][2] + deltaEffStressY[eIdx][2];
+                    totalEffStressZ[eIdx][0] = initStressZ[eIdx][0] + deltaEffStressZ[eIdx][0];
+                    totalEffStressZ[eIdx][1] = initStressZ[eIdx][1] + deltaEffStressZ[eIdx][1];
+                    totalEffStressZ[eIdx][2] = initStressZ[eIdx][2] + deltaEffStressZ[eIdx][2]    + initialPressure[eIdx];
                 }
             }
-        }
 
-        // calculate principal stresses i.e. the eigenvalues of the total stress tensor
-        Scalar a1, a2, a3;
-        DimMatrix totalStress;
-        DimVector eigenValues;
-
-        for (unsigned int eIdx = 0; eIdx < numElements; eIdx++)
-        {
             eigenValues = Scalar(0);
-            totalStress = Scalar(0);
+            totalEffStress = Scalar(0);
 
-            totalStress[0] = totalStressX[eIdx];
+            totalEffStress[0] = totalEffStressX[eIdx];
             if (dim >= 2)
-                totalStress[1] = totalStressY[eIdx];
+                totalEffStress[1] = totalEffStressY[eIdx];
             if (dim >= 3)
-                totalStress[2] = totalStressZ[eIdx];
+                totalEffStress[2] = totalEffStressZ[eIdx];
 
-            calculateEigenValues<dim>(eigenValues, totalStress);
+            calculateEigenValues<dim>(eigenValues, totalEffStress);
 
 
             for (int i = 0; i < dim; i++)
@@ -617,19 +620,47 @@ public:
             Scalar sigmam = 0.0;
             Scalar Peff = effectivePressure[eIdx];
 
-            Scalar theta = M_PI / 6;
-            Scalar S0 = 0.0;
-            taum = (principalStress1[eIdx] - principalStress3[eIdx]) / 2;
-            sigmam = (principalStress1[eIdx] + principalStress3[eIdx]) / 2;
+            const Dune::FieldVector<Scalar,2> failureCurveParams = this->problem_().spatialParams().failureCurveParams(element, fvGeometry, 0);
+            Scalar frictionAngle = failureCurveParams[0];
+            Scalar cohesion = failureCurveParams[1];
 
-            using std::abs;
-            using std::sin;
-            using std::cos;
-            Scalar Psc = -abs(taum) / sin(theta) + S0 * cos(theta) / sin(theta)
-                    + sigmam;
-            // Pressure margins according to J. Rutqvist et al. / International Journal of Rock Mecahnics & Mining Sciences 45 (2008), 132-143
-            Pcrtens[eIdx] = Peff - principalStress3[eIdx];
-            Pcrshe[eIdx] = Peff - Psc;
+            if (dim == 2)
+            {
+                taum = (principalStress1[eIdx] - principalStress2[eIdx]) / 2;
+                sigmam = (principalStress1[eIdx] + principalStress2[eIdx]) / 2;
+            }
+            if (dim == 3)
+            {
+                taum = (principalStress1[eIdx] - principalStress3[eIdx]) / 2;
+                sigmam = (principalStress1[eIdx] + principalStress3[eIdx]) / 2;
+            }
+
+            bool MohrCoulombWorstCase = GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.MohrCoulombWorstCase);
+            if (MohrCoulombWorstCase == true)
+            {
+
+                Scalar Psc = -fabs(taum) / sin(frictionAngle) + cohesion * cos(frictionAngle) / sin(frictionAngle) + sigmam;
+                Pcrshe[eIdx] = Peff - Psc;
+            }
+            else
+            {
+                Scalar FaultAngle = GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.FaultAngle);
+                Scalar sigmaFault = 0.0;
+                Scalar tauFault = 0.0;
+                if (dim == 2)
+                {
+                    sigmaFault = 0.5 * (totalEffStressX[eIdx][0] + totalEffStressY[eIdx][1]) + 0.5 * (totalEffStressX[eIdx][0] - totalEffStressY[eIdx][1])*cos(2.0*FaultAngle * M_PI / 180.0) + totalEffStressX[eIdx][1]*sin(2.0*FaultAngle * M_PI / 180.0);
+                    tauFault   =                                                       - 0.5 * (totalEffStressX[eIdx][0] - totalEffStressY[eIdx][1])*sin(2.0*FaultAngle * M_PI / 180.0) + totalEffStressX[eIdx][1]*cos(2.0*FaultAngle * M_PI / 180.0);
+                }
+                if (dim == 3)
+                {
+                    std::cout << "WARNING: Inclined elements only implemented in 2D" << std::endl;
+                }
+
+                Scalar sigmaFailureCurve = (std::abs(tauFault) - cohesion) / tan(frictionAngle);
+
+                Pcrshe[eIdx] =  sigmaFailureCurve - sigmaFault;
+            }
 
         }
 
@@ -643,38 +674,39 @@ public:
         writer.attachVertexData(rhoN, "rhoN");
         writer.attachVertexData(displacement, "u", dim);
 
-        writer.attachCellData(deltaEffStressX, "effective stress changes X", dim);
+        writer.attachCellData(deltaEffStressX, "effectiveStressChangesX", dim);
         if (dim >= 2)
-            writer.attachCellData(deltaEffStressY, "effective stress changes Y",    dim);
+            writer.attachCellData(deltaEffStressY, "effectiveStressChangesY",    dim);
         if (dim >= 3)
-            writer.attachCellData(deltaEffStressZ, "effective stress changes Z",    dim);
+            writer.attachCellData(deltaEffStressZ, "effectiveStressChangesZ",    dim);
 
-        writer.attachCellData(principalStress1, "principal stress 1");
+        writer.attachCellData(principalStress1, "principalstress1");
         if (dim >= 2)
-            writer.attachCellData(principalStress2, "principal stress 2");
+            writer.attachCellData(principalStress2, "principalstress2");
         if (dim >= 3)
-            writer.attachCellData(principalStress3, "principal stress 3");
+            writer.attachCellData(principalStress3, "principalstress3");
 
-        writer.attachCellData(totalStressX, "total stresses X", dim);
+        writer.attachCellData(totalEffStressX, "totalstressesX", dim);
         if (dim >= 2)
-            writer.attachCellData(totalStressY, "total stresses Y", dim);
+            writer.attachCellData(totalEffStressY, "totalstressesY", dim);
         if (dim >= 3)
-            writer.attachCellData(totalStressZ, "total stresses Z", dim);
+            writer.attachCellData(totalEffStressZ, "totalstressesZ", dim);
 
-        writer.attachCellData(initStressX, "initial stresses X", dim);
+        writer.attachCellData(initStressX, "initialstressesX", dim);
         if (dim >= 2)
-            writer.attachCellData(initStressY, "initial stresses Y", dim);
+            writer.attachCellData(initStressY, "initialstressesY", dim);
         if (dim >= 3)
-            writer.attachCellData(initStressZ, "initial stresses Z", dim);
+            writer.attachCellData(initStressZ, "initialstressesZ", dim);
 
-        writer.attachCellData(deltaEffPressure, "delta pEff");
-         writer.attachCellData(effectivePressure, "effectivePressure");
+        writer.attachCellData(deltaEffPressure, "deltapEff");
+        writer.attachVertexData(pInit, "pInit");
+        writer.attachCellData(effectivePressure, "effectivePressure");
         writer.attachCellData(Pcrtens, "Pcr_tensile");
         writer.attachCellData(Pcrshe, "Pcr_shear");
-        writer.attachCellData(effKx, "effective Kxx");
-        writer.attachCellData(effPorosity, "effective Porosity");
+        writer.attachCellData(effKx, "effectiveKxx");
+        writer.attachCellData(effPorosity, "effectivePorosity");
 
-
+        writer.attachCellData(E, "E");
     }
 
     /*!

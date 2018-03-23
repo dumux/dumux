@@ -107,6 +107,17 @@ public:
         // non-wetting phase mass
         storage[contiNEqIdx] = volVars.density(nPhaseIdx)
                 * volVars.saturation(nPhaseIdx) * volVars.effPorosity;
+
+        int eIdx = this->problem_().model().elementMapper().index(this->element_());
+
+//         if ( (this->problem_().coupled() == true) && (eIdx == 221) )
+//         {
+//             std::cout.precision(15);
+//             std::cout << "usePrevSol = " << usePrevSol << std::endl;
+//             std::cout << "volVars.saturation(wPhaseIdx) = " << volVars.saturation(wPhaseIdx) << std::endl;
+//             std::cout << "volVars.effPorosity = " << volVars.effPorosity << std::endl;
+//             std::cout << "storage[contiNEqIdx] at [" << scvIdx << "] = " << storage[contiNEqIdx] << std::endl;
+//         }
     }
 
     /*!
@@ -127,8 +138,16 @@ public:
                         fIdx,
                         this->curVolVars_());
 
+        FluxVariables fluxVarsOld;
+        fluxVarsOld.update(this->problem_(),
+                        this->element_(),
+                        this->fvGeometry_(),
+                        fIdx,
+                        this->prevVolVars_());
+
         flux = 0;
-        this->computeAdvectiveFlux(flux, fluxVars);
+
+        this->computeAdvectiveFlux(flux, fluxVars, fluxVarsOld);
     }
 
     /*!
@@ -142,23 +161,22 @@ public:
      * derived models to ease adding equations selectively.
      */
     void computeAdvectiveFlux(PrimaryVariables &flux,
-            const FluxVariables &fluxVars) const {
+            const FluxVariables &fluxVars,  const FluxVariables &fluxVarsOld) const {
         // calculate effective permeability based on effective porosity
         // according to the relation given in Rutqvist and Tsang (2002)
         // this evaluation should be moved to another location
         DimVector tmpVec;
-
         DimMatrix Keff, Keff_i, Keff_j;
-        Keff_i = EffectivePermeabilityModel::effectivePermeability(this->curVolVars_()[fluxVars.face().i],
-                              this->problem_().spatialParams(),
-                              this->element_(),
-                              this->fvGeometry_(),
-                              fluxVars.face().i);
-        Keff_j = EffectivePermeabilityModel::effectivePermeability(this->curVolVars_()[fluxVars.face().j],
-                              this->problem_().spatialParams(),
-                              this->element_(),
-                              this->fvGeometry_(),
-                              fluxVars.face().j);
+//         Keff_i = EffectivePermeabilityModel::effectivePermeability(this->curVolVars_()[fluxVars.face().i],
+//                               this->problem_().spatialParams(),
+//                               this->element_(),
+//                               this->fvGeometry_(),
+//                               fluxVars.face().i);
+//         Keff_j = EffectivePermeabilityModel::effectivePermeability(this->curVolVars_()[fluxVars.face().j],
+//                               this->problem_().spatialParams(),
+//                               this->element_(),
+//                               this->fvGeometry_(),
+//                               fluxVars.face().j);
 
         this->problem_().spatialParams().meanK(Keff, Keff_i, Keff_j);
         // loop over all phases
@@ -187,19 +205,49 @@ public:
 
             // add advective flux of current phase
             int eqIdx = (phaseIdx == wPhaseIdx) ? contiWEqIdx : contiNEqIdx;
-            flux[eqIdx] += normalFlux
+//             flux[eqIdx] += normalFlux
+//                     * ((massUpwindWeight_) * up.density(phaseIdx)
+//                             * up.mobility(phaseIdx)
+//                             + (massUpwindWeight_) * dn.density(phaseIdx)
+//                                     * dn.mobility(phaseIdx));
+                flux[eqIdx] += normalFlux
                     * ((massUpwindWeight_) * up.density(phaseIdx)
-                            * up.mobility(phaseIdx)
-                            + (1.0 - massUpwindWeight_) * dn.density(phaseIdx)
-                                    * dn.mobility(phaseIdx));
+                     + (1 - massUpwindWeight_) * dn.density(phaseIdx) )
+                    * ((mobilityUpwindWeight_) * up.mobility(phaseIdx)
+                     + (1 - mobilityUpwindWeight_) * dn.mobility(phaseIdx) );
 
             // if geomechanical feedback on flow is taken into account add the flux contribution
             // of the displacement velocity
 
-            if (this->problem_().coupled() == true) {
-                // use upwind displacement velocity to calculate phase transport (?)
-                flux[eqIdx] += up.effPorosity * up.saturation(phaseIdx)
-                        * up.density(phaseIdx) * fluxVars.timeDerivUNormal();
+//             if (this->problem_().coupled() == true) {
+//                 // use upwind displacement velocity to calculate phase transport (?)
+//                 flux[eqIdx] += up.effPorosity * up.saturation(phaseIdx)
+//                         * up.density(phaseIdx) * fluxVars.timeDerivUNormal();
+//             }
+
+            if (this->problem_().coupled() == true && phaseIdx == 0) {
+                if (!fluxVars.onBoundary())
+                {
+                    Dune::FieldVector<Scalar,2> lameParams = this->problem_().spatialParams().lameParams(this->element_(), this->fvGeometry_(), 0);
+
+                    Scalar lambda = lameParams[0];
+                    Scalar mu = lameParams[1];
+
+                    Scalar dt = this->problem_().timeManager().timeStepSize();
+                    Scalar beta = GET_RUNTIME_PARAM(TypeTag, Scalar, Damping.Beta);
+
+                    Scalar currentGradP = fluxVars.potentialGrad(phaseIdx)* fluxVars.face().normal;
+                    Scalar oldGradP = fluxVarsOld.potentialGrad(phaseIdx)* fluxVarsOld.face().normal;
+                    Scalar dGradP = currentGradP - oldGradP;
+
+                    Scalar stabilizationTerm = dGradP;
+                    stabilizationTerm *= fluxVars.face().area * fluxVars.face().area;
+                    stabilizationTerm /= beta * (lambda + 2.0 * mu);
+
+                    stabilizationTerm /= dt;
+
+//                     flux[eqIdx] -= stabilizationTerm;
+                }
             }
 
         }
@@ -228,6 +276,7 @@ protected:
 
 private:
     Scalar massUpwindWeight_;
+    Scalar mobilityUpwindWeight_;
 };
 }
 #endif

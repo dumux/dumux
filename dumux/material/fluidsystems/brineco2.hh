@@ -95,11 +95,11 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static std::string phaseName(int phaseIdx)
+    static const char *phaseName(int phaseIdx)
     {
-        static std::string name[] = {
-            std::string("l"),
-            std::string("g")
+        static const char *name[] = {
+            "l",
+            "g"
         };
 
         assert(0 <= phaseIdx && phaseIdx < numPhases);
@@ -125,7 +125,7 @@ public:
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
      * are independent on the fluid composition. This assumption is true
-     * if Henry's law and Raoult's law apply. If you are unsure what
+     * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
      * in some cases.
@@ -160,9 +160,9 @@ public:
      *
      * \param compIdx The index of the component to consider
      */
-    static std::string componentName(int compIdx)
+    static const char *componentName(int compIdx)
     {
-        static std::string name[] = {
+        static const char *name[] = {
             Brine::name(),
             CO2::name(),
         };
@@ -240,10 +240,8 @@ public:
             // use normalized composition for to calculate the density
             // (the relations don't seem to take non-normalized
             // compositions too well...)
-            using std::min;
-            using std::max;
-            Scalar xlBrine = min(1.0, max(0.0, fluidState.moleFraction(wPhaseIdx, BrineIdx)));
-            Scalar xlCO2 = min(1.0, max(0.0, fluidState.moleFraction(wPhaseIdx, CO2Idx)));
+            Scalar xlBrine = std::min(1.0, std::max(0.0, fluidState.moleFraction(wPhaseIdx, BrineIdx)));
+            Scalar xlCO2 = std::min(1.0, std::max(0.0, fluidState.moleFraction(wPhaseIdx, CO2Idx)));
             Scalar sumx = xlBrine + xlCO2;
             xlBrine /= sumx;
             xlCO2 /= sumx;
@@ -262,10 +260,8 @@ public:
             // use normalized composition for to calculate the density
             // (the relations don't seem to take non-normalized
             // compositions too well...)
-            using std::min;
-            using std::max;
-            Scalar xgBrine = min(1.0, max(0.0, fluidState.moleFraction(nPhaseIdx, BrineIdx)));
-            Scalar xgCO2 = min(1.0, max(0.0, fluidState.moleFraction(nPhaseIdx, CO2Idx)));
+            Scalar xgBrine = std::min(1.0, std::max(0.0, fluidState.moleFraction(nPhaseIdx, BrineIdx)));
+            Scalar xgCO2 = std::min(1.0, std::max(0.0, fluidState.moleFraction(nPhaseIdx, CO2Idx)));
             Scalar sumx = xgBrine + xgCO2;
             xgBrine /= sumx;
             xgCO2 /= sumx;
@@ -306,7 +302,7 @@ public:
             result = CO2::gasViscosity(temperature, pressure);
 
         Valgrind::CheckDefined(result);
-        return result;
+        return 0.001;
     }
 
     using Base::fugacityCoefficient;
@@ -367,10 +363,8 @@ public:
                                           xgH2O);
 
         // normalize the phase compositions
-        using std::min;
-        using std::max;
-        xlCO2 = max(0.0, min(1.0, xlCO2));
-        xgH2O = max(0.0, min(1.0, xgH2O));
+        xlCO2 = std::max(0.0, std::min(1.0, xlCO2));
+        xgH2O = std::max(0.0, std::min(1.0, xgH2O));
 
         xlH2O = 1.0 - xlCO2;
         xgCO2 = 1.0 - xgH2O;
@@ -466,7 +460,7 @@ public:
     using Base::binaryDiffusionCoefficient;
     /*!
      * \brief Given the phase compositions, return the binary
-     *        diffusion coefficient \f$\mathrm{[m^2/s]}\f$ of two components in a phase.
+     *        diffusion coefficent \f$\mathrm{[m^2/s]}\f$ of two components in a phase.
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIIdx Index of the component i
@@ -626,16 +620,16 @@ private:
         Valgrind::CheckDefined(xlH2O);
         Valgrind::CheckDefined(xlCO2);
 
-        if(T < 273.15) {
-            DUNE_THROW(NumericalProblem,
-                       "Liquid density for Brine and CO2 is only "
-                       "defined above 273.15K (is" << T << ")");
-        }
-        if(pl >= 2.5e8) {
-            DUNE_THROW(NumericalProblem,
-                       "Liquid density for Brine and CO2 is only "
-                       "defined below 250MPa (is" << pl << ")");
-        }
+//         if(T < 273.15) {
+//             DUNE_THROW(NumericalProblem,
+//                        "Liquid density for Brine and CO2 is only "
+//                        "defined above 273.15K (is" << T << ")");
+//         }
+//         if(pl >= 2.5e8) {
+//             DUNE_THROW(NumericalProblem,
+//                        "Liquid density for Brine and CO2 is only "
+//                        "defined below 250MPa (is" << pl << ")");
+//         }
 
         Scalar rho_brine = Brine::liquidDensity(T, pl);
         Scalar rho_pure = H2O::liquidDensity(T, pl);
@@ -695,7 +689,7 @@ private:
 
 
 #ifdef DUMUX_PROPERTIES_HH
-// forward definitions of the property tags
+// forward defintions of the property tags
 namespace Properties
 {
 NEW_PROP_TAG(Scalar);

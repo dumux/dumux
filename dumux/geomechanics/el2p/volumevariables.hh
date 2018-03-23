@@ -90,6 +90,11 @@ public:
         mu_ = lameParams[1];
 
         rockDensity_ = problem.spatialParams().rockDensity(element, scvIdx);
+
+        // porosity
+        initialPorosity_ = problem.spatialParams().porosity(element,
+                                                     fvGeometry,
+                                                     scvIdx);
     }
 
     /*!
@@ -150,8 +155,15 @@ public:
      DimVector displacement() const
      { return displacement_; }
 
+    /*!
+     * \brief Returns the average porosity within the control volume in \f$[-]\f$.
+     */
+    Scalar initialPorosity() const
+    { return initialPorosity_; }
+
     mutable Scalar divU;
     mutable Scalar effPorosity;
+    mutable Scalar volumetricStrain;
 
 protected:
     Scalar effFluidDensity_;
@@ -160,6 +172,7 @@ protected:
     Scalar lambda_;
     Scalar mu_;
     Scalar rockDensity_;
+    Scalar initialPorosity_;
 
 private:
     Implementation &asImp_()

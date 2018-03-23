@@ -74,6 +74,7 @@ class El2PLocalOperator
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
@@ -301,23 +302,6 @@ public:
              // calculate change in effective pressure with respect to initial conditions pInit (pInit is negativ)
              pEff = pw*sw + pn*sn + model_.problem().pInit(globalPos, it->position(), eg.entity());
              RF uDiv = traceEpsilon;
-             RF porosityEff;
-
-             // assume deformation induced porosity changes
-             if(model_.problem().coupled() == true){
-                if (porosity + uDiv < 1e-3*porosity){
-                    DUNE_THROW(NumericalProblem, "volume change too large");
-                }
-                else
-                    // this equation would be correct if the bulk volume could change (Vol_new = Vol_init * (1+div u)), however, we
-                    // have a constant bulk volume therefore we should apply phi_eff = phi_init + div u
-                    // but this causes convergence problems. Since div u is very small here the chosen relation is
-                    // assumed to be a good approximation
-                    porosityEff = (porosity + uDiv)/(1.0 + uDiv);
-                }
-             // neglect deformation induced porosity changes
-             else
-                porosityEff = porosity;
 
              // fill primary variable vector for current quadrature point
              PrimaryVariables primVars;
@@ -335,6 +319,9 @@ public:
              // NOTE: this overwrites the entries of the volumevariables of node 0
              //       and can cause errors
              volVars.update(primVars, model_.problem(), eg.entity(), fvGeometry, 0, false);
+
+             ElementVolumeVariables elemVolVars;
+             elemVolVars.update(model_.problem(), eg.entity(), fvGeometry, false);
 
              // calculate the density difference for the gravity term
              RF rhoDiff = volVars.density(nPhaseIdx) - volVars.density(wPhaseIdx);
@@ -363,7 +350,7 @@ public:
                     // multiplied with weighting function and geometric weight of quadrature rule.
                     // This assumes that the solid phase density remains constant, that the changes in porosity are very small,
                     // and that the density of the brine phase remains constant
-                    tmp = sn*porosityEff*rhoDiff*model_.problem().gravity()[coordDir]*vBasis[i]* qWeight;
+                    tmp = sn*elemVolVars[i].effPorosity*rhoDiff*model_.problem().gravity()[coordDir]*vBasis[i]* qWeight;
                     r.rawAccumulate(uLFS,i,tmp);
                 }
             }

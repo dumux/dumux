@@ -110,6 +110,8 @@ public:
 
         elTwoPGradients_(problem, element, elemVolVars);
         calculateDDt_(problem, element, elemVolVars);
+
+        onBoundary_ = onBoundary;
     }
 
 public:
@@ -151,6 +153,13 @@ public:
     {
         return this->fvGeometry_().subContVolFace[this->faceIdx_];
     }
+
+    /*!
+     * \brief Indicates if a face is on a boundary. Used for in the
+     *        face() method (e.g. for outflow boundary conditions).
+     */
+    bool onBoundary() const
+    { return onBoundary_; }
 
 protected:
     /*!
@@ -238,6 +247,8 @@ protected:
     GlobalPosition dU_;
     // intrinsic permeability
     DimMatrix K_;
+
+    bool onBoundary_;
 };
 
 } // end namespace
