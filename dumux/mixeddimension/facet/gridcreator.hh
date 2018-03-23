@@ -88,8 +88,10 @@ public:
 
     //! returns the i-th grid
     template<std::size_t id> Grid<id>& grid() { return *std::get<id>(gridPtrTuple_); }
+    template<std::size_t id> const Grid<id>& grid() const { return *std::get<id>(gridPtrTuple_); }
     //! returns the i-th grid factory
     template<std::size_t id> GridFactory<id>& gridFactory() { return std::get<id>(gridFactoryTuple_); }
+    template<std::size_t id> const GridFactory<id>& gridFactory() const { return std::get<id>(gridFactoryTuple_); }
 
     //! Encapsulates types used by this class
     struct Traits
