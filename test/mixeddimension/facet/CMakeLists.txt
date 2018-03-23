@@ -1,4 +1,4 @@
-dune_symlink_to_source_files(FILES "grid.msh" "test_gridcreator.input")
+dune_symlink_to_source_files(FILES "grid.msh" "grid2.msh" "test_gridcreator.input")
 
 dune_add_test(NAME test_facetgridcreator_alu
               CMAKE_GUARD dune-foamgrid_FOUND
@@ -31,6 +31,20 @@ dune_add_test(NAME test_tpfafacetcouplingmapper_ug
              SOURCES test_tpfafacetcouplingmapper.cc
              COMMAND ./test_tpfafacetcouplingmapper_ug
              CMD_ARGS test_gridcreator.input)
+
+dune_add_test(NAME test_tpfafacetcouplingmapper_boundary_alu
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMAKE_GUARD dune-alugrid_FOUND
+              COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
+              SOURCES test_tpfafacetcouplingmapper_boundary.cc
+              COMMAND ./test_tpfafacetcouplingmapper_boundary_alu)
+
+dune_add_test(NAME test_tpfafacetcouplingmapper_boundary_ug
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMAKE_GUARD dune-uggrid_FOUND
+              COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::UGGrid<2>
+              SOURCES test_tpfafacetcouplingmapper_boundary.cc
+              COMMAND ./test_tpfafacetcouplingmapper_boundary_ug)
 
 set(CMAKE_BUILD_TYPE Release)
 
