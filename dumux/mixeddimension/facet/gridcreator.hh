@@ -115,13 +115,13 @@ public:
     //! Returns domain marker of an element
     template<std::size_t id>
     typename Traits::ElementToDomainMarkerMap::value_type
-    getElementDomainMarker(const typename Grid<id>::template Codim<0>::Entity& element)
+    getElementDomainMarker(const typename Grid<id>::template Codim<0>::Entity& element) const
     { return elementMarkerMaps_[id][gridFactory<id>().insertionIndex(element)]; }
 
     //! Returns the boundary marker of an intersection
     template<std::size_t id>
     typename Traits::BoundarySegmentToMarkerMap::value_type
-    getBoundaryDomainMarker(const typename Grid<id>::LeafGridView::Intersection& is)
+    getBoundaryDomainMarker(const typename Grid<id>::LeafGridView::Intersection& is) const
     {
         // this should only be called for intersections that were inserted
         assert(gridFactory<id>().wasInserted(is) && "Can't obtain boundary markers for intersections that weren't inserted!");
@@ -130,8 +130,8 @@ public:
 
     //! Returns the insertion indices of the entities embedded in given element
     template<std::size_t id>
-    const typename Traits::EmbeddedEntityMap::mapped_type
-    embeddedEntityIndices(const typename Grid<id>::template Codim<0>::Entity& element)
+    typename Traits::EmbeddedEntityMap::mapped_type
+    embeddedEntityIndices(const typename Grid<id>::template Codim<0>::Entity& element) const
     {
         const auto& map = embeddedEntityMaps_[id];
         auto it = map.find( gridFactory<id>().insertionIndex(element) );
@@ -141,8 +141,8 @@ public:
 
     //! Returns the insertion indices of the entities in which the element is embedded
     template<std::size_t id>
-    const typename Traits::EmbedmentMap::mapped_type
-    embedmentEntityIndices(const typename Grid<id>::template Codim<0>::Entity& element)
+    typename Traits::EmbedmentMap::mapped_type
+    embedmentEntityIndices(const typename Grid<id>::template Codim<0>::Entity& element) const
     {
         const auto& map = embedmentMaps_[id];
         auto it = map.find( gridFactory<id>().insertionIndex(element) );
@@ -151,10 +151,16 @@ public:
     }
 
     //! Returns the maps of the embedded entities
+    const typename Traits::EmbeddedEntityMap& embeddedEntityMap(std::size_t id) const
+    { assert(id < numGrids); return embeddedEntityMaps_[id]; }
+
     typename Traits::EmbeddedEntityMap& embeddedEntityMap(std::size_t id)
     { assert(id < numGrids); return embeddedEntityMaps_[id]; }
 
     //! Returns the maps of the embedments
+    const typename Traits::EmbedmentMap& embedmentMap(std::size_t id) const
+    { assert(id < numGrids); return embedmentMaps_[id]; }
+
     typename Traits::EmbedmentMap& embedmentMap(std::size_t id)
     { assert(id < numGrids); return embedmentMaps_[id]; }
 
