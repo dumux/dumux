@@ -153,8 +153,8 @@ class CCTpfaFacetCouplingTwoDomainMapper
     };
 
     //! data structures used for the coupling maps
-    using BulkCouplingMap = std::map<BulkIndexType, BulkCouplingData>;
-    using LowDimCouplingMap = std::map<LowDimIndexType, LowDimCouplingData>;
+    using BulkCouplingMap = std::unordered_map<BulkIndexType, BulkCouplingData>;
+    using LowDimCouplingMap = std::unordered_map<LowDimIndexType, LowDimCouplingData>;
 
 public:
     /*!
