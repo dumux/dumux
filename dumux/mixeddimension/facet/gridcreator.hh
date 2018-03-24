@@ -16,7 +16,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FacetCoupling
+ * \ingroup MixedDimension
+ * \ingroup MixedDimensionFacet
  * \brief Contains the grid creator class that creates the grids in the context
  *        of hybrid-dimensional coupled models, where the (n-1)-dimensional
  *        domains live on the element facets of the n-dimensional domains.
@@ -44,7 +45,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup FacetCoupling
+ * \ingroup MixedDimension
+ * \ingroup MixedDimensionFacet
  * \brief Creates the grids in the context of hybrid-dimensional coupled models,
  *        where the (n-1)-dimensional domains live on the element facets of the
  *        n-dimensional domains.

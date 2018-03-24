@@ -16,7 +16,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FacetCoupling
+ * \ingroup MixedDimension
+ * \ingroup MixedDimensionFacet
  * \copydoc Dumux::CCTpfaFacetCouplingMapper
  */
 #ifndef DUMUX_FACETCOUPLING_CCTPFA_COUPLING_MAPPER_HH
@@ -40,7 +41,8 @@ class CCTpfaFacetCouplingTwoDomainMapper;
 template<class... FVG> class CCTpfaFacetCouplingMapper;
 
 /*!
- * \ingroup FacetCoupling
+ * \ingroup MixedDimension
+ * \ingroup MixedDimensionFacet
  * \brief Class that sets up and stores the coupling maps between two domains
  *        of dimension d and (d-1) in models where the coupling occurs across
  *        the facets of the d-dimensional domain. This class is to be used for
@@ -54,7 +56,8 @@ class CCTpfaFacetCouplingMapper<BulkFVG, LowDimFVG>
       : public CCTpfaFacetCouplingTwoDomainMapper<0, BulkFVG, LowDimFVG> {};
 
 /*!
- * \ingroup FacetCoupling
+ * \ingroup MixedDimension
+ * \ingroup MixedDimensionFacet
  * \brief Specialization of the mapper class for the case of
  *        three domains with the grid dimensions d, (d-1) & (d-2).
  *
@@ -91,7 +94,8 @@ public:
 };
 
 /*!
- * \ingroup FacetCoupling
+ * \ingroup MixedDimension
+ * \ingroup MixedDimensionFacet
  * \brief Implementation that sets up and stores the coupling maps
  *        between two domains of dimension d and (d-1).
  *
