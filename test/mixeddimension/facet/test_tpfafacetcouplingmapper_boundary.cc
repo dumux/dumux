@@ -72,7 +72,7 @@ int main (int argc, char *argv[]) try
     facetFvGeometry.update();
 
     // instantiate and update mapper for all domain combinations
-    Dumux::CCTpfaFacetCouplingMapper<0, BulkFVGridGeometry, FacetFVGridGeometry> mapper;
+    Dumux::CCTpfaFacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry> mapper;
     mapper.update(bulkFvGeometry, facetFvGeometry, gridCreator);
 
     constexpr auto bulkDomainId = Dune::index_constant<0>();

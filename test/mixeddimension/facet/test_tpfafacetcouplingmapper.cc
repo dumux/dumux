@@ -81,9 +81,9 @@ int main (int argc, char *argv[]) try
     edgeFvGeometry.update();
 
     // instantiate and update mappers for all domain combinations
-    Dumux::CCTpfaFacetCouplingMapper<0, BulkFVGridGeometry, FacetFVGridGeometry> bulkFacetMapper;
-    Dumux::CCTpfaFacetCouplingMapper<1, FacetFVGridGeometry, EdgeFVGridGeometry> facetEdgeMapper;
-    Dumux::CCTpfaFacetCouplingMapper<0, BulkFVGridGeometry, FacetFVGridGeometry, EdgeFVGridGeometry> hierarchyMapper;
+    Dumux::CCTpfaFacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry> bulkFacetMapper;
+    Dumux::CCTpfaFacetCouplingTwoDomainMapper<1, FacetFVGridGeometry, EdgeFVGridGeometry> facetEdgeMapper;
+    Dumux::CCTpfaFacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry, EdgeFVGridGeometry> hierarchyMapper;
 
     bulkFacetMapper.update(bulkFvGeometry, facetFvGeometry, gridCreator);
     facetEdgeMapper.update(facetFvGeometry, edgeFvGeometry, gridCreator);
