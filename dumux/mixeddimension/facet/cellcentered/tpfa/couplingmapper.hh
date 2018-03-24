@@ -32,8 +32,12 @@
 
 namespace Dumux
 {
-//! Forward declaration of the mapper taking an arbitrary number of geometries
-template<std::size_t idOffset, class... FVG> class CCTpfaFacetCouplingMapper;
+//! Forward declaration of the mapper implementation between two domains
+template<std::size_t idOffset, class BulkFVG, class LowDimFVG>
+class CCTpfaFacetCouplingTwoDomainMapper;
+
+//! Forward declaration of the mapper class
+template<class... FVG> class CCTpfaFacetCouplingMapper;
 
 /*!
  * \ingroup FacetCoupling
@@ -42,12 +46,62 @@ template<std::size_t idOffset, class... FVG> class CCTpfaFacetCouplingMapper;
  *        the facets of the d-dimensional domain. This class is to be used for
  *        the cell-centered scheme using tpfa.
  *
- * \tparam idOffset Offset added to the mapper-local domain ids
+ * \tparam BulkFVG the d-dimensional finite-volume grid geometry
+ * \tparam LowDimFVG the (d-1)-dimensional finite-volume grid geometry
+ */
+template<class BulkFVG, class LowDimFVG>
+class CCTpfaFacetCouplingMapper<BulkFVG, LowDimFVG>
+      : public CCTpfaFacetCouplingTwoDomainMapper<0, BulkFVG, LowDimFVG> {};
+
+/*!
+ * \ingroup FacetCoupling
+ * \brief Specialization of the mapper class for the case of
+ *        three domains with the grid dimensions d, (d-1) & (d-2).
+ *
+ * \tparam BulkFVG the d-dimensional finite-volume grid geometry
+ * \tparam FacetFVG the (d-1)-dimensional finite-volume grid geometry
+ * \tparam EdgeFVG the (d-2)-dimensional finite-volume grid geometry
+ */
+template<class BulkFVG, class FacetFVG, class EdgeFVG>
+class CCTpfaFacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>
+      : public CCTpfaFacetCouplingTwoDomainMapper<0, BulkFVG, FacetFVG>,
+        public CCTpfaFacetCouplingTwoDomainMapper<1, FacetFVG, EdgeFVG>
+{
+    using BulkFacetMapper = CCTpfaFacetCouplingTwoDomainMapper<0, BulkFVG, FacetFVG>;
+    using FacetEdgeMapper = CCTpfaFacetCouplingTwoDomainMapper<1, FacetFVG, EdgeFVG>;
+
+public:
+    /*!
+     * \brief Update coupling maps
+     *
+     * \tparam GridCreator Class that contains the grid factories and embedments
+     */
+    template<class GridCreator>
+    void update(const BulkFVG& bulkFvGridGeometry,
+                const FacetFVG& facetFvGridGeometry,
+                const EdgeFVG& edgeFvGridGeometry,
+                const GridCreator& gridCreator)
+    {
+        BulkFacetMapper::update(bulkFvGridGeometry, facetFvGridGeometry, gridCreator);
+        FacetEdgeMapper::update(facetFvGridGeometry, edgeFvGridGeometry, gridCreator);
+    }
+
+    using BulkFacetMapper::couplingMap;
+    using FacetEdgeMapper::couplingMap;
+};
+
+/*!
+ * \ingroup FacetCoupling
+ * \brief Implementation that sets up and stores the coupling maps
+ *        between two domains of dimension d and (d-1).
+ *
+ * \tparam idOffset Offset added to the mapper-local domain ids for
+ *                  the access to the grid quantities in grid creator
  * \tparam BulkFVG the d-dimensional finite-volume grid geometry
  * \tparam LowDimFVG the (d-1)-dimensional finite-volume grid geometry
  */
 template<std::size_t idOffset, class BulkFVG, class LowDimFVG>
-class CCTpfaFacetCouplingMapper<idOffset, BulkFVG, LowDimFVG>
+class CCTpfaFacetCouplingTwoDomainMapper
 {
     using BulkGridView = typename BulkFVG::GridView;
     using BulkElement = typename BulkGridView::template Codim<0>::Entity;
@@ -114,8 +168,8 @@ public:
         using GCLowDimGridView = typename GridCreator::template Grid<lowDimId>::LeafGridView;
         static constexpr bool bulkMatch = std::is_same<GCBulkGridView, BulkGridView>::value;
         static constexpr bool lowDimMatch = std::is_same<GCLowDimGridView, LowDimGridView>::value;
-        static_assert(bulkMatch, "The provided bulk domain id does not match the provided bulk grid geometry");
-        static_assert(lowDimMatch, "The provided lowDim domain id does not match the provided lowDim grid geometry");
+        static_assert(bulkMatch, "The bulk domain id does not match the provided bulk grid geometry");
+        static_assert(lowDimMatch, "The lowDim domain id does not match the provided lowDim grid geometry");
 
         // clear & resize
         bulkCouplingData_.clear();
@@ -222,46 +276,6 @@ public:
 private:
     BulkCouplingMap bulkCouplingData_;     //!< stores data on the coupled elements for each bulk element
     LowDimCouplingMap LowDimCouplingData_; //!< stores data on the coupled elements for each low dim element
-};
-
-/*!
- * \ingroup FacetCoupling
- * \brief Class that sets up and stores the coupling maps between three domains
- *        of dimension d, (d-1) and (d-2) in models where the coupling occurs across
- *        the facets of the d-dimensional domain. This class is to be used for
- *        the cell-centered scheme using tpfa.
- *
- * \tparam domainIdOffset Offset added to the mapper-local domain ids
- * \tparam BulkFVG the d-dimensional finite-volume grid geometry
- * \tparam FacetFVG the (d-1)-dimensional finite-volume grid geometry
- * \tparam EdgeFVG the (d-2)-dimensional finite-volume grid geometry
- */
-template<std::size_t idOffset, class BulkFVG, class FacetFVG, class EdgeFVG>
-class CCTpfaFacetCouplingMapper<idOffset, BulkFVG, FacetFVG, EdgeFVG>
-      : public CCTpfaFacetCouplingMapper<idOffset, BulkFVG, FacetFVG>,
-        public CCTpfaFacetCouplingMapper<idOffset+1, FacetFVG, EdgeFVG>
-{
-    using BulkFacetMapper = CCTpfaFacetCouplingMapper<idOffset, BulkFVG, FacetFVG>;
-    using FacetEdgeMapper = CCTpfaFacetCouplingMapper<idOffset+1, FacetFVG, EdgeFVG>;
-
-public:
-    /*!
-     * \brief Update coupling maps
-     *
-     * \tparam GridCreator Class that contains the grid factories and embedments
-     */
-    template<class GridCreator>
-    void update(const BulkFVG& bulkFvGridGeometry,
-                const FacetFVG& facetFvGridGeometry,
-                const EdgeFVG& edgeFvGridGeometry,
-                const GridCreator& gridCreator)
-    {
-        BulkFacetMapper::update(bulkFvGridGeometry, facetFvGridGeometry, gridCreator);
-        FacetEdgeMapper::update(facetFvGridGeometry, edgeFvGridGeometry, gridCreator);
-    }
-
-    using BulkFacetMapper::couplingMap;
-    using FacetEdgeMapper::couplingMap;
 };
 
 } // end namespace Dumux
