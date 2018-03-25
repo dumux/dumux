@@ -95,21 +95,21 @@ public:
                  localView(assembler.gridVariables(domainId).gridFluxVarsCache()),
                  assembler.localResidual(domainId),
                  (element.partitionType() == Dune::GhostEntity))
-    , couplingManager_(couplingManager)
-    {}
+    , couplingManager_(couplingManager) {}
+
     /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
+     * \brief Computes the matrix diagonal block derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template<class JacobianMatrixRow, class GridVariablesTuple>
-    void assembleJacobianAndResidual(JacobianMatrixRow& jacRow, SubSolutionVector& res, GridVariablesTuple& gridVariables)
+    template<class GridVariables>
+    void assembleJacobianAndResidualDiagonal(JacobianMatrix& jac, SubSolutionVector& res, GridVariables& gridVariables)
     {
         this->asImp_().bindLocalViews();
         this->elemBcTypes().update(problem(), this->element(), this->fvGeometry());
 
         // for the diagonal jacobian block
         // forward to the internal implementation
-        const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jacRow[domainId], *std::get<domainId>(gridVariables));
+        const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables);
 
         for (const auto& scv : scvs(this->fvGeometry()))
             res[scv.dofIndex()] += residual[scv.indexInElement()];
@@ -122,35 +122,49 @@ public:
             res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
             for (const auto& scvJ : scvs(this->fvGeometry()))
             {
-                jacRow[domainId][scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
+                jac[scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
                 if (scvI.indexInElement() == scvJ.indexInElement())
-                    jacRow[domainId][scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
+                    jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
             }
         };
+
+        this->asImp_().evalDirichletBoundaries(applyDirichlet);
+    }
+
+    /*!
+     * \brief Computes the derivatives with respect to the given element and adds them
+     *        to the global matrix. The element residual is written into the right hand side.
+     */
+    template<class JacobianMatrixRow, class GridVariablesTuple>
+    void assembleJacobianAndResidual(JacobianMatrixRow& jacRow, SubSolutionVector& res, GridVariablesTuple& gridVariables)
+    {
+        this->asImp_().bindLocalViews();
+        this->elemBcTypes().update(problem(), this->element(), this->fvGeometry());
+
+        // for the diagonal jacobian block
+        assembleJacobianAndResidualDiagonal(jacRow[domainId], res, *std::get<domainId>(gridVariables));
 
         // for the coupling blocks
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(jacRow)), [&, domainId = domainId](auto&& i)
         {
             if (i != domainId)
-                this->assembleJacobianCoupling(i, jacRow, residual, gridVariables);
+                this->assembleJacobianCoupling(i, jacRow, gridVariables);
         });
-
-        this->asImp_().evalDirichletBoundaries(applyDirichlet);
     }
 
     template<std::size_t otherId, class JacRow, class GridVariables,
              typename std::enable_if_t<(otherId == id), int> = 0>
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacRow& jacRow,
-                                  const ElementResidualVector& res, GridVariables& gridVariables)
+                                  GridVariables& gridVariables)
     {}
 
     template<std::size_t otherId, class JacRow, class GridVariables,
              typename std::enable_if_t<(otherId != id), int> = 0>
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacRow& jacRow,
-                                  const ElementResidualVector& res, GridVariables& gridVariables)
+                                  GridVariables& gridVariables)
     {
-        this->asImp_().assembleJacobianCoupling(domainJ, jacRow[domainJ], res, *std::get<otherId>(gridVariables));
+        this->asImp_().assembleJacobianCoupling(domainJ, jacRow[domainJ], *std::get<otherId>(gridVariables));
     }
 
     /*!
@@ -420,7 +434,7 @@ public:
      */
     template<std::size_t otherId, class JacobianBlock, class GridVariables>
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
-                                  const ElementResidualVector& res, GridVariables& gridVariables)
+                                  GridVariables& gridVariables)
     {
         ////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all dofs in the element with respect to all dofs in the coupling stencil. //
