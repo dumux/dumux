@@ -44,6 +44,170 @@
 
 namespace Dumux {
 
+template<class ActualMultiDomainFVAssembler, std::size_t id>
+class SequentialMultiDomainFVAssembler
+{
+public:
+    static constexpr auto domainId = typename Dune::index_constant<id>();
+    explicit SequentialMultiDomainFVAssembler(std::shared_ptr<ActualMultiDomainFVAssembler> actualFvAssembler)
+    : actualFvAssembler_(actualFvAssembler) {}
+
+    using Scalar = typename ActualMultiDomainFVAssembler::Scalar;
+    using SubDomainAssembler = typename ActualMultiDomainFVAssembler::template SubDomainAssembler<id>;
+
+    using SubDomainTypeTag = typename ActualMultiDomainFVAssembler::Traits::template SubDomainTypeTag<id>;
+    using JacobianMatrix = typename GET_PROP_TYPE(SubDomainTypeTag, JacobianMatrix);
+    using SolutionVector = typename GET_PROP_TYPE(SubDomainTypeTag, SolutionVector);
+    using ResidualType = SolutionVector;
+
+    using FVGridGeometry = typename ActualMultiDomainFVAssembler::template FVGridGeometry<id>;
+
+    static constexpr bool isSequential() { return true; }
+
+    const FVGridGeometry& fvGridGeometry() const
+    {
+        return actualFvAssembler_->fvGridGeometry(domainId);
+    }
+
+    /*!
+     * \brief The version without arguments uses the default constructor to create
+     *        the jacobian and residual objects in this assembler if you don't need them outside this class
+     */
+    void setLinearSystem()
+    {
+        actualFvAssembler_->setLinearSystem();
+    }
+
+    auto& jacobian()
+    { return actualFvAssembler_->jacobian()[domainId][domainId]; }
+
+    auto& residual()
+    { return actualFvAssembler_->residual()[domainId]; }
+
+    //! compute the residual and return it's vector norm
+    //! TODO: this needs to be adapted in parallel
+    Scalar residualNorm(const SolutionVector& curSol)
+    { return /*actualFvAssembler_->residualNorm(curSol)*/1.0; }
+
+    /*!
+     * \brief Sets the jacobian sparsity pattern.
+     */
+    void setJacobianPattern(JacobianMatrix& jac) const
+    {
+        const auto& additionalDofDependicies = actualFvAssembler_->couplingManager().additionalDofDependicies(domainId);
+        const auto pattern = getJacobianPattern<true>(actualFvAssembler_->fvGridGeometry(domainId), additionalDofDependicies);
+        pattern.exportIdx(jac);
+    }
+
+    //! compute the residuals using the internal residual
+    void assembleResidual(const SolutionVector& curSol)
+    {
+        // resetResidual_();
+        assembleResidual(residual(), curSol);
+    }
+
+    //! assemble a residual r
+    void assembleResidual(ResidualType& r, const SolutionVector& curSol)
+    {
+        // std::cout << "calling "
+        // checkAssemblerState_();
+
+        // update the grid variables for the case of active caching
+        updateGridVariables(curSol);
+
+        // using namespace Dune::Hybrid;
+        // forEach(integralRange(Dune::Hybrid::size(r)), [&](const auto domainId)
+        // {
+            // auto& subRes = r;
+            // actualFvAssembler_->assembleResidual_(domainId, r, curSol);
+        // });
+    }
+
+    void updateGridVariables(const SolutionVector& curSol)
+    {
+        actualFvAssembler_->gridVariables(domainId).update(curSol);
+    }
+
+
+
+    /*!
+     * \brief Assembles the global Jacobian of the residual
+     *        and the residual for the current solution.
+     */
+    template<class SolutionVector>
+    void assembleJacobianAndResidual(const SolutionVector& curSol)
+    {
+        // actualFvAssembler_->checkAssemblerState_();
+        resetResidual_();
+        resetJacobian_();
+
+        // Dune::printmatrix(std::cout, actualFvAssembler_->jacobian()[domainId][domainId], "", "");
+
+        auto& jacRow = actualFvAssembler_->jacobian()[domainId];
+        auto& subRes =  actualFvAssembler_->residual()[domainId];
+        assembleJacobianAndResidual_(domainId, jacRow, subRes, curSol);
+        // Dune::printmatrix(std::cout, actualFvAssembler_->jacobian()[domainId][domainId], "", "");
+    }
+
+    template<std::size_t i, class JacRow, class SubRes>
+    void assembleJacobianAndResidual_(Dune::index_constant<i> domainId, JacRow& jacRow, SubRes& subRes,
+                                      const SolutionVector& curSol)
+    {
+        typename ActualMultiDomainFVAssembler::SolutionVector tmpSol;
+        std::get<i>(tmpSol) = curSol;
+
+        actualFvAssembler_->assemble_(domainId, [&](const auto& element)
+        {
+            SubDomainAssembler subDomainAssembler(*actualFvAssembler_, element, tmpSol, *actualFvAssembler_->couplingManager_);
+            subDomainAssembler.assembleJacobianAndResidualDiagonal(jacRow[domainId], subRes, actualFvAssembler_->gridVariables(domainId));
+        });
+    }
+
+
+    /*!
+     * \brief Resizes the residual
+     */
+    void setResidualSize(SolutionVector& res) const
+    {
+        res.resize(actualFvAssembler_->numDofs(domainId));
+    }
+
+    void resetResidual_()
+    {
+        if(!actualFvAssembler_->residual_)
+        {
+            actualFvAssembler_->residual_ = std::make_shared<typename ActualMultiDomainFVAssembler::SolutionVector>();
+            setResidualSize(residual());
+        }
+
+        residual() = 0.0;
+    }
+
+    // reset the jacobian vector to 0.0
+    void resetJacobian_()
+    {
+        if(!actualFvAssembler_->jacobian_)
+        {
+            actualFvAssembler_->jacobian_ = std::make_shared<typename ActualMultiDomainFVAssembler::JacobianMatrix>();
+            actualFvAssembler_->setJacobianBuildMode((actualFvAssembler_->jacobian()));
+            setJacobianPattern(jacobian());
+        }
+
+       jacobian()  = 0.0;
+    }
+
+protected:
+    std::shared_ptr<ActualMultiDomainFVAssembler> actualFvAssembler_;
+};
+
+//! Return a shared_ptr to the sequential assembler auxiliary class
+template<class ActualMultiDomainFVAssembler, std::size_t id>
+auto makeSequentialAssembler(std::shared_ptr<ActualMultiDomainFVAssembler> assembler, Dune::index_constant<id>)
+{
+    using SeqAssembler = SequentialMultiDomainFVAssembler<ActualMultiDomainFVAssembler, id>;
+    return std::make_shared<SeqAssembler>(assembler);
+}
+
 /*!
  * \ingroup MultiDomain
  * \ingroup Assembly
@@ -56,6 +220,8 @@ namespace Dumux {
 template<class MDTraits, class CMType, DiffMethod diffMethod, bool isImplicit = true>
 class MultiDomainFVAssembler
 {
+    template<typename, std::size_t id> friend class SequentialMultiDomainFVAssembler;
+
     template<std::size_t id>
     using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
 
@@ -117,7 +283,6 @@ private:
 
 public:
 
-
     /*!
      * \brief The constructor for stationary problems
      * \note the grid variables might be temporarily changed during assembly (if caching is enabled)
@@ -157,6 +322,8 @@ public:
     {
         std::cout << "Instantiated assembler for an instationary problem." << std::endl;
     }
+
+    static constexpr bool isSequential() { return false; }
 
     /*!
      * \brief Assembles the global Jacobian of the residual
