@@ -95,18 +95,18 @@ public:
                  localView(assembler.gridVariables(domainId).gridFluxVarsCache()),
                  assembler.localResidual(domainId),
                  (element.partitionType() == Dune::GhostEntity))
-    , couplingManager_(couplingManager) {}
+    , couplingManager_(couplingManager)
+    {
+        this->asImp_().bindLocalViews();
+        this->elemBcTypes().update(problem(), this->element(), this->fvGeometry());
+    }
 
     /*!
      * \brief Computes the matrix diagonal block derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
-    template<class GridVariables>
     void assembleJacobianAndResidualDiagonal(JacobianMatrix& jac, SubSolutionVector& res, GridVariables& gridVariables)
     {
-        this->asImp_().bindLocalViews();
-        this->elemBcTypes().update(problem(), this->element(), this->fvGeometry());
-
         // for the diagonal jacobian block
         // forward to the internal implementation
         const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables);
@@ -138,9 +138,6 @@ public:
     template<class JacobianMatrixRow, class GridVariablesTuple>
     void assembleJacobianAndResidual(JacobianMatrixRow& jacRow, SubSolutionVector& res, GridVariablesTuple& gridVariables)
     {
-        this->asImp_().bindLocalViews();
-        this->elemBcTypes().update(problem(), this->element(), this->fvGeometry());
-
         // for the diagonal jacobian block
         assembleJacobianAndResidualDiagonal(jacRow[domainId], res, *std::get<domainId>(gridVariables));
 
