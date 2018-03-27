@@ -43,6 +43,7 @@
 #include <dumux/freeflow/navierstokes/model.hh>
 #include <dumux/freeflow/navierstokes/indices.hh>
 #include <dumux/freeflow/nonisothermal/indices.hh>
+#include <dumux/freeflow/nonisothermal/ransvtkoutputfields.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 
 #include "volumevariables.hh"
@@ -78,7 +79,7 @@ SET_PROP(RANS, VtkOutputFields)
 private:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 public:
-     using type = RANSVtkOutputFields<FVGridGeometry>;
+    using type = RANSVtkOutputFields<FVGridGeometry>;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -111,14 +112,15 @@ public:
 };
 
 //! The specific non-isothermal vtk output fields
-// SET_PROP(RANSNI, VtkOutputFields)
-// {
-// private:
-//      using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-//      using IsothermalFields = NavierStokesVtkOutputFields<FVGridGeometry>;
-// public:
-//      using type = NavierStokesNonIsothermalVtkOutputFields<IsothermalFields>;
-// };
+SET_PROP(RANSNI, VtkOutputFields)
+{
+private:
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using NavierStokesFields = NavierStokesVtkOutputFields<FVGridGeometry>;
+    using RANSFields = RANSVtkOutputFields<FVGridGeometry>;
+public:
+    using type = RANSNonIsothermalVtkOutputFields<NavierStokesFields, RANSFields>;
+};
 
 //! Use Fourier's Law as default heat conduction type
 SET_TYPE_PROP(RANSNI, HeatConductionType, FouriersLaw<TypeTag>);

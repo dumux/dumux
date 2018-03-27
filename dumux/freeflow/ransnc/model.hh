@@ -165,25 +165,12 @@ private:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    using SinglePhaseVtkOutputFields = RANSVtkOutputFields<FVGridGeometry>;
+    using NavierStokesFields = NavierStokesVtkOutputFields<FVGridGeometry>;
+    using RANSFields = RANSVtkOutputFields<FVGridGeometry>;
+    using SinglePhaseVtkOutputFields = RANSNonIsothermalVtkOutputFields<NavierStokesFields, RANSFields>;
 public:
     using type = RANSNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx, SinglePhaseVtkOutputFields>;
 };
-
-// //! The non-isothermal vtk output fields
-// SET_PROP(RANSNCNI, VtkOutputFields)
-// {
-// private:
-//     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-//     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-//     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-//     using IsothermalFields = RANSNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>;
-// public:
-//      using type = NavierStokesNonIsothermalVtkOutputFields<IsothermalFields>;
-// };
-//
-// //! Use Fourier's Law as default heat conduction type
-// SET_TYPE_PROP(RANSNCNI, HeatConductionType, FouriersLaw<TypeTag>);
 
 // \}
 } // end namespace Properties
