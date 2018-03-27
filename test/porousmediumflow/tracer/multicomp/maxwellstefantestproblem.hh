@@ -288,8 +288,8 @@ public:
                 gnuplot_.setYRange(0.4, 0.6);
                 gnuplot_.setXlabel("time [s]");
                 gnuplot_.setYlabel("mole fraction mol/mol");
-                gnuplot_.addDataSetToPlot(x_, y_, "N2_left");
-                gnuplot_.addDataSetToPlot(x_, y2_, "N2_right");
+                gnuplot_.addDataSetToPlot(x_, y_, "N2_left.dat", "w l t 'N_2 left'");
+                gnuplot_.addDataSetToPlot(x_, y2_, "N2_right.dat", "w l t 'N_2 right'");
                 gnuplot_.plot("mole_fraction_N2");
 
                 gnuplot2_.resetPlot();
@@ -297,8 +297,8 @@ public:
                 gnuplot2_.setYRange(0.0, 0.6);
                 gnuplot2_.setXlabel("time [s]");
                 gnuplot2_.setYlabel("mole fraction mol/mol");
-                gnuplot2_.addDataSetToPlot(x_, y3_, "C02_left");
-                gnuplot2_.addDataSetToPlot(x_, y4_, "C02_right");
+                gnuplot2_.addDataSetToPlot(x_, y3_, "CO2_left.dat", "w l t 'CO_2 left'");
+                gnuplot2_.addDataSetToPlot(x_, y4_, "C02_right.dat", "w l t CO_2 right");
                 gnuplot2_.plot("mole_fraction_C02");
 
                 gnuplot3_.resetPlot();
@@ -306,8 +306,8 @@ public:
                 gnuplot3_.setYRange(0.0, 0.6);
                 gnuplot3_.setXlabel("time [s]");
                 gnuplot3_.setYlabel("mole fraction mol/mol");
-                gnuplot3_.addDataSetToPlot(x_, y5_, "H2_left");
-                gnuplot3_.addDataSetToPlot(x_, y6_, "H2_right");
+                gnuplot3_.addDataSetToPlot(x_, y5_, "H2_left.dat", "w l t 'H_2 left'");
+                gnuplot3_.addDataSetToPlot(x_, y6_, "H2_right.dat", "w l t 'H_2 right'");
                 gnuplot3_.plot("mole_fraction_H2");
            }
         }
