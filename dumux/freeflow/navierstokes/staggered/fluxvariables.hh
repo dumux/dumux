@@ -132,14 +132,14 @@ public:
 
         // Check if we are on an outflow boundary.
         const bool isOutflow = scvf.boundary() ?
-                               problem.boundaryTypesAtPos(scvf.center()).isOutflow(Indices::massBalanceIdx)
+                               problem.boundaryTypesAtPos(scvf.center()).isOutflow(Indices::totalMassBalanceIdx)
                              : false;
 
         // Call the generic flux function.
         const Scalar flux = advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
 
         CellCenterPrimaryVariables result(0.0);
-        result[Indices::massBalanceIdx] = flux;
+        result[Indices::totalMassBalanceIdx] = flux;
 
         return result;
     }

@@ -18,42 +18,35 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesNCModel
- * \copydoc Dumux::NavierStokesNCVtkOutputFields
+ * \ingroup RANSNCModel
+ * \copydoc Dumux::RANSNCVtkOutputFields
  */
-#ifndef DUMUX_NAVIER_STOKES_NC_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_NAVIER_STOKES_NC_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_RANS_NC_VTK_OUTPUT_FIELDS_HH
+#define DUMUX_RANS_NC_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/freeflow/navierstokes/vtkoutputfields.hh>
+#include <dumux/freeflow/rans/vtkoutputfields.hh>
+#include <dumux/freeflow/navierstokesnc/vtkoutputfields.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup NavierStokesNCModel
- * \brief Adds vtk output fields specific to the NavierStokesNC model
+ * \ingroup RANSNCModel
+ * \brief Adds vtk output fields specific to the RANSNC model
  */
-template<class FVGridGeometry, class FluidSystem, int phaseIdx>
-class NavierStokesNCVtkOutputFields
+template<class FVGridGeometry, class FluidSystem, int phaseIdx, class SinglePhaseVtkOutputFields>
+class RANSNCVtkOutputFields
 {
+    enum { dim = FVGridGeometry::GridView::dimension };
 
 public:
-    //! Initialize the Navier-StokesNC specific vtk output fields.
+    //! Initialize the RANSNC specific vtk output fields.
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        NavierStokesVtkOutputFields<FVGridGeometry>::init(vtk);
-
-        for (int j = 0; j < FluidSystem::numComponents; ++j)
-        {
-            vtk.addVolumeVariable([j](const auto& v){ return v.massFraction(phaseIdx,j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            vtk.addVolumeVariable([j](const auto& v){ return v.moleFraction(phaseIdx,j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            if (j != phaseIdx)
-            {
-                vtk.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(phaseIdx,j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            }
-        }
+        NavierStokesNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>::init(vtk);
+        SinglePhaseVtkOutputFields::add(vtk);
+        vtk.addVolumeVariable([](const auto& v){ return v.eddyDiffusivity(); }, "D_t");
     }
 };
 

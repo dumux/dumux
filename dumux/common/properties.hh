@@ -196,6 +196,7 @@ NEW_PROP_TAG(SherwoodFormulation);
 
 NEW_PROP_TAG(EnableInertiaTerms); //!< Returns whether to include inertia terms in the momentum balance eq or not (Stokes / Navier-Stokes)
 NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure term in the momentum balance or not
+NEW_PROP_TAG(SinglePhaseVolumeVariables); //!< Returns the single-phase, momentum-based volume variables implementation (needed for the RANS models)
 
 } // end namespace Properties
 } // end namespace Dumux

@@ -84,7 +84,7 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
     enum {
-        massBalanceIdx = Indices::massBalanceIdx,
+        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         pressureIdx = Indices::pressureIdx,
         velocityXIdx = Indices::velocityXIdx,
@@ -186,7 +186,7 @@ public:
         values.setDirichlet(momentumBalanceIdx);
 
         // set a fixed pressure in one cell
-        values.setDirichletCell(massBalanceIdx);
+        values.setDirichletCell(totalMassBalanceIdx);
 
         return values;
     }

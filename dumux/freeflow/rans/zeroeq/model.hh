@@ -26,10 +26,8 @@
  *
  * These models calculate the eddy viscosity without solving additional PDEs,
  * only based on the wall distance and the velocity gradient.
- * The following models are available:
- *  -# Prandtl's mixing length, e.g. \cite Oertel2012a
- *  -# Van-Driest modification, \cite vanDriest1956a and \cite Hanna1981a
- *  -# Baldwin-Lomax, \cite Baldwin1978a
+ *
+ * \copydoc Dumux::EddyViscosityModels
  */
 
 #ifndef DUMUX_ZEROEQ_MODEL_HH
@@ -39,7 +37,6 @@
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/rans/model.hh>
 
-#include "indices.hh"
 #include "volumevariables.hh"
 
 namespace Dumux
@@ -61,16 +58,6 @@ NEW_TYPE_TAG(ZeroEq, INHERITS_FROM(RANS));
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-
-//! The indices
-SET_PROP(ZeroEq, Indices)
-{
-private:
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-public:
-    using type = ZeroEqIndices<dim, numEq>;
-};
 
 //! The volume variables
 SET_TYPE_PROP(ZeroEq, VolumeVariables, ZeroEqVolumeVariables<TypeTag>);

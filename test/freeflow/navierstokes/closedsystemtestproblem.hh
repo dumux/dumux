@@ -77,7 +77,7 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum { dimWorld = GridView::dimensionworld };
     enum {
-        massBalanceIdx = Indices::massBalanceIdx,
+        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         pressureIdx = Indices::pressureIdx,
         velocityXIdx = Indices::velocityXIdx,
@@ -156,9 +156,9 @@ public:
 
         // set a fixed pressure in one cell
         if (isLowerLeftCell_(globalPos))
-            values.setDirichletCell(massBalanceIdx);
+            values.setDirichletCell(totalMassBalanceIdx);
         else
-            values.setNeumann(massBalanceIdx);
+            values.setNeumann(totalMassBalanceIdx);
 
         return values;
     }

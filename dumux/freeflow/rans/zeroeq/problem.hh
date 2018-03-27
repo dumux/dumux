@@ -32,6 +32,7 @@
 #include <dumux/freeflow/rans/problem.hh>
 
 #include "model.hh"
+#include "models.hh"
 
 namespace Dumux
 {
@@ -69,11 +70,6 @@ class ZeroEqProblem : public RANSProblem<TypeTag>
     using DimVector = Dune::FieldVector<Scalar, dim>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
-    enum {
-        massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx
-    };
-
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
@@ -107,7 +103,7 @@ public:
     {
         ParentType::updateDynamicWallProperties(curSol);
 
-        static const int eddyViscosityModel
+        static const auto eddyViscosityModel
             = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.EddyViscosityModel");
 
         // calculate additional roughness
@@ -130,7 +126,7 @@ public:
                 volVars.update(elemSol, asImp_(), element, scv);
 
                 Scalar ksPlus = this->sandGrainRoughness_[elementID] * volVars.uStar() / volVars.kinematicViscosity();
-                if (ksPlus > 0 && eddyViscosityModel == Indices::baldwinLomax)
+                if (ksPlus > 0 && eddyViscosityModel == EddyViscosityModels::baldwinLomax)
                 {
                     DUNE_THROW(Dune::NotImplemented, "Roughness is not implemented for the Baldwin-Lomax model.");
                 }
@@ -154,7 +150,7 @@ public:
         }
 
         // update routine for specfic models
-        if (eddyViscosityModel == Indices::baldwinLomax)
+        if (eddyViscosityModel == EddyViscosityModels::baldwinLomax)
             updateBaldwinLomaxProperties();
     }
 
@@ -179,7 +175,7 @@ public:
         const Scalar cWake = 0.25;
         const Scalar cKleb = 0.3;
 
-        static const Scalar karmanConstant
+        static const auto karmanConstant
             = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.KarmanConstant");
 
         std::vector<Scalar> storedFMax;

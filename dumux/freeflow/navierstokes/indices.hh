@@ -45,9 +45,8 @@ struct NavierStokesIndices
     static constexpr int dimYIdx = 1; //!< Index of the y-component of a vector of size dim
     static constexpr int dimZIdx = 2; //!< Index of the z-component of a vector of size dim
 
-    static constexpr int massBalanceIdx = PVOffset + 0; //!< Index of the mass balance equation
-    static constexpr int conti0EqIdx = massBalanceIdx; //!< Index of the mass balance equation
-    static constexpr int pressureIdx = massBalanceIdx; //!< Index of the pressure in a solution vector
+    static constexpr int totalMassBalanceIdx = PVOffset + 0; //!< Index of the total mass balance equation
+    static constexpr int pressureIdx = totalMassBalanceIdx; //!< Index of the pressure in a solution vector
 
     static constexpr auto dim = dimension;
     static constexpr auto numEq = numEquations;

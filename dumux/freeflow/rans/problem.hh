@@ -43,9 +43,6 @@ namespace Dumux
  * This implements some base functionality for RANS models.
  * Especially vectors containing all wall-relevant properties, which are accessed
  * by the volumevariables.
- * \todo inherit all functions (especially gravity and temperature from Navier-Stokes)
- * This implements gravity (if desired) and a function returning the temperature.
- * Includes a specialized method used only by the staggered grid discretization.
  */
 template<class TypeTag>
 class RANSProblem : public NavierStokesProblem<TypeTag>
@@ -72,11 +69,6 @@ class RANSProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dim>;
     using DimVector = Dune::FieldVector<Scalar, dim>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
-
-    enum {
-        massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx
-    };
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
@@ -236,7 +228,7 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 const int dofIdxFace = scvf.dofIndex();
-                const auto numericalSolutionFace = curSol[faceIdx][dofIdxFace][momentumBalanceIdx];
+                const auto numericalSolutionFace = curSol[faceIdx][dofIdxFace][Indices::momentumBalanceIdx];
                 velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
             }
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)

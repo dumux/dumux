@@ -53,7 +53,7 @@ using RANSVolumeVariables = RANSVolumeVariablesImplementation<TypeTag, GET_PROP_
  */
 template <class TypeTag>
 class RANSVolumeVariablesImplementation<TypeTag, false>
-: public NavierStokesVolumeVariablesImplementation<TypeTag, false>
+: virtual public NavierStokesVolumeVariablesImplementation<TypeTag, false>
 {
     using ParentType = NavierStokesVolumeVariablesImplementation<TypeTag, false>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -164,32 +164,35 @@ public:
     { return uPlus_; }
 
     /*!
-     * \brief Set the values of the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ within the
-     *        control volume.
-     */
-    void setDynamicEddyViscosity(Scalar value)
-    { dynamicEddyViscosity_ = value; }
-
-    /*!
      * \brief Return the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow within the
      *        control volume.
      */
     Scalar dynamicEddyViscosity() const
-    { return dynamicEddyViscosity_; }
+    {
+        DUNE_THROW(Dune::NotImplemented,
+                   "The dynamicEddyViscosity() has to specified by the RANS implementation.");
+    }
 
     /*!
      * \brief Return the effective dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
      */
     Scalar effectiveViscosity() const
-    { return asImp_().viscosity() + dynamicEddyViscosity(); }
+    { return asImp_().viscosity() + asImp_().dynamicEddyViscosity(); }
 
     /*!
-     * \brief Return the kinematic eddy viscosity \f$\mathrm{[m^2/s]}\f$ of the fluid within the
+     * \brief Return the kinematic viscosity \f$\mathrm{[m^2/s]}\f$ of the fluid within the
      *        control volume.
      */
     Scalar kinematicViscosity() const
     { return asImp_().viscosity() / asImp_().density(); }
+
+    /*!
+     * \brief Return the kinematic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow within the
+     *        control volume.
+     */
+    Scalar kinematicEddyViscosity() const
+    { return asImp_().dynamicEddyViscosity() / asImp_().density(); }
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)

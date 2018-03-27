@@ -82,7 +82,7 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
     enum {
-        massBalanceIdx = Indices::massBalanceIdx,
+        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         pressureIdx = Indices::pressureIdx,
         velocityXIdx = Indices::velocityXIdx,
@@ -190,9 +190,9 @@ public:
 
         // set a fixed pressure in one cell
         if (isLowerLeftCell_(globalPos))
-            values.setDirichletCell(massBalanceIdx);
+            values.setDirichletCell(totalMassBalanceIdx);
         else
-            values.setOutflow(massBalanceIdx);
+            values.setOutflow(totalMassBalanceIdx);
 
         return values;
     }

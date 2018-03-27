@@ -87,7 +87,7 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
     enum {
-        massBalanceIdx = Indices::massBalanceIdx,
+        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         momentumXBalanceIdx = Indices::momentumXBalanceIdx,
         momentumYBalanceIdx = Indices::momentumYBalanceIdx,
@@ -205,7 +205,7 @@ public:
 
         // set Dirichlet values for the velocity and pressure everywhere
         values.setDirichlet(momentumBalanceIdx);
-        values.setDirichletCell(massBalanceIdx);
+        values.setDirichletCell(totalMassBalanceIdx);
 
         return values;
     }

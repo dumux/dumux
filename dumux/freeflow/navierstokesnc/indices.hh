@@ -45,12 +45,13 @@ private:
     using ParentType = NavierStokesIndices<dimension, numEquations, PVOffset>;
 
 public:
-
     static constexpr int phaseIdx = thePhaseIdx; //!< The phase index
     static constexpr int mainCompIdx = phaseIdx; //!< The index of the main component
 
     //! The index of the component whose mass balance will be replaced by the total one
     static constexpr int replaceCompEqIdx = theReplaceCompEqIdx;
+    static constexpr int totalMassBalanceIdx = replaceCompEqIdx; //!< Index of the total mass balance equation
+    static constexpr int conti0EqIdx = PVOffset; //!< The base index of the transport equations
 };
 
 // \}

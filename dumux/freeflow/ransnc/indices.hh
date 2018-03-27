@@ -18,34 +18,38 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ZeroEqModel
- * \copydoc Dumux::ZeroEqIndices
+ * \ingroup RANSNCModel
+ * \copydoc Dumux::RANSNCIndices
  */
-#ifndef DUMUX_ZEROEQ_INDICES_HH
-#define DUMUX_ZEROEQ_INDICES_HH
+#ifndef DUMUX_STAGGERED_RANS_NC_INDICES_HH
+#define DUMUX_STAGGERED_RANS_NC_INDICES_HH
 
-#include <dumux/freeflow/navierstokes/indices.hh>
+#include <dumux/freeflow/navierstokesnc/indices.hh>
+#include <dumux/common/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
+/*!
+ * \ingroup RANSNCModel
+ * \brief Dummy indices for the ZeroEqNC model
+ */
+class DummyIndices
+{ };
+
 // \{
 /*!
- * \ingroup ZeroEqModel
- * \brief The common indices for the isothermal ZeroEq model.
+ * \ingroup RANSNCModel
+ * \brief The common indices for the isothermal multi-component Reynolds-averaged Navier-Stokes model.
  *
- * \tparam dimension The dimension of the problem
- * \tparam numEquations the number of model equations
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <int dimension, int numEquations, int PVOffset = 0>
-struct ZeroEqIndices
-    : NavierStokesIndices<dimension, numEquations, PVOffset>
-{
-    static constexpr int noEddyViscosityModel = 0;
-    static constexpr int prandtl = 1;
-    static constexpr int modifiedVanDriest = 2;
-    static constexpr int baldwinLomax = 3;
-};
+template <int dimension, int numEquations,
+          int thePhaseIdx, int theReplaceCompEqIdx,
+          class SinglePhaseIndices = DummyIndices, int PVOffset = 0>
+struct RANSNCIndices
+    : public NavierStokesNCIndices<dimension, numEquations, thePhaseIdx, theReplaceCompEqIdx, PVOffset>,
+      public SinglePhaseIndices
+{ };
 
 // \}
 } // end namespace

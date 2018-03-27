@@ -18,43 +18,30 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesNCModel
- * \copydoc Dumux::NavierStokesNCVtkOutputFields
+ * \ingroup ZeroEqModel
+ * \copydoc Dumux::EddyViscosityModels
  */
-#ifndef DUMUX_NAVIER_STOKES_NC_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_NAVIER_STOKES_NC_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_EDDYVISCOSITY_MODELS_HH
+#define DUMUX_EDDYVISCOSITY_MODELS_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/freeflow/navierstokes/vtkoutputfields.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup NavierStokesNCModel
- * \brief Adds vtk output fields specific to the NavierStokesNC model
+ * \ingroup ZeroEqModel
+ * \brief The available eddy viscosity models
+ *
+ * The following models are available:
+ *  -# Prandtl's mixing length, e.g. \cite Oertel2012a
+ *  -# Van-Driest modification, \cite vanDriest1956a and \cite Hanna1981a
+ *  -# Baldwin-Lomax, \cite Baldwin1978a
  */
-template<class FVGridGeometry, class FluidSystem, int phaseIdx>
-class NavierStokesNCVtkOutputFields
+class EddyViscosityModels
 {
-
 public:
-    //! Initialize the Navier-StokesNC specific vtk output fields.
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
-    {
-        NavierStokesVtkOutputFields<FVGridGeometry>::init(vtk);
-
-        for (int j = 0; j < FluidSystem::numComponents; ++j)
-        {
-            vtk.addVolumeVariable([j](const auto& v){ return v.massFraction(phaseIdx,j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            vtk.addVolumeVariable([j](const auto& v){ return v.moleFraction(phaseIdx,j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            if (j != phaseIdx)
-            {
-                vtk.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(phaseIdx,j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            }
-        }
-    }
+    static constexpr int none = 0;
+    static constexpr int prandtl = 1;
+    static constexpr int modifiedVanDriest = 2;
+    static constexpr int baldwinLomax = 3;
 };
 
 } // end namespace Dumux

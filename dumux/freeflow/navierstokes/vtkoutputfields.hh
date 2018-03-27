@@ -52,6 +52,8 @@ public:
     static void init(VtkOutputModule& vtk)
     {
         vtk.addVolumeVariable([](const auto& v){ return v.pressure(); }, "p");
+        vtk.addVolumeVariable([](const auto& v){ return v.molarDensity(); }, "rhoMolar");
+        vtk.addVolumeVariable([](const auto& v){ return v.density(); }, "rho");
 
         // add discretization-specific fields
         additionalOutput_(vtk, discMethodTag<FVGridGeometry::discMethod>{});

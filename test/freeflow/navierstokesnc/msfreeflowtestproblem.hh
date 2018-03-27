@@ -184,7 +184,7 @@ class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
-        massBalanceIdx = Indices::massBalanceIdx,
+        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
         compTwoIdx = FluidSystem::N2Idx,
         compThreeIdx = FluidSystem::CO2Idx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
@@ -352,7 +352,7 @@ public:
         values.setDirichlet(momentumBalanceIdx);
         values.setOutflow(compTwoIdx);
         values.setOutflow(compThreeIdx);
-        values.setOutflow(massBalanceIdx);
+        values.setOutflow(totalMassBalanceIdx);
         return values;
     }
 

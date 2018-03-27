@@ -19,10 +19,7 @@
 /*!
  * \file
  *
- * \brief Pipe flow test for the staggered grid RANS model
- *
- * This test simulates is based on pipe flow experiments by
- * John Laufers experiments in 1954 \cite Laufer1954a.
+ * \brief Test for the staggered grid multi-component (Navier-)Stokes model
  */
  #include <config.h>
 
@@ -35,7 +32,7 @@
  #include <dune/grid/io/file/vtk.hh>
  #include <dune/istl/io.hh>
 
-#include "pipelauferproblem.hh"
+#include "channeltestproblem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -51,10 +48,7 @@
 
 #include <dumux/discretization/methods.hh>
 
-#include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
-
-#include <dumux/freeflow/navierstokes/staggered/fluxoverplane.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -82,7 +76,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(PipeLauferProblem);
+    using TypeTag = TTAG(ChannelNCTestTypeTag);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -182,11 +176,11 @@ int main(int argc, char** argv) try
         xOld = x;
         gridVariables->advanceTimeStep();
 
-        // update wall properties
-        problem->updateDynamicWallProperties(x);
-
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
+
+        // update wall properties
+        problem->updateDynamicWallProperties(x);
 
         // write vtk output
         vtkWriter.write(timeLoop->time());
@@ -204,57 +198,6 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////
-
-#if HAVE_PVPYTHON
-    bool plotLawOfTheWall = getParam<bool>("Output.PlotLawOfTheWall", false);
-    bool plotVelocityProfile = getParam<bool>("Output.PlotVelocityProfile", false);
-    if (plotLawOfTheWall || plotVelocityProfile)
-    {
-        char fileName[255];
-        std::string fileNameFormat = "%s-%05d";
-        sprintf(fileName, fileNameFormat.c_str(), problem->name().c_str(), timeLoop->timeStepIndex());
-        std::cout << fileName << std::endl;
-        std::string vtuFileName = std::string(fileName) + ".vtu";
-        std::string script = std::string(DUMUX_SOURCE_DIR) + "/bin/postprocessing/extractlinedata.py";
-        std::string syscom;
-
-        // execute the pvpython script
-        std::string command = std::string(PVPYTHON_EXECUTABLE) + " " + script
-                              + " -f " + vtuFileName
-                              + " -v 2"
-                              + " -r 10000";
-        syscom =  command + " -p1 8.0 0.0 0.0"
-                          + " -p2 8.0 0.2469 0.0"
-                          + " -of " + std::string(fileName) + "\n";
-//         std::cout << syscom << std::endl;
-        system(syscom.c_str());
-
-        char gnuplotFileName[255];
-        Dumux::GnuplotInterface<Scalar> gnuplot;
-        sprintf(gnuplotFileName, fileNameFormat.c_str(), "lawOfTheWall", timeLoop->timeStepIndex());
-        gnuplot.setOpenPlotWindow(plotLawOfTheWall);
-        gnuplot.setDatafileSeparator(',');
-        gnuplot.resetPlot();
-        gnuplot.setXlabel("y^+ [-]");
-        gnuplot.setYlabel("u_+ [-]");
-        gnuplot.setOption("set log x");
-        gnuplot.setOption("set xrange [1:3000]");
-        gnuplot.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer 1954, Re=50000'");
-        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l");
-        gnuplot.plot(std::string(gnuplotFileName));
-
-        sprintf(gnuplotFileName, fileNameFormat.c_str(), "velProfile", timeLoop->timeStepIndex());
-        gnuplot.resetAll();
-        gnuplot.setOpenPlotWindow(plotVelocityProfile);
-        gnuplot.setDatafileSeparator(',');
-        gnuplot.setXlabel("v_x/v_{x,max} [-]");
-        gnuplot.setYRange(0.0, 1.0);
-        gnuplot.setYlabel("y [-]");
-        gnuplot.addFileToPlot("laufer_re50000.csv", "u 2:1 w p t 'Laufer 1954, Re=50000'");
-        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 7:($24/0.2456) w l");
-        gnuplot.plot(std::string(gnuplotFileName));
-    }
-#endif
 
     // print dumux end message
     if (mpiHelper.rank() == 0)
