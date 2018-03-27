@@ -61,7 +61,7 @@ template<class ET, bool chem, bool therm, int numEF, int numES>
 struct NonEquilibriumModelTraits : public ET
 {
     static constexpr int numEq() { return numEnergyEqFluid()+numEnergyEqSolid()+numTransportEq()+ET::numConstraintEq(); }
-    static constexpr int numTransportEq() { return chem ? ET::numPhases()*ET::numComponents() : ET::numPhases(); }
+    static constexpr int numTransportEq() { return chem ? ET::numPhases()*ET::numComponents() : ET::numComponents(); }
 
     static constexpr int numEnergyEqFluid() { return therm ? numEF : 0; }
     static constexpr int numEnergyEqSolid() { return therm ? numES : 0; }

@@ -222,6 +222,14 @@ public:
     { return pressure_[phaseIdx]; }
 
     /*!
+     * \brief The partial pressure of a component in a phase \f$\mathrm{[Pa]}\f$
+     */
+    Scalar partialPressure(int phaseIdx, int compIdx) const
+    {
+        assert(FluidSystem::isGas(phaseIdx));
+        return moleFraction(phaseIdx, compIdx) * pressure(phaseIdx);
+    }
+    /*!
      * \brief The specific enthalpy \f$h_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[J/kg]}\f$
      */
     Scalar enthalpy(int phaseIdx) const
@@ -300,6 +308,41 @@ public:
         }
         else {
             moleFraction_[phaseIdx][compIdx] = value;
+
+            // re-calculate the mean molar mass
+            sumMoleFractions_[phaseIdx] = 0.0;
+            averageMolarMass_[phaseIdx] = 0.0;
+            for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx) {
+                sumMoleFractions_[phaseIdx] += moleFraction_[phaseIdx][compJIdx];
+                averageMolarMass_[phaseIdx] += moleFraction_[phaseIdx][compJIdx]*FluidSystem::molarMass(compJIdx);
+            }
+        }
+    }
+
+    /*!
+     * \brief Set the mass fraction of a component in a phase \f$\mathrm{[-]}\f$
+     *        and update the average molar mass \f$\mathrm{[kg/mol]}\f$ according
+     *        to the current composition of the phase
+     */
+    void setMassFraction(int phaseIdx, int compIdx, Scalar value)
+    {
+        Valgrind::CheckDefined(value);
+        Valgrind::SetDefined(sumMoleFractions_[phaseIdx]);
+        Valgrind::SetDefined(averageMolarMass_[phaseIdx]);
+        Valgrind::SetDefined(moleFraction_[phaseIdx][compIdx]);
+
+        if (numComponents != 2)
+            DUNE_THROW(Dune::NotImplemented, "This currently only works for 2 components.");
+        else
+        {
+            // calculate average molar mass of the gas phase
+            Scalar M1 = FluidSystem::molarMass(compIdx);
+            Scalar M2 = FluidSystem::molarMass(1-compIdx);
+            Scalar X2 = 1.0-value;
+            Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
+
+            moleFraction_[phaseIdx][compIdx] = value * avgMolarMass / M1;
+            moleFraction_[phaseIdx][1-compIdx] = 1.0-moleFraction_[phaseIdx][compIdx];
 
             // re-calculate the mean molar mass
             sumMoleFractions_[phaseIdx] = 0.0;

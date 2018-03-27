@@ -285,7 +285,7 @@ public:
         const Scalar cp = FluidSystem::heatCapacity(fs, wPhaseIdx) ;
         // This use of Tsat is only justified if the fluid is always boiling (tsat equals boiling conditions)
         // If a different state is to be simulated, please use the actual fluid temperature instead.
-        const Scalar Tsat = FluidSystem::vaporTemperature(fs, nPhaseIdx ) ;
+        const Scalar Tsat = volVars.temperature(0);;
         const Scalar deltaT = TSolid - Tsat ;
         const Scalar secondBracket = pow( (cp *deltaT / (0.006 * deltahv)  ) , 3.0 ) ;
         const Scalar Prl = volVars.prandtlNumber(wPhaseIdx) ;

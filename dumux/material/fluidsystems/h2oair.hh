@@ -70,6 +70,7 @@ public:
 
     static constexpr int wPhaseIdx = 0; // index of the water phase
     static constexpr int nPhaseIdx = 1; // index of the air phase
+    static constexpr int sPhaseIdx = 2; // index of the solid phase
 
     // export component indices to indicate the main component
     // of the corresponding phase at atmospheric pressure 1 bar
@@ -87,6 +88,7 @@ public:
         switch (phaseIdx) {
         case wPhaseIdx: return "liquid";
         case nPhaseIdx: return "gas";
+        case sPhaseIdx: return "solid";
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
