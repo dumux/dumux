@@ -142,6 +142,7 @@ int main(int argc, char** argv) try
     x[cellCenterIdx].resize(numDofsCellCenter);
     x[faceIdx].resize(numDofsFace);
     problem->applyInitialSolution(x);
+    problem->updateStaticWallProperties();
     problem->updateDynamicWallProperties(x);
     auto xOld = x;
 
@@ -205,8 +206,9 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
 
 #if HAVE_PVPYTHON
-    bool shouldPlot = getParam<bool>("Output.PlotVelocityProfiles", false);
-    if (shouldPlot)
+    bool plotLawOfTheWall = getParam<bool>("Output.PlotLawOfTheWall", false);
+    bool plotVelocityProfile = getParam<bool>("Output.PlotVelocityProfile", false);
+    if (plotLawOfTheWall || plotVelocityProfile)
     {
         char fileName[255];
         std::string fileNameFormat = "%s-%05d";
@@ -219,26 +221,37 @@ int main(int argc, char** argv) try
         // execute the pvpython script
         std::string command = std::string(PVPYTHON_EXECUTABLE) + " " + script
                               + " -f " + vtuFileName
-                              + " -v 1"
+                              + " -v 2"
                               + " -r 10000";
         syscom =  command + " -p1 8.0 0.0 0.0"
                           + " -p2 8.0 0.2469 0.0"
                           + " -of " + std::string(fileName) + "\n";
+//         std::cout << syscom << std::endl;
         system(syscom.c_str());
-
 
         char gnuplotFileName[255];
         Dumux::GnuplotInterface<Scalar> gnuplot;
-        sprintf(gnuplotFileName, fileNameFormat.c_str(), "velProfiles", timeLoop->timeStepIndex());
-        gnuplot.setOpenPlotWindow(shouldPlot);
+        sprintf(gnuplotFileName, fileNameFormat.c_str(), "lawOfTheWall", timeLoop->timeStepIndex());
+        gnuplot.setOpenPlotWindow(plotLawOfTheWall);
         gnuplot.setDatafileSeparator(',');
         gnuplot.resetPlot();
         gnuplot.setXlabel("y^+ [-]");
         gnuplot.setYlabel("u_+ [-]");
         gnuplot.setOption("set log x");
         gnuplot.setOption("set xrange [1:3000]");
-        gnuplot.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer1954a, Re=50000'");
-        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 10:11 w l");
+        gnuplot.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer 1954, Re=50000'");
+        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 11:12 w l");
+        gnuplot.plot(std::string(gnuplotFileName));
+
+        sprintf(gnuplotFileName, fileNameFormat.c_str(), "velProfile", timeLoop->timeStepIndex());
+        gnuplot.resetAll();
+        gnuplot.setOpenPlotWindow(plotVelocityProfile);
+        gnuplot.setDatafileSeparator(',');
+        gnuplot.setXlabel("v_x/v_{x,max} [-]");
+        gnuplot.setYRange(0.0, 1.0);
+        gnuplot.setYlabel("y [-]");
+        gnuplot.addFileToPlot("laufer_re50000.csv", "u 2:1 w p t 'Laufer 1954, Re=50000'");
+        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 5:($23/0.2456) w l");
         gnuplot.plot(std::string(gnuplotFileName));
     }
 #endif

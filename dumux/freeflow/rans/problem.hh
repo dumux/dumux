@@ -86,9 +86,7 @@ public:
     //! The constructor sets the gravity, if desired by the user.
     RANSProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
-    {
-        updateStaticWallProperties();
-    }
+    { }
 
     /*!
      * \brief Update the static (solution independent) relations to the walls
@@ -102,17 +100,16 @@ public:
         std::cout << "Update static wall properties. ";
 
         // update size and initial values of the global vectors
-        wallElementIDs_.resize(this->fvGridGeometry().elementMapper().size());
-        wallDistances_.resize(this->fvGridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
-        neighborIDs_.resize(this->fvGridGeometry().elementMapper().size());
-        cellCenters_.resize(this->fvGridGeometry().elementMapper().size(), GlobalPosition(0.0));
+        wallElementID_.resize(this->fvGridGeometry().elementMapper().size());
+        wallDistance_.resize(this->fvGridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
+        neighborID_.resize(this->fvGridGeometry().elementMapper().size());
+        cellCenter_.resize(this->fvGridGeometry().elementMapper().size(), GlobalPosition(0.0));
         velocity_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
-        velocityMaximum_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
-        velocityMinimum_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(std::numeric_limits<Scalar>::max()));
         velocityGradients_.resize(this->fvGridGeometry().elementMapper().size(), DimMatrix(0.0));
         flowNormalAxis_.resize(this->fvGridGeometry().elementMapper().size(), 0);
         wallNormalAxis_.resize(this->fvGridGeometry().elementMapper().size(), 1);
         kinematicViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        sandGrainRoughness_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
 
         // retrieve all wall intersections and corresponding elements
         std::vector<unsigned int> wallElements;
@@ -142,7 +139,7 @@ public:
         for (const auto& element : elements(gridView))
         {
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            cellCenters_[elementID] = element.geometry().center();
+            cellCenter_[elementID] = element.geometry().center();
             for (unsigned int i = 0; i < wallPositions.size(); ++i)
             {
                 static const int problemWallNormalAxis
@@ -158,13 +155,14 @@ public:
                 GlobalPosition global = element.geometry().center();
                 global -= wallPositions[i];
                 // second and argument ensures to use only aligned elements
-                if (abs(global[searchAxis]) < wallDistances_[elementID]
+                if (abs(global[searchAxis]) < wallDistance_[elementID]
                     && abs(global[searchAxis]) < global.two_norm() + 1e-8
                     && abs(global[searchAxis]) > global.two_norm() - 1e-8)
                 {
-                    wallDistances_[elementID] = abs(global[searchAxis]);
-                    wallElementIDs_[elementID] = wallElements[i];
+                    wallDistance_[elementID] = abs(global[searchAxis]);
+                    wallElementID_[elementID] = wallElements[i];
                     wallNormalAxis_[elementID] = searchAxis;
+                    sandGrainRoughness_[elementID] = asImp_().sandGrainRoughnessAtPos(wallPositions[i]);
                 }
             }
         }
@@ -175,8 +173,8 @@ public:
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
-                neighborIDs_[elementID][dimIdx][0] = elementID;
-                neighborIDs_[elementID][dimIdx][1] = elementID;
+                neighborID_[elementID][dimIdx][0] = elementID;
+                neighborID_[elementID][dimIdx][1] = elementID;
             }
 
             for (const auto& intersection : intersections(gridView, element))
@@ -187,15 +185,15 @@ public:
                 unsigned int neighborID = this->fvGridGeometry().elementMapper().index(intersection.outside());
                 for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
                 {
-                    if (abs(cellCenters_[elementID][dimIdx] - cellCenters_[neighborID][dimIdx]) > 1e-8)
+                    if (abs(cellCenter_[elementID][dimIdx] - cellCenter_[neighborID][dimIdx]) > 1e-8)
                     {
-                        if (cellCenters_[elementID][dimIdx] > cellCenters_[neighborID][dimIdx])
+                        if (cellCenter_[elementID][dimIdx] > cellCenter_[neighborID][dimIdx])
                         {
-                            neighborIDs_[elementID][dimIdx][0] = neighborID;
+                            neighborID_[elementID][dimIdx][0] = neighborID;
                         }
-                        if (cellCenters_[elementID][dimIdx] < cellCenters_[neighborID][dimIdx])
+                        if (cellCenter_[elementID][dimIdx] < cellCenter_[neighborID][dimIdx])
                         {
-                            neighborIDs_[elementID][dimIdx][1] = neighborID;
+                            neighborID_[elementID][dimIdx][1] = neighborID;
                         }
                     }
                 }
@@ -222,6 +220,10 @@ public:
         static const int flowNormalAxis
             = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.FlowNormalAxis", -1);
 
+        // re-initialize min and max values
+        velocityMaximum_.assign(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
+        velocityMinimum_.assign(this->fvGridGeometry().elementMapper().size(), DimVector(std::numeric_limits<Scalar>::max()));
+
         // calculate cell-center-averaged velocities
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
@@ -245,7 +247,7 @@ public:
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementID = wallElementIDs_[elementID];
+            unsigned int wallElementID = wallElementID_[elementID];
 
             Scalar maxVelocity = 0.0;
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
@@ -253,10 +255,10 @@ public:
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
                 {
                     velocityGradients_[elementID][velIdx][dimIdx]
-                        = (velocity_[neighborIDs_[elementID][dimIdx][1]][velIdx]
-                              - velocity_[neighborIDs_[elementID][dimIdx][0]][velIdx])
-                          / (cellCenters_[neighborIDs_[elementID][dimIdx][1]][dimIdx]
-                              - cellCenters_[neighborIDs_[elementID][dimIdx][0]][dimIdx]);
+                        = (velocity_[neighborID_[elementID][dimIdx][1]][velIdx]
+                              - velocity_[neighborID_[elementID][dimIdx][0]][velIdx])
+                          / (cellCenter_[neighborID_[elementID][dimIdx][1]][dimIdx]
+                              - cellCenter_[neighborID_[elementID][dimIdx][0]][dimIdx]);
                 }
 
                 if (abs(velocity_[elementID][dimIdx]) > abs(velocityMaximum_[wallElementID][dimIdx]))
@@ -302,7 +304,7 @@ public:
     /*!
      * \brief Returns whether a given point is on a wall
      *
-     * \param globalPos The position in global coordinates where the temperature should be specified.
+     * \param globalPos The position in global coordinates.
      */
     bool isOnWall(const GlobalPosition &globalPos) const
     {
@@ -311,11 +313,21 @@ public:
                    "The problem does not provide an isOnWall() method.");
     }
 
+    /*!
+     * \brief Returns the sand-grain roughness \f$\mathrm{[m]}\f$ at a given position
+     *
+     * \param globalPos The position in global coordinates.
+     */
+    Scalar sandGrainRoughnessAtPos(const GlobalPosition &globalPos) const
+    {
+        return 0.0;
+    }
+
 public:
-    std::vector<unsigned int> wallElementIDs_;
-    std::vector<Scalar> wallDistances_;
-    std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIDs_;
-    std::vector<GlobalPosition> cellCenters_;
+    std::vector<unsigned int> wallElementID_;
+    std::vector<Scalar> wallDistance_;
+    std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborID_;
+    std::vector<GlobalPosition> cellCenter_;
     std::vector<DimVector> velocity_;
     std::vector<DimVector> velocityMaximum_;
     std::vector<DimVector> velocityMinimum_;
@@ -323,6 +335,7 @@ public:
     std::vector<unsigned int> wallNormalAxis_;
     std::vector<unsigned int> flowNormalAxis_;
     std::vector<Scalar> kinematicViscosity_;
+    std::vector<Scalar> sandGrainRoughness_;
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)

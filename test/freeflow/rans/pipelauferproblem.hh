@@ -105,6 +105,7 @@ public:
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
+        sandGrainRoughness_ = getParam<Scalar>("Problem.SandGrainRoughness", 0.0);
     }
 
    /*!
@@ -117,6 +118,11 @@ public:
         Scalar localEps_ = 1e-6; // cannot use the epsilon, because ParentType is initialized first
         return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + localEps_
               || globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - localEps_;
+    }
+
+    Scalar sandGrainRoughnessAtPos(const GlobalPosition &globalPos) const
+    {
+        return sandGrainRoughness_;
     }
 
     bool shouldWriteRestartFile() const
@@ -228,6 +234,7 @@ private:
 
     Scalar eps_;
     Scalar inletVelocity_;
+    Scalar sandGrainRoughness_;
     TimeLoopPtr timeLoop_;
 };
 } //end namespace

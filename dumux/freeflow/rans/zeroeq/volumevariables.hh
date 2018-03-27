@@ -83,9 +83,11 @@ public:
                 const SubControlVolume& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
+        additionalRoughnessLength_ = problem.additionalRoughnessLength_[this->elementID()];
+        yPlusRough_ = wallDistanceRough() * this->uStar() / this->kinematicViscosity();
+
         calculateEddyViscosity(elemSol, problem, element, scv);
     }
-
 
     /*!
      * \brief Calculate and set the dynamic eddy viscosity.
@@ -121,14 +123,14 @@ public:
         }
         else if (eddyViscosityModel == Indices::prandtl)
         {
-            Scalar mixingLength = karmanConstant * asImp_().wallDistance();
+            Scalar mixingLength = karmanConstant * asImp_().wallDistanceRough();
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
         else if (eddyViscosityModel == Indices::modifiedVanDriest)
         {
-            Scalar mixingLength = karmanConstant * asImp_().wallDistance()
-                                  * (1.0 - exp(-asImp_().yPlus() / 26.0))
-                                  / sqrt(1.0 - exp(-0.26 * asImp_().yPlus()));
+            Scalar mixingLength = karmanConstant * asImp_().wallDistanceRough()
+                                  * (1.0 - exp(-asImp_().yPlusRough() / 26.0))
+                                  / sqrt(1.0 - exp(-0.26 * asImp_().yPlusRough()));
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
         else if (eddyViscosityModel == Indices::baldwinLomax)
@@ -143,6 +145,18 @@ public:
         asImp_().setDynamicEddyViscosity(kinematicEddyViscosity * asImp_().density());
     }
 
+    /*!
+     * \brief Return the wall distance \f$\mathrm{[m]}\f$ including an additional roughness length
+     */
+    Scalar wallDistanceRough() const
+    { return this->wallDistance() + additionalRoughnessLength_; }
+
+    /*!
+     * \brief Return the dimensionless wall distance \f$\mathrm{[-]}\f$  including an additional roughness length
+     */
+    Scalar yPlusRough() const
+    { return yPlusRough_; }
+
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
@@ -151,6 +165,10 @@ private:
     //! \copydoc asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
+
+protected:
+    Scalar additionalRoughnessLength_;
+    Scalar yPlusRough_;
 };
 
 /*!

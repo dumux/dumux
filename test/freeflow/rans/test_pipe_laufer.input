@@ -11,12 +11,14 @@ Cells1 = 25 25
 Grading1 = 1.2 -1.2
 
 [Output]
-PlotVelocityProfiles = true
+PlotLawOfTheWall = true
+PlotVelocityProfile = true
 
 [Problem]
 Name = pipe_laufer_zeroeq
 InletVelocity = 2.5 # [m/s]
 EnableGravity = false
+SandGrainRoughness = 0.0 # [m] # not implemented for EddyViscosityModel = 3
 
 [RANS]
 EddyViscosityModel = 3

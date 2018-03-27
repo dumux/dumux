@@ -101,24 +101,37 @@ public:
 
         // calculate characteristic properties of the turbulent flow
         elementID_ = problem.fvGridGeometry().elementMapper().index(element);
-        wallElementID_ = problem.wallElementIDs_[elementID_];
-        wallDistance_ = problem.wallDistances_[elementID_];
+        wallElementID_ = problem.wallElementID_[elementID_];
+        wallDistance_ = problem.wallDistance_[elementID_];
         velocity_ = problem.velocity_[elementID_];
+        velocityMaximum_ = problem.velocityMaximum_[wallElementID_];
         velocityGradients_ = problem.velocityGradients_[elementID_];
         unsigned int flowNormalAxis = problem.flowNormalAxis_[elementID_];
         unsigned int wallNormalAxis = problem.wallNormalAxis_[elementID_];
-        Scalar uStar = sqrt(problem.kinematicViscosity_[wallElementID_]
-                            * abs(problem.velocityGradients_[wallElementID_][flowNormalAxis][wallNormalAxis]));
-        yPlus_ = wallDistance_ * uStar / asImp_().kinematicViscosity();
-        yPlus_ = max(yPlus_, 1e-10); // zero values lead to numerical problems in some turbulence models
-        uPlus_ = velocity_[flowNormalAxis] / max(uStar, 1e-10);
+        uStar_ = sqrt(problem.kinematicViscosity_[wallElementID_]
+                      * abs(problem.velocityGradients_[wallElementID_][flowNormalAxis][wallNormalAxis]));
+        uStar_ = max(uStar_, 1e-10); // zero values lead to numerical problems in some turbulence models
+        yPlus_ = wallDistance_ * uStar_ / asImp_().kinematicViscosity();
+        uPlus_ = velocity_[flowNormalAxis] / uStar_;
     };
+
+    /*!
+     * \brief Return the element ID of the control volume.
+     */
+    unsigned int elementID() const
+    { return elementID_; }
 
     /*!
      * \brief Return the velocity vector \f$\mathrm{[m/s]}\f$ at the control volume center.
      */
     DimVector velocity() const
     { return velocity_; }
+
+    /*!
+     * \brief Return the maximum velocity vector \f$\mathrm{[m/s]}\f$ of the wall segment.
+     */
+    DimVector velocityMaximum() const
+    { return velocityMaximum_; }
 
     /*!
      * \brief Return the velocity gradients \f$\mathrm{[1/s]}\f$ at the control volume center.
@@ -131,6 +144,12 @@ public:
      */
     Scalar wallDistance() const
     { return wallDistance_; }
+
+    /*!
+     * \brief Return the wall friction velocity \f$\mathrm{[m/s]}\f$
+     */
+    Scalar uStar() const
+    { return uStar_; }
 
     /*!
      * \brief Return the dimensionless wall distance \f$\mathrm{[-]}\f$.
@@ -183,11 +202,13 @@ private:
 
 protected:
     DimVector velocity_;
+    DimVector velocityMaximum_;
     DimMatrix velocityGradients_;
     Scalar dynamicEddyViscosity_;
     unsigned int elementID_;
     unsigned int wallElementID_;
     Scalar wallDistance_;
+    Scalar uStar_;
     Scalar yPlus_;
     Scalar uPlus_;
 };
