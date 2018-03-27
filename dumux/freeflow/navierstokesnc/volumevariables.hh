@@ -121,14 +121,13 @@ public:
         fluidState.setSaturation(phaseIdx, 1.0);
 
         Scalar fracMinor = 0.0;
-        int transportEqIdx = 1;
 
         for(int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             if(compIdx == mainCompIdx)
                 continue;
 
-            const Scalar moleOrMassFraction = elemSol[0][transportEqIdx++] + 1.0;
+            const Scalar moleOrMassFraction = elemSol[0][Indices::conti0EqIdx+compIdx] + 1.0;
             if(useMoles)
                 fluidState.setMoleFraction(phaseIdx, compIdx, moleOrMassFraction -1.0);
             else
