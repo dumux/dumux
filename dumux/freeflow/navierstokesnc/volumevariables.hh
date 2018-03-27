@@ -120,24 +120,27 @@ public:
         // immiscible multi-phase models, so we have to set it here...
         fluidState.setSaturation(phaseIdx, 1.0);
 
-        Scalar fracMinor = 0.0;
+        Scalar sumFracMinorComp = 0.0;
 
         for(int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             if(compIdx == mainCompIdx)
                 continue;
 
-            const Scalar moleOrMassFraction = elemSol[0][Indices::conti0EqIdx+compIdx] + 1.0;
+            // temporary add 1.0 to remove spurious differences in mole fractions
+            // which are below the numerical accuracy
+            Scalar moleOrMassFraction = elemSol[0][Indices::conti0EqIdx+compIdx] + 1.0;
+            moleOrMassFraction = moleOrMassFraction - 1.0;
             if(useMoles)
-                fluidState.setMoleFraction(phaseIdx, compIdx, moleOrMassFraction -1.0);
+                fluidState.setMoleFraction(phaseIdx, compIdx, moleOrMassFraction);
             else
-                fluidState.setMassFraction(phaseIdx, compIdx, moleOrMassFraction -1.0);
-            fracMinor += moleOrMassFraction - 1.0;
+                fluidState.setMassFraction(phaseIdx, compIdx, moleOrMassFraction);
+            sumFracMinorComp += moleOrMassFraction;
         }
         if(useMoles)
-            fluidState.setMoleFraction(phaseIdx, mainCompIdx, 1.0 - fracMinor);
+            fluidState.setMoleFraction(phaseIdx, mainCompIdx, 1.0 - sumFracMinorComp);
         else
-            fluidState.setMassFraction(phaseIdx, mainCompIdx, 1.0 - fracMinor);
+            fluidState.setMassFraction(phaseIdx, mainCompIdx, 1.0 - sumFracMinorComp);
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updatePhase(fluidState, phaseIdx);
