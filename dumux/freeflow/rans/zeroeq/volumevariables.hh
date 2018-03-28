@@ -109,8 +109,6 @@ public:
         using std::exp;
         using std::sqrt;
         Scalar kinematicEddyViscosity = 0.0;
-        static const auto karmanConstant
-            = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.KarmanConstant");
         static const auto eddyViscosityModel
             = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.EddyViscosityModel");
         unsigned int elementID = problem.fvGridGeometry().elementMapper().index(element);
@@ -124,12 +122,12 @@ public:
         }
         else if (eddyViscosityModel == EddyViscosityModels::prandtl)
         {
-            Scalar mixingLength = karmanConstant * asImp_().wallDistanceRough();
+            Scalar mixingLength = problem.karmanConstant() * asImp_().wallDistanceRough();
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
         else if (eddyViscosityModel == EddyViscosityModels::modifiedVanDriest)
         {
-            Scalar mixingLength = karmanConstant * asImp_().wallDistanceRough()
+            Scalar mixingLength = problem.karmanConstant() * asImp_().wallDistanceRough()
                                   * (1.0 - exp(-asImp_().yPlusRough() / 26.0))
                                   / sqrt(1.0 - exp(-0.26 * asImp_().yPlusRough()));
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;

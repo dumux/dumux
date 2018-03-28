@@ -43,7 +43,7 @@ class H2O_CH4
 {
 public:
     /*!
-     * \brief Henry coefficent \f$[N/m^2]\f$  for molecular methane in liquid water.
+     * \brief Henry coefficient \f$[N/m^2]\f$  for molecular methane in liquid water.
      *
      * See:
      *

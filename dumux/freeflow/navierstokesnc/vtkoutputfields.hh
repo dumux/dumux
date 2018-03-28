@@ -47,11 +47,11 @@ public:
 
         for (int j = 0; j < FluidSystem::numComponents; ++j)
         {
-            vtk.addVolumeVariable([j](const auto& v){ return v.massFraction(phaseIdx,j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            vtk.addVolumeVariable([j](const auto& v){ return v.moleFraction(phaseIdx,j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+            vtk.addVolumeVariable([j](const auto& v){ return v.massFraction(j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+            vtk.addVolumeVariable([j](const auto& v){ return v.moleFraction(j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
             if (j != phaseIdx)
             {
-                vtk.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(phaseIdx,j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+                vtk.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
             }
         }
     }

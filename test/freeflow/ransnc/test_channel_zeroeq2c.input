@@ -1,6 +1,6 @@
 [TimeLoop]
-DtInitial = 10 # [s]
-TEnd = 100000 # [s]
+DtInitial = 1 # [s]
+TEnd = 1000 # [s]
 
 [Grid]
 Verbosity = true
@@ -12,7 +12,7 @@ Grading1 = 1.4
 
 [Problem]
 Name = test_channel_zeroeq2c # name passed to the output routines
-InletVelocity = 0.01 # [m/s]
+InletVelocity = 0.1 # [m/s]
 EnableGravity = false
 
 [RANS]

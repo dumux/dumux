@@ -109,9 +109,9 @@ public:
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
             //calculate x_inside
-            const auto xInside = insideVolVars.moleFraction(phaseIdx, compIdx);
+            const auto xInside = insideVolVars.moleFraction(compIdx);
             //calculate outside molefraction with the respective transmissibility
-            const auto xOutside = outsideVolVars.moleFraction(phaseIdx, compIdx);
+            const auto xOutside = outsideVolVars.moleFraction(compIdx);
 
             moleFracInside[compIdx] = xInside;
             moleFracOutside[compIdx] = xOutside;
@@ -218,7 +218,7 @@ private:
 
         for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
         {
-            const auto xi = volVars.moleFraction(phaseIdx, compIIdx);
+            const auto xi = volVars.moleFraction(compIIdx);
 
             //calculate diffusivity for i,numComponents
             auto fluidState = volVars.fluidState();
@@ -237,7 +237,7 @@ private:
                 if (compkIdx == compIIdx)
                             continue;
 
-                const auto xk = volVars.moleFraction(phaseIdx, compkIdx);
+                const auto xk = volVars.moleFraction(compkIdx);
                 Scalar tik = FluidSystem::binaryDiffusionCoefficient(fluidState,
                                                                     paramCache,
                                                                     phaseIdx,

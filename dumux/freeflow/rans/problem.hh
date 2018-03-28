@@ -112,6 +112,10 @@ public:
         {
             for (const auto& intersection : intersections(gridView, element))
             {
+                // only search for walls at a global boundary
+                if (!intersection.boundary())
+                    continue;
+
                 GlobalPosition global = intersection.geometry().center();
                 if (asImp_().isOnWall(global))
                 {
@@ -314,6 +318,12 @@ public:
     {
         return 0.0;
     }
+
+    /*!
+     * \brief Returns the Karman constant
+     */
+    const Scalar karmanConstant() const
+    { return 0.41; }
 
 public:
     std::vector<unsigned int> wallElementID_;

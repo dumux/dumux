@@ -175,9 +175,6 @@ public:
         const Scalar cWake = 0.25;
         const Scalar cKleb = 0.3;
 
-        static const auto karmanConstant
-            = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.KarmanConstant");
-
         std::vector<Scalar> storedFMax;
         std::vector<Scalar> storedYFMax;
         storedFMax.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
@@ -197,7 +194,7 @@ public:
             Scalar uStar = sqrt(this->kinematicViscosity_[wallElementID]
                                 * abs(this->velocityGradients_[wallElementID][flowNormalAxis][wallNormalAxis]));
             Scalar yPlus = wallDistance * uStar / this->kinematicViscosity_[elementID];
-            Scalar mixingLength = karmanConstant * wallDistance * (1.0 - exp(-yPlus / aPlus));
+            Scalar mixingLength = this->karmanConstant() * wallDistance * (1.0 - exp(-yPlus / aPlus));
             kinematicEddyViscosityInner[elementID] = mixingLength * mixingLength * omegaAbs;
 
             Scalar f = wallDistance * omegaAbs * (1.0 - exp(-yPlus / aPlus));

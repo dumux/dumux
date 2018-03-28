@@ -64,7 +64,6 @@ class NavierStokesNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
 
     // The index of the component balance equation that gets replaced with the total mass balance
     static const int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-    static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
     using ParentType = NavierStokesFluxVariables<TypeTag>;
 
@@ -101,7 +100,7 @@ public:
             auto upwindTerm = [compIdx](const auto& volVars)
             {
                 const auto density = useMoles ? volVars.molarDensity() : volVars.density();
-                const auto fraction =  useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx);
+                const auto fraction =  useMoles ? volVars.moleFraction(compIdx) : volVars.massFraction(compIdx);
                 return density * fraction;
             };
 

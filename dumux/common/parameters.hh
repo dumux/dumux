@@ -261,7 +261,6 @@ private:
         params["Mpfa.Q"] = "0.0";
 
         // parameters in the RANS group
-        params["RANS.KarmanConstant"] = "0.41";
         params["RANS.EddyViscosityModel"] = "1";
     }
 };

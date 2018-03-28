@@ -60,7 +60,6 @@ class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
 
     enum {
         conti0EqIdx = Indices::conti0EqIdx,
-        phaseIdx = Indices::phaseIdx,
 
         // The index of the component balance equation
         // that gets replaced with the total mass balance
@@ -91,7 +90,7 @@ public:
         {
             const int eqIdx = conti0EqIdx + compIdx;
 
-            const Scalar massOrMoleFraction = useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx);
+            const Scalar massOrMoleFraction = useMoles ? volVars.moleFraction(compIdx) : volVars.massFraction(compIdx);
             const Scalar s =  density * massOrMoleFraction;
 
             if (eqIdx != replaceCompEqIdx)
@@ -131,7 +130,7 @@ protected:
             if(eqIdx != conti0EqIdx && bcTypes.isDirichletCell(eqIdx))
             {
                 const auto& insideVolVars = elemVolVars[insideScv];
-                const Scalar massOrMoleFraction = useMoles ? insideVolVars.moleFraction(phaseIdx, compIdx) : insideVolVars.massFraction(phaseIdx, compIdx);
+                const Scalar massOrMoleFraction = useMoles ? insideVolVars.moleFraction(compIdx) : insideVolVars.massFraction(compIdx);
                 residual[eqIdx] = massOrMoleFraction - problem.dirichletAtPos(insideScv.center())[eqIdx];
             }
         }

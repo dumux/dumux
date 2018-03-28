@@ -59,7 +59,7 @@ class H2O_Component<Scalar, Components::Constant<id, Scalar>>
 {
 public:
     /*!
-     * \brief Henry coefficent \f$N/m^2\f$  for the constant component in liquid water.
+     * \brief Henry coefficient \f$N/m^2\f$  for the constant component in liquid water.
      *
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      */
@@ -70,7 +70,7 @@ public:
     }
 
     /*!
-     * \brief Henry coefficent \f$N/m^2\f$  for water in the constant component.
+     * \brief Henry coefficient \f$N/m^2\f$  for water in the constant component.
      *
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      */
@@ -82,7 +82,7 @@ public:
 
 
     /*!
-     * \brief Binary diffusion coefficent \f$m^2/s\f$ for molecular water and the constant component.
+     * \brief Binary diffusion coefficient \f$m^2/s\f$ for molecular water and the constant component.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */
@@ -93,7 +93,7 @@ public:
     }
 
     /*!
-     * \brief Diffusion coefficent \f$m^2/s\f$ for the constant component in liquid water.
+     * \brief Diffusion coefficient \f$m^2/s\f$ for the constant component in liquid water.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */

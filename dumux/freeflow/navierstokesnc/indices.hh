@@ -52,6 +52,7 @@ public:
     static constexpr int replaceCompEqIdx = theReplaceCompEqIdx;
     static constexpr int totalMassBalanceIdx = replaceCompEqIdx; //!< Index of the total mass balance equation
     static constexpr int conti0EqIdx = PVOffset; //!< The base index of the transport equations
+    static constexpr int pressureIdx = totalMassBalanceIdx; //!< Index of the pressure in a solution vector
 };
 
 // \}
