@@ -207,12 +207,15 @@ private:
  * \ingroup InputOutput
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format
  *
+ * \tparam TypeTag The TypeTag of the problem implementation
+ * \tparam phaseIdxOffset Used for single-phase problems to retrieve the right phase name
+ *
  * Handles the output of scalar and vector fields to VTK formatted file for multiple
  * variables and timesteps. Certain predefined fields can be registered on
  * initialization and/or be turned on/off using the designated properties. Additionally
  * non-standardized scalar and vector fields can be added to the writer manually.
  */
-template<typename TypeTag>
+template<typename TypeTag, int phaseIdxOffset = 0>
 class VtkOutputModule
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -479,17 +482,21 @@ public:
                 if (isBox && dim > 1)
                 {
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    {
                         sequenceWriter_.addVertexData(Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), velocity[phaseIdx],
-                                                            "velocity_" + std::string(FluidSystem::phaseName(phaseIdx)) + " (m/s)",
+                                                            "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
                                                             dimWorld, dim).get());
+                    }
                 }
                 // cell-centered models
                 else
                 {
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    {
                         sequenceWriter_.addCellData(Field(gridGeom_.gridView(), gridGeom_.elementMapper(), velocity[phaseIdx],
-                                                            "velocity_" + std::string(FluidSystem::phaseName(phaseIdx)) + " (m/s)",
+                                                            "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
                                                             dimWorld, 0).get());
+                    }
                 }
             }
 

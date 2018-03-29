@@ -39,12 +39,15 @@ class PointCloudVtkWriter;
  * \ingroup InputOutput
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format
  *        Specialization for staggered grids with dofs on faces.
+ *
+ * \tparam TypeTag The TypeTag of the problem implementation
+ * \tparam phaseIdxOffset Used for single-phase problems to retrieve the right phase name
  */
-template<typename TypeTag>
-class StaggeredVtkOutputModule : public VtkOutputModule<TypeTag>
+template<typename TypeTag, int phaseIdxOffset = 0>
+class StaggeredVtkOutputModule : public VtkOutputModule<TypeTag, phaseIdxOffset>
 {
-    friend class VtkOutputModule<TypeTag>;
-    using ParentType = VtkOutputModule<TypeTag>;
+    friend class VtkOutputModule<TypeTag, phaseIdxOffset>;
+    using ParentType = VtkOutputModule<TypeTag, phaseIdxOffset>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
