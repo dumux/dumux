@@ -68,6 +68,8 @@ struct PorousMediumFlowNIModelTraits : public IsothermalTraits
     static constexpr int numEq() { return IsothermalTraits::numEq()+1; }
     //! We additionally solve for the equation balance
     static constexpr bool enableEnergyBalance() { return true; }
+
+    static constexpr int numEnergyEq() { return 1; }
 };
 
 } // end namespace Dumux

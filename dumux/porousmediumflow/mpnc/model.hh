@@ -110,6 +110,7 @@
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 #include <dumux/porousmediumflow/nonequilibrium/model.hh>
+#include <dumux/porousmediumflow/nonequilibrium/volumevariables.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -144,6 +145,8 @@ struct MPNCModelTraits
     static constexpr bool enableEnergyBalance() { return false; }
     static constexpr bool enableThermalNonEquilibrium() { return false; }
     static constexpr bool enableChemicalNonEquilibrium() { return false; }
+
+    static constexpr int numEnergyEq() {return 0; }
 };
 
 namespace Properties
@@ -254,6 +257,15 @@ public:
 /////////////////////////////////////////////////
 
 SET_TYPE_PROP(MPNCNonequil, EquilibriumLocalResidual, MPNCLocalResidual<TypeTag>);
+
+//! use the mineralization volume variables together with the 2pnc vol vars
+SET_PROP(MPNCNonequil, VolumeVariables)
+{
+private:
+    using EquilibriumVolumeVariables = MPNCVolumeVariables<TypeTag>;
+public:
+    using type = NonEquilibriumVolumeVariables<TypeTag, EquilibriumVolumeVariables>;
+};
 
 //! Set the vtk output fields specific to this model
 SET_PROP(MPNCNonequil, EquilibriumVtkOutputFields)

@@ -30,7 +30,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, bool enableEnergyBalance>
+template <class TypeTag, bool enableEnergyBalance, int numEnergyEq>
 class PorousMediumFlowVolumeVariablesImplementation;
 
 /*!
@@ -40,14 +40,14 @@ class PorousMediumFlowVolumeVariablesImplementation;
  *        is specialized for isothermal and non-isothermal models.
  */
 template <class TypeTag>
-using PorousMediumFlowVolumeVariables = PorousMediumFlowVolumeVariablesImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>;
+using PorousMediumFlowVolumeVariables = PorousMediumFlowVolumeVariablesImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance(),GET_PROP_TYPE(TypeTag, ModelTraits)::numEnergyEq() >;
 
 /*!
  * \ingroup PorousmediumFlow
  * \brief The isothermal base class
  */
 template<class TypeTag>
-class PorousMediumFlowVolumeVariablesImplementation<TypeTag, false>
+class PorousMediumFlowVolumeVariablesImplementation<TypeTag, false, 0>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -58,6 +58,7 @@ class PorousMediumFlowVolumeVariablesImplementation<TypeTag, false>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
 public:
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -114,12 +115,14 @@ public:
 
     //! The temperature is obtained from the problem as a constant for isothermal models
     template<class ElementSolution>
-    static Scalar temperature(const ElementSolution &elemSol,
-                              const Problem& problem,
-                              const Element &element,
-                              const SubControlVolume &scv)
+    void updateTemperature(const ElementSolution &elemSol,
+                           const Problem& problem,
+                            const Element &element,
+                            const SubControlVolume &scv,
+                            FluidState& fluidState)
     {
-        return problem.temperatureAtPos(scv.dofPosition());
+        Scalar t = problem.temperatureAtPos(scv.dofPosition());
+        fluidState.setTemperature(t);
     }
 
     //! The phase enthalpy is zero for isothermal models
@@ -139,10 +142,10 @@ private:
 
 //! The non-isothermal implicit volume variables base class
 template <class TypeTag>
-class PorousMediumFlowVolumeVariablesImplementation<TypeTag, true>
-: public PorousMediumFlowVolumeVariablesImplementation<TypeTag, false>
+class PorousMediumFlowVolumeVariablesImplementation<TypeTag, true, 1>
+: public PorousMediumFlowVolumeVariablesImplementation<TypeTag, false, 0>
 {
-    using ParentType = PorousMediumFlowVolumeVariablesImplementation<TypeTag, false>;
+    using ParentType = PorousMediumFlowVolumeVariablesImplementation<TypeTag, false, 0>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -156,6 +159,7 @@ class PorousMediumFlowVolumeVariablesImplementation<TypeTag, true>
     static const int temperatureIdx = Indices::temperatureIdx;
 
 public:
+     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -228,12 +232,14 @@ public:
 
     //! The temperature is a primary variable for non-isothermal models
     template<class ElementSolution>
-    static Scalar temperature(const ElementSolution &elemSol,
-                              const Problem& problem,
-                              const Element &element,
-                              const SubControlVolume &scv)
+    void updateTemperature(const ElementSolution &elemSol,
+                            const Problem& problem,
+                            const Element &element,
+                            const SubControlVolume &scv,
+                            FluidState& fluidState)
     {
-        return ParentType::extractDofPriVars(elemSol, scv)[temperatureIdx];
+        Scalar t = ParentType::extractDofPriVars(elemSol, scv)[temperatureIdx];
+        fluidState.setTemperature(t);
     }
 
     //! The phase enthalpy is zero for isothermal models
@@ -256,6 +262,124 @@ private:
     Scalar solidHeatCapacity_;
     Scalar solidDensity_;
     Scalar solidThermalConductivity_;
+};
+
+//! The non-equilibrium implicit volume variables base class for a fluid and a solid temperature
+template <class TypeTag>
+class PorousMediumFlowVolumeVariablesImplementation<TypeTag, true, 2>
+: public PorousMediumFlowVolumeVariablesImplementation<TypeTag, true, 1>
+{
+    using ParentType = PorousMediumFlowVolumeVariablesImplementation<TypeTag, false, 0>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+    static const int temperatureIdx = Indices::temperatureIdx;
+
+    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
+    enum { temperature0Idx = Indices::temperature0Idx };
+    enum { temperatureSolidIdx = Indices::temperatureSolidIdx };
+
+public:
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+
+    //! The temperature is a primary variable for non-isothermal models
+    template<class ElementSolution>
+    void updateTemperature(const ElementSolution &elemSol,
+                            const Problem& problem,
+                            const Element &element,
+                            const SubControlVolume &scv,
+                            FluidState& fluidState)
+    {
+        const Scalar T = ParentType::extractDofPriVars(elemSol, scv)[temperature0Idx];
+        fluidState.setTemperature(T);
+
+        temperatureSolid_ = ParentType::extractDofPriVars(elemSol, scv)[temperatureSolidIdx];
+    }
+
+    /*!
+     * \brief Returns the temperature in fluid / solid phase(s)
+     *        the sub-control volume.
+     * \param phaseIdx The local index of the phases
+     */
+    Scalar temperatureSolid() const
+    { return temperatureSolid_; }
+
+protected:
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation*>(this); }
+    Implementation &asImp_()
+    { return *static_cast<Implementation*>(this); }
+
+private:
+    Scalar temperatureSolid_;
+};
+
+//! The non-equilibrium implicit volume variables base class for a fluid and a solid temperature
+template <class TypeTag>
+class PorousMediumFlowVolumeVariablesImplementation<TypeTag, true, 3>
+: public PorousMediumFlowVolumeVariablesImplementation<TypeTag, true, 1>
+{
+    using ParentType = PorousMediumFlowVolumeVariablesImplementation<TypeTag, false, 0>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+    static const int temperatureIdx = Indices::temperatureIdx;
+
+    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
+    enum { temperature0Idx = Indices::temperature0Idx };
+    enum { temperatureSolidIdx = Indices::temperatureSolidIdx };
+
+public:
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+
+    //! The temperature is a primary variable for non-isothermal models
+    template<class ElementSolution>
+    void updateTemperature(const ElementSolution &elemSol,
+                            const Problem& problem,
+                            const Element &element,
+                            const SubControlVolume &scv,
+                            FluidState& fluidState)
+    {
+        for(int phaseIdx=0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            // retrieve temperature from solution vector
+            const Scalar T = ParentType::extractDofPriVars(elemSol, scv)[temperature0Idx + phaseIdx];
+            fluidState.setTemperature(phaseIdx, T);
+        }
+
+        temperatureSolid_ = ParentType::extractDofPriVars(elemSol, scv)[temperatureSolidIdx];
+    }
+
+    /*!
+     * \brief Returns the temperature in fluid / solid phase(s)
+     *        the sub-control volume.
+     * \param phaseIdx The local index of the phases
+     */
+    Scalar temperatureSolid() const
+    { return temperatureSolid_; }
+
+protected:
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation*>(this); }
+    Implementation &asImp_()
+    { return *static_cast<Implementation*>(this); }
+
+private:
+    Scalar temperatureSolid_;
 };
 
 } // end namespace Dumux
