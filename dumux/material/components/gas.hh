@@ -25,6 +25,8 @@
 #ifndef DUMUX_COMPONENT_GAS_HH
 #define DUMUX_COMPONENT_GAS_HH
 
+#include <dune/common/exceptions.hh>
+
 namespace Dumux {
 namespace Components {
 

@@ -24,6 +24,8 @@
 #ifndef DUMUX_BOUNDARY_FLAG_HH
 #define DUMUX_BOUNDARY_FLAG_HH
 
+#include <cstddef>
+
 // ALUGrid specific includes
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
