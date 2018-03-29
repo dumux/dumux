@@ -39,38 +39,65 @@ template<class ActualFVGridGeometry>
 class GridGeometryView
 {
 public:
-    using GridView = typename ActualFVGridGeometry::GridView;
 
     explicit GridGeometryView(const ActualFVGridGeometry* actualFVGridGeometry)
     : fvGridGeometry_(actualFVGridGeometry) {}
 
-    //! export discretization method
+    //! export  the GridView type and the discretization method
+    using GridView = typename ActualFVGridGeometry::GridView;
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
     using LocalView = typename ActualFVGridGeometry::LocalView;
 
+    /*!
+     * \brief Returns true if this view if related to cell centered dofs
+     */
     static constexpr bool isCellCenter() { return false; }
+
+    /*!
+     * \brief Returns true if this view if related to face dofs
+     */
     static constexpr bool isFace() {return false; }
 
-    //! return a integral constant for cell center dofs
+    /*!
+     * \brief Return an integral constant index for cell centered dofs
+     */
     static constexpr auto cellCenterIdx()
     { return typename ActualFVGridGeometry::DofTypeIndices::CellCenterIdx{}; }
 
-    //! return a integral constant for face dofs
+    /*!
+     * \brief Return an integral constant index for face dofs
+     */
     static constexpr auto faceIdx()
     { return typename ActualFVGridGeometry::DofTypeIndices::FaceIdx{}; }
 
+    /*!
+     * \brief Return the gridView this grid geometry object lives on
+     */
     const auto& gridView() const
     { return fvGridGeometry_->gridView(); }
 
-    const auto &connectivityMap() const // TODO return correct map
+    /*!
+     * \brief Returns the connectivity map of which dofs have derivatives with respect
+     *        to a given dof.
+     */
+    const auto& connectivityMap() const // TODO return correct map
     { return fvGridGeometry_->connectivityMap(); }
 
+    /*!
+     * \brief Returns the mapper for vertices to indices for possibly adaptive grids.
+     */
     const auto& vertexMapper() const
     { return fvGridGeometry_->vertexMapper(); }
 
+    /*!
+     * \brief Returns the mapper for elements to indices for constant grids.
+     */
     const auto& elementMapper() const
     { return fvGridGeometry_->elementMapper(); }
 
+    /*!
+     * \brief Returns the actual fvGridGeometry we are a restriction of
+     */
     const ActualFVGridGeometry& actualfvGridGeometry() const
     { return *fvGridGeometry_; }
 
@@ -92,11 +119,16 @@ public:
 
     using ParentType::ParentType;
 
+    /*!
+     * \brief Returns true because this view is related to cell centered dofs
+     */
     static constexpr bool isCellCenter() { return true; }
 
+    /*!
+     * \brief The total number of cell centered dofs
+     */
     std::size_t numDofs() const
     { return this->fvGridGeometry_->numCellCenterDofs(); }
-
 };
 
 /*!
@@ -112,8 +144,14 @@ public:
 
     using ParentType::ParentType;
 
+    /*!
+     * \brief Returns true because this view is related to face dofs
+     */
     static constexpr bool isFace() {return true; }
 
+    /*!
+     * \brief The total number of cell centered dofs
+     */
     std::size_t numDofs() const
     { return this->fvGridGeometry_->numFaceDofs(); }
 };
