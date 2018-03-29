@@ -219,46 +219,21 @@ private:
         for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
         {
             const auto xi = volVars.moleFraction(compIIdx);
+            const Scalar tin = volVars.effectiveDiffusivity(compIIdx, numComponents-1);
 
-            //calculate diffusivity for i,numComponents
-            auto fluidState = volVars.fluidState();
-            typename FluidSystem::ParameterCache paramCache;
-            paramCache.updateAll(fluidState);
-            auto tin = FluidSystem::binaryDiffusionCoefficient(fluidState,
-                                                               paramCache,
-                                                               phaseIdx,
-                                                               compIIdx,
-                                                               numComponents-1);
-            //set the entrys of the diffusion matrix of the diagonal
+            // set the entries of the diffusion matrix of the diagonal
             reducedDiffusionMatrix[compIIdx][compIIdx] += xi/tin;
 
-            for (int compkIdx = 0; compkIdx < numComponents; compkIdx++)
+            for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
             {
-                if (compkIdx == compIIdx)
-                            continue;
-
-                const auto xk = volVars.moleFraction(compkIdx);
-                Scalar tik = FluidSystem::binaryDiffusionCoefficient(fluidState,
-                                                                    paramCache,
-                                                                    phaseIdx,
-                                                                    compIIdx,
-                                                                    compkIdx);
-                reducedDiffusionMatrix[compIIdx][compIIdx] += xk/tik;
-            }
-
-            // now set the rest of the entries (off-diagonal)
-            for (int compJIdx = 0; compJIdx < numComponents-1; compJIdx++)
-            {
-                //we don't want to calculate e.g. water in water diffusion
-                if (compIIdx == compJIdx)
+                // we don't want to calculate e.g. water in water diffusion
+                if (compJIdx == compIIdx)
                     continue;
-                //calculate diffusivity for compIIdx, compJIdx
-                Scalar tij = FluidSystem::binaryDiffusionCoefficient(fluidState,
-                                                                    paramCache,
-                                                                    phaseIdx,
-                                                                    compIIdx,
-                                                                    compJIdx);
-                reducedDiffusionMatrix[compIIdx][compJIdx] +=xi*(1/tin - 1/tij);
+
+                const auto xj = volVars.moleFraction(compJIdx);
+                const Scalar tij = volVars.effectiveDiffusivity(compIIdx, compJIdx);
+                reducedDiffusionMatrix[compIIdx][compIIdx] += xj/tij;
+                reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(1/tin - 1/tij);
             }
         }
         return reducedDiffusionMatrix;

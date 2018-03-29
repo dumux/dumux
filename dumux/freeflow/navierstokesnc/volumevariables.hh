@@ -85,18 +85,20 @@ public:
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(this->fluidState_);
-        int compIIdx = mainCompIdx;
-        for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
+        for (unsigned int compIIdx = 0; compIIdx < numComponents; ++compIIdx)
         {
-            // binary diffusion coefficients
-            if(compIIdx!= compJIdx)
+            for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
             {
-                setDiffusionCoefficient_(compJIdx,
-                                         FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
-                                                                                 paramCache,
-                                                                                 phaseIdx,
-                                                                                 compIIdx,
-                                                                                 compJIdx));
+                // binary diffusion coefficients
+                if(compIIdx != compJIdx)
+                {
+                    diffCoefficient_[phaseIdx][compIIdx][compJIdx]
+                        = FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
+                                                                  paramCache,
+                                                                  phaseIdx,
+                                                                  compIIdx,
+                                                                  compJIdx);
+                }
             }
         }
     }
@@ -187,26 +189,25 @@ public:
      /*!
      * \brief Returns the diffusion coefficient \f$\mathrm{[m^2/s]}\f$
      *
-     * \param compIdx the index of the component
+     * \param compIIdx the index of the component which diffusive
+     * \param compJIdx the index of the component with respect to which compIIdx diffuses
      */
-    Scalar diffusionCoefficient(int compIdx) const
+    Scalar diffusionCoefficient(int compIIdx, int compJIdx = phaseIdx) const
     {
-        if (compIdx < phaseIdx)
-            return diffCoefficient_[phaseIdx][compIdx];
-        else if (compIdx > phaseIdx)
-            return diffCoefficient_[phaseIdx][compIdx-1];
-        else
+        if (compIIdx == compJIdx)
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
+        return diffCoefficient_[phaseIdx][compIIdx][compJIdx];
     }
 
      /*!
      * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
      *
-     * \param compIdx the index of the component
+     * \param compIIdx the index of the component which diffusive
+     * \param compJIdx the index of the component with respect to which compIIdx diffuses
      */
-    Scalar effectiveDiffusivity(int compIdx) const
+    Scalar effectiveDiffusivity(int compIIdx, int compJIdx = phaseIdx) const
     {
-        return diffusionCoefficient(compIdx);
+        return diffusionCoefficient(compIIdx, compJIdx);
     }
 
 protected:
@@ -217,17 +218,7 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    void setDiffusionCoefficient_(int compIdx, Scalar d)
-    {
-        if (compIdx < phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx] = std::move(d);
-        else if (compIdx > phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
-    }
-
-    std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
+    std::array<std::array<std::array<Scalar, numComponents>, numComponents>, numPhases> diffCoefficient_;
 };
 
 } // end namespace Dumux
