@@ -107,7 +107,6 @@ public:
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     //! Pull member functions of the parent for deriving classes
-    using ParentType::temperature;
     using ParentType::enthalpy;
 
     /*!
@@ -127,7 +126,7 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        Implementation::completeFluidState(elemSol, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, fluidState_);
 
         /////////////
         // calculate the remaining quantities
@@ -176,14 +175,13 @@ public:
      * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
      */
     template<class ElementSolution>
-    static void completeFluidState(const ElementSolution& elemSol,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const SubControlVolume& scv,
-                                   FluidState& fluidState)
+    void completeFluidState(const ElementSolution& elemSol,
+                            const Problem& problem,
+                            const Element& element,
+                            const SubControlVolume& scv,
+                            FluidState& fluidState)
     {
-        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
-        fluidState.setTemperature(t);
+        ParentType::updateTemperature(elemSol, problem, element, scv, fluidState);
 
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
         const auto phasePresence = priVars.state();
@@ -510,6 +508,10 @@ public:
      */
     Scalar temperature() const
     { return fluidState_.temperature(/*phaseIdx=*/0); }
+
+    Scalar temperature(const int phaseIdx) const
+    { return fluidState_.temperature(phaseIdx); }
+
 
     /*!
      * \brief Returns the relative permeability of a given phase within

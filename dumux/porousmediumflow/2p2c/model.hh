@@ -113,6 +113,8 @@ struct TwoPTwoCModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
     static constexpr bool enableEnergyBalance() { return false; }
+
+    static constexpr int numEnergyEq() {return 0; }
 };
 
 namespace Properties {
