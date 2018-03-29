@@ -40,7 +40,7 @@ template<class TypeTag>
 class TwoPTwoCCO2PrimaryVariableSwitch
 : public PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), TwoPTwoCCO2PrimaryVariableSwitch<TypeTag>>
 {
-    using ParentType = PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), TwoPTwoCCO2PrimaryVariableSwitch<TypeTag>>;;
+    using ParentType = PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), TwoPTwoCCO2PrimaryVariableSwitch<TypeTag>>;
     friend ParentType;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

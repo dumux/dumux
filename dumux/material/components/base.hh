@@ -29,6 +29,11 @@
 #ifndef DUMUX_COMPONENT_BASE_HH
 #define DUMUX_COMPONENT_BASE_HH
 
+#include <string>
+
+#include <dune/common/exceptions.hh>
+#include <dune/common/stdstreams.hh>
+
 namespace Dumux {
 namespace Components {
 
