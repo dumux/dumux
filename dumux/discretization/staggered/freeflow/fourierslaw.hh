@@ -85,8 +85,8 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         // effective conductivity tensors
-        auto insideLambda = insideVolVars.thermalConductivity();
-        auto outsideLambda = outsideVolVars.thermalConductivity();
+        auto insideLambda = insideVolVars.effectiveThermalConductivity();
+        auto outsideLambda = outsideVolVars.effectiveThermalConductivity();
 
         // scale by extrusion factor
         insideLambda *= insideVolVars.extrusionFactor();

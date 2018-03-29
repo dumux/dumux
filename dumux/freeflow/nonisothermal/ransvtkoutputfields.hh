@@ -18,32 +18,31 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup RANSModel
- * \copydoc Dumux::RANSVtkOutputFields
+ * \ingroup RANSNIModel
+ * \copydoc Dumux::RANSNonIsothermalVtkOutputFields
  */
-#ifndef DUMUX_RANS_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_RANS_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_RANS_NI_OUTPUT_FIELDS_HH
+#define DUMUX_RANS_NI_OUTPUT_FIELDS_HH
 
-#include <dumux/freeflow/navierstokes/vtkoutputfields.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup RANSModel
- * \brief Adds vtk output fields for the Reynolds-Averaged Navier-Stokes model
+ * \ingroup RANSNIModel
+ * \brief Adds vtk output fields specific to non-isothermal RANS models
  */
-template<class FVGridGeometry>
-class RANSVtkOutputFields : public NavierStokesVtkOutputFields<FVGridGeometry>
+template<class NavierStokesVtkOutputFields, class RANSVtkOutputFields>
+class RANSNonIsothermalVtkOutputFields
 {
-    enum { dim = FVGridGeometry::GridView::dimension };
 
 public:
-    //! Initialize the Navier-Stokes specific vtk output fields.
+    //! Initialize the non-isothermal specific vtk output fields.
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        NavierStokesVtkOutputFields<FVGridGeometry>::init(vtk);
+        NavierStokesVtkOutputFields::init(vtk);
         add(vtk);
     }
 
@@ -51,18 +50,9 @@ public:
     template <class VtkOutputModule>
     static void add(VtkOutputModule& vtk)
     {
-        vtk.addVolumeVariable([](const auto& v){ return v.velocity()[0] / v.velocityMaximum()[0]; }, "v_x/v_x,max");
-        vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0]; }, "dv_x/dx_");
-        if (dim > 1)
-            vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[1]; }, "dv_y/dx_");
-        if (dim > 2)
-            vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[2]; }, "dv_z/dx_");
-        vtk.addVolumeVariable([](const auto& v){ return v.pressure() - 1e5; }, "p_rel");
-        vtk.addVolumeVariable([](const auto& v){ return v.viscosity() / v.density(); }, "nu");
-        vtk.addVolumeVariable([](const auto& v){ return v.kinematicEddyViscosity(); }, "nu_t");
-        vtk.addVolumeVariable([](const auto& v){ return v.wallDistance(); }, "l_w");
-        vtk.addVolumeVariable([](const auto& v){ return v.yPlus(); }, "y^+");
-        vtk.addVolumeVariable([](const auto& v){ return v.uPlus(); }, "u^+");
+        RANSVtkOutputFields::add(vtk);
+        vtk.addVolumeVariable( [](const auto& v){ return v.temperature(); }, "temperature");
+        vtk.addVolumeVariable( [](const auto& v){ return v.eddyThermalConductivity(); }, "lambda_t");
     }
 };
 

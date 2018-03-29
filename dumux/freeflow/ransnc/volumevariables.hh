@@ -38,8 +38,8 @@ namespace Dumux {
  */
 template <class TypeTag>
 class RANSNCVolumeVariables
-      : public GET_PROP_TYPE(TypeTag, SinglePhaseVolumeVariables),
-        public NavierStokesNCVolumeVariables<TypeTag>
+    : virtual public GET_PROP_TYPE(TypeTag, SinglePhaseVolumeVariables),
+      virtual public NavierStokesNCVolumeVariables<TypeTag>
 {
     using ParentTypeSinglePhase = typename GET_PROP_TYPE(TypeTag, SinglePhaseVolumeVariables);
     using ParentTypeCompositional = NavierStokesNCVolumeVariables<TypeTag>;
@@ -54,7 +54,6 @@ class RANSNCVolumeVariables
     static constexpr auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
 public:
-
     /*!
      * \brief Update all quantities for a given control volume
      *
@@ -70,12 +69,17 @@ public:
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        this->extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
-
-        // NOTE: the ParentTypeCompositional has to be called first
         ParentTypeCompositional::update(elemSol, problem, element, scv);
-        ParentTypeSinglePhase::update(elemSol, problem, element, scv);
+        ParentTypeSinglePhase::updateRANSProperties(elemSol, problem, element, scv);
+        calculateEddyDiffusivity();
+    }
 
+    /*!
+     * \brief Calculates the eddy diffusivity \f$\mathrm{[m^2/s]}\f$ based
+     *        on the kinematic eddy viscosity and the turbulent schmidt number
+     */
+    void calculateEddyDiffusivity()
+    {
         static const auto turbulentSchmidtNumber
             = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
                                         "RANS.TurbulentSchmidtNumber", 1.0);
@@ -103,13 +107,6 @@ public:
     }
 
 protected:
-
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
-
     Scalar eddyDiffusivity_;
 };
 

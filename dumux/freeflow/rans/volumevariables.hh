@@ -29,6 +29,7 @@
 #include <dune/common/fmatrix.hh>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/freeflow/navierstokes/volumevariables.hh>
 
@@ -71,31 +72,26 @@ class RANSVolumeVariablesImplementation<TypeTag, false>
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
-
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-
     /*!
-     * \brief Update all quantities for a given control volume
+     * \brief Update all turbulent quantities for a given control volume
      *
      * Wall related quantities are stored and the calculateEddyViscosity(...)
      * function of the turbulence model implementation is called.
      *
      * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to
-     *                be simulated
+     * \param problem The object specifying the problem which ought to be simulated
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
     template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
-                const Problem &problem,
-                const Element &element,
-                const SubControlVolume& scv)
+    void updateRANSProperties(const ElementSolution &elemSol,
+                              const Problem &problem,
+                              const Element &element,
+                              const SubControlVolume& scv)
     {
         using std::abs;
         using std::max;
         using std::sqrt;
-        ParentType::update(elemSol, problem, element, scv);
 
         // calculate characteristic properties of the turbulent flow
         elementID_ = problem.fvGridGeometry().elementMapper().index(element);
@@ -109,9 +105,10 @@ public:
         uStar_ = sqrt(problem.kinematicViscosity_[wallElementID_]
                       * abs(problem.velocityGradients_[wallElementID_][flowNormalAxis][wallNormalAxis]));
         uStar_ = max(uStar_, 1e-10); // zero values lead to numerical problems in some turbulence models
-        yPlus_ = wallDistance_ * uStar_ / asImp_().kinematicViscosity();
+        yPlus_ = wallDistance_ * uStar_ / kinematicViscosity();
         uPlus_ = velocity_[flowNormalAxis] / uStar_;
-    };
+        dynamicEddyViscosity_ = 0.0; // will be set by the specific RANS implementation
+    }
 
     /*!
      * \brief Return the element ID of the control volume.
@@ -166,9 +163,15 @@ public:
      *        control volume.
      */
     Scalar dynamicEddyViscosity() const
+    { return dynamicEddyViscosity_; }
+
+    /*!
+     * \brief Return the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow within the
+     *        control volume.
+     */
+    void setDynamicEddyViscosity(Scalar value)
     {
-        DUNE_THROW(Dune::NotImplemented,
-                   "The dynamicEddyViscosity() has to specified by the RANS implementation.");
+        dynamicEddyViscosity_ = value;
     }
 
     /*!
@@ -176,30 +179,21 @@ public:
      *        control volume.
      */
     Scalar effectiveViscosity() const
-    { return asImp_().viscosity() + asImp_().dynamicEddyViscosity(); }
+    { return ParentType::viscosity() + dynamicEddyViscosity(); }
 
     /*!
      * \brief Return the kinematic viscosity \f$\mathrm{[m^2/s]}\f$ of the fluid within the
      *        control volume.
      */
     Scalar kinematicViscosity() const
-    { return asImp_().viscosity() / asImp_().density(); }
+    { return ParentType::viscosity() / ParentType::density(); }
 
     /*!
      * \brief Return the kinematic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow within the
      *        control volume.
      */
     Scalar kinematicEddyViscosity() const
-    { return asImp_().dynamicEddyViscosity() / asImp_().density(); }
-
-private:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
+    { return dynamicEddyViscosity() / ParentType::density(); }
 
 protected:
     DimVector velocity_;
@@ -220,49 +214,38 @@ protected:
  */
 template <class TypeTag>
 class RANSVolumeVariablesImplementation<TypeTag, true>
-: public NavierStokesVolumeVariablesImplementation<TypeTag, true>,
-  public RANSVolumeVariablesImplementation<TypeTag, false>
+: virtual public NavierStokesVolumeVariablesImplementation<TypeTag, true>,
+  virtual public RANSVolumeVariablesImplementation<TypeTag, false>
 {
     using ParentTypeNonIsothermal = NavierStokesVolumeVariablesImplementation<TypeTag, true>;
     using ParentTypeIsothermal = RANSVolumeVariablesImplementation<TypeTag, false>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-//     static const int temperatureIdx = Indices::temperatureIdx;
 
 public:
-
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-
     /*!
-     * \brief Update all quantities for a given control volume
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to
-     *                be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
+     * \brief Calculates the eddy thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ based
+     *        on the kinematic eddy viscosity and the turbulent prandtl number
      */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
-                const Problem &problem,
-                const Element &element,
-                const SubControlVolume &scv)
+    void calculateEddyThermalConductivity()
     {
-        ParentTypeIsothermal::update(elemSol, problem, element, scv);
-        ParentTypeNonIsothermal::update(elemSol, problem, element, scv);
-        // TODO: convert eddyViscosity to eddyThermalConductivity
+        static const auto turbulentPrandtlNumber
+            = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
+                                        "RANS.TurbulentPrandtlNumber", 1.0);
+        eddyThermalConductivity_ = ParentTypeIsothermal::kinematicEddyViscosity()
+                                   * ParentTypeIsothermal::density()
+                                   * ParentTypeNonIsothermal::heatCapacity()
+                                   / turbulentPrandtlNumber;
     }
 
     /*!
      * \brief Returns the eddy thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
-     *        of the flow phase in the sub-control volume.
+     *        of the flow in the sub-control volume.
      */
     Scalar eddyThermalConductivity() const
     { return eddyThermalConductivity_; }
@@ -273,7 +256,7 @@ public:
      */
     Scalar effectiveThermalConductivity() const
     {
-        return FluidSystem::thermalConductivity(this->fluidState_)
+        return ParentTypeNonIsothermal::thermalConductivity()
                + eddyThermalConductivity();
     }
 

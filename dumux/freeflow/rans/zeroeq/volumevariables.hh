@@ -53,7 +53,7 @@ using ZeroEqVolumeVariables = ZeroEqVolumeVariablesImplementation<TypeTag, GET_P
  */
 template <class TypeTag>
 class ZeroEqVolumeVariablesImplementation<TypeTag, false>
-: public RANSVolumeVariablesImplementation<TypeTag, false>
+: virtual public RANSVolumeVariablesImplementation<TypeTag, false>
 {
     using ParentType = RANSVolumeVariablesImplementation<TypeTag, false>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -85,25 +85,44 @@ public:
                 const SubControlVolume& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
+        updateRANSProperties(elemSol, problem, element, scv);
+    }
+
+    /*!
+     * \brief Update all turbulent quantities for a given control volume
+     *
+     * Wall and roughness related quantities are stored. Eddy viscosity is set.
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    template<class ElementSolution>
+    void updateRANSProperties(const ElementSolution &elemSol,
+                              const Problem &problem,
+                              const Element &element,
+                              const SubControlVolume& scv)
+    {
+        ParentType::updateRANSProperties(elemSol, problem, element, scv);
         additionalRoughnessLength_ = problem.additionalRoughnessLength_[this->elementID()];
         yPlusRough_ = wallDistanceRough() * this->uStar() / this->kinematicViscosity();
-        dynamicEddyViscosity_ = calculateEddyViscosity(elemSol, problem, element, scv);
+        calculateEddyViscosity(elemSol, problem, element, scv);
     }
 
     /*!
      * \brief Calculate and set the dynamic eddy viscosity.
      *
      * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to
-     *                be simulated
+     * \param problem The object specifying the problem which ought to be simulated
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
     template<class ElementSolution>
-    Scalar calculateEddyViscosity(const ElementSolution &elemSol,
-                                  const Problem &problem,
-                                  const Element &element,
-                                  const SubControlVolume& scv)
+    void calculateEddyViscosity(const ElementSolution &elemSol,
+                                const Problem &problem,
+                                const Element &element,
+                                const SubControlVolume& scv)
     {
         using std::abs;
         using std::exp;
@@ -114,7 +133,7 @@ public:
         unsigned int elementID = problem.fvGridGeometry().elementMapper().index(element);
         unsigned int flowNormalAxis = problem.flowNormalAxis_[elementID];
         unsigned int wallNormalAxis = problem.wallNormalAxis_[elementID];
-        Scalar velGrad = abs(asImp_().velocityGradients()[flowNormalAxis][wallNormalAxis]);
+        Scalar velGrad = abs(ParentType::velocityGradients()[flowNormalAxis][wallNormalAxis]);
 
         if (eddyViscosityModel == EddyViscosityModels::none)
         {
@@ -122,14 +141,14 @@ public:
         }
         else if (eddyViscosityModel == EddyViscosityModels::prandtl)
         {
-            Scalar mixingLength = problem.karmanConstant() * asImp_().wallDistanceRough();
+            Scalar mixingLength = problem.karmanConstant() * wallDistanceRough();
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
         else if (eddyViscosityModel == EddyViscosityModels::modifiedVanDriest)
         {
-            Scalar mixingLength = problem.karmanConstant() * asImp_().wallDistanceRough()
-                                  * (1.0 - exp(-asImp_().yPlusRough() / 26.0))
-                                  / sqrt(1.0 - exp(-0.26 * asImp_().yPlusRough()));
+            Scalar mixingLength = problem.karmanConstant() * wallDistanceRough()
+                                  * (1.0 - exp(-yPlusRough() / 26.0))
+                                  / sqrt(1.0 - exp(-0.26 * yPlusRough()));
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
         else if (eddyViscosityModel == EddyViscosityModels::baldwinLomax)
@@ -141,7 +160,7 @@ public:
             DUNE_THROW(Dune::NotImplemented,
                        "This eddy viscosity model is not implemented: " << eddyViscosityModel);
         }
-        return kinematicEddyViscosity * asImp_().density();
+        ParentType::setDynamicEddyViscosity(kinematicEddyViscosity * ParentType::density());
     }
 
     /*!
@@ -156,26 +175,9 @@ public:
     Scalar yPlusRough() const
     { return yPlusRough_; }
 
-    /*!
-     * \brief Return the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow within the
-     *        control volume.
-     */
-    Scalar dynamicEddyViscosity() const
-    { return dynamicEddyViscosity_; }
-
-private:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
-
 protected:
     Scalar additionalRoughnessLength_;
     Scalar yPlusRough_;
-    Scalar dynamicEddyViscosity_;
 };
 
 /*!
@@ -184,8 +186,58 @@ protected:
  */
 template <class TypeTag>
 class ZeroEqVolumeVariablesImplementation<TypeTag, true>
-: public RANSVolumeVariablesImplementation<TypeTag, true>
-{ };
+: virtual public ZeroEqVolumeVariablesImplementation<TypeTag, false>,
+  virtual public RANSVolumeVariablesImplementation<TypeTag, true>
+{
+    using ParentTypeNonIsothermal = RANSVolumeVariablesImplementation<TypeTag, true>;
+    using ParentTypeIsothermal = ZeroEqVolumeVariablesImplementation<TypeTag, false>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+
+public:
+    /*!
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    template<class ElementSolution>
+    void update(const ElementSolution &elemSol,
+                const Problem &problem,
+                const Element &element,
+                const SubControlVolume &scv)
+    {
+        ParentTypeNonIsothermal::update(elemSol, problem, element, scv);
+        updateRANSProperties(elemSol, problem, element, scv);
+    }
+
+    /*!
+     * \brief Update all turbulent quantities for a given control volume
+     *
+     * Wall and roughness related quantities are stored. Eddy viscosity is set.
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    template<class ElementSolution>
+    void updateRANSProperties(const ElementSolution &elemSol,
+                              const Problem &problem,
+                              const Element &element,
+                              const SubControlVolume& scv)
+    {
+        ParentTypeIsothermal::updateRANSProperties(elemSol, problem, element, scv);
+        ParentTypeNonIsothermal::calculateEddyThermalConductivity();
+    }
+};
 }
 
 #endif
