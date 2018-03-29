@@ -98,11 +98,12 @@ public:
     /*!
      * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
      *
-     * \param compIdx the index of the component
+     * \param compIIdx the index of the component which diffusive
+     * \param compJIdx the index of the component with respect to which compIIdx diffuses
      */
-    Scalar effectiveDiffusivity(int compIdx) const
+    Scalar effectiveDiffusivity(int compIIdx, int compJIdx = phaseIdx) const
     {
-        return ParentTypeCompositional::diffusionCoefficient(compIdx)
+        return ParentTypeCompositional::diffusionCoefficient(compIIdx, compJIdx)
                + eddyDiffusivity();
     }
 
