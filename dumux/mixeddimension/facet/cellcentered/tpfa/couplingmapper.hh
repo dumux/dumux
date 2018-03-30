@@ -156,7 +156,15 @@ class CCTpfaFacetCouplingTwoDomainMapper
     using BulkCouplingMap = std::unordered_map<BulkIndexType, BulkCouplingData>;
     using LowDimCouplingMap = std::unordered_map<LowDimIndexType, LowDimCouplingData>;
 
+    //! Couping stencil types to facilitate type export below
+    using BulkCouplingStencil = std::vector<LowDimIndexType>;
+    using LowDimCouplingStencil = std::vector<BulkIndexType>;
+
 public:
+    //! Export the coupling stencil types for the provided domain indices
+    template<std::size_t id, std::enable_if_t<(id == bulkId || id == lowDimId), int> = 0>
+    using CouplingStencil = typename std::conditional<id == bulkId, BulkCouplingStencil, LowDimCouplingStencil>::type;
+
     /*!
      * \brief Update coupling maps.
      *
