@@ -74,6 +74,11 @@ class CCTpfaFacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>
     using FacetEdgeMapper = CCTpfaFacetCouplingTwoDomainMapper<1, FacetFVG, EdgeFVG>;
 
 public:
+    //! Export the coupling stencil type for the provided domain indices
+    template<std::size_t i>
+    using Stencil = typename std::conditional< (i < 2), typename BulkFacetMapper::template Stencil<i>,
+                                                        typename FacetEdgeMapper::template Stencil<i> >::type;
+
     /*!
      * \brief Update coupling maps
      *
@@ -140,6 +145,19 @@ class CCTpfaFacetCouplingTwoDomainMapper
             assert(it != couplingStencil.end());
             return couplingScvfs[ std::distance(couplingStencil.begin(), it) ];
         }
+
+        //! returns the low dim element coupled to a given scvf
+        LowDimIndexType getCoupledFacetElementIdx(BulkIndexType scvfIdx) const
+        {
+            for (unsigned int i = 0; i < couplingScvfs.size(); ++i)
+                if ( std::any_of(couplingScvfs[i].begin(),
+                                 couplingScvfs[i].end(),
+                                 [scvfIdx] (auto curScvfIdx) { return curScvfIdx == scvfIdx; }) )
+                     return couplingStencil[i];
+
+            DUNE_THROW(Dune::InvalidStateException, "Could not find coupled facet element for given scvf." <<
+                                                    "Make sure to only call this for scvfs that are coupled!");
+        }
     };
 
     //! data structure for coupling data lowDim->bulk
@@ -157,13 +175,13 @@ class CCTpfaFacetCouplingTwoDomainMapper
     using LowDimCouplingMap = std::unordered_map<LowDimIndexType, LowDimCouplingData>;
 
     //! Couping stencil types to facilitate type export below
-    using BulkCouplingStencil = std::vector<LowDimIndexType>;
-    using LowDimCouplingStencil = std::vector<BulkIndexType>;
+    using LowDimStencil = std::vector<LowDimIndexType>;
+    using BulkStencil = std::vector<BulkIndexType>;
 
 public:
-    //! Export the coupling stencil types for the provided domain indices
-    template<std::size_t id, std::enable_if_t<(id == bulkId || id == lowDimId), int> = 0>
-    using CouplingStencil = typename std::conditional<id == bulkId, BulkCouplingStencil, LowDimCouplingStencil>::type;
+    //! Export the stencil type for the provided domain index
+    template<std::size_t i>
+    using Stencil = typename std::conditional<i == bulkId, BulkStencil, LowDimStencil>::type;
 
     /*!
      * \brief Update coupling maps.
@@ -185,7 +203,7 @@ public:
 
         // clear & resize
         bulkCouplingData_.clear();
-        LowDimCouplingData_.clear();
+        lowDimCouplingData_.clear();
 
         // get references on the grid views
         const auto& bulkGridView = bulkFvGridGeometry.gridView();
@@ -213,9 +231,13 @@ public:
         {
             auto embedments = gridCreator.template embedmentEntityIndices<lowDimId>(element);
 
+            // proceed only if embedments were found
+            if (embedments.size() == 0)
+                continue;
+
             // get reference to coupling data for this low dim element
             const auto lowDimIdx = lowDimFvGridGeometry.elementMapper().index(element);
-            auto& lowDimData = LowDimCouplingData_[lowDimIdx];
+            auto& lowDimData = lowDimCouplingData_[lowDimIdx];
 
             // turn embedments into actual element indices
             for (unsigned int i = 0; i < embedments.size(); ++i)
@@ -276,18 +298,16 @@ public:
     }
 
     //! returns coupling data for bulk->lowDim
-    const BulkCouplingMap& couplingMap(Dune::index_constant<bulkId> i,
-                                       Dune::index_constant<lowDimId> j) const
+    const BulkCouplingMap& couplingMap(Dune::index_constant<bulkId> i, Dune::index_constant<lowDimId> j) const
     { return bulkCouplingData_; }
 
     //! returns coupling data for lowDim->bulk
-    const LowDimCouplingMap& couplingMap(Dune::index_constant<lowDimId> i,
-                                         Dune::index_constant<bulkId> j) const
-    { return LowDimCouplingData_; }
+    const LowDimCouplingMap& couplingMap(Dune::index_constant<lowDimId> i, Dune::index_constant<bulkId> j) const
+    { return lowDimCouplingData_; }
 
 private:
     BulkCouplingMap bulkCouplingData_;     //!< stores data on the coupled elements for each bulk element
-    LowDimCouplingMap LowDimCouplingData_; //!< stores data on the coupled elements for each low dim element
+    LowDimCouplingMap lowDimCouplingData_; //!< stores data on the coupled elements for each low dim element
 };
 
 } // end namespace Dumux
