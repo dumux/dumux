@@ -188,6 +188,16 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Reader for grid files of type ." + ext);
     }
 
+    //! Distributes the grid on all processes of a parallel computation
+    void loadBalance()
+    {
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(gridPtrTuple_)), [&](const auto id)
+        {
+            this->grid<id>().loadBalance();
+        });
+    }
+
 private:
     //! Returns the filename extension of a given filename
     static std::string getFileExtension(const std::string& fileName)
