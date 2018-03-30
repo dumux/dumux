@@ -23,6 +23,7 @@
 #ifndef DUMUX_FACETCOUPLING_GMSH_READER_HH
 #define DUMUX_FACETCOUPLING_GMSH_READER_HH
 
+#include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <iostream>
@@ -238,6 +239,9 @@ public:
                         }
                     }
 
+                    // ensure dune-specific corner ordering
+                    reorder(gt, corners);
+
                     // insert element data to grid's container
                     elementMarkerMaps_[gridIdx].push_back(physicalIndex);
                     elementData_[gridIdx].emplace_back(ElementData({gt, corners}));
@@ -351,6 +355,21 @@ private:
             case 5:  return Dune::GeometryTypes::hexahedron;    // hexahedron
             default:
                 DUNE_THROW(Dune::NotImplemented, "FacetCoupling gmsh reader for gmsh element type " << gmshElemType);
+        }
+    }
+
+    //! reorders in a dune way a set of given element corners in gmsh ordering
+    void reorder(const Dune::GeometryType gt, VertexIndexSet& cornerIndices) const
+    {
+        // triangles, lines need no reordering
+        if (gt == Dune::GeometryTypes::hexahedron)
+            DUNE_THROW(Dune::NotImplemented, "Reordering of corners for hexahedra");
+        else if (gt == Dune::GeometryTypes::tetrahedron)
+            DUNE_THROW(Dune::NotImplemented, "Reordering of corners for Tetrahedra");
+        else if (gt == Dune::GeometryTypes::quadrilateral)
+        {
+            assert(cornerIndices.size() == 4);
+            std::swap(cornerIndices[2], cornerIndices[3]);
         }
     }
 
