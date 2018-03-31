@@ -1,0 +1,18 @@
+[Problem]
+UseInteriorDirichletBCs = false
+UseAnalyticProblem = true
+EnableGravity = false
+LowDimAperture = 1e-2
+
+[Grid]
+File = ./grids/hybridgrid.msh
+
+[Bulk]
+Problem.Name = test_1p_1p_bulk
+SpatialParams.Permeability = 1
+FacetCoupling.Xi = 1.0
+
+[LowDim]
+SpatialParams.Permeability = 1e-4
+Problem.Name = test_1p_1p_lowdim
+Problem.UseDirichletBCs = true
