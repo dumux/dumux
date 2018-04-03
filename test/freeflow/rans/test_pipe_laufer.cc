@@ -164,6 +164,9 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
+    Dumux::GnuplotInterface<Scalar> gnuplot_lawOfTheWall;
+    Dumux::GnuplotInterface<Scalar> gnuplot_velocityProfile;
+
     // time loop
     timeLoop->start(); do
     {
@@ -216,7 +219,7 @@ int main(int argc, char** argv) try
         // execute the pvpython script
         std::string command = std::string(PVPYTHON_EXECUTABLE) + " " + script
                               + " -f " + vtuFileName
-                              + " -v 2"
+                              + " -v 0"
                               + " -r 10000";
         syscom =  command + " -p1 8.0 0.0 0.0"
                           + " -p2 8.0 0.2469 0.0"

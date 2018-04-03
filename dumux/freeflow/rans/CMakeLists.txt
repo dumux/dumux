@@ -1,3 +1,4 @@
+add_subdirectory("twoeq")
 add_subdirectory("zeroeq")
 
 #install headers

@@ -1,14 +1,19 @@
 [TimeLoop]
-DtInitial = 1e-1 # [s]
+DtInitial = 1e-3 # [s]
 TEnd = 100 # [s]
+# MaxTimeStepSize = 1e-2
 
 [Grid]
 Verbosity = true
 Positions0 = 0.0 10.0
 Positions1 = 0.0 0.12345 0.2469
-Cells0 = 25
-Cells1 = 25 25
-Grading1 = 1.2 -1.2
+Cells0 = 5
+# Cells1 = 25 25
+# Grading1 = 1.2 -1.2
+# Cells1 = 15 15
+# Grading1 = 1.5 -1.5
+Cells1 = 5 5
+Grading1 = 4.0 -4.0
 
 [Output]
 PlotLawOfTheWall = true
@@ -22,14 +27,20 @@ SandGrainRoughness = 0.0 # [m] # not implemented for EddyViscosityModel = 3
 
 [RANS]
 EddyViscosityModel = 3
+MinDissipation = 1e-8
+UseStoredEddyViscosity = false
+# LowReKEpsilonModel = 1
+# StartWithZeroVelocity = true
 
 [Assembly]
 NumericDifferenceMethod = 0
 NumericDifference.BaseEpsilon = 1e-8
 
 [Newton]
-MaxSteps = 10
+MaxSteps = 8
+TargetSteps = 5
 MaxRelativeShift = 1e-5
+# MaxTimeStepDivisions = 2
 
 [Vtk]
 AddVelocity = true

@@ -50,8 +50,6 @@ class ZeroEqVolumeVariables
 
     static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
 
-
-
 public:
     //! export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;

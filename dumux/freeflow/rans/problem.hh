@@ -97,6 +97,7 @@ public:
         cellCenter_.resize(this->fvGridGeometry().elementMapper().size(), GlobalPosition(0.0));
         velocity_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
         velocityGradients_.resize(this->fvGridGeometry().elementMapper().size(), DimMatrix(0.0));
+        stressTensorScalarProduct_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
         flowNormalAxis_.resize(this->fvGridGeometry().elementMapper().size(), 0);
         wallNormalAxis_.resize(this->fvGridGeometry().elementMapper().size(), 1);
         kinematicViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
@@ -216,7 +217,7 @@ public:
             = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.FlowNormalAxis", -1);
 
         // re-initialize min and max values
-        velocityMaximum_.assign(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
+        velocityMaximum_.assign(this->fvGridGeometry().elementMapper().size(), DimVector(1e-16));
         velocityMinimum_.assign(this->fvGridGeometry().elementMapper().size(), DimVector(std::numeric_limits<Scalar>::max()));
 
         // calculate cell-center-averaged velocities
@@ -283,6 +284,24 @@ public:
         {
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
 
+            Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension> stressTensor(0.0);
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                {
+                    stressTensor[dimIdx][velIdx] = 0.5 * velocityGradients_[elementID][dimIdx][velIdx]
+                                                   + 0.5 * velocityGradients_[elementID][velIdx][dimIdx];
+              }
+            }
+            stressTensorScalarProduct_[elementID] = 0.0;
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                {
+                    stressTensorScalarProduct_[elementID] += stressTensor[dimIdx][velIdx] * stressTensor[dimIdx][velIdx];
+                }
+            }
+
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
@@ -338,6 +357,7 @@ public:
     std::vector<DimVector> velocityMaximum_;
     std::vector<DimVector> velocityMinimum_;
     std::vector<DimMatrix> velocityGradients_;
+    std::vector<Scalar> stressTensorScalarProduct_;
     std::vector<unsigned int> wallNormalAxis_;
     std::vector<unsigned int> flowNormalAxis_;
     std::vector<Scalar> kinematicViscosity_;

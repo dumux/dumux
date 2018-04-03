@@ -30,8 +30,14 @@
 #include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/components/air.hh>
 
+#include <dumux/freeflow/turbulenceproperties.hh>
+#if LOWREKEPSILON
+#include <dumux/freeflow/rans/twoeq/lowrekepsilon/model.hh>
+#include <dumux/freeflow/rans/twoeq/lowrekepsilon/problem.hh>
+#else
 #include <dumux/freeflow/rans/zeroeq/model.hh>
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
+#endif
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
 namespace Dumux
@@ -44,7 +50,11 @@ namespace Properties
 #if NONISOTHERMAL
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNI));
 #else
+#if LOWREKEPSILON
+NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilon));
+#else
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEq));
+#endif
 #endif
 
 // the fluid system
@@ -75,12 +85,19 @@ SET_BOOL_PROP(PipeLauferProblem, EnableGridVolumeVariablesCache, true);
  * John Laufers experiments in 1954 \cite Laufer1954a.
  */
 template <class TypeTag>
+#if LOWREKEPSILON
+class PipeLauferProblem : public LowReKEpsilonProblem<TypeTag>
+{
+    using ParentType = LowReKEpsilonProblem<TypeTag>;
+#else
 class PipeLauferProblem : public ZeroEqProblem<TypeTag>
 {
     using ParentType = ZeroEqProblem<TypeTag>;
+#endif
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
@@ -92,6 +109,8 @@ class PipeLauferProblem : public ZeroEqProblem<TypeTag>
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
+    static const unsigned int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+
 public:
     PipeLauferProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
@@ -100,6 +119,21 @@ public:
         inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 283.15);
         wallTemperature_ = getParam<Scalar>("Problem.WallTemperature", 323.15);
         sandGrainRoughness_ = getParam<Scalar>("Problem.SandGrainRoughness", 0.0);
+        startWithZeroVelocity_ = getParam<bool>("RANS.StartWithZeroVelocity", false);
+
+        FluidSystem::init();
+        Dumux::TurbulenceProperties<Scalar, dimWorld, true> turbulenceProperties;
+        FluidState fluidState;
+        fluidState.setPressure(phaseIdx, 1e5);
+        fluidState.setTemperature(inletTemperature_);
+        Scalar density = FluidSystem::density(fluidState, phaseIdx);
+        Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, phaseIdx) / density;
+        Scalar diameter = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
+        viscosityTilde_ = turbulenceProperties.viscosityTilde(inletVelocity_, diameter, kinematicViscosity);
+        turbulentKineticEnergy_ = turbulenceProperties.turbulentKineticEnergy(inletVelocity_, diameter, kinematicViscosity);
+        dissipation_ = turbulenceProperties.dissipation(inletVelocity_, diameter, kinematicViscosity);
+        dissipationRate_ = turbulenceProperties.dissipationRate(inletVelocity_, diameter, kinematicViscosity);
+        std::cout << std::endl;
     }
 
    /*!
@@ -154,14 +188,26 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity everywhere
+        // set Dirichlet values for the velocity and outflow for total mass everywhere
+        values.setOutflow(Indices::conti0EqIdx);
         values.setDirichlet(Indices::momentumXBalanceIdx);
         values.setDirichlet(Indices::momentumYBalanceIdx);
+
 #if NONISOTHERMAL
         values.setDirichlet(Indices::energyBalanceIdx);
         if (isOutlet(globalPos))
         {
             values.setOutflow(Indices::energyBalanceIdx);
+        }
+#endif
+
+#if LOWREKEPSILON
+        values.setDirichlet(Indices::turbulentKineticEnergyIdx);
+        values.setDirichlet(Indices::dissipationIdx);
+        if (isOutlet(globalPos))
+        {
+            values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
+            values.setOutflow(Indices::dissipationEqIdx);
         }
 #endif
 
@@ -172,8 +218,6 @@ public:
             values.setOutflow(Indices::momentumXBalanceIdx);
             values.setOutflow(Indices::momentumYBalanceIdx);
         }
-        else
-            values.setOutflow(Indices::conti0EqIdx);
 
         return values;
     }
@@ -217,6 +261,11 @@ public:
         PrimaryVariables values(0.0);
         values[Indices::pressureIdx] = 1.0e+5;
         values[Indices::velocityXIdx] = inletVelocity_;
+        if (isOnWall(globalPos))
+        {
+            values[Indices::velocityXIdx] = 0.0;
+        }
+
 #if NONISOTHERMAL
         values[Indices::temperatureIdx] = inletTemperature_;
         if (isOnWall(globalPos))
@@ -224,10 +273,20 @@ public:
             values[Indices::temperatureIdx] = wallTemperature_;
         }
 #endif
-        if (isOnWall(globalPos))
+
+#if LOWREKEPSILON
+        if (time() < eps_ && startWithZeroVelocity_)
         {
             values[Indices::velocityXIdx] = 0.0;
         }
+        values[Indices::turbulentKineticEnergyEqIdx] = turbulentKineticEnergy_;
+        values[Indices::dissipationEqIdx] = dissipation_;
+        if (isOnWall(globalPos))
+        {
+            values[Indices::turbulentKineticEnergyEqIdx] = 0.0;
+            values[Indices::dissipationEqIdx] = 0.0;
+        }
+#endif
 
         return values;
     }
@@ -259,6 +318,11 @@ private:
     Scalar inletTemperature_;
     Scalar wallTemperature_;
     Scalar sandGrainRoughness_;
+    bool startWithZeroVelocity_;
+    Scalar viscosityTilde_;
+    Scalar turbulentKineticEnergy_;
+    Scalar dissipation_;
+    Scalar dissipationRate_;
     TimeLoopPtr timeLoop_;
 };
 } //end namespace

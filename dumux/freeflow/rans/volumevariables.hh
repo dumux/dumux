@@ -93,7 +93,7 @@ public:
         uStar_ = sqrt(problem.kinematicViscosity_[wallElementID_]
                       * abs(problem.velocityGradients_[wallElementID_][flowNormalAxis][wallNormalAxis]));
         uStar_ = max(uStar_, 1e-10); // zero values lead to numerical problems in some turbulence models
-        yPlus_ = wallDistance_ * uStar_ / kinematicViscosity();
+        yPlus_ = wallDistance_ * uStar_ / problem.kinematicViscosity_[elementID_];
         uPlus_ = velocity_[flowNormalAxis] / uStar_;
 
         // get the dynamic eddy viscosity from the specific RANS implementation

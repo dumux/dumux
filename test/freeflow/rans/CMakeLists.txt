@@ -10,6 +10,16 @@ dune_add_test(NAME test_pipe_laufer_zeroeq
                                 ${CMAKE_CURRENT_BINARY_DIR}/pipe_laufer_zeroeq_reference-00016.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_pipe_laufer_zeroeq test_pipe_laufer_reference.input")
 
+dune_add_test(NAME test_pipe_laufer_lowrekepsilon
+              SOURCES test_pipe_laufer.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/pipe_laufer_zeroeq.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/pipe_laufer_zeroeq_reference-00020.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_pipe_laufer_zeroeq test_pipe_laufer_reference.input")
+target_compile_definitions(test_pipe_laufer_lowrekepsilon PUBLIC "LOWREKEPSILON=1")
+
 dune_add_test(NAME test_pipe_zeroeqni
               SOURCES test_pipe_laufer.cc
               CMAKE_GUARD HAVE_UMFPACK
