@@ -28,6 +28,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxvariablesbase.hh>
+#include <dumux/discretization/upwindscheme.hh>
 
 namespace Dumux {
 
@@ -35,14 +36,15 @@ namespace Dumux {
  * \ingroup ImplicitModel
  * \brief The porous medium flux variables class that computes advective / convective,
  *        molecular diffusive and heat conduction fluxes.
+ *
+ * \param TypeTag The type tag for access to type traits
+ * \param UpwindScheme The upwind scheme to be applied to advective fluxes
  * \note  Not all specializations are currently implemented
  */
-template<class TypeTag>
-class PorousMediumFluxVariables : public FluxVariablesBase<TypeTag, PorousMediumFluxVariables<TypeTag>>
+template<class TypeTag,
+         class UpwindScheme = UpwindScheme<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)> >
+class PorousMediumFluxVariables : public FluxVariablesBase<TypeTag>
 {
-    using ThisType = PorousMediumFluxVariables<TypeTag>;
-    using ParentType = FluxVariablesBase<TypeTag, ThisType>;
-
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -99,7 +101,8 @@ public:
             advFluxIsCached_.set(phaseIdx, true);
         }
 
-        return this->applyUpwindScheme(upwindTerm, advFluxBeforeUpwinding_[phaseIdx], phaseIdx);
+        //! Give the upwind scheme access to the cached variables
+        return UpwindScheme::apply(*this, upwindTerm, advFluxBeforeUpwinding_[phaseIdx], phaseIdx);
     }
 
     /*!
