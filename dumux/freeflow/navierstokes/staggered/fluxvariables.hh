@@ -43,7 +43,7 @@ class NavierStokesFluxVariablesImpl;
  */
 template<class TypeTag>
 class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
-: public FluxVariablesBase<TypeTag, NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>>
+: public FluxVariablesBase<TypeTag>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

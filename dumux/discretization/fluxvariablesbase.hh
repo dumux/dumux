@@ -24,33 +24,16 @@
 #ifndef DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 #define DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/upwindscheme.hh>
-
 namespace Dumux {
-
-// forward declaration
-template<class TypeTag, class Impl, class UpwindScheme>
-class FluxVariablesBaseImplementation;
-
-/*!
- * \ingroup Discretization
- * \brief Base class for the flux variables living on a sub control volume face
- * \note The upwind scheme is chosen depending on the discretization method
- */
-template<class TypeTag, class Impl>
-using FluxVariablesBase = FluxVariablesBaseImplementation<TypeTag, Impl, UpwindScheme<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)>>;
 
 /*!
  * \ingroup Discretization
  * \brief Base class for the flux variables living on a sub control volume face
  *
  * \tparam TypeTag The type tag
- * \tparam Implementation The implementation that uses this class as base (CRTP)
- * \tparam UpwindScheme The type of the upwind scheme used for upwinding of advective fluxes
  */
-template<class TypeTag, class Implementation, class UpwindScheme>
-class FluxVariablesBaseImplementation
+template<class TypeTag>
+class FluxVariablesBase
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -99,23 +82,7 @@ public:
     const ElementFluxVariablesCache& elemFluxVarsCache() const
     { return *elemFluxVarsCachePtr_; }
 
-    //! Applies the upwind scheme to precalculated fluxes
-    template<class UpwindTermFunction>
-    Scalar applyUpwindScheme(const UpwindTermFunction& upwindTerm, Scalar flux, int phaseIdx) const
-    {
-        //! Give the upwind scheme access to the cached variables
-        return UpwindScheme::apply(asImp_(), upwindTerm, flux, phaseIdx);
-    }
-
 private:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
-
     const Problem* problemPtr_;                             //!< Pointer to the problem
     const Element* elementPtr_;                             //!< Pointer to the element at hand
     const FVElementGeometry* fvGeometryPtr_;                //!< Pointer to the current FVElementGeometry
