@@ -80,7 +80,6 @@ NEW_PROP_TAG(FVGridGeometry);                      //!< The type of the global f
 NEW_PROP_TAG(EnableFVGridGeometryCache);           //!< specifies if geometric data is saved (faster, but more memory consuming)
 
 NEW_PROP_TAG(VolumeVariables);                     //!< The secondary variables within a sub-control volume
-NEW_PROP_TAG(ElementVolumeVariables);              //!< The type for a local (element/stencil) container for the volume variables
 NEW_PROP_TAG(GridVolumeVariables);                 //!< The type for a global container for the volume variables
 NEW_PROP_TAG(EnableGridVolumeVariablesCache);      //!< If disabled, the volume variables are not stored (reduces memory, but is slower)
 NEW_PROP_TAG(FluxVariables);                       //!< Container storing the different types of flux variables

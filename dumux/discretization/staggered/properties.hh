@@ -100,12 +100,6 @@ public:
     using type = StaggeredGridVolumeVariables<FVGridGeometry, Traits, enableCache>;
 };
 
-//! Set the element volume variables class
-SET_PROP(StaggeredModel, ElementVolumeVariables)
-{
-    using type = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-};
-
 //! Set the global flux variables cache vector class
 SET_PROP(StaggeredModel, GridFluxVariablesCache)
 {

@@ -51,7 +51,6 @@ namespace Properties
     NEW_PROP_TAG(TwoPIAIndices);
     NEW_PROP_TAG(NumEq);
     NEW_PROP_TAG(MaterialLaw);
-    NEW_PROP_TAG(ElementVolumeVariables);
     NEW_PROP_TAG(AwnSurface);
     NEW_PROP_TAG(AwnSurfaceParams);
 }

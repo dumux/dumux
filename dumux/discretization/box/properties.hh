@@ -73,9 +73,6 @@ public:
     using type = BoxGridVolumeVariables<Problem, VolumeVariables, enableCache>;
 };
 
-//! The element volume variables vector class
-SET_TYPE_PROP(BoxModel, ElementVolumeVariables, typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView);
-
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<typename GET_PROP_TYPE(TypeTag, BoundaryTypes)>);
 
