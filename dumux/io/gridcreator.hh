@@ -1056,6 +1056,116 @@ private:
 
 #if HAVE_UG
 
+template<typename Grid>
+class UGLoadBalance
+{
+    const static int dimension = Grid::dimension;
+    using ctype = typename Grid::ctype;
+    using GridView = typename Grid::LeafGridView;
+    using IdSet = typename Grid::LocalIdSet;
+    using Data = std::map<typename IdSet::IdType, int>;
+
+    class LBDataHandle
+    : public Dune::CommDataHandleIF<LBDataHandle,
+    typename Data::mapped_type>
+    {
+    public:
+        typedef typename Data::mapped_type DataType;
+
+    public:
+
+        bool contains (int dim, int codim) const
+        {
+            assert(dim == dimension);
+            return codim == 0;
+        }
+
+        bool fixedSize (int dim, int codim) const
+        {
+            assert(dim == dimension);
+            return true;
+        }
+
+        template<class Entity>
+        size_t size (Entity& entity) const
+        {
+            return 1;
+        }
+
+        template<class MessageBuffer, class Entity>
+        void gather (MessageBuffer& buff, const Entity& entity) const
+        {
+            const auto& id = idSet_.id(entity);
+            buff.write(data_.at(id));
+        }
+
+        template<class MessageBuffer, class Entity>
+        void scatter (MessageBuffer& buff, const Entity& entity, size_t)
+        {
+            const auto& id = idSet_.id(entity);
+            buff.read(data_[id]);
+        }
+
+        LBDataHandle (const IdSet& idSet, Data& data)
+        : idSet_(idSet)
+        , data_(data)
+        {}
+
+    private:
+        const IdSet& idSet_;
+        Data& data_;
+    };
+
+    static void fillDataFromMarkers(const GridView& gv,
+                                    Data& data,
+                                    const std::vector<int>& elementMarkers)
+    {
+        const auto& idSet = gv.grid().localIdSet();
+
+        for (const auto& element : elements(gv, Dune::Partitions::interiorBorder))
+        {
+            const auto& id = idSet.id(element);
+
+            data[id] = elementMarkers[gv.indexSet().index(element)];
+        }
+    }
+
+    static void retrieveMarkersFromData(const GridView& gv,
+                                        Data& data,
+                                        std::vector<int>& elementMarkers)
+    {
+        const auto& idSet = gv.grid().localIdSet();
+
+        elementMarkers.resize(gv.size(0), 0);
+        for (const auto& element : elements(gv, Dune::Partitions::interiorBorder))
+        {
+            const auto& id = idSet.id(element);
+
+            elementMarkers[gv.indexSet().index(element)] = data[id];
+        }
+    }
+
+public:
+    static void balance(Grid& grid, std::vector<int>& elementMarkers)
+    {
+        const auto& gv = grid.leafGridView();
+
+        // define the map containing the data to be balanced
+        Data data;
+
+        LBDataHandle dataHandle(grid.localIdSet(), data);
+
+        // fill the data map
+        fillDataFromMarkers(gv, data, elementMarkers);
+
+        // balance the grid and the data
+        grid.loadBalance(dataHandle);
+
+        // fill the markers vector
+        retrieveMarkersFromData(gv, data, elementMarkers);
+    }
+};
+
 /*!
  * \brief Provides a grid creator for UGGrids
  *        from information in the input file
@@ -1138,6 +1248,10 @@ public:
         {
             ParentType::dgfGridPtr().loadBalance();
         }
+        else if (ParentType::enableGmshDomainMarkers_)
+        {
+            UGLoadBalance<Grid>::balance(ParentType::grid(), ParentType::elementMarkers_);
+        }
         else
         {
             ParentType::gridPtr()->loadBalance();
@@ -1153,9 +1267,6 @@ public:
     {
         if(ParentType::enableGmshDomainMarkers_)
         {
-            if(ParentType::grid().comm().size() > 1)
-                DUNE_THROW(Dune::NotImplemented, "UGGrid currently doesn't support element data load balancing.");
-
             // parameters are only given for level 0 elements
             if (element.hasFather())
             {
