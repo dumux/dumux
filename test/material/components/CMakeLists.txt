@@ -40,11 +40,6 @@ dune_add_test(NAME plot_heavyoil
               COMMAND ./plot_component
               CMD_ARGS "HeavyOil")
 
-dune_add_test(NAME plot_lnapl
-              TARGET plot_component
-              COMMAND ./plot_component
-              CMD_ARGS "LNAPL_oil")
-
 dune_add_test(NAME plot_mesitylene
               TARGET plot_component
               COMMAND ./plot_component

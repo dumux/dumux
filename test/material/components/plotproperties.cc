@@ -40,7 +40,6 @@
 #include <dumux/material/components/h2.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/heavyoil.hh>
-#include <dumux/material/components/lnapl.hh>
 #include <dumux/material/components/mesitylene.hh>
 #include <dumux/material/components/n2.hh>
 #include <dumux/material/components/o2.hh>
@@ -286,8 +285,6 @@ int main(int argc, char *argv[])
         plotStuff< Components::H2O<double> >(openPlotWindow);
     else if (compName == "HeavyOil")
         plotStuff< Components::HeavyOil<double> >(openPlotWindow);
-    else if (compName == "LNAPL_oil")
-        plotStuff< Components::LNAPL<double> >(openPlotWindow);
     else if (compName == "Mesitylene")
         plotStuff< Components::Mesitylene<double> >(openPlotWindow);
     else if (compName == "N2")

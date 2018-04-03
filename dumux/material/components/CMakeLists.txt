@@ -17,7 +17,6 @@ dnapl.hh
 h2.hh
 h2o.hh
 heavyoil.hh
-lnapl.hh
 mesitylene.hh
 n2.hh
 nacl.hh
