@@ -34,22 +34,19 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fvproperties.hh>
 
-#include <dumux/discretization/cellcentered/gridvolumevariables.hh>
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
+#include <dumux/discretization/cellcentered/tpfa/gridvolumevariables.hh>
 #include <dumux/discretization/cellcentered/tpfa/gridfluxvariablescache.hh>
-#include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
-#include <dumux/discretization/cellcentered/tpfa/elementvolumevariables.hh>
 #include <dumux/discretization/cellcentered/tpfa/elementfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
+
 //! Type tag for the cell-centered tpfa scheme.
 NEW_TYPE_TAG(CCTpfaModel, INHERITS_FROM(FiniteVolumeModel));
 
@@ -63,17 +60,25 @@ public:
     using type = CCTpfaFVGridGeometry<GridView, enableCache>;
 };
 
+//! The grid volume variables vector class
+SET_PROP(CCTpfaModel, GridVolumeVariables)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+public:
+    using type = CCTpfaGridVolumeVariables<Problem, VolumeVariables, enableCache>;
+};
+
+//! The element volume variables vector class
+SET_TYPE_PROP(CCTpfaModel, ElementVolumeVariables, typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView);
+
 //! The global flux variables cache vector class
 SET_TYPE_PROP(CCTpfaModel, GridFluxVariablesCache, CCTpfaGridFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
 
-//! The global previous volume variables vector class
-SET_TYPE_PROP(CCTpfaModel, ElementVolumeVariables, CCTpfaElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
-
 //! The local flux variables cache vector class
 SET_TYPE_PROP(CCTpfaModel, ElementFluxVariablesCache, CCTpfaElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
-
-//! The global current volume variables vector class
-SET_TYPE_PROP(CCTpfaModel, GridVolumeVariables, CCGridVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes);

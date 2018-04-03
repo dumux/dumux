@@ -503,9 +503,6 @@ public:
      { return fluidState_.moleFraction(phaseIdx, compIdx); }
 
 protected:
-    Scalar porosity_;               //!< Effective porosity within the control volume
-    PermeabilityType permeability_; //!> Effective permeability within the control volume
-    Scalar mobility_[numPhases];    //!< Effective mobility within the control volume
     FluidState fluidState_;
 
 private:
@@ -519,6 +516,9 @@ private:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
     }
 
+    Scalar porosity_;               //!< Effective porosity within the control volume
+    PermeabilityType permeability_; //!> Effective permeability within the control volume
+    Scalar mobility_[numPhases];    //!< Effective mobility within the control volume
     std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
 };
 

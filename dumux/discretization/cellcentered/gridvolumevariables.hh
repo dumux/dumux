@@ -24,7 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_GRID_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_CC_GRID_VOLUMEVARIABLES_HH
 
-#include <dumux/common/properties.hh>
+#include <type_traits>
 
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
@@ -36,38 +36,32 @@ namespace Dumux {
  * \ingroup CCDiscretization
  * \brief Base class for the grid volume variables
  * \note This class has a cached version and a non-cached version
- * \tparam TypeTag the TypeTag
- * \tparam enableGridVolVarsCache if the cache is enabled
+ * \tparam Traits the traits class injecting the problem, volVar and elemVolVars type
+ * \tparam cachingEnabled if the cache is enabled
  */
-template<class TypeTag, bool enableGridVolVarsCache>
-class CCGridVolumeVariables
-{};
+template<class Traits, bool cachingEnabled = false>
+class CCGridVolumeVariables {};
 
 //! specialization in case of storing the volume variables
-template<class TypeTag>
-class CCGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
+template<class Traits>
+class CCGridVolumeVariables<Traits, /*cachingEnabled*/true>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using IndexType = typename GridView::IndexSet::IndexType;
-
-    static const int dim = GridView::dimension;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using ThisType = CCGridVolumeVariables<Traits, true>;
+    using Problem = typename Traits::Problem;
 
 public:
-    //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    //! export the volume variables type
+    using VolumeVariables = typename Traits::VolumeVariables;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = true;
 
+    //! export the type of the local view
+    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
+
     CCGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
+    template<class FVGridGeometry, class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
         const auto numScv = fvGridGeometry.numScv();
@@ -98,7 +92,7 @@ public:
                 {
                     const auto insideScvIdx = scvf.insideScvIdx();
                     const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                    const auto dirichletPriVars = elementSolution<SolutionVector, FVGridGeometry>(problem().dirichlet(element, scvf));
+                    const auto dirichletPriVars = elementSolution<typename FVGridGeometry::LocalView>(problem().dirichlet(element, scvf));
 
                     volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars,
                                                                   problem(),
@@ -109,24 +103,26 @@ public:
         }
     }
 
-    const VolumeVariables& volVars(const IndexType scvIdx) const
+    const VolumeVariables& volVars(const std::size_t scvIdx) const
     { return volumeVariables_[scvIdx]; }
 
-    VolumeVariables& volVars(const IndexType scvIdx)
+    VolumeVariables& volVars(const std::size_t scvIdx)
     { return volumeVariables_[scvIdx]; }
 
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     const VolumeVariables& volVars(const SubControlVolume scv) const
     { return volumeVariables_[scv.dofIndex()]; }
 
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     VolumeVariables& volVars(const SubControlVolume scv)
     { return volumeVariables_[scv.dofIndex()]; }
 
     // required for compatibility with the box method
-    const VolumeVariables& volVars(const IndexType scvIdx, const IndexType localIdx) const
+    const VolumeVariables& volVars(const std::size_t scvIdx, const std::size_t localIdx) const
     { return volumeVariables_[scvIdx]; }
 
     // required for compatibility with the box method
-    VolumeVariables& volVars(const IndexType scvIdx, const IndexType localIdx)
+    VolumeVariables& volVars(const std::size_t scvIdx, const std::size_t localIdx)
     { return volumeVariables_[scvIdx]; }
 
     //! The problem we are solving
@@ -140,22 +136,25 @@ private:
 
 
 //! Specialization when the current volume variables are not stored globally
-template<class TypeTag>
-class CCGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
+template<class Traits>
+class CCGridVolumeVariables<Traits, /*cachingEnabled*/false>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using ThisType = CCGridVolumeVariables<Traits, false>;
+    using Problem = typename Traits::Problem;
 
 public:
-    //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    //! export the volume variables type
+    using VolumeVariables = typename Traits::VolumeVariables;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = false;
 
+    //! export the type of the local view
+    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
+
     CCGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
+    template<class FVGridGeometry, class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
     //! The problem we are solving
@@ -166,6 +165,6 @@ private:
     const Problem* problemPtr_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

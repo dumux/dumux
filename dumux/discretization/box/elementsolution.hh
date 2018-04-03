@@ -124,8 +124,8 @@ auto elementSolution(const Element& element, const SolutionVector& sol, const FV
 template<class Element, class ElementVolumeVariables, class FVElementGeometry>
 auto elementSolution(const Element& element, const ElementVolumeVariables& elemVolVars, const FVElementGeometry& gg)
 -> std::enable_if_t<FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::box,
-                    BoxElementSolution<typename FVElementGeometry::FVGridGeometry,
-                                       typename ElementVolumeVariables::SolutionVector>>
+                    BoxElementSolution<FVElementGeometry,
+                                       typename ElementVolumeVariables::VolumeVariables::PrimaryVariables>>
 {
     return BoxElementSolution<typename FVElementGeometry::FVGridGeometry,
                               typename ElementVolumeVariables::SolutionVector>(element, elemVolVars, gg);

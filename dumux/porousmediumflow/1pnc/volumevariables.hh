@@ -51,8 +51,8 @@ class OnePNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
@@ -73,10 +73,7 @@ class OnePNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 
     };
 
-    using Element = typename GridView::template Codim<0>::Entity;
-
 public:
-
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
@@ -359,29 +356,13 @@ public:
     { return permeability_; }
 
 protected:
+    FluidState fluidState_;
 
-    static Scalar temperature_(const PrimaryVariables &priVars,
-                               const Problem& problem,
-                               const Element &element,
-                               const FVElementGeometry &fvGeometry,
-                               int scvIdx)
-    {
-         return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
-    }
-
-
+private:
     Scalar porosity_;        //!< Effective porosity within the control volume
     PermeabilityType permeability_;
     Scalar density_;
-    FluidState fluidState_;
     Dune::FieldVector<Scalar, numComponents> diffCoeff_;
-
-private:
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 
 };
 

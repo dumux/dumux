@@ -55,9 +55,10 @@ class PorousMediumFlowVolumeVariablesImplementation<TypeTag, false>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
 public:
+    //! export the primary variables type
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
     /*!
      * \brief Update all quantities for a given control volume

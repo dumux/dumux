@@ -190,10 +190,10 @@ public:
         const auto& outsideVolVars = curElemVolVars[outsideScvIdx];
         const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element,
                                                                                      insideScv,
-                                                                                     elementSolution<SolutionVector, FVGridGeometry>(insideVolVars.priVars()));
+                                                                                     elementSolution<FVElementGeometry>(insideVolVars.priVars()));
         const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(outsideElement,
                                                                                       outsideScv,
-                                                                                      elementSolution<SolutionVector, FVGridGeometry>(outsideVolVars.priVars()));
+                                                                                      elementSolution<FVElementGeometry>(outsideVolVars.priVars()));
 
         // get references to the two participating derivative matrices
         auto& dI_dI = derivativeMatrices[insideScvIdx];
@@ -450,7 +450,7 @@ public:
         const auto& outsideVolVars = curElemVolVars[scvf.outsideScvIdx()];
         const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element,
                                                                                      insideScv,
-                                                                                     elementSolution<SolutionVector, FVGridGeometry>(insideVolVars.priVars()));
+                                                                                     elementSolution<FVElementGeometry>(insideVolVars.priVars()));
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho_w = insideVolVars.density(FluidSystem::wPhaseIdx);
