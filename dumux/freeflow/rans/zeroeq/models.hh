@@ -21,14 +21,14 @@
  * \ingroup ZeroEqModel
  * \copydoc Dumux::EddyViscosityModels
  */
-#ifndef DUMUX_EDDYVISCOSITY_MODELS_HH
-#define DUMUX_EDDYVISCOSITY_MODELS_HH
+#ifndef DUMUX_ZEROEQ_MODELS_HH
+#define DUMUX_ZEROEQ_MODELS_HH
 
 namespace Dumux {
 
 /*!
  * \ingroup ZeroEqModel
- * \brief The available eddy viscosity models
+ * \brief The available 0-eq. eddy viscosity models.
  *
  * The following models are available:
  *  -# Prandtl's mixing length, e.g. \cite Oertel2012a

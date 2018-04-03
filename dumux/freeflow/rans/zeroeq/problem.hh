@@ -74,7 +74,9 @@ public:
     //! The constructor sets the gravity, if desired by the user.
     ZeroEqProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
-    { }
+    {
+        eddyViscosityModel_ = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.EddyViscosityModel", 1);
+    }
 
     /*!
      * \brief Correct size of the static (solution independent) wall variables
@@ -99,9 +101,6 @@ public:
     {
         ParentType::updateDynamicWallProperties(curSol);
 
-        static const auto eddyViscosityModel
-            = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.EddyViscosityModel");
-
         // calculate additional roughness
         bool printedRangeWarning = false;
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
@@ -122,7 +121,7 @@ public:
                 volVars.update(elemSol, asImp_(), element, scv);
 
                 Scalar ksPlus = this->sandGrainRoughness_[elementID] * volVars.uStar() / volVars.kinematicViscosity();
-                if (ksPlus > 0 && eddyViscosityModel == EddyViscosityModels::baldwinLomax)
+                if (ksPlus > 0 && eddyViscosityModel_ == EddyViscosityModels::baldwinLomax)
                 {
                     DUNE_THROW(Dune::NotImplemented, "Roughness is not implemented for the Baldwin-Lomax model.");
                 }
@@ -146,7 +145,7 @@ public:
         }
 
         // update routine for specfic models
-        if (eddyViscosityModel == EddyViscosityModels::baldwinLomax)
+        if (eddyViscosityModel_ == EddyViscosityModels::baldwinLomax)
             updateBaldwinLomaxProperties();
     }
 
@@ -260,6 +259,7 @@ public:
     }
 
 public:
+    int eddyViscosityModel_;
     std::vector<Scalar> kinematicEddyViscosity_;
     std::vector<Scalar> additionalRoughnessLength_;
 
