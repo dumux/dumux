@@ -105,6 +105,8 @@ public:
                 /*numP=*/300);
 
         // name of the problem and output file
+        // getParam<TYPE>("GROUPNAME.PARAMNAME") reads and sets parameter PARAMNAME
+        // of type TYPE given in the group GROUPNAME from the input file
         name_ = getParam<std::string>("Problem.Name");
         // depth of the aquifer, units: m
         aquiferDepth_ = getParam<Scalar>("Problem.AquiferDepth");

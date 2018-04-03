@@ -40,6 +40,7 @@ class InjectionProblem2P;
 
 namespace Properties
 {
+// define the TypeTag for this problem with a cell-centered two-point flux approximation spatial discretization.
 NEW_TYPE_TAG(Injection2pTypeTag, INHERITS_FROM(TwoP, InjectionSpatialParamsTypeTag));
 NEW_TYPE_TAG(Injection2pCCTypeTag, INHERITS_FROM(CCTpfaModel, Injection2pTypeTag));
 
@@ -103,6 +104,8 @@ public:
                 /*numP=*/300);
 
         // name of the problem and output file
+        // getParam<TYPE>("GROUPNAME.PARAMNAME") reads and sets parameter PARAMNAME
+        // of type TYPE given in the group GROUPNAME from the input file
         name_ = getParam<std::string>("Problem.Name");
         // depth of the aquifer, units: m
         aquiferDepth_ = getParam<Scalar>("Problem.AquiferDepth");
@@ -147,9 +150,11 @@ public:
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-         BoundaryTypes bcTypes;
+        BoundaryTypes bcTypes;
+        // set the left of the domain (with the global position in "0 = x" direction as a Dirichlet boundary
         if (globalPos[0] < eps_)
             bcTypes.setAllDirichlet();
+        // set all other as Neumann boundaries
         else
             bcTypes.setAllNeumann();
 
@@ -184,6 +189,8 @@ public:
         PrimaryVariables values(0.0);
 
         // if we are inside the injection zone set inflow Neumann boundary conditions
+        // using < boundary + eps_ or > boundary - eps_ is safer for floating point comparisons
+        // than using <= or >= as it is robust with regard to imprecision introduced by rounding errors.
         if (time_ < injectionDuration_
             && globalPos[1] < 15 + eps_ && globalPos[1] > 7 - eps_ && globalPos[0] > 0.9*this->fvGridGeometry().bBoxMax()[0])
         {

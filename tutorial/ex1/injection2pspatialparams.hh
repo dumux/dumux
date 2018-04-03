@@ -70,6 +70,7 @@ class InjectionSpatialParams : public FVSpatialParams<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
+    // get the dimensions of the simulation domain from GridView
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
@@ -118,8 +119,8 @@ public:
      * \param globalPos The global position
      */
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
-
     {
+        // here, either aquitard or aquifer permeability are returned, depending on the global position
         if (isInAquitard_(globalPos))
             return aquitardK_;
         return aquiferK_;
@@ -132,6 +133,7 @@ public:
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
+        // here, either aquitard or aquifer porosity are returned, depending on the global position
         if (isInAquitard_(globalPos))
             return aquitardPorosity_;
         return aquiferPorosity_;
@@ -193,8 +195,12 @@ private:
 
     static constexpr Scalar eps_ = 1e-6;
 
+    // provides a convenient way distinguishing whether a given location is inside the aquitard
     bool isInAquitard_(const GlobalPosition &globalPos) const
-    { return globalPos[dimWorld-1] > aquiferHeightFromBottom_ + eps_; }
+    {
+        // globalPos[dimWorld-1] is the y direction for 2D grids or the z direction for 3D grids
+        return globalPos[dimWorld-1] > aquiferHeightFromBottom_ + eps_;
+    }
 
     Scalar aquitardK_;
     Scalar aquiferK_;
