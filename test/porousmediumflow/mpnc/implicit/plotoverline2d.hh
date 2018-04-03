@@ -69,7 +69,7 @@ class PlotOverLine2D
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using aterialLawParams = typename MaterialLaw::Params;
 
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {

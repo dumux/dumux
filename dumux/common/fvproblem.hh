@@ -63,7 +63,7 @@ class FVProblem
     using PointSourceHelper = typename GET_PROP_TYPE(TypeTag, PointSourceHelper);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
     enum {
         dim = GridView::dimension,

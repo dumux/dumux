@@ -108,9 +108,6 @@ public:
     using type = CCMpfaGridVolumeVariables<Problem, VolumeVariables, enableCache>;
 };
 
-//! The element volume variables vector class
-SET_TYPE_PROP(CCMpfaModel, ElementVolumeVariables, typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView);
-
 //! The global flux variables cache vector class
 SET_TYPE_PROP(CCMpfaModel,
               GridFluxVariablesCache,

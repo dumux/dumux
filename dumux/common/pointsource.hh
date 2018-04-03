@@ -54,7 +54,7 @@ class PointSource
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -220,7 +220,7 @@ class SolDependentPointSource : public PointSource<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;

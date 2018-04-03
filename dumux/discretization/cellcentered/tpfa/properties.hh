@@ -71,9 +71,6 @@ public:
     using type = CCTpfaGridVolumeVariables<Problem, VolumeVariables, enableCache>;
 };
 
-//! The element volume variables vector class
-SET_TYPE_PROP(CCTpfaModel, ElementVolumeVariables, typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView);
-
 //! The global flux variables cache vector class
 SET_TYPE_PROP(CCTpfaModel, GridFluxVariablesCache, CCTpfaGridFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
 

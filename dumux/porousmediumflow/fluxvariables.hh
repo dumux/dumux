@@ -55,7 +55,7 @@ class PorousMediumFluxVariables : public FluxVariablesBase<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
     enum
