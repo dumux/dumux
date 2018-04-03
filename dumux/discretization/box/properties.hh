@@ -42,14 +42,12 @@
 #include <dumux/discretization/box/gridfluxvariablescache.hh>
 #include <dumux/discretization/box/elementfluxvariablescache.hh>
 #include <dumux/discretization/box/gridvolumevariables.hh>
-#include <dumux/discretization/box/elementvolumevariables.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 #include <dumux/discretization/box/fvelementgeometry.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
+
 //! Type tag for the box scheme.
 NEW_TYPE_TAG(BoxModel, INHERITS_FROM(FiniteVolumeModel));
 
@@ -64,16 +62,22 @@ public:
     using type = BoxFVGridGeometry<Scalar, GridView, enableCache>;
 };
 
-//! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<typename GET_PROP_TYPE(TypeTag, BoundaryTypes)>);
-
-//! The global volume variables vector class
-SET_TYPE_PROP(BoxModel, GridVolumeVariables, BoxGridVolumeVariables<TypeTag,
-                            GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
+//! The grid volume variables vector class
+SET_PROP(BoxModel, GridVolumeVariables)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+public:
+    using type = BoxGridVolumeVariables<Problem, VolumeVariables, enableCache>;
+};
 
 //! The element volume variables vector class
-SET_TYPE_PROP(BoxModel, ElementVolumeVariables, BoxElementVolumeVariables<TypeTag,
-                            GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
+SET_TYPE_PROP(BoxModel, ElementVolumeVariables, typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView);
+
+//! Set the default for the ElementBoundaryTypes
+SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<typename GET_PROP_TYPE(TypeTag, BoundaryTypes)>);
 
 //! The global flux variables cache vector class
 SET_TYPE_PROP(BoxModel, GridFluxVariablesCache, BoxGridFluxVariablesCache<TypeTag,
