@@ -412,14 +412,7 @@ public:
     static Scalar enthalpy(const FluidState &fluidState,
                            int phaseIdx)
     {
-        assert(0 <= phaseIdx && phaseIdx < numPhases);
-        if (phaseIdx == wPhaseIdx) {
-            return H2O::liquidEnthalpy(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
-        }
-        else {
-            return MyCompressibleComponent::liquidEnthalpy(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
-        }
-        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+        DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OMyCompressibleComponent::enthalpy()");
     }
 
     using Base::heatCapacity;
@@ -427,7 +420,7 @@ public:
     static Scalar heatCapacity(const FluidState &fluidState,
                                int phaseIdx)
     {
-        DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2ONAPL::heatCapacity()");
+        DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OMyCompressibleComponent::heatCapacity()");
     }
 
     using Base::thermalConductivity;

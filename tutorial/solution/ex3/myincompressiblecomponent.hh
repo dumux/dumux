@@ -75,6 +75,12 @@ public:
     {
         return 5.7e-4;// [Pa*s]
     }
+
+    /*!
+     * \brief Returns true if the liquid phase is assumed to be compressible
+     */
+    static constexpr bool liquidIsCompressible()
+    { return false; }
 };
 
 } // end namespace
