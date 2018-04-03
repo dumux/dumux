@@ -38,9 +38,9 @@ using StaggeredElementSolution = Dune::BlockVector<PrimaryVariables>;
  * \brief  Make an element solution for staggered schemes
  * \note This is e.g. used to contruct an element solution at Dirichlet boundaries
  */
-template<class SolutionVector, class FVGridGeometry, class PrimaryVariables>
+template<class FVElementGeometry, class PrimaryVariables>
 auto elementSolution(PrimaryVariables&& priVars)
--> std::enable_if_t<FVGridGeometry::discMethod == DiscretizationMethod::staggered,
+-> std::enable_if_t<FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::staggered,
                     StaggeredElementSolution<PrimaryVariables>>
 {
     return StaggeredElementSolution<PrimaryVariables>({std::move(priVars)});

@@ -161,7 +161,7 @@ public:
             auto&& scvJ = fvGeometry.scv(globalJ);
             CellCenterPrimaryVariables priVars(0.0);
             priVars = sol[cellCenterIdx][globalJ];
-            auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
+            auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
             volumeVariables_[localIdx].update(elemSol,
                                               problem,
                                               elementJ,
@@ -197,7 +197,7 @@ public:
             volumeVariables_.resize(localIdx+1);
             volVarIndices_.resize(localIdx+1);
 
-            auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(boundaryPriVars));
+            auto elemSol = elementSolution<FVElementGeometry>(std::move(boundaryPriVars));
             volumeVariables_[localIdx].update(elemSol,
                                               problem,
                                               element,
@@ -223,7 +223,7 @@ public:
         auto&& scv = fvGeometry.scv(eIdx);
         CellCenterPrimaryVariables priVars(0.0);
         priVars = sol[cellCenterIdx][eIdx];
-        auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
+        auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
         volumeVariables_[0].update(elemSol,
                                    gridVolVars().problem(),
                                    element,

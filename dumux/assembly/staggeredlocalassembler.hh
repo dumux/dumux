@@ -340,7 +340,7 @@ protected:
 
                const Scalar eps = numericEpsilon(priVars[pvIdx], cellCenterIdx, cellCenterIdx);
                priVars[pvIdx] += eps;
-               auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
+               auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
                curVolVars.update(elemSol, problem, elementJ, scvJ);
 
                const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry, prevElemVolVars, curElemVolVars,
@@ -467,7 +467,7 @@ protected:
 
                    const Scalar eps = numericEpsilon(priVars[pvIdx], faceIdx, cellCenterIdx);
                    priVars[pvIdx] += eps;
-                   auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
+                   auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
                    curVolVars.update(elemSol, problem, elementJ, scvJ);
 
                    const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,

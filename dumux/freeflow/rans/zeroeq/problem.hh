@@ -121,7 +121,7 @@ public:
 
                 const int dofIdx = scv.dofIndex();
                 CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][dofIdx]);
-                auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
+                auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
 

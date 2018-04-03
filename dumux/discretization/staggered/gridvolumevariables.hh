@@ -92,7 +92,7 @@ public:
             {
                 CellCenterPrimaryVariables priVars(0.0);
                 priVars = sol[cellCenterIdx][scv.dofIndex()];
-                auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
+                auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
                 volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
             }
 
@@ -121,7 +121,7 @@ public:
                         if(eqIdx == Indices::pressureIdx)
                             DUNE_THROW(Dune::InvalidStateException, "Face at: " << scvf.center() << " has neither Dirichlet nor Neumann BC.");
                 }
-                auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(boundaryPriVars));
+                auto elemSol = elementSolution<FVElementGeometry>(std::move(boundaryPriVars));
                 volumeVariables_[scvf.outsideScvIdx()].update(elemSol, problem(), element, insideScv);
             }
         }
