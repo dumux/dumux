@@ -65,7 +65,7 @@ public:
     {
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
         const auto localScvIdx = scv.indexInElement();
-        residual[localScvIdx] += evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+        residual[localScvIdx] += this->asImp().evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
     }
 
     //! evaluate the flux residual for a sub control volume face
