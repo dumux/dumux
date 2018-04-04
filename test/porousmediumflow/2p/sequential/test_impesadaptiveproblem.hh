@@ -27,7 +27,6 @@
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/lnapl.hh>
 
 #include <dumux/porousmediumflow/2p/sequential/impes/problem.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressurepropertiesadaptive.hh>

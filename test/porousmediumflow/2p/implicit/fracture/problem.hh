@@ -26,7 +26,7 @@
 #define DUMUX_TWOP_FRACTURE_TEST_PROBLEM_HH
 
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/dnapl.hh>
+#include <dumux/material/components/trichloroethene.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
@@ -63,7 +63,7 @@ SET_PROP(FractureTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> >;
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Trichloroethene<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
@@ -78,7 +78,7 @@ SET_BOOL_PROP(FractureTypeTag, SolutionDependentAdvection, false);
 
 /*!
  * \ingroup TwoPTests
- * \brief DNAPL transport through a fracture network (2d in 3d).
+ * \brief Trichloroethene (DNAPL) transport through a fracture network (2d in 3d).
  */
 template <class TypeTag>
 class FractureProblem : public PorousMediumFlowProblem<TypeTag>

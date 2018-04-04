@@ -19,10 +19,10 @@
 /*!
  * \file
  * \ingroup Components
- * \brief A simple implementation of a DNAPL (TCE).
+ * \brief A simple implementation of Trichloroethene (TCE), a DNAPL.
  */
-#ifndef DUMUX_DNAPL_HH
-#define DUMUX_DNAPL_HH
+#ifndef DUMUX_TRICHLOROETHENE_HH
+#define DUMUX_TRICHLOROETHENE_HH
 
 #include <dumux/material/idealgas.hh>
 #include "component.hh"
@@ -39,7 +39,7 @@ namespace Components {
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class DNAPL : public Component<Scalar, DNAPL<Scalar> >
+class Trichloroethene : public Component<Scalar, Trichloroethene<Scalar> >
 {
 
 public:
@@ -47,7 +47,7 @@ public:
      * \brief A human readable name for the dense NAPL TCE.
      */
     static std::string name()
-    { return "DNAPL_TCE"; }
+    { return "Trichloroethene"; }
 
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of TCE.
@@ -157,7 +157,7 @@ public:
 } // end namespace Components
 
 template<class Scalar>
-using DNAPL DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::DNAPL<Scalar>;
+using Trichloroethene DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::Trichloroethene<Scalar>;
 
 } // end namespace Dumux
 
