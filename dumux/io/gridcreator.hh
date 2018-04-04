@@ -279,20 +279,23 @@ public:
      */
     static void loadBalance()
     {
-        // if we may have dgf parameters use load balancing of the dgf pointer
-        if(enableDgfGridPointer_)
+        if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
         {
-            dgfGridPtr().loadBalance();
+            // if we may have dgf parameters use load balancing of the dgf pointer
+            if(enableDgfGridPointer_)
+            {
+                dgfGridPtr().loadBalance();
+            }
+            // if we have gmsh parameters we have to manually load balance the data
+            else if (enableGmshDomainMarkers_)
+            {
+                GridDataHandle<std::shared_ptr<Grid>, GridCreatorBase<Grid>> dh(gridPtr());
+                gridPtr()->loadBalance(dh.interface());
+                gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
+            }
+            else
+                gridPtr()->loadBalance();
         }
-        // if we have gmsh parameters we have to manually load balance the data
-        else if (enableGmshDomainMarkers_)
-        {
-            GridDataHandle<std::shared_ptr<Grid>, GridCreatorBase<Grid>> dh(gridPtr());
-            gridPtr()->loadBalance(dh.interface());
-            gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
-        }
-        else
-            gridPtr()->loadBalance();
     }
 
 protected:
