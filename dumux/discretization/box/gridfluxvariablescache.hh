@@ -23,49 +23,61 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_GRID_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_BOX_GRID_FLUXVARSCACHE_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/box/elementfluxvariablescache.hh>
-
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
+#include <dumux/discretization/box/elementfluxvariablescache.hh>
 
 namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the flux variables cache vector, we store one cache per face
+ * \ingroup BoxDiscretization
+ * \brief Flux variable caches traits
  */
-template<class TypeTag, bool EnableGridFluxVariablesCache>
+template<class P, class FVC>
+struct BoxDefaultGridFVCTraits
+{
+    using Problem = P;
+    using FluxVariablesCache = FVC;
+
+    template<class GridFluxVariablesCache, bool cachingEnabled>
+    using LocalView = BoxElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
+};
+
+/*!
+ * \ingroup BoxDiscretization
+ * \brief Flux variable caches on a gridview
+ * \note The class is specialized for a version with and without grid caching
+ */
+template<class Problem,
+         class FluxVariablesCache,
+         bool cachingEnabled = false,
+         class Traits = BoxDefaultGridFVCTraits<Problem, FluxVariablesCache> >
 class BoxGridFluxVariablesCache;
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the flux variables cache vector, we store one cache per face
+ * \ingroup BoxDiscretization
+ * \brief Flux variable caches on a gridview with grid caching enabled
+ * \note The flux caches of the gridview are stored which is memory intensive but faster
  */
-template<class TypeTag>
-class BoxGridFluxVariablesCache<TypeTag, true>
+template<class P, class FVC, class Traits>
+class BoxGridFluxVariablesCache<P, FVC, true, Traits>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using Problem = typename Traits::Problem;
+    using ThisType = BoxGridFluxVariablesCache<P, FVC, true, Traits>;
 
 public:
-    //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    //! export the flux variable cache type
+    using FluxVariablesCache = typename Traits::FluxVariablesCache;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = true;
 
+    //! export the type of the local view
+    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
+
     BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
+    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
@@ -96,11 +108,11 @@ public:
     { return *problemPtr_; }
 
     // access operator
-    const FluxVariablesCache& cache(IndexType eIdx, IndexType scvfIdx) const
+    const FluxVariablesCache& cache(std::size_t eIdx, std::size_t scvfIdx) const
     { return fluxVarsCache_[eIdx][scvfIdx]; }
 
     // access operator
-    FluxVariablesCache& cache(IndexType eIdx, IndexType scvfIdx)
+    FluxVariablesCache& cache(std::size_t eIdx, std::size_t scvfIdx)
     { return fluxVarsCache_[eIdx][scvfIdx]; }
 
 private:
@@ -110,33 +122,28 @@ private:
 };
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the flux variables cache vector, we store one cache per face
+ * \ingroup BoxDiscretization
+ * \brief Flux variable caches on a gridview with grid caching disabled
  */
-template<class TypeTag>
-class BoxGridFluxVariablesCache<TypeTag, false>
+template<class P, class FVC, class Traits>
+class BoxGridFluxVariablesCache<P, FVC, false, Traits>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using Problem = typename Traits::Problem;
+    using ThisType = BoxGridFluxVariablesCache<P, FVC, false, Traits>;
 
 public:
-    //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    //! export the flux variable cache type
+    using FluxVariablesCache = typename Traits::FluxVariablesCache;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = false;
 
+    //! export the type of the local view
+    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
+
     BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
+    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,

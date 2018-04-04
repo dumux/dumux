@@ -23,65 +23,66 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_ELEMENT_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_BOX_ELEMENT_FLUXVARSCACHE_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the flux variables cache vector, we store one cache per face
+ * \ingroup BoxDiscretization
+ * \brief The flux variables caches for an element
+ * \note The class is specialized for a version with and without caching
+ * If grid caching is enabled the flux caches are stored for the whole gridview in the corresponding
+ * GridFluxVariablesCache which is memory intensive but faster. For caching disabled the
+ * flux caches are locally computed for each element whenever needed.
  */
-template<class TypeTag, bool EnableGridFluxVariablesCache>
+template<class GFVC, bool cachingEnabled>
 class BoxElementFluxVariablesCache
 {};
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the flux variables cache vector, we store one cache per face
+ * \ingroup BoxDiscretization
+ * \brief The flux variables caches for an element with caching enabled
  */
-template<class TypeTag>
-class BoxElementFluxVariablesCache<TypeTag, true>
+template<class GFVC>
+class BoxElementFluxVariablesCache<GFVC, true>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
-
 public:
+    //! export the type of the grid flux variables cache
+    using GridFluxVariablesCache = GFVC;
+
+    //! export the type of the flux variables cache
+    using FluxVariablesCache = typename GFVC::FluxVariablesCache;
+
     BoxElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
     // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
-    void bind(const Element& element,
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
     {
         bindElement(element, fvGeometry, elemVolVars);
     }
 
-    void bindElement(const Element& element,
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars)
     {
         eIdx_ = fvGeometry.fvGridGeometry().elementMapper().index(element);
     }
 
-    void bindScvf(const Element& element,
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindScvf(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
-                  const SubControlVolumeFace& scvf)
+                  const typename FVElementGeometry::SubControlVolumeFace& scvf)
     {
         bindElement(element, fvGeometry, elemVolVars);
     }
 
     // access operator
+    template<class SubControlVolumeFace>
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return gridFluxVarsCache().cache(eIdx_, scvf.index()); }
 
@@ -91,41 +92,38 @@ public:
 
 private:
     const GridFluxVariablesCache* gridFluxVarsCachePtr_;
-    // currently bound element
-    IndexType eIdx_;
+    std::size_t eIdx_; //!< currently bound element
 };
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the flux variables cache vector, we store one cache per face
+ * \ingroup BoxDiscretization
+ * \brief The flux variables caches for an element with caching disabled
  */
-template<class TypeTag>
-class BoxElementFluxVariablesCache<TypeTag, false>
+template<class GFVC>
+class BoxElementFluxVariablesCache<GFVC, false>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
-
 public:
+    //! export the type of the grid flux variables cache
+    using GridFluxVariablesCache = GFVC;
+
+    //! export the type of the flux variables cache
+    using FluxVariablesCache = typename GFVC::FluxVariablesCache;
+
     BoxElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
     // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
-    void bind(const Element& element,
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
     {
         bindElement(element, fvGeometry, elemVolVars);
     }
 
-    void bindElement(const Element& element,
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars)
     {
@@ -135,20 +133,23 @@ public:
             (*this)[scvf].update(gridFluxVarsCache().problem(), element, fvGeometry, elemVolVars, scvf);
     }
 
-    void bindScvf(const Element& element,
+    template<class FVElementGeometry, class ElementVolumeVariables>
+    void bindScvf(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
-                  const SubControlVolumeFace& scvf)
+                  const typename FVElementGeometry::SubControlVolumeFace& scvf)
     {
         fluxVarsCache_.resize(fvGeometry.numScvf());
         (*this)[scvf].update(gridFluxVarsCache().problem(), element, fvGeometry, elemVolVars, scvf);
     }
 
     // access operator
+    template<class SubControlVolumeFace>
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return fluxVarsCache_[scvf.index()]; }
 
     // access operator
+    template<class SubControlVolumeFace>
     FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
     { return fluxVarsCache_[scvf.index()]; }
 

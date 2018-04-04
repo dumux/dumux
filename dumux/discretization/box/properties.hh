@@ -40,10 +40,8 @@
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/box/elementboundarytypes.hh>
 #include <dumux/discretization/box/gridfluxvariablescache.hh>
-#include <dumux/discretization/box/elementfluxvariablescache.hh>
 #include <dumux/discretization/box/gridvolumevariables.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
-#include <dumux/discretization/box/fvelementgeometry.hh>
 
 namespace Dumux {
 namespace Properties {
@@ -73,16 +71,22 @@ public:
     using type = BoxGridVolumeVariables<Problem, VolumeVariables, enableCache>;
 };
 
-//! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<typename GET_PROP_TYPE(TypeTag, BoundaryTypes)>);
-
-//! The global flux variables cache vector class
-SET_TYPE_PROP(BoxModel, GridFluxVariablesCache, BoxGridFluxVariablesCache<TypeTag,
-                            GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
+//! The grid flux variables cache vector class
+SET_PROP(BoxModel, GridFluxVariablesCache)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+public:
+    using type = BoxGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
+};
 
 //! The local flux variables cache vector class
-SET_TYPE_PROP(BoxModel, ElementFluxVariablesCache, BoxElementFluxVariablesCache<TypeTag,
-                            GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
+SET_TYPE_PROP(BoxModel, ElementFluxVariablesCache, typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView);
+
+//! Set the default for the ElementBoundaryTypes
+SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<typename GET_PROP_TYPE(TypeTag, BoundaryTypes)>);
 
 //! Set the BaseLocalResidual to BoxLocalResidual
 SET_TYPE_PROP(BoxModel, BaseLocalResidual, BoxLocalResidual<TypeTag>);
