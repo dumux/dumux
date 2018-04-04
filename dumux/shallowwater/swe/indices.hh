@@ -49,7 +49,7 @@ struct SweIndices
     static constexpr auto dim = dimension;
     static constexpr auto numEq = numEquations;
 
-    static constexpr int waterdepthXIdx = massBalanceIdx; //!< Index of the velocity in a solution vector
+    static constexpr int waterdepthIdx = massBalanceIdx; //!< Index of the velocity in a solution vector
     static constexpr int velocityXIdx = momentumXBalanceIdx; //!< Index of the velocity in a solution vector
     static constexpr int velocityYIdx = momentumYBalanceIdx; //!< Index of the velocity in a solution vector
 

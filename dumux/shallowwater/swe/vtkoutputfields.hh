@@ -55,11 +55,12 @@ public:
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.getH(); }, "h");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.getU(); }, "u");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.getV(); }, "v");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.getZ(); }, "z");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.getKs(); }, "ks");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.getTheta(); }, "theta");
+//        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.getKs(); }, "ks");
+//        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.getTheta(); }, "theta");
     }
 
-}; // end namespace Dumux
+};
+
+} // end namespace Dumux
 
 #endif

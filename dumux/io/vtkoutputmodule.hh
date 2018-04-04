@@ -218,9 +218,9 @@ class VtkOutputModule
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+//    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+//    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using ElementMapper = typename FVGridGeometry::ElementMapper;
     using VertexMapper = typename FVGridGeometry::VertexMapper;
@@ -352,7 +352,7 @@ public:
         //////////////////////////////////////////////////////////////
 
         // instatiate the velocity output
-        VelocityOutput velocityOutput(problem_, gridGeom_, gridVariables_, sol_);
+        //VelocityOutput velocityOutput(problem_, gridGeom_, gridVariables_, sol_);
         std::array<std::vector<GlobalPosition>, numPhases> velocity;
 
         // process rank
@@ -366,7 +366,7 @@ public:
         //! Abort if no data was registered
         if (!volVarScalarDataInfo_.empty()
             || !fields_.empty()
-            || velocityOutput.enableOutput()
+//            || velocityOutput.enableOutput()
             || addProcessRank)
         {
             const auto numCells = gridGeom_.gridView().size(0);
@@ -376,7 +376,7 @@ public:
             if (!volVarScalarDataInfo_.empty())
                 volVarScalarData.resize(volVarScalarDataInfo_.size(), std::vector<Scalar>(numDofs));
 
-            if (velocityOutput.enableOutput())
+            if (0)//velocityOutput.enableOutput())
             {
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                 {
@@ -399,14 +399,14 @@ public:
 
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
-                if (velocityOutput.enableOutput())
+                if (0)//velocityOutput.enableOutput())
                     fvGeometry.bind(element);
                 else
                     fvGeometry.bindElement(element);
 
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
-                if (velocityOutput.enableOutput())
+                if (0)//velocityOutput.enableOutput())
                     elemVolVars.bind(element, fvGeometry, sol_);
                 else if (!volVarScalarDataInfo_.empty())
                     elemVolVars.bindElement(element, fvGeometry, sol_);
@@ -424,9 +424,9 @@ public:
                 }
 
                 // velocity output
-                if (velocityOutput.enableOutput())
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                        velocityOutput.calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
+//                 if (velocityOutput.enableOutput())
+//                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+//                         velocityOutput.calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
 
                 //! the rank
                 if (addProcessRank)
@@ -442,13 +442,13 @@ public:
                 addDofDataForWriter_(sequenceWriter_, volVarScalarData[i], volVarScalarDataInfo_[i].name);
 
             // the velocity field
-            if (velocityOutput.enableOutput())
+            if (0)//velocityOutput.enableOutput())
             {
                 if (isBox && dim > 1)
                 {
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                         sequenceWriter_.addVertexData(Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), velocity[phaseIdx],
-                                                            "velocity_" + std::string(FluidSystem::phaseName(phaseIdx)) + " (m/s)",
+                                                            "velocity_" + std::to_string(phaseIdx) + " (m/s)",
                                                             dimWorld, dim).get());
                 }
                 // cell-centered models
@@ -456,7 +456,7 @@ public:
                 {
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                         sequenceWriter_.addCellData(Field(gridGeom_.gridView(), gridGeom_.elementMapper(), velocity[phaseIdx],
-                                                            "velocity_" + std::string(FluidSystem::phaseName(phaseIdx)) + " (m/s)",
+                                                            "velocity_" + std::to_string(phaseIdx) + " (m/s)",
                                                             dimWorld, 0).get());
                 }
             }

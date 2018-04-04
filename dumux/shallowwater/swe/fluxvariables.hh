@@ -47,11 +47,12 @@ class SweFluxVariables : public FluxVariablesBase<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
-    using NumericalFluxType = typename GET_PROP_TYPE(TypeTag, NumericalFluxType);
-    using TurbulenceModelType = typename GET_PROP_TYPE(TypeTag, TurbulenceModelType);
+//    using NumericalFluxType = typename GET_PROP_TYPE(TypeTag, NumericalFluxType);
+//    using TurbulenceModelType = typename GET_PROP_TYPE(TypeTag, TurbulenceModelType);
     static constexpr bool enableNumericalFlux = GET_PROP_VALUE(TypeTag, EnableNumericalFlux);
     static constexpr bool enableTurbulenceModel = GET_PROP_VALUE(TypeTag, EnableTurbulenceModel);
 
@@ -62,20 +63,19 @@ public:
     {
     }
 
-    template<typename FunctionType>
-    Scalar numericalFlux() const
+    NumEqVector numericalFlux() const
     {
 
-        Scalar fluxVector[3] = {0.0,0.0,0.0};
+        NumEqVector fluxVector(0.0);
         if (enableNumericalFlux)
         {
 
-            return NumericalFluxType::flux(this->problem(),
-                                            this->element(),
-                                            this->fvGeometry(),
-                                            this->elemVolVars(),
-                                            this->scvFace(),
-                                            this->elemFluxVarsCache());
+//             return NumericalFluxType::flux(this->problem(),
+//                                             this->element(),
+//                                             this->fvGeometry(),
+//                                             this->elemVolVars(),
+//                                             this->scvFace(),
+//                                             this->elemFluxVarsCache());
         }
         else
         {
@@ -83,18 +83,17 @@ public:
         }
     }
 
-    template<typename FunctionType>
-    Scalar turbulenceFlux() const
+    NumEqVector turbulenceFlux() const
     {
-        Scalar fluxVector[3] = {0.0,0.0,0.0};
+        NumEqVector fluxVector(0.0);
         if (enableTurbulenceModel)
         {
-            return TurbulenceModelType::flux(this->problem(),
-                                            this->element(),
-                                            this->fvGeometry(),
-                                            this->elemVolVars(),
-                                            this->scvFace(),
-                                            this->elemFluxVarsCache());
+//             return TurbulenceModelType::flux(this->problem(),
+//                                             this->element(),
+//                                             this->fvGeometry(),
+//                                             this->elemVolVars(),
+//                                             this->scvFace(),
+//                                             this->elemFluxVarsCache());
         }
         else
         {

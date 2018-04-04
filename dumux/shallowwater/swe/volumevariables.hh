@@ -74,6 +74,15 @@ class SweVolumeVariablesImplementation
 
 public:
 
+    void update(const ElementSolutionVector &elemSol,
+                const Problem &problem,
+                const Element &element,
+                const SubControlVolume &scv)
+    {
+        priVars_ = extractDofPriVars(elemSol, scv);
+        frictionH_ = 0; // calculate from primary variables and spatial params
+        frictionUstarH_ = 0; // calculate from primary variables and spatial params
+    }
 
 
     /*!
@@ -84,55 +93,42 @@ public:
     { return elemSol[0]; }
 
 
+    Scalar extrusionFactor() const
+    { return 1.0; }
+
     /*!
      * \brief Return water detph h inside the sub-control volume.
      *
      */
-    Scalar getH(const ElementSolutionVector &elemSol,const Problem &problem,
-                const Element &element, const SubControlVolume& scv)
+    Scalar getH() const
     {
-        return elemSol[waterdepthIdx];
+        return priVars_[waterdepthIdx];
     }
 
     /*!
      * \brief Return water velocity u inside the sub-control volume.
      *
      */
-    Scalar getU(const ElementSolutionVector &elemSol,const Problem &problem,
-                const Element &element, const SubControlVolume& scv)
+    Scalar getU() const
     {
-        return elemSol[velocityXIdx];
+        return priVars_[velocityXIdx];
     }
     /*!
      * \brief Return water velocity v inside the sub-control volume.
      *
      */
-    Scalar getV(const ElementSolutionVector &elemSol,const Problem &problem,
-                const Element &element, const SubControlVolume& scv)
+    Scalar getV() const
     {
-        return elemSol[velocityYIdx];
-    }
-
-    /*!
-     * \brief Return the bottom z inside the sub-control volume.
-     *
-     */
-    Scalar getZ(const Problem &problem,
-                const Element &element,
-                const SubControlVolume& scv) const
-    {
-        return problem.getZ(element);
+        return priVars_[velocityYIdx];
     }
 
     /*!
      * \brief Return the friction height h inside the sub-control volume.
      *
      */
-    Scalar frictionH(const Problem &problem,
-                const Element &element,
-                const SubControlVolume& scv) const
+    Scalar frictionH() const
     {
-        return problem.frictionH(element);
+        return frictionH_;
     }
 
 
@@ -140,20 +136,15 @@ public:
      * \brief Return the friction u_starh inside the sub-control volume.
      *
      */
-    Scalar frictionUstarH(const Problem &problem,
-                const Element &element,
-                const SubControlVolume& scv) const
+    Scalar frictionUstarH() const
     {
-        return problem.frictionUstarH(element);
+        return frictionUstarH_;
     }
-    /*!
-     * \brief Return the gravity constant inside the sub-control volume.
-     *
-     */
-    Scalar gravity(const Problem &problem) const
-    {
-        return problem.gravity();
-    }
+
+private:
+    PrimaryVariables priVars_;
+    Scalar frictionH_;
+    Scalar frictionUstarH_;
 };
 
 }

@@ -1,3 +1,4 @@
-add_input_file_links()
-
-add_executable(test_swe EXCLUDE_FROM_ALL test_swe.cc)
+dune_add_test(NAME test_swe
+              SOURCES test_swe.cc
+              COMPILE_DEFINITIONS TYPETAG=SweTestTypeTag
+              COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_swe)

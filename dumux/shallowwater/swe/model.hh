@@ -31,7 +31,9 @@
 #define DUMUX_SWE_MODEL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/darcyslaw.hh>
 #include <dumux/shallowwater/properties.hh>
+#include <dumux/shallowwater/advectiveflux.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
@@ -68,9 +70,19 @@ SET_BOOL_PROP(Swe, EnableTurbulenceModel, false); //!< The turbulence model for 
 * \brief The two-dimensional shallow water equations have allways 3 equations.
 */
 SET_INT_PROP(Swe, NumEq, 3);
-SET_INT_PROP(Swe, NumEqVector, 3);
+SET_INT_PROP(Swe, NumPhases, 1);
+SET_BOOL_PROP(Swe, EnableAdvection, true);
+SET_BOOL_PROP(Swe, SolutionDependentAdvection, true);
+SET_BOOL_PROP(Swe, EnableMolecularDiffusion, false);
+SET_BOOL_PROP(Swe, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(Swe, EnableEnergyBalance, false);
+SET_BOOL_PROP(Swe, SolutionDependentHeatConduction, false);
+SET_TYPE_PROP(Swe, AdvectionType, ShallowWaterAdvectiveFlux<TypeTag>);
 
-//! Set friciton law indices
+//! Set friction law indices
+NEW_PROP_TAG(Manning);
+NEW_PROP_TAG(Chezy);
+NEW_PROP_TAG(Nikuradse);
 SET_INT_PROP(Swe, Manning, 1);
 SET_INT_PROP(Swe, Chezy, 2);
 SET_INT_PROP(Swe, Nikuradse, 3);

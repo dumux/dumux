@@ -42,7 +42,7 @@ namespace Dumux
 template<class TypeTag>
 class SweProblem : public FVProblem<TypeTag>
 {
-    using ParentType = FVPProblem<TypeTag>;
+    using ParentType = FVProblem<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -50,7 +50,7 @@ class SweProblem : public FVProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -65,42 +65,42 @@ class SweProblem : public FVProblem<TypeTag>
 
 public:
 
-    Scalar getH(const element)
+    Scalar getH(const Element& element)
     {
         return asImp_().getH();
     }
 
-    Scalar getU(const element)
+    Scalar getU(const Element& element)
     {
         return asImp_().getU();
     }
 
-    Scalar getV(const element)
+    Scalar getV(const Element& element)
     {
         return asImp_().getV();
     }
 
-    Scalar getZ(const element)
+    Scalar getZ(const Element& element)
     {
         return asImp_().getZ();
     }
 
-    Scalar getKs(const element)
+    Scalar getKs(const Element& element)
     {
         return asImp_().getZ();
     }
 
-    Scalar getFrictionH(const element)
+    Scalar getFrictionH(const Element& element)
     {
         return asImp_().getFrictionH();
     }
 
-    Scalar getFrictionUstarH(const element)
+    Scalar getFrictionUstarH(const Element& element)
     {
         return asImp_().getFrictionUstarH();
     }
 
-    Scalar getGravity(const element)
+    Scalar getGravity(const Element& element)
     {
         return asImp_().getGravity();
     }

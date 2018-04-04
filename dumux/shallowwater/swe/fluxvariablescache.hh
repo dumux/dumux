@@ -67,6 +67,14 @@ public:
                 const ElementVolumeVariables& elemVolVars,
                 const SubControlVolumeFace &scvf)
     {}
+
+    //! Do nothing so far.
+    void updateAdvection(const Problem& problem,
+                const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars,
+                const SubControlVolumeFace &scvf)
+    {}
 };
 
 } // end namespace

@@ -26,6 +26,7 @@
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/shallowwater/properties.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/shallowwater/swe/problem.hh>
 #include <dumux/shallowwater/swe/model.hh>
 #include "swetestspatialparams.hh"
@@ -44,14 +45,15 @@ class SweTestProblem;
 // Specify the properties for the problem
 namespace Properties
 {
-NEW_TYPE_TAG(SweTestTypeTag, INHERITS_FROM(Swe, SweTestSpatialParams));
-NEW_TYPE_TAG(SweTestProblem, INHERITS_FROM(CCTpfaModel, SweTestTypeTag));
+    NEW_TYPE_TAG(SweTestTypeTag, INHERITS_FROM(CCTpfaModel, Swe, SweTestSpatialParams));
 
 // Use 2d YaspGrid
 SET_TYPE_PROP(SweTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
 SET_TYPE_PROP(SweTestTypeTag, Problem,SweTestProblem<TypeTag>);
+
+SET_TYPE_PROP(SweTestTypeTag, SpatialParams, SweTestSpatialParams<TypeTag>);
 
 } // end namespace Dumux
 
@@ -72,10 +74,12 @@ SET_TYPE_PROP(SweTestTypeTag, Problem,SweTestProblem<TypeTag>);
  * simulation time is 10 seconds
  */
 template <class TypeTag>
-class SweTestProblem : public SweProblem<TypeTag>
+// evtl von SweProblem ableiten?
+class SweTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = SweProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -100,7 +104,7 @@ public:
      * \param timeManager The Dumux TimeManager for simulation management.
      * \param gridView The grid view on the spatial domain of the problem
      */
-    SweProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    SweTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         name_ = getParam<std::string>("Problem.Name");
@@ -167,8 +171,9 @@ public:
 
     //! set neumann condition for phases (flux, [kg/(m^2 s)])
 
-    void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
+    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
     {
+        PrimaryVariables values(0.0);
 
         //we need the Riemann invariants to compute the values depending of the boundary type
         //since we use a weak imposition we do not have a dirichlet value. We impose fluxes
@@ -176,6 +181,8 @@ public:
         values[massBalanceIdx] = 0.0;
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
+
+        return values;
     }
 
 
@@ -192,12 +199,15 @@ public:
      *
      * \param globalPos The position for which the boundary type is set
      */
-    void initial(PrimaryVariables &values,
-        const Element& element) const
+    PrimaryVariables initial(const Element& element) const
     {
+        PrimaryVariables values(0.0);
+
         values[massBalanceIdx] = 1.0;
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
+
+        return values;
     };
 
     // \}

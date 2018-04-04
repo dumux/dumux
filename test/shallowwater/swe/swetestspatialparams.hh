@@ -45,9 +45,9 @@ NEW_TYPE_TAG(SweTestSpatialParams);
  *        shallow water model
  */
 template<class TypeTag>
-class SweTestSpatialParams : public FVSpatialParamsSwe<TypeTag>
+class SweTestSpatialParams //: public FVSpatialParamsSwe<TypeTag>
 {
-    using ParentType = FVSpatialParamsSwe<TypeTag>;
+    //using ParentType = FVSpatialParamsSwe<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -65,6 +65,8 @@ class SweTestSpatialParams : public FVSpatialParamsSwe<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    SweTestSpatialParams(const Problem& problem)
+    {}
 
     /*! \brief Define the porosity in [-].
    *
@@ -92,7 +94,7 @@ public:
 
 private:
 
-    const IndexSet& indexSet_;
+//    const IndexSet& indexSet_;
     static constexpr Scalar eps_ = 1.5e-7;
 };
 

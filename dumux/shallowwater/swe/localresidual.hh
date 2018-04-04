@@ -53,9 +53,8 @@ class SweResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
-    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
 
     enum {
@@ -67,7 +66,7 @@ class SweResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
         massBalanceIdx = Indices::massBalanceIdx,
         momentumXBalanceIdx = Indices::momentumXBalanceIdx,
         momentumYBalanceIdx = Indices::momentumYBalanceIdx,
-        waterdepthXIdx = Indices::waterdepthXIdx,
+        waterdepthIdx = Indices::waterdepthIdx,
         velocityXIdx = Indices::velocityXIdx,
         velocityYIdx = Indices::velocityYIdx
     };
@@ -95,8 +94,8 @@ public:
         // partial time derivative of the phase mass
         ResidualVector storage(0.0);
         storage[massBalanceIdx] = volVars.getH();
-        storage[momentumXBalanceIdx] = volVars.getH() * volVars.getU;
-        storage[momentumYBalanceIdx] = volVars.getH() * volVars.getV;
+        storage[momentumXBalanceIdx] = volVars.getH() * volVars.getU();
+        storage[momentumYBalanceIdx] = volVars.getH() * volVars.getV();
 
         return storage;
     }
@@ -118,16 +117,12 @@ public:
                                const SubControlVolumeFace& scvf,
                                const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        FluxVariables fluxVars;
-
         ResidualVector flux(0.0);
 
-        auto numFlux = fluxVars.numericalFlux(); //uses fluxvariables.hh
-        auto turbFlux = fluxVars.turbulenceFlux(); //uses fluxvariables.hh
+        auto numFlux = AdvectionType::flux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+//        auto turbFlux = fluxVars.turbulenceFlux(); //uses fluxvariables.hh
 
-        flux[massBalanceIdx] = numFlux[0] + turbFlux[0];
-        flux[momentumXBalanceIdx] = numFlux[1] + turbFlux[1];
-        flux[momentumYBalanceIdx] = numFlux[2] + turbFlux[2];
+        flux = numFlux;// + turbFlux;
 
         return flux;
     }
