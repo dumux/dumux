@@ -76,7 +76,7 @@ public:
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the component.
      */
     template<class C = Implementation>
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: molarMass()");
         DUNE_THROW(Dune::NotImplemented, "molarMass()");
@@ -86,7 +86,7 @@ public:
      * \brief Returns the critical temperature in \f$\mathrm{[K]}\f$ of the component.
      */
     template<class C = Implementation>
-    static Scalar criticalTemperature()
+    static constexpr Scalar criticalTemperature()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: criticalTemperature()");
         DUNE_THROW(Dune::NotImplemented, "criticalTemperature()");
@@ -96,7 +96,7 @@ public:
      * \brief Returns the critical pressure in \f$\mathrm{[Pa]}\f$ of the component.
      */
     template<class C = Implementation>
-    static Scalar criticalPressure()
+    static constexpr Scalar criticalPressure()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: criticalPressure()");
         DUNE_THROW(Dune::NotImplemented, "criticalPressure()");
@@ -106,7 +106,7 @@ public:
      * \brief Returns the temperature in \f$\mathrm{[K]}\f$ at the component's triple point.
      */
     template<class C = Implementation>
-    static Scalar tripleTemperature()
+    static constexpr Scalar tripleTemperature()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: tripleTemperature()");
         DUNE_THROW(Dune::NotImplemented, "tripleTemperature()");
@@ -116,7 +116,7 @@ public:
      * \brief Returns the pressure in \f$\mathrm{[Pa]}\f$ at the component's triple point.
      */
     template<class C = Implementation>
-    static Scalar triplePressure()
+    static constexpr Scalar triplePressure()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: triplePressure()");
         DUNE_THROW(Dune::NotImplemented, "triplePressure()");
