@@ -361,11 +361,9 @@ private:
     //! reorders in a dune way a set of given element corners in gmsh ordering
     void reorder(const Dune::GeometryType gt, VertexIndexSet& cornerIndices) const
     {
-        // triangles, lines need no reordering
+        // triangles, lines & tetrahedra need no reordering
         if (gt == Dune::GeometryTypes::hexahedron)
             DUNE_THROW(Dune::NotImplemented, "Reordering of corners for hexahedra");
-        else if (gt == Dune::GeometryTypes::tetrahedron)
-            DUNE_THROW(Dune::NotImplemented, "Reordering of corners for Tetrahedra");
         else if (gt == Dune::GeometryTypes::quadrilateral)
         {
             assert(cornerIndices.size() == 4);
