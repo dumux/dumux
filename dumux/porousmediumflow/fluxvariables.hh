@@ -43,7 +43,11 @@ namespace Dumux {
  */
 template<class TypeTag,
          class UpwindScheme = UpwindScheme<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)> >
-class PorousMediumFluxVariables : public FluxVariablesBase<TypeTag>
+class PorousMediumFluxVariables
+: public FluxVariablesBase<typename GET_PROP_TYPE(TypeTag, Problem),
+                           typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView,
+                           typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView,
+                           typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
