@@ -136,9 +136,6 @@ public:
     using type = CCMpfaGridFluxVariablesCache<Traits, enableCache>;
 };
 
-//! The local flux variables cache vector class
-SET_TYPE_PROP(CCMpfaModel, ElementFluxVariablesCache, typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView);
-
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(CCMpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes);
 

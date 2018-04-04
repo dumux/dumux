@@ -81,9 +81,6 @@ public:
     using type = CCTpfaGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
 };
 
-//! The local flux variables cache vector class
-SET_TYPE_PROP(CCTpfaModel, ElementFluxVariablesCache, typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView);
-
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes);
 

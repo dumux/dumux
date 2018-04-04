@@ -111,11 +111,6 @@ private:
 public:
     using type = StaggeredGridFluxVariablesCache<FVGridGeometry, Traits, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>;
 };
-//! Set the local flux variables cache vector class
-SET_PROP(StaggeredModel, ElementFluxVariablesCache)
-{
-    using type = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-};
 
 //! Set the face solution type
 SET_PROP(StaggeredModel, StaggeredFaceSolution)

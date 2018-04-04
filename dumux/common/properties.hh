@@ -84,7 +84,6 @@ NEW_PROP_TAG(GridVolumeVariables);                 //!< The type for a global co
 NEW_PROP_TAG(EnableGridVolumeVariablesCache);      //!< If disabled, the volume variables are not stored (reduces memory, but is slower)
 NEW_PROP_TAG(FluxVariables);                       //!< Container storing the different types of flux variables
 NEW_PROP_TAG(FluxVariablesCache);                  //!< Stores data associated with flux vars
-NEW_PROP_TAG(ElementFluxVariablesCache);           //!< A local vector of flux variable caches per element
 NEW_PROP_TAG(GridFluxVariablesCache);              //!< The global vector of flux variable containers
 NEW_PROP_TAG(EnableGridFluxVariablesCache);        //!< specifies if data on flux vars should be saved (faster, but more memory consuming)
 NEW_PROP_TAG(GridVariables);                       //!< The grid variables object managing variable data on the grid (volvars/fluxvars cache)

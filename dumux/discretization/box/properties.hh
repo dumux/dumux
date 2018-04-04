@@ -82,9 +82,6 @@ public:
     using type = BoxGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
 };
 
-//! The local flux variables cache vector class
-SET_TYPE_PROP(BoxModel, ElementFluxVariablesCache, typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView);
-
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<typename GET_PROP_TYPE(TypeTag, BoundaryTypes)>);
 
