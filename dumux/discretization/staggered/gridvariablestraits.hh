@@ -50,19 +50,19 @@ struct StaggeredGridFaceVariablesTraits
  * \ingroup StaggeredDiscretization
  * \brief Traits class to be used for the StaggeredGridVolumeVariables.
  *
- * \tparam VV The volume variables type
  * \tparam P The problem type
+ * \tparam VV The volume variables type
  * \tparam I The indices type
  */
-template<class VV, class P, class PV, class I>
+template<class P, class VV, class I>
 struct StaggeredGridVolumeVariablesTraits
 {
-    template<class FVGridGeometry, class GridVolumeVariables, bool enableCache>
-    using LocalView = StaggeredElementVolumeVariables<FVGridGeometry, GridVolumeVariables, enableCache>;
+    template<class GridVolumeVariables, bool enableCache>
+    using LocalView = StaggeredElementVolumeVariables<GridVolumeVariables, enableCache>;
 
-    using Indices = I;
     using Problem = P;
     using VolumeVariables = VV;
+    using Indices = I;
 };
 
 } // end namespace Dumux

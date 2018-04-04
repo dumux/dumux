@@ -85,15 +85,15 @@ private:
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices); // TODO extract indices from volumevariables
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
 
-    using Traits = StaggeredGridVolumeVariablesTraits<VolumeVariables, Problem, CellCenterPrimaryVariables, Indices>;
+    using Traits = StaggeredGridVolumeVariablesTraits<Problem, VolumeVariables, Indices>; // TODO extract indices from volumevariables
 
 public:
-    using type = StaggeredGridVolumeVariables<FVGridGeometry, Traits, enableCache>;
+    using type = StaggeredGridVolumeVariables<Traits, enableCache>;
 };
 
 //! Set the global flux variables cache vector class
