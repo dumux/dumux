@@ -29,6 +29,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dumux/io/gridcreator.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux {
 
@@ -38,7 +39,7 @@ class GridCreatorTests
     using GridView = typename Grid::LeafGridView;
     using Scalar = double;
     static const int dim = Grid::dimension;
-    using GridCreator = typename Dumux::GridCreatorImpl<Grid, DiscretizationMethods::None>;
+    using GridCreator = typename Dumux::GridCreatorImpl<Grid, DiscretizationMethod::none>;
     using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
 
 public:
