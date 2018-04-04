@@ -107,9 +107,9 @@ protected:
                           << xww + xwn << std::endl;
                 newPhasePresence = bothPhases;
                 if (formulation == pnsw)
-                    priVars[switchIdx] = 0.0;
+                    priVars[switchIdx] = 0.0001;
                 else if (formulation == pwsn)
-                    priVars[switchIdx] = 1.0;
+                    priVars[switchIdx] = 0.9999;
             }
         }
         else if (phasePresence == wPhaseOnly)
@@ -135,9 +135,9 @@ protected:
                           << xnw + xnn << std::endl;
                 newPhasePresence = bothPhases;
                 if (formulation == pnsw)
-                    priVars[switchIdx] = 0.999;
+                    priVars[switchIdx] = 0.9999;
                 else if (formulation == pwsn)
-                    priVars[switchIdx] = 0.001;
+                    priVars[switchIdx] = 0.0001;
             }
         }
         else if (phasePresence == bothPhases)
