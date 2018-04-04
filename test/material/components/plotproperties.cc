@@ -36,7 +36,6 @@
 #include <dumux/material/components/brine.hh>
 #include <dumux/material/components/ch4.hh>
 #include <dumux/material/components/co2.hh>
-#include <dumux/material/components/dnapl.hh>
 #include <dumux/material/components/h2.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/heavyoil.hh>
@@ -45,6 +44,7 @@
 #include <dumux/material/components/o2.hh>
 #include <dumux/material/components/simpleco2.hh>
 #include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/trichloroethene.hh>
 #include <dumux/material/components/xylene.hh>
 
 using namespace std;
@@ -277,8 +277,6 @@ int main(int argc, char *argv[])
         plotStuff< Components::Brine<double> >(openPlotWindow);
     else if (compName == "CH4")
         plotStuff< Components::CH4<double> >(openPlotWindow);
-    else if (compName == "DNAPL_TCE")
-        plotStuff< Components::DNAPL<double> >(openPlotWindow);
     else if (compName == "H2")
         plotStuff< Components::H2<double> >(openPlotWindow);
     else if (compName == "H2O")
@@ -295,6 +293,8 @@ int main(int argc, char *argv[])
         plotStuff< Components::SimpleCO2<double> >(openPlotWindow);
     else if (compName == "SimpleH2O")
         plotStuff< Components::SimpleH2O<double>  >(openPlotWindow);
+    else if (compName == "Trichloroethene")
+        plotStuff< Components::Trichloroethene<double> >(openPlotWindow);
     else if (compName == "Xylene")
         plotStuff< Components::Xylene<double> >(openPlotWindow);
     else

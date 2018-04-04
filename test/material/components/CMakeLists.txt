@@ -20,11 +20,6 @@ dune_add_test(NAME plot_ch4
               COMMAND ./plot_component
               CMD_ARGS "CH4")
 
-dune_add_test(NAME plot_dnapl_tce
-              TARGET plot_component
-              COMMAND ./plot_component
-              CMD_ARGS "DNAPL_TCE")
-
 dune_add_test(NAME plot_h2
               TARGET plot_component
               COMMAND ./plot_component
@@ -64,6 +59,11 @@ dune_add_test(NAME plot_simpleh2o
               TARGET plot_component
               COMMAND ./plot_component
               CMD_ARGS "SimpleH2O")
+
+dune_add_test(NAME plot_trichloroethene
+              TARGET plot_component
+              COMMAND ./plot_component
+              CMD_ARGS "Trichloroethene")
 
 dune_add_test(NAME plot_xylene
               TARGET plot_component

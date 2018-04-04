@@ -27,7 +27,7 @@
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/dnapl.hh>
+#include <dumux/material/components/trichloroethene.hh>
 
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressurepropertiesadaptive.hh>
@@ -75,7 +75,7 @@ SET_PROP(MPFATwoPTestTypeTag, FluidSystem)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
 #if PROBLEM == 2
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> >;
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Trichloroethene<Scalar> >;
 #else
     using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
 #endif
@@ -101,7 +101,7 @@ NEW_TYPE_TAG(MPFALAdaptiveTwoPTestTypeTag, INHERITS_FROM(FvMpfaL2dPressureTwoPAd
  * \ingroup SequentialTwoPTests
  * \brief test problem for sequential 2p models
  *
- * A DNAPL is injected from the top into a rectangular 2D domain saturated by water.
+ * Trichloroethene (a DNAPL) is injected from the top into a rectangular 2D domain saturated by water.
  * The remaining upper and the lower boundary is closed (Neumann = 0). At the sides a hydrostatic pressure condition
  * and free outflow for saturation are set. The domain is heterogeneous with a backround material and three lenses.
  *

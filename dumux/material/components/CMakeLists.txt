@@ -13,7 +13,6 @@ co2tablereader.hh
 co2tables.inc
 component.hh
 constant.hh
-dnapl.hh
 h2.hh
 h2o.hh
 heavyoil.hh
@@ -24,6 +23,7 @@ o2.hh
 simpleco2.hh
 simpleh2o.hh
 tabulatedcomponent.hh
+trichloroethene.hh
 unit.hh
 xylene.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/components)
