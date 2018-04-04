@@ -32,8 +32,11 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/mixeddimension/facet/cellcentered/upwindscheme.hh>
 #include <dumux/mixeddimension/facet/cellcentered/localresidual.hh>
 #include <dumux/mixeddimension/facet/cellcentered/tpfa/darcyslaw.hh>
+
+#include <dumux/porousmediumflow/fluxvariables.hh>
 
 namespace Dumux {
 
@@ -48,6 +51,9 @@ SET_TYPE_PROP(CCTpfaFacetCouplingModel, AdvectionType, FacetCouplingCCTpfaDarcys
 
 //! Use the cc local residual for models with facet coupling
 SET_TYPE_PROP(CCTpfaFacetCouplingModel, BaseLocalResidual, FacetCouplingCCLocalResidual<TypeTag>);
+
+//! Per default, use the porous medium flow flux variables with the modified upwind scheme
+SET_TYPE_PROP(CCTpfaFacetCouplingModel, FluxVariables, PorousMediumFluxVariables<TypeTag, CCFacetCouplingUpwindScheme<TypeTag>>);
 
 } // namespace Properties
 } // namespace Dumux
