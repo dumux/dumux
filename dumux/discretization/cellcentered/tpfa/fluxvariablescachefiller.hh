@@ -27,8 +27,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
 * \ingroup CCTpfaDiscretization

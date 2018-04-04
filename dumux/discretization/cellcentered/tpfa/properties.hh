@@ -35,13 +35,11 @@
 #include <dumux/discretization/fvproperties.hh>
 
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
-
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
-#include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/gridvolumevariables.hh>
 #include <dumux/discretization/cellcentered/tpfa/gridfluxvariablescache.hh>
-#include <dumux/discretization/cellcentered/tpfa/elementfluxvariablescache.hh>
+#include <dumux/discretization/cellcentered/tpfa/fluxvariablescachefiller.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 
 namespace Dumux {
@@ -71,11 +69,20 @@ public:
     using type = CCTpfaGridVolumeVariables<Problem, VolumeVariables, enableCache>;
 };
 
-//! The global flux variables cache vector class
-SET_TYPE_PROP(CCTpfaModel, GridFluxVariablesCache, CCTpfaGridFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
+//! The grid flux variables cache vector class
+SET_PROP(CCTpfaModel, GridFluxVariablesCache)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FluxVariablesCacheFiller = CCTpfaFluxVariablesCacheFiller<TypeTag>;
+public:
+    using type = CCTpfaGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
+};
 
 //! The local flux variables cache vector class
-SET_TYPE_PROP(CCTpfaModel, ElementFluxVariablesCache, CCTpfaElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
+SET_TYPE_PROP(CCTpfaModel, ElementFluxVariablesCache, typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes);
