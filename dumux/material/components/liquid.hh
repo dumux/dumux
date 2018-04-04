@@ -49,7 +49,7 @@ public:
     static constexpr bool liquidIsCompressible()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: liquidIsCompressible()");
-        DUNE_THROW(Dune::NotImplemented, "liquidIsCompressible()");
+        return 0; // iso c++ requires a return statement for constexpr functions
     }
 
     /*!
@@ -59,7 +59,7 @@ public:
     static constexpr bool liquidViscosityIsConstant()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: liquidViscosityIsConstant()");
-        DUNE_THROW(Dune::NotImplemented, "liquidViscosityIsConstant()");
+        return 0; // iso c++ requires a return statement for constexpr functions
     }
 
     /*!

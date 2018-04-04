@@ -79,7 +79,7 @@ public:
     static constexpr Scalar molarMass()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: molarMass()");
-        DUNE_THROW(Dune::NotImplemented, "molarMass()");
+        return 0; // iso c++ requires a return statement for constexpr functions
     }
 
     /*!
@@ -89,7 +89,7 @@ public:
     static constexpr Scalar criticalTemperature()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: criticalTemperature()");
-        DUNE_THROW(Dune::NotImplemented, "criticalTemperature()");
+        return 0; // iso c++ requires a return statement for constexpr functions
     }
 
     /*!
@@ -99,7 +99,7 @@ public:
     static constexpr Scalar criticalPressure()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: criticalPressure()");
-        DUNE_THROW(Dune::NotImplemented, "criticalPressure()");
+        return 0; // iso c++ requires a return statement for constexpr functions
     }
 
     /*!
@@ -109,7 +109,7 @@ public:
     static constexpr Scalar tripleTemperature()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: tripleTemperature()");
-        DUNE_THROW(Dune::NotImplemented, "tripleTemperature()");
+        return 0; // iso c++ requires a return statement for constexpr functions
     }
 
     /*!
@@ -119,7 +119,7 @@ public:
     static constexpr Scalar triplePressure()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: triplePressure()");
-        DUNE_THROW(Dune::NotImplemented, "triplePressure()");
+        return 0; // iso c++ requires a return statement for constexpr functions
     }
 
     /*!

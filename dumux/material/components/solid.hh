@@ -49,7 +49,7 @@ public:
     static constexpr bool solidIsCompressible()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidIsCompressible()");
-        DUNE_THROW(Dune::NotImplemented, "solidIsCompressible()");
+        return 0; // iso c++ requires a return statement for constexpr functions
     }
 
     /*!
