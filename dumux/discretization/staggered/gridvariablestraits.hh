@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GRID_VARIABLES_TRAITS_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GRID_VARIABLES_TRAITS_HH
 
+#include <dumux/discretization/staggered/elementfacevariables.hh>
+#include <dumux/discretization/staggered/elementvolumevariables.hh>
 
 namespace Dumux {
 
@@ -61,23 +63,6 @@ struct StaggeredGridVolumeVariablesTraits
     using Indices = I;
     using Problem = P;
     using VolumeVariables = VV;
-};
-
-/*!
- * \ingroup StaggeredDiscretization
- * \brief Traits class to be used for the StaggeredGridVFluxVariablesCache.
- *
- * \tparam FVC The flux variables cache type
- * \tparam P The problem type
- */
-template<class FVC, class P>
-struct StaggeredGridFluxVariablesCacheTraits
-{
-    template<class FVGridGeometry, class StaggeredGridFluxVariablesCache, bool enableCache>
-    using LocalView = StaggeredElementFluxVariablesCache<FVGridGeometry, StaggeredGridFluxVariablesCache, enableCache>;
-
-    using FluxVariablesCache = FVC;
-    using Problem = P;
 };
 
 } // end namespace Dumux

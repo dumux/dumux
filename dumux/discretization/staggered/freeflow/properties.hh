@@ -38,6 +38,7 @@
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/fvgridgeometry.hh>
+#include <dumux/discretization/staggered/fvelementgeometry.hh>
 
 #include "subcontrolvolumeface.hh"
 #include "connectivitymap.hh"

@@ -39,14 +39,10 @@
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/staggered/gridvariables.hh>
 #include <dumux/discretization/staggered/gridfluxvariablescache.hh>
-#include <dumux/discretization/staggered/elementfluxvariablescache.hh>
 #include <dumux/discretization/staggered/gridvolumevariables.hh>
-#include <dumux/discretization/staggered/elementvolumevariables.hh>
 #include <dumux/discretization/staggered/fvgridgeometry.hh>
-#include <dumux/discretization/staggered/fvelementgeometry.hh>
 #include <dumux/discretization/staggered/gridfacevariables.hh>
 #include <dumux/discretization/staggered/facesolution.hh>
-#include <dumux/discretization/staggered/elementfacevariables.hh>
 #include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 
 #include <dune/istl/multitypeblockvector.hh>
@@ -104,12 +100,11 @@ public:
 SET_PROP(StaggeredModel, GridFluxVariablesCache)
 {
 private:
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Traits = StaggeredGridFluxVariablesCacheTraits<FluxVariablesCache, Problem>;
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 public:
-    using type = StaggeredGridFluxVariablesCache<FVGridGeometry, Traits, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>;
+    using type = StaggeredGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
 };
 
 //! Set the face solution type
