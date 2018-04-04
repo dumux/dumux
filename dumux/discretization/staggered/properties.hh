@@ -64,15 +64,11 @@ NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel));
 SET_PROP(StaggeredModel, GridFaceVariables)
 {
 private:
-    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
     static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache);
-
-    using Traits = StaggeredGridFaceVariablesTraits<FaceVariables, Problem>;
-
 public:
-    using type = StaggeredGridFaceVariables<FVGridGeometry, Traits, enableCache>;
+    using type = StaggeredGridFaceVariables<Problem, FaceVariables, enableCache>;
 };
 
 //! Cache the face variables per default

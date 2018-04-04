@@ -24,27 +24,9 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GRID_VARIABLES_TRAITS_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GRID_VARIABLES_TRAITS_HH
 
-#include <dumux/discretization/staggered/elementfacevariables.hh>
 #include <dumux/discretization/staggered/elementvolumevariables.hh>
 
 namespace Dumux {
-
-/*!
- * \ingroup StaggeredDiscretization
- * \brief Traits class to be used for the StaggeredGridFaceVariables.
- *
- * \tparam FV The face variables type
- * \tparam P The problem type
- */
-template<class FV, class P>
-struct StaggeredGridFaceVariablesTraits
-{
-    template<class FVGridGeometry, class GridFaceVariables, bool enableCache>
-    using LocalView = StaggeredElementFaceVariables<FVGridGeometry, GridFaceVariables, enableCache>;
-
-    using FaceVariables = FV;
-    using Problem = P;
-};
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -53,6 +35,7 @@ struct StaggeredGridFaceVariablesTraits
  * \tparam P The problem type
  * \tparam VV The volume variables type
  * \tparam I The indices type
+ * TODO: Remove the indices (get out of volvar) and do a default class like in tpfa
  */
 template<class P, class VV, class I>
 struct StaggeredGridVolumeVariablesTraits
