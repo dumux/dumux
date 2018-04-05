@@ -50,7 +50,7 @@ namespace FluidSystems {
  *  water of the IAPWS-formulation.
  */
 template <class Scalar,
-          class H2Otype = TabulatedComponent<H2O<Scalar>>,
+          class H2Otype = Components::TabulatedComponent<Components::H2O<Scalar>>,
           bool useComplexRelations=true>
 class BrineAir
 : public BaseFluidSystem<Scalar, BrineAir<Scalar, H2Otype, useComplexRelations>>
@@ -63,10 +63,10 @@ public:
 
     using H2O = H2Otype;
     using H2O_Air = BinaryCoeff::H2O_Air;
-    using Air = Dumux::Air<Scalar>;
+    using Air = Dumux::Components::Air<Scalar>;
     using Brine_Air = BinaryCoeff::Brine_Air<Scalar, Air>;
-    using Brine = Dumux::Brine<Scalar,H2Otype>;
-    using NaCl = Dumux::NaCl<Scalar>;
+    using Brine = Dumux::Components::Brine<Scalar,H2Otype>;
+    using NaCl = Dumux::Components::NaCl<Scalar>;
 
     // the type of parameter cache objects. this fluid system does not
     using ParameterCache = NullParameterCache;

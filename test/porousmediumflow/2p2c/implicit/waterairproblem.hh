@@ -239,7 +239,7 @@ public:
             const auto t = initialValues[temperatureIdx];
 
             // note: energy equation is always formulated in terms of mass specific quantities, not per mole
-            values[energyEqIdx] = -1e-3*N2<Scalar>::gasEnthalpy(t, pn);
+            values[energyEqIdx] = -1e-3*Components::N2<Scalar>::gasEnthalpy(t, pn);
         }
 
         return values;

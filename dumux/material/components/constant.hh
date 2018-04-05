@@ -24,9 +24,11 @@
 #ifndef DUMUX_COMPONENTS_CONSTANT_HH
 #define DUMUX_COMPONENTS_CONSTANT_HH
 
-#include <dune/common/deprecated.hh>
 #include <dumux/common/parameters.hh>
-#include "component.hh"
+
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
 
 namespace Dumux {
 namespace Components {
@@ -47,7 +49,10 @@ namespace Components {
  * \note If you only have one component you can also omit the "1.".
  */
 template<int id, class Scalar>
-class Constant : public Component<Scalar, Constant<id, Scalar> >
+class Constant
+: public Components::Base<Scalar, Constant<id, Scalar> >
+, public Components::Liquid<Scalar, Constant<id, Scalar> >
+, public Components::Gas<Scalar, Constant<id, Scalar> >
 {
 
 public:

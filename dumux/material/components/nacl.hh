@@ -25,12 +25,13 @@
 #define DUMUX_NACL_HH
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/material/components/component.hh>
 
 #include <cmath>
 #include <iostream>
 
-#include <dune/common/deprecated.hh>
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/solid.hh>
 
 namespace Dumux {
 namespace Components {
@@ -40,7 +41,10 @@ namespace Components {
  * \brief A class for the NaCl properties
  */
 template <class Scalar>
-class NaCl : public Component<Scalar, NaCl<Scalar> >
+class NaCl
+: public Components::Base<Scalar, NaCl<Scalar> >
+, public Components::Liquid<Scalar, NaCl<Scalar> >
+, public Components::Solid<Scalar, NaCl<Scalar> >
 {
 public:
     /*!
@@ -87,9 +91,6 @@ public:
 };
 
 } // end namespace Components
-
-template<class Scalar>
-using NaCl DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::NaCl<Scalar>;
 
 } // end namespace Dumux
 

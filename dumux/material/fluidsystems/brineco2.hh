@@ -48,9 +48,9 @@ namespace FluidSystems
  */
 template<class Scalar,
          class CO2Table,
-         class H2Otype = TabulatedComponent<H2O<Scalar> >,
-         class BrineRawComponent = Brine<Scalar, H2O<Scalar> >,
-         class Brinetype = TabulatedComponent<BrineRawComponent> >
+         class H2Otype = Components::TabulatedComponent<Components::H2O<Scalar> >,
+         class BrineRawComponent = Components::Brine<Scalar, Components::H2O<Scalar> >,
+         class Brinetype = Components::TabulatedComponent<BrineRawComponent> >
 class BrineCO2
 : public BaseFluidSystem<Scalar, BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype> >
 {
@@ -64,7 +64,7 @@ public:
     using ParameterCache = NullParameterCache;
     using H2O = H2Otype;
     using Brine = Brinetype;
-    using CO2 = Dumux::CO2<Scalar, CO2Table>;
+    using CO2 = Dumux::Components::CO2<Scalar, CO2Table>;
 
     static const int numComponents = 2;
     static const int numPhases = 2;

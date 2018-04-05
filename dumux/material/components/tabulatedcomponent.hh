@@ -34,7 +34,6 @@
 #include <vector>
 #include <iostream>
 
-#include <dune/common/deprecated.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/material/components/componenttraits.hh>
 
@@ -77,7 +76,7 @@ namespace Components {
  *                          values for gas&liquid phase will be set
  *                          depending on the vapor pressure.
  */
-template <class RawComponent, bool useVaporPressure = true>
+template <class RawComponent, bool useVaporPressure=true>
 class TabulatedComponent
 {
 public:
@@ -1031,9 +1030,6 @@ template <class RawComponent, bool useVaporPressure>
 unsigned TabulatedComponent<RawComponent, useVaporPressure>::nDensity_;
 
 } // end namespace Components
-
-template <class RawComponent, bool useVaporPressure=true>
-using TabulatedComponent DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::TabulatedComponent<RawComponent, useVaporPressure>;
 
 } // end namespace Dumux
 

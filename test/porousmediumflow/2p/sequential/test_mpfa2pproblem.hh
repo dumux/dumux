@@ -73,11 +73,11 @@ SET_TYPE_PROP(MPFATwoPTestTypeTag, Problem, MPFATwoPTestProblem<TypeTag>);
 SET_PROP(MPFATwoPTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #if PROBLEM == 2
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Trichloroethene<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
 #else
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #endif
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };

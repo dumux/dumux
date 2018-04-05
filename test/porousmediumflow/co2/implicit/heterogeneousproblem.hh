@@ -163,7 +163,7 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using CO2 = Dumux::CO2<Scalar, HeterogeneousCO2Tables::CO2Tables>;
+    using CO2 = Dumux::Components::CO2<Scalar, HeterogeneousCO2Tables::CO2Tables>;
 
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);

@@ -101,7 +101,7 @@ class RichardsNIEvaporationProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using IapwsH2O = H2O<Scalar>;
+    using IapwsH2O = Components::H2O<Scalar>;
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);

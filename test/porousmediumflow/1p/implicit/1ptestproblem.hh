@@ -51,7 +51,7 @@ NEW_TYPE_TAG(OnePTestCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePTestTypeTag))
 SET_PROP(OnePTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // Set the grid type

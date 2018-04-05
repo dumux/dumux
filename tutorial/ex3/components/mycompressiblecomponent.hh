@@ -25,8 +25,9 @@
 #define DUMUX_MYCOMPRESSIBLECOMPONENT_HH
 
 #include <dumux/material/idealgas.hh>
-#include <dumux/material/components/component.hh>
 
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
 
 namespace Dumux
 {
@@ -37,7 +38,9 @@ namespace Dumux
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class MyCompressibleComponent : public Component<Scalar, MyCompressibleComponent<Scalar> >
+class MyCompressibleComponent
+: public Components::Base<Scalar, MyCompressibleComponent<Scalar> >
+, public Components::Liquid<Scalar, MyCompressibleComponent<Scalar> >
 {
 
 public:
@@ -56,7 +59,7 @@ public:
       * \brief Returns true if the liquid phase is assumed to be compressible
       */
      static constexpr bool liquidIsCompressible()
-     { true; }
+     { return true; }
 
      /*!
       * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the component.

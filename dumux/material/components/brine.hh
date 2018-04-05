@@ -25,14 +25,15 @@
 #define DUMUX_BRINE_HH
 
 
-#include <dumux/material/components/component.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/nacl.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
 #include <cmath>
 
-#include <dune/common/deprecated.hh>
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
 
 namespace Dumux {
 namespace Components {
@@ -45,12 +46,14 @@ namespace Components {
  * \tparam H2O Static polymorphism: the Brine class can access all properties of the H2O class
  */
 template <class Scalar,
-          class H2O_Tabulated = TabulatedComponent<H2O<Scalar>>>
-class Brine : public Component<Scalar, Brine<Scalar, H2O_Tabulated> >
+          class H2O_Tabulated = Components::TabulatedComponent<Components::H2O<Scalar>>>
+class Brine
+: public Components::Base<Scalar, Brine<Scalar, H2O_Tabulated> >
+, public Components::Liquid<Scalar, Brine<Scalar, H2O_Tabulated> >
+, public Components::Gas<Scalar, Brine<Scalar, H2O_Tabulated> >
 {
 public:
-    using H2O = TabulatedComponent<Dumux::H2O<Scalar>>;
-
+    using H2O = Components::TabulatedComponent<Dumux::Components::H2O<Scalar>>;
     //HACK: If salinity is a pseudo-component, a constat value is used
     static Scalar constantSalinity;
 
@@ -68,7 +71,7 @@ public:
    static Scalar molarMass(Scalar salinity = constantSalinity)
    {
        const Scalar M1 = H2O::molarMass();
-       const Scalar M2 = NaCl<Scalar>::molarMass(); // molar mass of NaCl [kg/mol]
+       const Scalar M2 = Components::NaCl<Scalar>::molarMass(); // molar mass of NaCl [kg/mol]
        const Scalar X2 = salinity; // mass fraction of salt in brine
        return M1*M2/(M2 + X2*(M1 - M2));
    };
@@ -395,9 +398,6 @@ template <class Scalar, class H2O>
 Scalar Brine<Scalar, H2O>::constantSalinity = 0.1;
 
 } // end namespace Components
-
-template <class Scalar, class H2O = TabulatedComponent<H2O<Scalar>>>
-using Brine DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::Brine<Scalar, H2O>;
 
 } // end namespace Dumux
 

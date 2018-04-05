@@ -26,10 +26,11 @@
 #define DUMUX_MESITYLENE_HH
 
 #include <dumux/material/idealgas.hh>
-#include <dumux/material/components/component.hh>
 #include <dumux/material/constants.hh>
 
-#include <dune/common/deprecated.hh>
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
 
 namespace Dumux {
 namespace Components {
@@ -41,7 +42,10 @@ namespace Components {
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class Mesitylene : public Component<Scalar, Mesitylene<Scalar> >
+class Mesitylene
+: public Components::Base<Scalar, Mesitylene<Scalar> >
+, public Components::Liquid<Scalar, Mesitylene<Scalar> >
+, public Components::Gas<Scalar, Mesitylene<Scalar> >
 {
     using Consts = Constants<Scalar>;
 
@@ -372,9 +376,6 @@ protected:
 };
 
 } // end namespace Components
-
-template<class Scalar>
-using Mesitylene DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::Mesitylene<Scalar>;
 
 } // end namespace Dumux
 

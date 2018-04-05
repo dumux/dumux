@@ -26,10 +26,11 @@
 #define DUMUX_HEAVYOIL_HH
 
 #include <dumux/material/idealgas.hh>
-#include <dumux/material/components/component.hh>
 #include <dumux/material/constants.hh>
 
-#include <dune/common/deprecated.hh>
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
 
 namespace Dumux {
 namespace Components {
@@ -41,7 +42,10 @@ namespace Components {
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class HeavyOil : public Component<Scalar, HeavyOil<Scalar> >
+class HeavyOil
+: public Components::Base<Scalar, HeavyOil<Scalar> >
+, public Components::Liquid<Scalar, HeavyOil<Scalar> >
+, public Components::Gas<Scalar, HeavyOil<Scalar> >
 {
     using Consts = Dumux::Constants<Scalar>;
 
@@ -488,9 +492,6 @@ protected:
 };
 
 } // end namespace Components
-
-template<class Scalar>
-using HeavyOil DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::HeavyOil<Scalar>;
 
 } // end namespace Dumux
 

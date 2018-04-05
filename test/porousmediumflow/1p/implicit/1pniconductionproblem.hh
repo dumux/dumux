@@ -63,7 +63,7 @@ SET_TYPE_PROP(OnePNIConductionTypeTag, Problem,
 // Set the fluid system
 SET_TYPE_PROP(OnePNIConductionTypeTag, FluidSystem,
             FluidSystems::OnePLiquid<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                           H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
+                                                           Components::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 // Set the spatial parameters
 SET_TYPE_PROP(OnePNIConductionTypeTag,
               SpatialParams,
@@ -106,7 +106,7 @@ class OnePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using IapwsH2O = H2O<Scalar>;
+    using IapwsH2O = Components::H2O<Scalar>;
 
     enum { dimWorld = GridView::dimensionworld };
 

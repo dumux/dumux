@@ -25,8 +25,9 @@
 #define DUMUX_MYCOMPRESSIBLECOMPONENT_HH
 
 #include <dumux/material/idealgas.hh>
-#include <dumux/material/components/component.hh>
 
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
 
 namespace Dumux
 {
@@ -37,7 +38,9 @@ namespace Dumux
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class MyCompressibleComponent : public Component<Scalar, MyCompressibleComponent<Scalar> >
+class MyCompressibleComponent
+: public Components::Base<Scalar, MyIncompressibleComponent<Scalar> >
+, public Components::Liquid<Scalar, MyIncompressibleComponent<Scalar> >
 {
 public:
     /*!

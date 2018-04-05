@@ -51,7 +51,7 @@ NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEq));
 SET_PROP(PipeLauferProblem, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::OnePGas<Scalar, Air<Scalar> >;
+    using type = FluidSystems::OnePGas<Scalar, Components::Air<Scalar> >;
 };
 
 // Set the grid type

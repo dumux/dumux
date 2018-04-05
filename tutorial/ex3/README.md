@@ -84,7 +84,7 @@ SET_PROP(ExerciseThreeTypeTag, FluidSystem)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef TabulatedComponent<H2O<Scalar>> TabulatedH2O;
+    typedef Components::TabulatedComponent<Components::H2O<Scalar>> TabulatedH2O;
     typedef typename FluidSystems::OnePLiquid<Scalar, TabulatedH2O> WettingPhase;
     /*!
      * Uncomment first line and comment second line for using the incompressible component
@@ -100,7 +100,7 @@ public:
 
 ### 2.1. Incompressible component
 
-Open the file `myincompressiblecomponent.hh`. You can see in line 40 that a component should always derive from the _Component_ class (see `dumux/material/components/component.hh`), which defines the interface of a _DuMuX_ component with all possibly required functions to be overloaded by the actual implementation.
+Open the file `myincompressiblecomponent.hh`. You can see in line 40 that a component should always derive from the _Base_ class (see `dumux/material/components/base.hh`), which defines the interface of a _DuMuX_ component with all possibly required functions to be overloaded by the actual implementation. Additionally it is required for liquids to derive from the _Liquid_ class (see `dumux/material/components/liquid.hh`), for gases to derive from the _Gas_ class (see `dumux/material/components/gas.hh`) and for solids to derive from the _Solid_ class (see `dumux/material/components/solid.hh`).
 
 ```c++
 /*!
@@ -123,7 +123,7 @@ Implement an incompressible component into the file `myincompressiblecomponent.h
 | $`\rho_{liquid}`$ | $`Kg/m^3`$   | $`1460`$   |
 | $`\mu_{liquid}`$ | $`Pa \cdot s`$   | $`5.7 \cdot 10^{-4}`$   |
 
-In order to do so, have a look at the file `dumux/material/components/component.hh` to see how the interfaces are defined and overload them accordingly.
+In order to do so, have a look at the files `dumux/material/components/base.hh` and `dumux/material/components/liquid.hh` to see how the interfaces are defined and overload them accordingly.
 
 In order to execute the program, change to the build-directory
 
@@ -233,4 +233,4 @@ make exercise3_b
 ./exercise3_b exercise3_b.input
 ```
 
-You will observe an error message and an abortion of the program. This is due to the fact that in order for the constraint solver and other mechanisms in the two-phase two-component model to work, two additional functionalities in the component have to be implemented. The model has to know whether or not the liquid pure component is compressible and it needs the vapour pressure. As in the previous exercise, check the `dumux/material/components/component.hh` file for these two functions and implement them into `mycompressiblecomponent.hh`. For the vapour pressure, use a value of $`3900`$  Pa.
+You will observe an error message and an abortion of the program. This is due to the fact that in order for the constraint solver and other mechanisms in the two-phase two-component model to work, two additional functionalities in the component have to be implemented. The model has to know whether or not the liquid pure component is compressible and it needs the vapour pressure. As in the previous exercise, check the `dumux/material/components/base.hh` and `dumux/material/components/liquid.hh` files for these two functions and implement them into `mycompressiblecomponent.hh`. For the vapour pressure, use a value of $`3900`$  Pa.

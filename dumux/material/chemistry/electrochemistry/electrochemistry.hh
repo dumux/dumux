@@ -31,7 +31,7 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/material/constants.hh>
-#include <dumux/material/components/component.hh>
+
 #include <dumux/material/fluidsystems/h2on2o2.hh>
 
 namespace Dumux {

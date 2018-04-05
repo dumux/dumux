@@ -115,7 +115,7 @@ class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using IapwsH2O = H2O<Scalar>;
+    using IapwsH2O = Components::H2O<Scalar>;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     // copy some indices for convenience

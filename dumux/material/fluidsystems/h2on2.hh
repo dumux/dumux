@@ -58,8 +58,8 @@ class H2ON2
 
     // convenience using declarations
     using IdealGas = Dumux::IdealGas<Scalar>;
-    using TabulatedH2O = TabulatedComponent<Dumux::H2O<Scalar> >;
-    using SimpleN2 = Dumux::N2<Scalar>;
+    using TabulatedH2O = Components::TabulatedComponent<Dumux::Components::H2O<Scalar> >;
+    using SimpleN2 = Dumux::Components::N2<Scalar>;
 
 public:
     /****************************************
