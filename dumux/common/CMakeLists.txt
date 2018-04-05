@@ -11,7 +11,6 @@ boundingboxtree.hh
 defaultusagemessage.hh
 dimensionlessnumbers.hh
 dumuxmessage.hh
-eigenvalues.hh
 entitymap.hh
 exceptions.hh
 fixedlengthspline_.hh
@@ -34,7 +33,6 @@ staggeredfvproblem.hh
 start.hh
 tabulated2dfunction.hh
 timemanager.hh
-timesteppingscheme.hh
 valgrind.hh
 variablelengthspline_.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/common)
