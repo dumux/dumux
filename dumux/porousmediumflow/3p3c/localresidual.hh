@@ -46,7 +46,7 @@ class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -88,11 +88,11 @@ public:
      * \param scv The sub control volume
      * \param volVars The volume variables
      */
-    ResidualVector computeStorage(const Problem& problem,
+    NumEqVector computeStorage(const Problem& problem,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars) const
     {
-        ResidualVector storage(0.0);
+        NumEqVector storage(0.0);
 
         // compute storage term of all components within all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -127,7 +127,7 @@ public:
      * \param scvf The sub control volume face
      * \param elemFluxVarsCache The element flux variables cache
      */
-    ResidualVector computeFlux(const Problem& problem,
+    NumEqVector computeFlux(const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
                                const ElementVolumeVariables& elemVolVars,
@@ -138,7 +138,7 @@ public:
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         // get upwind weights into local scope
-        ResidualVector flux(0.0);
+        NumEqVector flux(0.0);
 
         // advective fluxes
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
