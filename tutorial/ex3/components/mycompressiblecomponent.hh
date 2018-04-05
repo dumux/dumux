@@ -56,18 +56,15 @@ public:
       * \brief Returns true if the liquid phase is assumed to be compressible
       */
      static constexpr bool liquidIsCompressible()
-     {
-         // TODO: replace the line below by a meaningful return statement
-         DUNE_THROW(Dune::NotImplemented, "Todo: implement liquidIsCompressible()");
-     }
+     { true; }
 
      /*!
       * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the component.
       */
      static Scalar molarMass()
      {
-         // TODO: replace the line below by a meaningful return statement
-         DUNE_THROW(Dune::NotImplemented, "Todo: implement molar mass");
+        // TODO: replace the line below by a meaningful return statement
+        DUNE_THROW(Dune::NotImplemented, "Todo: implement molar mass");
      }
 
      /*!
