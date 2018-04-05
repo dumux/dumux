@@ -39,9 +39,8 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 
-#include <dumux/nonlinear/newtoncontroller.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
@@ -115,10 +114,8 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NewtonController = Dumux::NewtonController<Scalar>;
-    auto newtonController = std::make_shared<NewtonController>();
-    NewtonMethod<NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
+    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // linearize & solve
     Dune::Timer timer;
