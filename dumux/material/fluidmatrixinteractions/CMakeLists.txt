@@ -12,5 +12,4 @@ diffusivitymillingtonquirk.hh
 permeabilitykozenycarman.hh
 permeabilityrutqvisttsang.hh
 porosityprecipitation.hh
-porosityreactivebed.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions)
