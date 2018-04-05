@@ -19,10 +19,10 @@
 /*!
  * \file
  * \ingroup Fluidsystems
- * \brief @copybrief Dumux::FluidSystems::TwoPLiquidVaporFluidsystem
+ * \brief @copybrief Dumux::FluidSystems::TwoPOneC
  */
-#ifndef DUMUX_2P_LIQUID_VAPOR_FLUID_SYSTEM_HH
-#define DUMUX_2P_LIQUID_VAPOR_FLUID_SYSTEM_HH
+#ifndef DUMUX_2P_1C_FLUID_SYSTEM_HH
+#define DUMUX_2P_1C_FLUID_SYSTEM_HH
 
 #include <limits>
 #include <cassert>
@@ -43,10 +43,10 @@ namespace FluidSystems {
  * \brief A two-phase fluid system with only one component.
  */
 template <class Scalar, class ComponentType>
-class TwoPLiquidVaporFluidsystem
-    : public BaseFluidSystem<Scalar, TwoPLiquidVaporFluidsystem<Scalar, ComponentType> >
+class TwoPOneC
+    : public BaseFluidSystem<Scalar, TwoPOneC<Scalar, ComponentType> >
 {
-    using ThisType = TwoPLiquidVaporFluidsystem<Scalar, ComponentType>;
+    using ThisType = TwoPOneC<Scalar, ComponentType>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
     using Component = ComponentType;
 
@@ -86,7 +86,7 @@ public:
     static bool isLiquid(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        return phaseIdx != nPhaseIdx;
+        return phaseIdx == wPhaseIdx;
     }
 
     /*!
@@ -157,7 +157,6 @@ public:
     static constexpr int ComponentIdx = 0;
 
 
-
     /*!
      * \brief Return the human readable name of a component
      *
@@ -165,12 +164,8 @@ public:
      */
     static std::string componentName(int compIdx)
     {
-        static std::string name[] = {
-            Component::name()
-        };
-
         assert(0 <= compIdx && compIdx < numComponents);
-        return name[compIdx];
+        return Component::name();
     }
 
     /*!
@@ -180,12 +175,8 @@ public:
      */
     static Scalar molarMass(int compIdx)
     {
-        static const Scalar M[] = {
-            Component::molarMass()
-        };
-
         assert(0 <= compIdx && compIdx < numComponents);
-        return M[compIdx];
+        return Component::molarMass();
     }
 
     /*!
@@ -195,12 +186,8 @@ public:
      */
     static Scalar criticalTemperature(int compIdx)
     {
-        static const Scalar Tcrit[] = {
-            Component::criticalTemperature()
-        };
-
         assert(0 <= compIdx && compIdx < numComponents);
-        return Tcrit[compIdx];
+        return Component::criticalTemperature();
     }
 
     /*!
@@ -210,12 +197,8 @@ public:
      */
     static Scalar criticalPressure(int compIdx)
     {
-        static const Scalar pcrit[] = {
-            Component::criticalPressure()
-        };
-
         assert(0 <= compIdx && compIdx < numComponents);
-        return pcrit[compIdx];
+        return Component::criticalPressure();
     }
 
     /*!
@@ -226,7 +209,7 @@ public:
     static Scalar criticalMolarVolume(int compIdx)
     {
         DUNE_THROW(Dune::NotImplemented,
-                   "TwoPLiquidVaporFluidsystem::criticalMolarVolume()");
+                   "TwoPOneC::criticalMolarVolume()");
         return 0;
     }
 
@@ -237,12 +220,8 @@ public:
      */
     static Scalar acentricFactor(int compIdx)
     {
-        static const Scalar accFac[] = {
-            Component::acentricFactor(), // H2O (from Reid, et al.)
-        };
-
         assert(0 <= compIdx && compIdx < numComponents);
-        return accFac[compIdx];
+        return Component::acentricFactor();
     }
 
     /****************************************
@@ -358,7 +337,7 @@ public:
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         Scalar pressure = fluidState.pressure(nPhaseIdx) ;
 
-        return Component::vaporTemperature( pressure ) ;
+        return Component::vaporTemperature(pressure) ;
     }
 
     /*!
@@ -402,17 +381,12 @@ public:
 
         // liquid phase
         if (phaseIdx == wPhaseIdx)
-        {
            return Component::vaporPressure(T)/p;
-        }
 
         // for the gas phase, assume an ideal gas when it comes to
         // fugacity (-> fugacity == partial pressure)
         else
-        {
             return 1.0;
-
-        }
     }
 
 

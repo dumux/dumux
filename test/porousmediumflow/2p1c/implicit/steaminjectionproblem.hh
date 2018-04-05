@@ -30,7 +30,7 @@
 #include <dumux/porousmediumflow/2p1c/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/fluidsystems/2pliquidvapor.hh>
+#include <dumux/material/fluidsystems/2p1c.hh>
 
 #include <dumux/material/components/tabulatedcomponent.hh>
 #include <dumux/material/components/h2o.hh>
@@ -61,7 +61,7 @@ private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> >;
 public:
-    using type = Dumux::FluidSystems::TwoPLiquidVaporFluidsystem<Scalar, H2OType >;
+    using type = Dumux::FluidSystems::TwoPOneC<Scalar, H2OType >;
 };
 
 
