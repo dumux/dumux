@@ -39,7 +39,6 @@
 #include <dumux/material/fluidsystems/h2on2kinetic.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/fluidsystems/purewatersimple.hh>
 #include <dumux/material/fluidsystems/spe5.hh>
 
 // include all fluid states
@@ -201,12 +200,6 @@ int main()
 
     // liquid phase
     {   using FluidSystem = FluidSystems::LiquidPhase<Scalar, H2O>;
-        success += checkFluidSystem<Scalar, FluidSystem>(); }
-
-    // pure water simple
-    {   using FluidSystem = FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*enableComplexRelations=*/false>;
-        success += checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using FluidSystem = FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*enableComplexRelations=*/true>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // spe5

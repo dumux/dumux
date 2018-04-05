@@ -44,6 +44,7 @@ dune_add_test(COMPILE_ONLY # since it currently fails miserably with very differ
 #install sources
 install(FILES
 combustionproblem1c.hh
+combustionfluidsystem.hh
 combustionspatialparams.hh
 evaporationatmosphereproblem.hh
 evaporationatmospherespatialparams.hh

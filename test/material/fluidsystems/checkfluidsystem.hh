@@ -43,7 +43,6 @@
 #include <dumux/material/fluidsystems/h2on2kinetic.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/fluidsystems/purewatersimple.hh>
 #include <dumux/material/fluidsystems/spe5.hh>
 
 // include all fluid states
