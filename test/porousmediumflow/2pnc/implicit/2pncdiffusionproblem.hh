@@ -66,8 +66,10 @@ SET_BOOL_PROP(TwoPNCDiffusionTypeTag, UseMoles, true);
 SET_TYPE_PROP(TwoPNCDiffusionTypeTag, MolecularDiffusionType, DIFFUSIONTYPE);
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
-SET_INT_PROP(TwoPNCDiffusionTypeTag, Formulation, TwoPNCFormulation::pwsn);
-}
+SET_PROP(TwoPNCDiffusionTypeTag, Formulation)
+{ static constexpr auto value = TwoPFormulation::pwsn; };
+
+} // end namespace Properties
 
 
 /*!
@@ -89,21 +91,21 @@ class TwoPNCDiffusionProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
 
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx,
 
         wCompIdx = FluidSystem::wCompIdx,
         nCompIdx = FluidSystem::nCompIdx,
 
         wPhaseOnly = Indices::wPhaseOnly,
 
-        contiH2OEqIdx = Indices::contiWEqIdx,
-        contiN2EqIdx = Indices::contiNEqIdx
+        contiH2OEqIdx = Indices::conti0EqIdx + wCompIdx,
+        contiN2EqIdx = Indices::conti0EqIdx + nCompIdx
     };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);

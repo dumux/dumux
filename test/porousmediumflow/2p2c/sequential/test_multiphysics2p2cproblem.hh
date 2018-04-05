@@ -98,7 +98,7 @@ using ParentType = IMPETProblem2P2C<TypeTag>;
 using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 using Grid = typename GridView::Grid;
 using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
-using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
 using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 

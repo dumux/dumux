@@ -119,7 +119,7 @@ class InfiltrationThreePProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum {
         pressureIdx = Indices::pressureIdx,
@@ -251,7 +251,7 @@ public:
                  && (globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_))
             {
                 // mol fluxes, convert with M(Mesit.)=0,120 kg/mol --> 1.2e-4  kg/(sm)
-                values[Indices::contiNEqIdx] = -0.001;
+                values[Indices::conti0EqIdx + FluidSystem::nCompIdx] = -0.001;
             }
         }
 

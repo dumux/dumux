@@ -42,7 +42,7 @@ class MineralizationLocalResidual: public CompositionalLocalResidual<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 

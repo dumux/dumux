@@ -81,18 +81,19 @@ class ObstacleSpatialParams : public FVSpatialParams<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
 
     enum {dimWorld=GridView::dimensionworld};
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-     using PermeabilityType = Scalar;
+    //! export the type used for the permeability
+    using PermeabilityType = Scalar;
+    //! export the material law type used
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
 
-
-    ObstacleSpatialParams(const Problem &problem)
-        : ParentType(problem)
+    //! the constructor
+    ObstacleSpatialParams(const Problem &problem) : ParentType(problem)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;
@@ -141,9 +142,7 @@ public:
     Scalar porosity(const Element &element,
                     const SubControlVolume &scv,
                     const ElementSolution &elemSol) const
-    {
-        return porosity_;
-    }
+    { return porosity_; }
 
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).

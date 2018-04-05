@@ -46,7 +46,7 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
      using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
 
-     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
      using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
      using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);

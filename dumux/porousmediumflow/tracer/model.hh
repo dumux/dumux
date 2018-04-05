@@ -61,17 +61,20 @@
 #include "vtkoutputfields.hh"
 #include "localresidual.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \ingroup RichardsNCModel
+ * \ingroup TracerModel
  * \brief Specifies a number properties of the Richards n-components model.
  *
  * \tparam nComp the number of components to be considered.
+ * \tparam useMol whether mole or mass balances are used
  */
-template<int nComp>
+template<int nComp, bool useMol>
 struct TracerModelTraits
 {
+    using Indices = TracerIndices;
+
     static constexpr int numEq() { return nComp; }
     static constexpr int numPhases() { return 1; }
     static constexpr int numComponents() { return nComp; }
@@ -79,11 +82,28 @@ struct TracerModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
     static constexpr bool enableEnergyBalance() { return false; }
+
+    static constexpr bool useMoles() { return useMol; }
+};
+
+/*!
+ * \ingroup TracerModel
+ * \brief Traits class for the volume variables of the single-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam MT The model traits
+ */
+template<class PV, class FSY, class MT>
+struct TracerVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using ModelTraits = MT;
 };
 
 // \{
-namespace Properties
-{
+namespace Properties {
 
 //////////////////////////////////////////////////////////////////
 // Type tags
@@ -105,29 +125,30 @@ SET_PROP(Tracer, ModelTraits)
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    using type = TracerModelTraits<FluidSystem::numComponents>;
+    using type = TracerModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles)>;
 };
 
 //! Use the tracer local residual function for the tracer model
 SET_TYPE_PROP(Tracer, LocalResidual, TracerLocalResidual<TypeTag>);
 
 //! Set the vtk output fields specific to this model
-SET_PROP(Tracer, VtkOutputFields)
+SET_TYPE_PROP(Tracer, VtkOutputFields, TracerVtkOutputFields);
+
+//! Set the volume variables property
+SET_PROP(Tracer, VolumeVariables)
 {
 private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-public:
-    using type = TracerVtkOutputFields<FluidSystem>;
-};
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
-//! define the VolumeVariables
-SET_TYPE_PROP(Tracer, VolumeVariables, TracerVolumeVariables<TypeTag>);
+    using Traits = TracerVolumeVariablesTraits<PV, FSY, MT>;
+public:
+    using type = TracerVolumeVariables<Traits>;
+};
 
 //! We use darcy's law as the default for the advective fluxes
 SET_TYPE_PROP(Tracer, AdvectionType, StationaryVelocityField<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-//! Set the indices used by the tracer model
-SET_TYPE_PROP(Tracer, Indices, TracerIndices<>);
 
 //! Use FVSpatialParamsOneP by default.
 SET_TYPE_PROP(Tracer, SpatialParams, FVSpatialParamsOneP<TypeTag>);

@@ -25,10 +25,6 @@
 #ifndef DUMUX_MINERALIZATION_VOLUME_VARIABLES_HH
 #define DUMUX_MINERALIZATION_VOLUME_VARIABLES_HH
 
-#include <dumux/common/math.hh>
-#include <dumux/common/properties.hh>
-#include <dumux/material/fluidstates/compositional.hh>
-
 namespace Dumux {
 
 /*!
@@ -36,18 +32,12 @@ namespace Dumux {
  * \brief Contains the quantities which are are constant within a sub-control volume
  *        of the finite volume grid in an m-phase, n-component, mineralization model.
  */
-template <class TypeTag, class NonMineralizationVolVars>
+template <class Traits, class NonMineralizationVolVars>
 class MineralizationVolumeVariables : public NonMineralizationVolVars
 {
     using ParentType = NonMineralizationVolVars;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using ModelTraits = typename Traits::ModelTraits;
     enum
     {
         numPhases = ModelTraits::numPhases(),
@@ -56,14 +46,17 @@ class MineralizationVolumeVariables : public NonMineralizationVolVars
     };
 
 public:
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    //! export the type of the fluid state
+    using FluidState = typename Traits::FluidState;
+    //! export the type of the fluid system
+    using FluidSystem = typename Traits::FluidSystem;
 
     //! updates all required quantities inside the given scv
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume& scv)
+                const Scv& scv)
     {
         // Update parent type (also completes the fluid state)
         ParentType::update(elemSol, problem, element, scv);

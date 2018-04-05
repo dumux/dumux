@@ -37,10 +37,9 @@ namespace Dumux
  * This class is used to fill the gaps in BoxLocalResidual for the 3P3C flow.
  */
 template<class TypeTag>
-class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
+class ThreePThreeCLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
@@ -49,28 +48,29 @@ class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {
         numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
         numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
 
-        conti0EqIdx = Indices::conti0EqIdx,//!< index of the mass conservation equation for the water component
-        conti1EqIdx = Indices::conti1EqIdx,//!< index of the mass conservation equation for the contaminant component
-        conti2EqIdx = Indices::conti2EqIdx,//!< index of the mass conservation equation for the gas component
+        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::wPhaseIdx,//!< index of the mass conservation equation for the water component
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::nPhaseIdx,//!< index of the mass conservation equation for the contaminant component
+        contiGEqIdx = Indices::conti0EqIdx + FluidSystem::gPhaseIdx,//!< index of the mass conservation equation for the gas component
 
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx,
+        gPhaseIdx = FluidSystem::gPhaseIdx,
 
-        wCompIdx = Indices::wCompIdx,
-        nCompIdx = Indices::nCompIdx,
-        gCompIdx = Indices::gCompIdx
+        wCompIdx = FluidSystem::wCompIdx,
+        nCompIdx = FluidSystem::nCompIdx,
+        gCompIdx = FluidSystem::gCompIdx
     };
 
 public:
@@ -99,7 +99,7 @@ public:
         {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                auto eqIdx = conti0EqIdx + compIdx;
+                auto eqIdx = Indices::conti0EqIdx + compIdx;
                 storage[eqIdx] += volVars.porosity()
                                   * volVars.saturation(phaseIdx)
                                   * volVars.molarDensity(phaseIdx)
@@ -149,7 +149,7 @@ public:
                 { return volVars.molarDensity(phaseIdx)*volVars.moleFraction(phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
 
                 // get equation index
-                auto eqIdx = conti0EqIdx + compIdx;
+                auto eqIdx = Indices::conti0EqIdx + compIdx;
                 flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
             }
 
@@ -178,21 +178,14 @@ public:
         Scalar jGN = 0.0;
         Scalar jNN = 0.0;
 
-        flux[conti0EqIdx] += jWW+jWG+jWN;
-        flux[conti1EqIdx] += jNW+jNG+jNN;
-        flux[conti2EqIdx] += jGW+jGG+jGN;
+        flux[contiWEqIdx] += jWW+jWG+jWN;
+        flux[contiNEqIdx] += jNW+jNG+jNN;
+        flux[contiGEqIdx] += jGW+jGG+jGN;
 
         return flux;
     }
-
-protected:
-    Implementation *asImp_()
-    { return static_cast<Implementation *> (this); }
-
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *> (this); }
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

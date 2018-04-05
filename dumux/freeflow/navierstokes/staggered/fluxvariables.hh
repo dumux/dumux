@@ -67,7 +67,8 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
@@ -142,14 +143,14 @@ public:
 
         // Check if we are on an outflow boundary.
         const bool isOutflow = scvf.boundary()
-                               ? problem.boundaryTypesAtPos(scvf.center()).isOutflow(Indices::totalMassBalanceIdx)
+                               ? problem.boundaryTypesAtPos(scvf.center()).isOutflow(Indices::conti0EqIdx)
                                : false;
 
         // Call the generic flux function.
         const Scalar flux = advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
 
         CellCenterPrimaryVariables result(0.0);
-        result[Indices::totalMassBalanceIdx] = flux;
+        result[Indices::conti0EqIdx - ModelTraits::dim()] = flux;
 
         return result;
     }
@@ -249,7 +250,7 @@ public:
         // Treat outflow conditions.
         if(scvf.boundary())
         {
-            if(problem.boundaryTypesAtPos(scvf.center()).isOutflow(Indices::momentumBalanceIdx))
+            if(problem.boundaryTypesAtPos(scvf.center()).isOutflow(Indices::velocity(scvf.directionIndex())))
             {
                 // Treat the staggered half-volume adjacent to the boundary as if it was on the opposite side of the boundary.
                 // The respective face's outer normal vector will point in the same direction as the scvf's one.

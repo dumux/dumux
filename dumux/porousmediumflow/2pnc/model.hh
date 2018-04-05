@@ -99,24 +99,28 @@
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/2p/formulation.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "primaryvariableswitch.hh"
 #include "vtkoutputfields.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup TwoPNCModel
  * \brief Specifies a number properties of two-phase n-component models.
  *
- * \ţparam nComp the number of components to be considered.
+ * \tparam nComp the number of components to be considered.
+ * \tparam useMol whether to use molar or mass balances
+ * \tparam setMoleFractionForWP whether to set mole fractions for wetting or non-wetting phase
  */
-template<int nComp>
+template<int nComp, bool useMol, bool setMoleFractionForWP, TwoPFormulation formulation>
 struct TwoPNCModelTraits
 {
+    using Indices = TwoPNCIndices;
+
     static constexpr int numEq() { return nComp; }
     static constexpr int numPhases() { return 2; }
     static constexpr int numComponents() { return nComp; }
@@ -125,10 +129,35 @@ struct TwoPNCModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
     static constexpr bool enableEnergyBalance() { return false; }
+
+    static constexpr bool useMoles() { return useMol; }
+    static constexpr bool setMoleFractionsForWettingPhase() { return setMoleFractionForWP; }
+
+    static constexpr TwoPFormulation priVarFormulation() { return formulation; }
 };
 
-namespace Properties
+/*!
+ * \ingroup TwoPNCModel
+ * \brief Traits class for the volume variables of the single-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ */
+template<class PV, class FSY, class FST, class PT, class MT>
+struct TwoPNCVolumeVariablesTraits
 {
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+};
+
+
+namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
@@ -149,8 +178,22 @@ public:
 };
 
 SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);         //!< The primary variable switch for the 2pnc model
-SET_TYPE_PROP(TwoPNC, VolumeVariables, TwoPNCVolumeVariables<TypeTag>);                     //!< the VolumeVariables property
 SET_TYPE_PROP(TwoPNC, SpatialParams, FVSpatialParams<TypeTag>);                             //!< Use the FVSpatialParams by default
+
+//! Set the volume variables property
+SET_PROP(TwoPNC, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+public:
+    using type = TwoPNCVolumeVariables<Traits>;
+};
 
 //! Set the model traits
 SET_PROP(TwoPNC, ModelTraits)
@@ -160,36 +203,25 @@ private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
 public:
-    using type = TwoPNCModelTraits<FluidSystem::numComponents>;
+    using type = TwoPNCModelTraits<FluidSystem::numComponents,
+                                   GET_PROP_VALUE(TypeTag, UseMoles),
+                                   GET_PROP_VALUE(TypeTag, SetMoleFractionsForWettingPhase),
+                                   GET_PROP_VALUE(TypeTag, Formulation)>;
 };
 
 //! Set the vtk output fields specific to this model
-SET_PROP(TwoPNC, VtkOutputFields)
-{
-private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-public:
-    using type = TwoPNCVtkOutputFields<FluidSystem, Indices>;
-};
+SET_TYPE_PROP(TwoPNC, VtkOutputFields, TwoPNCVtkOutputFields);
 
 SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //!< Use the compositional local residual
 
 SET_INT_PROP(TwoPNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents); //!< Per default, no component mass balance is replaced
-SET_INT_PROP(TwoPNC, Formulation, TwoPNCFormulation::pwsn);                                 //!< Default formulation is pw-Sn, overwrite if necessary
+
+//! Default formulation is pw-Sn, overwrite if necessary
+SET_PROP(TwoPNC, Formulation)
+{ static constexpr auto value = TwoPFormulation::pwsn; };
 
 SET_BOOL_PROP(TwoPNC, SetMoleFractionsForWettingPhase, true);  //!< Set the primary variables mole fractions for the wetting or non-wetting phase
 SET_BOOL_PROP(TwoPNC, UseMoles, true);                         //!< Use mole fractions in the balance equations by default
-
-//! The indices required by the isothermal 2pnc model
-SET_PROP(TwoPNC, Indices)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-public:
-    using type = TwoPNCIndices<FluidSystem, /*PVOffset=*/0>;
-};
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(TwoPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
@@ -215,42 +247,24 @@ private:
     //! we use the number of components specified by the fluid system here
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
-    using IsothermalTraits = TwoPNCModelTraits<FluidSystem::numComponents>;
+    using IsothermalTraits = TwoPNCModelTraits<FluidSystem::numComponents,
+                                               GET_PROP_VALUE(TypeTag, UseMoles),
+                                               GET_PROP_VALUE(TypeTag, SetMoleFractionsForWettingPhase),
+                                               GET_PROP_VALUE(TypeTag, Formulation)>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
 //! Set non-isothermal output fields
-SET_PROP(TwoPNCNI, VtkOutputFields)
-{
-private:
-    using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using IsothermalFields = TwoPNCVtkOutputFields<FluidSystem, Indices>;
-public:
-    using type = EnergyVtkOutputFields<IsothermalFields>;
-};
-
-//! set non-isothermal Indices
-SET_PROP(TwoPNCNI, Indices)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using IsothermalIndices = TwoPNCIndices<FluidSystem, /*PVOffset=*/0>;
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-public:
-    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
-};
-
+SET_TYPE_PROP(TwoPNCNI, VtkOutputFields, EnergyVtkOutputFields<TwoPNCVtkOutputFields>);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNCNI, ThermalConductivityModel)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    using type = ThermalConductivitySomerton<Scalar, Indices>;
+    using type = ThermalConductivitySomerton<Scalar>;
 };
 
 } // end namespace Properties

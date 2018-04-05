@@ -38,7 +38,6 @@ class PorousMediumFlowProblem : public FVProblem<TypeTag>
 {
     using ParentType = FVProblem<TypeTag>;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum {
@@ -50,6 +49,9 @@ class PorousMediumFlowProblem : public FVProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
+    //! export spatial parameter type
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+
     /*!
      * \brief The constructor
      *

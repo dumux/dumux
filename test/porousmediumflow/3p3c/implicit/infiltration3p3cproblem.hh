@@ -100,7 +100,8 @@ class InfiltrationThreePThreeCProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     // copy some indices for convenience
     enum {
@@ -111,9 +112,9 @@ class InfiltrationThreePThreeCProblem : public PorousMediumFlowProblem<TypeTag>
         // phase state
         wgPhaseOnly = Indices::wgPhaseOnly,
 
-        contiWEqIdx = Indices::conti0EqIdx, //!< Index of the mass conservation equation for the water component
-        contiNEqIdx = Indices::conti1EqIdx,//!< Index of the mass conservation equation for the contaminant component
-        contiAEqIdx = Indices::conti2EqIdx,//!< Index of the mass conservation equation for the gas component
+        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::wCompIdx, //!< Index of the mass conservation equation for the water component
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::nCompIdx,//!< Index of the mass conservation equation for the contaminant component
+        contiAEqIdx = Indices::conti0EqIdx + FluidSystem::gCompIdx,//!< Index of the mass conservation equation for the gas component
 
         // world dimension
         dimWorld = GridView::dimensionworld
@@ -122,7 +123,6 @@ class InfiltrationThreePThreeCProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);

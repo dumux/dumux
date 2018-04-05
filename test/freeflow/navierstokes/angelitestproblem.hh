@@ -30,6 +30,7 @@
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
+#include "l2error.hh"
 
 namespace Dumux
 {
@@ -73,34 +74,18 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-
-    // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
-    enum {
-        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        pressureIdx = Indices::pressureIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx
-    };
-
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using TimeLoopPtr = std::shared_ptr<TimeLoop<Scalar>>;
+
+    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     AngeliTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -130,15 +115,16 @@ public:
     {
         if(printL2Error_)
         {
-            const auto l2error = calculateL2Error(curSol);
-            const int numCellCenterDofs = this->fvGridGeometry().gridView().size(0);
-            const int numFaceDofs = this->fvGridGeometry().gridView().size(1);
+            using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
+            const auto l2error = L2Error::calculateL2Error(*this, curSol);
+            const int numCellCenterDofs = this->fvGridGeometry().numCellCenterDofs();
+            const int numFaceDofs = this->fvGridGeometry().numFaceDofs();
             std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
                     << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
                     << std::scientific
-                    << "L2(p) = " << l2error.first[pressureIdx] << " / " << l2error.second[pressureIdx]
-                    << ", L2(vx) = " << l2error.first[velocityXIdx] << " / " << l2error.second[velocityXIdx]
-                    << ", L2(vy) = " << l2error.first[velocityYIdx] << " / " << l2error.second[velocityYIdx]
+                    << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
+                    << ", L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
+                    << ", L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
                     << std::endl;
         }
     }
@@ -179,10 +165,11 @@ public:
         BoundaryTypes values;
 
         // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(momentumBalanceIdx);
+        values.setDirichlet(Indices::momentumXBalanceIdx);
+        values.setDirichlet(Indices::momentumYBalanceIdx);
 
-        // set a fixed pressure in one cell
-        values.setDirichletCell(totalMassBalanceIdx);
+        // set a fixed pressure in all cells at the boundary
+        values.setDirichletCell(Indices::conti0EqIdx);
 
         return values;
     }
@@ -212,9 +199,9 @@ public:
 
         PrimaryVariables values;
 
-        values[pressureIdx] = - 0.25 * std::exp(-10.0 * kinematicViscosity_ * M_PI * M_PI * t) * M_PI * M_PI * (4.0 * std::cos(2.0 * M_PI * x) + std::cos(4.0 * M_PI * y));
-        values[velocityXIdx] = - 2.0 * M_PI * std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * std::cos(M_PI * x) * std::sin(2.0 * M_PI * y);
-        values[velocityYIdx] = M_PI * std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * std::sin(M_PI * x) * std::cos(2.0 * M_PI * y);
+        values[Indices::pressureIdx] = - 0.25 * std::exp(-10.0 * kinematicViscosity_ * M_PI * M_PI * t) * M_PI * M_PI * (4.0 * std::cos(2.0 * M_PI * x) + std::cos(4.0 * M_PI * y));
+        values[Indices::velocityXIdx] = - 2.0 * M_PI * std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * std::cos(M_PI * x) * std::sin(2.0 * M_PI * y);
+        values[Indices::velocityYIdx] = M_PI * std::exp(- 5.0 * kinematicViscosity_ * M_PI * M_PI * t) * std::sin(M_PI * x) * std::cos(2.0 * M_PI * y);
 
         return values;
     }
@@ -234,79 +221,6 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         return analyticalSolution(globalPos, -timeLoop_->timeStepSize());
-    }
-
-
-   /*!
-     * \brief Calculate the L2 error between the analytical solution and the numerical approximation.
-     *
-     */
-    auto calculateL2Error(const SolutionVector& curSol) const
-    {
-        PrimaryVariables sumError(0.0), sumReference(0.0), l2NormAbs(0.0), l2NormRel(0.0);
-
-        const int numFaceDofs = this->fvGridGeometry().gridView().size(1);
-
-        std::vector<Scalar> staggeredVolume(numFaceDofs);
-        std::vector<Scalar> errorVelocity(numFaceDofs);
-        std::vector<Scalar> velocityReference(numFaceDofs);
-        std::vector<int> directionIndex(numFaceDofs);
-
-        Scalar totalVolume = 0.0;
-
-        for (const auto& element : elements(this->fvGridGeometry().gridView()))
-        {
-            auto fvGeometry = localView(this->fvGridGeometry());
-            fvGeometry.bindElement(element);
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                // treat cell-center dofs
-                const auto dofIdxCellCenter = scv.dofIndex();
-                const auto& posCellCenter = scv.dofPosition();
-                const auto analyticalSolutionCellCenter = dirichletAtPos(posCellCenter)[pressureIdx];
-                const auto numericalSolutionCellCenter = curSol[FVGridGeometry::cellCenterIdx()][dofIdxCellCenter][pressureIdx];
-                sumError[pressureIdx] += squaredDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter) * scv.volume();
-                sumReference[pressureIdx] += analyticalSolutionCellCenter * analyticalSolutionCellCenter * scv.volume();
-                totalVolume += scv.volume();
-
-                // treat face dofs
-                for (auto&& scvf : scvfs(fvGeometry))
-                {
-                    const int dofIdxFace = scvf.dofIndex();
-                    const int dirIdx = scvf.directionIndex();
-                    const auto analyticalSolutionFace = dirichletAtPos(scvf.center())[Indices::velocity(dirIdx)];
-                    const auto numericalSolutionFace = curSol[FVGridGeometry::faceIdx()][dofIdxFace][momentumBalanceIdx];
-                    directionIndex[dofIdxFace] = dirIdx;
-                    errorVelocity[dofIdxFace] = squaredDiff_(analyticalSolutionFace, numericalSolutionFace);
-                    velocityReference[dofIdxFace] = squaredDiff_(analyticalSolutionFace, 0.0);
-                    const Scalar staggeredHalfVolume = 0.5 * scv.volume();
-                    staggeredVolume[dofIdxFace] = staggeredVolume[dofIdxFace] + staggeredHalfVolume;
-                }
-            }
-        }
-
-        // get the absolute and relative discrete L2-error for cell-center dofs
-        l2NormAbs[pressureIdx] = std::sqrt(sumError[pressureIdx] / totalVolume);
-        l2NormRel[pressureIdx] = std::sqrt(sumError[pressureIdx] / sumReference[pressureIdx]);
-
-        // get the absolute and relative discrete L2-error for face dofs
-        for(int i = 0; i < numFaceDofs; ++i)
-        {
-            const int dirIdx = directionIndex[i];
-            const auto error = errorVelocity[i];
-            const auto ref = velocityReference[i];
-            const auto volume = staggeredVolume[i];
-            sumError[Indices::velocity(dirIdx)] += error * volume;
-            sumReference[Indices::velocity(dirIdx)] += ref * volume;
-        }
-
-        for(int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
-        {
-            l2NormAbs[Indices::velocity(dirIdx)] = std::sqrt(sumError[Indices::velocity(dirIdx)] / totalVolume);
-            l2NormRel[Indices::velocity(dirIdx)] = std::sqrt(sumError[Indices::velocity(dirIdx)] / sumReference[Indices::velocity(dirIdx)]);
-        }
-        return std::make_pair(l2NormAbs, l2NormRel);
     }
 
    /*!
@@ -373,21 +287,15 @@ public:
                     analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
                 }
 
-                analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[pressureIdx];
+                analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[Indices::pressureIdx];
 
-                for(int dirIdx = 0; dirIdx < dim; ++dirIdx)
+                for(int dirIdx = 0; dirIdx < ModelTraits::dim(); ++dirIdx)
                     analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
             }
         }
     }
 
-    private:
-
-    template<class T>
-    T squaredDiff_(const T& a, const T& b) const
-    {
-        return (a-b)*(a-b);
-    }
+private:
 
     bool isLowerLeftCell_(const GlobalPosition& globalPos) const
     {

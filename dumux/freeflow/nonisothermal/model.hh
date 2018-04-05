@@ -43,6 +43,8 @@
 #ifndef DUMUX_STAGGERED_NI_MODEL_HH
 #define DUMUX_STAGGERED_NI_MODEL_HH
 
+#include "indices.hh"
+
 namespace Dumux {
 
 /*!
@@ -58,6 +60,8 @@ struct NavierStokesNIModelTraits : public IsothermalTraits
     static constexpr int numEq() { return IsothermalTraits::numEq()+1; }
     //! We additionally solve for the equation balance
     static constexpr bool enableEnergyBalance() { return true; }
+    //! the indices
+    using Indices = NavierStokesNonIsothermalIndices<typename IsothermalTraits::Indices, numEq()>;
 };
 
 } // end  namespace Dumux

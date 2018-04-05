@@ -67,8 +67,10 @@ SET_TYPE_PROP(DissolutionTypeTag, SpatialParams, DissolutionSpatialparams<TypeTa
 
 //Set properties here to override the default property settings
 SET_INT_PROP(DissolutionTypeTag, ReplaceCompEqIdx, 1); //!< Replace gas balance by total mass balance
-SET_INT_PROP(DissolutionTypeTag, Formulation, TwoPNCFormulation::pnsw);
-}
+SET_PROP(DissolutionTypeTag, Formulation)
+{ static constexpr auto value = TwoPFormulation::pnsw; };
+
+} // end namespace Properties
 
 /*!
  * \ingroup TwoPNCMinModel
@@ -96,7 +98,7 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum {
         pressureIdx = Indices::pressureIdx,

@@ -109,7 +109,6 @@ class ObstacleProblem
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
@@ -125,9 +124,12 @@ class ObstacleProblem
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using ParameterCache = typename FluidSystem::ParameterCache;
 
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
     enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
-    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
+    enum {numPhases = ModelTraits::numPhases()};
+    enum {numComponents = ModelTraits::numComponents()};
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     enum {wCompIdx = FluidSystem::wCompIdx};

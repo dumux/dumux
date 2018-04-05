@@ -27,7 +27,7 @@
 #include <cassert>
 
 #include <dune/common/exceptions.hh>
-#include <dumux/common/properties.hh>
+
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/constants.hh>
@@ -41,29 +41,24 @@ namespace Dumux {
  * This contains the quantities which are are constant within a finite
  * volume in the Richards model.
  */
-template <class TypeTag>
-class RichardsVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
+template <class Traits>
+class RichardsVolumeVariables
+: public PorousMediumFlowVolumeVariables<Traits, RichardsVolumeVariables<Traits>>
 {
-    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ParentType = PorousMediumFlowVolumeVariables<Traits, RichardsVolumeVariables<Traits>>;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using PermeabilityType = typename Traits::PermeabilityType;
+    using ModelTraits = typename Traits::ModelTraits;
+    using Indices = typename ModelTraits::Indices;
+    using FS = typename Traits::FluidSystem;
 
     enum{
          pressureIdx = Indices::pressureIdx,
          switchIdx = Indices::switchIdx,
-         wPhaseIdx = Indices::wPhaseIdx,
-         nPhaseIdx = Indices::nPhaseIdx,
-         wCompIdx = FluidSystem::wCompIdx,
-         nCompIdx = FluidSystem::nCompIdx
+         wPhaseIdx = FS::wPhaseIdx,
+         nPhaseIdx = FS::nPhaseIdx,
+         wCompIdx = FS::wCompIdx,
+         nCompIdx = FS::nCompIdx
     };
 
     // present phases
@@ -74,19 +69,15 @@ class RichardsVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
         bothPhases = Indices::bothPhases
     };
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    static constexpr bool enableWaterDiffusionInAir
-        = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
-    static constexpr bool useKelvinVaporPressure
-        = GET_PROP_VALUE(TypeTag, UseKelvinEquation);
-
-    static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
+    static constexpr bool enableWaterDiffusionInAir = ModelTraits::enableMolecularDiffusion();
+    static constexpr bool useKelvinVaporPressure = ModelTraits::useKelvinVaporPressure();
+    static constexpr int numPhases = ModelTraits::numPhases();
 
 public:
-
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    //! export type of the fluid system
+    using FluidSystem = typename Traits::FluidSystem;
+    //! export type of the fluid state
+    using FluidState = typename Traits::FluidState;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -97,11 +88,11 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume& scv)
+                const Scv& scv)
     {
         static_assert(!(!enableWaterDiffusionInAir && useKelvinVaporPressure),
           "Kevin vapor presssure only makes sense if water in air is considered!");
@@ -113,6 +104,7 @@ public:
 
         // precompute the minimum capillary pressure (entry pressure)
         // needed to make sure we don't compute unphysical capillary pressures and thus saturations
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         minPc_ = MaterialLaw::endPointPc(materialParams);
 
         if (phasePresence == nPhaseOnly)
@@ -145,12 +137,12 @@ public:
             fluidState_.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState_, paramCache, wPhaseIdx));
 
             // compute and set the enthalpy
-            fluidState_.setEnthalpy(wPhaseIdx, Implementation::enthalpy(fluidState_, paramCache, wPhaseIdx));
-            fluidState_.setEnthalpy(nPhaseIdx, Implementation::enthalpy(fluidState_, paramCache, nPhaseIdx));
+            fluidState_.setEnthalpy(wPhaseIdx, ParentType::enthalpy(fluidState_, paramCache, wPhaseIdx));
+            fluidState_.setEnthalpy(nPhaseIdx, ParentType::enthalpy(fluidState_, paramCache, nPhaseIdx));
         }
         else if (phasePresence == bothPhases)
         {
-            Implementation::completeFluidState(elemSol, problem, element, scv, fluidState_);
+            completeFluidState(elemSol, problem, element, scv, fluidState_);
 
             // if we want to account for diffusion in the air phase
             // use Raoult to compute the water mole fraction in air
@@ -176,7 +168,7 @@ public:
         }
         else if (phasePresence == wPhaseOnly)
         {
-            Implementation::completeFluidState(elemSol, problem, element, scv, fluidState_);
+            completeFluidState(elemSol, problem, element, scv, fluidState_);
         }
 
         //////////
@@ -200,11 +192,11 @@ public:
      * \param scv The subcontrol volume.
      * \param fluidState The fluid state to fill.
      */
-    template<class ElementSolution>
-    static void completeFluidState(const ElementSolution& elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    static void completeFluidState(const ElemSol& elemSol,
                                    const Problem& problem,
                                    const Element& element,
-                                   const SubControlVolume& scv,
+                                   const Scv& scv,
                                    FluidState& fluidState)
     {
         Scalar t = ParentType::temperature(elemSol, problem, element, scv);
@@ -215,6 +207,7 @@ public:
 
         // set the wetting pressure
         using std::max;
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         Scalar minPc = MaterialLaw::pc(materialParams, 1.0);
         fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
         fluidState.setPressure(nPhaseIdx, max(problem.nonWettingReferencePressure(), fluidState.pressure(wPhaseIdx) + minPc));
@@ -237,8 +230,8 @@ public:
         fluidState.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, paramCache, wPhaseIdx));
 
         // compute and set the enthalpy
-        fluidState.setEnthalpy(wPhaseIdx, Implementation::enthalpy(fluidState, paramCache, wPhaseIdx));
-        fluidState.setEnthalpy(nPhaseIdx, Implementation::enthalpy(fluidState, paramCache, nPhaseIdx));
+        fluidState.setEnthalpy(wPhaseIdx, ParentType::enthalpy(fluidState, paramCache, wPhaseIdx));
+        fluidState.setEnthalpy(nPhaseIdx, ParentType::enthalpy(fluidState, paramCache, nPhaseIdx));
     }
 
     /*!

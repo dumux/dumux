@@ -45,226 +45,184 @@ namespace Dumux {
  *        modules which require the specific interfacial area between
  *        fluid phases.
  */
-// forward declaration
-template <class TypeTag, bool enableChemicalNonEquilibrium ,bool enableThermalNonEquilibrium>
+template<class Traits, bool enableChemicalNonEquilibrium ,bool enableThermalNonEquilibrium>
 class NonEquilibriumVolumeVariablesImplementation;
 
-template <class TypeTag>
+template<class Traits>
 using NonEquilibriumVolumeVariables =
-NonEquilibriumVolumeVariablesImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableChemicalNonEquilibrium(), GET_PROP_TYPE(TypeTag, ModelTraits)::enableThermalNonEquilibrium()>;
+      NonEquilibriumVolumeVariablesImplementation< Traits,
+                                                   Traits::ModelTraits::enableChemicalNonEquilibrium(),
+                                                   Traits::ModelTraits::enableThermalNonEquilibrium() >;
 
-template <class TypeTag>
-class NonEquilibriumVolumeVariablesImplementation<TypeTag, false/*enableChemicalNonEquilibrium*/, false/*enableThermalNonEquilibrium*/>
+//! Specialization for both chemical and thermal non-equilibrium disabled
+template<class Traits>
+class NonEquilibriumVolumeVariablesImplementation< Traits,
+                                                   false/*chemicalNonEquilibrium?*/,
+                                                   false/*thermalNonEquilibrium?*/ >
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using ParameterCache = typename FluidSystem::ParameterCache;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidState = typename Traits::FluidState;
+    using ParameterCache = typename Traits::FluidSystem::ParameterCache;
+
 public:
-    template<class ElementSolution>
-    void updateInterfacialArea(const ElementSolution& elemSol,
-                               const FluidState & fluidState,
-                               const ParameterCache &paramCache,
-                               const Problem &problem,
-                               const Element & element,
-                               const SubControlVolume& scv)
-    {}
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateInterfacialArea(const ElemSol& elemSol,
+                               const FluidState& fluidState,
+                               const ParameterCache& paramCache,
+                               const Problem& problem,
+                               const Element& element,
+                               const Scv& scv) {}
 
-    template<class ElementSolution>
-    void updateTemperatures(const ElementSolution& elemSol,
-                             const Problem &problem,
-                             const Element& element,
-                             const SubControlVolume& scv,
-                             FluidState& fluidState)
-    {}
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateTemperatures(const ElemSol& elemSol,
+                            const Problem &problem,
+                            const Element& element,
+                            const Scv& scv,
+                            FluidState& fluidState) {}
 
-
-    void updateMoleFraction(FluidState & actualFluidState,
-                            ParameterCache & paramCache,
-                            const PrimaryVariables & priVars)
-    {}
-
+    void updateMoleFraction(FluidState& actualFluidState,
+                            ParameterCache& paramCache,
+                            const typename Traits::PrimaryVariables& priVars) {}
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// // specialization for the case of NO kinetic mass but kinetic energy transfer of a fluid mixture and solid
-// /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template <class TypeTag>
-class NonEquilibriumVolumeVariablesImplementation<TypeTag, /*enableChemicalNonEquilibrium*/false, /*enableThermalNonEquilibrium*/true>
+// specialization for the case of NO kinetic mass but kinetic energy transfer of a fluid mixture and solid
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+template<class Traits>
+class NonEquilibriumVolumeVariablesImplementation< Traits,
+                                                   false/*chemicalNonEquilibrium?*/,
+                                                   true/*thermalNonEquilibrium?*/ >
 {
-    using BaseType = PorousMediumFlowVolumeVariables<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using ParameterCache = typename FluidSystem::ParameterCache;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidState = typename Traits::FluidState;
+    using ParameterCache = typename Traits::FluidSystem::ParameterCache;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
 
-    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
-    enum { nusseltFormulation = GET_PROP_VALUE(TypeTag, NusseltFormulation)} ;
-    enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
-    enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
-    enum { temperature0Idx = Indices::temperature0Idx };
+    using ModelTraits = typename Traits::ModelTraits;
+    using Indices = typename ModelTraits::Indices;
+    static constexpr auto numPhases = ModelTraits::numPhases();
+    static constexpr auto numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
+    static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
 
-    static_assert((numEnergyEqFluid < 2),
-                   "This model is a specialization for a energy transfer of a fluid  mixture and a solid");
+    static_assert((numEnergyEqFluid < 2), "This model is a specialization for a energy transfer of a fluid mixture and a solid");
 
     using DimLessNum = DimensionlessNumbers<Scalar>;
+
 public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
-     */
-    template<class ElementSolution>
-    void updateInterfacialArea(const ElementSolution& elemSol,
-                               const FluidState & fluidState,
-                               const ParameterCache &paramCache,
-                               const Problem &problem,
-                               const Element & element,
-                               const SubControlVolume& scv)
-    {
-        factorMassTransfer_   = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
-        factorEnergyTransfer_   = problem.spatialParams().factorEnergyTransfer(element, scv, elemSol);
-        characteristicLength_   = problem.spatialParams().characteristicLength(element, scv, elemSol);
-
-        // setting the dimensionless numbers.
-        // obtaining the respective quantities.
-         const unsigned int vIdxGlobal = scv.dofIndex();
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {
-            const Scalar darcyMagVelocity     = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, vIdxGlobal);
-            const Scalar dynamicViscosity     = fluidState.viscosity(phaseIdx);
-            const Scalar density              = fluidState.density(phaseIdx);
-            const Scalar kinematicViscosity   = dynamicViscosity / density;
-            const Scalar heatCapacity         = FluidSystem::heatCapacity(fluidState,
-                                                                          paramCache,
-                                                                          phaseIdx);
-            const Scalar thermalConductivity  = FluidSystem::thermalConductivity(fluidState,
-                                                                           paramCache,
-                                                                           phaseIdx);
-            const Scalar porosity = problem.spatialParams().porosity(element,
-                                                                   scv,
-                                                                   elemSol);
-
-            reynoldsNumber_[phaseIdx]   = DimLessNum::reynoldsNumber(darcyMagVelocity,
-                                                                     characteristicLength_,
-                                                                     kinematicViscosity);
-
-            prandtlNumber_[phaseIdx]    = DimLessNum::prandtlNumber(dynamicViscosity,
-                                                                    heatCapacity,
-                                                                    thermalConductivity);
-
-
-            nusseltNumber_[phaseIdx]    = DimLessNum::nusseltNumberForced(reynoldsNumber_[phaseIdx],
-                                                                          prandtlNumber_[phaseIdx],
-                                                                          porosity,
-                                                                          nusseltFormulation);
-        }
-    }
-
-    /*!
-     * \brief Update all quantities for a given control volume
      *
      * \param elemSol A vector containing all primary variables connected to the element
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache The parameter cache corresponding to the fluid state
+     * \param problem The problem to be solved
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution>
-    void updateTemperatures(const ElementSolution& elemSol,
-                            const Problem &problem,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateInterfacialArea(const ElemSol& elemSol,
+                               const FluidState& fluidState,
+                               const ParameterCache& paramCache,
+                               const Problem& problem,
+                               const Element& element,
+                               const Scv& scv)
+    {
+        factorMassTransfer_  = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
+        factorEnergyTransfer_ = problem.spatialParams().factorEnergyTransfer(element, scv, elemSol);
+        characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
+
+        // set the dimensionless numbers and obtain respective quantities
+        const unsigned int vIdxGlobal = scv.dofIndex();
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            const auto darcyMagVelocity     = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, vIdxGlobal);
+            const auto dynamicViscosity     = fluidState.viscosity(phaseIdx);
+            const auto density              = fluidState.density(phaseIdx);
+            const auto kinematicViscosity   = dynamicViscosity/density;
+
+            using FluidSystem = typename Traits::FluidSystem;
+            const auto heatCapacity        = FluidSystem::heatCapacity(fluidState, paramCache, phaseIdx);
+            const auto thermalConductivity = FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
+            const auto porosity            = problem.spatialParams().porosity(element, scv, elemSol);
+
+            reynoldsNumber_[phaseIdx] = DimLessNum::reynoldsNumber(darcyMagVelocity, characteristicLength_, kinematicViscosity);
+            prandtlNumber_[phaseIdx]  = DimLessNum::prandtlNumber(dynamicViscosity, heatCapacity, thermalConductivity);
+            nusseltNumber_[phaseIdx]  = DimLessNum::nusseltNumberForced(reynoldsNumber_[phaseIdx],
+                                                                        prandtlNumber_[phaseIdx],
+                                                                        porosity,
+                                                                        ModelTraits::nusseltFormulation());
+        }
+    }
+
+    /*!
+     * \brief Update the temperatures for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The problem to be solved
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateTemperatures(const ElemSol& elemSol,
+                            const Problem& problem,
                             const Element& element,
-                            const SubControlVolume& scv,
+                            const Scv& scv,
                             FluidState& fluidState)
     {
-        if (numEnergyEqFluid >1)
-        for(int phaseIdx=0; phaseIdx < numEnergyEqFluid; ++phaseIdx)
+        // set fluid temperature(s)
+        if (numEnergyEqFluid > 1)
         {
             // retrieve temperature from solution vector
-            const Scalar T = BaseType::extractDofPriVars(elemSol, scv)[temperature0Idx + phaseIdx];
-            fluidState.setTemperature(phaseIdx, T);
+            for(int phaseIdx=0; phaseIdx < numEnergyEqFluid; ++phaseIdx)
+            {
+                const auto T = elemSol[scv.indexInElement()][Indices::temperature0Idx + phaseIdx];
+                fluidState.setTemperature(phaseIdx, T);
+            }
         }
         else
         {
-            const Scalar T = BaseType::extractDofPriVars(elemSol, scv)[temperature0Idx];
+            const auto T = elemSol[scv.indexInElement()][Indices::temperature0Idx];
             fluidState.setTemperature(T);
         }
-        for(int solidPhaseIdx = numEnergyEqFluid; solidPhaseIdx < numEnergyEqFluid+numEnergyEqSolid; ++solidPhaseIdx)
-        {
-            temperatureSolid_ = BaseType::extractDofPriVars(elemSol, scv)[temperature0Idx + solidPhaseIdx];
 
-        }
+        // set solid temperatures
+        static_assert(numEnergyEqSolid == 1, "Solid system not yet implemented");
+        for (int solidPhaseIdx = numEnergyEqFluid; solidPhaseIdx < numEnergyEqFluid+numEnergyEqSolid; ++solidPhaseIdx)
+            temperatureSolid_ = elemSol[scv.indexInElement()][Indices::temperature0Idx + solidPhaseIdx];
     }
 
-    void updateMoleFraction(FluidState & actualFluidState,
-                            ParameterCache & paramCache,
-                            const PrimaryVariables & priVars)
-    { }
-
-
     /*!
-     * \brief Returns the temperature in fluid / solid phase(s)
-     *        the sub-control volume.
-     * \param phaseIdx The local index of the phases
+     * \brief Update composition of all phases in the mutable parameters from the primary variables.
+     *
+     *  \param actualFluidState Container for all the secondary variables concerning the fluids
+     *  \param paramCache Container for cache parameters
+     *  \param priVars The primary Variables
      */
-    Scalar temperatureSolid() const
-    { return temperatureSolid_; }
+    void updateMoleFraction(FluidState& actualFluidState,
+                            ParameterCache& paramCache,
+                            const typename Traits::PrimaryVariables& priVars) {}
 
+
+    //! Returns the temperature of the solid phase(s)
+    Scalar temperatureSolid() const { return temperatureSolid_; }
     //! access function Reynolds Number
-    const Scalar reynoldsNumber(const unsigned int phaseIdx) const
-    { return reynoldsNumber_[phaseIdx]; }
-
+    const Scalar reynoldsNumber(const unsigned int phaseIdx) const { return reynoldsNumber_[phaseIdx]; }
     //! access function Prandtl Number
-    const Scalar prandtlNumber(const unsigned int phaseIdx) const
-    { return prandtlNumber_[phaseIdx]; }
-
+    const Scalar prandtlNumber(const unsigned int phaseIdx) const { return prandtlNumber_[phaseIdx]; }
     //! access function Nusselt Number
-    const Scalar nusseltNumber(const unsigned int phaseIdx) const
-    { return nusseltNumber_[phaseIdx]; }
-
+    const Scalar nusseltNumber(const unsigned int phaseIdx) const { return nusseltNumber_[phaseIdx]; }
     //! access function characteristic length
-    const Scalar characteristicLength() const
-    { return characteristicLength_; }
-
+    const Scalar characteristicLength() const { return characteristicLength_; }
     //! access function pre factor energy transfer
-    const Scalar factorEnergyTransfer() const
-    { return factorEnergyTransfer_; }
-
+    const Scalar factorEnergyTransfer() const { return factorEnergyTransfer_; }
     //! access function pre factor mass transfer
-    const Scalar factorMassTransfer() const
-    { return factorMassTransfer_; }
-
-    /*!
-     * \brief If running in valgrind this makes sure that all
-     *        quantities in the volume variables are defined.
-     */
-    void checkDefined() const
-    {
-#if !defined NDEBUG && HAVE_VALGRIND
-        Valgrind::CheckDefined(reynoldsNumber_);
-        Valgrind::CheckDefined(prandtlNumber_);
-        Valgrind::CheckDefined(nusseltNumber_);
-        Valgrind::CheckDefined(characteristicLength_);
-        Valgrind::CheckDefined(factorEnergyTransfer_);
-        Valgrind::CheckDefined(factorMassTransfer_);
-        Valgrind::CheckDefined(temperatureSolid_);
-#endif
-    }
+    const Scalar factorMassTransfer() const { return factorMassTransfer_; }
 
 private:
     //! dimensionless numbers
     Scalar reynoldsNumber_[numPhases];
     Scalar prandtlNumber_[numPhases];
     Scalar nusseltNumber_[numPhases];
+
     Scalar characteristicLength_;
     Scalar factorEnergyTransfer_;
     Scalar factorMassTransfer_;
@@ -273,166 +231,137 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// // specialization for the case of (only) kinetic mass transfer. Be careful, we do not test this!
-// ////////////////////////////////////////////////////////////////////////////////////////////////////
-template <class TypeTag>
-class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalNonEquilibrium*/, false/*enableThermalNonEquilibrium*/>
+// specialization for the case of (only) kinetic mass transfer. Be careful, we do not test this!
+////////////////////////////////////////////////////////////////////////////////////////////////////
+template<class Traits>
+class NonEquilibriumVolumeVariablesImplementation< Traits,
+                                                   true/*chemicalNonEquilibrium?*/,
+                                                   false/*thermalNonEquilibrium?*/>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using ParameterCache = typename FluidSystem::ParameterCache;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidState = typename Traits::FluidState;
+    using FluidSystem = typename Traits::FluidSystem;
+    using ParameterCache = typename Traits::FluidSystem::ParameterCache;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
 
-    enum { numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents() };
-    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
-    enum { wPhaseIdx = FluidSystem::wPhaseIdx };
-    enum { nPhaseIdx = FluidSystem::nPhaseIdx };
-    enum { nCompIdx = FluidSystem::nCompIdx } ;
-    enum { wCompIdx = FluidSystem::wCompIdx } ;
-    enum { dim = GridView::dimension};
-    enum { sherwoodFormulation = GET_PROP_VALUE(TypeTag, SherwoodFormulation)} ;
-    enum { moleFrac00Idx = Indices::conti0EqIdx };
+    using ModelTraits = typename Traits::ModelTraits;
+    using Indices = typename ModelTraits::Indices;
+    static constexpr auto numPhases = ModelTraits::numPhases();
+    static constexpr auto numComponents = ModelTraits::numComponents();
 
-    using AwnSurface = typename GET_PROP_TYPE(TypeTag, AwnSurface);
-    using AwnSurfaceParams = typename  AwnSurface::Params;
+    static constexpr auto wPhaseIdx = FluidSystem::wPhaseIdx;
+    static constexpr auto nPhaseIdx = FluidSystem::nPhaseIdx;
 
     using DimLessNum = DimensionlessNumbers<Scalar>;
     using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
+
 public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache The parameter cache corresponding to the fluid state
+     * \param problem The problem to be solved
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
-    template<class ElementSolution>
-    void updateInterfacialArea(const ElementSolution& elemSol,
-                               const FluidState & fluidState,
-                               const ParameterCache &paramCache,
-                               const Problem &problem,
-                               const Element & element,
-                               const SubControlVolume& scv)
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateInterfacialArea(const ElemSol& elemSol,
+                               const FluidState& fluidState,
+                               const ParameterCache& paramCache,
+                               const Problem& problem,
+                               const Element& element,
+                               const Scv& scv)
     {
-        //obtain parameters for awnsurface
-        const AwnSurfaceParams & awnSurfaceParams = problem.spatialParams().aWettingNonWettingSurfaceParams(element, scv, elemSol) ;
+        // obtain parameters for awnsurface and material law
+        const auto& awnSurfaceParams = problem.spatialParams().aWettingNonWettingSurfaceParams(element, scv, elemSol) ;
+        const auto& materialParams  = problem.spatialParams().materialLawParams(element, scv, elemSol) ;
 
-        // obtain (standard) material parameters (needed for the residual saturations)
-        const auto &materialParams  = problem.spatialParams().materialLawParams(element, scv, elemSol) ;
-
-        Valgrind::CheckDefined(awnSurfaceParams);
-        const Scalar Sw = fluidState.saturation(wPhaseIdx) ;
-        const Scalar pc = fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx);
+        const auto Sw = fluidState.saturation(wPhaseIdx) ;
+        const auto pc = fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx);
 
         // so far there is only a model for kinetic mass transfer between fluid phases
-        interfacialArea_ = AwnSurface::interfacialArea(awnSurfaceParams, materialParams, Sw, pc );
+        using AwnSurface = typename Problem::SpatialParams::AwnSurface;
+        interfacialArea_ = AwnSurface::interfacialArea(awnSurfaceParams, materialParams, Sw, pc);
 
-        Valgrind::CheckDefined(interfacialArea_);
+        factorMassTransfer_ = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
+        characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
 
-        factorMassTransfer_   = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
-
-        characteristicLength_   = problem.spatialParams().characteristicLength(element, scv, elemSol);
-        // setting the dimensionless numbers.
-        // obtaining the respective quantities.
-        int globalVertexIdx = problem.vertexMapper().subIndex(element, scv, dim);
+        // set the dimensionless numbers and obtain respective quantities.
+        const auto globalVertexIdx = problem.fvGridGeometry().vertexMapper().subIndex(element, scv, Element::Geometry::myDimension);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            const Scalar darcyMagVelocity     = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
-            const Scalar dynamicViscosity     = fluidState.viscosity(phaseIdx);
-            const Scalar density              = fluidState.density(phaseIdx);
-            const Scalar kinematicViscosity   = dynamicViscosity / density;
+            const auto darcyMagVelocity     = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
+            const auto dynamicViscosity     = fluidState.viscosity(phaseIdx);
+            const auto density              = fluidState.density(phaseIdx);
+            const auto kinematicViscosity   = dynamicViscosity/density;
 
             // diffusion coefficient of non-wetting component in wetting phase
-            const Scalar diffCoeff = FluidSystem::binaryDiffusionCoefficient(fluidState, paramCache, phaseIdx, wCompIdx, nCompIdx);
+            const auto diffCoeff = FluidSystem::binaryDiffusionCoefficient(fluidState,
+                                                                           paramCache,
+                                                                           phaseIdx,
+                                                                           FluidSystem::wCompIdx,
+                                                                           FluidSystem::nCompIdx);
 
-            reynoldsNumber_[phaseIdx]   = DimLessNum::reynoldsNumber(darcyMagVelocity,
-                                                                     characteristicLength_,
-                                                                     kinematicViscosity);
-
-            schmidtNumber_[phaseIdx]    = DimLessNum::schmidtNumber(dynamicViscosity,
-                                                                    density,
-                                                                    diffCoeff);
-            sherwoodNumber_[phaseIdx]   = DimLessNum::sherwoodNumber(reynoldsNumber_[phaseIdx],
-                                                                     schmidtNumber_[phaseIdx],
-                                                                     sherwoodFormulation);
+            reynoldsNumber_[phaseIdx] = DimLessNum::reynoldsNumber(darcyMagVelocity, characteristicLength_, kinematicViscosity);
+            schmidtNumber_[phaseIdx]  = DimLessNum::schmidtNumber(dynamicViscosity, density, diffCoeff);
+            sherwoodNumber_[phaseIdx] = DimLessNum::sherwoodNumber(reynoldsNumber_[phaseIdx],
+                                                                   schmidtNumber_[phaseIdx],
+                                                                   ModelTraits::sherwoodFormulation());
         }
     }
-
-     /*!
-     * \brief Update composition of all phases in the mutable
-     *        parameters from the primary variables.
-     *
-     *        \param actualFluidState Container for all the secondary variables concerning the fluids
-     *        \param paramCache Container for cache parameters
-     *        \param priVars The primary Variables
-     *        \param *hint the volume variables, usable for initial guess of composition
-     */
-    void updateMoleFraction(FluidState & actualFluidState,
-                            ParameterCache & paramCache,
-                            const PrimaryVariables & priVars)
-    {
-        // setting the mole fractions of the fluid state
-        for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx)
-        {
-                // set the component mole fractions
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                    actualFluidState.setMoleFraction(phaseIdx,
-                           compIdx,
-                           priVars[moleFrac00Idx +
-                                   phaseIdx*numComponents +
-                                   compIdx]);
-                }
-        }
-
-//          // For using the ... other way of calculating equilibrium
-//          THIS IS ONLY FOR silencing Valgrind but is not used in this model
-            for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx)
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                    const Scalar phi = FluidSystem::fugacityCoefficient(actualFluidState,
-                                                                        paramCache,
-                                                                        phaseIdx,
-                                                                        compIdx);
-                    actualFluidState.setFugacityCoefficient(phaseIdx,
-                                                      compIdx,
-                                                      phi);
-            }
-
-            FluidState equilFluidState; // the fluidState *on the interface* i.e. chemical equilibrium
-            equilFluidState.assign(actualFluidState) ;
-            ConstraintSolver::solve(equilFluidState,
-                                    paramCache,
-                                    /*setViscosity=*/false,
-                                    /*setEnthalpy=*/false) ;
-
-            // Setting the equilibrium composition (in a kinetic model not necessarily the same as the actual mole fraction)
-            for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx){
-                for (int compIdx=0; compIdx< numComponents; ++ compIdx){
-                    xEquil_[phaseIdx][compIdx] = equilFluidState.moleFraction(phaseIdx, compIdx);
-                }
-            }
-
-            // compute densities of all phases
-            for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx){
-                const Scalar rho = FluidSystem::density(actualFluidState, paramCache, phaseIdx);
-                actualFluidState.setDensity(phaseIdx, rho);
-            }
-
-        }
 
     /*!
-     * \brief The mole fraction we would have in the case of chemical equilibrium /
+     * \brief Update composition of all phases in the mutable parameters from the primary variables.
+     *
+     *  \param actualFluidState Container for all the secondary variables concerning the fluids
+     *  \param paramCache Container for cache parameters
+     *  \param priVars The primary Variables
+     */
+    void updateMoleFraction(FluidState& actualFluidState,
+                            ParameterCache& paramCache,
+                            const typename Traits::PrimaryVariables& priVars)
+    {
+        // set the mole fractions of the fluid state
+        for(int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                actualFluidState.setMoleFraction( phaseIdx,
+                                                  compIdx,
+                                                  priVars[Indices::conti0EqIdx+phaseIdx*numComponents+compIdx] );
+
+        // For using the ... other way of calculating equilibrium
+        for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                actualFluidState.setFugacityCoefficient( phaseIdx,
+                                                         compIdx,
+                                                         FluidSystem::fugacityCoefficient(actualFluidState,
+                                                                                          paramCache,
+                                                                                          phaseIdx,
+                                                                                          compIdx) );
+
+        FluidState equilFluidState; // the fluidState *on the interface* i.e. chemical equilibrium
+        equilFluidState.assign(actualFluidState) ;
+        ConstraintSolver::solve(equilFluidState, paramCache, /*setViscosity=*/false, /*setEnthalpy=*/false);
+
+        // Set the equilibrium composition (in a kinetic model not necessarily the same as the actual mole fraction)
+        for(int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (int compIdx = 0; compIdx < numComponents; ++ compIdx)
+                xEquil_[phaseIdx][compIdx] = equilFluidState.moleFraction(phaseIdx, compIdx);
+
+        // compute densities of all phases
+        for(int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            actualFluidState.setDensity(phaseIdx, FluidSystem::density(actualFluidState, paramCache, phaseIdx));
+    }
+
+    /*!
+     * \brief The mole fraction we would have in the case of chemical equilibrium
      *        on the interface.
      *
-     *     \param phaseIdx The index of the fluid phase
-     *     \param compIdx The local index of the component
+     * \param phaseIdx The index of the fluid phase
+     * \param compIdx The local index of the component
      */
     const Scalar xEquil(const unsigned int phaseIdx, const unsigned int compIdx) const
-    {
-        return xEquil_[phaseIdx][compIdx] ;
-    }
+    { return xEquil_[phaseIdx][compIdx]; }
 
     /*!
      * \brief The specific interfacial area between two fluid phases [m^2 / m^3]
@@ -440,44 +369,21 @@ public:
     const Scalar interfacialArea(const unsigned int phaseIIdx, const unsigned int phaseJIdx) const
     {
         // so far there is only a model for kinetic mass transfer between fluid phases
-        assert((phaseIIdx == nPhaseIdx && phaseJIdx == wPhaseIdx)
-              || (phaseIIdx == wPhaseIdx && phaseJIdx == nPhaseIdx));
+        assert( (phaseIIdx == nPhaseIdx && phaseJIdx == wPhaseIdx)
+                || (phaseIIdx == wPhaseIdx && phaseJIdx == nPhaseIdx) );
         return interfacialArea_;
     }
 
     //! access function Reynolds Number
-    const Scalar reynoldsNumber(const unsigned int phaseIdx) const
-    { return reynoldsNumber_[phaseIdx]; }
-
+    const Scalar reynoldsNumber(const unsigned int phaseIdx) const { return reynoldsNumber_[phaseIdx]; }
     //! access function Schmidt Number
-    const Scalar schmidtNumber(const unsigned int phaseIdx) const
-    { return schmidtNumber_[phaseIdx]; }
-
+    const Scalar schmidtNumber(const unsigned int phaseIdx) const { return schmidtNumber_[phaseIdx]; }
     //! access function Sherwood Number
-    const Scalar sherwoodNumber(const unsigned int phaseIdx) const
-    { return sherwoodNumber_[phaseIdx]; }
-
+    const Scalar sherwoodNumber(const unsigned int phaseIdx) const { return sherwoodNumber_[phaseIdx]; }
     //! access function characteristic length
-    const Scalar characteristicLength() const
-    { return characteristicLength_; }
-
+    const Scalar characteristicLength() const { return characteristicLength_; }
     //! access function pre factor mass transfer
-    const Scalar factorMassTransfer() const
-    { return factorMassTransfer_; }
-
-    /*!
-     * \brief If running in valgrind this makes sure that all
-     *        quantities in the volume variables are defined.
-     */
-    void checkDefined() const
-    {
-        Valgrind::CheckDefined(interfacialArea_);
-        Valgrind::CheckDefined(characteristicLength_);
-        Valgrind::CheckDefined(factorMassTransfer_);
-        Valgrind::CheckDefined(reynoldsNumber_);
-        Valgrind::CheckDefined(schmidtNumber_);
-        Valgrind::CheckDefined(sherwoodNumber_);
-    }
+    const Scalar factorMassTransfer() const { return factorMassTransfer_; }
 
 private:
     Scalar characteristicLength_;
@@ -490,282 +396,233 @@ private:
     Scalar xEquil_[numPhases][numComponents];
 };
 
-//this is a specialization where everything is in non-equilibrium. we have to do our own stuff for the interfacial area but can use the rest from the others
-template <class TypeTag>
-class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalNonEquilibrium*/, true/*enableThermalNonEquilibrium*/>
+// Specialization where everything is in non-equilibrium.
+template<class Traits>
+class NonEquilibriumVolumeVariablesImplementation< Traits,
+                                                   true/*chemicalNonEquilibrium?*/,
+                                                   true/*thermalNonEquilibrium?*/>
 {
-    using BaseType = PorousMediumFlowVolumeVariables<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using ParameterCache = typename FluidSystem::ParameterCache;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidState = typename Traits::FluidState;
+    using FluidSystem = typename Traits::FluidSystem;
+    using ParameterCache = typename Traits::FluidSystem::ParameterCache;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
 
-    enum { numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents() };
-    enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
-    enum { wPhaseIdx = FluidSystem::wPhaseIdx };
-    enum { nPhaseIdx = FluidSystem::nPhaseIdx };
-    enum { sPhaseIdx = FluidSystem::sPhaseIdx };
-    enum { nCompIdx = FluidSystem::nCompIdx } ;
-    enum { wCompIdx = FluidSystem::wCompIdx } ;
-    enum { nusseltFormulation = GET_PROP_VALUE(TypeTag, NusseltFormulation)} ;
-    enum { sherwoodFormulation = GET_PROP_VALUE(TypeTag, SherwoodFormulation)} ;
-    enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
-    enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
-    enum { temperature0Idx = Indices::temperature0Idx };
-    enum { moleFrac00Idx = Indices::conti0EqIdx };
+    using ModelTraits = typename Traits::ModelTraits;
+    using Indices = typename ModelTraits::Indices;
+    static constexpr auto numPhases = ModelTraits::numPhases();
+    static constexpr auto numComponents = ModelTraits::numComponents();
+    static constexpr auto numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
+    static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
 
-    static_assert((numEnergyEqFluid > 1),
-                   "This model only deals with energy transfer between two fluids and one solid phase");
+    static constexpr auto wPhaseIdx = FluidSystem::wPhaseIdx;
+    static constexpr auto nPhaseIdx = FluidSystem::nPhaseIdx;
+    static constexpr auto sPhaseIdx = FluidSystem::sPhaseIdx;
+
     using DimLessNum = DimensionlessNumbers<Scalar>;
-
-    using AwnSurface = typename GET_PROP_TYPE(TypeTag, AwnSurface);
-    using AwnSurfaceParams = typename  AwnSurface::Params;
-    using AwsSurface = typename GET_PROP_TYPE(TypeTag, AwsSurface);
-    using AwsSurfaceParams = typename  AwsSurface::Params;
-    using AnsSurface = typename GET_PROP_TYPE(TypeTag, AnsSurface);
-    using AnsSurfaceParams = typename  AnsSurface::Params;
-
     using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
-
+    static_assert((numEnergyEqFluid > 1), "This model only deals with energy transfer between two fluids and one solid phase");
 
 public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache The parameter cache corresponding to the fluid state
+     * \param problem The problem to be solved
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
-    template<class ElementSolution>
-    void updateInterfacialArea(const ElementSolution& elemSol,
-                                const FluidState & fluidState,
-                                const ParameterCache &paramCache,
-                                const Problem &problem,
-                                const Element & element,
-                                const SubControlVolume& scv)
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateInterfacialArea(const ElemSol& elemSol,
+                               const FluidState& fluidState,
+                               const ParameterCache& paramCache,
+                               const Problem& problem,
+                               const Element& element,
+                               const Scv& scv)
     {
         // obtain (standard) material parameters (needed for the residual saturations)
-       const auto& materialParams =
-            problem.spatialParams().materialLawParams(element, scv, elemSol);
+       const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
         //obtain parameters for interfacial area constitutive relations
-        const AwnSurfaceParams & aWettingNonWettingSurfaceParams
-               = problem.spatialParams().aWettingNonWettingSurfaceParams(element, scv, elemSol);
-        const AnsSurfaceParams & aNonWettingSolidSurfaceParams
-               = problem.spatialParams().aNonWettingSolidSurfaceParams(element, scv, elemSol);
-
-        Valgrind::CheckDefined(aWettingNonWettingSurfaceParams);
-        Valgrind::CheckDefined(aNonWettingSolidSurfaceParams);
+        const auto& aWettingNonWettingSurfaceParams = problem.spatialParams().aWettingNonWettingSurfaceParams(element, scv, elemSol);
+        const auto& aNonWettingSolidSurfaceParams = problem.spatialParams().aNonWettingSolidSurfaceParams(element, scv, elemSol);
 
         const Scalar pc = fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx);
         const Scalar Sw = fluidState.saturation(wPhaseIdx);
-        Valgrind::CheckDefined(Sw);
-        Valgrind::CheckDefined(pc);
+
         Scalar awn;
 
+        // TODO can we delete this??? awn is overwritten anyway!
 #define AwnRegul 0
         // This regularizes the interfacial area between the fluid phases.
         // This makes sure, that
         // a) some saturation cannot be lost: Never leave two phase region.
         // b) We cannot leave the fit region: no crazy (e.g. negative) values possible
-//        const Scalar Swr =  aWettingNonWettingSurfaceParams.Swr() ;
-//        const Scalar Snr =  aWettingNonWettingSurfaceParams.Snr() ;
+
+        // const Scalar Swr =  aWettingNonWettingSurfaceParams.Swr() ;
+        // const Scalar Snr =  aWettingNonWettingSurfaceParams.Snr() ;
 
         // this just leads to a stalling newton error as soon as this kicks in.
         // May be a spline or sth like this would help, but I do not which derivatives
         // to specify.
 #if AwnRegul
         if(Sw < 5e-3 ) // or Sw > (1.-1e-5 )
-        {
             awn = 0. ; // 10.; //
-        }
-        else
 #endif
-        awn = AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams, Sw, pc ); // 10.; //
 
-        interfacialArea_[wPhaseIdx][nPhaseIdx] = awn ; //10. ;//
+        using AwnSurface = typename Problem::SpatialParams::AwnSurface;
+        awn = AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams, Sw, pc );
+        interfacialArea_[wPhaseIdx][nPhaseIdx] = awn;
         interfacialArea_[nPhaseIdx][wPhaseIdx] = interfacialArea_[wPhaseIdx][nPhaseIdx];
-        interfacialArea_[wPhaseIdx][wPhaseIdx] = 0. ;
+        interfacialArea_[wPhaseIdx][wPhaseIdx] = 0.;
 
-        Scalar ans = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams,Sw, pc ); // 10.; //
-//        if (ans <0 )
-//            ans = 0 ;
+        using AnsSurface = typename Problem::SpatialParams::AnsSurface;
+        Scalar ans = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams,Sw, pc);
 
-// Switch for using a a_{wn} relations that has some "maximum capillary pressure" as parameter.
-// That value is obtained by regularization of the pc(Sw) function.
+        // Switch for using a a_{wn} relations that has some "maximum capillary pressure" as parameter.
+        // That value is obtained by regularization of the pc(Sw) function.
 #if USE_PCMAX
-       const Scalar pcMax = problem.spatialParams().pcMax(element,
-                                                          scv,
-                                                          elemSol);
+        const Scalar pcMax = problem.spatialParams().pcMax(element, scv, elemSol);
         // I know the solid surface from the pore network. But it is more consistent to use the fit value.
-        solidSurface_   = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams, /*Sw=*/0., pcMax );
-        Valgrind::CheckDefined(solidSurface_);
-#endif
-        interfacialArea_[nPhaseIdx][sPhaseIdx] = ans ; //10. ; //
-        interfacialArea_[sPhaseIdx][nPhaseIdx] = interfacialArea_[nPhaseIdx][sPhaseIdx];
-        interfacialArea_[nPhaseIdx][nPhaseIdx] = 0. ;
+        using AnsSurface = typename Problem::SpatialParams::AnsSurface;
+        solidSurface_ = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams, /*Sw=*/0., pcMax);
 
-#if USE_PCMAX
-        const Scalar aws = solidSurface_ - ans ;
-        interfacialArea_[wPhaseIdx][sPhaseIdx] = aws ; //10. ; //
+        const Scalar aws = solidSurface_ - ans;
+        interfacialArea_[wPhaseIdx][sPhaseIdx] = aws;
         interfacialArea_[sPhaseIdx][wPhaseIdx] = interfacialArea_[wPhaseIdx][sPhaseIdx];
-        interfacialArea_[sPhaseIdx][sPhaseIdx] = 0. ;
+        interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.;
 #else
-        const AwsSurfaceParams & aWettingSolidSurfaceParams
-               = problem.spatialParams().aWettingSolidSurfaceParams();
-        Valgrind::CheckDefined(aWettingSolidSurfaceParams);
-        const Scalar aws = AwsSurface::interfacialArea(aWettingSolidSurfaceParams,materialParams, Sw, pc ); // 10.; //
+        using AwsSurface = typename Problem::SpatialParams::AwsSurface;
+        const auto& aWettingSolidSurfaceParams = problem.spatialParams().aWettingSolidSurfaceParams();
+        const auto aws = AwsSurface::interfacialArea(aWettingSolidSurfaceParams,materialParams, Sw, pc );
         interfacialArea_[wPhaseIdx][sPhaseIdx] = aws ;
         interfacialArea_[sPhaseIdx][wPhaseIdx] = interfacialArea_[wPhaseIdx][sPhaseIdx];
-        interfacialArea_[sPhaseIdx][sPhaseIdx] = 0. ;
+        interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.;
 #endif
 
-        Valgrind::CheckDefined(interfacialArea_);
+        interfacialArea_[nPhaseIdx][sPhaseIdx] = ans;
+        interfacialArea_[sPhaseIdx][nPhaseIdx] = interfacialArea_[nPhaseIdx][sPhaseIdx];
+        interfacialArea_[nPhaseIdx][nPhaseIdx] = 0.;
 
-        factorMassTransfer_   = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
+        factorMassTransfer_ = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
+        factorEnergyTransfer_ = problem.spatialParams().factorEnergyTransfer(element, scv, elemSol);
+        characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
 
-        factorEnergyTransfer_   = problem.spatialParams().factorEnergyTransfer(element, scv, elemSol);
-
-        characteristicLength_   = problem.spatialParams().characteristicLength(element, scv, elemSol);
-
-
-        const unsigned int vIdxGlobal = scv.dofIndex();
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            const Scalar darcyMagVelocity     = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, vIdxGlobal);
-            const Scalar dynamicViscosity     = fluidState.viscosity(phaseIdx);
-            const Scalar density              = fluidState.density(phaseIdx);
-            const Scalar kinematicViscosity   = dynamicViscosity / density;
-            const Scalar heatCapacity         = FluidSystem::heatCapacity(fluidState, paramCache, phaseIdx);
-            const Scalar thermalConductivity  = FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
-
+        const auto vIdxGlobal = scv.dofIndex();
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            const auto darcyMagVelocity    = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, vIdxGlobal);
+            const auto dynamicViscosity    = fluidState.viscosity(phaseIdx);
+            const auto density             = fluidState.density(phaseIdx);
+            const auto kinematicViscosity  = dynamicViscosity/density;
+            const auto heatCapacity        = FluidSystem::heatCapacity(fluidState, paramCache, phaseIdx);
+            const auto thermalConductivity = FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
 
             // diffusion coefficient of non-wetting component in wetting phase
-            const Scalar diffCoeff =  FluidSystem::binaryDiffusionCoefficient(fluidState, paramCache, phaseIdx, wCompIdx, nCompIdx);
-            const Scalar porosity = problem.spatialParams().porosity(element,
-                                                                    scv,
-                                                                   elemSol);
+            const auto porosity = problem.spatialParams().porosity(element, scv, elemSol);
+            const auto diffCoeff = FluidSystem::binaryDiffusionCoefficient(fluidState,
+                                                                           paramCache,
+                                                                           phaseIdx,
+                                                                           FluidSystem::wCompIdx,
+                                                                           FluidSystem::nCompIdx);
 
-            reynoldsNumber_[phaseIdx]   = DimLessNum::reynoldsNumber(darcyMagVelocity,
-                                                                     characteristicLength_,
-                                                                     kinematicViscosity);
-
-            prandtlNumber_[phaseIdx]    = DimLessNum::prandtlNumber(dynamicViscosity,
-                                                                    heatCapacity,
-                                                                    thermalConductivity);
-
-            nusseltNumber_[phaseIdx]    = DimLessNum::nusseltNumberForced(reynoldsNumber_[phaseIdx],
-                                                                          prandtlNumber_[phaseIdx],
-                                                                          porosity,
-                                                                          nusseltFormulation);
-
-            schmidtNumber_[phaseIdx]    = DimLessNum::schmidtNumber(dynamicViscosity,
-                                                                    density,
-                                                                    diffCoeff);
-
+            reynoldsNumber_[phaseIdx] = DimLessNum::reynoldsNumber(darcyMagVelocity, characteristicLength_, kinematicViscosity);
+            prandtlNumber_[phaseIdx]  = DimLessNum::prandtlNumber(dynamicViscosity, heatCapacity, thermalConductivity);
+            schmidtNumber_[phaseIdx]  = DimLessNum::schmidtNumber(dynamicViscosity, density, diffCoeff);
+            nusseltNumber_[phaseIdx]  = DimLessNum::nusseltNumberForced(reynoldsNumber_[phaseIdx],
+                                                                        prandtlNumber_[phaseIdx],
+                                                                        porosity,
+                                                                        ModelTraits::nusseltFormulation());
             // If Diffusion is not enabled, Sherwood is divided by zero
-            sherwoodNumber_[phaseIdx]   = DimLessNum::sherwoodNumber(reynoldsNumber_[phaseIdx],
-                                                                      schmidtNumber_[phaseIdx],
-                                                                      sherwoodFormulation);
+            sherwoodNumber_[phaseIdx] = DimLessNum::sherwoodNumber(reynoldsNumber_[phaseIdx],
+                                                                   schmidtNumber_[phaseIdx],
+                                                                   ModelTraits::sherwoodFormulation());
         }
     }
 
-    void updateMoleFraction(FluidState & actualFluidState,
-                            ParameterCache & paramCache,
-                            const PrimaryVariables & priVars)
+    /*!
+     * \brief Update composition of all phases in the mutable parameters from the primary variables.
+     *
+     *  \param actualFluidState Container for all the secondary variables concerning the fluids
+     *  \param paramCache Container for cache parameters
+     *  \param priVars The primary Variables
+     */
+    void updateMoleFraction(FluidState& actualFluidState,
+                            ParameterCache& paramCache,
+                            const typename Traits::PrimaryVariables& priVars)
     {
         // setting the mole fractions of the fluid state
-        for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx){
-                // set the component mole fractions
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                    actualFluidState.setMoleFraction(phaseIdx,
-                           compIdx,
-                           priVars[moleFrac00Idx +
-                                   phaseIdx*numComponents +
-                                   compIdx]);
-                }
-            }
+        for(int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                actualFluidState.setMoleFraction( phaseIdx,
+                                                  compIdx,
+                                                  priVars[Indices::conti0EqIdx+phaseIdx*numComponents+compIdx] );
 
-//            // For using the ... other way of calculating equilibrium
-//             THIS IS ONLY FOR silencing Valgrind but is not used in this model
-            for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx)
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                    const Scalar phi = FluidSystem::fugacityCoefficient(actualFluidState,
-                                                                        paramCache,
-                                                                        phaseIdx,
-                                                                        compIdx);
-                    actualFluidState.setFugacityCoefficient(phaseIdx,
-                                                      compIdx,
-                                                      phi);
-            }
+        // For using the ... other way of calculating equilibrium
+        for(int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                actualFluidState.setFugacityCoefficient( phaseIdx,
+                                                         compIdx,
+                                                         FluidSystem::fugacityCoefficient(actualFluidState,
+                                                                                          paramCache,
+                                                                                          phaseIdx,
+                                                                                          compIdx) );
 
-            FluidState equilFluidState; // the fluidState *on the interface* i.e. chemical equilibrium
-            equilFluidState.assign(actualFluidState) ;
-            ConstraintSolver::solve(equilFluidState,
-                                    paramCache,
-                                    /*setViscosity=*/false,
-                                    /*setEnthalpy=*/false) ;
+        FluidState equilFluidState; // the fluidState *on the interface* i.e. chemical equilibrium
+        equilFluidState.assign(actualFluidState);
+        ConstraintSolver::solve(equilFluidState, paramCache, /*setViscosity=*/false, /*setEnthalpy=*/false);
 
-            // Setting the equilibrium composition (in a kinetic model not necessarily the same as the actual mole fraction)
-            for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx){
-                for (int compIdx=0; compIdx< numComponents; ++ compIdx){
-                    xEquil_[phaseIdx][compIdx] = equilFluidState.moleFraction(phaseIdx, compIdx);
-                }
-            }
+        // Set the equilibrium composition (in a kinetic model not necessarily the same as the actual mole fraction)
+        for(int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                xEquil_[phaseIdx][compIdx] = equilFluidState.moleFraction(phaseIdx, compIdx);
 
-            // compute densities of all phases
-            for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx){
-                const Scalar rho = FluidSystem::density(actualFluidState, paramCache, phaseIdx);
-                actualFluidState.setDensity(phaseIdx, rho);
-            }
-
+        // compute densities of all phases
+        for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx)
+            actualFluidState.setDensity(phaseIdx, FluidSystem::density(actualFluidState, paramCache, phaseIdx));
      }
 
-    template<class ElementSolution>
-    void updateTemperatures(const ElementSolution& elemSol,
-                            const Problem &problem,
+    /*!
+     * \brief Update the temperatures for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The problem to be solved
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateTemperatures(const ElemSol& elemSol,
+                            const Problem& problem,
                             const Element& element,
-                            const SubControlVolume& scv,
+                            const Scv& scv,
                             FluidState& fluidState)
     {
         for(int phaseIdx=0; phaseIdx < numEnergyEqFluid; ++phaseIdx)
         {
             // retrieve temperature from solution vector
-            const Scalar T = BaseType::extractDofPriVars(elemSol, scv)[temperature0Idx + phaseIdx];
+            const Scalar T = elemSol[scv.indexInElement()][Indices::temperature0Idx + phaseIdx];
             fluidState.setTemperature(phaseIdx, T);
         }
+
         for(int solidPhaseIdx = numEnergyEqFluid; solidPhaseIdx < numEnergyEqFluid+numEnergyEqSolid; ++solidPhaseIdx)
-        {
-            temperatureSolid_ = BaseType::extractDofPriVars(elemSol, scv)[temperature0Idx + solidPhaseIdx];
-        }
+            temperatureSolid_ = elemSol[scv.indexInElement()][Indices::temperature0Idx + solidPhaseIdx];
     }
 
     /*!
-     * \brief Returns the temperature in fluid / solid phase(s)
-     *        the sub-control volume.
-     * \param phaseIdx The local index of the phases
-     */
-    const Scalar temperatureSolid() const
-    { return temperatureSolid_; }
-    /*!
-     * \brief The mole fraction we would have in the case of chemical equilibrium /
+     * \brief The mole fraction we would have in the case of chemical equilibrium
      *        on the interface.
      *
-     *     \param phaseIdx The index of the fluid phase
-     *     \param compIdx The local index of the component
+     * \param phaseIdx The index of the fluid phase
+     * \param compIdx The local index of the component
      */
     const Scalar xEquil(const unsigned int phaseIdx, const unsigned int compIdx) const
-    {
-        return xEquil_[phaseIdx][compIdx] ;
-    }
+    { return xEquil_[phaseIdx][compIdx]; }
 
     /*!
      * \brief The specific interfacial area between two fluid phases [m^2 / m^3]
-     *
-     * This is _only_ required by the kinetic mass/energy modules
-     *
+     * \note This is _only_ required by the kinetic mass/energy modules
      */
     const Scalar interfacialArea(const unsigned int phaseIIdx, const unsigned int phaseJIdx) const
     {
@@ -774,56 +631,24 @@ public:
         return interfacialArea_[phaseIIdx][phaseJIdx];
     }
 
+    //! Returns the temperature of the solid phase(s)
+    const Scalar temperatureSolid() const { return temperatureSolid_; }
     //! access function Reynolds Number
-    const Scalar reynoldsNumber(const unsigned int phaseIdx) const
-    { return reynoldsNumber_[phaseIdx]; }
-
+    const Scalar reynoldsNumber(const unsigned int phaseIdx) const { return reynoldsNumber_[phaseIdx]; }
     //! access function Prandtl Number
-    const Scalar prandtlNumber(const unsigned int phaseIdx) const
-    { return prandtlNumber_[phaseIdx]; }
-
+    const Scalar prandtlNumber(const unsigned int phaseIdx) const { return prandtlNumber_[phaseIdx]; }
     //! access function Nusselt Number
-    const Scalar nusseltNumber(const unsigned int phaseIdx) const
-    { return nusseltNumber_[phaseIdx]; }
-
+    const Scalar nusseltNumber(const unsigned int phaseIdx) const { return nusseltNumber_[phaseIdx]; }
     //! access function Schmidt Number
-    const Scalar schmidtNumber(const unsigned int phaseIdx) const
-    { return schmidtNumber_[phaseIdx]; }
-
+    const Scalar schmidtNumber(const unsigned int phaseIdx) const { return schmidtNumber_[phaseIdx]; }
     //! access function Sherwood Number
-    const Scalar sherwoodNumber(const unsigned int phaseIdx) const
-    { return sherwoodNumber_[phaseIdx]; }
-
+    const Scalar sherwoodNumber(const unsigned int phaseIdx) const { return sherwoodNumber_[phaseIdx]; }
     //! access function characteristic length
-    const Scalar characteristicLength() const
-    { return characteristicLength_; }
-
+    const Scalar characteristicLength() const { return characteristicLength_; }
     //! access function pre factor energy transfer
-    const Scalar factorEnergyTransfer() const
-    { return factorEnergyTransfer_; }
-
+    const Scalar factorEnergyTransfer() const { return factorEnergyTransfer_; }
     //! access function pre factor mass transfer
-    const Scalar factorMassTransfer() const
-    { return factorMassTransfer_; }
-
-    /*!
-     * \brief If running in valgrind this makes sure that all
-     *        quantities in the volume variables are defined.
-     */
-    void checkDefined() const
-    {
-#if !defined NDEBUG && HAVE_VALGRIND
-        Valgrind::CheckDefined(reynoldsNumber_);
-        Valgrind::CheckDefined(prandtlNumber_);
-        Valgrind::CheckDefined(nusseltNumber_);
-        Valgrind::CheckDefined(schmidtNumber_);
-        Valgrind::CheckDefined(sherwoodNumber_);
-        Valgrind::CheckDefined(characteristicLength_);
-        Valgrind::CheckDefined(factorEnergyTransfer_);
-        Valgrind::CheckDefined(factorMassTransfer_);
-        Valgrind::CheckDefined(interfacialArea_);
-#endif
-    }
+    const Scalar factorMassTransfer() const { return factorMassTransfer_; }
 
 private:
     //! dimensionless numbers
@@ -839,9 +664,8 @@ private:
     Scalar interfacialArea_[numPhases+1][numPhases+1];
     Scalar xEquil_[numPhases][numComponents];
     Scalar temperatureSolid_;
-
 };
-//
+
 } // namespace Dumux
 
 #endif

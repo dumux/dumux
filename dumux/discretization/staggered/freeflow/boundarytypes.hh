@@ -47,7 +47,6 @@ public:
             resetEq(eqIdx);
     }
 
-
     /*!
      * \brief Reset the boundary types for one equation.
      */

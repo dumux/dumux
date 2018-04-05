@@ -124,25 +124,30 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    enum { dimWorld = GridView::dimensionworld };
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
     // copy some indices for convenience
-    enum {
+    enum
+    {
+        // primary variable indices
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
 
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-
+        // phase presence index
         wPhaseOnly = Indices::wPhaseOnly,
 
+        // phase indices
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx,
+
+        // component indices
         nCompIdx = FluidSystem::nCompIdx,
         BrineIdx = FluidSystem::BrineIdx,
-        CO2Idx = FluidSystem::CO2Idx
-    };
-    enum {
+        CO2Idx = FluidSystem::CO2Idx,
+
+        // equation indices
         conti0EqIdx = Indices::conti0EqIdx,
         contiCO2EqIdx = conti0EqIdx + CO2Idx
     };
@@ -158,18 +163,22 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using CO2 = Dumux::Components::CO2<Scalar, HeterogeneousCO2Tables::CO2Tables>;
+
+    using CO2 = Components::CO2<Scalar, HeterogeneousCO2Tables::CO2Tables>;
 
     //! property that defines whether mole or mass fractions are used
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = ModelTraits::useMoles();
 
     // the discretization method we are using
     static constexpr auto discMethod = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod;
+
+    // world dimension to access gravity vector
+    static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
     /*!

@@ -61,7 +61,7 @@ class ZeroEqProblem : public RANSProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum {
         dim = Grid::dimension,
@@ -115,8 +115,12 @@ public:
                 using std::exp;
 
                 const int dofIdx = scv.dofIndex();
-                CellCenterPrimaryVariables priVars(curSol[FVGridGeometry::cellCenterIdx()][dofIdx]);
-                auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
+
+                // construct a privars object from the cell center solution vector
+                const auto& cellCenterPriVars = curSol[FVGridGeometry::cellCenterIdx()][dofIdx];
+                PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
+                auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
+
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
 

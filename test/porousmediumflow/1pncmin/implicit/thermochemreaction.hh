@@ -43,7 +43,7 @@ class ThermoChemReaction
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     static const int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();

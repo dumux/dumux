@@ -53,10 +53,12 @@
 #ifndef DUMUX_NONISOTHERMAL_MODEL_HH
 #define DUMUX_NONISOTHERMAL_MODEL_HH
 
-namespace Dumux
-{
+#include <dumux/porousmediumflow/nonisothermal/indices.hh>
+
+namespace Dumux {
+
 /*!
- * \ingroup OnePModel
+ * \ingroup NIModel
  * \brief Specifies a number properties of non-isothermal porous medium
  *        flow models based on the specifics of a given isothermal model.
  * \tparam IsothermalTraits Model traits of the isothermal model
@@ -68,6 +70,8 @@ struct PorousMediumFlowNIModelTraits : public IsothermalTraits
     static constexpr int numEq() { return IsothermalTraits::numEq()+1; }
     //! We additionally solve for the equation balance
     static constexpr bool enableEnergyBalance() { return true; }
+    //! The indices related to the non-isothermal model
+    using Indices = EnergyIndices< typename IsothermalTraits::Indices, numEq()>;
 };
 
 } // end namespace Dumux

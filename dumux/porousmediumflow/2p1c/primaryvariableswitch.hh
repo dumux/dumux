@@ -35,9 +35,9 @@ namespace Dumux {
  */
 template<class TypeTag>
 class TwoPOneCPrimaryVariableSwitch
-: public PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), TwoPOneCPrimaryVariableSwitch<TypeTag>>
+: public PrimaryVariableSwitch<TwoPOneCPrimaryVariableSwitch<TypeTag>>
 {
-    using ParentType = PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), TwoPOneCPrimaryVariableSwitch<TypeTag>>;
+    using ParentType = PrimaryVariableSwitch<TwoPOneCPrimaryVariableSwitch<TypeTag>>;
     friend ParentType;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -47,15 +47,16 @@ class TwoPOneCPrimaryVariableSwitch
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {
         switchIdx = Indices::switch1Idx,
 
         pressureIdx = Indices::pressureIdx,
 
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx,
 
         twoPhases = Indices::twoPhases,
         wPhaseOnly  = Indices::wPhaseOnly,

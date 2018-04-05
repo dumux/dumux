@@ -61,7 +61,7 @@ class RANSProblem : public NavierStokesProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum {
         dim = Grid::dimension,
@@ -225,10 +225,11 @@ public:
 
             // calculate velocities
             DimVector velocityTemp(0.0);
+            static constexpr auto momentumBalanceIdx = 0;
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 const int dofIdxFace = scvf.dofIndex();
-                const auto numericalSolutionFace = curSol[FVGridGeometry::faceIdx()][dofIdxFace][Indices::momentumBalanceIdx];
+                const auto numericalSolutionFace = curSol[FVGridGeometry::faceIdx()][dofIdxFace][momentumBalanceIdx];
                 velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
             }
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
@@ -284,8 +285,12 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const int dofIdx = scv.dofIndex();
-                CellCenterPrimaryVariables priVars(curSol[FVGridGeometry::cellCenterIdx()][dofIdx]);
-                auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
+
+                // construct a privars object from the cell center solution vector
+                const auto& cellCenterPriVars = curSol[FVGridGeometry::cellCenterIdx()][dofIdx];
+                PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
+                auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
+
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
                 kinematicViscosity_[elementID] = volVars.viscosity() / volVars.density();

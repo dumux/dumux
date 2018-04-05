@@ -31,59 +31,37 @@ namespace Dumux
 
 /*!
  * \ingroup MPNCModel
- * \brief Enumerates the formulations which the MpNc model accepts.
- */
-struct MpNcPressureFormulation
-{
-    enum {
-        mostWettingFirst,
-        leastWettingFirst
-    };
-};
-
-/*!
- * \ingroup MPNCModel
  * \brief The primary variable and equation indices for the MpNc model.
  *
  * \tparam FluidSystem The fluid system class
  * \tparam numEqBalance Number of balance equations: all transport equations and the constraint equations
- * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class FluidSystem, int numEqBalance, int BasePVOffset = 0>
-class MPNCIndices
+template <int numPhases, int numEqBalance>
+struct MPNCIndices
 {
-     enum { numPhases = FluidSystem::numPhases };
-public:
-
-    //! Phase indices
-    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase
-    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase
-
     /*!
      * \brief Index of the saturation of the first phase in a vector
      *        of primary variables.
      *
-     * The following (numPhases - 1) primary variables represent the
-     * saturations for the phases [1, ..., numPhases - 1]
+     * \note The following (numPhases - 1) primary variables represent the
+     *       saturations for the phases [1, ..., numPhases - 1]
      */
     static const unsigned int s0Idx = numEqBalance - numPhases;
 
     /*!
-     * \brief Index of the first phase' pressure in a vector of
-     *        primary variables.
+     * \brief Index of the first phase' pressure in a vector of primary variables.
      */
     static const unsigned int p0Idx = numEqBalance  - 1;
 
     /*!
      * \brief Index of the first phase NCP equation.
-     *
-     * The index for the remaining phases are consecutive.
+     * \note The index for the remaining phases are consecutive.
      */
     static const unsigned int phase0NcpIdx =  numEqBalance - numPhases;
 
-    static const unsigned int fug0Idx = BasePVOffset + 0;
-    static const unsigned int conti0EqIdx = BasePVOffset + 0;
-    static const unsigned int moleFrac00Idx = BasePVOffset + 0;
+    static const unsigned int fug0Idx = 0;
+    static const unsigned int conti0EqIdx = 0;
+    static const unsigned int moleFrac00Idx = 0;
 };
 
 }

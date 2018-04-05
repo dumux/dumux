@@ -24,30 +24,23 @@
 #ifndef DUMUX_NAVIERSTOKES_NI_INDICES_HH
 #define DUMUX_NAVIERSTOKES_NI_INDICES_HH
 
-#include <dumux/common/properties.hh>
+namespace Dumux {
 
-namespace Dumux
-{
-// \{
 /*!
  * \ingroup NavierStokesNIModel
  * \brief Indices for the non-isothermal Navier-Stokes model.
  *
- * \tparam dimension The dimension of the problem
- * \tparam numEquations The number of model equations
  * \tparam IsothermalIndices The isothermal indices class
- * \tparam PVOffset The first index in a primary variable vector.
+ * \tparam numEq the number of equations of the non-isothermal model
  */
-template <int dimension, int numEquations, class IsothermalIndices, int PVOffset = 0>
+template <class IsothermalIndices, int numEq>
 class NavierStokesNonIsothermalIndices : public IsothermalIndices
 {
 public:
-    static constexpr auto dim = dimension;
-    static constexpr auto numEq = numEquations;
-
-    static constexpr auto energyBalanceIdx = PVOffset + numEq - dim - 1;
-    static constexpr int temperatureIdx = energyBalanceIdx;
+    static constexpr int energyBalanceIdx = numEq - 1;
+    static constexpr int temperatureIdx = numEq - 1;
 };
-} // end namespace
+
+} // end namespace Dumux
 
 #endif // DUMUX_NAVIERSTOKES_NI_INDICES_HH

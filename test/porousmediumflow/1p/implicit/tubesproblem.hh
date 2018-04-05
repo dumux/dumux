@@ -84,7 +84,7 @@ class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
         // indices of the primary variables
         conti0EqIdx = Indices::conti0EqIdx,

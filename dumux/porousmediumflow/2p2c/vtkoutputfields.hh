@@ -24,40 +24,38 @@
 #ifndef DUMUX_TWOPTWOC_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_TWOPTWOC_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup TwoPTwoCModel
  * \brief Adds vtk output fields specific to the two-phase two-component model
  */
-template<class FluidSystem, class Indices>
 class TwoPTwoCVtkOutputFields
 {
-
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        // register standardized vtk output fields
-        vtk.addVolumeVariable([](const auto& v){ return v.saturation(Indices::nPhaseIdx); }, "Sn");
-        vtk.addVolumeVariable([](const auto& v){ return v.saturation(Indices::wPhaseIdx); }, "Sw");
-        vtk.addVolumeVariable([](const auto& v){ return v.pressure(Indices::nPhaseIdx); }, "pn");
-        vtk.addVolumeVariable([](const auto& v){ return v.pressure(Indices::wPhaseIdx); }, "pw");
-        vtk.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); }, "pc");
-        vtk.addVolumeVariable([](const auto& v){ return v.density(Indices::wPhaseIdx); }, "rhoW");
-        vtk.addVolumeVariable([](const auto& v){ return v.density(Indices::nPhaseIdx); }, "rhoN");
-        vtk.addVolumeVariable([](const auto& v){ return v.mobility(Indices::wPhaseIdx); }, "mobW");
-        vtk.addVolumeVariable([](const auto& v){ return v.mobility(Indices::nPhaseIdx); }, "mobN");
+        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
+        using FluidSystem = typename VolumeVariables::FluidSystem;
 
-        for (int i = 0; i < FluidSystem::numPhases; ++i)
-            for (int j = 0; j < FluidSystem::numComponents; ++j)
+        // register standardized vtk output fields
+        vtk.addVolumeVariable([](const auto& v){ return v.saturation(FluidSystem::nPhaseIdx); }, "Sn");
+        vtk.addVolumeVariable([](const auto& v){ return v.saturation(FluidSystem::wPhaseIdx); }, "Sw");
+        vtk.addVolumeVariable([](const auto& v){ return v.pressure(FluidSystem::nPhaseIdx); }, "pn");
+        vtk.addVolumeVariable([](const auto& v){ return v.pressure(FluidSystem::wPhaseIdx); }, "pw");
+        vtk.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); }, "pc");
+        vtk.addVolumeVariable([](const auto& v){ return v.density(FluidSystem::wPhaseIdx); }, "rhoW");
+        vtk.addVolumeVariable([](const auto& v){ return v.density(FluidSystem::nPhaseIdx); }, "rhoN");
+        vtk.addVolumeVariable([](const auto& v){ return v.mobility(FluidSystem::wPhaseIdx); }, "mobW");
+        vtk.addVolumeVariable([](const auto& v){ return v.mobility(FluidSystem::nPhaseIdx); }, "mobN");
+
+        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+            for (int j = 0; j < VolumeVariables::numComponents(); ++j)
                 vtk.addVolumeVariable([i,j](const auto& v){ return v.massFraction(i,j); },"X_"+ FluidSystem::phaseName(i) + "^" + FluidSystem::componentName(j));
 
-        for (int i = 0; i < FluidSystem::numPhases; ++i)
-            for (int j = 0; j < FluidSystem::numComponents; ++j)
+        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+            for (int j = 0; j < VolumeVariables::numComponents(); ++j)
                 vtk.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },"x_"+ FluidSystem::phaseName(i) + "^" + FluidSystem::componentName(j));
 
         vtk.addVolumeVariable([](const auto& v){ return v.porosity(); }, "porosity");

@@ -25,7 +25,7 @@
 #define DUMUX_2PNC_PRIMARY_VARIABLE_SWITCH_HH
 
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
-#include "indices.hh" // for formulation
+#include <dumux/porousmediumflow/2p/formulation.hh>
 
 namespace Dumux {
 
@@ -35,9 +35,9 @@ namespace Dumux {
  */
 template<class TypeTag>
 class TwoPNCPrimaryVariableSwitch
-: public PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), TwoPNCPrimaryVariableSwitch<TypeTag>>
+: public PrimaryVariableSwitch<TwoPNCPrimaryVariableSwitch<TypeTag>>
 {
-    using ParentType = PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), TwoPNCPrimaryVariableSwitch<TypeTag>>;
+    using ParentType = PrimaryVariableSwitch<TwoPNCPrimaryVariableSwitch<TypeTag>>;
     friend ParentType;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -48,7 +48,7 @@ class TwoPNCPrimaryVariableSwitch
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     static const int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
     static const int numMajorComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numMajorComponents();
@@ -57,21 +57,18 @@ class TwoPNCPrimaryVariableSwitch
 
         switchIdx = Indices::switchIdx,
 
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx,
 
         wCompIdx = FluidSystem::wCompIdx,
         nCompIdx = FluidSystem::nCompIdx,
 
         wPhaseOnly = Indices::wPhaseOnly,
         nPhaseOnly = Indices::nPhaseOnly,
-        bothPhases = Indices::bothPhases,
-
-        pwsn = TwoPNCFormulation::pwsn,
-        pnsw = TwoPNCFormulation::pnsw,
-       formulation = GET_PROP_VALUE(TypeTag, Formulation)
+        bothPhases = Indices::bothPhases
     };
 
+    static constexpr auto formulation = GET_PROP_TYPE(TypeTag, ModelTraits)::priVarFormulation();
 public:
     using ParentType::ParentType;
 
@@ -148,10 +145,10 @@ protected:
                         << sumxw << std::endl;
                 newPhasePresence = bothPhases;
 
-                //saturation of the wetting phase set to 0.0001 (if formulation pnsw and vice versa)
-                if (formulation == pnsw)
+                //saturation of the wetting phase set to 0.0001 (if formulation TwoPFormulation::pnsw and vice versa)
+                if (formulation == TwoPFormulation::pnsw)
                     priVars[switchIdx] = 0.0001;
-                else if (formulation == pwsn)
+                else if (formulation == TwoPFormulation::pwsn)
                     priVars[switchIdx] = 0.9999;
 
                 //switch all secondary components back to wetting mole fraction
@@ -179,10 +176,10 @@ protected:
                         << ", coordinated: " << globalPos << ", sumxn: "
                         << sumxn << std::endl;
                 newPhasePresence = bothPhases;
-                //saturation of the wetting phase set to 0.9999 (if formulation pnsw and vice versa)
-                if (formulation == pnsw)
+                //saturation of the wetting phase set to 0.9999 (if formulation TwoPFormulation::pnsw and vice versa)
+                if (formulation == TwoPFormulation::pnsw)
                     priVars[switchIdx] = 0.9999;
-                else if (formulation == pwsn)
+                else if (formulation == TwoPFormulation::pwsn)
                     priVars[switchIdx] = 0.0001;
 
             }

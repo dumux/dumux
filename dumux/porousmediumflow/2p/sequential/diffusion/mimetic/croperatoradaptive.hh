@@ -80,7 +80,7 @@ class CROperatorAssemblerTwoPAdaptive
     using SatType = Dune::BlockVector< Dune::FieldVector<double, 1> >;
     using IntersectionMapper = Dumux::IntersectionMapper<GridView>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum
     {

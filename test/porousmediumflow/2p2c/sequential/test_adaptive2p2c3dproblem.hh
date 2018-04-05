@@ -104,7 +104,7 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
 using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
-using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
 

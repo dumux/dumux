@@ -113,7 +113,7 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     enum { dimWorld = GridView::dimensionworld };
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,

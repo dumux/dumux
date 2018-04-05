@@ -35,9 +35,9 @@ namespace Dumux {
  */
 template<class TypeTag>
 class ThreePWaterOilPrimaryVariableSwitch
-: public PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), ThreePWaterOilPrimaryVariableSwitch<TypeTag>>
+: public PrimaryVariableSwitch<ThreePWaterOilPrimaryVariableSwitch<TypeTag>>
 {
-    using ParentType = PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), ThreePWaterOilPrimaryVariableSwitch<TypeTag>>;
+    using ParentType = PrimaryVariableSwitch<ThreePWaterOilPrimaryVariableSwitch<TypeTag>>;
     friend ParentType;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -47,20 +47,20 @@ class ThreePWaterOilPrimaryVariableSwitch
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
         pressureIdx = Indices::pressureIdx,
 
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx,
+        gPhaseIdx = FluidSystem::gPhaseIdx,
 
-        wCompIdx = Indices::wCompIdx,
-        nCompIdx = Indices::nCompIdx,
-        gCompIdx = Indices::gCompIdx,
+        wCompIdx = FluidSystem::wCompIdx,
+        nCompIdx = FluidSystem::nCompIdx,
 
         threePhases = Indices::threePhases,
         wPhaseOnly  = Indices::wPhaseOnly,

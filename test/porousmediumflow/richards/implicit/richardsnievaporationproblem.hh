@@ -104,7 +104,7 @@ class RichardsNIEvaporationProblem : public PorousMediumFlowProblem<TypeTag>
     using IapwsH2O = Components::H2O<Scalar>;
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum { dimWorld = GridView::dimensionworld };
 
     enum {

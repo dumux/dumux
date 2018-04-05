@@ -25,8 +25,6 @@
 #ifndef DUMUX_1PNC_VOLUME_VARIABLES_HH
 #define DUMUX_1PNC_VOLUME_VARIABLES_HH
 
-#include <dune/common/fvector.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 
 namespace Dumux {
@@ -43,38 +41,35 @@ namespace Dumux {
  *       This way one can use two-phase fluid systems for this one-phasic flow and transport
  *       model by specifying which phase is present through the DuMuX property system.
  */
-template <class TypeTag>
-class OnePNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
+template <class Traits>
+class OnePNCVolumeVariables
+: public PorousMediumFlowVolumeVariables<Traits, OnePNCVolumeVariables<Traits>>
 {
-    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables<Traits, OnePNCVolumeVariables<Traits>>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using PermeabilityType = typename Traits::PermeabilityType;
+    using Idx = typename Traits::ModelTraits::Indices;
 
     enum
     {
-        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
+        numComponents = Traits::ModelTraits::numComponents(),
 
-        phaseIdx = Indices::phaseIdx,
-        phaseCompIdx = Indices::phaseCompIdx,
+        phaseIdx = Idx::phaseIdx,
+        phaseCompIdx = Idx::phaseCompIdx,
 
         // primary variable indices
-        pressureIdx = Indices::pressureIdx,
-        firstMoleFracIdx = Indices::firstMoleFracIdx,
-
+        pressureIdx = Idx::pressureIdx,
+        firstMoleFracIdx = Idx::firstMoleFracIdx,
     };
 
 public:
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    // export indices
+    using Indices = typename Traits::ModelTraits::Indices;
+    //! export fluid state type
+    using FluidState = typename Traits::FluidState;
+    //! export fluid system type
+    using FluidSystem = typename Traits::FluidSystem;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -85,11 +80,11 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume &scv)
+                const Scv &scv)
     {
         ParentType::update(elemSol, problem, element, scv);
 
@@ -131,11 +126,11 @@ public:
      * \param scv The sub-control volume
      * \param fluidState A container with the current (physical) state of the fluid
      */
-    template<class ElementSolution>
-    static void completeFluidState(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    static void completeFluidState(const ElemSol &elemSol,
                                    const Problem& problem,
                                    const Element& element,
-                                   const SubControlVolume &scv,
+                                   const Scv &scv,
                                    FluidState& fluidState)
 
     {
@@ -173,7 +168,7 @@ public:
         fluidState.setViscosity(phaseIdx, mu);
 
         // compute and set the enthalpy
-        Scalar h = Implementation::enthalpy(fluidState, paramCache, phaseIdx);
+        Scalar h = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
         fluidState.setEnthalpy(phaseIdx, h);
     }
 
@@ -363,9 +358,8 @@ private:
     PermeabilityType permeability_;
     Scalar density_;
     Dune::FieldVector<Scalar, numComponents> diffCoeff_;
-
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

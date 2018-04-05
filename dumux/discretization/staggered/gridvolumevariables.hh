@@ -49,6 +49,7 @@ class StaggeredGridVolumeVariables<Traits, /*cachingEnabled*/true>
 {
     using ThisType = StaggeredGridVolumeVariables<Traits, true>;
     using Problem = typename Traits::Problem;
+    using PrimaryVariables = typename Traits::VolumeVariables::PrimaryVariables;
 
 public:
     //! export the type of the indices TODO: get them out of the volvars
@@ -81,7 +82,10 @@ public:
 
             for (auto&& scv : scvs(fvGeometry))
             {
-                CellCenterPrimaryVariables priVars = sol[scv.dofIndex()];
+                // construct a privars object from the cell center solution vector
+                const auto& cellCenterPriVars = sol[scv.dofIndex()];
+                PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
+
                 auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
                 volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
             }
@@ -97,14 +101,14 @@ public:
                 const auto insideScvIdx = scvf.insideScvIdx();
                 const auto& insideScv = fvGeometry.scv(insideScvIdx);
 
-                CellCenterPrimaryVariables boundaryPriVars(0.0);
-
-                for(int eqIdx = 0; eqIdx < CellCenterPrimaryVariables::dimension; ++eqIdx)
+                PrimaryVariables boundaryPriVars(0.0);
+                constexpr auto offset = PrimaryVariables::dimension - CellCenterPrimaryVariables::dimension;
+                for(int eqIdx = offset; eqIdx < PrimaryVariables::dimension; ++eqIdx)
                 {
                     if(bcTypes.isDirichlet(eqIdx) || bcTypes.isDirichletCell(eqIdx))
                         boundaryPriVars[eqIdx] = problem().dirichlet(element, scvf)[eqIdx];
                     else if(bcTypes.isNeumann(eqIdx) || bcTypes.isOutflow(eqIdx) || bcTypes.isSymmetry())
-                        boundaryPriVars[eqIdx] = sol[scvf.insideScvIdx()][eqIdx];
+                        boundaryPriVars[eqIdx] = sol[scvf.insideScvIdx()][eqIdx - offset];
                     //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary
                     // could be made more general by allowing a non-zero-gradient, provided in problem file
                     else

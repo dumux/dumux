@@ -25,8 +25,6 @@
 #ifndef DUMUX_2P1C_INDICES_HH
 #define DUMUX_2P1C_INDICES_HH
 
-#include <dumux/common/properties.hh>
-
 namespace Dumux {
 
 /*!
@@ -36,28 +34,23 @@ namespace Dumux {
  * \tparam FluidSystem The fluid system class
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class FluidSystem, int PVOffset = 0>
 class TwoPOneCIndices
 {
 public:
-    // Phase indices
-    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase.
-    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase.
-
     // Present phases (-> 'pseudo' primary variable)
     static const int twoPhases = 1; //!< Both wetting and non-wetting phase are present.
     static const int wPhaseOnly = 2; //!< Only the wetting phase is present.
     static const int nPhaseOnly = 3; //!< Only non-wetting phase is present.
 
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for phase pressure in a solution vector.
-    static const int switch1Idx = PVOffset + 1; //!< Index of saturation or temperature.
+    static const int pressureIdx = 0; //!< Index for phase pressure in a solution vector.
+    static const int switch1Idx = 1; //!< Index of saturation or temperature.
 
     // Equation indices
-    static const int conti0EqIdx = PVOffset    + 0; //!< Index of the mass conservation equation for the water component.
-    static const int energyEqIdx = PVOffset + 1; //<! The index for energy in equation vectors.
+    static const int conti0EqIdx = 0; //!< Index of the mass conservation equation for the water component.
+    static const int energyEqIdx = 1; //<! The index for energy in equation vectors.
 };
 
-}
+} // end namespace Dumux
 
 #endif

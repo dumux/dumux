@@ -83,17 +83,16 @@ class MPNCComparisonSpatialParams : public FVSpatialParams<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     enum {dimWorld=GridView::dimensionworld};
 
 public:
-     using PermeabilityType = Scalar;
+    using PermeabilityType = Scalar;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
-
-    MPNCComparisonSpatialParams(const Problem &problem)
-        : ParentType(problem)
+    //! The constructor
+    MPNCComparisonSpatialParams(const Problem &problem) : ParentType(problem)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;

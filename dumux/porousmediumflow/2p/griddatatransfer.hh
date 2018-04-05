@@ -28,9 +28,12 @@
 
 #include <dune/grid/common/partitionset.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
+
 #include <dumux/common/properties.hh>
+
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/elementsolution.hh>
+#include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/adaptive/griddatatransfer.hh>
 
 namespace Dumux {
@@ -45,7 +48,6 @@ class TwoPGridDataTransfer : public GridDataTransfer
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -58,6 +60,8 @@ class TwoPGridDataTransfer : public GridDataTransfer
                                                                   std::declval<SolutionVector>(),
                                                                   std::declval<FVGridGeometry>()))>;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
     struct AdaptedValues
     {
@@ -74,22 +78,22 @@ class TwoPGridDataTransfer : public GridDataTransfer
     static constexpr int dimWorld = Grid::dimensionworld;
     static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 
-    // export some indices
-    enum {
-        // index of saturation in primary variables
-        saturationIdx = Indices::saturationIdx,
+    // saturation primary variable index
+    enum { saturationIdx = Indices::saturationIdx };
 
-        // phase indices
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-
-        // formulations
-        pwsn = Indices::pwsn,
-        pnsw = Indices::pnsw,
-
-        // the formulation that is actually used
-        formulation = GET_PROP_VALUE(TypeTag, Formulation)
+    // phase indices
+    enum
+    {
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx,
     };
+
+    // formulations
+    static constexpr auto pwsn = TwoPFormulation::pwsn;
+    static constexpr auto pnsw = TwoPFormulation::pnsw;
+
+    // the formulation that is actually used
+    static constexpr auto formulation = ModelTraits::priVarFormulation();
 
     // This won't work (mass conservative) for compressible fluids
     static_assert(!FluidSystem::isCompressible(wPhaseIdx)
@@ -339,12 +343,12 @@ public:
 
                         const auto dofIdxGlobal = scv.dofIndex();
                         const auto scvVolume = scv.volume();
-                        if (int(formulation) == pwsn)
+                        if (formulation == pwsn)
                         {
                             massCoeff[dofIdxGlobal] += scvVolume * volVars.density(nPhaseIdx) * volVars.porosity();
                             associatedMass[dofIdxGlobal] += scvVolume / fatherElementVolume * adaptedValuesFather.associatedMass[nPhaseIdx];
                         }
-                        else if (int(formulation) == pnsw)
+                        else if (formulation == pnsw)
                         {
                             massCoeff[dofIdxGlobal] += scvVolume * volVars.density(wPhaseIdx) * volVars.porosity();
                             associatedMass[dofIdxGlobal] += scvVolume / fatherElementVolume * adaptedValuesFather.associatedMass[wPhaseIdx];

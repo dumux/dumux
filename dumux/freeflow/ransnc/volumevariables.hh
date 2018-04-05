@@ -54,6 +54,9 @@ class RANSNCVolumeVariables
     static constexpr auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
 public:
+    using FluidSystem = typename ParentTypeCompositional::FluidSystem;
+    using FluidState = typename ParentTypeCompositional::FluidState;
+
     /*!
      * \brief Update all quantities for a given control volume
      *

@@ -49,26 +49,26 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
-    enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
+    enum { numEnergyEqSolid = ModelTraits::numEnergyEqSolid() };
     enum { energyEq0Idx = Indices::energyEq0Idx };
     enum { energyEqSolidIdx = Indices::energyEqSolidIdx};
 
-    enum { numComponents    = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents() };
+    enum { numComponents    = ModelTraits::numComponents() };
     enum { wPhaseIdx        = FluidSystem::wPhaseIdx};
     enum { nPhaseIdx        = FluidSystem::nPhaseIdx};
     enum { sPhaseIdx        = FluidSystem::sPhaseIdx};
 
 public:
-
-
     //! The energy storage in the fluid phase with index phaseIdx
     static void fluidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
@@ -318,26 +318,28 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2 /*numEnergyEqFluid*/>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    enum { numPhases        = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
-    enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
-    enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    enum { numPhases        = ModelTraits::numPhases() };
+    enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
+    enum { numEnergyEqSolid = ModelTraits::numEnergyEqSolid() };
     enum { energyEq0Idx = Indices::energyEq0Idx };
     enum { energyEqSolidIdx = Indices::energyEqSolidIdx};
     enum { conti0EqIdx = Indices::conti0EqIdx };
 
-    enum { numComponents    = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents() };
+    enum { numComponents    = ModelTraits::numComponents() };
     enum { wPhaseIdx        = FluidSystem::wPhaseIdx};
     enum { nPhaseIdx        = FluidSystem::nPhaseIdx};
     enum { sPhaseIdx        = FluidSystem::sPhaseIdx};
 
-    static constexpr bool enableChemicalNonEquilibrium = GET_PROP_TYPE(TypeTag, ModelTraits)::enableChemicalNonEquilibrium();
+    static constexpr bool enableChemicalNonEquilibrium = ModelTraits::enableChemicalNonEquilibrium();
 
 public:
 

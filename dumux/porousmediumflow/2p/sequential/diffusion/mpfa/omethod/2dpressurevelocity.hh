@@ -73,7 +73,7 @@ template<class TypeTag> class FvMpfaO2dPressureVelocity2p: public FvMpfaO2dPress
 
     using InteractionVolume = FVMPFAOInteractionVolume<TypeTag>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum
         {
             wPhaseIdx = Indices::wPhaseIdx,

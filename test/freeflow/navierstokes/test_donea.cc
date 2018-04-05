@@ -161,6 +161,7 @@ int main(int argc, char** argv) try
     nonLinearSolver.solve(x);
 
     // write vtk output
+    problem->postTimeStep(x);
     vtkWriter.write(1.0);
 
     timer.stop();

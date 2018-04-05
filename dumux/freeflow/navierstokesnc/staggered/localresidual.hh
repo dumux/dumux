@@ -51,7 +51,7 @@ class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using CellCenterResidual = CellCenterPrimaryVariables;
 
@@ -59,6 +59,7 @@ class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
 
     static constexpr int numComponents =ModelTraits::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr auto cellCenterOffset = ParentType::cellCenterOffset;
 
 public:
     using ParentType::ParentType;
@@ -76,7 +77,7 @@ public:
         // compute storage term of all components
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            const int eqIdx = Indices::conti0EqIdx + compIdx;
+            const int eqIdx = compIdx;
 
             const Scalar massOrMoleFraction = useMoles ? volVars.moleFraction(compIdx) : volVars.massFraction(compIdx);
             const Scalar s =  density * massOrMoleFraction;
@@ -120,7 +121,7 @@ protected:
             {
                 const auto& insideVolVars = elemVolVars[insideScv];
                 const Scalar massOrMoleFraction = useMoles ? insideVolVars.moleFraction(compIdx) : insideVolVars.massFraction(compIdx);
-                residual[eqIdx] = massOrMoleFraction - problem.dirichletAtPos(insideScv.center())[eqIdx];
+                residual[eqIdx - cellCenterOffset] = massOrMoleFraction - problem.dirichletAtPos(insideScv.center())[eqIdx];
             }
         }
 

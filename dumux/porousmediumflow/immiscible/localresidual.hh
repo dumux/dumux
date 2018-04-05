@@ -51,11 +51,10 @@ class ImmiscibleLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    // first index for the mass balance
-    enum { conti0EqIdx = Indices::conti0EqIdx };
 
-    static const int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    static constexpr int numPhases = ModelTraits::numPhases();
+    static constexpr int conti0EqIdx = ModelTraits::Indices::conti0EqIdx; //!< first index for the mass balance
 
 public:
     using ParentType::ParentType;

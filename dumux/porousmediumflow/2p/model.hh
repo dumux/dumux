@@ -71,6 +71,7 @@
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
+#include "formulation.hh"
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "vtkoutputfields.hh"
@@ -81,8 +82,14 @@ namespace Dumux
  * \ingroup TwoPModel
  * \brief Specifies a number properties of two-phase models.
  */
+template<TwoPFormulation formulation>
 struct TwoPModelTraits
 {
+    using Indices = TwoPIndices<formulation>;
+
+    static constexpr TwoPFormulation priVarFormulation()
+    { return formulation; }
+
     static constexpr int numEq() { return 2; }
     static constexpr int numPhases() { return 2; }
     static constexpr int numComponents() { return 2; }
@@ -90,6 +97,26 @@ struct TwoPModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return false; }
     static constexpr bool enableEnergyBalance() { return false; }
+};
+
+/*!
+ * \ingroup TwoPModel
+ * \brief Traits class for the two-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ */
+template<class PV, class FSY, class FST, class PT, class MT>
+struct TwoPVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
 };
 
 ////////////////////////////////
@@ -110,25 +137,32 @@ NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP));
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal two-phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_INT_PROP(TwoP, Formulation, TwoPFormulation::pwsn);                       //!< Set the default formulation to pWsN
+ //!< Set the default formulation to pwsn
+SET_PROP(TwoP, Formulation)
+{ static constexpr auto value = TwoPFormulation::pwsn; };
+
 SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //!< Use the immiscible local residual operator for the 2p model
-SET_TYPE_PROP(TwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);           //!< the VolumeVariables property
 SET_TYPE_PROP(TwoP, SpatialParams, FVSpatialParams<TypeTag>);                 //!< The spatial parameters. Use FVSpatialParams by default.
 
 //! The model traits class
-SET_TYPE_PROP(TwoP, ModelTraits, TwoPModelTraits);
+SET_TYPE_PROP(TwoP, ModelTraits, TwoPModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>);
 
 //! Set the vtk output fields specific to the twop model
-SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)>);
+SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields);
 
-//! The indices required by the isothermal 2p model
-SET_PROP(TwoP, Indices)
+//! Set the volume variables property
+SET_PROP(TwoP, VolumeVariables)
 {
 private:
-    using Fluidsystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int formulation = GET_PROP_VALUE(TypeTag, Formulation);
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = TwoPVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
 public:
-    using type = TwoPIndices<Fluidsystem, formulation, 0>;
+    using type = TwoPVolumeVariables<Traits>;
 };
 
 //! The two-phase model uses the immiscible fluid state
@@ -146,31 +180,18 @@ public:
 ////////////////////////////////////////////////////////
 
 //! The non-isothermal model traits class
-SET_TYPE_PROP(TwoPNI, ModelTraits, PorousMediumFlowNIModelTraits<TwoPModelTraits>);
+SET_TYPE_PROP(TwoPNI, ModelTraits, PorousMediumFlowNIModelTraits<TwoPModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>>);
 
 //! Set the vtk output fields specific to the non-isothermal twop model
-SET_TYPE_PROP(TwoPNI, VtkOutputFields, EnergyVtkOutputFields< TwoPVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)> >);
-
-//! Set non-isothermal Indices
-SET_PROP(TwoPNI, Indices)
-{
-private:
-    static constexpr int formulation = GET_PROP_VALUE(TypeTag, Formulation);
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using IsothermalIndices = TwoPIndices<FluidSystem, formulation, 0>;
-public:
-    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
-};
+SET_TYPE_PROP(TwoPNI, VtkOutputFields, EnergyVtkOutputFields<TwoPVtkOutputFields>);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNI, ThermalConductivityModel)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    using type = ThermalConductivitySomerton<Scalar, Indices>;
+    using type = ThermalConductivitySomerton<Scalar>;
 };
 
 } // end namespace Properties

@@ -109,16 +109,17 @@ class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     enum {
 
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
         temperatureIdx = Indices::temperatureIdx,
-        contiWEqIdx = Indices::contiWEqIdx,
-        contiGEqIdx = Indices::contiGEqIdx,
-        contiNEqIdx = Indices::contiNEqIdx,
+        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::wCompIdx,
+        contiGEqIdx = Indices::conti0EqIdx + FluidSystem::gCompIdx,
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::nCompIdx,
         energyEqIdx = Indices::energyEqIdx,
 
         // phase states
@@ -135,7 +136,6 @@ class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;

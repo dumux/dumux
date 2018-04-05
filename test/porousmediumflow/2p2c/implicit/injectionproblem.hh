@@ -102,26 +102,33 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    enum {
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    // primary variable indices
+    enum
+    {
         pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx,
-
-        // world dimension
-        dimWorld = GridView::dimensionworld
+        switchIdx = Indices::switchIdx
     };
 
-    enum {
-        nPhaseIdx = Indices::nPhaseIdx,
+    // phase presence
+    enum { wPhaseOnly = Indices::wPhaseOnly };
 
-        wPhaseOnly = Indices::wPhaseOnly,
-
-        wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx,
-
+    // equation indices
+    enum
+    {
         contiH2OEqIdx = Indices::contiWEqIdx,
         contiN2EqIdx = Indices::contiNEqIdx
+    };
+
+    // phase indices
+    enum
+    {
+        nPhaseIdx = FluidSystem::nPhaseIdx,
+        wCompIdx = FluidSystem::wCompIdx,
+        nCompIdx = FluidSystem::nCompIdx
     };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -129,12 +136,12 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     //! property that defines whether mole or mass fractions are used
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = ModelTraits::useMoles();
 
 public:
     /*!
@@ -246,9 +253,9 @@ public:
      * Negative values indicate an inflow.
      */
     NumEqVector neumann(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolumeFace& scvf) const
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
 
@@ -279,9 +286,7 @@ public:
      * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    {
-        return initial_(globalPos);
-    }
+    { return initial_(globalPos); }
 
     // \}
 

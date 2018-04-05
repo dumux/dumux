@@ -46,13 +46,12 @@ class NavierStokesNCVolumeVariables : virtual public NavierStokesVolumeVariables
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum { numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
-           numPhases = FluidSystem::numPhases,
+           numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
            mainCompIdx = Indices::mainCompIdx,
            pressureIdx = Indices::pressureIdx
     };
@@ -61,8 +60,8 @@ class NavierStokesNCVolumeVariables : virtual public NavierStokesVolumeVariables
     static constexpr auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
 public:
-
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = typename ParentType::FluidSystem;
+    using FluidState = typename ParentType::FluidState;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -92,7 +91,7 @@ public:
                 // binary diffusion coefficients
                 if(compIIdx != compJIdx)
                 {
-                    diffCoefficient_[phaseIdx][compIIdx][compJIdx]
+                    diffCoefficient_[compIIdx][compJIdx]
                         = FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
                                                                   paramCache,
                                                                   phaseIdx,
@@ -128,9 +127,11 @@ public:
             if(compIdx == mainCompIdx)
                 continue;
 
+            int offset = mainCompIdx != 0 ? 1 : 0;
+
             // temporary add 1.0 to remove spurious differences in mole fractions
             // which are below the numerical accuracy
-            Scalar moleOrMassFraction = elemSol[0][Indices::conti0EqIdx+compIdx] + 1.0;
+            Scalar moleOrMassFraction = elemSol[0][Indices::conti0EqIdx+compIdx+offset] + 1.0;
             moleOrMassFraction = moleOrMassFraction - 1.0;
             if(useMoles)
                 fluidState.setMoleFraction(phaseIdx, compIdx, moleOrMassFraction);
@@ -196,7 +197,7 @@ public:
     {
         if (compIIdx == compJIdx)
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
-        return diffCoefficient_[phaseIdx][compIIdx][compJIdx];
+        return diffCoefficient_[compIIdx][compJIdx];
     }
 
      /*!
@@ -218,7 +219,7 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    std::array<std::array<std::array<Scalar, numComponents>, numComponents>, numPhases> diffCoefficient_;
+    std::array<std::array<Scalar, numComponents>, numComponents> diffCoefficient_;
 };
 
 } // end namespace Dumux

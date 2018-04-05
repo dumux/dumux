@@ -38,9 +38,9 @@ namespace Dumux {
  */
 template<class TypeTag>
 class ExtendedRichardsPrimaryVariableSwitch
-: public PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), ExtendedRichardsPrimaryVariableSwitch<TypeTag>>
+: public PrimaryVariableSwitch<ExtendedRichardsPrimaryVariableSwitch<TypeTag>>
 {
-    using ParentType = PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), ExtendedRichardsPrimaryVariableSwitch<TypeTag>>;
+    using ParentType = PrimaryVariableSwitch<ExtendedRichardsPrimaryVariableSwitch<TypeTag>>;
     friend ParentType;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -51,7 +51,7 @@ class ExtendedRichardsPrimaryVariableSwitch
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum {
         switchIdx = Indices::switchIdx,

@@ -47,7 +47,7 @@ enum ElectroChemistryModel { Ochs, Acosta };
  * with the electrochemical models suggested by Ochs (2008) \cite ochs2008 or Acosta et al. (2006) \cite A3:acosta:2006
  * \todo TODO: Scalar type should be extracted from VolumeVariables!
  */
-template <class Scalar, class Indices, class FVGridGeometry, ElectroChemistryModel electroChemistryModel>
+template <class Scalar, class Indices, class FluidSystem, class FVGridGeometry, ElectroChemistryModel electroChemistryModel>
 class ElectroChemistry
 {
     using FVElementGeometry = typename FVGridGeometry::LocalView;
@@ -57,14 +57,9 @@ class ElectroChemistry
     using Constant = Dumux::Constants<Scalar>;
 
     enum {
-        //indices of the phases
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
-    };
-    enum {
         //indices of the components
-        wCompIdx = Indices::wCompIdx, //major component of the liquid phase
-        nCompIdx = Indices::nCompIdx, //major component of the gas phase
+        wCompIdx = FluidSystem::wCompIdx, //major component of the liquid phase
+        nCompIdx = FluidSystem::nCompIdx, //major component of the gas phase
         O2Idx = wCompIdx + 2
     };
     enum {
@@ -126,6 +121,7 @@ public:
     template<class VolumeVariables>
     static Scalar calculateCurrentDensity(const VolumeVariables &volVars)
     {
+
         static int maxIter = getParam<int>("ElectroChemistry.MaxIterations");
         static Scalar specificResistance = getParam<Scalar>("ElectroChemistry.SpecificResistance");
         static Scalar reversibleVoltage = getParam<Scalar>("ElectroChemistry.ReversibleVoltage");
@@ -147,7 +143,7 @@ public:
             Scalar activationLossesNext    = calculateActivationLosses_(volVars, currentDensity+deltaCurrentDensity);
             Scalar concentrationLosses     = calculateConcentrationLosses_(volVars);
             Scalar activationLossesDiff    = activationLossesNext - activationLosses;
-            Scalar sw                      = volVars.saturation(wPhaseIdx);
+            Scalar sw                      = volVars.saturation(FluidSystem::wPhaseIdx);
 
             if(electroChemistryModel == ElectroChemistryModel::Acosta)
             {
@@ -202,11 +198,11 @@ private:
         static Scalar transferCoefficient = getParam<Scalar>("ElectroChemistry.TransferCoefficient");
 
         //Saturation sw for Acosta calculation
-        Scalar sw = volVars.saturation(wPhaseIdx);
+        Scalar sw = volVars.saturation(FluidSystem::wPhaseIdx);
         //Calculate prefactor
         Scalar preFactor = Constant::R*volVars.fluidState().temperature()/transferCoefficient/Constant::F/numElectrons;
         //Get partial pressure of O2 in the gas phase
-        Scalar pO2 = volVars.pressure(nPhaseIdx) * volVars.fluidState().moleFraction(nPhaseIdx, O2Idx);
+        Scalar pO2 = volVars.pressure(FluidSystem::nPhaseIdx) * volVars.fluidState().moleFraction(FluidSystem::nPhaseIdx, O2Idx);
 
         Scalar losses = 0.0;
         //Calculate activation losses
@@ -245,7 +241,7 @@ private:
         //Calculate preFactor
         Scalar preFactor = Constant::R*volVars.temperature()/transferCoefficient/Constant::F/numElectrons;
         //Get partial pressure of O2 in the gas phase
-        Scalar pO2 = volVars.pressure(nPhaseIdx) * volVars.fluidState().moleFraction(nPhaseIdx, O2Idx);
+        Scalar pO2 = volVars.pressure(FluidSystem::nPhaseIdx) * volVars.fluidState().moleFraction(FluidSystem::nPhaseIdx, O2Idx);
 
         Scalar losses = 0.0;
         //Calculate concentration losses

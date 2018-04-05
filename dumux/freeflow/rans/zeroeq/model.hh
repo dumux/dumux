@@ -39,8 +39,7 @@
 
 #include "volumevariables.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 namespace Properties {
 
 ///////////////////////////////////////////////////////////////////////////

@@ -25,141 +25,134 @@
 #ifndef DUMUX_MPNC_VOLUME_VARIABLES_HH
 #define DUMUX_MPNC_VOLUME_VARIABLES_HH
 
-#include "indices.hh"
-
-#include <dumux/common/properties.hh>
-#include <dumux/porousmediumflow/nonequilibrium/volumevariables.hh>
-#include <dumux/porousmediumflow/volumevariables.hh>
-
 #include <dumux/material/constraintsolvers/ncpflash.hh>
 #include <dumux/material/constraintsolvers/compositionfromfugacities.hh>
 
+#include <dumux/porousmediumflow/nonequilibrium/volumevariables.hh>
+#include <dumux/porousmediumflow/volumevariables.hh>
+
+#include "pressureformulation.hh"
+
 namespace Dumux
 {
+
 /*!
  * \ingroup MPNCModel
- * \brief Contains the quantities which are constant within a
- *        finite volume in the MpNc model.
+ * \brief Contains the quantities which are constant within a finite volume in the MpNc model.
+ *
+ * \tparam Traits Class encapsulating types to be used by the vol vars
  */
-template <class TypeTag>
+template <class Traits>
 class MPNCVolumeVariables
-    : public PorousMediumFlowVolumeVariables<TypeTag>
-    , public NonEquilibriumVolumeVariables<TypeTag>
+    : public PorousMediumFlowVolumeVariables< Traits, MPNCVolumeVariables<Traits> >
+    , public NonEquilibriumVolumeVariables< Traits >
 {
-    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables< Traits, MPNCVolumeVariables<Traits> >;
+    using NonEqVolVars = NonEquilibriumVolumeVariables< Traits >;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using PermeabilityType = typename Traits::PermeabilityType;
 
-    // formulations
-    enum {
-        pressureFormulation = GET_PROP_VALUE(TypeTag, PressureFormulation),
-        mostWettingFirst    = MpNcPressureFormulation::mostWettingFirst,
-        leastWettingFirst   = MpNcPressureFormulation::leastWettingFirst
-    };
+    using ModelTraits = typename Traits::ModelTraits;
+    static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
 
-    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
-    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
-    enum {s0Idx = Indices::s0Idx};
-    enum {p0Idx = Indices::p0Idx};
-    enum {fug0Idx = Indices::fug0Idx};
+    static constexpr bool enableThermalNonEquilibrium = ModelTraits::enableThermalNonEquilibrium();
+    static constexpr bool enableChemicalNonEquilibrium = ModelTraits::enableChemicalNonEquilibrium();
+    static constexpr bool enableDiffusion = ModelTraits::enableMolecularDiffusion();
 
-    static constexpr bool enableThermalNonEquilibrium = GET_PROP_TYPE(TypeTag, ModelTraits)::enableThermalNonEquilibrium();
-    static constexpr bool enableChemicalNonEquilibrium = GET_PROP_TYPE(TypeTag, ModelTraits)::enableChemicalNonEquilibrium();
-    static constexpr bool enableDiffusion = GET_PROP_TYPE(TypeTag, ModelTraits)::enableMolecularDiffusion();
-
-
-    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
-    using CompositionFromFugacities = Dumux::CompositionFromFugacities<Scalar, FluidSystem>;
+    using Indices = typename ModelTraits::Indices;
+    using ComponentVector = Dune::FieldVector<Scalar, ModelTraits::numComponents()>;
+    using CompositionFromFugacities = Dumux::CompositionFromFugacities<Scalar, typename Traits::FluidSystem>;
 
 public:
-    // export type of fluid state for non-isothermal models
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using ParentType::ParentType;
+    //! export the underlying fluid system
+    using FluidSystem = typename Traits::FluidSystem;
+    //! export the fluid state type
+    using FluidState = typename Traits::FluidState;
 
-    MPNCVolumeVariables()
-    { };
-
+    //! return number of phases considered by the model
+    static constexpr int numPhases() { return ModelTraits::numPhases(); }
+    //! return number of components considered by the model
+    static constexpr int numComponents() { return ModelTraits::numComponents(); }
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
-                const Problem &problem,
-                const Element &element,
-                const SubControlVolume& scv)
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol& elemSol,
+                const Problem& problem,
+                const Element& element,
+                const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
-
         completeFluidState(elemSol, problem, element, scv, fluidState_);
 
         //calculate the remaining quantities
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+
         // relative permeabilities
-        MaterialLaw::relativePermeabilities(relativePermeability_,
-                                            materialParams,
-                                            fluidState_);
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
+        MaterialLaw::relativePermeabilities(relativePermeability_, materialParams, fluidState_);
+
+        // binary diffusion coefficients
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
         if (enableDiffusion)
         {
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx)
             {
                 int compIIdx = phaseIdx;
-                for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
-                {
-                    // binary diffusion coefficients
+                for (unsigned int compJIdx = 0; compJIdx < numComponents(); ++compJIdx)
                     if(compIIdx!= compJIdx)
-                    {
                         setDiffusionCoefficient_(phaseIdx, compJIdx,
                                                 FluidSystem::binaryDiffusionCoefficient(fluidState_,
                                                                                         paramCache,
                                                                                         phaseIdx,
                                                                                         compIIdx,
                                                                                         compJIdx));
-                    }
-                }
             }
         }
 
         porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
-        //only do this if we are either looking at chemical or thermal non-equilibrium. or both
+        // only do this if we are either looking at chemical and/or thermal non-equilibrium
         if (enableChemicalNonEquilibrium || enableThermalNonEquilibrium)
         {
-        // specific interfacial area,
-        // well also all the dimensionless numbers :-)
-        // well, also the mass transfer rate
-            this->updateInterfacialArea(elemSol,
-                                        fluidState_,
-                                        paramCache,
-                                        problem,
-                                        element,
-                                        scv);
+            // specific interfacial area,
+            // well, also all the dimensionless numbers :-)
+            // well, also the mass transfer rate
+            NonEqVolVars::updateInterfacialArea(elemSol,
+                                                fluidState_,
+                                                paramCache,
+                                                problem,
+                                                element,
+                                                scv);
         }
     }
 
     /*!
-     * \copydoc ImplicitModel::completeFluidState
-     * \param isOldSol Specifies whether this is the previous solution or the current one
+     * \brief Set complete fluid state
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     * \param fluidState A container with the current (physical) state of the fluid
      */
-     template<class ElementSolution>
-     void completeFluidState(const ElementSolution& elemSol,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const SubControlVolume& scv,
-                                   FluidState& fluidState)
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void completeFluidState(const ElemSol& elemSol,
+                            const Problem& problem,
+                            const Element& element,
+                            const Scv& scv,
+                            FluidState& fluidState)
     {
         /////////////
         // set the fluid phase temperatures
@@ -170,52 +163,52 @@ public:
             fluidState.setTemperature(t);
         }
         else
-        {
-            this->updateTemperatures(elemSol,
-                                     problem,
-                                      element,
-                                      scv,
-                                      fluidState);
-        }
+            NonEqVolVars::updateTemperatures(elemSol, problem, element, scv, fluidState);
+
         /////////////
         // set the phase saturations
         /////////////
-        auto&& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+
         Scalar sumSat = 0;
-        for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx) {
-            sumSat += priVars[s0Idx + phaseIdx];
-            fluidState.setSaturation(phaseIdx, priVars[s0Idx + phaseIdx]);
+        for (int phaseIdx = 0; phaseIdx < numPhases() - 1; ++phaseIdx)
+        {
+            sumSat += priVars[Indices::s0Idx + phaseIdx];
+            fluidState.setSaturation(phaseIdx, priVars[Indices::s0Idx + phaseIdx]);
         }
-        Valgrind::CheckDefined(sumSat);
-        fluidState.setSaturation(numPhases - 1, 1.0 - sumSat);
+
+        fluidState.setSaturation(numPhases() - 1, 1.0 - sumSat);
 
         /////////////
         // set the phase pressures
         /////////////
-        // capillary pressure parameters
-        const auto& materialParams =
-            problem.spatialParams().materialLawParams(element, scv, elemSol);
-        // capillary pressures
-        Scalar capPress[numPhases];
-        MaterialLaw::capillaryPressures(capPress, materialParams, fluidState);
-        // add to the pressure of the first fluid phase
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
+        // capillary pressures
+        Scalar capPress[numPhases()];
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
+        MaterialLaw::capillaryPressures(capPress, materialParams, fluidState);
+
+        // add to the pressure of the first fluid phase,
         // depending on which pressure is stored in the primary variables
-        if(pressureFormulation == mostWettingFirst){
+        if(pressureFormulation == MpNcPressureFormulation::mostWettingFirst)
+        {
             // This means that the pressures are sorted from the most wetting to the least wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pw
-            const Scalar pw = priVars[p0Idx];
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            const Scalar pw = priVars[Indices::p0Idx];
+            for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx)
                 fluidState.setPressure(phaseIdx, pw - capPress[0] + capPress[phaseIdx]);
         }
-        else if(pressureFormulation == leastWettingFirst){
+        else if(pressureFormulation == MpNcPressureFormulation::leastWettingFirst)
+        {
             // This means that the pressures are sorted from the least wetting to the most wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pn
-            const Scalar pn = priVars[p0Idx];
-            for (int phaseIdx = numPhases-1; phaseIdx >= 0; --phaseIdx)
-                fluidState.setPressure(phaseIdx, pn - capPress[numPhases-1] + capPress[phaseIdx]);
+            const Scalar pn = priVars[Indices::p0Idx];
+            for (int phaseIdx = numPhases()-1; phaseIdx >= 0; --phaseIdx)
+                fluidState.setPressure(phaseIdx, pn - capPress[numPhases()-1] + capPress[phaseIdx]);
         }
-        else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << pressureFormulation << " is invalid.");
+        else
+            DUNE_THROW(Dune::InvalidStateException, "MPNCVolumeVariables do not support the chosen pressure formulation");
 
         /////////////
         // set the fluid compositions
@@ -225,43 +218,38 @@ public:
 
         ComponentVector fug;
         // retrieve component fugacities
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            fug[compIdx] = priVars[fug0Idx + compIdx];
+        for (int compIdx = 0; compIdx < numComponents(); ++compIdx)
+            fug[compIdx] = priVars[Indices::fug0Idx + compIdx];
 
         if(!enableChemicalNonEquilibrium)
         {
             // calculate phase compositions
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx)
+            {
                 // initial guess
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                    Scalar x_ij = 1.0/numComponents;
+                for (int compIdx = 0; compIdx < numComponents(); ++compIdx)
+                {
+                    Scalar x_ij = 1.0/numComponents();
 
                     // set initial guess of the component's mole fraction
-                    fluidState.setMoleFraction(phaseIdx,
-                                            compIdx,
-                                            x_ij);
+                    fluidState.setMoleFraction(phaseIdx, compIdx, x_ij);
                 }
-                // calculate the phase composition from the component
-                // fugacities
+
+                // calculate the phase composition from the component fugacities
                 CompositionFromFugacities::guessInitial(fluidState, paramCache, phaseIdx, fug);
                 CompositionFromFugacities::solve(fluidState, paramCache, phaseIdx, fug);
             }
         }
         else
-        {
-            this->updateMoleFraction(fluidState,
-                                     paramCache,
-                                     priVars);
-        }
+            NonEqVolVars::updateMoleFraction(fluidState, paramCache, priVars);
 
-        // dynamic viscosities
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            // viscosities
-            Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+        // dynamic viscosities and enthalpies
+        for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx)
+        {
+            const auto mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
             fluidState.setViscosity(phaseIdx, mu);
 
-            // compute and set the enthalpy
-            Scalar h = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
+            const auto h = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
             fluidState.setEnthalpy(phaseIdx, h);
         }
 
@@ -435,10 +423,8 @@ public:
      */
     bool isPhaseActive(const unsigned int phaseIdx) const
     {
-        return
-            phasePresentIneq(fluidState(), phaseIdx) -
-            phaseNotPresentIneq(fluidState(), phaseIdx)
-            >= 0;
+        return phasePresentIneq(fluidState(), phaseIdx) -
+               phaseNotPresentIneq(fluidState(), phaseIdx) >= 0;
     }
 
     /*!
@@ -491,12 +477,12 @@ public:
     {
         // difference of sum of mole fractions in the phase from 100%
         Scalar a = 1;
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        for (int compIdx = 0; compIdx < numComponents(); ++compIdx)
             a -= fluidState.moleFraction(phaseIdx, compIdx);
         return a;
     }
 
-protected:
+private:
 
     void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
     {
@@ -508,9 +494,9 @@ protected:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient for phaseIdx = compIdx doesn't exist");
     }
 
-    std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
+    std::array<std::array<Scalar, numComponents()-1>, numPhases()> diffCoefficient_;
     Scalar porosity_; //!< Effective porosity within the control volume
-    Scalar relativePermeability_[numPhases]; //!< Effective relative permeability within the control volume
+    Scalar relativePermeability_[numPhases()]; //!< Effective relative permeability within the control volume
     PermeabilityType permeability_;
 
     //! Mass fractions of each component within each phase

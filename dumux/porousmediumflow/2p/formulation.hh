@@ -16,33 +16,27 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
 /*!
  * \file
- * \ingroup NIModel
- * \brief Adds vtk output fields specific to non-isothermal models
+ * \ingroup TwoPModel
+ * \brief Defines an enumeration for the formulations accepted by the two-phase model.
  */
-#ifndef DUMUX_ENERGY_OUTPUT_FIELDS_HH
-#define DUMUX_ENERGY_OUTPUT_FIELDS_HH
+#ifndef DUMUX_2P_FORMULATION_INDICES_HH
+#define DUMUX_2P_FORMULATION_INDICES_HH
 
-namespace Dumux {
-
-/*!
- * \ingroup NIModel
- * \brief Adds vtk output fields specific to non-isothermal models
- */
-template<class IsothermalVtkOutputFields>
-class EnergyVtkOutputFields
+namespace Dumux
 {
-
-public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
-    {
-        IsothermalVtkOutputFields::init(vtk);
-        vtk.addVolumeVariable( [](const auto& v){ return v.temperature(); }, "temperature");
-    }
+/*!
+ * \ingroup TwoPModel
+ * \brief Enumerates the formulations which the two-phase model accepts.
+ */
+enum class TwoPFormulation
+{
+    pwsn, //!< pw and sn as primary variables
+    pnsw  //!< pn and sw as primary variables
 };
 
-} // end namespace Dumux
+} // namespace Dumux
 
 #endif

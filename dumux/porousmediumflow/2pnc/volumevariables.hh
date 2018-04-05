@@ -37,7 +37,7 @@
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
-#include "indices.hh" // for formulation
+#include <dumux/porousmediumflow/2p/formulation.hh>
 
 namespace Dumux {
 
@@ -46,40 +46,29 @@ namespace Dumux {
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase, n-component model.
  */
-template <class TypeTag>
-class TwoPNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
+template <class Traits>
+class TwoPNCVolumeVariables
+: public PorousMediumFlowVolumeVariables<Traits, TwoPNCVolumeVariables<Traits>>
 {
-    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ParentType = PorousMediumFlowVolumeVariables<Traits, TwoPNCVolumeVariables<Traits>>;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using PermeabilityType = typename Traits::PermeabilityType;
+    using FS = typename Traits::FluidSystem;
+    using Indices = typename Traits::ModelTraits::Indices;
 
     enum
     {
-        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
-        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
-        numMajorComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numMajorComponents(),
-
-        // formulations
-        formulation = GET_PROP_VALUE(TypeTag, Formulation),
-        pwsn = TwoPNCFormulation::pwsn,
-        pnsw = TwoPNCFormulation::pnsw,
+        numPhases = Traits::ModelTraits::numPhases(),
+        numComponents = Traits::ModelTraits::numComponents(),
+        numMajorComponents = Traits::ModelTraits::numMajorComponents(),
 
         // phase indices
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
+        wPhaseIdx = FS::wPhaseIdx,
+        nPhaseIdx = FS::nPhaseIdx,
 
         // component indices
-        wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx,
+        wCompIdx = FS::wCompIdx,
+        nCompIdx = FS::nCompIdx,
 
         // phase presence enums
         nPhaseOnly = Indices::nPhaseOnly,
@@ -91,15 +80,21 @@ class TwoPNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
         switchIdx = Indices::switchIdx,
     };
 
-    using Element = typename GridView::template Codim<0>::Entity;
-    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
-    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static_assert(useMoles, "use moles has to be set true in the 2pnc model");
+    static constexpr auto formulation = Traits::ModelTraits::priVarFormulation();
+
+    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FS>;
+    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FS>;
 
 public:
+    //! export fluid state type
+    using FluidState = typename Traits::FluidState;
+    //! export fluid system type
+    using FluidSystem = typename Traits::FluidSystem;
 
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    static constexpr bool useMoles()
+    { return Traits::ModelTraits::useMoles(); }
+
+    static_assert(useMoles(), "use moles has to be set true in the 2pnc model");
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -110,19 +105,20 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub control volume
     */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume& scv)
+                const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        Implementation::completeFluidState(elemSol, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, fluidState_);
 
         /////////////
         // calculate the remaining quantities
         /////////////
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto &materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
         // Second instance of a parameter cache.
@@ -173,11 +169,11 @@ public:
      *
      * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
      */
-    template<class ElementSolution>
-    static void completeFluidState(const ElementSolution& elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    static void completeFluidState(const ElemSol& elemSol,
                                    const Problem& problem,
                                    const Element& element,
-                                   const SubControlVolume& scv,
+                                   const Scv& scv,
                                    FluidState& fluidState)
     {
         Scalar t = ParentType::temperature(elemSol, problem, element, scv);
@@ -201,12 +197,12 @@ public:
         }
         else if (phasePresence == bothPhases)
         {
-            if (formulation == pwsn)
+            if (formulation == TwoPFormulation::pwsn)
                 Sn = priVars[switchIdx];
-            else if (formulation == pnsw)
+            else if (formulation == TwoPFormulation::pnsw)
                 Sn = 1.0 - priVars[switchIdx];
             else
-                DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
+                DUNE_THROW(Dune::InvalidStateException, "Formulation is invalid.");
         }
         else
         {
@@ -222,17 +218,18 @@ public:
 
         // calculate capillary pressure
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         auto pc = MaterialLaw::pc(materialParams, 1 - Sn);
 
         // extract the pressures
-        if (formulation == pwsn)
+        if (formulation == TwoPFormulation::pwsn)
         {
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
             if (priVars[pressureIdx] + pc < 0.0)
                  DUNE_THROW(NumericalProblem,"Capillary pressure is too low");
             fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
         }
-        else if (formulation == pnsw)
+        else if (formulation == TwoPFormulation::pnsw)
         {
             fluidState.setPressure(nPhaseIdx, priVars[pressureIdx]);
             // Here we check for (p_g - pc) in order to ensure that (p_l > 0)
@@ -245,7 +242,7 @@ public:
         }
         else
         {
-            DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
+            DUNE_THROW(Dune::InvalidStateException, "Formulation is invalid.");
         }
 
         /////////////
@@ -265,7 +262,7 @@ public:
             // set the known mole fractions in the fluidState so that they
             // can be used by the MiscibleMultiPhaseComposition constraint solver
             unsigned int knownPhaseIdx = nPhaseIdx;
-            if (GET_PROP_VALUE(TypeTag, SetMoleFractionsForWettingPhase))
+            if (Traits::ModelTraits::setMoleFractionsForWettingPhase())
             {
                 knownPhaseIdx = wPhaseIdx;
             }

@@ -54,7 +54,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered >
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     static constexpr int dim = GridView::dimension;
@@ -106,7 +106,7 @@ public:
             if(scvf.boundary())
             {
                 const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-                if(bcTypes.isOutflow(eqIdx) && eqIdx != pressureIdx)
+                if(bcTypes.isOutflow(eqIdx))
                     return flux;
             }
 

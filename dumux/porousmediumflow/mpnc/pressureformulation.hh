@@ -18,31 +18,24 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NIModel
- * \brief Adds vtk output fields specific to non-isothermal models
+ * \ingroup MPNCModel
+ * \brief Enumeration of the formulations accepted by the MpNc model.
  */
-#ifndef DUMUX_ENERGY_OUTPUT_FIELDS_HH
-#define DUMUX_ENERGY_OUTPUT_FIELDS_HH
+#ifndef DUMUX_MPNC_PRESSUREFORMULATION_HH
+#define DUMUX_MPNC_PRESSUREFORMULATION_HH
 
-namespace Dumux {
-
-/*!
- * \ingroup NIModel
- * \brief Adds vtk output fields specific to non-isothermal models
- */
-template<class IsothermalVtkOutputFields>
-class EnergyVtkOutputFields
+namespace Dumux
 {
 
-public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
-    {
-        IsothermalVtkOutputFields::init(vtk);
-        vtk.addVolumeVariable( [](const auto& v){ return v.temperature(); }, "temperature");
-    }
+/*!
+ * \ingroup MPNCModel
+ * \brief Enumerates the formulations which the MpNc model accepts.
+ */
+enum class MpNcPressureFormulation
+{
+    mostWettingFirst, leastWettingFirst
 };
 
-} // end namespace Dumux
+}
 
 #endif

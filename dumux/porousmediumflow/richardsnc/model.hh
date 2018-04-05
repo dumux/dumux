@@ -84,21 +84,26 @@
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 
+#include <dumux/porousmediumflow/richards/model.hh>
+
 #include "volumevariables.hh"
 #include "indices.hh"
 #include "vtkoutputfields.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup RichardsNCModel
  * \brief Specifies a number properties of the Richards n-components model.
  *
  * \tparam nComp the number of components to be considered.
+ * \tparam useMol whether to use mass or mole balances
  */
-template<int nComp>
+template<int nComp, bool useMol>
 struct RichardsNCModelTraits
 {
+    using Indices = RichardsNCIndices;
+
     static constexpr int numEq() { return nComp; }
     static constexpr int numPhases() { return 1; }
     static constexpr int numComponents() { return nComp; }
@@ -106,10 +111,11 @@ struct RichardsNCModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
     static constexpr bool enableEnergyBalance() { return false; }
+
+    static constexpr bool useMoles() { return useMol; }
 };
 
-namespace Properties
-{
+namespace Properties {
 
 //////////////////////////////////////////////////////////////////
 // Type tags
@@ -131,7 +137,7 @@ SET_PROP(RichardsNC, ModelTraits)
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    using type = RichardsNCModelTraits<FluidSystem::numComponents>;
+    using type = RichardsNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles)>;
 };
 
 //! Define that per default mole fractions are used in the balance equations
@@ -144,8 +150,20 @@ SET_TYPE_PROP(RichardsNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
 //! the total mass balance, i.e. the phase balance
 SET_INT_PROP(RichardsNC, ReplaceCompEqIdx, 0);
 
-//! define the VolumeVariables
-SET_TYPE_PROP(RichardsNC, VolumeVariables, RichardsNCVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(RichardsNC, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = RichardsVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+public:
+    using type = RichardsNCVolumeVariables<Traits>;
+};
 
 //! The default richardsnc model computes no diffusion in the air phase
 //! Turning this on leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
@@ -174,56 +192,30 @@ SET_PROP(RichardsNC, FluidState)
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
+
 //! Set the vtk output fields specific to this model
-SET_PROP(RichardsNC, VtkOutputFields)
-{
-private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+SET_TYPE_PROP(RichardsNC, VtkOutputFields, RichardsNCVtkOutputFields);
 
-public:
-    using type = RichardsNCVtkOutputFields<FluidSystem, Indices>;
-};
-
-//! Set the indices used
-SET_TYPE_PROP(RichardsNC, Indices, RichardsNCIndices<>);
 //! The spatial parameters to be employed.
 //! Use FVSpatialParamsOneP by default.
 SET_TYPE_PROP(RichardsNC, SpatialParams, FVSpatialParamsOneP<TypeTag>);
 
 //! The model after Millington (1961) is used for the effective diffusivity
-SET_PROP(RichardsNC, EffectiveDiffusivityModel)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = DiffusivityMillingtonQuirk<Scalar>;
-};
+SET_TYPE_PROP(RichardsNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //! average is used as default model to compute the effective thermal heat conductivity
-SET_PROP(RichardsNCNI, ThermalConductivityModel)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = ThermalConductivityAverage<Scalar>;
-};
+SET_TYPE_PROP(RichardsNCNI, ThermalConductivityModel, ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //////////////////////////////////////////////////////////////////
 // Property values for non-isothermal Richards n-components model
 //////////////////////////////////////////////////////////////////
-
-//! set non-isothermal Indices
-SET_PROP(RichardsNCNI, Indices)
-{
-private:
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-public:
-    using type = EnergyIndices<RichardsNCIndices<>, numEq, 0>;
-};
 
 //! set non-isothermal model traits
 SET_PROP(RichardsNCNI, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using IsothermalTraits = RichardsNCModelTraits<FluidSystem::numComponents>;
+    using IsothermalTraits = RichardsNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles)>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };

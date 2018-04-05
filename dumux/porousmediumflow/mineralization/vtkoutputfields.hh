@@ -34,21 +34,24 @@ namespace Dumux
  * \ingroup MineralizationModel
  * \brief Adds vtk output fields specific to a NCMin model
  */
-template<class NonMineralizationVtkOutputFields, class FluidSystem>
+template<class NonMineralizationVtkOutputFields>
 class MineralizationVtkOutputFields
 {
-
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
+        using FluidSystem = typename VtkOutputModule::VolumeVariables::FluidSystem;
+
         // output of the model without mineralization
         NonMineralizationVtkOutputFields::init(vtk);
 
         // additional output
+        // TODO: Why does fluid system have number of solid phases??
         for (int i = 0; i < FluidSystem::numSPhases; ++i)
         {
-            vtk.addVolumeVariable([i](const auto& v){ return v.precipitateVolumeFraction(FluidSystem::numPhases + i); },"precipitateVolumeFraction_"+ FluidSystem::phaseName(FluidSystem::numPhases + i));
+            vtk.addVolumeVariable([i](const auto& v){ return v.precipitateVolumeFraction(FluidSystem::numPhases + i); },
+                                  "precipitateVolumeFraction_"+ FluidSystem::phaseName(FluidSystem::numPhases + i));
         }
     }
 };

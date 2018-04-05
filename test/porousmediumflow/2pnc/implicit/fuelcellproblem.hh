@@ -54,7 +54,8 @@ SET_TYPE_PROP(FuelCellTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(FuelCellTypeTag, Problem, FuelCellProblem<TypeTag>);
 // Set the primary variable combination for the 2pnc model
-SET_INT_PROP(FuelCellTypeTag, Formulation, TwoPNCFormulation::pnsw);
+SET_PROP(FuelCellTypeTag, Formulation)
+{ static constexpr auto value = TwoPFormulation::pnsw; };
 
 // Set fluid configuration
 SET_PROP(FuelCellTypeTag, FluidSystem)
@@ -81,7 +82,7 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -95,11 +96,11 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     // Select the electrochemistry method
-    using ElectroChemistry = typename Dumux::ElectroChemistry<Scalar, Indices, FVGridGeometry, ElectroChemistryModel::Ochs>;
+    using ElectroChemistry = typename Dumux::ElectroChemistry<Scalar, Indices, FluidSystem, FVGridGeometry, ElectroChemistryModel::Ochs>;
 
     enum { numComponents = FluidSystem::numComponents };
 
-    enum { wPhaseIdx = Indices::wPhaseIdx };
+    enum { wPhaseIdx = FluidSystem::wPhaseIdx };
 
     enum { bothPhases = Indices::bothPhases };
 

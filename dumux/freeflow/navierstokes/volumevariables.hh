@@ -50,13 +50,14 @@ template <class TypeTag>
 class NavierStokesVolumeVariablesImplementation<TypeTag, false>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
 public:
-
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
@@ -225,15 +226,16 @@ class NavierStokesVolumeVariablesImplementation<TypeTag, true>
 {
     using ParentType = NavierStokesVolumeVariablesImplementation<TypeTag, false>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static const int temperatureIdx = Indices::temperatureIdx;
 
 public:
-
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using PrimaryVariables = typename ParentType::PrimaryVariables;
+    using FluidSystem = typename ParentType::FluidSystem;
+    using FluidState = typename ParentType::FluidState;
 
     /*!
      * \brief Update all quantities for a given control volume

@@ -69,19 +69,8 @@ SET_TYPE_PROP(MPNCComparisonTypeTag,
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(MPNCComparisonTypeTag, Scalar, double);
-
 SET_BOOL_PROP(MPNCComparisonTypeTag, UseMoles, true);
-
-SET_PROP(MPNCComparisonTypeTag, VtkOutputFields)
-{
-private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-public:
-    using type = TwoPTwoCMPNCVtkOutputFields<FluidSystem, Indices>;
-};
-
+SET_TYPE_PROP(MPNCComparisonTypeTag, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields);
 }
 
 
@@ -96,7 +85,7 @@ class MPNCComparisonProblem
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);

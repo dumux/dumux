@@ -26,20 +26,11 @@
 #define DUMUX_BOX_2P_INDICES_HH
 
 #include <dumux/common/properties.hh>
+#include "formulation.hh"
 
 namespace Dumux
 {
 // \{
-
-/*!
- * \ingroup TwoPModel
- * \brief Enumerates the formulations which the two-phase model accepts.
- */
-struct TwoPFormulation
-{
-    static const int pwsn = 0; //!< pw and sn as primary variables
-    static const int pnsw = 1; //!< pn and sw as primary variables
-};
 
 /*!
  * \ingroup TwoPModel
@@ -48,21 +39,16 @@ struct TwoPFormulation
  * \tparam FluidSystem The fluid system class
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class FluidSystem, int PVOffset = 0>
 struct TwoPCommonIndices
 {
-    // Phase indices
-    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< index of the wetting phase
-    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< index of the non-wetting phase
-
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< index of the saturation of the non-wetting/wetting phase
+    static const int pressureIdx = 0; //!< index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static const int saturationIdx = 1; //!< index of the saturation of the non-wetting/wetting phase
 
     // indices of the equations
-    static const int conti0EqIdx = PVOffset + 0; //!< index of the first continuity equation
-    static const int contiWEqIdx = PVOffset + 0; //!< index of the continuity equation of the wetting phase
-    static const int contiNEqIdx = PVOffset + 1; //!< index of the continuity equation of the non-wetting phase
+    static const int conti0EqIdx = 0; //!< index of the first continuity equation
+    static const int contiWEqIdx = 0; //!< index of the continuity equation of the wetting phase
+    static const int contiNEqIdx = 1; //!< index of the continuity equation of the non-wetting phase
 };
 
 
@@ -75,15 +61,12 @@ struct TwoPCommonIndices
  * \tparam formulation The formulation, either pwsn or pnsw
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class FluidSystem,
-          int formulation = TwoPFormulation::pwsn,
-          int PVOffset = 0>
-struct TwoPIndices
-: public TwoPCommonIndices<FluidSystem, PVOffset>, TwoPFormulation
+template <TwoPFormulation formulation = TwoPFormulation::pwsn>
+struct TwoPIndices : public TwoPCommonIndices
 {
     // indices of the primary variables
-    static const int pwIdx = PVOffset + 0; //!< index of the wetting phase pressure
-    static const int snIdx = PVOffset + 1; //!< index of the nonwetting phase saturation
+    static constexpr int pwIdx = 0; //!< index of the wetting phase pressure
+    static constexpr int snIdx = 1; //!< index of the nonwetting phase saturation
 };
 
 /*!
@@ -94,13 +77,13 @@ struct TwoPIndices
  * \tparam FluidSystem The fluid system class
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class FluidSystem, int PVOffset>
-struct TwoPIndices<FluidSystem, TwoPFormulation::pnsw, PVOffset>
-: public TwoPCommonIndices<FluidSystem, PVOffset>, TwoPFormulation
+template <>
+struct TwoPIndices<TwoPFormulation::pnsw>
+: public TwoPCommonIndices
 {
     // indices of the primary variables
-    static const int pnIdx = PVOffset + 0; //!< index of the nonwetting phase pressure
-    static const int swIdx = PVOffset + 1; //!< index of the wetting phase saturation
+    static constexpr int pnIdx = 0; //!< index of the nonwetting phase pressure
+    static constexpr int swIdx = 1; //!< index of the wetting phase saturation
 };
 
 // \}

@@ -30,6 +30,26 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief  Helper function to creater a PrimaryVariables object from CellCenterPrimaryVariables
+ * \tparam PrimaryVariables The type of the desired primary variables object
+ * \tparam CellCenterPrimaryVariables The type of the cell center (input) primary variables object
+ * \param CellCenterPrimaryVariables The cell center (input) primary variables object
+ */
+template<class PrimaryVariables, class CellCenterPrimaryVariables>
+PrimaryVariables makePriVarsFromCellCenterPriVars(const CellCenterPrimaryVariables& cellCenterPriVars)
+{
+    static_assert(int(PrimaryVariables::dimension) > int(CellCenterPrimaryVariables::dimension),
+                  "PrimaryVariables' size must be greater than the one of CellCenterPrimaryVariables");
+
+    PrimaryVariables priVars(0.0);
+    constexpr auto offset = PrimaryVariables::dimension - CellCenterPrimaryVariables::dimension;
+    for (std::size_t i = 0; i < cellCenterPriVars.size(); ++i)
+        priVars[i + offset] = cellCenterPriVars[i];
+    return priVars;
+}
+
 template<class PrimaryVariables>
 using StaggeredElementSolution = Dune::BlockVector<PrimaryVariables>;
 

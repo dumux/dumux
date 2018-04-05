@@ -95,34 +95,38 @@ class ColumnProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
+
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    enum
+    {
+        // primary variable indices
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
         temperatureIdx = Indices::temperatureIdx,
-        contiWEqIdx = Indices::contiWEqIdx,
-        contiGEqIdx = Indices::contiGEqIdx,
-        contiNEqIdx = Indices::contiNEqIdx,
+
+        // equation indices
         energyEqIdx = Indices::energyEqIdx,
+        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::wCompIdx, //!< Index of the mass conservation equation for the water component,
+        contiGEqIdx = Indices::conti0EqIdx + FluidSystem::gCompIdx, //!< Index of the mass conservation equation for the gas component,
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::nCompIdx, //!< Index of the mass conservation equation for the contaminant component
 
         // Phase State
-        threePhases = Indices::threePhases,
-
-        // world dimension
-        dimWorld = GridView::dimensionworld
+        threePhases = Indices::threePhases
     };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 
 public:
     /*!

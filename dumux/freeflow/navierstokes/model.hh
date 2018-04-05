@@ -65,19 +65,21 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fourierslaw.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup NavierStokesModel
  * \brief Traits for the Navier-Stokes model
  */
-template<int dim>
+template<int dimension>
 struct NavierStokesModelTraits
 {
+    //! The dimension of the model
+    static constexpr int dim() { return dimension; }
+
     //! There are as many momentum balance equations as dimensions
     //! and one mass balance equation.
-    static constexpr int numEq() { return dim+1; }
+    static constexpr int numEq() { return dimension+1; }
 
     //! The number of phases is 1
     static constexpr int numPhases() { return 1; }
@@ -93,6 +95,9 @@ struct NavierStokesModelTraits
 
     //! The model is isothermal
     static constexpr bool enableEnergyBalance() { return false; }
+
+    //! the indices
+    using Indices = NavierStokesIndices<dim()>;
 };
 
 // \{
@@ -154,16 +159,6 @@ SET_TYPE_PROP(NavierStokes, FluxVariables, NavierStokesFluxVariables<TypeTag>);
 //! The flux variables cache class, by default the one for free flow
 SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
-//! The indices required by the isothermal single-phase model
-SET_PROP(NavierStokes, Indices)
-{
-private:
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-public:
-    using type = NavierStokesIndices<dim, numEq>;
-};
-
 //! The specific vtk output fields
 SET_PROP(NavierStokes, VtkOutputFields)
 {
@@ -185,17 +180,6 @@ private:
     using IsothermalTraits = NavierStokesModelTraits<dim>;
 public:
     using type = NavierStokesNIModelTraits<IsothermalTraits>;
-};
-
-//! The indices required by the non-isothermal single-phase model
-SET_PROP(NavierStokesNI, Indices)
-{
-private:
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    using IsothermalIndices = NavierStokesIndices<dim, numEq>;
-public:
-    using type = NavierStokesNonIsothermalIndices<dim, numEq, IsothermalIndices>;
 };
 
 //! The specific non-isothermal vtk output fields

@@ -31,11 +31,15 @@ namespace Dumux
 /*!
  * \ingroup OnePModel
  * \brief Indices for the one-phase model.
+ *
+ * \tparam offset The first index in a primary variable vector.
  */
+template<int offset = 0>
 struct OnePIndices
 {
-    static const int conti0EqIdx = 0; //!< index for the mass balance
-    static const int pressureIdx = 0; //!< index of the primary variable
+    static const int PVOffset = offset;      //!< the first index in primary variable vector
+    static const int conti0EqIdx = PVOffset; //!< index for the mass balance
+    static const int pressureIdx = PVOffset; //!< index of the primary variable
 };
 
 // \}

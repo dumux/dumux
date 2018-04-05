@@ -81,7 +81,7 @@ private:
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices); // TODO extract indices from volumevariables
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices; // TODO extract indices from volumevariables
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
@@ -135,6 +135,7 @@ SET_TYPE_PROP(StaggeredModel,
               CellCenterPrimaryVariables,
               Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
                                 GET_PROP_VALUE(TypeTag, NumEqCellCenter)>);
+
 //! The face primary variables
 SET_TYPE_PROP(StaggeredModel,
               FacePrimaryVariables,
@@ -142,14 +143,7 @@ SET_TYPE_PROP(StaggeredModel,
                                 GET_PROP_VALUE(TypeTag, NumEqFace)>);
 
 //! Boundary types at a single degree of freedom
-SET_PROP(StaggeredModel, BoundaryTypes)
-{
-private:
-    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-    static constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
-public:
-    using type = BoundaryTypes<numEqCellCenter + numEqFace>;
-};
+SET_TYPE_PROP(StaggeredModel, BoundaryTypes, BoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
 
 //! Set one or different base epsilons for the calculations of the localJacobian's derivatives
 SET_PROP(StaggeredModel, BaseEpsilon)

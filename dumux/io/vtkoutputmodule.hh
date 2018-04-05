@@ -245,8 +245,8 @@ class VtkOutputModule
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr int dofCodim = isBox ? dim : 0;
 
-    struct VolVarScalarDataInfo { std::function<Scalar(const VolumeVariables&)> get; std::string name; };
-    struct VolVarVectorDataInfo { std::function<GlobalPosition(const VolumeVariables&)> get; std::string name; };
+    struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; };
+    struct VolVarVectorDataInfo { std::function<GlobalPosition(const VV&)> get; std::string name; };
     using Field = Vtk::template Field<GridView>;
 
 public:

@@ -89,7 +89,7 @@ class CROperatorAssemblerTwoP
     using FaceMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, FaceLayout>;
 #endif
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum
     {
         pressureEqIdx = Indices::pressureEqIdx,

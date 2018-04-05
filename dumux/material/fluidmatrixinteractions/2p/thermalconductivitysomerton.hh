@@ -27,14 +27,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace Dumux
-{
-
-struct SomertonIndices
-{
-    static constexpr int wPhaseIdx = 0;
-    static constexpr int nPhaseIdx = 1;
-};
+namespace Dumux {
 
 /*!
  * \ingroup Fluidmatrixinteractions
@@ -62,7 +55,7 @@ struct SomertonIndices
  }\f$
  *
  */
-template<class Scalar, class Indices = SomertonIndices>
+template<class Scalar>
 class ThermalConductivitySomerton
 {
 public:
@@ -83,16 +76,18 @@ public:
      * fluid conductivities and interpolated with the square root of the wetting saturation.
      * See f.e. Ebigbo, A.: Thermal Effects of Carbon Dioxide Sequestration in the Subsurface, Diploma thesis \cite ebigbo2005 .
      */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry, class SubControlVolume>
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
                                                const SpatialParams& spatialParams,
                                                const Element& element,
                                                const FVGeometry& fvGeometry,
-                                               const SubControlVolume& scv)
+                                               const typename FVGeometry::SubControlVolume& scv)
     {
-        const Scalar sw = volVars.saturation(Indices::wPhaseIdx);
-        const Scalar lambdaW = volVars.fluidThermalConductivity(Indices::wPhaseIdx);
-        const Scalar lambdaN = volVars.fluidThermalConductivity(Indices::nPhaseIdx);
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+
+        const Scalar sw = volVars.saturation(FluidSystem::wPhaseIdx);
+        const Scalar lambdaW = volVars.fluidThermalConductivity(FluidSystem::wPhaseIdx);
+        const Scalar lambdaN = volVars.fluidThermalConductivity(FluidSystem::nPhaseIdx);
         const Scalar lambdaSolid = volVars.solidThermalConductivity();
         const Scalar porosity = volVars.porosity();
 

@@ -58,7 +58,7 @@ class FvMpfaL3dInteractionVolumeContainer
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);

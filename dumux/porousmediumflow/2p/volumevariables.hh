@@ -25,9 +25,8 @@
 #ifndef DUMUX_2P_VOLUME_VARIABLES_HH
 #define DUMUX_2P_VOLUME_VARIABLES_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
-#include <dune/common/fvector.hh>
+#include "indices.hh"
 
 namespace Dumux {
 
@@ -36,40 +35,33 @@ namespace Dumux {
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase model.
  */
-template <class TypeTag>
-class TwoPVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
+template <class Traits>
+class TwoPVolumeVariables
+: public PorousMediumFlowVolumeVariables<Traits, TwoPVolumeVariables<Traits> >
 {
-    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables<Traits, TwoPVolumeVariables<Traits> >;
 
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using PermeabilityType = typename Traits::PermeabilityType;
+    using ModelTraits = typename Traits::ModelTraits;
+    using Indices = typename ModelTraits::Indices;
+    static constexpr auto formulation = ModelTraits::priVarFormulation();
+    using Scalar = typename Traits::PrimaryVariables::value_type;
 
     enum
     {
-        pwsn = Indices::pwsn,
-        pnsw = Indices::pnsw,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
-        formulation = GET_PROP_VALUE(TypeTag, Formulation)
+        wPhaseIdx = Traits::FluidSystem::wPhaseIdx,
+        nPhaseIdx = Traits::FluidSystem::nPhaseIdx,
+        numPhases = ModelTraits::numPhases()
     };
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    // export type of fluid state for non-isothermal models
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    //! export type of fluid system
+    using FluidSystem = typename Traits::FluidSystem;
+    //! export type of fluid state
+    using FluidState = typename Traits::FluidState;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -80,11 +72,11 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub control volume
     */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume& scv)
+                const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
 
@@ -92,6 +84,7 @@ public:
 
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         mobility_[wPhaseIdx] =
             MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
             / fluidState_.viscosity(wPhaseIdx);
@@ -117,11 +110,11 @@ public:
      *
      * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
      */
-    template<class ElementSolution>
-    static void completeFluidState(const ElementSolution& elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    static void completeFluidState(const ElemSol& elemSol,
                                    const Problem& problem,
                                    const Element& element,
-                                   const SubControlVolume& scv,
+                                   const Scv& scv,
                                    FluidState& fluidState)
     {
         Scalar t =  ParentType::temperature(elemSol, problem, element, scv);
@@ -129,8 +122,9 @@ public:
 
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
 
-        if (int(formulation) == pwsn) {
+        if (formulation == TwoPFormulation::pwsn) {
             Scalar sn = priVars[saturationIdx];
             fluidState.setSaturation(nPhaseIdx, sn);
             fluidState.setSaturation(wPhaseIdx, 1 - sn);
@@ -140,7 +134,7 @@ public:
             fluidState.setPressure(nPhaseIdx,
                                    pw + MaterialLaw::pc(materialParams, 1 - sn));
         }
-        else if (int(formulation) == pnsw) {
+        else if (formulation == TwoPFormulation::pnsw) {
             Scalar sw = priVars[saturationIdx];
             fluidState.setSaturation(wPhaseIdx, sw);
             fluidState.setSaturation(nPhaseIdx, 1 - sw);
@@ -251,20 +245,14 @@ public:
     { return permeability_; }
 
 protected:
-
     FluidState fluidState_;
+
+private:
     Scalar porosity_;
     PermeabilityType permeability_;
     Scalar mobility_[numPhases];
-
-private:
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 };
 
-}
+} // end namespace Dumux
 
 #endif

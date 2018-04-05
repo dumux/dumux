@@ -91,22 +91,46 @@
 #include "primaryvariableswitch.hh"
 #include "vtkoutputfields.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ThreePWaterOilModel
  * \brief Specifies a number properties of the three-phase two-component model.
  */
+template<bool onlyGasPhase>
 struct ThreePWaterOilModelTraits
 {
- static constexpr int numEq() { return 2; }
- static constexpr int numPhases() { return 3; }
- static constexpr int numComponents() { return 2; }
+    using Indices = ThreePWaterOilIndices;
 
- static constexpr bool enableAdvection() { return true; }
- static constexpr bool enableMolecularDiffusion() { return true; }
- static constexpr bool enableEnergyBalance() { return false; }
+    static constexpr int numEq() { return 2; }
+    static constexpr int numPhases() { return 3; }
+    static constexpr int numComponents() { return 2; }
+
+    static constexpr bool enableAdvection() { return true; }
+    static constexpr bool enableMolecularDiffusion() { return true; }
+    static constexpr bool enableEnergyBalance() { return false; }
+
+    static constexpr bool onlyGasPhaseCanDisappear() { return onlyGasPhase; }
+};
+
+/*!
+ * \ingroup ThreePWaterOilModel
+ * \brief Traits class for the two-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ */
+template<class PV, class FSY, class FST, class PT, class MT>
+struct ThreePWaterOilVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
 };
 
 namespace Properties {
@@ -125,7 +149,7 @@ private:
     static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 3p2cni model!");
     static_assert(FluidSystem::numPhases == 3, "Only fluid systems with 3 phases are supported by the 3p2cni model!");
 public:
-    using type = PorousMediumFlowNIModelTraits<ThreePWaterOilModelTraits>;
+    using type = PorousMediumFlowNIModelTraits<ThreePWaterOilModelTraits<GET_PROP_VALUE(TypeTag, OnlyGasPhaseCanDisappear)>>;
 };
 
 /*!
@@ -164,8 +188,20 @@ public:
 //! Determines whether a constraint solver should be used explicitly
 SET_BOOL_PROP(ThreePWaterOilNI, OnlyGasPhaseCanDisappear, true);
 
-//! the VolumeVariables property
-SET_TYPE_PROP(ThreePWaterOilNI, VolumeVariables, ThreePWaterOilVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(ThreePWaterOilNI, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = ThreePWaterOilVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+public:
+    using type = ThreePWaterOilVolumeVariables<Traits>;
+};
 
 //! The spatial parameters to be employed.
 //! Use FVSpatialParams by default.
@@ -183,33 +219,14 @@ SET_PROP(ThreePWaterOilNI, ThermalConductivityModel)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    using type = ThermalConductivitySomerton<Scalar, Indices>;
+    using type = ThermalConductivitySomerton<Scalar>;
 };
 
 //! Set the non-isothermal vkt output fields
-SET_PROP(ThreePWaterOilNI, VtkOutputFields)
-{
-private:
-    using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using IsothermalFields = ThreePWaterOilVtkOutputFields<FluidSystem, Indices>;
-public:
-    using type = EnergyVtkOutputFields<IsothermalFields>;
-};
+SET_TYPE_PROP(ThreePWaterOilNI, VtkOutputFields, EnergyVtkOutputFields<ThreePWaterOilVtkOutputFields>);
 
-//set non-isothermal Indices
-SET_PROP(ThreePWaterOilNI, Indices)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using IsothermalIndices =  ThreePWaterOilIndices<FluidSystem, /*PVOffset=*/0>;
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-public:
-    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
-};
+} // end namespace Properties
+} // end namespace Dumux
 
-}
-}
 #endif

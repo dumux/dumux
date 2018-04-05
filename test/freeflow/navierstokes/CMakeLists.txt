@@ -1,5 +1,5 @@
 add_input_file_links()
-
+set(CMAKE_BUILD_TYPE Debug)
 add_executable(test_closedsystem EXCLUDE_FROM_ALL test_closedsystem.cc)
 
 dune_add_test(NAME test_navierstokes_liddrivencavity_re1

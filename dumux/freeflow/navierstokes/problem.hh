@@ -70,7 +70,7 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum {
         dim = GridView::dimension,
@@ -124,8 +124,7 @@ public:
                               const SubControlVolumeFace& scvf,
                               const PrimaryVariables& initSol) const
     {
-        const auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-        sol[FVGridGeometry::faceIdx()][scvf.dofIndex()][numEqCellCenter] = initSol[Indices::velocity(scvf.directionIndex())];
+        sol[FVGridGeometry::faceIdx()][scvf.dofIndex()][0] = initSol[Indices::velocity(scvf.directionIndex())];
     }
 
 private:

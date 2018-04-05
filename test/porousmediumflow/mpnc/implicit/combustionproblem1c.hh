@@ -31,6 +31,7 @@
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/mpnc/model.hh>
+#include <dumux/porousmediumflow/mpnc/pressureformulation.hh>
 
 
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
@@ -46,8 +47,8 @@ template<class TypeTag>
 class CombustionProblemOneComponent;
 
 //! Custom model traits to deactivate diffusion for this test
-template<int numP, int numC>
-struct CombustionModelTraits : public MPNCModelTraits<numP, numC>
+template<int numP, int numC, MpNcPressureFormulation formulation>
+struct CombustionModelTraits : public MPNCModelTraits<numP, numC, formulation>
 {
     static constexpr bool enableMolecularDiffusion() { return false; }
 };
@@ -62,17 +63,19 @@ SET_TYPE_PROP(CombustionOneComponentTypeTag, Grid, Dune::OneDGrid);
 
 // Set the problem property
 SET_TYPE_PROP(CombustionOneComponentTypeTag,
-               Problem,
-               CombustionProblemOneComponent<TypeTag>);
+              Problem,
+              CombustionProblemOneComponent<TypeTag>);
 
 SET_TYPE_PROP(CombustionOneComponentTypeTag,
               FluidSystem,
               FluidSystems::CombustionFluidsystem<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
 
 //! Set the default pressure formulation: either pw first or pn first
-SET_INT_PROP(CombustionOneComponentTypeTag,
-        PressureFormulation,
-        MpNcPressureFormulation::mostWettingFirst);
+SET_PROP(CombustionOneComponentTypeTag, PressureFormulation)
+{
+public:
+    static const MpNcPressureFormulation value = MpNcPressureFormulation::mostWettingFirst;
+};
 
 // Set the type used for scalar values
 SET_TYPE_PROP(CombustionOneComponentTypeTag, Scalar, double );
@@ -84,17 +87,9 @@ SET_PROP(CombustionOneComponentTypeTag, EquilibriumModelTraits)
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    using type = CombustionModelTraits<FluidSystem::numPhases, FluidSystem::numComponents>;
-};
-
-//! Franz Lindners simple lumping
-SET_PROP(CombustionOneComponentTypeTag, ThermalConductivityModel)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-public:
-    using type = ThermalConductivitySimpleFluidLumping<Scalar, GET_PROP_VALUE(TypeTag, NumEnergyEqFluid), Indices>;
+    using type = CombustionModelTraits< FluidSystem::numPhases,
+                                        FluidSystem::numComponents,
+                                        GET_PROP_VALUE(TypeTag, PressureFormulation) >;
 };
 
 SET_PROP(CombustionOneComponentTypeTag, FluidState)
@@ -126,7 +121,6 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -137,21 +131,25 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using ParameterCache = typename FluidSystem::ParameterCache;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
     enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
-    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
+    enum {numPhases = ModelTraits::numPhases()};
+    enum {numComponents = ModelTraits::numComponents()};
     enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
     enum {conti00EqIdx = Indices::conti0EqIdx};
     enum {energyEq0Idx = Indices::energyEqIdx};
-    enum {numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)};
-    enum {numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid)};
+    enum {numEnergyEqFluid = ModelTraits::numEnergyEqFluid()};
+    enum {numEnergyEqSolid = ModelTraits::numEnergyEqSolid()};
     enum {energyEqSolidIdx = energyEq0Idx + numEnergyEqFluid + numEnergyEqSolid - 1};
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
@@ -159,13 +157,9 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     enum {nCompIdx = FluidSystem::N2Idx};
 
     // formulations
-    enum {
-        pressureFormulation = GET_PROP_VALUE(TypeTag, PressureFormulation),
-        mostWettingFirst = MpNcPressureFormulation::mostWettingFirst,
-        leastWettingFirst = MpNcPressureFormulation::leastWettingFirst
-    };
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    static constexpr auto pressureFormulation = ModelTraits::pressureFormulation();
+    static constexpr auto mostWettingFirst = MpNcPressureFormulation::mostWettingFirst;
+    static constexpr auto leastWettingFirst = MpNcPressureFormulation::leastWettingFirst;
 
 public:
     CombustionProblemOneComponent(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -433,7 +427,8 @@ private:
             // For two phases this means that there is one pressure as primary variable: pn
             priVars[p0Idx] = p[nPhaseIdx];
         }
-        else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << pressureFormulation << " is invalid.");
+        else
+            DUNE_THROW(Dune::InvalidStateException, "CombustionProblemOneComponent does not support the chosen pressure formulation.");
 
         fluidState.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);
         fluidState.setMoleFraction(wPhaseIdx, nCompIdx, 0.0);
@@ -454,10 +449,10 @@ private:
         using ComputeFromReferencePhase = ComputeFromReferencePhase<Scalar, FluidSystem>;
         ParameterCache paramCache;
         ComputeFromReferencePhase::solve(fluidState,
-                                        paramCache,
-                                        refPhaseIdx,
-                                        /*setViscosity=*/false,
-                                        /*setEnthalpy=*/false);
+                                         paramCache,
+                                         refPhaseIdx,
+                                         /*setViscosity=*/false,
+                                         /*setEnthalpy=*/false);
 
         //////////////////////////////////////
         // Set fugacities
@@ -494,9 +489,7 @@ private:
      * \brief Give back whether the tested position (input) is a specific region (right) in the domain
      */
     bool inPM_(const GlobalPosition & globalPos) const
-    {   return
-        not this->spatialParams().inOutFlow(globalPos);
-    }
+    { return !this->spatialParams().inOutFlow(globalPos); }
 
 private:
     static constexpr Scalar eps_ = 1e-6;
@@ -523,7 +516,6 @@ private:
 
     Scalar time_;
     std::shared_ptr<GridVariables> gridVariables_;
-
 };
 
 } //end namespace

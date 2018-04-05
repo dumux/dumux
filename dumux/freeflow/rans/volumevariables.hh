@@ -62,8 +62,7 @@ class RANSVolumeVariablesImplementation<TypeTag, false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -72,6 +71,9 @@ class RANSVolumeVariablesImplementation<TypeTag, false>
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
+    using FluidSystem = typename ParentType::FluidSystem;
+    using FluidState = typename ParentType::FluidState;
+
     /*!
      * \brief Update all turbulent quantities for a given control volume
      *
@@ -228,6 +230,9 @@ class RANSVolumeVariablesImplementation<TypeTag, true>
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    using FluidSystem = typename ParentTypeIsothermal::FluidSystem;
+    using FluidState = typename ParentTypeIsothermal::FluidState;
+
     /*!
      * \brief Calculates the eddy thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ based
      *        on the kinematic eddy viscosity and the turbulent prandtl number

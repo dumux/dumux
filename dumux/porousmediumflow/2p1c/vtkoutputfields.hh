@@ -32,7 +32,6 @@ namespace Dumux {
  * \ingroup TwoPOneCModel
  * \brief Adds vtk output fields specific to two-phase one-component model.
  */
-template<class Indices>
 class TwoPOneCVtkOutputFields
 {
 public:
@@ -40,7 +39,7 @@ public:
     static void init(VtkOutputModule& vtk)
     {
         // use default fields from the 2p model
-        TwoPVtkOutputFields<Indices>::init(vtk);
+        TwoPVtkOutputFields::init(vtk);
 
         // output additional to TwoP output:
         vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phasePresence");

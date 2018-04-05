@@ -68,20 +68,16 @@ SET_TYPE_PROP(TwoPTwoCComparisonTypeTag,
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, Scalar, double);
-SET_INT_PROP(TwoPTwoCComparisonTypeTag, Formulation, TwoPTwoCFormulation::pnsw);
+SET_PROP(TwoPTwoCComparisonTypeTag, Formulation)
+{
+public:
+    static const TwoPFormulation value = TwoPFormulation::pnsw;
+};
 
 SET_BOOL_PROP(TwoPTwoCComparisonTypeTag, UseMoles, true);
 
-SET_PROP(TwoPTwoCComparisonTypeTag, VtkOutputFields)
-{
-private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-public:
-    using type = TwoPTwoCMPNCVtkOutputFields<FluidSystem, Indices>;
-};
-}
+SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields);
+} // end namespace Properties
 
 
 /*!
@@ -90,12 +86,10 @@ public:
  *
  */
 template <class TypeTag>
-class TwoPTwoCComparisonProblem
-    : public PorousMediumFlowProblem<TypeTag>
+class TwoPTwoCComparisonProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -105,12 +99,15 @@ class TwoPTwoCComparisonProblem
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
     // world dimension
-    enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
-    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
+    enum {numPhases = ModelTraits::numPhases()};
+    enum {numComponents = ModelTraits::numComponents()};
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     enum {wCompIdx = FluidSystem::wCompIdx};
@@ -123,7 +120,6 @@ class TwoPTwoCComparisonProblem
         contiN2EqIdx = Indices::contiNEqIdx
     };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 
 public:

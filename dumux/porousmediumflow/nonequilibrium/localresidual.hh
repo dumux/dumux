@@ -53,14 +53,15 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, false>: public GE
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
-    static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
-    static constexpr int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
+    static constexpr int numPhases = ModelTraits::numPhases();
+    static constexpr int numComponents = ModelTraits::numComponents();
     enum { conti0EqIdx = Indices::conti0EqIdx };
 public:
     using ParentType::ParentType;
@@ -164,7 +165,6 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, true>: public GET
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -174,8 +174,11 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, true>: public GET
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
-    static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
-    static constexpr int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    static constexpr int numPhases = ModelTraits::numPhases();
+    static constexpr int numComponents = ModelTraits::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 

@@ -51,7 +51,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::staggered >
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum { energyBalanceIdx = Indices::energyBalanceIdx };
 

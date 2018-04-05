@@ -27,15 +27,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace Dumux
-{
-
-struct SimpleThreePIndices
-{
-    static const int wPhaseIdx = 0;
-    static const int nPhaseIdx = 1;
-    static const int gPhaseIdx = 2;
-};
+namespace Dumux {
 
 /*!
  * \ingroup Fluidmatrixinteractions
@@ -68,7 +60,7 @@ struct SimpleThreePIndices
  \lambda_\text{g,eff} = \lambda_{solid}^{\left(1-\phi\right)}*\lambda_g^\phi.
  \f]
  */
-template<class Scalar, class Indices = SimpleThreePIndices>
+template<class Scalar>
 class ThermalConductivitySomerton
 {
 public:
@@ -88,18 +80,20 @@ public:
      * These two effective conductivities are computed as geometric mean of the solid and the
      * fluid conductivities and interpolated with the square root of the wetting saturation.
      */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry, class SubControlVolume>
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
                                                const SpatialParams& spatialParams,
                                                const Element& element,
                                                const FVGeometry& fvGeometry,
-                                               const SubControlVolume& scv)
+                                               const typename FVGeometry::SubControlVolume& scv)
     {
-        Scalar sw = volVars.saturation(Indices::wPhaseIdx);
-        Scalar sn = volVars.saturation(Indices::nPhaseIdx);
-        Scalar lambdaW = volVars.fluidThermalConductivity(Indices::wPhaseIdx);
-        Scalar lambdaN = volVars.fluidThermalConductivity(Indices::nPhaseIdx);
-        Scalar lambdaG = volVars.fluidThermalConductivity(Indices::gPhaseIdx);
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+
+        Scalar sw = volVars.saturation(FluidSystem::wPhaseIdx);
+        Scalar sn = volVars.saturation(FluidSystem::nPhaseIdx);
+        Scalar lambdaW = volVars.fluidThermalConductivity(FluidSystem::wPhaseIdx);
+        Scalar lambdaN = volVars.fluidThermalConductivity(FluidSystem::nPhaseIdx);
+        Scalar lambdaG = volVars.fluidThermalConductivity(FluidSystem::gPhaseIdx);
         Scalar lambdaSolid = volVars.solidThermalConductivity();
         Scalar porosity = volVars.porosity();
 

@@ -135,8 +135,12 @@ public:
                                          const SubControlVolume& scv,
                                          const PrimaryVariables& initSol) const
     {
+        constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+        constexpr auto numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+        constexpr auto offset = numEq - numEqCellCenter;
+
         for(auto&& i : priVarIndices_(cellCenterIdx))
-            sol[cellCenterIdx][scv.dofIndex()][i] = initSol[i];
+            sol[cellCenterIdx][scv.dofIndex()][i] = initSol[i + offset];
     }
 
     //! Applys the initial face solution
@@ -162,7 +166,6 @@ protected:
     static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::CellCenterIdx)
     {
         constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return Dune::range(0, numEqCellCenter);
 #else
@@ -174,12 +177,11 @@ protected:
     //! Specialization for face dofs.
     static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::FaceIdx)
     {
-        constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-        constexpr auto numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
+        constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-        return Dune::range(numEqCellCenter, numEq);
+        return Dune::range(0, numEqFace);
 #else
-        return IntRange(numEqCellCenter, numEq);
+        return IntRange(0, numEqFace);
 #endif
     }
 

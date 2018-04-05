@@ -42,7 +42,6 @@ NEW_PROP_TAG(ModelParameterGroup);    //!< Property which defines the group that
 NEW_PROP_TAG(ModelDefaultParameters); //!< Property which defines the group that is queried for parameters by default
 NEW_PROP_TAG(GridCreator);            //!< Property which provides a GridCreator (manages grids)
 NEW_PROP_TAG(Grid);                   //!< The DUNE grid type
-NEW_PROP_TAG(Indices);                //!< Enumerations for the numeric model
 NEW_PROP_TAG(PrimaryVariables);       //!< A vector of primary variables
 NEW_PROP_TAG(NumEqVector);            //!< A vector of size number equations that can be used for Neumann fluxes, sources, residuals, ...
 NEW_PROP_TAG(GridView);               //!< The type of the grid view according to the grid type

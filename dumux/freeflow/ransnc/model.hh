@@ -71,9 +71,14 @@ namespace Dumux {
  * \ingroup RANSModel
  * \brief Traits for the RANS multi-component model
  */
-template<int dim, int nComp>
-struct RANSNCModelTraits : NavierStokesNCModelTraits<dim, nComp>
-{ };
+template<int dim, int nComp, int phaseIdx, int replaceCompEqIdx>
+struct RANSNCModelTraits : NavierStokesNCModelTraits<dim, nComp, phaseIdx, replaceCompEqIdx>
+{
+private:
+    using ParentType = NavierStokesNCModelTraits<dim, nComp, phaseIdx, replaceCompEqIdx>;
+public:
+    using Indices = RANSNCIndices<dim, ParentType::numEq(), phaseIdx, replaceCompEqIdx>;
+};
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the single-phase, multi-component RANS model
@@ -95,18 +100,6 @@ NEW_TYPE_TAG(ZeroEqNC, INHERITS_FROM(ZeroEq, RANSNC));
 //! The volume variables
 SET_TYPE_PROP(RANSNC, VolumeVariables, RANSNCVolumeVariables<TypeTag>);
 SET_TYPE_PROP(ZeroEqNC, SinglePhaseVolumeVariables, ZeroEqVolumeVariables<TypeTag>);
-
-//! The indices
-SET_PROP(RANSNC, Indices)
-{
-private:
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-public:
-    using type = RANSNCIndices<dim, numEq, phaseIdx, replaceCompEqIdx>;
-};
 
 //! The specific vtk output fields
 SET_PROP(ZeroEqNC, VtkOutputFields)
@@ -140,22 +133,11 @@ private:
     static constexpr int dim = GridView::dimension;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int numComponents = FluidSystem::numComponents;
-    using IsothermalModelTraits = NavierStokesNCModelTraits<dim, numComponents>;
-public:
-    using type = NavierStokesNIModelTraits<IsothermalModelTraits>;
-};
-
-//! The indices
-SET_PROP(RANSNCNI, Indices)
-{
-private:
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-    using IsothermalIndices = NavierStokesNCIndices<dim, numEq, phaseIdx, replaceCompEqIdx>;
+    using IsothermalModelTraits = NavierStokesNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx>;
 public:
-    using type = NavierStokesNonIsothermalIndices<dim, numEq, IsothermalIndices>;
+    using type = NavierStokesNIModelTraits<IsothermalModelTraits>;
 };
 
 //! The specific vtk output fields
@@ -175,6 +157,5 @@ public:
 // \}
 } // end namespace Properties
 } // end namespace Dumux
-
 
 #endif

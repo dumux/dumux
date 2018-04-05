@@ -155,30 +155,33 @@ class EvaporationAtmosphereSpatialParams : public FVSpatialParams<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum { dimWorld = GridView::dimensionworld };
     enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
 public:
-
-    using AwnSurface = typename GET_PROP_TYPE(TypeTag, AwnSurface);
-    using AwnSurfaceParams = typename  AwnSurface::Params;
-    using AwsSurface = typename GET_PROP_TYPE(TypeTag, AwsSurface);
-    using AwsSurfaceParams = typename  AwsSurface::Params;
-    using AnsSurface = typename GET_PROP_TYPE(TypeTag, AnsSurface);
-    using AnsSurfaceParams = typename  AnsSurface::Params;
+    //! export the type used for the permeability
     using PermeabilityType = Scalar;
+    //! export the material law type used
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    //! export the types used for interfacial area calculations
+    using AwnSurface = typename GET_PROP_TYPE(TypeTag, AwnSurface);
+    using AwsSurface = typename GET_PROP_TYPE(TypeTag, AwsSurface);
+    using AnsSurface = typename GET_PROP_TYPE(TypeTag, AnsSurface);
 
-    EvaporationAtmosphereSpatialParams(const Problem &problem)
-        : ParentType(problem)
+    //! convenience aliases of the law parameters
+    using MaterialLawParams = typename MaterialLaw::Params;
+    using AwnSurfaceParams = typename AwnSurface::Params;
+    using AwsSurfaceParams = typename AwsSurface::Params;
+    using AnsSurfaceParams = typename AnsSurface::Params;
+
+    EvaporationAtmosphereSpatialParams(const Problem &problem) : ParentType(problem)
     {
         heightPM_               = getParam<std::vector<Scalar>>("Grid.Positions1")[1];
         heightDomain_           = getParam<std::vector<Scalar>>("Grid.Positions1")[2];
@@ -231,8 +234,7 @@ public:
             // capillary pressure parameters
             FluidState fluidState ;
             Scalar S[numPhases] ;
-            const auto &materialParams =  materialParamsPM_;
-                    Scalar capPress[numPhases];
+            Scalar capPress[numPhases];
             //set saturation to inital values, this needs to be done in order for the fluidState to tell me pc
             for (int phaseIdx = 0; phaseIdx < numPhases ; ++phaseIdx) {
                 // set saturation to zero for getting pcmax
@@ -243,7 +245,7 @@ public:
             }
 
             //obtain pc according to saturation
-            MaterialLaw::capillaryPressures(capPress, materialParams, fluidState);
+            MaterialLaw::capillaryPressures(capPress, materialParamsPM_, fluidState);
             using std::abs;
             pcMax_ = abs(capPress[0]);
 
@@ -278,8 +280,8 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
-        const  auto & globalPos =  scv.dofPosition();
-        if (inFF_(globalPos) )
+        const  auto & globalPos = scv.dofPosition();
+        if (inFF_(globalPos))
             return intrinsicPermeabilityFF_ ;
         else if (inPM_(globalPos))
             return intrinsicPermeabilityPM_ ;
@@ -301,7 +303,7 @@ public:
     {
         const auto& globalPos =  scv.dofPosition();
 
-        if (inFF_(globalPos) )
+        if (inFF_(globalPos))
             return porosityFF_ ;
         else if (inPM_(globalPos))
             return porosityPM_ ;
@@ -313,25 +315,15 @@ public:
     const MaterialLawParams& materialLawParams(const Element& element,
                                                const SubControlVolume& scv,
                                                const ElementSolution& elemSol) const
-    {
-        const auto& globalPos =  scv.dofPosition();
-        if (inFF_(globalPos) )
-            return materialParamsFF_ ;
-        else if (inPM_(globalPos))
-            return materialParamsPM_ ;
-        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
-    }
+    { return materialLawParamsAtPos(scv.dofPosition()); }
 
-    /*!
-     * \brief Return a reference to the material parameters of the material law.
-     * \param globalPos The position in global coordinates. */
-    const MaterialLawParams & materialLawParamsAtPos(const GlobalPosition & globalPos) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
-        if (inFF_(globalPos) )
-            return materialParamsFF_ ;
+        if (inFF_(globalPos))
+            return materialParamsFF_;
         else if (inPM_(globalPos))
-            return materialParamsPM_ ;
-        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
+            return materialParamsPM_;
+        else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
     /*!\brief Return a reference to the container object for the
@@ -343,16 +335,16 @@ public:
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume */
     template<class ElementSolution>
-    const AwnSurfaceParams & aWettingNonWettingSurfaceParams(const Element &element,
-                                                             const SubControlVolume &scv,
-                                                             const ElementSolution &elemSol) const
+    const AwnSurfaceParams& aWettingNonWettingSurfaceParams(const Element &element,
+                                                            const SubControlVolume &scv,
+                                                            const ElementSolution &elemSol) const
     {
         const auto& globalPos =  scv.dofPosition();
         if (inFF_(globalPos) )
             return aWettingNonWettingSurfaceParamsFreeFlow_  ;
         else if (inPM_(globalPos))
             return aWettingNonWettingSurfaceParams_ ;
-        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
+        else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
      }
 
     /*!\brief Return a reference to the container object for the
@@ -364,16 +356,16 @@ public:
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume */
     template<class ElementSolution>
-    const AnsSurfaceParams & aNonWettingSolidSurfaceParams(const Element &element,
-                                                             const SubControlVolume &scv,
-                                                             const ElementSolution &elemSol) const
+    const AnsSurfaceParams& aNonWettingSolidSurfaceParams(const Element &element,
+                                                          const SubControlVolume &scv,
+                                                          const ElementSolution &elemSol) const
     {
         const auto& globalPos =  scv.dofPosition();
         if (inFF_(globalPos) )
             return aNonWettingSolidSurfaceParamsFreeFlow_  ;
         else if (inPM_(globalPos))
             return aNonWettingSolidSurfaceParams_ ;
-        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
+        else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
      }
 
     /*!\brief Return the maximum capillary pressure for the given pc-Sw curve
@@ -407,10 +399,7 @@ public:
                                       const SubControlVolume &scv,
                                       const ElementSolution &elemSol) const
 
-    {
-        const auto& globalPos =  scv.dofPosition();
-        return characteristicLengthAtPos(globalPos);
-    }
+    { return characteristicLengthAtPos(scv.dofPosition()); }
 
     /*!\brief Return the characteristic length for the mass transfer.
      * \param globalPos The position in global coordinates.*/
@@ -420,7 +409,7 @@ public:
             return characteristicLengthFF_ ;
         else if (inPM_(globalPos))
             return characteristicLengthPM_ ;
-        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
+        else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
     /*!\brief Return the pre factor the the energy transfer
@@ -434,10 +423,7 @@ public:
     const Scalar factorEnergyTransfer(const Element &element,
                                       const SubControlVolume &scv,
                                       const ElementSolution &elemSol) const
-    {
-       const auto& globalPos =  scv.dofPosition();
-       return factorEnergyTransferAtPos(globalPos);
-    }
+    { return factorEnergyTransferAtPos(scv.dofPosition()); }
 
     /*!\brief Return the pre factor the the energy transfer
      * \param globalPos The position in global coordinates.*/
@@ -447,7 +433,7 @@ public:
             return factorEnergyTransfer_ ;
         else if (inPM_(globalPos))
             return factorEnergyTransfer_ ;
-        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
+        else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
     /*!\brief Return the pre factor the the mass transfer
@@ -461,11 +447,7 @@ public:
     const Scalar factorMassTransfer(const Element &element,
                                       const SubControlVolume &scv,
                                       const ElementSolution &elemSol) const
-    {
-       const auto& globalPos =  scv.dofPosition();
-        return factorMassTransferAtPos(globalPos);
-
-    }
+    { return factorMassTransferAtPos(scv.dofPosition()); }
 
     /*!\brief Return the pre factor the the mass transfer
      * \param globalPos The position in global coordinates.*/
@@ -475,7 +457,7 @@ public:
             return factorMassTransfer_ ;
         else if (inPM_(globalPos))
             return factorMassTransfer_ ;
-        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
+        else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
 
@@ -544,11 +526,10 @@ private:
     static constexpr Scalar eps_  = 1e-6;
     Scalar heightDomain_ ;
 
-    AwnSurfaceParams    aWettingNonWettingSurfaceParams_;
-    AnsSurfaceParams    aNonWettingSolidSurfaceParams_ ;
-
-    AwnSurfaceParams    aWettingNonWettingSurfaceParamsFreeFlow_;
-    AnsSurfaceParams    aNonWettingSolidSurfaceParamsFreeFlow_ ;
+    AwnSurfaceParams aWettingNonWettingSurfaceParams_;
+    AnsSurfaceParams aNonWettingSolidSurfaceParams_ ;
+    AwnSurfaceParams aWettingNonWettingSurfaceParamsFreeFlow_;
+    AnsSurfaceParams aNonWettingSolidSurfaceParamsFreeFlow_ ;
 
     Scalar pcMax_ ;
 
@@ -559,13 +540,13 @@ private:
     Scalar factorEnergyTransfer_ ;
     Scalar factorMassTransfer_ ;
     Scalar characteristicLengthPM_ ;
-    MaterialLawParams   materialParamsPM_ ;
+    MaterialLawParams materialParamsPM_ ;
 
     // Free Flow Domain
     Scalar porosityFF_ ;
     Scalar intrinsicPermeabilityFF_ ;
     Scalar characteristicLengthFF_ ;
-    MaterialLawParams   materialParamsFF_ ;
+    MaterialLawParams materialParamsFF_ ;
 
     // solid parameters
     Scalar solidDensity_ ;

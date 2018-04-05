@@ -48,29 +48,17 @@ public:
  * \ingroup PorousmediumCompositional
  * \brief The primary variable switch controlling the phase presence state variable
  */
-template<class FVGridGeometry, class Implementation>
+template<class Implementation>
 class PrimaryVariableSwitch
 {
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-
-    using GridView = typename FVGridGeometry::GridView;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, GridView::dimensionworld>;
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
-    enum { dim = GridView::dimension };
-
 public:
-
     PrimaryVariableSwitch(const std::size_t& numDofs)
     {
         wasSwitched_.resize(numDofs, false);
     }
 
     //! If the primary variables were recently switched
-    bool wasSwitched(IndexType dofIdxGlobal) const
+    bool wasSwitched(std::size_t dofIdxGlobal) const
     {
         return wasSwitched_[dofIdxGlobal];
     }
@@ -87,7 +75,7 @@ public:
     bool update(SolutionVector& curSol,
                 GridVariables& gridVariables,
                 const Problem& problem,
-                const FVGridGeometry& fvGridGeometry)
+                const typename GridVariables::GridGeometry& fvGridGeometry)
     {
         bool switched = false;
         visited_.assign(wasSwitched_.size(), false);
@@ -140,10 +128,10 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
     // perform variable switch at a degree of freedom location
-    template<class PrimaryVariables, class VolumeVariables>
-    bool update_(PrimaryVariables& priVars,
+    template<class VolumeVariables, class GlobalPosition>
+    bool update_(typename VolumeVariables::PrimaryVariables& priVars,
                  const VolumeVariables& volVars,
-                 IndexType dofIdxGlobal,
+                 std::size_t dofIdxGlobal,
                  const GlobalPosition& globalPos)
     {
         // evaluate if the primary variable switch would switch
@@ -155,12 +143,12 @@ protected:
     std::vector<bool> visited_;
 
 private:
-    template<class GridVolumeVariables, class ElementVolumeVariables>
+    template<class GridVolumeVariables, class ElementVolumeVariables, class SubControlVolume>
     static auto getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     -> std::enable_if_t<!GridVolumeVariables::cachingEnabled, decltype(elemVolVars[scv])>
     { return elemVolVars[scv]; }
 
-    template<class GridVolumeVariables, class ElementVolumeVariables>
+    template<class GridVolumeVariables, class ElementVolumeVariables, class SubControlVolume>
     static auto getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     -> std::enable_if_t<GridVolumeVariables::cachingEnabled, decltype(gridVolVars.volVars(scv))>
     { return gridVolVars.volVars(scv); }

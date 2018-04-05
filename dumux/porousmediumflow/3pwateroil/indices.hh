@@ -24,33 +24,15 @@
 #ifndef DUMUX_3P2CNI_INDICES_HH
 #define DUMUX_3P2CNI_INDICES_HH
 
-#include <dumux/common/properties.hh>
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ThreePWaterOilModel
  * \brief The indices for the isothermal 3p2cni model.
- *
- * \tparam FluidSystem The fluid system class
- * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class FluidSystem, int PVOffset = 0>
 class ThreePWaterOilIndices
 {
 public:
-    // Phase indices
-    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< index of the wetting liquid phase
-    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< index of the nonwetting liquid phase
-    static const int gPhaseIdx = FluidSystem::gPhaseIdx; //!< index of the gas phase
-
-    // Component indices to indicate the main component
-    // of the corresponding phase at atmospheric pressure 1 bar
-    // and room temperature 20°C:
-    static const int wCompIdx = FluidSystem::wCompIdx;
-    static const int nCompIdx = FluidSystem::nCompIdx;
-    static const int gCompIdx = -1; //!< dummy index for compatibility with 3p3c
-
     // present phases (-> 'pseudo' primary variable)
     static const int threePhases = 1; //!< All three phases are present
     static const int wPhaseOnly = 2; //!< Only the water phase is present
@@ -60,19 +42,14 @@ public:
     static const int wgPhaseOnly = 6; //!< Only water and gas phases are present
 
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for phase pressure in a solution vector
-    static const int switch1Idx = PVOffset + 1; //!< Index 1 of saturation, mole fraction or temperature
-    static const int switch2Idx = PVOffset + 2; //!< Index 2 of saturation, mole fraction or temperature
+    static const int pressureIdx = 0; //!< Index for phase pressure in a solution vector
+    static const int switch1Idx = 1; //!< Index 1 of saturation, mole fraction or temperature
+    static const int switch2Idx = 2; //!< Index 2 of saturation, mole fraction or temperature
 
     // equation indices
-    static const int conti0EqIdx = PVOffset    + wCompIdx; //!< Index of the mass conservation equation for the water component
-    static const int conti1EqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the contaminant component
-    static const int conti2EqIdx = -1; //!< dummy index for compatibility with 3p3c
-
-    static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< index of the mass conservation equation for the water component
-    static const int contiNEqIdx = conti0EqIdx + nCompIdx; //!< index of the mass conservation equation for the contaminant component
+    static const int conti0EqIdx = 0; //!< Index of the mass conservation equation for the water component
 };
 
-}
+} // end namespace Dumux
 
 #endif

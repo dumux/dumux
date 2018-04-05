@@ -77,16 +77,14 @@ class FractureSpatialParams : public FVSpatialParams<TypeTag>
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    //get the material law from the property system
+public:
+    //! export permeability type
+    using PermeabilityType = Scalar;
+    //! export the type used for the material law
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename MaterialLaw::Params;
 
-public:
-    // export permeability type
-    using PermeabilityType = Scalar;
-
-     FractureSpatialParams(const Problem& problem)
-     : ParentType(problem)
+    FractureSpatialParams(const Problem& problem): ParentType(problem)
     {
         // residual saturations
         materialParams_.setSwr(0.05);
@@ -104,9 +102,7 @@ public:
      * \param globalPos The global position
      */
     Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
-    {
-        return 1e-10;
-    }
+    { return 1e-10; }
 
     /*!
      * \brief Returns the porosity \f$[-]\f$
@@ -122,10 +118,7 @@ public:
      * \param globalPos The position at which we evaluate
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    {
-        return materialParams_;
-    }
-
+    { return materialParams_; }
 
 private:
     MaterialLawParams materialParams_;

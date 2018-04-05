@@ -177,32 +177,24 @@ template <class TypeTag>
 class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
-        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
-        compTwoIdx = FluidSystem::N2Idx,
-        compThreeIdx = FluidSystem::CO2Idx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        pressureIdx = Indices::pressureIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx,
-    };
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
-
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+
+    using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
+
+    enum {
+        compTwoIdx =  Indices::conti0EqIdx + FluidSystem::N2Idx,
+        compThreeIdx = Indices::conti0EqIdx + FluidSystem::CO2Idx,
+    };
 
 public:
     MaxwellStefanNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -225,6 +217,7 @@ public:
      * \param gridVariables The grid variables
      * \param time The time
      */
+     template<class SolutionVector, class GridVariables>
      void postTimeStep(const SolutionVector& curSol,
                        const GridVariables& gridVariables,
                        const Scalar time)
@@ -348,10 +341,11 @@ public:
     {
         BoundaryTypes values;
         // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(momentumBalanceIdx);
+        values.setDirichlet(Indices::momentumXBalanceIdx);
+        values.setDirichlet(Indices::momentumYBalanceIdx);
         values.setOutflow(compTwoIdx);
         values.setOutflow(compThreeIdx);
-        values.setOutflow(totalMassBalanceIdx);
+        values.setOutflow(Indices::conti0EqIdx);
         return values;
     }
 
@@ -390,9 +384,9 @@ public:
            initialValues[compThreeIdx] = 0.0;
         }
 
-        initialValues[pressureIdx] = 1.1e+5;
-        initialValues[velocityXIdx] = 0.0;
-        initialValues[velocityYIdx] = 0.0;
+        initialValues[Indices::pressureIdx] = 1.1e+5;
+        initialValues[Indices::velocityXIdx] = 0.0;
+        initialValues[Indices::velocityYIdx] = 0.0;
 
         return initialValues;
     }

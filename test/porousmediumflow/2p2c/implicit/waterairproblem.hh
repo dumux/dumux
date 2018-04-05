@@ -103,43 +103,47 @@ SET_BOOL_PROP(WaterAirTypeTag, UseMoles, true);
 template <class TypeTag >
 class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
 {
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
+
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    // primary variable indices
+    enum
+    {
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
-
-        nCompIdx = FluidSystem::nCompIdx,
-
         temperatureIdx = Indices::temperatureIdx,
-        energyEqIdx = Indices::energyEqIdx,
-
-        // phase state
-        wPhaseOnly = Indices::wPhaseOnly,
-
-        // world dimension
-        dimWorld = GridView::dimensionworld,
-
-        conti0EqIdx = Indices::conti0EqIdx,
-        contiNEqIdx = conti0EqIdx + Indices::nCompIdx
+        energyEqIdx = Indices::energyEqIdx
     };
+
+    // equation indices
+    enum
+    {
+        conti0EqIdx = Indices::conti0EqIdx,
+        contiNEqIdx = Indices::contiNEqIdx
+    };
+
+    // phase presence
+    enum { wPhaseOnly = Indices::wPhaseOnly };
+    // component index
+    enum { nCompIdx = FluidSystem::nCompIdx };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
     //! property that defines whether mole or mass fractions are used
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = ModelTraits::useMoles();
 
 public:
     /*!

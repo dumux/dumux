@@ -161,6 +161,7 @@ int main(int argc, char** argv) try
 
     // write vtk output
     vtkWriter.write(1.0);
+    problem->postTimeStep(x);
 
     timer.stop();
 

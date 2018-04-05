@@ -49,7 +49,7 @@ private:
     using ScalarSolutionType = typename SolutionTypes::ScalarSolution;
     using ElementMapper = typename SolutionTypes::ElementMapper;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum
     {

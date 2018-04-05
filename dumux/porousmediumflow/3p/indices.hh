@@ -24,44 +24,24 @@
 #ifndef DUMUX_3P_INDICES_HH
 #define DUMUX_3P_INDICES_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ThreePModel
  * \brief The common indices for the isothermal three-phase model.
- *
- * \tparam FluidSystem The fluid system class
- * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class FluidSystem, int PVOffset = 0>
 class ThreePIndices
 {
 public:
-    // Phase indices
-    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< index of the wetting liquid phase
-    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< index of the nonwetting liquid phase
-    static const int gPhaseIdx = FluidSystem::gPhaseIdx; //!< index of the gas phase
-
-
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< index for gas phase pressure in a solution vector
-    static const int swIdx = PVOffset + 1; //!< index of water (more wetting than the other liquid) saturation
-    static const int snIdx = PVOffset + 2; //!< index of (e.g.) NAPL saturation
-
+    static constexpr int pressureIdx = 0; //!< index for gas phase pressure in a solution vector
+    static constexpr int swIdx = 1; //!< index of water (more wetting than the other liquid) saturation
+    static constexpr int snIdx = 2; //!< index of (e.g.) NAPL saturation
 
     // equation indices
-    static const int conti0EqIdx = PVOffset    + wPhaseIdx; //!< index of the mass conservation equation for the water component
-    static const int conti1EqIdx = conti0EqIdx + nPhaseIdx; //!< index of the mass conservation equation for the contaminant component
-    static const int conti2EqIdx = conti0EqIdx + gPhaseIdx; //!< index of the mass conservation equation for the air component
-
-    static const int contiWEqIdx = conti0EqIdx + wPhaseIdx; //!< index of the mass conservation equation for the water component
-    static const int contiNEqIdx = conti0EqIdx + nPhaseIdx; //!< index of the mass conservation equation for the contaminant component
-    static const int contiGEqIdx = conti0EqIdx + gPhaseIdx; //!< index of the mass conservation equation for the air component
+    static constexpr int conti0EqIdx = 0; //!< index of first balance equation
 };
 
-}
+} // end namespace Dumux
 
 #endif

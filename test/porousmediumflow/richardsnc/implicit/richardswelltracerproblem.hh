@@ -33,8 +33,8 @@
 
 #include "richardswelltracerspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup RichardsNCTests
  * \brief A water infiltration problem with a low-permeability lens
@@ -105,14 +105,14 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     enum {
         pressureIdx = Indices::pressureIdx,
         compIdx = Indices::compMainIdx + 1,
-        wPhaseIdx = Indices::wPhaseIdx,
+        wPhaseIdx = FluidSystem::wPhaseIdx,
 
         dimWorld = GridView::dimensionworld
     };

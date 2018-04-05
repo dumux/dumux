@@ -71,7 +71,7 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using CellCenterResidual = CellCenterPrimaryVariables;
     using FaceResidual = FacePrimaryVariables;
@@ -79,6 +79,10 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
 public:
+
+    // account for the offset of the cell center privars within the PrimaryVariables container
+    static constexpr auto cellCenterOffset = ModelTraits::numEq() - CellCenterPrimaryVariables::dimension;
+    static_assert(cellCenterOffset == ModelTraits::dim(), "cellCenterOffset must equal dim for staggered NavierStokes");
 
     //! Use the parent type's constructor
     using ParentType::ParentType;
@@ -116,7 +120,8 @@ public:
         const auto sourceValues = problem.sourceAtPos(scv.center());
 
         // copy the respective cell center related values to the result
-        std::copy_n(sourceValues.begin(), result.size(), result.begin());
+        for (int i = 0; i < result.size(); ++i)
+            result[i] = sourceValues[i + cellCenterOffset];
 
         return result;
     }
@@ -128,7 +133,7 @@ public:
                                                            const VolumeVariables& volVars) const
     {
         CellCenterPrimaryVariables storage;
-        storage[Indices::totalMassBalanceIdx] = volVars.density();
+        storage[Indices::conti0EqIdx - ModelTraits::dim()] = volVars.density();
 
         computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, ModelTraits::enableEnergyBalance() >(),
                                                   problem, scv, volVars, storage);
@@ -224,12 +229,14 @@ protected:
                     static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
                     // handle Neumann BCs, i.e. overwrite certain fluxes by user-specified values
                     for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
-                        if(bcTypes.isNeumann(eqIdx))
+                    {
+                        if(bcTypes.isNeumann(eqIdx + cellCenterOffset))
                         {
                             const auto extrusionFactor = 1.0; //TODO: get correct extrusion factor
-                            boundaryFlux[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, scvf)[eqIdx]
-                                                   * extrusionFactor * scvf.area();
+                            boundaryFlux[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, scvf)[eqIdx + cellCenterOffset]
+                                                  * extrusionFactor * scvf.area();
                         }
+                    }
                 }
 
                 residual += boundaryFlux;
@@ -251,10 +258,10 @@ protected:
                        const BoundaryTypes& bcTypes) const
     {
         // set a fixed pressure for cells adjacent to a wall
-        if(bcTypes.isDirichletCell(Indices::totalMassBalanceIdx))
+        if(bcTypes.isDirichletCell(Indices::conti0EqIdx))
         {
             const auto& insideVolVars = elemVolVars[insideScv];
-            residual[Indices::pressureIdx] = insideVolVars.pressure() - problem.dirichletAtPos(insideScv.center())[Indices::pressureIdx];
+            residual[Indices::conti0EqIdx - cellCenterOffset] = insideVolVars.pressure() - problem.dirichletAtPos(insideScv.center())[Indices::pressureIdx];
         }
     }
 
@@ -278,7 +285,7 @@ protected:
             const auto bcTypes = problem.boundaryTypes(element, scvf);
 
             // set a fixed value for the velocity for Dirichlet boundary conditions
-            if(bcTypes.isDirichlet(Indices::momentumBalanceIdx))
+            if(bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
             {
                 const Scalar velocity = elementFaceVars[scvf].velocitySelf();
                 const Scalar dirichletValue = problem.dirichlet(element, scvf)[Indices::velocity(scvf.directionIndex())];
@@ -296,9 +303,9 @@ protected:
             }
 
             // outflow condition for the momentum balance equation
-            if(bcTypes.isOutflow(Indices::momentumBalanceIdx))
+            if(bcTypes.isOutflow(Indices::velocity(scvf.directionIndex())))
             {
-                if(bcTypes.isDirichlet(Indices::totalMassBalanceIdx))
+                if(bcTypes.isDirichlet(Indices::conti0EqIdx))
                     residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars, elemFluxVarsCache);
                 else
                     DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");
@@ -330,8 +337,8 @@ protected:
         auto upwindTerm = [](const auto& volVars) { return volVars.density() * volVars.enthalpy(); };
         using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
 
-        flux[Indices::energyBalanceIdx] = FluxVariables::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
-        flux[Indices::energyBalanceIdx] += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
+        flux[Indices::energyBalanceIdx - cellCenterOffset] = FluxVariables::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
+        flux[Indices::energyBalanceIdx - cellCenterOffset] += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
     }
 
     //! Evaluate energy fluxes entering or leaving the cell center control volume for non isothermal models
@@ -345,7 +352,7 @@ protected:
                                                    const VolumeVariables& volVars,
                                                    CellCenterPrimaryVariables& storage) const
     {
-        storage[Indices::energyBalanceIdx] = volVars.density() * volVars.internalEnergy();
+        storage[Indices::energyBalanceIdx - cellCenterOffset] = volVars.density() * volVars.internalEnergy();
     }
 
     //! Evaluate energy storage for isothermal models
@@ -362,6 +369,7 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 };
-}
+
+} // end namespace Dumux
 
 #endif   // DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH

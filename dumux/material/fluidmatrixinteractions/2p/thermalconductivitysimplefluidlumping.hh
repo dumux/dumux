@@ -29,18 +29,12 @@
 
 namespace Dumux {
 
-struct SimpleLumpingIndices
-{
-    static const int wPhaseIdx = 0;
-    static const int nPhaseIdx = 1;
-};
-
 /*!
  * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  * \todo This shouldn't depend on TypeTag!!
  */
-template<class Scalar, int numEnergyEquationsFluid, class Indices = SimpleLumpingIndices>
+template<class Scalar, int numEnergyEquationsFluid>
 class ThermalConductivitySimpleFluidLumping
 {
 
@@ -52,7 +46,7 @@ public:
      * \param spatialParams spatial parameters
      * \param element element (to be passed to spatialParams)
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
-     * \param scvIdx scvIdx (to be passed to spatialParams)
+     * \param scv the sub-control volume
      *
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      */
@@ -63,9 +57,10 @@ public:
                                                const FVGeometry& fvGeometry,
                                                SubControlVolume& scv)
     {
-        Scalar sw = volVars.saturation(Indices::wPhaseIdx);
-        Scalar lambdaW = volVars.fluidThermalConductivity(Indices::wPhaseIdx);
-        Scalar lambdaN = volVars.fluidThermalConductivity(Indices::nPhaseIdx);
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+        Scalar sw = volVars.saturation(FluidSystem::wPhaseIdx);
+        Scalar lambdaW = volVars.fluidThermalConductivity(FluidSystem::wPhaseIdx);
+        Scalar lambdaN = volVars.fluidThermalConductivity(FluidSystem::nPhaseIdx);
         Scalar lambdaSolid = volVars.solidThermalConductivity();
         Scalar porosity = volVars.porosity();
 

@@ -25,13 +25,11 @@
 #ifndef DUMUX_3P3C_VOLUME_VARIABLES_HH
 #define DUMUX_3P3C_VOLUME_VARIABLES_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
-#include <dumux/discretization/methods.hh>
 
 namespace Dumux {
 
@@ -40,56 +38,55 @@ namespace Dumux {
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the three-phase three-component model.
  */
-template <class TypeTag>
-class ThreePThreeCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
+template <class Traits>
+class ThreePThreeCVolumeVariables
+: public PorousMediumFlowVolumeVariables<Traits, ThreePThreeCVolumeVariables<Traits>>
 {
-    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables<Traits, ThreePThreeCVolumeVariables<Traits>>;
 
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
-    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
-    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using PermeabilityType = typename Traits::PermeabilityType;
+
+    using FS = typename Traits::FluidSystem;
+    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FS>;
+    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FS>;
+
+    using ModelTraits = typename Traits::ModelTraits;
+    using Idx = typename ModelTraits::Indices;
     enum {
-        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
-        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
+        numPhases = ModelTraits::numPhases(),
+        numComponents = ModelTraits::numComponents(),
 
-        wCompIdx = Indices::wCompIdx,
-        gCompIdx = Indices::gCompIdx,
-        nCompIdx = Indices::nCompIdx,
+        wCompIdx = FS::wCompIdx,
+        gCompIdx = FS::gCompIdx,
+        nCompIdx = FS::nCompIdx,
 
-        wPhaseIdx = Indices::wPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = FS::wPhaseIdx,
+        gPhaseIdx = FS::gPhaseIdx,
+        nPhaseIdx = FS::nPhaseIdx,
 
-        switch1Idx = Indices::switch1Idx,
-        switch2Idx = Indices::switch2Idx,
-        pressureIdx = Indices::pressureIdx
+        switch1Idx = Idx::switch1Idx,
+        switch2Idx = Idx::switch2Idx,
+        pressureIdx = Idx::pressureIdx
     };
 
     // present phases
     enum {
-        threePhases = Indices::threePhases,
-        wPhaseOnly  = Indices::wPhaseOnly,
-        gnPhaseOnly = Indices::gnPhaseOnly,
-        wnPhaseOnly = Indices::wnPhaseOnly,
-        gPhaseOnly  = Indices::gPhaseOnly,
-        wgPhaseOnly = Indices::wgPhaseOnly
+        threePhases = Idx::threePhases,
+        wPhaseOnly  = Idx::wPhaseOnly,
+        gnPhaseOnly = Idx::gnPhaseOnly,
+        wnPhaseOnly = Idx::wnPhaseOnly,
+        gPhaseOnly  = Idx::gPhaseOnly,
+        wgPhaseOnly = Idx::wgPhaseOnly
     };
 
-    using Element = typename GridView::template Codim<0>::Entity;
-
 public:
-
-   using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    //! export fluid state type
+    using FluidState = typename Traits::FluidState;
+    //! export fluid system type
+    using FluidSystem = typename Traits::FluidSystem;
+    //! export the indices
+    using Indices = typename ModelTraits::Indices;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -100,17 +97,17 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub control volume
     */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume& scv)
+                const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
         const auto phasePresence = priVars.state();
 
-        bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
+        constexpr bool useConstraintSolver = ModelTraits::useConstraintSolver();
 
         // capillary pressure parameters
         const auto &materialParams =
@@ -169,6 +166,7 @@ public:
         pg_ = priVars[pressureIdx];
 
         // calculate capillary pressures
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         Scalar pcgw = MaterialLaw::pcgw(materialParams, sw_);
         Scalar pcnw = MaterialLaw::pcnw(materialParams, sw_);
         Scalar pcgn = MaterialLaw::pcgn(materialParams, sw_ + sn_);
@@ -679,7 +677,9 @@ public:
     }
 
 protected:
+    FluidState fluidState_;
 
+private:
     Scalar sw_, sg_, sn_, pg_, pw_, pn_;
 
     Scalar moleFrac_[numPhases][numComponents];
@@ -689,9 +689,7 @@ protected:
     PermeabilityType permeability_; //!< Effective permeability within the control volume
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
-    FluidState fluidState_;
 
-private:
     void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
     {
         if (compIdx < phaseIdx)
@@ -705,12 +703,6 @@ private:
     }
 
     std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
-
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 };
 
 } // end namespace Dumux
