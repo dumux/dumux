@@ -38,7 +38,7 @@ namespace Dumux {
  * \param v The container, requires being() and end() method
  * \param filename The filename to write to
  *
- * usage: std::vector<double>(5, 0.0) v; writeContainerToFile(v, "myvector.txt");
+ * usage: std::vector<double> v(5, 0.0); writeContainerToFile(v, "myvector.txt");
  */
 template<typename Container>
 void writeContainerToFile(const Container& v,
