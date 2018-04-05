@@ -39,7 +39,7 @@ class TwoPOneCLocalResidual : public ImmiscibleLocalResidual<TypeTag>
 {
     using ParentType = ImmiscibleLocalResidual<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
@@ -62,11 +62,11 @@ public:
 
 
     //! Evaluate the storage term within a given scv
-    ResidualVector computeStorage(const Problem& problem,
-                                  const SubControlVolume& scv,
-                                  const VolumeVariables& volVars) const
+    NumEqVector computeStorage(const Problem& problem,
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars) const
     {
-        ResidualVector storage(0.0);
+        NumEqVector storage(0.0);
         // Compute storage term of all components within all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
@@ -84,17 +84,17 @@ public:
     }
 
     //! Evaluate the fluxes over a face of a sub control volume
-    ResidualVector computeFlux(const Problem& problem,
-                               const Element& element,
-                               const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace& scvf,
-                               const ElementFluxVariablesCache& elemFluxVarsCache) const
+    NumEqVector computeFlux(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace& scvf,
+                            const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
-        ResidualVector flux;
+        NumEqVector flux;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // The physical quantities for which we perform upwinding

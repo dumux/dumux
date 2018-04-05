@@ -47,7 +47,7 @@ class TracerLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -74,11 +74,11 @@ public:
      * \param scv The sub control volume
      * \param volVars The primary and secondary varaibles on the scv
      */
-    PrimaryVariables computeStorage(const Problem& problem,
-                                    const SubControlVolume& scv,
-                                    const VolumeVariables& volVars) const
+    NumEqVector computeStorage(const Problem& problem,
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars) const
     {
-        PrimaryVariables storage(0.0);
+        NumEqVector storage(0.0);
 
         // formulation with mole balances
         if (useMoles)
@@ -111,17 +111,17 @@ public:
      * \param scvf The sub control volume face
      * \param elemFluxVarsCache The cache related to flux compuation
      */
-    PrimaryVariables computeFlux(const Problem& problem,
-                                 const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& elemVolVars,
-                                 const SubControlVolumeFace& scvf,
-                                 const ElementFluxVariablesCache& elemFluxVarsCache) const
+    NumEqVector computeFlux(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace& scvf,
+                            const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
-        PrimaryVariables flux(0.0);
+        NumEqVector flux(0.0);
         const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
 
         // formulation with mole balances

@@ -52,7 +52,7 @@ class BoxLocalResidual : public FVLocalResidual<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
 public:
     using ElementResidualVector = typename ParentType::ElementResidualVector;
@@ -84,15 +84,15 @@ public:
     }
 
     //! evaluate flux residuals for one sub control volume face
-    ResidualVector evalFlux(const Problem& problem,
-                            const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const ElementBoundaryTypes& elemBcTypes,
-                            const ElementFluxVariablesCache& elemFluxVarsCache,
-                            const SubControlVolumeFace& scvf) const
+    NumEqVector evalFlux(const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const ElementBoundaryTypes& elemBcTypes,
+                         const ElementFluxVariablesCache& elemFluxVarsCache,
+                         const SubControlVolumeFace& scvf) const
     {
-        ResidualVector flux(0.0);
+        NumEqVector flux(0.0);
 
         // inner faces
         if (!scvf.boundary())

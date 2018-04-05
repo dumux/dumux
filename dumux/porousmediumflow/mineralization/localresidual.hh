@@ -38,7 +38,7 @@ template<class TypeTag>
 class MineralizationLocalResidual: public CompositionalLocalResidual<TypeTag>
 {
     using ParentType = CompositionalLocalResidual<TypeTag>;
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -70,9 +70,9 @@ public:
      * \param volVars The volume variables (primary/secondary variables) in the scv
      * \return Amount per volume of the conserved quantities
      */
-    ResidualVector computeStorage(const Problem& problem,
-                                  const SubControlVolume& scv,
-                                  const VolumeVariables& volVars) const
+    NumEqVector computeStorage(const Problem& problem,
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars) const
     {
         auto storage = ParentType::computeStorage(problem, scv, volVars);
 

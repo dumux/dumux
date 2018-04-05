@@ -48,7 +48,7 @@ protected:
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -90,11 +90,11 @@ public:
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-     ResidualVector computeStorage(const Problem& problem,
-                                  const SubControlVolume& scv,
-                                  const VolumeVariables& volVars) const
+     NumEqVector computeStorage(const Problem& problem,
+                                const SubControlVolume& scv,
+                                const VolumeVariables& volVars) const
     {
-        ResidualVector storage(0.0);
+        NumEqVector storage(0.0);
 
         const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
         { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
@@ -133,18 +133,18 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    ResidualVector computeFlux(const Problem& problem,
-                               const Element& element,
-                               const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace& scvf,
-                               const ElementFluxVariablesCache& elemFluxVarsCache) const
+    NumEqVector computeFlux(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace& scvf,
+                            const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         // get upwind weights into local scope
-        ResidualVector flux(0.0);
+        NumEqVector flux(0.0);
 
         const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
         { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };

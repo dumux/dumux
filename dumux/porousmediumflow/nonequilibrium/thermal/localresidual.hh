@@ -44,7 +44,7 @@ template<class TypeTag>
 class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -70,7 +70,7 @@ public:
 
 
     //! The energy storage in the fluid phase with index phaseIdx
-    static void fluidPhaseStorage(ResidualVector& storage,
+    static void fluidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
@@ -85,7 +85,7 @@ public:
 
 
     //! The energy storage in the solid matrix
-    static void solidPhaseStorage(ResidualVector& storage,
+    static void solidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars)
     {
@@ -100,14 +100,14 @@ public:
     }
 
      // this is to make nonequilibrium work with compositional local residual, compositional calls that for non-isothermal models
-    static void heatConvectionFlux(ResidualVector& flux,
+    static void heatConvectionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars,
                                    int phaseIdx)
     {}
 
 
    //! The advective phase energy fluxes
-    static void heatConvectionFlux(ResidualVector& flux,
+    static void heatConvectionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars,
                                    const ElementVolumeVariables& elemVolVars,
                                    const SubControlVolumeFace& scvf,
@@ -142,7 +142,7 @@ public:
     }
 
     //! The diffusive energy fluxes
-    static void heatConductionFlux(ResidualVector& flux,
+    static void heatConductionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars)
     {
         //in case we have one energy equation for more than one fluid phase we use an effective law in the nonequilibrium fourierslaw
@@ -157,7 +157,7 @@ public:
      *
      * \param scv The sub-control volume over which we integrate the source term
      */
-    static void computeSourceEnergy(ResidualVector& source,
+    static void computeSourceEnergy(NumEqVector& source,
                                     const Element& element,
                                     const FVElementGeometry& fvGeometry,
                                     const ElementVolumeVariables& elemVolVars,
@@ -313,7 +313,7 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2 /*numEnergyEqFluid*/>
 : public EnergyLocalResidualNonEquilibrium<TypeTag, 1 /*numEnergyEqFluid*/>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -342,7 +342,7 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2 /*numEnergyEqFluid*/>
 public:
 
     //! The energy storage in the fluid phase with index phaseIdx
-    static void fluidPhaseStorage(ResidualVector& storage,
+    static void fluidPhaseStorage(NumEqVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
@@ -355,7 +355,7 @@ public:
 
 
    //! The advective phase energy fluxes
-    static void heatConvectionFlux(ResidualVector& flux,
+    static void heatConvectionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars,
                                    const ElementVolumeVariables& elemVolVars,
                                    const SubControlVolumeFace& scvf,
@@ -390,7 +390,7 @@ public:
     }
 
     //! The diffusive energy fluxes
-    static void heatConductionFlux(ResidualVector& flux,
+    static void heatConductionFlux(NumEqVector& flux,
                                    FluxVariables& fluxVars)
     {
 
@@ -406,7 +406,7 @@ public:
      *
      * \param scv The sub-control volume over which we integrate the source term
      */
-    static void computeSourceEnergy(ResidualVector& source,
+    static void computeSourceEnergy(NumEqVector& source,
                                     const Element& element,
                                     const FVElementGeometry& fvGeometry,
                                     const ElementVolumeVariables& elemVolVars,
