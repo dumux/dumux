@@ -75,8 +75,8 @@ public:
      * \param volVars The primary and secondary varaibles on the scv
      */
     NumEqVector computeStorage(const Problem& problem,
-                                    const SubControlVolume& scv,
-                                    const VolumeVariables& volVars) const
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars) const
     {
         NumEqVector storage(0.0);
 
@@ -112,11 +112,11 @@ public:
      * \param elemFluxVarsCache The cache related to flux compuation
      */
     NumEqVector computeFlux(const Problem& problem,
-                                 const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& elemVolVars,
-                                 const SubControlVolumeFace& scvf,
-                                 const ElementFluxVariablesCache& elemFluxVarsCache) const
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace& scvf,
+                            const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);

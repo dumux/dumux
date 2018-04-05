@@ -91,8 +91,8 @@ public:
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
      NumEqVector computeStorage(const Problem& problem,
-                                  const SubControlVolume& scv,
-                                  const VolumeVariables& volVars) const
+                                const SubControlVolume& scv,
+                                const VolumeVariables& volVars) const
     {
         NumEqVector storage(0.0);
 
@@ -134,11 +134,11 @@ public:
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
     NumEqVector computeFlux(const Problem& problem,
-                               const Element& element,
-                               const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace& scvf,
-                               const ElementFluxVariablesCache& elemFluxVarsCache) const
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace& scvf,
+                            const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);

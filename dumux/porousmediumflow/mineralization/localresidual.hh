@@ -71,8 +71,8 @@ public:
      * \return Amount per volume of the conserved quantities
      */
     NumEqVector computeStorage(const Problem& problem,
-                                  const SubControlVolume& scv,
-                                  const VolumeVariables& volVars) const
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars) const
     {
         auto storage = ParentType::computeStorage(problem, scv, volVars);
 

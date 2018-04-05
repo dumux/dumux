@@ -63,8 +63,8 @@ public:
 
     //! Evaluate the storage term within a given scv
     NumEqVector computeStorage(const Problem& problem,
-                                  const SubControlVolume& scv,
-                                  const VolumeVariables& volVars) const
+                               const SubControlVolume& scv,
+                               const VolumeVariables& volVars) const
     {
         NumEqVector storage(0.0);
         // Compute storage term of all components within all phases
@@ -85,11 +85,11 @@ public:
 
     //! Evaluate the fluxes over a face of a sub control volume
     NumEqVector computeFlux(const Problem& problem,
-                               const Element& element,
-                               const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace& scvf,
-                               const ElementFluxVariablesCache& elemFluxVarsCache) const
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace& scvf,
+                            const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
