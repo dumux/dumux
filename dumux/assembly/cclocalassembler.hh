@@ -61,7 +61,7 @@ class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Imp
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
 public:
 
@@ -133,7 +133,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
@@ -157,7 +157,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
         //////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
@@ -182,7 +182,7 @@ public:
         neighborElements.resize(numNeighbors);
 
         // assemble the undeflected residual
-        using Residuals = ReservedBlockVector<LocalResidualValues, maxElementStencilSize>;
+        using Residuals = ReservedBlockVector<NumEqVector, maxElementStencilSize>;
         Residuals origResiduals(numNeighbors + 1); origResiduals = 0.0;
         origResiduals[0] = this->evalLocalResidual()[0];
 
@@ -311,7 +311,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fal
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
@@ -327,7 +327,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
         if (this->assembler().isStationaryProblem())
             DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
@@ -361,7 +361,7 @@ public:
         // element solution container to be deflected
         auto elemSol = elementSolution(element, curSol, fvGridGeometry);
 
-        LocalResidualValues partialDeriv;
+        NumEqVector partialDeriv;
 
         // derivatives in the neighbors with repect to the current elements
         for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
@@ -421,7 +421,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/tr
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
@@ -434,7 +434,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
+    NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
     {
         // assemble the undeflected residual
         const auto residual = this->evalLocalResidual()[0];
@@ -500,7 +500,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/fa
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>;
     using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
@@ -513,7 +513,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
+    NumEqVector assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
     {
         // assemble the undeflected residual
         const auto residual = this->evalLocalResidual()[0];
