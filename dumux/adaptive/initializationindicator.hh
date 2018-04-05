@@ -174,7 +174,8 @@ public:
                 for (const auto& scv : scvs(fvGeometry))
                 {
                     auto source = problem_->source(element, fvGeometry, elemVolVars, scv);
-                    if (source.infinity_norm() > eps_)
+                    auto pointSource = problem_->scvPointSources(element, fvGeometry, elemVolVars, scv);
+                    if (source.infinity_norm() + pointSource.infinity_norm() > eps_)
                     {
                         indicatorVector_[eIdx] = true;
                         break; // element is marked, escape scv loop
