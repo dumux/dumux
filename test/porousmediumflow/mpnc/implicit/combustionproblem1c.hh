@@ -67,7 +67,7 @@ SET_TYPE_PROP(CombustionOneComponentTypeTag,
 
 SET_TYPE_PROP(CombustionOneComponentTypeTag,
               FluidSystem,
-              FluidSystems::PureWaterSimpleFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
+              FluidSystems::CombustionFluidsystem<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
 
 //! Set the default pressure formulation: either pw first or pn first
 SET_INT_PROP(CombustionOneComponentTypeTag,
