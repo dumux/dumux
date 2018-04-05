@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Fluidsystems
- * \brief @copybrief Dumux::FluidSystems::LiquidPhase
+ * \brief @copybrief Dumux::FluidSystems::OnePLiquid
  */
 #ifndef DUMUX_LIQUID_PHASE_HH
 #define DUMUX_LIQUID_PHASE_HH
@@ -41,10 +41,10 @@ namespace FluidSystems
  * \brief A liquid phase consisting of a single component
  */
 template <class Scalar, class ComponentT>
-class LiquidPhase
-: public BaseFluidSystem<Scalar, LiquidPhase<Scalar, ComponentT> >
+class OnePLiquid
+: public BaseFluidSystem<Scalar, OnePLiquid<Scalar, ComponentT> >
 {
-    using ThisType = LiquidPhase<Scalar, ComponentT>;
+    using ThisType = OnePLiquid<Scalar, ComponentT>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
 
 public:

@@ -33,7 +33,7 @@
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "spatialparams.hh"
 
@@ -66,7 +66,7 @@ SET_TYPE_PROP(OnePIncompressible, LocalResidual, OnePIncompressibleLocalResidual
 SET_PROP(OnePIncompressible, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
 };
 
 // Enable caching

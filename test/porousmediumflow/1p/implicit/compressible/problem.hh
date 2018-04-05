@@ -26,7 +26,7 @@
 
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
@@ -65,7 +65,7 @@ SET_PROP(OnePCompressible, FluidSystem)
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    using type = FluidSystems::LiquidPhase<Scalar, TabulatedComponent<Scalar, H2O<Scalar>>>;
+    using type = FluidSystems::OnePLiquid<Scalar, TabulatedComponent<Scalar, H2O<Scalar>>>;
 };
 
 // Disable caching (for testing purposes)

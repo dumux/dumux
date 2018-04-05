@@ -64,7 +64,7 @@
 
 #include <dumux/assembly/staggeredlocalresidual.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include <dumux/material/fluidstates/compositional.hh>
 

@@ -29,7 +29,7 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 
@@ -46,12 +46,12 @@ namespace FluidSystems {
  * The fluid phases are completely specified by means of their
  * constituting components.
  * The wetting and the non-wetting phase can be defined individually
- * via FluidSystem::LiquidPhase<Component> and
+ * via FluidSystem::OnePLiquid<Component> and
  * FluidSystem::GasPhase<Component>. These phases consist of one pure
  * component.
  * \tparam Scalar the scalar type
- * \tparam WettingPhase the wetting phase fluid system (use FluidSystem::LiquidPhase<Component> / FluidSystem::GasPhase<Component>)
- * \tparam NonwettingPhase the wetting phase fluid system (use FluidSystem::LiquidPhase<Component> / FluidSystem::GasPhase<Component>)
+ * \tparam WettingPhase the wetting phase fluid system (use FluidSystem::OnePLiquid<Component> / FluidSystem::GasPhase<Component>)
+ * \tparam NonwettingPhase the wetting phase fluid system (use FluidSystem::OnePLiquid<Component> / FluidSystem::GasPhase<Component>)
  */
 template <class Scalar, class WettingPhase, class NonwettingPhase>
 class TwoPImmiscible

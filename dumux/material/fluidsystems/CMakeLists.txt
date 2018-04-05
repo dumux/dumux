@@ -12,7 +12,7 @@ install(FILES
   h2on2.hh
   h2on2kinetic.hh
   h2on2o2.hh
-  liquidphase.hh
+  1pliquid.hh
   liquidphase2c.hh
   nullparametercache.hh
   parametercachebase.hh

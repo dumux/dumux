@@ -38,7 +38,7 @@
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/h2on2kinetic.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/spe5.hh>
 
 // include all fluid states
@@ -62,7 +62,7 @@ int main()
     using H2O = Components::H2O<Scalar>;
     using N2 = Components::N2<Scalar>;
 
-    using Liquid = FluidSystems::LiquidPhase<Scalar, H2O>;
+    using Liquid = FluidSystems::OnePLiquid<Scalar, H2O>;
     using Gas = FluidSystems::GasPhase<Scalar, N2>;
 
     int success = 0;
@@ -199,7 +199,7 @@ int main()
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // liquid phase
-    {   using FluidSystem = FluidSystems::LiquidPhase<Scalar, H2O>;
+    {   using FluidSystem = FluidSystems::OnePLiquid<Scalar, H2O>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // spe5

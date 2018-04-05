@@ -45,7 +45,7 @@
 // #include "components/mycompressiblecomponent.hh"
 
 // We will only have liquid phases Here
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 // The two-phase immiscible fluid system
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
@@ -77,13 +77,13 @@ SET_PROP(ExerciseThreeTwoPTypeTag, FluidSystem)
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using TabulatedH2O = TabulatedComponent<Scalar, H2O<Scalar>>;
-    using WettingPhase = typename FluidSystems::LiquidPhase<Scalar, TabulatedH2O>;
+    using WettingPhase = typename FluidSystems::OnePLiquid<Scalar, TabulatedH2O>;
     /*!
      * Uncomment first line and comment second line for using the incompressible component
      * Uncomment second line and comment first line for using the compressible component
      */
-    using NonWettingPhase = typename FluidSystems::LiquidPhase<Scalar, MyIncompressibleComponent<Scalar> >;
-    // using NonWettingPhase = typename FluidSystems::LiquidPhase<Scalar, MyCompressibleComponent<Scalar> >;
+    using NonWettingPhase = typename FluidSystems::OnePLiquid<Scalar, MyIncompressibleComponent<Scalar> >;
+    // using NonWettingPhase = typename FluidSystems::OnePLiquid<Scalar, MyCompressibleComponent<Scalar> >;
 
 public:
     using type = typename FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonWettingPhase>;
