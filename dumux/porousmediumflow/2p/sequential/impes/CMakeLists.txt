@@ -2,7 +2,6 @@
 #install headers
 install(FILES
 gridadaptionindicator.hh
-gridadaptionindicatorlocalflux.hh
 gridadaptionindicatorlocal.hh
 problem.hh
 propertiesadaptive.hh
