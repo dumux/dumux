@@ -281,7 +281,7 @@ public:
      * \brief Set time loop for instationary problems
      * \note calling this turns this into a stationary assembler
      */
-    void setTimeManager(std::shared_ptr<const TimeLoop> timeLoop)
+    void setTimeLoop(std::shared_ptr<const TimeLoop> timeLoop)
     { timeLoop_ = timeLoop_; isStationaryProblem_ = true; }
 
     /*!
