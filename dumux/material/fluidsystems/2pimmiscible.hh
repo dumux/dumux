@@ -45,19 +45,24 @@ namespace FluidSystems {
  *
  * The fluid phases are completely specified by means of their
  * constituting components.
- * The wetting and the non-wetting phase can be defined individually
- * via FluidSystem::OnePLiquid<Component> and
- * FluidSystem::OnePGas<Component>. These phases consist of one pure
+ * The wetting and the non-wetting fluids can be defined individually
+ * via FluidSystem::OnePLiquid<Scalar, Component> and
+ * FluidSystem::OnePGas<Scalar, Component>. These fluids consist of one pure
  * component.
  * \tparam Scalar the scalar type
- * \tparam WettingPhase the wetting phase fluid system (use FluidSystem::OnePLiquid<Component> / FluidSystem::OnePGas<Component>)
- * \tparam NonwettingPhase the wetting phase fluid system (use FluidSystem::OnePLiquid<Component> / FluidSystem::OnePGas<Component>)
+ * \tparam WettingFluid the wetting phase fluid system (use FluidSystem::OnePLiquid<Scalar, Component> / FluidSystem::OnePGas<Scalar, Component>)
+ * \tparam NonwettingFluid the wetting phase fluid system (use FluidSystem::OnePLiquid<Scalar, Component> / FluidSystem::OnePGas<Scalar, Component>)
  */
-template <class Scalar, class WettingPhase, class NonwettingPhase>
+template <class Scalar, class WettingFluid, class NonwettingFluid>
 class TwoPImmiscible
-: public BaseFluidSystem<Scalar, TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase> >
+: public BaseFluidSystem<Scalar, TwoPImmiscible<Scalar, WettingFluid, NonwettingFluid> >
 {
-    using ThisType = TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
+    static_assert((WettingFluid::numPhases == 1), "WettingFluid has more than one phase");
+    static_assert((NonwettingFluid::numPhases == 1), "NonwettingFluid has more than one phase");
+    static_assert((WettingFluid::numComponents == 1), "WettingFluid has more than one component");
+    static_assert((NonwettingFluid::numComponents == 1), "NonwettingFluid has more than one component");
+
+    using ThisType = TwoPImmiscible<Scalar, WettingFluid, NonwettingFluid>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
 public:
     /****************************************
@@ -96,8 +101,8 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
         if (phaseIdx == wPhaseIdx)
-            return WettingPhase::isLiquid();
-        return NonwettingPhase::isLiquid();
+            return WettingFluid::isLiquid();
+        return NonwettingFluid::isLiquid();
     }
 
     /*!
@@ -136,8 +141,8 @@ public:
 
         // let the fluids decide
         if (phaseIdx == wPhaseIdx)
-            return WettingPhase::isCompressible();
-        return NonwettingPhase::isCompressible();
+            return WettingFluid::isCompressible();
+        return NonwettingFluid::isCompressible();
     }
 
     /*!
@@ -152,8 +157,8 @@ public:
 
         // let the fluids decide
         if (phaseIdx == wPhaseIdx)
-            return WettingPhase::isIdealGas();
-        return NonwettingPhase::isIdealGas();
+            return WettingFluid::isIdealGas();
+        return NonwettingFluid::isIdealGas();
     }
 
     /****************************************
@@ -178,8 +183,8 @@ public:
         assert(0 <= compIdx && compIdx < numComponents);
 
         if (compIdx == wCompIdx)
-            return WettingPhase::name();
-        return NonwettingPhase::name();
+            return WettingFluid::name();
+        return NonwettingFluid::name();
     }
 
     /*!
@@ -191,8 +196,8 @@ public:
         assert(0 <= compIdx && compIdx < numComponents);
 
         if (compIdx == wCompIdx)
-            return WettingPhase::molarMass();
-        return NonwettingPhase::molarMass();
+            return WettingFluid::molarMass();
+        return NonwettingFluid::molarMass();
     }
 
     /*!
@@ -204,8 +209,8 @@ public:
         assert(0 <= compIdx && compIdx < numComponents);
 
         if (compIdx == wCompIdx)
-            return WettingPhase::criticalTemperature();
-        return NonwettingPhase::criticalTemperature();
+            return WettingFluid::criticalTemperature();
+        return NonwettingFluid::criticalTemperature();
     }
 
     /*!
@@ -217,8 +222,8 @@ public:
         assert(0 <= compIdx && compIdx < numComponents);
 
         if (compIdx == wCompIdx)
-            return WettingPhase::criticalPressure();
-        return NonwettingPhase::criticalPressure();
+            return WettingFluid::criticalPressure();
+        return NonwettingFluid::criticalPressure();
     }
 
     /*!
@@ -230,8 +235,8 @@ public:
         assert(0 <= compIdx && compIdx < numComponents);
 
         if (compIdx == wCompIdx)
-            return WettingPhase::acentricFactor();
-        return NonwettingPhase::acentricFactor();
+            return WettingFluid::acentricFactor();
+        return NonwettingFluid::acentricFactor();
     }
 
     /****************************************
@@ -245,7 +250,7 @@ public:
     {
         // two gaseous phases at once do not make sense physically!
         // (But two liquids are fine)
-        assert(WettingPhase::isLiquid() || NonwettingPhase::isLiquid());
+        assert(WettingFluid::isLiquid() || NonwettingFluid::isLiquid());
     }
 
     using Base::density;
@@ -262,8 +267,8 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
         if (phaseIdx == wPhaseIdx)
-            return WettingPhase::density(temperature, pressure);
-        return NonwettingPhase::density(temperature, pressure);
+            return WettingFluid::density(temperature, pressure);
+        return NonwettingFluid::density(temperature, pressure);
     }
 
     using Base::viscosity;
@@ -281,8 +286,8 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
         if (phaseIdx == wPhaseIdx)
-            return WettingPhase::viscosity(temperature, pressure);
-        return NonwettingPhase::viscosity(temperature, pressure);
+            return WettingFluid::viscosity(temperature, pressure);
+        return NonwettingFluid::viscosity(temperature, pressure);
     }
 
     using Base::fugacityCoefficient;
@@ -389,8 +394,8 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
         if (phaseIdx == wPhaseIdx)
-            return WettingPhase::enthalpy(temperature, pressure);
-        return NonwettingPhase::enthalpy(temperature, pressure);
+            return WettingFluid::enthalpy(temperature, pressure);
+        return NonwettingFluid::enthalpy(temperature, pressure);
     }
 
     using Base::thermalConductivity;
@@ -408,8 +413,8 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
         if (phaseIdx == wPhaseIdx)
-            return WettingPhase::thermalConductivity(temperature, pressure);
-        return NonwettingPhase::thermalConductivity(temperature, pressure);
+            return WettingFluid::thermalConductivity(temperature, pressure);
+        return NonwettingFluid::thermalConductivity(temperature, pressure);
     }
 
     using Base::heatCapacity;
@@ -433,8 +438,8 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
         if (phaseIdx == wPhaseIdx)
-            return WettingPhase::heatCapacity(temperature, pressure);
-        return NonwettingPhase::heatCapacity(temperature, pressure);
+            return WettingFluid::heatCapacity(temperature, pressure);
+        return NonwettingFluid::heatCapacity(temperature, pressure);
     }
 };
 
