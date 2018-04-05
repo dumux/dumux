@@ -33,18 +33,13 @@
 #include <dumux/common/defaultmappertraits.hh>
 
 #include <dumux/discretization/staggered/properties.hh>
+#include <dumux/discretization/staggered/fvgridgeometry.hh>
 #include <dumux/freeflow/properties.hh>
 
-#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
-#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
-#include <dumux/discretization/staggered/fvgridgeometry.hh>
-
-#include "subcontrolvolumeface.hh"
-#include "connectivitymap.hh"
 #include "facevariables.hh"
 #include "boundarytypes.hh"
 #include "velocityoutput.hh"
-#include "staggeredgeometryhelper.hh"
+#include "fvgridgeometrytraits.hh"
 
 namespace Dumux
 {
@@ -83,29 +78,21 @@ SET_PROP(StaggeredFreeFlowModel, FVGridGeometry)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    using Traits = StaggeredFreeFlowDefaultFVGridGeometryTraits<GridView>;
     static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-
-    struct Traits : public DefaultMapperTraits<GridView>
-    {
-        using SubControlVolume = CCSubControlVolume<GridView>;
-        using SubControlVolumeFace = FreeFlowStaggeredSubControlVolumeFace<GridView>;
-        using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
-        using GeometryHelper = FreeFlowStaggeredGeometryHelper<GridView>;
-
-        template<class FVGridGeometry>
-        using ConnectivityMap = StaggeredFreeFlowConnectivityMap<FVGridGeometry, DofTypeIndices>;
-
-        template<class FVGridGeometry, bool enableCache>
-        using LocalView = StaggeredFVElementGeometry<FVGridGeometry, enableCache>;
-    };
-
 public:
     using type = StaggeredFVGridGeometry<GridView, enableCache, Traits>;
 };
 
 //! The variables living on the faces
-SET_TYPE_PROP(StaggeredFreeFlowModel, FaceVariables, StaggeredFaceVariables<TypeTag>);
+SET_PROP(StaggeredFreeFlowModel, FaceVariables)
+{
+private:
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    using type = StaggeredFaceVariables<FacePrimaryVariables, GridView::dimension>;
+};
 
 //! Boundary types at a single degree of freedom
 SET_PROP(StaggeredFreeFlowModel, BoundaryTypes)

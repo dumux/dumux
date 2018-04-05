@@ -46,38 +46,35 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
 {
     using ParentType = StaggeredLocalResidual<TypeTag>;
     friend class StaggeredLocalResidual<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
+
+    using GridFluxVariablesCache = typename GridVariables::GridFluxVariablesCache;
+    using ElementFluxVariablesCache = typename GridFluxVariablesCache::LocalView;
+
+    using GridFaceVariables = typename GridVariables::GridFaceVariables;
+    using ElementFaceVariables = typename GridFaceVariables::LocalView;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FaceResidual = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-
-    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-
-    enum {
-        pressureIdx = Indices::pressureIdx,
-
-        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx
-    };
-
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using CellCenterResidual = CellCenterPrimaryVariables;
+    using FaceResidual = FacePrimaryVariables;
 
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
@@ -119,8 +116,7 @@ public:
         const auto sourceValues = problem.sourceAtPos(scv.center());
 
         // copy the respective cell center related values to the result
-        for(int i = 0; i < numEqCellCenter; ++i)
-            result[i] = sourceValues[i];
+        std::copy_n(sourceValues.begin(), result.size(), result.begin());
 
         return result;
     }
@@ -132,7 +128,7 @@ public:
                                                            const VolumeVariables& volVars) const
     {
         CellCenterPrimaryVariables storage;
-        storage[totalMassBalanceIdx] = volVars.density();
+        storage[Indices::totalMassBalanceIdx] = volVars.density();
 
         computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, ModelTraits::enableEnergyBalance() >(),
                                                   problem, scv, volVars, storage);
@@ -183,26 +179,28 @@ public:
 
 protected:
 
-//      /*!
-//      * \brief Evaluate boundary conditions
-//      */
-//     void evalBoundary_(const Element& element,
-//                        const FVElementGeometry& fvGeometry,
-//                        const ElementVolumeVariables& elemVolVars,
-//                        const ElementFaceVariables& elemFaceVars,
-//                        const ElementBoundaryTypes& elemBcTypes,
-//                        const ElementFluxVariablesCache& elemFluxVarsCache)
-//     {
-//         evalBoundaryForCellCenter_(element, fvGeometry, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
-//         for (auto&& scvf : scvfs(fvGeometry))
-//         {
-//             evalBoundaryForFace_(element, fvGeometry, scvf, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
-//         }
-//     }
+    //  /*!
+    //  * \brief Evaluate boundary conditions
+    //  */
+    // template<class ElementBoundaryTypes>
+    // void evalBoundary_(const Element& element,
+    //                    const FVElementGeometry& fvGeometry,
+    //                    const ElementVolumeVariables& elemVolVars,
+    //                    const ElementFaceVariables& elemFaceVars,
+    //                    const ElementBoundaryTypes& elemBcTypes,
+    //                    const ElementFluxVariablesCache& elemFluxVarsCache)
+    // {
+    //     evalBoundaryForCellCenter_(element, fvGeometry, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
+    //     for (auto&& scvf : scvfs(fvGeometry))
+    //     {
+    //         evalBoundaryForFace_(element, fvGeometry, scvf, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
+    //     }
+    // }
 
      /*!
      * \brief Evaluate boundary conditions for a cell center dof
      */
+    template<class ElementBoundaryTypes>
     void evalBoundaryForCellCenter_(CellCenterResidual& residual,
                                     const Problem& problem,
                                     const Element& element,
@@ -223,8 +221,9 @@ protected:
 
                 if(bcTypes.hasNeumann())
                 {
+                    static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
                     // handle Neumann BCs, i.e. overwrite certain fluxes by user-specified values
-                    for(int eqIdx = 0; eqIdx < GET_PROP_VALUE(TypeTag, NumEqCellCenter); ++eqIdx)
+                    for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                         if(bcTypes.isNeumann(eqIdx))
                         {
                             const auto extrusionFactor = 1.0; //TODO: get correct extrusion factor
@@ -244,6 +243,7 @@ protected:
      * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
      *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
      */
+    template<class BoundaryTypes>
     void setFixedCell_(CellCenterResidual& residual,
                        const Problem& problem,
                        const SubControlVolume& insideScv,
@@ -251,16 +251,17 @@ protected:
                        const BoundaryTypes& bcTypes) const
     {
         // set a fixed pressure for cells adjacent to a wall
-        if(bcTypes.isDirichletCell(totalMassBalanceIdx))
+        if(bcTypes.isDirichletCell(Indices::totalMassBalanceIdx))
         {
             const auto& insideVolVars = elemVolVars[insideScv];
-            residual[pressureIdx] = insideVolVars.pressure() - problem.dirichletAtPos(insideScv.center())[pressureIdx];
+            residual[Indices::pressureIdx] = insideVolVars.pressure() - problem.dirichletAtPos(insideScv.center())[Indices::pressureIdx];
         }
     }
 
      /*!
      * \brief Evaluate boundary conditions for a face dof
      */
+    template<class ElementBoundaryTypes>
     void evalBoundaryForFace_(FaceResidual& residual,
                               const Problem& problem,
                               const Element& element,
@@ -277,7 +278,7 @@ protected:
             const auto bcTypes = problem.boundaryTypes(element, scvf);
 
             // set a fixed value for the velocity for Dirichlet boundary conditions
-            if(bcTypes.isDirichlet(momentumBalanceIdx))
+            if(bcTypes.isDirichlet(Indices::momentumBalanceIdx))
             {
                 const Scalar velocity = elementFaceVars[scvf].velocitySelf();
                 const Scalar dirichletValue = problem.dirichlet(element, scvf)[Indices::velocity(scvf.directionIndex())];
@@ -295,9 +296,9 @@ protected:
             }
 
             // outflow condition for the momentum balance equation
-            if(bcTypes.isOutflow(momentumBalanceIdx))
+            if(bcTypes.isOutflow(Indices::momentumBalanceIdx))
             {
-                if(bcTypes.isDirichlet(totalMassBalanceIdx))
+                if(bcTypes.isDirichlet(Indices::totalMassBalanceIdx))
                     residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars, elemFluxVarsCache);
                 else
                     DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");

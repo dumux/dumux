@@ -19,32 +19,34 @@
 /*!
  * \file
  * \ingroup StaggeredDiscretization
- * \brief The local element solution class for staggered methods
+ * \brief Traits class to be used in conjunction with the StaggeredGridFaceVariables.
  */
-#ifndef DUMUX_STAGGERED_ELEMENT_SOLUTION_HH
-#define DUMUX_STAGGERED_ELEMENT_SOLUTION_HH
+#ifndef DUMUX_DISCRETIZATION_STAGGERED_GRID_VARIABLES_TRAITS_HH
+#define DUMUX_DISCRETIZATION_STAGGERED_GRID_VARIABLES_TRAITS_HH
 
-#include <type_traits>
-#include <dune/istl/bvector.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/staggered/elementvolumevariables.hh>
 
 namespace Dumux {
 
-template<class PrimaryVariables>
-using StaggeredElementSolution = Dune::BlockVector<PrimaryVariables>;
-
 /*!
  * \ingroup StaggeredDiscretization
- * \brief  Make an element solution for staggered schemes
- * \note This is e.g. used to contruct an element solution at Dirichlet boundaries
+ * \brief Traits class to be used for the StaggeredGridVolumeVariables.
+ *
+ * \tparam P The problem type
+ * \tparam VV The volume variables type
+ * \tparam I The indices type
+ * TODO: Remove the indices (get out of volvar) and do a default class like in tpfa
  */
-template<class FVElementGeometry, class PrimaryVariables>
-auto elementSolution(PrimaryVariables&& priVars)
--> std::enable_if_t<FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::staggered,
-                    StaggeredElementSolution<PrimaryVariables>>
+template<class P, class VV, class I>
+struct StaggeredGridVolumeVariablesTraits
 {
-    return StaggeredElementSolution<PrimaryVariables>({std::move(priVars)});
-}
+    template<class GridVolumeVariables, bool enableCache>
+    using LocalView = StaggeredElementVolumeVariables<GridVolumeVariables, enableCache>;
+
+    using Problem = P;
+    using VolumeVariables = VV;
+    using Indices = I;
+};
 
 } // end namespace Dumux
 

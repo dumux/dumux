@@ -27,8 +27,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
 * \ingroup CCTpfaDiscretization
@@ -43,7 +42,7 @@ class CCTpfaFluxVariablesCacheFiller
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     using Element = typename GridView::template Codim<0>::Entity;

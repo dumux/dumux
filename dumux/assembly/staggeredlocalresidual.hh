@@ -45,8 +45,8 @@ class StaggeredLocalResidual
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -55,7 +55,7 @@ class StaggeredLocalResidual
 
     using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FaceResidual = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables)::LocalView;
 
     using TimeLoop = TimeLoopBase<Scalar>;
 

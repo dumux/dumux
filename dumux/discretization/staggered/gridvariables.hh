@@ -41,11 +41,18 @@ class StaggeredGridVariables : public FVGridVariables<GG, GVV, GFVC>
 {
     using ParentType = FVGridVariables<GG, GVV, GFVC>;
     using FVGridGeometry = GG;
-    using GridVolumeVariables = GVV;
-    using GridFluxVariablesCache = GFVC;
-    using GridFaceVariables = GFV;
+
+    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
+    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
 public:
+    //! export the type of the grid volume variables
+    using GridVolumeVariables = GVV;
+    //! export the type of the grid flux variables cache
+    using GridFluxVariablesCache = GFVC;
+    //! export the type of the grid face variables
+    using GridFaceVariables = GFV;
+
     //! Constructor
     template<class Problem>
     StaggeredGridVariables(std::shared_ptr<Problem> problem,
@@ -59,25 +66,25 @@ public:
     template<class SolutionVector>
     void update(const SolutionVector& curSol)
     {
-        ParentType::update(curSol);
-        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol);
+        ParentType::update(curSol[cellCenterIdx]);
+        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
     }
 
     //! initialize all variables (stationary case)
     template<class SolutionVector>
     void init(const SolutionVector& curSol)
     {
-        ParentType::init(curSol);
-        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol);
+        ParentType::init(curSol[cellCenterIdx]);
+        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
     }
 
     //! initialize all variables (instationary case)
     template<class SolutionVector>
     void init(const SolutionVector& curSol, const SolutionVector& initSol)
     {
-        ParentType::init(curSol, initSol);
-        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol);
-        prevGridFaceVariables_.update(*this->fvGridGeometry_, initSol);
+        ParentType::init(curSol[cellCenterIdx], initSol[cellCenterIdx]);
+        curGridFaceVariables_.update(*this->fvGridGeometry_, curSol[faceIdx]);
+        prevGridFaceVariables_.update(*this->fvGridGeometry_, initSol[faceIdx]);
     }
 
     //! Sets the current state as the previous for next time step

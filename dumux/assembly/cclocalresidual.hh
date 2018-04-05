@@ -44,8 +44,8 @@ class CCLocalResidual : public FVLocalResidual<TypeTag>
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 

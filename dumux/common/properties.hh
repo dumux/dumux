@@ -80,12 +80,10 @@ NEW_PROP_TAG(FVGridGeometry);                      //!< The type of the global f
 NEW_PROP_TAG(EnableFVGridGeometryCache);           //!< specifies if geometric data is saved (faster, but more memory consuming)
 
 NEW_PROP_TAG(VolumeVariables);                     //!< The secondary variables within a sub-control volume
-NEW_PROP_TAG(ElementVolumeVariables);              //!< The type for a local (element/stencil) container for the volume variables
 NEW_PROP_TAG(GridVolumeVariables);                 //!< The type for a global container for the volume variables
 NEW_PROP_TAG(EnableGridVolumeVariablesCache);      //!< If disabled, the volume variables are not stored (reduces memory, but is slower)
 NEW_PROP_TAG(FluxVariables);                       //!< Container storing the different types of flux variables
 NEW_PROP_TAG(FluxVariablesCache);                  //!< Stores data associated with flux vars
-NEW_PROP_TAG(ElementFluxVariablesCache);           //!< A local vector of flux variable caches per element
 NEW_PROP_TAG(GridFluxVariablesCache);              //!< The global vector of flux variable containers
 NEW_PROP_TAG(EnableGridFluxVariablesCache);        //!< specifies if data on flux vars should be saved (faster, but more memory consuming)
 NEW_PROP_TAG(GridVariables);                       //!< The grid variables object managing variable data on the grid (volvars/fluxvars cache)
@@ -156,13 +154,11 @@ NEW_PROP_TAG(GridFaceVariables);                   //!< Global vector containing
 NEW_PROP_TAG(CellCenterPrimaryVariables);          //!< The primary variables container type for cell-centered dofs
 NEW_PROP_TAG(FacePrimaryVariables);                //!< The primary variables container type for face dofs
 NEW_PROP_TAG(IntersectionMapper);                  //!< Specifies the intersection mapper
-NEW_PROP_TAG(DofTypeIndices);                      //!< Specifies index types for accessing the multi type block vectors/matrices
 NEW_PROP_TAG(StaggeredPrimaryVariables);           //!< The hybrid primary variables container type
 NEW_PROP_TAG(BaseEpsilon);                         //!< A base epsilon for numerical differentiation, can contain multiple values
 NEW_PROP_TAG(FaceVariables);                       //!< Class containing local face-related data
 NEW_PROP_TAG(BoundaryValues);                      //!< Class containing local boundary data
 NEW_PROP_TAG(StaggeredFaceSolution);               //!< A vector containing the solution for a face (similar to ElementSolution)
-NEW_PROP_TAG(ElementFaceVariables);                //!< Face related varibles (similar to volume variables)
 NEW_PROP_TAG(EnableGridFaceVariablesCache);      //!< Switch on/off caching of face variables
 
 /////////////////////////////////////////////////////////////

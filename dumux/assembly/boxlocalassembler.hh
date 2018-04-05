@@ -56,7 +56,7 @@ class BoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Im
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
     enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
 

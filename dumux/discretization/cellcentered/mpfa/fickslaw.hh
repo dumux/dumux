@@ -50,8 +50,8 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
 

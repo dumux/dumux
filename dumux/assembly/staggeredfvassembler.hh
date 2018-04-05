@@ -56,14 +56,11 @@ class StaggeredFVAssembler
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using TimeLoop = TimeLoopBase<typename GET_PROP_TYPE(TypeTag, Scalar)>;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using LocalAssembler = StaggeredLocalAssembler<TypeTag, diffMethod, isImplicit>;
 
     static constexpr int dim = GridView::dimension;
-
-    using LocalAssembler =StaggeredLocalAssembler<TypeTag, diffMethod, isImplicit>;
-
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
+    static constexpr auto cellCenterIdx = GET_PROP_TYPE(TypeTag, FVGridGeometry)::cellCenterIdx();
+    static constexpr auto faceIdx = GET_PROP_TYPE(TypeTag, FVGridGeometry)::faceIdx();
 
     using CCToCCMatrixBlock = typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockCCToCC;
     using CCToFaceMatrixBlock = typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockCCToFace;

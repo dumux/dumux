@@ -111,7 +111,7 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using IapwsH2O = H2O<Scalar>;

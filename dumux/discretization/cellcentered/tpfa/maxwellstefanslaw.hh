@@ -54,9 +54,9 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::cctpfa >
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);

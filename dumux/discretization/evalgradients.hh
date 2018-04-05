@@ -45,14 +45,13 @@ namespace Dumux {
  *         the PrimaryVariables object (i.e. numEq). Each entry is
  *         a GlobalCoordinate object holding the priVar gradient.
  */
-template<class Element, class FVGridGeometry, class Sol>
+template<class Element, class FVElementGeometry, class PrimaryVariables>
 auto evalGradients(const Element& element,
                    const typename Element::Geometry& geometry,
-                   const FVGridGeometry& fvGridGeometry,
-                   const BoxElementSolution<FVGridGeometry, Sol>& elemSol,
+                   const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+                   const BoxElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
                    const typename Element::Geometry::GlobalCoordinate& globalPos)
 {
-    using PrimaryVariables = typename BoxElementSolution<FVGridGeometry, Sol>::PrimaryVariables;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     // evaluate gradients using the local finite element basis
@@ -106,13 +105,12 @@ auto evalGradients(const Element& element,
  *         the PrimaryVariables object (i.e. numEq). Each entry is
  *         a GlobalCoordinate object holding the priVar gradient.
  */
-template<class Element, class FVGridGeometry, class Sol>
-Dune::FieldVector<typename Element::Geometry::GlobalCoordinate,
-                  CCElementSolution<FVGridGeometry, Sol>::PrimaryVariables::dimension>
+template<class Element, class FVElementGeometry, class PrimaryVariables>
+Dune::FieldVector<typename Element::Geometry::GlobalCoordinate, PrimaryVariables::dimension>
 evalGradients(const Element& element,
               const typename Element::Geometry& geometry,
-              const FVGridGeometry& fvGridGeometry,
-              const CCElementSolution<FVGridGeometry, Sol>& elemSol,
+              const typename FVElementGeometry::FVGridGeometry& fvGridGeometry,
+              const CCElementSolution<FVElementGeometry, PrimaryVariables>& elemSol,
               const typename Element::Geometry::GlobalCoordinate& globalPos)
 { DUNE_THROW(Dune::NotImplemented, "General gradient evaluation for cell-centered methods"); }
 

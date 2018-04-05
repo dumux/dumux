@@ -34,24 +34,23 @@
 
 #include <dumux/discretization/fvproperties.hh>
 
-#include <dumux/discretization/cellcentered/gridvolumevariables.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvgridgeometrytraits.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvgridgeometry.hh>
+#include <dumux/discretization/cellcentered/mpfa/gridvolumevariables.hh>
 #include <dumux/discretization/cellcentered/mpfa/gridfluxvariablescache.hh>
-#include <dumux/discretization/cellcentered/mpfa/elementvolumevariables.hh>
-#include <dumux/discretization/cellcentered/mpfa/elementfluxvariablescache.hh>
+#include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
+#include <dumux/discretization/cellcentered/mpfa/fluxvariablescachefiller.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
+
 //! Type tag for the cell-centered mpfa scheme.
 NEW_TYPE_TAG(CCMpfaModel, INHERITS_FROM(FiniteVolumeModel));
 
@@ -99,24 +98,43 @@ public:
     using type = CCMpfaFVGridGeometry<GridView, Traits, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>;
 };
 
-//! The global flux variables cache vector class
-SET_TYPE_PROP(CCMpfaModel,
-              GridFluxVariablesCache,
-              CCMpfaGridFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
+//! The grid volume variables vector class
+SET_PROP(CCMpfaModel, GridVolumeVariables)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+public:
+    using type = CCMpfaGridVolumeVariables<Problem, VolumeVariables, enableCache>;
+};
 
-//! The local flux variables cache vector class
-SET_TYPE_PROP(CCMpfaModel,
-              ElementFluxVariablesCache,
-              CCMpfaElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
+//! The grid volume variables vector class
+SET_PROP(CCMpfaModel, GridFluxVariablesCache)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
 
+    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
 
-//! The global previous volume variables vector class
-SET_TYPE_PROP(CCMpfaModel,
-              ElementVolumeVariables,
-              CCMpfaElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
+    using PhysicsTraits = IvDataHandlePhysicsTraits<typename GET_PROP_TYPE(TypeTag, ModelTraits)>;
+    using PrimaryMatVecTraits = typename PrimaryInteractionVolume::Traits::MatVecTraits;
+    using SecondaryMatVecTraits = typename SecondaryInteractionVolume::Traits::MatVecTraits;
 
-//! The global current volume variables vector class
-SET_TYPE_PROP(CCMpfaModel, GridVolumeVariables, CCGridVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
+    using PrimaryIvDataHandle = InteractionVolumeDataHandle<PrimaryMatVecTraits, PhysicsTraits>;
+    using SecondaryIvDataHandle = InteractionVolumeDataHandle<SecondaryMatVecTraits, PhysicsTraits>;
+
+    using Traits = CCMpfaDefaultGridFluxVariablesCacheTraits<Problem,
+                                                             FluxVariablesCache, FluxVariablesCacheFiller,
+                                                             PrimaryInteractionVolume, SecondaryInteractionVolume,
+                                                             PrimaryIvDataHandle, SecondaryIvDataHandle>;
+public:
+    using type = CCMpfaGridFluxVariablesCache<Traits, enableCache>;
+};
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(CCMpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes);

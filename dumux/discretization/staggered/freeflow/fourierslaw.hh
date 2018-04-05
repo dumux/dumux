@@ -49,7 +49,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::staggered >
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 

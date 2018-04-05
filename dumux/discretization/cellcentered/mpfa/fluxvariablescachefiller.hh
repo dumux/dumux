@@ -51,8 +51,8 @@ class CCMpfaFluxVariablesCacheFiller
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using MpfaHelper = typename FVGridGeometry::MpfaHelper;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);

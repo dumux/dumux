@@ -33,31 +33,26 @@ namespace Dumux {
  * \ingroup BoxModel
  * \brief The element solution vector
  */
-template<class FVGridGeometry, class SolutionVector>
+template<class FVElementGeometry, class PV>
 class BoxElementSolution
 {
+    using FVGridGeometry = typename FVElementGeometry::FVGridGeometry;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
 
 public:
-    using PrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[0])>;
+    //! export the primary variables type
+    using PrimaryVariables = PV;
 
     //! Default constructor
     BoxElementSolution() = default;
 
     //! Constructor with element and solution and grid geometry
+    template<class SolutionVector>
     BoxElementSolution(const Element& element, const SolutionVector& sol,
                        const FVGridGeometry& fvGridGeometry)
     {
         update(element, sol, fvGridGeometry);
-    }
-
-    //! Constructor with element and solution and element geometry
-    BoxElementSolution(const Element& element, const SolutionVector& sol,
-                       const FVElementGeometry& fvGeometry)
-    {
-        update(element, sol, fvGeometry);
     }
 
     //! Constructor with element and elemVolVars and fvGeometry
@@ -72,6 +67,7 @@ public:
     }
 
     //! extract the element solution from the solution vector using a mapper
+    template<class SolutionVector>
     void update(const Element& element, const SolutionVector& sol,
                 const FVGridGeometry& fvGridGeometry)
     {
@@ -82,6 +78,7 @@ public:
     }
 
     //! extract the element solution from the solution vector using a local fv geometry
+    template<class SolutionVector>
     void update(const Element& element, const SolutionVector& sol,
                 const FVElementGeometry& fvGeometry)
     {
@@ -112,9 +109,12 @@ private:
 template<class Element, class SolutionVector, class FVGridGeometry>
 auto elementSolution(const Element& element, const SolutionVector& sol, const FVGridGeometry& gg)
 -> std::enable_if_t<FVGridGeometry::discMethod == DiscretizationMethod::box,
-                    BoxElementSolution<FVGridGeometry, SolutionVector>>
+                    BoxElementSolution<typename FVGridGeometry::LocalView,
+                                      std::decay_t<decltype(std::declval<SolutionVector>()[0])>>
+                    >
 {
-    return BoxElementSolution<FVGridGeometry, SolutionVector>(element, sol, gg);
+    using PrimaryVariables = std::decay_t<decltype(std::declval<SolutionVector>()[0])>;
+    return BoxElementSolution<typename FVGridGeometry::LocalView, PrimaryVariables>(element, sol, gg);
 }
 
 /*!
@@ -124,11 +124,11 @@ auto elementSolution(const Element& element, const SolutionVector& sol, const FV
 template<class Element, class ElementVolumeVariables, class FVElementGeometry>
 auto elementSolution(const Element& element, const ElementVolumeVariables& elemVolVars, const FVElementGeometry& gg)
 -> std::enable_if_t<FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::box,
-                    BoxElementSolution<typename FVElementGeometry::FVGridGeometry,
-                                       typename ElementVolumeVariables::SolutionVector>>
+                    BoxElementSolution<FVElementGeometry,
+                                       typename ElementVolumeVariables::VolumeVariables::PrimaryVariables>>
 {
-    return BoxElementSolution<typename FVElementGeometry::FVGridGeometry,
-                              typename ElementVolumeVariables::SolutionVector>(element, elemVolVars, gg);
+    using PrimaryVariables = typename ElementVolumeVariables::VolumeVariables::PrimaryVariables;
+    return BoxElementSolution<FVElementGeometry, PrimaryVariables>(element, elemVolVars, gg);
 }
 
 } // end namespace Dumux

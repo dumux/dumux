@@ -19,33 +19,46 @@
 /*!
  * \file
  * \ingroup StaggeredDiscretization
- * \brief The local element solution class for staggered methods
+ * \copydoc Dumux::StaggeredFreeFlowDefaultFVGridGeometryTraits
  */
-#ifndef DUMUX_STAGGERED_ELEMENT_SOLUTION_HH
-#define DUMUX_STAGGERED_ELEMENT_SOLUTION_HH
+#ifndef DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FV_GRID_GEOMETRY_TRAITS
+#define DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FV_GRID_GEOMETRY_TRAITS
 
-#include <type_traits>
-#include <dune/istl/bvector.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
+#include <dumux/discretization/staggered/fvelementgeometry.hh>
+#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
+
+#include "subcontrolvolumeface.hh"
+#include "connectivitymap.hh"
+#include "staggeredgeometryhelper.hh"
 
 namespace Dumux {
 
-template<class PrimaryVariables>
-using StaggeredElementSolution = Dune::BlockVector<PrimaryVariables>;
-
 /*!
  * \ingroup StaggeredDiscretization
- * \brief  Make an element solution for staggered schemes
- * \note This is e.g. used to contruct an element solution at Dirichlet boundaries
+ * \brief Default traits for the finite volume grid geometry.
  */
-template<class FVElementGeometry, class PrimaryVariables>
-auto elementSolution(PrimaryVariables&& priVars)
--> std::enable_if_t<FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::staggered,
-                    StaggeredElementSolution<PrimaryVariables>>
+template<class GridView>
+struct StaggeredFreeFlowDefaultFVGridGeometryTraits : public DefaultMapperTraits<GridView>
 {
-    return StaggeredElementSolution<PrimaryVariables>({std::move(priVars)});
-}
+    using SubControlVolume = CCSubControlVolume<GridView>;
+    using SubControlVolumeFace = FreeFlowStaggeredSubControlVolumeFace<GridView>;
+    using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
+    using GeometryHelper = FreeFlowStaggeredGeometryHelper<GridView>;
 
-} // end namespace Dumux
+    struct DofTypeIndices
+    {
+        using CellCenterIdx = Dune::index_constant<0>;
+        using FaceIdx = Dune::index_constant<1>;
+    };
+
+    template<class FVGridGeometry>
+    using ConnectivityMap = StaggeredFreeFlowConnectivityMap<FVGridGeometry>;
+
+    template<class FVGridGeometry, bool cachingEnabled>
+    using LocalView = StaggeredFVElementGeometry<FVGridGeometry, cachingEnabled>;
+};
+
+}
 
 #endif

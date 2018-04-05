@@ -60,7 +60,7 @@ class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Imp
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
 public:

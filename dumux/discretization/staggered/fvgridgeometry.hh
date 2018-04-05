@@ -35,9 +35,9 @@ namespace Dumux {
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
- template<class GridView,
-          bool enableFVGridGeometryCache,
-          class Traits>
+template<class GridView,
+         bool cachingEnabled,
+         class Traits>
 class StaggeredFVGridGeometry;
 
 /*!
@@ -55,12 +55,6 @@ class StaggeredFVGridGeometry<GV, true, Traits>
     using IndexType = typename GV::IndexSet::IndexType;
     using Element = typename GV::template Codim<0>::Entity;
 
-    enum {
-        // Grid and world dimension
-        dim = GV::dimension,
-        dimWorld = GV::dimensionworld
-    };
-
     using IntersectionMapper = typename Traits::IntersectionMapper;
     using GeometryHelper = typename Traits::GeometryHelper;
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
@@ -77,6 +71,16 @@ public:
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
     //! export the grid view type
     using GridView = GV;
+    //! export the dof type indices
+    using DofTypeIndices = typename Traits::DofTypeIndices;
+
+    //! return a integral constant for cell center dofs
+    static constexpr auto cellCenterIdx()
+    { return typename DofTypeIndices::CellCenterIdx{}; }
+
+    //! return a integral constant for face dofs
+    static constexpr auto faceIdx()
+    { return typename DofTypeIndices::FaceIdx{}; }
 
     //! Constructor
     StaggeredFVGridGeometry(const GridView& gridView)

@@ -102,10 +102,6 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using TimeLoopPtr = std::shared_ptr<TimeLoop<Scalar>>;
 
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
-
 public:
     AngeliTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
@@ -269,7 +265,7 @@ public:
                 const auto dofIdxCellCenter = scv.dofIndex();
                 const auto& posCellCenter = scv.dofPosition();
                 const auto analyticalSolutionCellCenter = dirichletAtPos(posCellCenter)[pressureIdx];
-                const auto numericalSolutionCellCenter = curSol[cellCenterIdx][dofIdxCellCenter][pressureIdx];
+                const auto numericalSolutionCellCenter = curSol[FVGridGeometry::cellCenterIdx()][dofIdxCellCenter][pressureIdx];
                 sumError[pressureIdx] += squaredDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter) * scv.volume();
                 sumReference[pressureIdx] += analyticalSolutionCellCenter * analyticalSolutionCellCenter * scv.volume();
                 totalVolume += scv.volume();
@@ -280,7 +276,7 @@ public:
                     const int dofIdxFace = scvf.dofIndex();
                     const int dirIdx = scvf.directionIndex();
                     const auto analyticalSolutionFace = dirichletAtPos(scvf.center())[Indices::velocity(dirIdx)];
-                    const auto numericalSolutionFace = curSol[faceIdx][dofIdxFace][momentumBalanceIdx];
+                    const auto numericalSolutionFace = curSol[FVGridGeometry::faceIdx()][dofIdxFace][momentumBalanceIdx];
                     directionIndex[dofIdxFace] = dirIdx;
                     errorVelocity[dofIdxFace] = squaredDiff_(analyticalSolutionFace, numericalSolutionFace);
                     velocityReference[dofIdxFace] = squaredDiff_(analyticalSolutionFace, 0.0);

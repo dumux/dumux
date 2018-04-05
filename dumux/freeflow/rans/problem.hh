@@ -70,10 +70,6 @@ class RANSProblem : public NavierStokesProblem<TypeTag>
     using DimVector = Dune::FieldVector<Scalar, dim>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
-
 public:
     //! The constructor sets the gravity, if desired by the user.
     RANSProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -232,7 +228,7 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 const int dofIdxFace = scvf.dofIndex();
-                const auto numericalSolutionFace = curSol[faceIdx][dofIdxFace][Indices::momentumBalanceIdx];
+                const auto numericalSolutionFace = curSol[FVGridGeometry::faceIdx()][dofIdxFace][Indices::momentumBalanceIdx];
                 velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
             }
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
@@ -288,8 +284,8 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const int dofIdx = scv.dofIndex();
-                CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][dofIdx]);
-                auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
+                CellCenterPrimaryVariables priVars(curSol[FVGridGeometry::cellCenterIdx()][dofIdx]);
+                auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
                 kinematicViscosity_[elementID] = volVars.viscosity() / volVars.density();

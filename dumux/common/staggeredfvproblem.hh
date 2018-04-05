@@ -55,23 +55,15 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
-
     using CoordScalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, GridView::dimensionworld>;
 
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
+    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
+    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
 public:
     /*!
@@ -168,7 +160,7 @@ protected:
 
     //! Helper function that returns an iterable range of primary variable indices.
     //! Specialization for cell center dofs.
-    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::CellCenterIdx)
+    static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::CellCenterIdx)
     {
         constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
@@ -181,7 +173,7 @@ protected:
 
     //! Helper function that returns an iterable range of primary variable indices.
     //! Specialization for face dofs.
-    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx)
+    static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::FaceIdx)
     {
         constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
         constexpr auto numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();

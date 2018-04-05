@@ -25,7 +25,6 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_GRID_VOLUMEVARIABLES_HH
 
 #include <dune/common/exceptions.hh>
-#include <dumux/common/properties.hh>
 
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
@@ -37,7 +36,7 @@ namespace Dumux {
  * \ingroup StaggeredDiscretization
  * \brief Grid volume variables class for staggered models
  */
-template<class TypeTag, bool enableGridVolVarsCache>
+template<class Traits, bool cachingEnabled>
 class StaggeredGridVolumeVariables;
 
 /*!
@@ -45,40 +44,32 @@ class StaggeredGridVolumeVariables;
  * \brief Grid volume variables class for staggered models.
           Specialization in case of storing the volume variables
  */
-template<class TypeTag>
-class StaggeredGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
+template<class Traits>
+class StaggeredGridVolumeVariables<Traits, /*cachingEnabled*/true>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using IndexType = typename GridView::IndexSet::IndexType;
-
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-
-    static const int dim = GridView::dimension;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-
-    enum { numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter) };
+    using ThisType = StaggeredGridVolumeVariables<Traits, true>;
+    using Problem = typename Traits::Problem;
 
 public:
-    //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    //! export the type of the indices TODO: get them out of the volvars
+    using Indices = typename Traits::Indices;
+
+    //! export the type of the VolumeVariables
+    using VolumeVariables = typename Traits::VolumeVariables;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = true;
 
+    //! export the type of the local view
+    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
+
     StaggeredGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     //! Update all volume variables
+    template<class FVGridGeometry, class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
+        using CellCenterPrimaryVariables = typename SolutionVector::value_type;
         auto numScv = fvGridGeometry.numScv();
         auto numBoundaryScvf = fvGridGeometry.numBoundaryScvf();
 
@@ -90,9 +81,8 @@ public:
 
             for (auto&& scv : scvs(fvGeometry))
             {
-                CellCenterPrimaryVariables priVars(0.0);
-                priVars = sol[cellCenterIdx][scv.dofIndex()];
-                auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(priVars));
+                CellCenterPrimaryVariables priVars = sol[scv.dofIndex()];
+                auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
                 volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
             }
 
@@ -109,34 +99,36 @@ public:
 
                 CellCenterPrimaryVariables boundaryPriVars(0.0);
 
-                for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
+                for(int eqIdx = 0; eqIdx < CellCenterPrimaryVariables::dimension; ++eqIdx)
                 {
                     if(bcTypes.isDirichlet(eqIdx) || bcTypes.isDirichletCell(eqIdx))
                         boundaryPriVars[eqIdx] = problem().dirichlet(element, scvf)[eqIdx];
                     else if(bcTypes.isNeumann(eqIdx) || bcTypes.isOutflow(eqIdx) || bcTypes.isSymmetry())
-                        boundaryPriVars[eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
+                        boundaryPriVars[eqIdx] = sol[scvf.insideScvIdx()][eqIdx];
                     //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary
                     // could be made more general by allowing a non-zero-gradient, provided in problem file
                     else
                         if(eqIdx == Indices::pressureIdx)
                             DUNE_THROW(Dune::InvalidStateException, "Face at: " << scvf.center() << " has neither Dirichlet nor Neumann BC.");
                 }
-                auto elemSol = elementSolution<SolutionVector, FVGridGeometry>(std::move(boundaryPriVars));
+                auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(boundaryPriVars));
                 volumeVariables_[scvf.outsideScvIdx()].update(elemSol, problem(), element, insideScv);
             }
         }
     }
 
-    const VolumeVariables& volVars(const IndexType scvIdx) const
+    const VolumeVariables& volVars(const std::size_t scvIdx) const
     { return volumeVariables_[scvIdx]; }
 
-    VolumeVariables& volVars(const IndexType scvIdx)
+    VolumeVariables& volVars(const std::size_t scvIdx)
     { return volumeVariables_[scvIdx]; }
 
-    const VolumeVariables& volVars(const SubControlVolume scv) const
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
+    const VolumeVariables& volVars(const SubControlVolume& scv) const
     { return volumeVariables_[scv.dofIndex()]; }
 
-    VolumeVariables& volVars(const SubControlVolume scv)
+    template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
+    VolumeVariables& volVars(const SubControlVolume& scv)
     { return volumeVariables_[scv.dofIndex()]; }
 
     const Problem& problem() const
@@ -153,22 +145,25 @@ private:
  * \brief Grid volume variables class for staggered models.
           Specialization in case of not storing the volume variables
  */
-template<class TypeTag>
-class StaggeredGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
+template<class Traits>
+class StaggeredGridVolumeVariables<Traits, /*cachingEnabled*/false>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ThisType = StaggeredGridVolumeVariables<Traits, false>;
+    using Problem = typename Traits::Problem;
 
 public:
-    //! export the type of the local view
-    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    //! export the type of the VolumeVariables
+    using VolumeVariables = typename Traits::VolumeVariables;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = false;
 
+    //! export the type of the local view
+    using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
+
     StaggeredGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
+    template<class FVGridGeometry, class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
     const Problem& problem() const

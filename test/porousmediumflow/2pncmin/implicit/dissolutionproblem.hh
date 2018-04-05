@@ -128,7 +128,7 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);

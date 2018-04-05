@@ -78,7 +78,7 @@ class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
     // Grid and world dimension
     static const int dim = GridView::dimension;

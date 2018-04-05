@@ -53,7 +53,7 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
@@ -322,7 +322,7 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2 /*numEnergyEqFluid*/>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     enum { numPhases        = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases() };
