@@ -42,7 +42,7 @@ class CCLocalResidual : public FVLocalResidual<TypeTag>
     using ParentType = FVLocalResidual<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
@@ -69,14 +69,14 @@ public:
     }
 
     //! evaluate the flux residual for a sub control volume face
-    ResidualVector evalFlux(const Problem& problem,
+    NumEqVector evalFlux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
                             const ElementVolumeVariables& elemVolVars,
                             const ElementFluxVariablesCache& elemFluxVarsCache,
                             const SubControlVolumeFace& scvf) const
     {
-        ResidualVector flux(0.0);
+        NumEqVector flux(0.0);
 
         // inner faces
         if (!scvf.boundary())
