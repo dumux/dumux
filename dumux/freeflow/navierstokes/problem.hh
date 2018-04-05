@@ -124,9 +124,8 @@ public:
                               const SubControlVolumeFace& scvf,
                               const PrimaryVariables& initSol) const
     {
-        typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx faceIdx;
         const auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-        sol[faceIdx][scvf.dofIndex()][numEqCellCenter] = initSol[Indices::velocity(scvf.directionIndex())];
+        sol[FVGridGeometry::faceIdx()][scvf.dofIndex()][numEqCellCenter] = initSol[Indices::velocity(scvf.directionIndex())];
     }
 
 private:

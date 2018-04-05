@@ -58,10 +58,6 @@ class FluxOverPlane
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
-
     enum {
         // Grid and world dimension
         dim = GridView::dimension,

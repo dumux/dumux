@@ -130,13 +130,6 @@ SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, CCElementBoundaryTypes);
 //! Set the BaseLocalResidual to StaggeredLocalResidual
 SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, StaggeredLocalResidual<TypeTag>);
 
-//! Definition of the indices for cell center and face dofs in the global solution vector
-SET_PROP(StaggeredModel, DofTypeIndices)
-{
-    using CellCenterIdx = Dune::index_constant<0>;
-    using FaceIdx = Dune::index_constant<1>;
-};
-
 //! The cell center primary variables
 SET_TYPE_PROP(StaggeredModel,
               CellCenterPrimaryVariables,

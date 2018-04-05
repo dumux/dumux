@@ -133,14 +133,11 @@ int main(int argc, char** argv) try
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
     const auto numDofsCellCenter = leafGridView.size(0);
     const auto numDofsFace = leafGridView.size(1);
     SolutionVector x;
-    x[cellCenterIdx].resize(numDofsCellCenter);
-    x[faceIdx].resize(numDofsFace);
+    x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
+    x[FVGridGeometry::faceIdx()].resize(numDofsFace);
     problem->applyInitialSolution(x);
     problem->updateStaticWallProperties();
     problem->updateDynamicWallProperties(x);

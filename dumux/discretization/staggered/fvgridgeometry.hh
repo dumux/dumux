@@ -35,9 +35,9 @@ namespace Dumux {
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
- template<class GridView,
-          bool enableFVGridGeometryCache,
-          class Traits>
+template<class GridView,
+         bool cachingEnabled,
+         class Traits>
 class StaggeredFVGridGeometry;
 
 /*!

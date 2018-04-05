@@ -98,6 +98,8 @@ class StaggeredLocalAssembler<TypeTag,
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
     static constexpr auto faceOffset = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
+    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
 public:
 
@@ -110,10 +112,6 @@ public:
                                 const Element& element,
                                 const SolutionVector& curSol)
     {
-        using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-        typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-        typename DofTypeIndices::FaceIdx faceIdx;
-
         // get some references for convenience
         const auto& problem = assembler.problem();
         auto& localResidual = assembler.localResidual();
@@ -183,11 +181,6 @@ public:
                                             const Element& element,
                                             const SolutionVector& curSol)
     {
-        using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-        typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-        typename DofTypeIndices::FaceIdx faceIdx;
-
-
         // get some references for convenience
         const auto& problem = assembler.problem();
         auto& localResidual = assembler.localResidual();
@@ -314,9 +307,6 @@ protected:
                  JacobianMatrix& matrix,
                  const NumCellCenterEqVector& ccResidual)
     {
-        using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-        typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-
         const auto& problem = assembler.problem();
         auto& localResidual = assembler.localResidual();
         auto& gridVariables = assembler.gridVariables();
@@ -376,11 +366,6 @@ protected:
                           JacobianMatrix& matrix,
                           const NumCellCenterEqVector& ccResidual)
     {
-       // build derivatives with for cell center dofs w.r.t. face dofs
-       using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-       typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-       typename DofTypeIndices::FaceIdx faceIdx;
-
        const auto& problem = assembler.problem();
        auto& localResidual = assembler.localResidual();
        auto& gridVariables = assembler.gridVariables();
@@ -440,10 +425,6 @@ protected:
     {
        for(auto&& scvf : scvfs(fvGeometry))
        {
-           using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-           typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-           typename DofTypeIndices::FaceIdx faceIdx;
-
            const auto& problem = assembler.problem();
            auto& localResidual = assembler.localResidual();
            auto& gridVariables = assembler.gridVariables();
@@ -505,9 +486,6 @@ protected:
                             JacobianMatrix& matrix,
                             const FaceSolutionVector& cachedResidual)
     {
-        using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-        typename DofTypeIndices::FaceIdx faceIdx;
-
         const auto& problem = assembler.problem();
         auto& localResidual = assembler.localResidual();
         const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
@@ -612,7 +590,7 @@ protected:
 
     //! Helper function that returns an iterable range of primary variable indices.
     //! Specialization for cell center dofs.
-    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::CellCenterIdx)
+    static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::CellCenterIdx)
     {
         constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
@@ -625,7 +603,7 @@ protected:
 
     //! Helper function that returns an iterable range of primary variable indices.
     //! Specialization for face dofs.
-    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx)
+    static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::FaceIdx)
     {
         constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
         constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);

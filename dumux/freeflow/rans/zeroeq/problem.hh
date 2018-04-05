@@ -70,10 +70,6 @@ class ZeroEqProblem : public RANSProblem<TypeTag>
     using DimVector = Dune::FieldVector<Scalar, dim>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
-
 public:
     //! The constructor sets the gravity, if desired by the user.
     ZeroEqProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -120,7 +116,7 @@ public:
                 using std::exp;
 
                 const int dofIdx = scv.dofIndex();
-                CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][dofIdx]);
+                CellCenterPrimaryVariables priVars(curSol[FVGridGeometry::cellCenterIdx()][dofIdx]);
                 auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);

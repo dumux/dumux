@@ -160,7 +160,7 @@ protected:
 
     //! Helper function that returns an iterable range of primary variable indices.
     //! Specialization for cell center dofs.
-    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::CellCenterIdx)
+    static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::CellCenterIdx)
     {
         constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
@@ -173,7 +173,7 @@ protected:
 
     //! Helper function that returns an iterable range of primary variable indices.
     //! Specialization for face dofs.
-    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx)
+    static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::FaceIdx)
     {
         constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
         constexpr auto numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();

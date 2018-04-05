@@ -64,10 +64,6 @@ class StaggeredVtkOutputModule : public VtkOutputModule<TypeTag, phaseIdxOffset>
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
-
     struct FaceVarScalarDataInfo { std::function<Scalar(const FaceVariables&)> get; std::string name; };
     struct FaceVarVectorDataInfo { std::function<GlobalPosition(const SubControlVolumeFace& scvf, const FaceVariables&)> get; std::string name; };
 
