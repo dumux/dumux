@@ -39,11 +39,16 @@
 namespace Dumux {
 namespace Components {
 
-template <class Scalar, class Implementation>
+template <class ScalarType, class Component>
 class Base
 {
 public:
-    static const bool isTabulated = false;
+
+    //! export the scalar type used by the component
+    using Scalar = ScalarType;
+
+    //! if the component relies on tabulated values
+    static constexpr bool isTabulated = false;
 
     /*!
      * \brief A default routine for initialization, not needed for components and must not be called.
@@ -65,7 +70,7 @@ public:
      * \brief A human readable name for the component.
      * \note Mandatory for all components
      */
-    template<class C = Implementation>
+    template<class C = Component>
     static std::string name()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: name()");
@@ -75,7 +80,7 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the component.
      */
-    template<class C = Implementation>
+    template<class C = Component>
     static constexpr Scalar molarMass()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: molarMass()");
@@ -85,7 +90,7 @@ public:
     /*!
      * \brief Returns the critical temperature in \f$\mathrm{[K]}\f$ of the component.
      */
-    template<class C = Implementation>
+    template<class C = Component>
     static constexpr Scalar criticalTemperature()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: criticalTemperature()");
@@ -95,7 +100,7 @@ public:
     /*!
      * \brief Returns the critical pressure in \f$\mathrm{[Pa]}\f$ of the component.
      */
-    template<class C = Implementation>
+    template<class C = Component>
     static constexpr Scalar criticalPressure()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: criticalPressure()");
@@ -105,7 +110,7 @@ public:
     /*!
      * \brief Returns the temperature in \f$\mathrm{[K]}\f$ at the component's triple point.
      */
-    template<class C = Implementation>
+    template<class C = Component>
     static constexpr Scalar tripleTemperature()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: tripleTemperature()");
@@ -115,7 +120,7 @@ public:
     /*!
      * \brief Returns the pressure in \f$\mathrm{[Pa]}\f$ at the component's triple point.
      */
-    template<class C = Implementation>
+    template<class C = Component>
     static constexpr Scalar triplePressure()
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: triplePressure()");
@@ -128,7 +133,7 @@ public:
      *
      * \param T temperature of the component in \f$\mathrm{[K]}\f$
      */
-    template<class C = Implementation>
+    template<class C = Component>
     static Scalar vaporPressure(Scalar t)
     {
         static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: vaporPressure(t)");
