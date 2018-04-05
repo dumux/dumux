@@ -27,7 +27,7 @@
 #ifndef DUMUX_PIPE_LAUFER_PROBLEM_HH
 #define DUMUX_PIPE_LAUFER_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/gasphase.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/components/air.hh>
 
 #include <dumux/freeflow/rans/zeroeq/model.hh>
@@ -51,7 +51,7 @@ NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEq));
 SET_PROP(PipeLauferProblem, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::GasPhase<Scalar, Air<Scalar> >;
+    using type = FluidSystems::OnePGas<Scalar, Air<Scalar> >;
 };
 
 // Set the grid type

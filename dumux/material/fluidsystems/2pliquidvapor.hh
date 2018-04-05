@@ -31,7 +31,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/fluidsystems/gasphase.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 
 #include "base.hh"

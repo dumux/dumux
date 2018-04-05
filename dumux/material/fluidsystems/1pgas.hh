@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Fluidsystems
- * \brief @copybrief Dumux::FluidSystems::GasPhase
+ * \brief @copybrief Dumux::FluidSystems::OnePGas
  */
 #ifndef DUMUX_GAS_PHASE_HH
 #define DUMUX_GAS_PHASE_HH
@@ -42,10 +42,10 @@ namespace FluidSystems
  * \brief A gaseous phase consisting of a single component
  */
 template <class Scalar, class ComponentT>
-class GasPhase
-: public BaseFluidSystem<Scalar, GasPhase<Scalar, ComponentT> >
+class OnePGas
+: public BaseFluidSystem<Scalar, OnePGas<Scalar, ComponentT> >
 {
-    using ThisType = GasPhase<Scalar, ComponentT>;
+    using ThisType = OnePGas<Scalar, ComponentT>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
 
 public:

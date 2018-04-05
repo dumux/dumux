@@ -4,7 +4,7 @@ install(FILES
   base.hh
   brineair.hh
   brineco2.hh
-  gasphase.hh
+  1pgas.hh
   h2oair.hh
   h2oairmesitylene.hh
   h2oairxylene.hh

@@ -31,7 +31,7 @@
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>
-#include <dumux/material/fluidsystems/gasphase.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
@@ -63,7 +63,7 @@ int main()
     using N2 = Components::N2<Scalar>;
 
     using Liquid = FluidSystems::OnePLiquid<Scalar, H2O>;
-    using Gas = FluidSystems::GasPhase<Scalar, N2>;
+    using Gas = FluidSystems::OnePGas<Scalar, N2>;
 
     int success = 0;
     std::vector<std::string> collectedExceptions;
@@ -169,7 +169,7 @@ int main()
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // gas phase
-    {   using FluidSystem = FluidSystems::GasPhase<Scalar, H2O>;
+    {   using FluidSystem = FluidSystems::OnePGas<Scalar, H2O>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- Air -- Mesitylene
