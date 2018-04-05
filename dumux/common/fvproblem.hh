@@ -53,7 +53,7 @@ class FVProblem
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -248,7 +248,7 @@ public:
      * Negative values mean influx.
      * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    ResidualVector neumann(const Element& element,
+    NumEqVector neumann(const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const ElementVolumeVariables& elemVolVars,
                            const SubControlVolumeFace& scvf) const
@@ -266,11 +266,11 @@ public:
      * Negative values mean influx.
      * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    ResidualVector neumannAtPos(const GlobalPosition &globalPos) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
         //! As a default, i.e. if the user's problem does not overload any neumann method
         //! return no-flow Neumann boundary conditions at all Neumann boundaries
-        return ResidualVector(0.0);
+        return NumEqVector(0.0);
     }
 
     /*!
@@ -291,7 +291,7 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    ResidualVector source(const Element &element,
+    NumEqVector source(const Element &element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolVars,
                           const SubControlVolume &scv) const
@@ -313,11 +313,11 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    ResidualVector sourceAtPos(const GlobalPosition &globalPos) const
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
         //! As a default, i.e. if the user's problem does not overload any source method
         //! return 0.0 (no source terms)
-        return ResidualVector(0.0);
+        return NumEqVector(0.0);
     }
 
     /*!
@@ -399,12 +399,12 @@ public:
      *        Caution: Only overload this method in the implementation if you know
      *                 what you are doing.
      */
-    ResidualVector scvPointSources(const Element &element,
+    NumEqVector scvPointSources(const Element &element,
                                    const FVElementGeometry& fvGeometry,
                                    const ElementVolumeVariables& elemVolVars,
                                    const SubControlVolume &scv) const
     {
-        ResidualVector source(0);
+        NumEqVector source(0);
         auto scvIdx = scv.indexInElement();
         auto key = std::make_pair(fvGridGeometry_->elementMapper().index(element), scvIdx);
         if (pointSourceMap_.count(key))

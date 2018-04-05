@@ -52,7 +52,7 @@ class PointSource
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
@@ -64,7 +64,7 @@ class PointSource
 
 public:
     //! Constructor for constant point sources
-    PointSource(GlobalPosition pos, PrimaryVariables values)
+    PointSource(GlobalPosition pos, NumEqVector values)
       : values_(values), pos_(pos), embeddings_(1) {}
 
     //! Constructor for sol dependent point sources, when there is no
@@ -101,7 +101,7 @@ public:
     }
 
     //! Convenience = operator overload modifying only the values
-    PointSource& operator= (const PrimaryVariables& values)
+    PointSource& operator= (const NumEqVector& values)
     {
         values_ = values;
         return *this;
@@ -115,7 +115,7 @@ public:
     }
 
     //! return the source values
-    PrimaryVariables values() const
+    NumEqVector values() const
     { return values_; }
 
     //! return the source position
@@ -155,7 +155,7 @@ public:
     }
 
 protected:
-    PrimaryVariables values_; //!< value of the point source for each equation
+    NumEqVector values_; //!< value of the point source for each equation
 private:
     GlobalPosition pos_; //!< position of the point source
     std::size_t embeddings_; //!< how many SCVs the point source is associated with
@@ -171,27 +171,27 @@ class IdPointSource : public PointSource<TypeTag>
     using ParentType = PointSource<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     static const int dimworld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
 public:
     //! Constructor for constant point sources
-    IdPointSource(GlobalPosition pos, PrimaryVariables values, IdType id)
+    IdPointSource(GlobalPosition pos, NumEqVector values, IdType id)
       :  ParentType(pos, values), id_(id) {}
 
     //! Constructor for sol dependent point sources, when there is no
     // value known at the time of initialization
     IdPointSource(GlobalPosition pos, IdType id)
-      : ParentType(pos, PrimaryVariables(0.0)), id_(id) {}
+      : ParentType(pos, NumEqVector(0.0)), id_(id) {}
 
     //! return the sources identifier
     IdType id() const
     { return id_; }
 
     //! Convenience = operator overload modifying only the values
-    IdPointSource& operator= (const PrimaryVariables& values)
+    IdPointSource& operator= (const NumEqVector& values)
     {
         ParentType::operator=(values);
         return *this;
@@ -218,7 +218,7 @@ class SolDependentPointSource : public PointSource<TypeTag>
     using ParentType = PointSource<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
@@ -227,19 +227,19 @@ class SolDependentPointSource : public PointSource<TypeTag>
 
     static const int dimworld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimworld>;
-    // returns the PointSource values as PrimaryVariables
-    using ValueFunction = typename std::function<PrimaryVariables(const Problem &problem,
-                                                                  const Element &element,
-                                                                  const FVElementGeometry &fvGeometry,
-                                                                  const ElementVolumeVariables &elemVolVars,
-                                                                  const SubControlVolume &scv)>;
+    // returns the PointSource values as NumEqVector
+    using ValueFunction = typename std::function<NumEqVector(const Problem &problem,
+                                                             const Element &element,
+                                                             const FVElementGeometry &fvGeometry,
+                                                             const ElementVolumeVariables &elemVolVars,
+                                                             const SubControlVolume &scv)>;
 
 public:
     //! Constructor for sol dependent point sources, when there is no
     // value known at the time of initialization
     SolDependentPointSource(GlobalPosition pos,
                             ValueFunction valueFunction)
-      : ParentType(pos, PrimaryVariables(0.0)), valueFunction_(valueFunction) {}
+      : ParentType(pos, NumEqVector(0.0)), valueFunction_(valueFunction) {}
 
     //! an update function called before adding the value
     // to the local residual in the problem in scvPointSources
@@ -252,7 +252,7 @@ public:
     { this->values_ = valueFunction_(problem, element, fvGeometry, elemVolVars, scv); }
 
     //! Convenience = operator overload modifying only the values
-    SolDependentPointSource& operator= (const PrimaryVariables& values)
+    SolDependentPointSource& operator= (const NumEqVector& values)
     {
         ParentType::operator=(values);
         return *this;
