@@ -83,7 +83,8 @@ class DissolutionSpatialparams : public FVSpatialParams<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using PorosityLaw = PorosityPrecipitation<TypeTag>;
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PorosityLaw = PorosityPrecipitation<Scalar, ModelTraits::numComponents(), ModelTraits::numSPhases()>;
     using PermeabilityLaw = PermeabilityKozenyCarman<TypeTag>;
 
 public:
@@ -110,7 +111,6 @@ public:
         materialParams_.setLambda(bcLambda1_);
 
         //! Initialize the parameter laws
-        poroLaw_.init(*this);
         permLaw_.init(*this);
     }
 
@@ -145,7 +145,7 @@ public:
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
                     const ElementSolution& elemSol) const
-    { return poroLaw_.evaluatePorosity(element, scv, elemSol); }
+    { return poroLaw_.evaluatePorosity(element, scv, elemSol, referencePorosity_, 1e-5); }
 
     /*!
      *  \brief Define the reference permeability \f$[m^2]\f$ distribution
