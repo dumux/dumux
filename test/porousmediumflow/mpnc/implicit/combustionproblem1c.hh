@@ -32,11 +32,12 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/mpnc/model.hh>
 
-#include <dumux/material/fluidsystems/purewatersimple.hh>
+
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 
 #include "combustionspatialparams.hh"
+#include "combustionfluidsystem.hh"
 
 namespace Dumux
 {
