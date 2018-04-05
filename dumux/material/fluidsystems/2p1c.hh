@@ -79,6 +79,12 @@ public:
     }
 
     /*!
+     * \brief Returns whether the fluids are miscible
+     */
+    static constexpr bool isMiscible()
+    { return false; }
+
+    /*!
      * \brief Return whether a phase is liquid
      *
      * \param phaseIdx The index of the fluid phase to consider

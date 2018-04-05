@@ -86,6 +86,12 @@ public:
     { return Component::name(); }
 
     /*!
+     * \brief There is only one phase, so not mass transfer between phases can occur
+     */
+    static constexpr bool isMiscible()
+    { return false; }
+
+    /*!
      * \brief Returns whether the fluid is a liquid
      */
     static constexpr bool isLiquid(int phaseIdx = 0)
