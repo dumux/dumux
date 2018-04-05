@@ -28,8 +28,6 @@
 
 #include <dumux/material/spatialparams/fv1p.hh>
 
-#include <dumux/material/fluidmatrixinteractions/porosityreactivebed.hh>
-#include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
 #include <dumux/material/fluidmatrixinteractions/mineralization/effectivesoliddensity.hh>
 #include <dumux/material/fluidmatrixinteractions/mineralization/effectivesolidheatcapacity.hh>
 
@@ -79,8 +77,6 @@ class ThermoChemSpatialParams : public FVSpatialParamsOneP<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using PorosityLaw = PorosityReactiveBed<TypeTag>;
-    using PermeabilityLaw = PermeabilityKozenyCarman<TypeTag>;
     using EffectiveSolidRho = EffectiveSolidDensity<TypeTag>;
     using EffectiveSolidCp = EffectiveSolidHeatCapacity<TypeTag>;
 
@@ -102,30 +98,8 @@ public:
         cp_[cPhaseIdx-numPhases] = 934; //[J/kgK] heat capacity of CaO (see Shao et al. 2014)
         cp_[hPhaseIdx-numPhases] = 1530; //[J/kgK] heat capacity of Ca(OH)_2 (see Shao et al. 2014)
         eps_ = 1e-6;
-        poroLaw_.init(*this);
-        permLaw_.init(*this);
         effSolRho_.init(*this);
         effSolCp_.init(*this);
-    }
-
-    /*!
-     *  \brief Define the reference permeability \f$[m^2]\f$ distribution
-     *
-     *  \param element The finite element
-     *  \param scv The sub-control volume
-     */
-    Scalar referencePermeability(const Element& element, const SubControlVolume &scv) const
-    { return 8.53e-12; }
-
-    /*!
-     *  \brief Define the reference porosity \f$[-]\f$ distribution
-     *
-     *  \param element The finite element
-     *  \param scv The sub-control volume
-     */
-    Scalar referencePorosity(const Element& element, const SubControlVolume &scv) const
-    {
-        return  0.8;
     }
 
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
@@ -141,19 +115,7 @@ public:
     Scalar permeability(const Element& element,
                         const SubControlVolume& scv,
                         const ElementSolution& elemSol) const
-    { return permLaw_.evaluatePermeability(element, scv, elemSol); }
-
-    /*!
-     *  \brief Define the minimum porosity \f$[-]\f$ distribution
-     *
-     *  \param element The finite element
-     *  \param scv The sub-control volume
-     */
-    Scalar minPorosity(const Element& element, const SubControlVolume &scv) const
-    {
-//         return 0.604; //intrinsic porosity of CaO2H2 (see Nagel et al. 2014)
-        return 0.8;
-    }
+    { return 8.53e-12; }
 
     /*!
      *  \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
@@ -166,10 +128,7 @@ public:
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
                     const ElementSolution& elemSol) const
-    {
-//         return poroLaw_.evaluatePorosity(element, scv, elemSol);
-        return 0.8;
-    }
+    { return 0.8; }
 
     /*!
      * \brief Returns the average heat capacity \f$[J / (kg K)]\f$ of solid phases.
@@ -248,8 +207,6 @@ private:
    Scalar lambdaSolid_;
    std::array<Scalar, numSPhases> rho_;
    std::array<Scalar, numSPhases> cp_;
-   PorosityLaw poroLaw_;
-   PermeabilityLaw permLaw_;
    EffectiveSolidRho effSolRho_;
    EffectiveSolidCp effSolCp_;
 };

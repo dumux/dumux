@@ -83,10 +83,6 @@ class DissolutionSpatialparams : public FVSpatialParams<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PorosityLaw = PorosityPrecipitation<Scalar, ModelTraits::numComponents(), ModelTraits::numSPhases()>;
-    using PermeabilityLaw = PermeabilityKozenyCarman<TypeTag>;
-
 public:
     // type used for the permeability (i.e. tensor or scalar)
     using PermeabilityType = Scalar;
@@ -109,9 +105,6 @@ public:
         // parameters of Brooks & Corey Law
         materialParams_.setPe(pEntry1_);
         materialParams_.setLambda(bcLambda1_);
-
-        //! Initialize the parameter laws
-        permLaw_.init(*this);
     }
 
     /*!
@@ -147,16 +140,6 @@ public:
                     const ElementSolution& elemSol) const
     { return poroLaw_.evaluatePorosity(element, scv, elemSol, referencePorosity_, 1e-5); }
 
-    /*!
-     *  \brief Define the reference permeability \f$[m^2]\f$ distribution
-     *
-     *  \param element The finite element
-     *  \param scv The sub-control volume
-     */
-    PermeabilityType referencePermeability(const Element& element, const SubControlVolume &scv) const
-    { return referencePermeability_; }
-
-
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
      *  on the position in the domain
      *
@@ -169,7 +152,10 @@ public:
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
-    { return permLaw_.evaluatePermeability(element, scv, elemSol); }
+    {
+        const auto poro = porosity(element, scv, elemSol);
+        return permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, poro);
+    }
 
     Scalar solidity(const SubControlVolume &scv) const
     { return 1.0 - porosityAtPos(scv.center()); }
@@ -188,8 +174,11 @@ private:
 
     MaterialLawParams materialParams_;
 
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PorosityLaw = PorosityPrecipitation<Scalar, ModelTraits::numComponents(), ModelTraits::numSPhases()>;
     PorosityLaw poroLaw_;
-    PermeabilityLaw permLaw_;
+    PermeabilityKozenyCarman<PermeabilityType> permLaw_;
+
     Scalar solubilityLimit_;
     Scalar referencePorosity_;
     PermeabilityType referencePermeability_ = 0.0;
