@@ -113,8 +113,8 @@ public:
         lambdaSolid_ = 2.8;
 
         // specific heat capacities
-        fineHeatCap_ = 850.;
-        coarseHeatCap_ = 850;
+        fineHeatCap_ = 850.0;
+        coarseHeatCap_ = 850.0;
 
         // residual saturations
         fineMaterialParams_.setSwr(0.1);
