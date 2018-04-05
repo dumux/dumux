@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Fluidsystems
- * \brief @copybrief Dumux::FluidSystems::PureWaterSimpleFluidSystem
+ * \brief @copybrief Dumux::FluidSystems::CombustionFluidsystem
  */
 #ifndef DUMUX_PURE_WATER_FLUID_SYSTEM_HH
 #define DUMUX_PURE_WATER_FLUID_SYSTEM_HH
@@ -46,10 +46,10 @@ namespace FluidSystems {
  *           Values are taken from Shi & Wang, A numerical investigation of transpiration cooling with liquid coolant phase change, Transport in Porous Media, 2011
  */
 template <class Scalar, bool useComplexRelations = false>
-class PureWaterSimpleFluidSystem
-    : public BaseFluidSystem<Scalar, PureWaterSimpleFluidSystem<Scalar, useComplexRelations> >
+class CombustionFluidsystem
+    : public BaseFluidSystem<Scalar, CombustionFluidsystem<Scalar, useComplexRelations> >
 {
-    using ThisType = PureWaterSimpleFluidSystem<Scalar, useComplexRelations>;
+    using ThisType = CombustionFluidsystem<Scalar, useComplexRelations>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
 
     // convenience using declarations
