@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
 
     using Traits = ComponentTraits<Components::Air<double>>;
     static_assert(Traits::hasGasState, "Air component is reported to have no gas state?!");
-    // static_assert(!Traits::hasSolidState, "Air component is reported to implement a solid state?!");
+    static_assert(!Traits::hasSolidState, "Air component is reported to implement a solid state?!");
+    static_assert(!Traits::hasLiquidState, "Air component is reported to implement a liquid state?!");
     static_assert(std::is_same<double, Traits::Scalar>::value, "Scalar type not correctly reported!");
 }
