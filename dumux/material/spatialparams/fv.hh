@@ -50,9 +50,11 @@ class FVSpatialParams: public FVSpatialParamsOneP<TypeTag>
     using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 
 public:
-    FVSpatialParams(const Problem& problem)
-    : FVSpatialParamsOneP<TypeTag>(problem)
-    {}
+    //! export the type used for the material law
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+
+    //! The constructor
+    FVSpatialParams(const Problem& problem) : FVSpatialParamsOneP<TypeTag>(problem) {}
 
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
