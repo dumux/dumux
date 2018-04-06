@@ -26,15 +26,15 @@
 #ifndef DUMUX_LENSPROBLEM_POINTSOURCE_HH
 #define DUMUX_LENSPROBLEM_POINTSOURCE_HH
 
-#include "../incompressible/problem.hh"
+#include "problem.hh"
 
 namespace Dumux
 {
 
 template <class TypeTag >
-class PointSourceTestProblem : public TwoPTestProblem<TypeTag>
+class PointSourceTestProblem : public TwoPTestProblemAdaptive<TypeTag>
 {
-    using ParentType = TwoPTestProblem<TypeTag>;
+    using ParentType = TwoPTestProblemAdaptive<TypeTag>;
     using PointSource =  typename GET_PROP_TYPE(TypeTag, PointSource);
 
 public:

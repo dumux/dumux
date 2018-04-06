@@ -57,6 +57,7 @@
 //! Use the incompressible or point source problem for this adaptive test
 #include <test/porousmediumflow/2p/implicit/incompressible/problem.hh>
 #include "pointsourceproblem.hh"
+#include "problem.hh"
 
 //! type tags for the adaptive versions of the two-phase incompressible problem
 namespace Dumux {
@@ -76,6 +77,9 @@ SET_TYPE_PROP(TwoPIncompressibleAdaptiveMpfa, Grid, Dune::ALUGrid<2, 2, Dune::cu
 SET_TYPE_PROP(TwoPIncompressibleAdaptiveBox, Grid, Dune::UGGrid<2>);
 #endif
 SET_TYPE_PROP(TwoPAdaptivePointSource, Problem, PointSourceTestProblem<TypeTag>);
+SET_TYPE_PROP(TwoPIncompressibleAdaptiveTpfa, Problem, TwoPTestProblemAdaptive<TypeTag>);
+SET_TYPE_PROP(TwoPIncompressibleAdaptiveMpfa, Problem, TwoPTestProblemAdaptive<TypeTag>);
+SET_TYPE_PROP(TwoPIncompressibleAdaptiveBox, Problem, TwoPTestProblemAdaptive<TypeTag>);
 } // end namespace Properties
 } // end namespace Dumux
 
@@ -159,8 +163,7 @@ int main(int argc, char** argv) try
     }
 
     // Do refinement for the initial conditions using our indicator
-    // we set coarsen tolerance to 0.0 because we do not want any coarsening to be done here
-    indicator.calculate(x, refineTol, /*coarsenTol*/0.0);
+    indicator.calculate(x, refineTol, coarsenTol);
 
     bool wasAdapted = false;
     if (markElements(GridCreator::grid(), indicator))
