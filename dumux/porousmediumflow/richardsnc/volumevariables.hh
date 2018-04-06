@@ -319,6 +319,8 @@ class RichardsNCVolumeVariables : public RichardsBaseVolumeVariables<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
+    static_assert(!GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir), "Water diffusion in air is not implement for RichardsNC");
+
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx,
