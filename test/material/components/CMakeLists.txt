@@ -1,3 +1,6 @@
+dune_add_test(SOURCES test_componenttraits.cc
+              COMPILE_ONLY)
+
 add_executable(plot_component plotproperties.cc)
 
 dune_add_test(NAME plot_air

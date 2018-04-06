@@ -37,12 +37,6 @@ class Solid
 {
 public:
     /*!
-     * \brief the component has a solid state if it derives from Solid
-     */
-    static constexpr bool hasSolidState()
-    { return true; }
-
-    /*!
      * \brief Returns true if the solid phase is assumed to be compressible
      */
     template<class C = Component>

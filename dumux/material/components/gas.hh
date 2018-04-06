@@ -37,12 +37,6 @@ class Gas
 {
 public:
     /*!
-     * \brief the component has a gas state if it derives from Gas
-     */
-    static constexpr bool hasGasState()
-    { return true; }
-
-    /*!
      * \brief Returns true if the gas phase is assumed to be compressible
      */
     template<class C = Component>

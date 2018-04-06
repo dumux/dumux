@@ -46,6 +46,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/trichloroethene.hh>
 #include <dumux/material/components/xylene.hh>
+#include <dumux/material/components/componenttraits.hh>
 
 using namespace std;
 using namespace Dumux;
@@ -108,7 +109,7 @@ void plot(Functor&& f,
 //! Plot properties if overloads compile
 template<class C, class hasNoDensityOverload = checkLiqDen>
 auto plotLiquidDensity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<!decltype(isValid(hasNoDensityOverload{})(declval<C>()))::value, void>
+-> typename std::enable_if_t<!decltype(isValid(hasNoDensityOverload{})(declval<C>()))::value && ComponentTraits<C>::hasLiquidState, void>
 {
     auto f = [] (auto T, auto p) { return C::liquidDensity(T, p); };
     plot(f, T, p, C::name(), "liquid", "density", "[kg/^3]", openPlot);
@@ -116,7 +117,7 @@ auto plotLiquidDensity(const vector<double>& T, double p, bool openPlot)
 
 template<class C, class hasNoEnthalpyOverload = checkLiqEnth>
 auto plotLiquidEnthalpy(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<!decltype(isValid(hasNoEnthalpyOverload{})(declval<C>()))::value, void>
+-> typename std::enable_if_t<!decltype(isValid(hasNoEnthalpyOverload{})(declval<C>()))::value && ComponentTraits<C>::hasLiquidState, void>
 {
     auto f = [] (auto T, auto p) { return C::liquidEnthalpy(T, p); };
     plot(f, T, p, C::name(), "liquid", "enthalpy", "[J/(kg)]", openPlot);
@@ -124,7 +125,7 @@ auto plotLiquidEnthalpy(const vector<double>& T, double p, bool openPlot)
 
 template<class C, class hasNoHeatCapOverload = checkLiqHeatCap>
 auto plotLiquidHeatCapacity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<!decltype(isValid(hasNoHeatCapOverload{})(declval<C>()))::value, void>
+-> typename std::enable_if_t<!decltype(isValid(hasNoHeatCapOverload{})(declval<C>()))::value && ComponentTraits<C>::hasLiquidState, void>
 {
     auto f = [] (auto T, auto p) { return C::liquidHeatCapacity(T, p); };
     plot(f, T, p, C::name(), "liquid", "heat capacity", "[J/(kg*K)]", openPlot);
@@ -132,7 +133,7 @@ auto plotLiquidHeatCapacity(const vector<double>& T, double p, bool openPlot)
 
 template<class C, class hasNoViscOverload = checkLiqVisc>
 auto plotLiquidViscosity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<!decltype(isValid(hasNoViscOverload{})(declval<C>()))::value, void>
+-> typename std::enable_if_t<!decltype(isValid(hasNoViscOverload{})(declval<C>()))::value && ComponentTraits<C>::hasLiquidState, void>
 {
     auto f = [] (auto T, auto p) { return C::liquidViscosity(T, p); };
     plot(f, T, p, C::name(), "liquid", "viscosity", "[Pa*s]", openPlot);
@@ -140,7 +141,7 @@ auto plotLiquidViscosity(const vector<double>& T, double p, bool openPlot)
 
 template<class C, class hasNoThermCondOverload = checkLiqThermCond>
 auto plotLiquidThermalConductivity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<!decltype(isValid(hasNoThermCondOverload{})(declval<C>()))::value, void>
+-> typename std::enable_if_t<!decltype(isValid(hasNoThermCondOverload{})(declval<C>()))::value && ComponentTraits<C>::hasLiquidState, void>
 {
     auto f = [] (auto T, auto p) { return C::liquidThermalConductivity(T, p); };
     plot(f, T, p, C::name(), "liquid", "thermal conductivity", "[J/(kg*K)]", openPlot);
@@ -148,7 +149,7 @@ auto plotLiquidThermalConductivity(const vector<double>& T, double p, bool openP
 
 template<class C, class hasNoDensityOverload = checkGasDen>
 auto plotGasDensity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<!decltype(isValid(hasNoDensityOverload{})(declval<C>()))::value, void>
+-> typename std::enable_if_t<!decltype(isValid(hasNoDensityOverload{})(declval<C>()))::value && ComponentTraits<C>::hasGasState, void>
 {
     auto f = [] (auto T, auto p) { return C::gasDensity(T, p); };
     plot(f, T, p, C::name(), "gas", "density", "[kg/^3]", openPlot);
@@ -156,7 +157,7 @@ auto plotGasDensity(const vector<double>& T, double p, bool openPlot)
 
 template<class C, class hasNoEnthalpyOverload = checkGasEnth>
 auto plotGasEnthalpy(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<!decltype(isValid(hasNoEnthalpyOverload{})(declval<C>()))::value, void>
+-> typename std::enable_if_t<!decltype(isValid(hasNoEnthalpyOverload{})(declval<C>()))::value && ComponentTraits<C>::hasGasState, void>
 {
     auto f = [] (auto T, auto p) { return C::gasEnthalpy(T, p); };
     plot(f, T, p, C::name(), "gas", "enthalpy", "[J/(kg)]", openPlot);
@@ -164,7 +165,7 @@ auto plotGasEnthalpy(const vector<double>& T, double p, bool openPlot)
 
 template<class C, class hasNoHeatCapOverload = checkGasHeatCap>
 auto plotGasHeatCapacity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<!decltype(isValid(hasNoHeatCapOverload{})(declval<C>()))::value, void>
+-> typename std::enable_if_t<!decltype(isValid(hasNoHeatCapOverload{})(declval<C>()))::value && ComponentTraits<C>::hasGasState, void>
 {
     auto f = [] (auto T, auto p) { return C::gasHeatCapacity(T, p); };
     plot(f, T, p, C::name(), "gas", "heat capacity", "[J/(kg*K)]", openPlot);
@@ -172,7 +173,7 @@ auto plotGasHeatCapacity(const vector<double>& T, double p, bool openPlot)
 
 template<class C, class hasNoViscOverload = checkGasVisc>
 auto plotGasViscosity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<!decltype(isValid(hasNoViscOverload{})(declval<C>()))::value, void>
+-> typename std::enable_if_t<!decltype(isValid(hasNoViscOverload{})(declval<C>()))::value && ComponentTraits<C>::hasGasState, void>
 {
     auto f = [] (auto T, auto p) { return C::gasViscosity(T, p); };
     plot(f, T, p, C::name(), "gas", "viscosity", "[Pa*s]", openPlot);
@@ -180,7 +181,7 @@ auto plotGasViscosity(const vector<double>& T, double p, bool openPlot)
 
 template<class C, class hasNoThermCondOverload = checkGasThermCond>
 auto plotGasThermalConductivity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<!decltype(isValid(hasNoThermCondOverload{})(declval<C>()))::value, void>
+-> typename std::enable_if_t<!decltype(isValid(hasNoThermCondOverload{})(declval<C>()))::value && ComponentTraits<C>::hasGasState, void>
 {
     auto f = [] (auto T, auto p) { return C::gasThermalConductivity(T, p); };
     plot(f, T, p, C::name(), "gas", "thermal conductivity", "[J/(kg*K)]", openPlot);
@@ -189,43 +190,43 @@ auto plotGasThermalConductivity(const vector<double>& T, double p, bool openPlot
 //! Do not plot properties if overloads don't compile
 template<class C, class hasNoDensityOverload = checkLiqDen>
 auto plotLiquidDensity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<decltype(isValid(hasNoDensityOverload{})(declval<C>()))::value, void> {}
+-> typename std::enable_if_t<decltype(isValid(hasNoDensityOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasLiquidState, void> {}
 
 template<class C, class hasNoEnthalpyOverload = checkLiqEnth>
 auto plotLiquidEnthalpy(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<decltype(isValid(hasNoEnthalpyOverload{})(declval<C>()))::value, void> {}
+-> typename std::enable_if_t<decltype(isValid(hasNoEnthalpyOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasLiquidState, void> {}
 
 template<class C, class hasNoHeatCapOverload = checkLiqHeatCap>
 auto plotLiquidHeatCapacity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<decltype(isValid(hasNoHeatCapOverload{})(declval<C>()))::value, void> {}
+-> typename std::enable_if_t<decltype(isValid(hasNoHeatCapOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasLiquidState, void> {}
 
 template<class C, class hasNoViscOverload = checkLiqVisc>
 auto plotLiquidViscosity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<decltype(isValid(hasNoViscOverload{})(declval<C>()))::value, void> {}
+-> typename std::enable_if_t<decltype(isValid(hasNoViscOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasLiquidState, void> {}
 
 template<class C, class hasNoThermCondOverload = checkLiqThermCond>
 auto plotLiquidThermalConductivity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<decltype(isValid(hasNoThermCondOverload{})(declval<C>()))::value, void> {}
+-> typename std::enable_if_t<decltype(isValid(hasNoThermCondOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasLiquidState, void> {}
 
 template<class C, class hasNoDensityOverload = checkGasDen>
 auto plotGasDensity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<decltype(isValid(hasNoDensityOverload{})(declval<C>()))::value, void> {}
+-> typename std::enable_if_t<decltype(isValid(hasNoDensityOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasGasState, void> {}
 
 template<class C, class hasNoEnthalpyOverload = checkGasEnth>
 auto plotGasEnthalpy(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<decltype(isValid(hasNoEnthalpyOverload{})(declval<C>()))::value, void> {}
+-> typename std::enable_if_t<decltype(isValid(hasNoEnthalpyOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasGasState, void> {}
 
 template<class C, class hasNoHeatCapOverload = checkGasHeatCap>
 auto plotGasHeatCapacity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<decltype(isValid(hasNoHeatCapOverload{})(declval<C>()))::value, void> {}
+-> typename std::enable_if_t<decltype(isValid(hasNoHeatCapOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasGasState, void> {}
 
 template<class C, class hasNoViscOverload = checkGasVisc>
 auto plotGasViscosity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<decltype(isValid(hasNoViscOverload{})(declval<C>()))::value, void> {}
+-> typename std::enable_if_t<decltype(isValid(hasNoViscOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasGasState, void> {}
 
 template<class C, class hasNoThermCondOverload = checkGasThermCond>
 auto plotGasThermalConductivity(const vector<double>& T, double p, bool openPlot)
--> typename std::enable_if_t<decltype(isValid(hasNoThermCondOverload{})(declval<C>()))::value, void> {}
+-> typename std::enable_if_t<decltype(isValid(hasNoThermCondOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasGasState, void> {}
 
 //! a number of properties of a component
 template<class Component>

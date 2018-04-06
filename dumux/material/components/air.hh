@@ -40,7 +40,8 @@ namespace Components {
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class Air : public Component<Scalar, Air<Scalar> >
+class Air : public Components::Base<Scalar, Air<Scalar> >,
+            public Components::Gas<Scalar, Air<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
 

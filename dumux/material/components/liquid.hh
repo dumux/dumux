@@ -37,12 +37,6 @@ class Liquid
 {
 public:
     /*!
-     * \brief the component has a liquid state if it derives from Liquid
-     */
-    static constexpr bool hasLiquidState()
-    { return true; }
-
-    /*!
      * \brief Returns true if the liquid phase is assumed to be compressible
      */
     template<class C = Component>
