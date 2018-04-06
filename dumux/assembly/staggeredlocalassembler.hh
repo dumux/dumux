@@ -98,8 +98,6 @@ class StaggeredLocalAssembler<TypeTag,
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
     static constexpr auto faceOffset = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-    static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
-    static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
 public:
 
@@ -116,6 +114,8 @@ public:
         const auto& problem = assembler.problem();
         auto& localResidual = assembler.localResidual();
         auto& gridVariables = assembler.gridVariables();
+        static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
+        static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
         // prepare the local views
         auto fvGeometry = localView(assembler.fvGridGeometry());
@@ -185,6 +185,8 @@ public:
         const auto& problem = assembler.problem();
         auto& localResidual = assembler.localResidual();
         auto& gridVariables = assembler.gridVariables();
+        static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
+        static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
         // prepare the local views
         auto fvGeometry = localView(assembler.fvGridGeometry());
@@ -310,6 +312,7 @@ protected:
         const auto& problem = assembler.problem();
         auto& localResidual = assembler.localResidual();
         auto& gridVariables = assembler.gridVariables();
+        static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
 
        // build derivatives with for cell center dofs w.r.t. cell center dofs
        const auto cellCenterGlobalI = assembler.fvGridGeometry().elementMapper().index(element);
@@ -369,6 +372,8 @@ protected:
        const auto& problem = assembler.problem();
        auto& localResidual = assembler.localResidual();
        auto& gridVariables = assembler.gridVariables();
+       static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
+       static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
        // build derivatives with for cell center dofs w.r.t. cell center dofs
        const auto cellCenterGlobalI = assembler.fvGridGeometry().elementMapper().index(element);
@@ -429,6 +434,8 @@ protected:
            auto& localResidual = assembler.localResidual();
            auto& gridVariables = assembler.gridVariables();
            const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
+           static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
+           static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
            // set the actual dof index
            const auto faceGlobalI = scvf.dofIndex();
@@ -490,6 +497,7 @@ protected:
         auto& localResidual = assembler.localResidual();
         const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
         auto& gridVariables = assembler.gridVariables();
+        static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
        for(auto&& scvf : scvfs(fvGeometry))
        {
