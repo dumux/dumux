@@ -46,6 +46,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 
+// The problem file, where setup-specific boundary and initial conditions are defined.
 #include "injection2p2cproblem.hh"
 
 ////////////////////////
@@ -101,6 +102,8 @@ int main(int argc, char** argv) try
     gridVariables->init(x, xOld);
 
     // get some time loop parameters
+    // getParam<TYPE>("GROUPNAME.PARAMNAME") reads and sets parameter PARAMNAME
+    // of type TYPE given in the group GROUPNAME from the input file
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");

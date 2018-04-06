@@ -107,6 +107,8 @@ public:
                 /*numP=*/300);
 
         // name of the problem and output file
+        // getParam<TYPE>("GROUPNAME.PARAMNAME") reads and sets parameter PARAMNAME
+        // of type TYPE given in the group GROUPNAME from the input file
         name_ = getParam<std::string>("Problem.Name");
         // depth of the aquifer, units: m
         aquiferDepth_ = getParam<Scalar>("Problem.AquiferDepth");
@@ -234,7 +236,7 @@ public:
         * set a temperature gradient of 0.03 K per m beginning at 283 K here.
         * Hint: you can use aquiferDepth_ and the globalPos similar to the pressure gradient
         * use globalPos[0] and globalPos[1] to implement the high temperature lens with 380 K
-        * Hint : use Indices::temperatureIdx
+        * Hint : use Indices::temperatureIdx to address the initial values for temperature
         */
         return values;
     }
