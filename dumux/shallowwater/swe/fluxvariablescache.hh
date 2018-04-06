@@ -66,7 +66,8 @@ public:
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars,
                 const SubControlVolumeFace &scvf)
-    {}
+    { //so far empty for SWEs, the porous media models compute the gradients here
+    }
 
     //! Do nothing so far.
     void updateAdvection(const Problem& problem,

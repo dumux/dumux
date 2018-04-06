@@ -41,75 +41,91 @@ namespace Dumux
  *
  *
  */
-template <class TypeTag>
-class SweFrictionlaws
+template <class RF>
+RF computeUstarH(const RF ks, const RF h, const RF grav, const char law)
 {
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    static const int manning = GET_PROP_VALUE(TypeTag,Manning);
-    static const int chezy = GET_PROP_VALUE(TypeTag,Chezy);
-    static const int nikuradse = GET_PROP_VALUE(TypeTag,Nikuradse);
+    /**************************************************************
+    /
+    / Friction as function of the water depth/gradient might work
+    / better see
+    /
+    / Heniche et al. 2000 had a similar approach
+    / "A two-dimensional finite element drying-wetting shallow
+    / water model for rives and estuaries",
+    / Advances in Water Resources 23(4):359-372
+    /
+    / We define a water depth minUpperH, if the water depth is
+    / smaller, we start to limit the friciton law.
+    / So the friciton term get's not extreme large for small water
+    / depths
+    /
+    / ------------------------- minUpperh -----------
+    /
+    /
+    /
+    /------------------------rough_h ---------------
+    /   /\  /\   roughness                  /grain\
+    /-------------------------------bottom ------------------
+    //////////////////////////////////////////////////
+    /
+    **************************************************************/
 
-public:
+    RF ustar_h, rough_h;
+    using std::pow;
+    using std::max;
+    using std::min;
+    using std::pow;
+    using std::log;
+
+    const int manning = 1;
+    const int chezy = 2;
+    const int nikuradse = 3;
+
+    const RF letL = 0.0, letT = 2.0, letE = 1.0; //let this parameters as they are
+    RF mobility = 1.0;
+    RF krw = 1.0;
+    RF sw = 0.0;
+
+    ustar_h = 0.0;    //compute friction
 
 
-    /*!
-     * \brief The computation of ustar_h for different friction laws.
-     *
-     * TODO describe all friction laws formulas
-     *
-     * \param h     water depth
-     * \param ks    friction value, depending on the law
-     * \params grav gravitation
-     * \param law   integer id, defining the friction law to use
-     * \return ustar_h.
-     *
-     */
-    static Scalar ustar_h(const Scalar ks, const Scalar h, const Scalar grav, const int law)
-    {
-        Scalar ustar_h;
-        using std::pow;
-        using std::max;
-        using std::min;
-        using std::pow;
-        using std::log;
-
-
-        //compute friction
-        if (law == manning){
-            //Manning friction
-            ustar_h = manningUstarH(ks,h,grav);
-        }else if(law == chezy){
-            //Chezy friction law
-            ustar_h = grav / pow(ks,2.0);
-        }else if(law == nikuradse){
-            //Nikuradse friction
-            //Nikuradse law uses a rough_h approximation for small depths to avoid extreme frictions
-            Scalar mobility = 1.0;
-            Scalar krw = 1.0;
-            Scalar sw = 0.0;
-            Scalar minUpperH;
-            Scalar rough_h;
-            const Scalar letL = 0.0, letT = 2.0, letE = 1.0;
-            rough_h = ks;
-            minUpperH = rough_h* 2.0; //we start to limit the friction for small water depths
-
-            //Mobility after LET-model
-            sw = min(h * (1.0/minUpperH),1.0);
-            sw = max(0.0,sw);
-            mobility = (krw * pow(sw,letL))/(pow(sw,letL) + letE * pow(1.0-sw,letT));
-            rough_h = rough_h * (1.0 - mobility);
-
-            //Nikuradse law
-            ustar_h = pow(0.41,2.0)/pow(log((12*(h+ rough_h))/ks),2.0);
-        }else{
-            //now law is used and ustar_h is zero
-            ustar_h = 0.0;
-        }
-
-        return ustar_h;
+    if (law == manning){
+        rough_h = std::pow(25.68/(1.0/ks),6.0);
+    }else{
+        rough_h = ks;
     }
-};
+
+    auto minUpperH = rough_h* 2.0; //we start to limit the friction for small water depths
+
+    //Mobility after LET-model
+    sw = min(h * (1.0/minUpperH),1.0);
+    sw = max(0.0,sw);
+    mobility = (krw * pow(sw,letL))/(pow(sw,letL) + letE * pow(1.0-sw,letT));
+    rough_h = rough_h * (1.0 - mobility);
+
+    //compute friction
+    if (law == manning){
+        //Manning friction
+        if (ks > 0){
+            auto cfric = pow((h + rough_h),1.0/6.0) * 1.0/(ks);
+            ustar_h = grav / pow(cfric,2.0);
+        }
+    }else if(law == chezy){
+        //Chezy friction law
+        ustar_h = grav / pow(ks,2.0);
+
+    }else if(law == nikuradse){
+        //Nikuradse law
+        ustar_h = pow(0.41,2.0)/pow(log((12*(h+ rough_h))/ks),2.0);
+    }else{
+        //now law is used and ustar_h is zero
+        ustar_h = 0.0;
+    }
+
+    return ustar_h;
+}
+
 
 } // end namespace Dumux
 

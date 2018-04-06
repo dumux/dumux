@@ -77,18 +77,47 @@ public:
 
     /*! \brief Define the friction parameter ks.
     *
-    * \param globalPos The global position where we evaluate
     * \param element The current element
     * \param scv The sub-control volume inside the element.
     * \param elemSol The solution at the dofs connected to the element.
     * \return the material parameters object
     */
-    Scalar ks(const GlobalPosition& globalPos,
-             const Element& element,
+    Scalar ks(const Element& element,
              const SubControlVolume& scv,
              const ElementSolutionVector& elemSol) const
     {
         return 0.0;
+    }
+
+    /*! \brief Define the gravitation.
+    *
+    * \param element The current element
+    * \param scv The sub-control volume inside the element.
+    * \param elemSol The solution at the dofs connected to the element.
+    * \return the material parameters object
+    */
+    Scalar grav() const
+    {
+        return grav_;
+    }
+
+    /*! \brief Define the friciton law.
+    *
+    *   0 = no friction
+    *   1 = Manning
+    *   2 = Chezy
+    *   3 = Nikuradse
+    *
+    *
+    *
+    * \param element The current element
+    * \param scv The sub-control volume inside the element.
+    * \param elemSol The solution at the dofs connected to the element.
+    * \return the material parameters object
+    */
+    int frictionlaw() const
+    {
+        return 0;
     }
 
 
@@ -96,6 +125,7 @@ private:
 
 //    const IndexSet& indexSet_;
     static constexpr Scalar eps_ = 1.5e-7;
+    static constexpr Scalar grav_ = 9.81;
 };
 
 } // end namespace

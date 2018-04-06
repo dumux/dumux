@@ -24,7 +24,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/methods.hh>
-#include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
+//#include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
 namespace Dumux
 {
@@ -52,7 +52,7 @@ public:
 
 /*!
  * \ingroup CCTpfaDiscretization
- * \brief The cache corresponding to tpfa Darcy's Law
+ * \brief The cache corresponding to tpfa numerical flux
  */
 template<class TypeTag>
 class ShallowWaterAdvectiveFluxCache
@@ -115,6 +115,7 @@ class ShallowWaterAdvectiveFlux
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
         NumEqVector flux(0.0);
+
 //         static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
 //
 //         const auto& fluxVarsCache = elemFluxVarsCache[scvf];

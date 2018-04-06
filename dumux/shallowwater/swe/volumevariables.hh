@@ -26,6 +26,7 @@
 #define DUMUX_SWE_VOLUME_VARIABLES_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/material/fluidmatrixinteractions/frictionlaws/swefrictionlaws.hh>
 
 namespace Dumux
 {
@@ -80,8 +81,18 @@ public:
                 const SubControlVolume &scv)
     {
         priVars_ = extractDofPriVars(elemSol, scv);
+        auto h = priVars_[waterdepthIdx];
+        auto u = priVars_[velocityXIdx];
+        auto v = priVars_[velocityYIdx];
+        auto ks =  problem.spatialParams().ks(element, scv, elemSol);
+        auto grav =  problem.spatialParams().grav();
+        auto frictionlaw =  problem.spatialParams().frictionlaw();
+
+        //
+        auto ustar_h = computeUstarH(ks,h,grav,frictionlaw);
         frictionH_ = 0; // calculate from primary variables and spatial params
         frictionUstarH_ = 0; // calculate from primary variables and spatial params
+
     }
 
 

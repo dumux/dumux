@@ -120,8 +120,6 @@ public:
         ResidualVector flux(0.0);
 
         auto numFlux = AdvectionType::flux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-//        auto turbFlux = fluxVars.turbulenceFlux(); //uses fluxvariables.hh
-
         flux = numFlux;// + turbFlux;
 
         return flux;
