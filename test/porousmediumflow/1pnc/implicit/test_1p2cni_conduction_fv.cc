@@ -41,9 +41,8 @@
  #include <dumux/common/dumuxmessage.hh>
  #include <dumux/common/defaultusagemessage.hh>
 
- #include <dumux/nonlinear/newtoncontroller.hh>
+ #include <dumux/nonlinear/newtonsolver.hh>
  #include <dumux/linear/seqsolverbackend.hh>
- #include <dumux/nonlinear/newtonmethod.hh>
 
  #include <dumux/assembly/fvassembler.hh>
 
@@ -108,7 +107,6 @@
      using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
      auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
      auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-     auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
      auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
      // intialize the vtk output module
@@ -134,9 +132,8 @@
      auto linearSolver = std::make_shared<LinearSolver>();
 
      // the non-linear solver
-     using NewtonController = Dumux::NewtonController<Scalar>;
-     auto newtonController = std::make_shared<NewtonController>(timeLoop);
-     NewtonMethod<NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
+     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
      // time loop
      timeLoop->start(); do
@@ -144,24 +141,8 @@
          // set previous solution for storage evaluations
          assembler->setPreviousSolution(xOld);
 
-         // try solving the non-linear system
-         for (int i = 0; i < maxDivisions; ++i)
-         {
-             // linearize & solve
-             auto converged = nonLinearSolver.solve(x);
-
-             if (converged)
-                 break;
-
-             if (!converged && i == maxDivisions-1)
-                 DUNE_THROW(Dune::MathError,
-                            "Newton solver didn't converge after "
-                            << maxDivisions
-                            << " time-step divisions. dt="
-                            << timeLoop->timeStepSize()
-                            << ".\nThe solutions of the current and the previous time steps "
-                            << "have been saved to restart files.");
-         }
+         // linearize & solve
+         nonLinearSolver.solve(x, *timeLoop);
 
          // update the exact time temperature
          problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
@@ -180,8 +161,8 @@
          // report statistics of this time step
          timeLoop->reportTimeStep();
 
-         // set new dt as suggested by newton controller
-         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+         // set new dt as suggested by the newton solver
+         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
      } while (!timeLoop->finished());
 

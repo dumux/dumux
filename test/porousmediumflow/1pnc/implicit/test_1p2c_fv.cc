@@ -152,7 +152,7 @@
          // report statistics of this time step
          timeLoop->reportTimeStep();
 
-         // set new dt as suggested by newton controller
+         // set new dt as suggested by the newton solver
          timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
      } while (!timeLoop->finished());
