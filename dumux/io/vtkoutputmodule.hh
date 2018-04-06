@@ -218,27 +218,31 @@ private:
 template<typename TypeTag, int phaseIdxOffset = 0>
 class VtkOutputModule
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using ElementMapper = typename FVGridGeometry::ElementMapper;
-    using VertexMapper = typename FVGridGeometry::VertexMapper;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    static constexpr int numPhases = ModelTraits::numPhases();
+
+    using VV = typename GridVariables::VolumeVariables;
+    using FluidSystem = typename VV::FluidSystem;
+    using Scalar = typename GridVariables::Scalar;
+
+    using GridView = typename FVGridGeometry::GridView;
+    using ElementMapper = typename FVGridGeometry::ElementMapper;
+    using VertexMapper = typename FVGridGeometry::VertexMapper;
 
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
-    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
+    static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr int dofCodim = isBox ? dim : 0;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VolumeVariables&)> get; std::string name; };
@@ -246,7 +250,10 @@ class VtkOutputModule
     using Field = Vtk::template Field<GridView>;
 
 public:
+    //! export type of the volume variables for the outputfields
+    using VolumeVariables = VV;
 
+    //! export field type
     enum class FieldType : unsigned int
     {
         element, vertex, automatic
