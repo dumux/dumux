@@ -83,9 +83,13 @@ struct GridDataHandle : public Dune::CommDataHandleIF<GridDataHandle<GridPtr, Gr
     :  gridPtr_(gridPtr), idSet_(gridPtr->localIdSet())
     {
         auto gridView = gridPtr_->levelGridView(0);
+        const auto& indexSet = gridView.indexSet();
 
         for( const auto& element : elements(gridView, Dune::Partitions::interior))
-           std::swap(GridCreator::elementMarkers_[GridCreator::gridFactory().insertionIndex(element)], elData_[idSet_.id(element)]);
+           std::swap(GridCreator::elementMarkers_[GridCreator::gridFactory().insertionIndex(element)], data_[idSet_.id(element)]);
+
+        for (const auto& face : entities(gridView, Dune::Codim<1>()))
+           std::swap(GridCreator::faceMarkers_[indexSet.index(face)], data_[idSet_.id(face)]);
     }
 
     ~GridDataHandle()
@@ -94,37 +98,45 @@ struct GridDataHandle : public Dune::CommDataHandleIF<GridDataHandle<GridPtr, Gr
         const auto& indexSet = gridView.indexSet();
 
         GridCreator::elementMarkers_.resize(indexSet.size(0));
-
         for(const auto& element : elements(gridView))
-           std::swap(GridCreator::elementMarkers_[indexSet.index(element)], elData_[idSet_.id(element)]);
+           std::swap(GridCreator::elementMarkers_[indexSet.index(element)], data_[idSet_.id(element)]);
+
+        GridCreator::faceMarkers_.resize(indexSet.size(1));
+        for (const auto& face : entities(gridView, Dune::Codim<1>()))
+           std::swap(GridCreator::faceMarkers_[indexSet.index(face)], data_[idSet_.id(face)]);
     }
 
     Dune::CommDataHandleIF<GridDataHandle<GridPtr, GridCreator>, int>& interface()
     { return *this; }
 
     bool contains (int dim, int codim) const
-    { return codim==0; }
+    { return codim == 0 || codim == 1; }
 
     bool fixedSize (int dim, int codim) const
     { return false; }
 
     template<class EntityType>
     size_t size (const EntityType& e) const
-    { return GridCreator::elementMarkers_.size(); }
+    {
+        if (EntityType::codimension == 0)
+            return GridCreator::elementMarkers_.size();
+        else
+            return GridCreator::faceMarkers_.size();
+    }
 
     template<class MessageBufferImp, class EntityType>
     void gather (MessageBufferImp& buff, const EntityType& e) const
-    { buff.write(elData_[idSet_.id(e)]); }
+    { buff.write(data_[idSet_.id(e)]); }
 
     template<class MessageBufferImp, class EntityType>
     void scatter (MessageBufferImp& buff, const EntityType& e, size_t n)
-    { buff.read(elData_[idSet_.id(e)]); }
+    { buff.read(data_[idSet_.id(e)]); }
 
 private:
     GridPtr &gridPtr_;
     using IdSet = typename GridType::LocalIdSet;
     const IdSet &idSet_;
-    mutable std::map< typename IdSet::IdType, int> elData_;
+    mutable std::map< typename IdSet::IdType, int> data_;
 };
 
 
@@ -207,9 +219,26 @@ public:
     {
         if(enableGmshDomainMarkers_)
         {
-            if (boundarySegmentIndex >= grid().numBoundarySegments())
-                DUNE_THROW(Dune::RangeError, "Boundary segment index "<< boundarySegmentIndex << " bigger than number of bonudary segments in grid!");
+            if (boundarySegmentIndex >= boundaryMarkers_.size())
+                DUNE_THROW(Dune::RangeError, "Boundary segment index "<< boundarySegmentIndex << " bigger than number of boundary segments in grid!");
             return boundaryMarkers_[boundarySegmentIndex];
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "The getBoundaryDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
+                                                     << " If your Gmsh file contains domain markers / physical entities,"
+                                                     << " enable them by setting 'Grid.DomainMarkers = true' in the input file.");
+    }
+
+    /*!
+     * \brief Return the boundary domain marker (Gmsh physical entity number) of an intersection
+              Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
+     * \param intersection The intersection to be evaluated
+     */
+    static int getBoundaryDomainMarker(const Intersection& intersection)
+    {
+        if(enableGmshDomainMarkers_)
+        {
+            return boundaryMarkers_[intersection.boundarySegmentIndex()];
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "The getBoundaryDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
@@ -222,7 +251,7 @@ public:
               Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
      * \param elementIdx The element index
      */
-    DUNE_DEPRECATED_MSG("This will often produce wrong parameters in case the grid implementation resorts the elements after insertion. Use getElementDomainMarker(element) instead!")
+    DUNE_DEPRECATED_MSG("This may produce wrong results if the grid implementation reorders the elements after insertion. Use getElementDomainMarker(element) instead!")
     static int getElementDomainMarker(int elementIdx)
     {
         if(enableGmshDomainMarkers_)
@@ -240,7 +269,7 @@ public:
     /*!
      * \brief Return the element domain marker (Gmsh physical entity number) of an element.
               Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
-     * \param elementIdx The element index
+     * \param element The element to be evaluated
      */
     static int getElementDomainMarker(const Element& element)
     {
@@ -279,6 +308,7 @@ public:
      */
     static void loadBalance()
     {
+        std::cout << Dune::MPIHelper::getCollectiveCommunication().rank() << " before: boundaryMarkers_.size() = " << boundaryMarkers_.size() << std::endl;
         if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
         {
             // if we may have dgf parameters use load balancing of the dgf pointer
@@ -289,9 +319,27 @@ public:
             // if we have gmsh parameters we have to manually load balance the data
             else if (enableGmshDomainMarkers_)
             {
-                GridDataHandle<std::shared_ptr<Grid>, GridCreatorBase<Grid>> dh(gridPtr());
-                gridPtr()->loadBalance(dh.interface());
-                gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
+                {
+                    // element and face markers are communicated during load balance
+                    GridDataHandle<std::shared_ptr<Grid>, GridCreatorBase<Grid>> dh(gridPtr());
+                    gridPtr()->loadBalance(dh.interface());
+                    gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
+                }
+
+                // transform face markers to boundary markers
+                boundaryMarkers_.resize(gridPtr()->numBoundarySegments(), 0);
+                const auto& indexSet = gridPtr()->leafGridView().indexSet();
+                for (const auto& element : elements(gridPtr()->leafGridView()))
+                {
+                    for (const auto& intersection : intersections(gridPtr()->leafGridView(), element))
+                    {
+                        if (intersection.boundary())
+                        {
+                            auto marker = faceMarkers_[indexSet.index(element.template subEntity<1>(intersection.indexInInside()))];
+                            boundaryMarkers_[intersection.boundarySegmentIndex()] = marker;
+                        }
+                    }
+                }
             }
             else
                 gridPtr()->loadBalance();
@@ -470,6 +518,7 @@ protected:
     */
     static std::vector<int> elementMarkers_;
     static std::vector<int> boundaryMarkers_;
+    static std::vector<int> faceMarkers_;
 };
 
 template <class Grid>
@@ -483,6 +532,9 @@ std::vector<int> GridCreatorBase<Grid>::elementMarkers_;
 
 template <class Grid>
 std::vector<int> GridCreatorBase<Grid>::boundaryMarkers_;
+
+template <class Grid>
+std::vector<int> GridCreatorBase<Grid>::faceMarkers_;
 
 /*!
  * \brief Provides the grid creator implementation for all supported grid managers that constructs a grid
@@ -1285,7 +1337,7 @@ public:
             }
         }
         else
-            DUNE_THROW(Dune::InvalidStateException, "The getBoundaryDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
+            DUNE_THROW(Dune::InvalidStateException, "The getElementDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
                                                     << " If your Gmsh file contains domain markers / physical entities,"
                                                     << " enable them by setting 'Grid.DomainMarkers = true' in the input file.");
     }
@@ -1385,7 +1437,7 @@ public:
         // try to create it from a DGF or msh file in GridParameterGroup.File
         else if (haveParamInGroup(modelParamGroup, "Grid.File"))
         {
-            ParentType::makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
+            makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
             return;
         }
@@ -1444,10 +1496,29 @@ public:
             // only filll the factory for rank 0
             if(domainMarkers)
             {
+                std::vector<int> boundaryMarkersInsertionIndex;
                 if (Dune::MPIHelper::getCollectiveCommunication().rank() == 0)
-                    Dune::GmshReader<Grid>::read(ParentType::gridFactory(), fileName, ParentType::boundaryMarkers_, ParentType::elementMarkers_, verbose, boundarySegments);
+                    Dune::GmshReader<Grid>::read(ParentType::gridFactory(), fileName, boundaryMarkersInsertionIndex, ParentType::elementMarkers_, verbose, boundarySegments);
 
                 ParentType::gridPtr() = std::shared_ptr<Grid>(ParentType::gridFactory().createGrid());
+
+                // reorder boundary markers according to boundarySegmentIndex
+                ParentType::boundaryMarkers_.resize(ParentType::gridPtr()->numBoundarySegments(), 0);
+                ParentType::faceMarkers_.resize(ParentType::gridPtr()->leafGridView().size(1), 0);
+                const auto& indexSet = ParentType::gridPtr()->leafGridView().indexSet();
+                for (const auto& element : elements(ParentType::gridPtr()->leafGridView()))
+                {
+                    for (const auto& intersection : intersections(ParentType::gridPtr()->leafGridView(), element))
+                    {
+                        if (intersection.boundary() && ParentType::gridFactory().wasInserted(intersection))
+                        {
+                            auto marker = boundaryMarkersInsertionIndex[ParentType::gridFactory().insertionIndex(intersection)];
+                            ParentType::boundaryMarkers_[intersection.boundarySegmentIndex()] = marker;
+                            ParentType::faceMarkers_[indexSet.index(element.template subEntity<1>(intersection.indexInInside()))] = marker;
+                        }
+                    }
+                }
+                std::cout << Dune::MPIHelper::getCollectiveCommunication().rank() << ": finished setting of faceMarkers_." << std::endl;
             }
             else
             {

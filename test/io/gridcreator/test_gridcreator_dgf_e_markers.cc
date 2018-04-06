@@ -29,11 +29,13 @@
 
 int main(int argc, char** argv) try
 {
-    using namespace Dumux;
-    // initialize MPI, finalize is done automatically on exit
     Dune::MPIHelper::instance(argc, argv);
-    Parameters::init(argc, argv, "test_gridcreator_gmsh.input");
-    GridCreatorTests<Dune::UGGrid<3>>::testBoundaryDomainMarkers();
+
+    Dumux::Parameters::init(argc, argv, "test_gridcreator_dgf_e_markers.input");
+
+    auto name = Dumux::getParam<std::string>("Problem.Name");
+    Dumux::GridCreatorTests<GRIDTYPE>::testElementMarkers("dgf", name);
+
     return 0;
 }
 catch (Dumux::ParameterException &e) {
@@ -43,8 +45,4 @@ catch (Dumux::ParameterException &e) {
 catch (Dune::Exception &e) {
     std::cerr << "Dune reported error: " << e << std::endl;
     return 3;
-}
-catch (...) {
-    std::cerr << "Unknown exception thrown!\n";
-    return 4;
 }
