@@ -24,7 +24,9 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/methods.hh>
-//#include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
+#include <dumux/shallowwater/numericalfluxes/exactriemannsolver.hh>
+#include <dumux/shallowwater/numericalfluxes/fluxrotation.hh>
+#include <dumux/shallowwater/numericalfluxes/letmodel.hh>
 
 namespace Dumux
 {
@@ -116,55 +118,77 @@ class ShallowWaterAdvectiveFlux
     {
         NumEqVector flux(0.0);
 
-//         static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
-//
-//         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-//
-//         // Get the inside and outside volume variables
-//         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-//         const auto& insideVolVars = elemVolVars[insideScv];
-//         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-//
-//         if (enableGravity)
-//         {
-//             // do averaging for the density over all neighboring elements
-//             const auto rho = scvf.boundary() ? outsideVolVars.density(phaseIdx)
-//                                              : (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
-//
-//             // Obtain inside and outside pressures
-//             const auto pInside = insideVolVars.pressure(phaseIdx);
-//             const auto pOutside = outsideVolVars.pressure(phaseIdx);
-//
-//             const auto& tij = fluxVarsCache.advectionTij();
-//             const auto& g = problem.gravityAtPos(scvf.ipGlobal());
-//
-//             //! compute alpha := n^T*K*g
-//             const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
-//
-//             Scalar flux = tij*(pInside - pOutside) + rho*scvf.area()*alpha_inside;
-//
-//             //! On interior faces we have to add K-weighted gravitational contributions
-//             if (!scvf.boundary())
-//             {
-//                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-//                 const auto outsideK = outsideVolVars.permeability();
-//                 const auto outsideTi = computeTpfaTransmissibility(scvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
-//                 const auto alpha_outside = vtmv(scvf.unitOuterNormal(), outsideK, g)*outsideVolVars.extrusionFactor();
-//
-//                 flux += rho*tij/outsideTi*(alpha_inside - alpha_outside);
-//             }
-//
-//             return flux;
-//         }
-//         else
-//         {
-//             // Obtain inside and outside pressures
-//             const auto pInside = insideVolVars.pressure(phaseIdx);
-//             const auto pOutside = outsideVolVars.pressure(phaseIdx);
-//
-//             // return flux
-//             return fluxVarsCache.advectionTij()*(pInside - pOutside);
-//         }
+        //Get the inside and outside volume variables
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+        const auto& nxy = scvf.unitOuterNormal();
+
+        Scalar cellStatesLeft[4] = {0.0};
+        Scalar cellStatesRight[4] = {0.0};
+        cellStatesLeft[0] = insideVolVars.getH();
+        cellStatesRight[0] = outsideVolVars.getH();
+        cellStatesLeft[1] = insideVolVars.getU();
+        cellStatesRight[1] = outsideVolVars.getU();
+        cellStatesLeft[2] =  insideVolVars.getV();
+        cellStatesRight[3] = outsideVolVars.getV();
+        cellStatesLeft[3] = insideVolVars.getBottom();
+        cellStatesRight[3] = outsideVolVars.getBottom();
+
+        Scalar hllc_hl = cellStatesLeft[0];
+        Scalar hllc_hr = cellStatesRight[0];
+        Scalar thetal = cellStatesLeft[3] + cellStatesLeft[0];
+        Scalar thetar = cellStatesRight[3] + cellStatesRight[0];
+
+        //Hydrostatic reconstrucion after Audusse
+        Scalar dzl = std::max(0.0,cellStatesRight[3] - cellStatesLeft[3]);
+        cellStatesLeft[0] = std::max(0.0, hllc_hl - dzl);
+        Scalar dzr = std::max(0.0,cellStatesLeft[3] - cellStatesRight[3]);
+        cellStatesRight[0] = std::max(0.0, hllc_hr - dzr);
+
+        //------------------ Flux rotation -------
+        //make rotation for computing 1d HLLC flux
+        stateRotation(nxy,cellStatesLeft);
+        stateRotation(nxy,cellStatesRight);
+
+        //---------------------------------
+        //compute the HLLC flux
+        //---------------------------------
+        Scalar riemannFlux[3] = {0.0};
+
+        auto ks_av = std::max(outsideVolVars.getKsH(), insideVolVars.getKsH());
+        ks_av = std::max(ks_av,1.0E-6);
+        ks_av = std::min(ks_av,0.1);
+
+        Scalar mobility[3] = {1.0};
+        letmobility(cellStatesLeft[0],cellStatesRight[0],ks_av,mobility);
+        computeExactRiemann(riemannFlux,cellStatesLeft[0],cellStatesRight[0],
+                            cellStatesLeft[1],cellStatesRight[1],
+                            cellStatesLeft[2],cellStatesRight[2],insideVolVars.getGravity());
+
+        //---------------------------------
+        //end of  HLLC flux
+        //---------------------
+
+        //redo rotation
+        rotateFluxBack(nxy,riemannFlux);
+
+        //Audusse
+        Scalar hgzl = 0.5 * (cellStatesLeft[0] + hllc_hl) *(cellStatesLeft[0] - hllc_hl)  ;
+        Scalar hgzr = 0.5 * (cellStatesRight[0] + hllc_hr) * (cellStatesRight[0] - hllc_hr);
+        Scalar hdxzl = 0.0;
+        Scalar hdxzr = 0.0;
+        Scalar hdyzl = 0.0;
+        Scalar hdyzr = 0.0;
+        hdxzl = insideVolVars.getGravity() * nxy[0] * hgzl;
+        hdyzl = insideVolVars.getGravity() * nxy[1] * hgzl;
+        hdxzr = insideVolVars.getGravity() * nxy[0] * hgzr;
+        hdyzr = insideVolVars.getGravity() * nxy[1] * hgzr;
+
+        flux[0] = riemannFlux[0] * scvf.area() * mobility[0];
+        flux[1] =  (riemannFlux[1]  - hdxzl) * scvf.area() * mobility[1];
+        flux[2] =  (riemannFlux[2]  - hdyzl) * scvf.area() * mobility[2];
+
         return flux;
     }
 };

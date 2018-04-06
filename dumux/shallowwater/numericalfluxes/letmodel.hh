@@ -41,22 +41,42 @@
 namespace Dumux
 {
 
-inline void letModel(const auto dh, const auto dhmin,const auto dhmax,
-                     const auto letL,const auto letE,const auto letT,
-                     auto& mobility)
+
+inline void letmobility(const auto dl,const auto dr, const auto ks, auto& mobility)
   {
+
+        //Add a mobility term
+        //LET-Type see https://en.wikipedia.org/wiki/Relative_permeability
+        //This is hard coded so far
+        double krw = 1.0;
+        double sw = 0.0;
+        double minUpperH,minLowerH;
+        double letL = 2.0;
+        double letT = 2.0;
+        double letE = 1.0;
         mobility[0] = 1.0;
         mobility[1] = 1.0;
         mobility[2] = 1.0;
 
-        auto sw = std::min(h * (1.0/minUpperH) - (minLowerH),1.0);
-        sw = std::max(sw,0.0);
-        sw = std::min(sw,1.0);
+        minUpperH = ks*1.0; //We use ks*1 and compute the maximum in ks_av
+        minLowerH = ks*0.01; //0.001 is a good lower limit
 
-        if (dlr < dhmax){
-            mobility[0] = (1.0 * * std::pow(sw,letL))/(std::pow(sw,letL) + letE* std::pow(1.0-sw,letT));
+        double h;
+
+        h = (dl+dr)*0.5;
+        //h = std::min(dl,dr);
+        //h = std::max(dl,dr);
+
+        if (h < minUpperH){
+          sw = std::min(h * (1.0/minUpperH) - (minLowerH),1.0);  //best factor is not totally clear, about 0.01?!
+          sw = std::max(sw,0.0);
+          sw = std::min(sw,1.0);
+
+          //LET-model for mobility
+          mobility[0] = (krw * std::pow(sw,letL))/(std::pow(sw,letL) + letE* std::pow(1.0-sw,letT));
         }
-  }
+
+    }
 } // end namespace Dumux
 
 #endif

@@ -39,50 +39,50 @@ namespace Dumux
 template<class Scalar>
 
     //We use the notation after Toro dl = hl,
-    //Toro, E.F. 2001, "Shock-Capturing Methods for Free-SuScalcarace Shallow Flows", 1st edition, John Wiley & Sons.
+    //Toro, E.F. 2001, "Shock-Capturing Methods for Free-Surface Shallow Flows", 1st edition, John Wiley & Sons.
 
-    //typedef Scalcar ;
-    void computeExactRiemann(Scalcar *flux, Scalcar dl, Scalcar dr, Scalcar ul, Scalcar ur,Scalcar vl, Scalcar vr,Scalcar grav){
+    //typedef Scalar ;
+    void computeExactRiemann(Scalar *flux, Scalar dl, Scalar dr, Scalar ul, Scalar ur,Scalar vl, Scalar vr,Scalar grav){
 
-        Scalcar fl = 0.0;
-        Scalcar fr = 0.0;
-        Scalcar fld = 0.0;
-        Scalcar frd = 0.0;
-        Scalcar us = 0.0;
-        Scalcar hstar = 0.0;
-        Scalcar cl = 0.0; //cl
-        Scalcar cr = 0.0; //Cr
-        Scalcar c = 0.0;
-        Scalcar cs = 0.0;
-        Scalcar f = 0.0;
-        Scalcar s = 0.0;
-        Scalcar fd = 0.0;
-        Scalcar dcrit = 0.0;
-        Scalcar dmin = 0.0;
-        Scalcar gel = 0.0;
-        Scalcar ger = 0.0;
-        Scalcar ges = 0.0;
-        Scalcar ds = 0.0;
-        Scalcar d0 = 0.0;
-        Scalcar cha = 0.0;
-        Scalcar sl = 0.0;
-        Scalcar sr = 0.0;
-        Scalcar shl = 0.0;
-        Scalcar shr = 0.0;
-        Scalcar stl = 0.0;
-        Scalcar str = 0.0;
-        Scalcar utmp = 0.0;
+        Scalar fl = 0.0;
+        Scalar fr = 0.0;
+        Scalar fld = 0.0;
+        Scalar frd = 0.0;
+        Scalar us = 0.0;
+        Scalar hstar = 0.0;
+        Scalar cl = 0.0; //cl
+        Scalar cr = 0.0; //Cr
+        Scalar c = 0.0;
+        Scalar cs = 0.0;
+        Scalar f = 0.0;
+        Scalar s = 0.0;
+        Scalar fd = 0.0;
+        Scalar dcrit = 0.0;
+        Scalar dmin = 0.0;
+        Scalar gel = 0.0;
+        Scalar ger = 0.0;
+        Scalar ges = 0.0;
+        Scalar ds = 0.0;
+        Scalar d0 = 0.0;
+        Scalar cha = 0.0;
+        Scalar sl = 0.0;
+        Scalar sr = 0.0;
+        Scalar shl = 0.0;
+        Scalar shr = 0.0;
+        Scalar stl = 0.0;
+        Scalar str = 0.0;
+        Scalar utmp = 0.0;
         int maxsteps = 200;
-        Scalcar tol = 1.0E-12;
-        Scalcar d = 0.0;
-        Scalcar u = 0.0;
-        Scalcar ql = 0.0;
-        Scalcar qr = 0.0;
-        Scalcar v = 0.0;
-        Scalcar ds_start;
-        Scalcar ds_start2;
-        Scalcar ssl = 0.0;
-        Scalcar ssr = 0.0;
+        Scalar tol = 1.0E-12;
+        Scalar d = 0.0;
+        Scalar u = 0.0;
+        Scalar ql = 0.0;
+        Scalar qr = 0.0;
+        Scalar v = 0.0;
+        Scalar ds_start;
+        Scalar ds_start2;
+        Scalar ssl = 0.0;
+        Scalar ssr = 0.0;
 
         //================== Exact Riemann solver
         dl = std::max(dl,0.0);

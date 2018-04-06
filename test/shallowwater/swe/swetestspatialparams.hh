@@ -121,6 +121,12 @@ public:
     }
 
 
+    Scalar bottom() const
+    {
+        return 0.0;
+    }
+
+
 private:
 
 //    const IndexSet& indexSet_;

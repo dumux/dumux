@@ -85,13 +85,15 @@ public:
         auto u = priVars_[velocityXIdx];
         auto v = priVars_[velocityYIdx];
         auto ks =  problem.spatialParams().ks(element, scv, elemSol);
-        auto grav =  problem.spatialParams().grav();
+        grav_ =  problem.spatialParams().grav();
         auto frictionlaw =  problem.spatialParams().frictionlaw();
 
         //
-        auto ustar_h = computeUstarH(ks,h,grav,frictionlaw);
+        auto ustar_h = computeUstarH(ks,h,grav_,frictionlaw);
         frictionH_ = 0; // calculate from primary variables and spatial params
         frictionUstarH_ = 0; // calculate from primary variables and spatial params
+        bottom_ = problem.spatialParams().bottom();
+        auto ksH_ = computeKsH(ks,frictionlaw);
 
     }
 
@@ -134,16 +136,6 @@ public:
     }
 
     /*!
-     * \brief Return the friction height h inside the sub-control volume.
-     *
-     */
-    Scalar frictionH() const
-    {
-        return frictionH_;
-    }
-
-
-    /*!
      * \brief Return the friction u_starh inside the sub-control volume.
      *
      */
@@ -152,10 +144,40 @@ public:
         return frictionUstarH_;
     }
 
+     /*!
+     * \brief Return the friction u_starh inside the sub-control volume.
+     *
+     */
+    Scalar getBottom() const
+    {
+        return bottom_;
+    }
+
+    /*!
+     * \brief Return the friction height.
+     *
+     */
+    Scalar getKsH() const
+    {
+      return ksH_;
+    }
+
+    /*!
+     * \brief Return the gravity constant.
+     *
+     */
+    Scalar getGravity() const
+    {
+      return grav_;
+    }
+
 private:
     PrimaryVariables priVars_;
     Scalar frictionH_;
+    Scalar bottom_;
     Scalar frictionUstarH_;
+    Scalar ksH_;
+    Scalar grav_;
 };
 
 }

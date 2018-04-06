@@ -42,7 +42,7 @@ namespace Dumux
  *
  */
 template <class RF>
-RF computeUstarH(const RF ks, const RF h, const RF grav, const char law)
+RF computeUstarH(const RF ks, const RF h, const RF grav, int law)
 {
 
     /**************************************************************
@@ -75,7 +75,6 @@ RF computeUstarH(const RF ks, const RF h, const RF grav, const char law)
     using std::pow;
     using std::max;
     using std::min;
-    using std::pow;
     using std::log;
 
     const int manning = 1;
@@ -125,6 +124,34 @@ RF computeUstarH(const RF ks, const RF h, const RF grav, const char law)
 
     return ustar_h;
 }
+
+template <class RF>
+RF computeKsH(const RF ks, int law)
+{
+
+    /**************************************************************
+    / Compute an estimated height of the friction elements
+    / (grains, etc.)
+    /
+    / This is a numerical parameter to limit the flux for depths
+    / smaller as the estimated height
+    **************************************************************/
+
+    RF ks_h;
+    using std::pow;
+    const int manning = 1;
+    const int chezy = 2;
+    const int nikuradse = 3;
+
+    if (law == manning){
+        ks_h = std::pow(25.68/(1.0/ks),6.0);
+    }else{
+        ks_h = ks;
+    }
+
+    return ks_h;
+}
+
 
 
 } // end namespace Dumux
