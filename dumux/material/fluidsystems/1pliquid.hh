@@ -30,6 +30,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/material/fluidsystems/base.hh>
+#include <dumux/material/components/componenttraits.hh>
 
 namespace Dumux
 {
@@ -46,6 +47,8 @@ class OnePLiquid
 {
     using ThisType = OnePLiquid<Scalar, ComponentT>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
+
+    static_assert(ComponentTraits<ComponentT>::hasLiquidState, "The component does not implement a liquid state!");
 
 public:
     using Component = ComponentT;

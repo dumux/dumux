@@ -30,6 +30,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/material/fluidsystems/base.hh>
+#include <dumux/material/components/componenttraits.hh>
 
 namespace Dumux
 {
@@ -47,6 +48,8 @@ class OnePGas
 {
     using ThisType = OnePGas<Scalar, ComponentT>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
+
+    static_assert(ComponentTraits<ComponentT>::hasGasState, "The component does not implement a gas state!");
 
 public:
     using Component = ComponentT;
