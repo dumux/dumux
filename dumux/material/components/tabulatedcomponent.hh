@@ -34,11 +34,33 @@
 #include <vector>
 #include <iostream>
 
-#include <dumux/common/exceptions.hh>
-
 #include <dune/common/deprecated.hh>
+#include <dumux/common/exceptions.hh>
+#include <dumux/material/components/componenttraits.hh>
 
 namespace Dumux {
+namespace Components {
+// forward declaration
+template<class RawComponent, bool useVaporPressure>
+class TabulatedComponent;
+} // end namespace Components
+
+//! component traits for tabulated component
+template<class RawComponent, bool useVaporPressure>
+struct ComponentTraits<Components::TabulatedComponent<RawComponent, useVaporPressure>>
+{
+    using Scalar = typename RawComponent::Scalar;
+
+    //! if the component implements a solid state
+    static constexpr bool hasSolidState = std::is_base_of<Components::Solid<Scalar, RawComponent>, RawComponent>::value;
+
+    //! if the component implements a liquid state
+    static constexpr bool hasLiquidState = std::is_base_of<Components::Liquid<Scalar, RawComponent>, RawComponent>::value;
+
+    //! if the component implements a gaseous state
+    static constexpr bool hasGasState = std::is_base_of<Components::Gas<Scalar, RawComponent>, RawComponent>::value;
+};
+
 namespace Components {
 
 /*!
