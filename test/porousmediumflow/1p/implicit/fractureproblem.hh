@@ -27,7 +27,7 @@
 #define DUMUX_ONEP_FRACTURE_TEST_PROBLEM_HH
 
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/discretization/box/properties.hh>
@@ -64,7 +64,7 @@ SET_TYPE_PROP(FractureTypeTag, Problem, Dumux::FractureProblem<TypeTag>);
 SET_PROP(FractureTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
 };
 
 } // end namespace Properties

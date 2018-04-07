@@ -24,7 +24,7 @@
 #ifndef DUMUX_DENSITY_FLOW_NC_TEST_PROBLEM_HH
 #define DUMUX_DENSITY_FLOW_NC_TEST_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>

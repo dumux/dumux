@@ -30,8 +30,14 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/3p/model.hh>
-#include <dumux/material/fluidsystems/h2oairmesitylene.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
+#include <dumux/material/fluidsystems/3pimmiscible.hh>
+#include <dumux/material/components/tabulatedcomponent.hh>
+#include <dumux/material/components/air.hh>
+#include <dumux/material/components/mesitylene.hh>
+#include <dumux/material/components/h2o.hh>
+// #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 
 #include "infiltration3pspatialparams.hh"
 
@@ -58,9 +64,21 @@ SET_TYPE_PROP(InfiltrationThreePTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(InfiltrationThreePTypeTag, Problem, InfiltrationThreePProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(InfiltrationThreePTypeTag,
-              FluidSystem,
-              FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_PROP(InfiltrationThreePTypeTag, FluidSystem)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Water = Components::TabulatedComponent<Components::H2O<Scalar>>;
+    using WettingFluid = FluidSystems::OnePLiquid<Scalar, Water>;
+    using NonwettingFluid = FluidSystems::OnePLiquid<Scalar, Components::Mesitylene<Scalar>>;
+    using Gas = FluidSystems::OnePGas<Scalar, Components::Air<Scalar>>;
+public:
+    using type = FluidSystems::ThreePImmiscible<Scalar, WettingFluid, NonwettingFluid, Gas>;
+};
+
+// SET_TYPE_PROP(InfiltrationThreePTypeTag,
+//               FluidSystem,
+//               FluidSystems::ThreePImmiscible<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 }// end namespace Properties
 

@@ -80,6 +80,12 @@ public:
     { return Implementation::isCompressible(phaseIdx); }
 
     /*!
+     * \brief Returns whether the fluids are miscible
+     */
+    static constexpr bool isMiscible()
+    { return Implementation::isMiscible(); }
+
+    /*!
      * \brief Returns true if and only if a fluid phase is assumed to
      *        have a constant viscosity.
      *

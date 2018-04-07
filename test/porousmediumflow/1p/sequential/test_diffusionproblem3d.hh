@@ -63,8 +63,8 @@ SET_TYPE_PROP(DiffusionTestTypeTag, Problem, TestDiffusion3DProblem<TypeTag>);
 SET_PROP(DiffusionTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 

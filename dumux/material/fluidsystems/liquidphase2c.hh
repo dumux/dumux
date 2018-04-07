@@ -76,6 +76,12 @@ public:
     { return MainComponent::name(); }
 
     /*!
+     * \brief Returns whether the fluids are miscible
+     */
+    static constexpr bool isMiscible()
+    { return true; }
+
+    /*!
      * \brief A human readable name for the component.
      *
      * \param compIdx The index of the component to consider

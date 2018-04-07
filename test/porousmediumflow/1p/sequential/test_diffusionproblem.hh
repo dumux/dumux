@@ -61,8 +61,8 @@ SET_TYPE_PROP(FVVelocity2PTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_PROP(FVVelocity2PTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
@@ -78,8 +78,8 @@ SET_TYPE_PROP(FVMPFAOVelocity2PTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_PROP(FVMPFAOVelocity2PTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
@@ -94,8 +94,8 @@ SET_TYPE_PROP(MimeticPressure2PTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_PROP(MimeticPressure2PTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 

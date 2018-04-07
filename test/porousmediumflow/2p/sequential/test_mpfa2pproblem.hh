@@ -25,7 +25,7 @@
 #define DUMUX_TEST_MPFA2P_PROBLEM_HH
 
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/trichloroethene.hh>
 
@@ -73,11 +73,11 @@ SET_TYPE_PROP(MPFATwoPTestTypeTag, Problem, MPFATwoPTestProblem<TypeTag>);
 SET_PROP(MPFATwoPTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
 #if PROBLEM == 2
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Trichloroethene<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Trichloroethene<Scalar> >;
 #else
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
 #endif
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };

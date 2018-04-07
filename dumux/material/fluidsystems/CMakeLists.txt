@@ -4,7 +4,7 @@ install(FILES
   base.hh
   brineair.hh
   brineco2.hh
-  gasphase.hh
+  1pgas.hh
   h2oair.hh
   h2oairmesitylene.hh
   h2oairxylene.hh
@@ -12,7 +12,7 @@ install(FILES
   h2on2.hh
   h2on2kinetic.hh
   h2on2o2.hh
-  liquidphase.hh
+  1pliquid.hh
   liquidphase2c.hh
   nullparametercache.hh
   parametercachebase.hh

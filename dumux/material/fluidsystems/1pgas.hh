@@ -19,10 +19,10 @@
 /*!
  * \file
  * \ingroup Fluidsystems
- * \brief @copybrief Dumux::FluidSystems::LiquidPhase
+ * \brief @copybrief Dumux::FluidSystems::OnePGas
  */
-#ifndef DUMUX_LIQUID_PHASE_HH
-#define DUMUX_LIQUID_PHASE_HH
+#ifndef DUMUX_GAS_PHASE_HH
+#define DUMUX_GAS_PHASE_HH
 
 #include <cassert>
 #include <limits>
@@ -30,22 +30,26 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/material/fluidsystems/base.hh>
+#include <dumux/material/components/componenttraits.hh>
 
 namespace Dumux
 {
+
 namespace FluidSystems
 {
 
 /*!
  * \ingroup Fluidsystems
- * \brief A liquid phase consisting of a single component
+ * \brief A gaseous phase consisting of a single component
  */
 template <class Scalar, class ComponentT>
-class LiquidPhase
-: public BaseFluidSystem<Scalar, LiquidPhase<Scalar, ComponentT> >
+class OnePGas
+: public BaseFluidSystem<Scalar, OnePGas<Scalar, ComponentT> >
 {
-    using ThisType = LiquidPhase<Scalar, ComponentT>;
+    using ThisType = OnePGas<Scalar, ComponentT>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
+
+    static_assert(ComponentTraits<ComponentT>::hasGasState, "The component does not implement a gas state!");
 
 public:
     using Component = ComponentT;
@@ -86,10 +90,16 @@ public:
     { return Component::name(); }
 
     /*!
+     * \brief There is only one phase, so not mass transfer between phases can occur
+     */
+    static constexpr bool isMiscible()
+    { return false; }
+
+    /*!
      * \brief Returns whether the fluid is a liquid
      */
     static constexpr bool isLiquid(int phaseIdx = 0)
-    { return true; }
+    { return false; }
 
     /*!
      * \brief Returns true if and only if a fluid phase is assumed to
@@ -112,19 +122,13 @@ public:
      * \brief Returns true if the fluid is assumed to be compressible
      */
     static constexpr bool isCompressible(int phaseIdx = 0)
-    { return Component::liquidIsCompressible(); }
-
-    /*!
-     * \brief Returns true if the fluid viscosity is constant
-     */
-    static constexpr bool viscosityIsConstant(int phaseIdx = 0)
-    { return Component::liquidViscosityIsConstant(); }
+    { return Component::gasIsCompressible(); }
 
     /*!
      * \brief Returns true if the fluid is assumed to be an ideal gas
      */
     static constexpr bool isIdealGas(int phaseIdx = 0)
-    { return false; /* we're a liquid! */ }
+    { return Component::gasIsIdeal(); }
 
     /*!
      * \brief The mass in \f$\mathrm{[kg]}\f$ of one mole of the component.
@@ -133,25 +137,25 @@ public:
     {  return Component::molarMass(); }
 
     /*!
-     * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of the component
+     * \brief Returns the critical temperature in \f$\mathrm{[K]}\f$ of the component
      */
     static Scalar criticalTemperature()
     {  return Component::criticalTemperature(); }
 
     /*!
-     * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of the component
+     * \brief Returns the critical pressure in \f$\mathrm{[Pa]}\f$ of the component
      */
     static Scalar criticalPressure()
     {  return Component::criticalPressure(); }
 
     /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at the component's triple point.
+     * \brief Returns the temperature in \f$\mathrm{[K]}\f$ at the component's triple point.
      */
     static Scalar tripleTemperature()
     {  return Component::tripleTemperature(); }
 
     /*!
-     * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at the component's triple point.
+     * \brief Returns the pressure in \f$\mathrm{[Pa]}\f$ at the component's triple point.
      */
     static Scalar triplePressure()
     { return Component::triplePressure(); }
@@ -159,15 +163,18 @@ public:
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of the component at a given
      *        temperature.
+     * \param T temperature \f$\mathrm{[K]}\f$
      */
     static Scalar vaporPressure(Scalar T)
-    {  return Component::vaporPressure(T); }
+    { return Component::vaporPressure(T); }
 
     /*!
      * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure and temperature.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param pressure The given pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar density(Scalar temperature, Scalar pressure)
-    {  return Component::liquidDensity(temperature, pressure); }
+    {  return Component::gasDensity(temperature, pressure); }
 
     using Base::density;
     /*!
@@ -183,20 +190,24 @@ public:
 
     /*!
      * \brief The pressure \f$\mathrm{[Pa]}\f$ of the component at a given density and temperature.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param density The given density \f$\mathrm{[kg/m^3]}\f$
      */
     static Scalar pressure(Scalar temperature, Scalar density)
-    {  return Component::liquidPressure(temperature, density); }
+    {  return Component::gasPressure(temperature, density); }
 
     /*!
-     * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ the pure component as a liquid.
+     * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of the pure component as a gas.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param pressure The given pressure \f$\mathrm{[Pa]}\f$
      */
     static const Scalar enthalpy(Scalar temperature, Scalar pressure)
-    {  return Component::liquidEnthalpy(temperature, pressure); }
+    {  return Component::gasEnthalpy(temperature, pressure); }
 
-    using Base::enthalpy;
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ the pure component as a liquid.
      */
+    using Base::enthalpy;
     template <class FluidState>
     static Scalar enthalpy(const FluidState &fluidState,
                            const int phaseIdx)
@@ -206,16 +217,20 @@ public:
     }
 
     /*!
-     * \brief Specific internal energy \f$\mathrm{[J/kg]}\f$ the pure component as a liquid.
+     * \brief Specific internal energy \f$\mathrm{[J/kg]}\f$ of the pure component as a gas.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param pressure The given pressure \f$\mathrm{[Pa]}\f$
      */
     static const Scalar internalEnergy(Scalar temperature, Scalar pressure)
-    { return Component::liquidInternalEnergy(temperature, pressure); }
+    { return Component::gasInternalEnergy(temperature, pressure); }
 
     /*!
-     * \brief The dynamic liquid viscosity \f$\mathrm{[N/m^3*s]}\f$ of the pure component.
+     * \brief The dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the pure component at a given pressure and temperature.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param pressure The given pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar viscosity(Scalar temperature, Scalar pressure)
-    {  return Component::liquidViscosity(temperature, pressure); }
+    {  return Component::gasViscosity(temperature, pressure); }
 
     using Base::viscosity;
     /*!
@@ -256,7 +271,7 @@ public:
 
     using Base::diffusionCoefficient;
     /*!
-     * \copybrief Base::diffusionCoefficient
+     *  \copybrief Base::diffusionCoefficient
      *
      * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
@@ -284,15 +299,18 @@ public:
                                              int phaseIdx,
                                              int compIIdx,
                                              int compJIdx)
+
     {
         DUNE_THROW(Dune::InvalidStateException, "Not applicable: Binary diffusion coefficients");
     }
 
     /*!
      * \brief Thermal conductivity of the fluid \f$\mathrm{[W/(m K)]}\f$.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param pressure The given pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar thermalConductivity(Scalar temperature, Scalar pressure)
-    { return Component::liquidThermalConductivity(temperature, pressure); }
+    { return Component::gasThermalConductivity(temperature, pressure); }
 
     using Base::thermalConductivity;
     /*!
@@ -308,9 +326,11 @@ public:
 
     /*!
      * \brief Specific isobaric heat capacity of the fluid \f$\mathrm{[J/(kg K)]}\f$.
+     * \param temperature The given temperature \f$\mathrm{[K]}\f$
+     * \param pressure The given pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar heatCapacity(Scalar temperature, Scalar pressure)
-    { return Component::liquidHeatCapacity(temperature, pressure); }
+    { return Component::gasHeatCapacity(temperature, pressure); }
 
     using Base::heatCapacity;
     /*!

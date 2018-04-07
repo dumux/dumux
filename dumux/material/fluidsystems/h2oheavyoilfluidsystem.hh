@@ -41,7 +41,7 @@ namespace FluidSystems {
  *        components in both, the liquid and the gas phase.
  */
 template <class Scalar,
-          class H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > >
+          class H2OType = Dumux::TabulatedComponent<Dumux::H2O<Scalar> > >
 class H2OHeavyOil
     : public BaseFluidSystem<Scalar, H2OHeavyOil<Scalar, H2OType> >
 {
@@ -109,6 +109,11 @@ public:
         }
     }
 
+    /*!
+     * \brief Returns whether the fluids are miscible
+     */
+    static constexpr bool isMiscible()
+    { return true; }
 
     /*!
      * \brief Return whether a phase is liquid

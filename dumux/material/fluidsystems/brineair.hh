@@ -50,7 +50,7 @@ namespace FluidSystems {
  *  water of the IAPWS-formulation.
  */
 template <class Scalar,
-          class H2Otype = TabulatedComponent<Scalar, H2O<Scalar>>,
+          class H2Otype = TabulatedComponent<H2O<Scalar>>,
           bool useComplexRelations=true>
 class BrineAir
 : public BaseFluidSystem<Scalar, BrineAir<Scalar, H2Otype, useComplexRelations>>
@@ -103,6 +103,12 @@ public:
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
+
+    /*!
+     * \brief Returns whether the fluids are miscible
+     */
+    static constexpr bool isMiscible()
+    { return true; }
 
     /*!
      * \brief Return whether a phase is liquid

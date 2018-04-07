@@ -58,7 +58,7 @@ class H2ON2
 
     // convenience using declarations
     using IdealGas = Dumux::IdealGas<Scalar>;
-    using TabulatedH2O = TabulatedComponent<Scalar, Dumux::H2O<Scalar> >;
+    using TabulatedH2O = TabulatedComponent<Dumux::H2O<Scalar> >;
     using SimpleN2 = Dumux::N2<Scalar>;
 
 public:
@@ -89,6 +89,12 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         return name[phaseIdx];
     }
+
+    /*!
+     * \brief Returns whether the fluids are miscible
+     */
+    static constexpr bool isMiscible()
+    { return true; }
 
     /*!
      * \brief Return whether a phase is liquid

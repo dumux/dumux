@@ -24,7 +24,7 @@
 #ifndef DUMUX_TEST_IMPES_PROBLEM_HH
 #define DUMUX_TEST_IMPES_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
 
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
@@ -85,8 +85,8 @@ SET_TYPE_PROP(IMPESTestTypeTag, Problem, IMPESTestProblem<TypeTag>);
 SET_PROP(IMPESTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
-    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 

@@ -72,7 +72,7 @@ This fluid system expects __phases__ as input and so far we have only included t
 
 ```c++
 // We will only have liquid phases Here
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 ```
 
 which creates a _liquid phase_ from a given component. Finally, using all of the included classes we set the the fluid system property by choosing a liquid phase consisting of the incompressible fictitious component as non-wetting phase and tabulated water as the wetting phase in the immiscible fluid system:
@@ -84,14 +84,14 @@ SET_PROP(ExerciseThreeTypeTag, FluidSystem)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef TabulatedComponent<Scalar, H2O<Scalar>> TabulatedH2O;
-    typedef typename FluidSystems::LiquidPhase<Scalar, TabulatedH2O> WettingPhase;
+    typedef TabulatedComponent<H2O<Scalar>> TabulatedH2O;
+    typedef typename FluidSystems::OnePLiquid<Scalar, TabulatedH2O> WettingPhase;
     /*!
      * Uncomment first line and comment second line for using the incompressible component
      * Uncomment second line and comment first line for using the compressible component
      */
-    typedef typename FluidSystems::LiquidPhase<Scalar, MyIncompressibleComponent<Scalar> > NonWettingPhase;
-    // typedef typename FluidSystems::LiquidPhase<Scalar, MyCompressibleComponent<Scalar> > NonWettingPhase;
+    typedef typename FluidSystems::OnePLiquid<Scalar, MyIncompressibleComponent<Scalar> > NonWettingPhase;
+    // typedef typename FluidSystems::OnePLiquid<Scalar, MyCompressibleComponent<Scalar> > NonWettingPhase;
 
 public:
     typedef typename FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonWettingPhase> type;

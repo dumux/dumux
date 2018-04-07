@@ -24,7 +24,7 @@
 #ifndef DUMUX_CHANNEL_TEST_PROBLEM_HH
 #define DUMUX_CHANNEL_TEST_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/constant.hh>
 
@@ -50,9 +50,9 @@ SET_PROP(ChannelTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 #if NONISOTHERMAL
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
 #else
-    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 #endif
 };
 

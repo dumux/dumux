@@ -31,14 +31,14 @@
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>
-#include <dumux/material/fluidsystems/gasphase.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/h2on2kinetic.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/spe5.hh>
 
 // include all fluid states
@@ -62,8 +62,8 @@ int main()
     using H2O = Components::H2O<Scalar>;
     using N2 = Components::N2<Scalar>;
 
-    using Liquid = FluidSystems::LiquidPhase<Scalar, H2O>;
-    using Gas = FluidSystems::GasPhase<Scalar, N2>;
+    using Liquid = FluidSystems::OnePLiquid<Scalar, H2O>;
+    using Gas = FluidSystems::OnePGas<Scalar, N2>;
 
     int success = 0;
     std::vector<std::string> collectedExceptions;
@@ -159,17 +159,17 @@ int main()
         const bool enableComplexRelations=true;
         using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using H2OType = Components::TabulatedComponent<Scalar, Components::H2O<Scalar>>;
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
         const bool enableComplexRelations=false;
         using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using H2OType = Components::TabulatedComponent<Scalar, Components::H2O<Scalar>>;
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
         const bool enableComplexRelations=true;
         using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // gas phase
-    {   using FluidSystem = FluidSystems::GasPhase<Scalar, H2O>;
+    {   using FluidSystem = FluidSystems::OnePGas<Scalar, H2O>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- Air -- Mesitylene
@@ -199,7 +199,7 @@ int main()
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // liquid phase
-    {   using FluidSystem = FluidSystems::LiquidPhase<Scalar, H2O>;
+    {   using FluidSystem = FluidSystems::OnePLiquid<Scalar, H2O>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // spe5

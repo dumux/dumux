@@ -49,7 +49,7 @@ namespace FluidSystems {
  * It assumes all phases to be ideal mixtures.
  */
 template <class Scalar,
-          class H2OType = TabulatedComponent<Scalar, H2O<Scalar> > >
+          class H2OType = TabulatedComponent<H2O<Scalar> > >
 class H2OAirMesitylene
     : public BaseFluidSystem<Scalar, H2OAirMesitylene<Scalar, H2OType> >
 {
@@ -120,6 +120,11 @@ public:
         }
     }
 
+    /*!
+     * \brief Returns whether the fluids are miscible
+     */
+    static constexpr bool isMiscible()
+    { return true; }
 
     /*!
      * \brief Return whether a phase is liquid

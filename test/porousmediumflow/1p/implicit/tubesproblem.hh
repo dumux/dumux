@@ -35,7 +35,7 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "tubesspatialparams.hh"
 
@@ -63,7 +63,7 @@ SET_TYPE_PROP(TubesTestTypeTag, SpatialParams, TubesTestSpatialParams<TypeTag>);
 SET_PROP(TubesTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 } // end namespace Properties
 

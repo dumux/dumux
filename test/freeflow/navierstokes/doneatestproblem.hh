@@ -24,7 +24,7 @@
 #ifndef DUMUX_DONEA_TEST_PROBLEM_HH
 #define DUMUX_DONEA_TEST_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -45,7 +45,7 @@ NEW_TYPE_TAG(DoneaTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStoke
 SET_PROP(DoneaTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type

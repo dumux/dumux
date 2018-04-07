@@ -35,14 +35,14 @@
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>
-#include <dumux/material/fluidsystems/gasphase.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/h2on2kinetic.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/spe5.hh>
 
 // include all fluid states

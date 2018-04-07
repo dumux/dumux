@@ -67,7 +67,7 @@ class H2ON2O2
 
     using IdealGas = Dumux::IdealGas<Scalar>;
     using Constants = Dumux::Constants<Scalar>;
-    using TabulatedH2O = TabulatedComponent<Scalar, Dumux::H2O<Scalar> >;
+    using TabulatedH2O = TabulatedComponent<Dumux::H2O<Scalar> >;
     using SimpleN2 = Dumux::N2<Scalar>;
     using O2 = Dumux::O2<Scalar>;
 

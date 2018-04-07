@@ -45,11 +45,11 @@ namespace Components {
  * \tparam H2O Static polymorphism: the Brine class can access all properties of the H2O class
  */
 template <class Scalar,
-          class H2O_Tabulated = TabulatedComponent<Scalar, H2O<Scalar>>>
+          class H2O_Tabulated = TabulatedComponent<H2O<Scalar>>>
 class Brine : public Component<Scalar, Brine<Scalar, H2O_Tabulated> >
 {
 public:
-    using H2O = TabulatedComponent<Scalar, Dumux::H2O<Scalar>>;
+    using H2O = TabulatedComponent<Dumux::H2O<Scalar>>;
 
     //HACK: If salinity is a pseudo-component, a constat value is used
     static Scalar constantSalinity;
@@ -396,7 +396,7 @@ Scalar Brine<Scalar, H2O>::constantSalinity = 0.1;
 
 } // end namespace Components
 
-template <class Scalar, class H2O = TabulatedComponent<Scalar, H2O<Scalar>>>
+template <class Scalar, class H2O = TabulatedComponent<H2O<Scalar>>>
 using Brine DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::Brine<Scalar, H2O>;
 
 } // end namespace Dumux
