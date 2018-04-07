@@ -68,7 +68,7 @@ SET_PROP(InfiltrationThreePTypeTag, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Water = Components::TabulatedComponent<Scalar, Components::H2O<Scalar>>;
+    using Water = Components::TabulatedComponent<Components::H2O<Scalar>>;
     using WettingFluid = FluidSystems::OnePLiquid<Scalar, Water>;
     using NonwettingFluid = FluidSystems::OnePLiquid<Scalar, Components::Mesitylene<Scalar>>;
     using Gas = FluidSystems::OnePGas<Scalar, Components::Air<Scalar>>;

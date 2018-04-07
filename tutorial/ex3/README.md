@@ -84,7 +84,7 @@ SET_PROP(ExerciseThreeTypeTag, FluidSystem)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef TabulatedComponent<Scalar, H2O<Scalar>> TabulatedH2O;
+    typedef TabulatedComponent<H2O<Scalar>> TabulatedH2O;
     typedef typename FluidSystems::OnePLiquid<Scalar, TabulatedH2O> WettingPhase;
     /*!
      * Uncomment first line and comment second line for using the incompressible component

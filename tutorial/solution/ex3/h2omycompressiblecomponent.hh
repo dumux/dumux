@@ -47,7 +47,7 @@ namespace FluidSystems
  *        which are water and a ficitious component from tutorial exercise 3a.
  */
 template <class TypeTag, class Scalar,
-          class H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > >
+          class H2OType = Dumux::TabulatedComponent<Dumux::H2O<Scalar> > >
 class H2OMyCompressibleComponent
     : public BaseFluidSystem< Scalar, H2OMyCompressibleComponent<TypeTag, Scalar, H2OType> >
 {

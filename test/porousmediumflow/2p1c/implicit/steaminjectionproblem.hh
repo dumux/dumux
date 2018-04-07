@@ -59,7 +59,7 @@ SET_PROP(InjectionProblemTypeTag, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> >;
+    using H2OType = Dumux::TabulatedComponent<Dumux::H2O<Scalar> >;
 public:
     using type = Dumux::FluidSystems::TwoPOneC<Scalar, H2OType >;
 };

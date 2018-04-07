@@ -76,7 +76,7 @@ SET_PROP(ExerciseThreeTwoPTypeTag, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using TabulatedH2O = TabulatedComponent<Scalar, H2O<Scalar>>;
+    using TabulatedH2O = TabulatedComponent<H2O<Scalar>>;
     using WettingPhase = typename FluidSystems::OnePLiquid<Scalar, TabulatedH2O>;
     /*!
      * Uncomment first line and comment second line for using the incompressible component
@@ -128,7 +128,7 @@ public:
 
       // initialize the tables for the water properties
       std::cout << "Initializing the tables for the water properties" << std::endl;
-      TabulatedComponent<Scalar, H2O<Scalar>>::init(/*tempMin=*/273.15,
+      TabulatedComponent<H2O<Scalar>>::init(/*tempMin=*/273.15,
                                                     /*tempMax=*/623.15,
                                                     /*numTemp=*/100,
                                                     /*pMin=*/0.0,

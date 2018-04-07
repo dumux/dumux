@@ -65,7 +65,7 @@ SET_PROP(OnePCompressible, FluidSystem)
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    using type = FluidSystems::OnePLiquid<Scalar, TabulatedComponent<Scalar, H2O<Scalar>>>;
+    using type = FluidSystems::OnePLiquid<Scalar, TabulatedComponent<H2O<Scalar>>>;
 };
 
 // Disable caching (for testing purposes)
@@ -98,7 +98,7 @@ public:
     OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        TabulatedComponent<Scalar, H2O<Scalar>>::init(272.15, 294.15, 10,
+        TabulatedComponent<H2O<Scalar>>::init(272.15, 294.15, 10,
                                                       1.0e4, 1.0e6, 200);
     }
 

@@ -48,9 +48,9 @@ namespace FluidSystems
  */
 template<class Scalar,
          class CO2Table,
-         class H2Otype = TabulatedComponent<Scalar, H2O<Scalar> >,
+         class H2Otype = TabulatedComponent<H2O<Scalar> >,
          class BrineRawComponent = Brine<Scalar, H2O<Scalar> >,
-         class Brinetype = TabulatedComponent<Scalar, BrineRawComponent> >
+         class Brinetype = TabulatedComponent<BrineRawComponent> >
 class BrineCO2
 : public BaseFluidSystem<Scalar, BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype> >
 {

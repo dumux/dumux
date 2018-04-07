@@ -159,11 +159,11 @@ int main()
         const bool enableComplexRelations=true;
         using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using H2OType = Components::TabulatedComponent<Scalar, Components::H2O<Scalar>>;
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
         const bool enableComplexRelations=false;
         using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using H2OType = Components::TabulatedComponent<Scalar, Components::H2O<Scalar>>;
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
         const bool enableComplexRelations=true;
         using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }

@@ -50,7 +50,7 @@ namespace FluidSystems {
  *  water of the IAPWS-formulation.
  */
 template <class Scalar,
-          class H2Otype = TabulatedComponent<Scalar, H2O<Scalar>>,
+          class H2Otype = TabulatedComponent<H2O<Scalar>>,
           bool useComplexRelations=true>
 class BrineAir
 : public BaseFluidSystem<Scalar, BrineAir<Scalar, H2Otype, useComplexRelations>>

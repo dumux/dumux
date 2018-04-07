@@ -47,7 +47,7 @@ int main()
 {
     using Scalar = double;
     using IapwsH2O = Dumux::H2O<Scalar>;
-    using TabulatedH2O = Dumux::TabulatedComponent<Scalar, IapwsH2O>;
+    using TabulatedH2O = Dumux::TabulatedComponent<IapwsH2O>;
 
     Scalar tempMin = 274.15;
     Scalar tempMax = 622.15;

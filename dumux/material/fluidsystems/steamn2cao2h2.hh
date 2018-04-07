@@ -56,7 +56,7 @@ namespace FluidSystems
  */
 
 template <class Scalar,
-           class H2Otype = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar>>,
+           class H2Otype = Dumux::TabulatedComponent<Dumux::H2O<Scalar>>,
           bool useComplexRelations=true>
 class SteamN2CaO2H2
 : public BaseFluidSystem<Scalar, SteamN2CaO2H2<Scalar, H2Otype, useComplexRelations> >
