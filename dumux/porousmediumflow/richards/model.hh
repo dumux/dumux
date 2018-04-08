@@ -202,7 +202,7 @@ public:
 SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSwitch<TypeTag>);
 
 //! The primary variable switch for the richards model
-//SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);
+// SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);
 
 //! The spatial parameters to be employed.
 //! Use FVSpatialParams by default.

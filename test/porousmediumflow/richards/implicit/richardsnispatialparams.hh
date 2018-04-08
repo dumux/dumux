@@ -30,8 +30,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/spatialparams/fv.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup RichardsTests
@@ -42,8 +41,7 @@ namespace Dumux
 template<class TypeTag>
 class RichardsNISpatialParams;
 
-namespace Properties
-{
+namespace Properties {
 // The spatial parameters TypeTag
 NEW_TYPE_TAG(RichardsNISpatialParams);
 
@@ -62,8 +60,7 @@ public:
     // define the material law parameterized by absolute saturations
     using type = EffToAbsLaw<EffectiveLaw>;
 };
-}
-
+} // end namespace Properties
 
 template<class TypeTag>
 class RichardsNISpatialParams : public FVSpatialParams<TypeTag>
@@ -106,10 +103,6 @@ public:
         materialParams_.setVgAlpha(0.0037);
         materialParams_.setVgn(4.7);
     }
-
-    ~RichardsNISpatialParams()
-    {}
-
 
     /*!
      * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
@@ -183,7 +176,6 @@ public:
         return lambdaSolid_;
     }
 
-
 private:
 
     MaterialLawParams materialParams_;
@@ -192,6 +184,6 @@ private:
     Scalar lambdaSolid_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

@@ -73,6 +73,9 @@ class ExtendedRichardsPrimaryVariableSwitch
     static constexpr bool useKelvinVaporPressure
         = GET_PROP_VALUE(TypeTag, UseKelvinEquation);
 
+public:
+    using ParentType::ParentType;
+
 protected:
 
     // perform variable switch at a degree of freedom location

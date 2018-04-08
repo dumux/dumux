@@ -25,7 +25,7 @@
 #define DUMUX_RICHARDS_NEWTON_SOLVER_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/porousmediumflow/richards/privarswitchnewtonsolver.hh>
 #include <dumux/discretization/elementsolution.hh>
 
 namespace Dumux {
@@ -40,10 +40,10 @@ namespace Dumux {
  *       or from possible ModelTraits.
  */
 template <class TypeTag, class Assembler, class LinearSolver>
-class RichardsNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
+class RichardsNewtonSolver : public RichardsPrivarSwitchNewtonSolver<TypeTag, Assembler, LinearSolver>
 {
     using Scalar = typename Assembler::Scalar;
-    using ParentType = NewtonSolver<Assembler, LinearSolver>;
+    using ParentType = RichardsPrivarSwitchNewtonSolver<TypeTag, Assembler, LinearSolver>;
     using SolutionVector = typename Assembler::ResidualType;
 
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);

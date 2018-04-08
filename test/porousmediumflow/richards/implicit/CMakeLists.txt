@@ -88,6 +88,27 @@ dune_add_test(SOURCES test_richardsniconduction_fv.cc
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconduction test_richardsniconduction.input -Problem.Name test_ccrichardsniconduction"
                       )
 
+dune_add_test(SOURCES test_richardsnievaporation_fv.cc
+              NAME test_richardsnievaporation_tpfa
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIEvaporationCCTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_ccrichardsevaporation-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsnievaporation-00043.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsnievaporation_tpfa test_richardsnievaporation.input -Problem.Name test_ccrichardsnievaporation"
+                      )
+
+dune_add_test(SOURCES test_richardsnievaporation_fv.cc
+              NAME test_richardsnievaporation_box
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIEvaporationBoxTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_boxrichardsevaporation-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsnievaporation-00043.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richardsnievaporation_box test_richardsnievaporation.input -Problem.Name test_boxrichardsnievaporation"
+                      )
+
+
 #install sources
 install(FILES
 richardsanalyticalproblem.hh
@@ -96,9 +117,11 @@ richardslensproblem.hh
 richardslensspatialparams.hh
 richardsniconductionproblem.hh
 richardsniconvectionproblem.hh
+richardsnievaporationproblem.hh
 richardsnispatialparams.hh
 test_richardslens_fv.cc
 test_richardsniconduction_fv.cc
 test_richardsniconvection_fv.cc
+test_richardsnievaporation_fv.cc
 test_ccrichardsanalytical.cc
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/richards)

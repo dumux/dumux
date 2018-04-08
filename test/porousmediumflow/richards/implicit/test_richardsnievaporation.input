@@ -1,0 +1,17 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 3e4 # [s]
+MaxTimeStepSize = 1e3 # [s]
+
+[Grid]
+UpperRight = 10 20
+Cells = 5 20
+
+[Problem]
+Name = test_richardsevaporation # name passed to the output routines
+OutputInterval = 5 # every 5th timestep an output file is written
+EnableGravity = 0 # disable gravity
+UsePrimaryVariableSwitch = true
+
+[Newton]
+EnableChop = false  # chop for better convergence
