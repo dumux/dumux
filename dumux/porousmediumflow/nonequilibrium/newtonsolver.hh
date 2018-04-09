@@ -20,7 +20,7 @@
  * \file
  * \ingroup PorousmediumNonEquilibriumModel
  * \brief A MpNc specific newton solver.
- *  This controller calls the velocity averaging in the model after each iteration.
+ *  This solver calls the velocity averaging in the model after each iteration.
  */
 #ifndef DUMUX_NONEQUILIBRIUM_NEWTON_SOLVER_HH
 #define DUMUX_NONEQUILIBRIUM_NEWTON_SOLVER_HH

@@ -19,9 +19,7 @@
 /*!
  * \file
  * \ingroup PorousmediumCompositional
- * \brief Reference implementation of a controller class for the Newton solver.
- *
- * Usually this controller should be sufficient.
+ * \copydoc Dumux::PriVarSwitchNewtonSolver
  */
 #ifndef DUMUX_PRIVARSWITCH_NEWTON_SOLVER_HH
 #define DUMUX_PRIVARSWITCH_NEWTON_SOLVER_HH
@@ -37,9 +35,7 @@ namespace Dumux {
 
 /*!
  * \ingroup PorousmediumCompositional
- * \brief A newton controller that handles primary variable switches
- * \todo make this independent of TypeTag by making PrimaryVariableSwitch a template argument
- *       and extracting everything model specific from there
+ * \brief A newton solver that handles primary variable switches
  */
 template <class Assembler, class LinearSolver, class PrimaryVariableSwitch>
 class PriVarSwitchNewtonSolver : public NewtonSolver<Assembler, LinearSolver>

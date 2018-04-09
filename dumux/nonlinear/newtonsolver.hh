@@ -19,9 +19,9 @@
 /*!
  * \file
  * \ingroup Nonlinear
- * \brief Reference implementation of a controller class for the Newton solver.
+ * \brief Reference implementation of the Newton solver.
  *
- * Usually this controller should be sufficient.
+ * Usually this solver should be sufficient.
  */
 #ifndef DUMUX_NEWTON_SOLVER_HH
 #define DUMUX_NEWTON_SOLVER_HH
@@ -61,11 +61,12 @@ struct supportsPartialReassembly
 
 /*!
  * \ingroup Nonlinear
- * \brief An implementation of a Newton controller
- * \tparam Scalar the scalar type
+ * \brief An implementation of a Newton solver
+ * \tparam Assembler the assembler
+ * \tparam LinearSolver the linear solver
  * \tparam Comm the communication object used to communicate with all processes
  * \note If you want to specialize only some methods but are happy with the
- *       defaults of the reference controller, derive your controller from
+ *       defaults of the reference solver, derive your solver from
  *       this class and simply overload the required methods.
  */
 template <class Assembler, class LinearSolver,
@@ -214,7 +215,7 @@ public:
 
     /*!
      * \brief Run the newton method to solve a non-linear system.
-     *        The controller is responsible for all the strategic decisions.
+     *        The solver is responsible for all the strategic decisions.
      */
     void solve(SolutionVector& uCurrentIter, const std::unique_ptr<ConvergenceWriter>& convWriter = nullptr)
     {
@@ -471,7 +472,7 @@ public:
         endIterMsgStream_.str("");
 
         // When the Newton iterations are done: ask the model to check whether it makes sense
-        // TODO: how do we realize this? -> do this here in the newton controller
+        // TODO: how do we realize this? -> do this here in the newton solver
         // model_().checkPlausibility();
     }
 
@@ -620,7 +621,7 @@ private:
 
     /*!
      * \brief Run the newton method to solve a non-linear system.
-     *        The controller is responsible for all the strategic decisions.
+     *        The solver is responsible for all the strategic decisions.
      */
     bool solve_(SolutionVector& uCurrentIter, const std::unique_ptr<ConvergenceWriter>& convWriter = nullptr)
     {
@@ -643,11 +644,11 @@ private:
         {
             newtonBegin(uCurrentIter);
 
-            // execute the method as long as the controller thinks
+            // execute the method as long as the solver thinks
             // that we should do another iteration
             while (newtonProceed(uCurrentIter, newtonConverged()))
             {
-                // notify the controller that we're about to start
+                // notify the solver that we're about to start
                 // a new timestep
                 newtonBeginStep(uCurrentIter);
 
@@ -708,7 +709,7 @@ private:
                 newtonUpdate(uCurrentIter, uLastIter, deltaU);
                 updateTimer.stop();
 
-                // tell the controller that we're done with this iteration
+                // tell the solver that we're done with this iteration
                 newtonEndStep(uCurrentIter, uLastIter);
 
                 // if a convergence writer was specified compute residual and write output
@@ -719,7 +720,7 @@ private:
                 }
             }
 
-            // tell controller we are done
+            // tell solver we are done
             newtonEnd();
 
             // reset state if newton failed
@@ -729,7 +730,7 @@ private:
                 return false;
             }
 
-            // tell controller we converged successfully
+            // tell solver we converged successfully
             newtonSucceed();
 
             if (verbose_) {
