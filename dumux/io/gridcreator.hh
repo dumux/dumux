@@ -113,16 +113,11 @@ struct GridDataHandle : public Dune::CommDataHandleIF<GridDataHandle<GridPtr, Gr
     { return codim == 0 || codim == 1; }
 
     bool fixedSize (int dim, int codim) const
-    { return false; }
+    { return true; }
 
     template<class EntityType>
     size_t size (const EntityType& e) const
-    {
-        if (EntityType::codimension == 0)
-            return GridCreator::elementMarkers_.size();
-        else
-            return GridCreator::faceMarkers_.size();
-    }
+    { return 1; }
 
     template<class MessageBufferImp, class EntityType>
     void gather (MessageBufferImp& buff, const EntityType& e) const
