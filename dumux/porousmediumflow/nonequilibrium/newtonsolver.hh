@@ -19,43 +19,35 @@
 /*!
  * \file
  * \ingroup PorousmediumNonEquilibriumModel
- * \brief A MpNc specific controller for the newton solver.
- *  This controller calls the velocity averaging in the model after each iteration.
+ * \brief A MpNc specific newton solver.
+ *  This solver calls the velocity averaging in the model after each iteration.
  */
-#ifndef DUMUX_NONEQUILIBRIUM_NEWTON_CONTROLLER_HH
-#define DUMUX_NONEQUILIBRIUM_NEWTON_CONTROLLER_HH
+#ifndef DUMUX_NONEQUILIBRIUM_NEWTON_SOLVER_HH
+#define DUMUX_NONEQUILIBRIUM_NEWTON_SOLVER_HH
 
-#include <algorithm>
-
-#include <dumux/nonlinear/newtoncontroller.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 
 namespace Dumux {
 /*!
  * \ingroup PorousmediumNonEquilibriumModel
- * \brief A nonequilibrium specific controller for the newton solver.
- * This controller calls the velocity averaging in the problem after each iteration.
+ * \brief A nonequilibrium specific newton solver.
+ * This solver calls the velocity averaging in the problem after each iteration.
  */
-template <class Scalar,
-          class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> >
-class NonEquilibriumNewtonController : public NewtonController<Scalar, Comm>
+template <class Assembler, class LinearSolver>
+class NonEquilibriumNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
 {
-    using ParentType = NewtonController<Scalar, Comm>;
+    using ParentType = NewtonSolver<Assembler, LinearSolver>;
+    using SolutionVector = typename Assembler::ResidualType;
 
 public:
     using ParentType::ParentType;
 
-    template<class JacobianAssembler, class SolutionVector>
-    void newtonUpdate(JacobianAssembler& assembler,
-                      SolutionVector &uCurrentIter,
-                      const SolutionVector &uLastIter,
-                      const SolutionVector &deltaU)
+    void newtonEndStep(SolutionVector &uCurrentIter,
+                       const SolutionVector &uLastIter) final
     {
-        ParentType::newtonUpdate(assembler,
-                                 uCurrentIter,
-                                 uLastIter,
-                                 deltaU);
+        ParentType::newtonEndStep(uCurrentIter, uLastIter);
 
-        auto& gridVariables = assembler.gridVariables();
+        auto& gridVariables = this->assembler().gridVariables();
         // Averages the face velocities of a vertex. Implemented in the model.
         // The velocities are stored in the model.
         gridVariables.calcVelocityAverage(uCurrentIter);
@@ -63,4 +55,4 @@ public:
 };
 
 } // end namespace Dumux
-#endif // DUMUX_VELO_PROB_AVERAGE_NEWTON_CONTROLLER_HH
+#endif // DUMUX_NONEQUILIBRIUM_NEWTON_SOLVER_HH

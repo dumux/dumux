@@ -4,7 +4,8 @@ install(FILES
 indices.hh
 localresidual.hh
 model.hh
-newtoncontroller.hh
+newtonsolver.hh
+privarswitchnewtonsolver.hh
 primaryvariableswitch.hh
 volumevariables.hh
 vtkoutputfields.hh

@@ -70,7 +70,6 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
-#include <dumux/porousmediumflow/richards/newtoncontroller.hh>
 
 #include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
@@ -147,6 +146,10 @@ SET_INT_PROP(RichardsNC, ReplaceCompEqIdx, 0);
 
 //! define the VolumeVariables
 SET_TYPE_PROP(RichardsNC, VolumeVariables, RichardsNCVolumeVariables<TypeTag>);
+
+//! The default richardsnc model computes no diffusion in the air phase
+//! Turning this on leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
+SET_BOOL_PROP(RichardsNC, EnableWaterDiffusionInAir, false);
 
 /*!
  *\brief The fluid system used by the model.

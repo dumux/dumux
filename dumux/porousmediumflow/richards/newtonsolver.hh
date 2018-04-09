@@ -33,7 +33,7 @@ namespace Dumux {
  * \ingroup RichardsModel
  * \brief A Richards model specific newton solver.
  *
- * This controller 'knows' what a 'physically meaningful' solution is
+ * This solver 'knows' what a 'physically meaningful' solution is
  * and can thus do update smarter than the plain Newton solver.
  *
  * \todo make this typetag independent by extracting anything model specific from assembler

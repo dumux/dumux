@@ -30,8 +30,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 
-#include <dumux/nonlinear/newtonmethod.hh>
-#include <dumux/nonlinear/newtoncontroller.hh>
+#include <dumux/nonlinear/newtonsolver.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/assembly/fvassembler.hh>
@@ -134,7 +133,6 @@ int main(int argc, char** argv) try
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-    auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
     auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
     // intialize the vtk output module
@@ -164,9 +162,8 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonController = Dumux::NewtonController<Scalar>;
-    auto newtonController = std::make_shared<NewtonController>(timeLoop);
-    NewtonMethod<NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
+    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+    NewtonSolver nonLinearSolver(assembler, linearSolver);
 
     // time loop
     timeLoop->start(); do
@@ -177,43 +174,27 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
-        // try solving the non-linear system
-        for (int i = 0; i < maxDivisions; ++i)
-        {
-            // linearize & solve
-            auto converged = nonLinearSolver.solve(x);
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(x, *timeLoop);
 
-            if (converged)
-                break;
+        // make the new solution the old solution
+        xOld = x;
+        gridVariables->advanceTimeStep();
 
-            if (!converged && i == maxDivisions-1)
-                DUNE_THROW(Dune::MathError,
-                        "Newton solver didn't converge after "
-                        << maxDivisions
-                        << " time-step divisions. dt="
-                        << timeLoop->timeStepSize()
-                        << ".\nThe solutions of the current and the previous time steps "
-                        << "have been saved to restart files.");
-        }
+        // advance to the time loop to the next step
+        timeLoop->advanceTimeStep();
 
-    // make the new solution the old solution
-    xOld = x;
-    gridVariables->advanceTimeStep();
+        // update the output fields before write
+        problem->updateVtkOutput(x);
 
-    // advance to the time loop to the next step
-    timeLoop->advanceTimeStep();
+        // write vtk output
+        vtkWriter.write(timeLoop->time());
 
-    // update the output fields before write
-    problem->updateVtkOutput(x);
+        // report statistics of this time step
+        timeLoop->reportTimeStep();
 
-    // write vtk output
-    vtkWriter.write(timeLoop->time());
-
-    // report statistics of this time step
-    timeLoop->reportTimeStep();
-
-    // set new dt as suggested by newton controller
-    timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+        // set new dt as suggested by the newton solver
+        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 
