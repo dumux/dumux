@@ -37,7 +37,6 @@
 #include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
@@ -183,7 +182,7 @@ int main(int argc, char** argv) try
         if (timeLoop->isCheckPoint() || timeLoop->finished())
             vtkWriter.write(timeLoop->time());
 
-        // set new dt as suggested by newton controller
+        // set new dt
         timeLoop->setTimeStepSize(dt);
     }
 

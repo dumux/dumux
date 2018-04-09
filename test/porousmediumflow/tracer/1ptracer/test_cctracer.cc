@@ -39,7 +39,6 @@
 #include <dumux/common/dumuxmessage.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -286,7 +285,7 @@ int main(int argc, char** argv) try
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        // set new dt as suggested by newton controller
+        // set new dt
         timeLoop->setTimeStepSize(dt);
 
     } while (!timeLoop->finished());
