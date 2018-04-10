@@ -263,8 +263,12 @@ public:
         values[massBalanceIdx] = 1.0;
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
-        values[massBalanceIdx] = 4.0;
 
+        auto someInitSol = element.geometry().center();
+        if (someInitSol[0] < 10.001)
+        {
+            values[massBalanceIdx] = 4.0;
+        }
 
         return values;
     };
