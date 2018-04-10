@@ -168,6 +168,9 @@ public:
         //for the cell state of the ghost cell
         PrimaryVariables values(0.0);
 
+        values[massBalanceIdx] = 0.0;
+        values[velocityXIdx] = 0.0;
+        values[velocityYIdx] = 0.0;
 
         return values;
 
@@ -208,7 +211,9 @@ public:
 
             for (auto&& scv : scvs(fvGeometry))
             {
-
+                //check if the element is a boundary element and store the boudary condition type
+                //and the boundary condition value (sum up the overall values over all partions
+                // for each boundary)
             }
         }
     }

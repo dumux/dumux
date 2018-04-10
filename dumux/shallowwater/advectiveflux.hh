@@ -140,6 +140,24 @@ class ShallowWaterAdvectiveFlux
         Scalar thetal = cellStatesLeft[3] + cellStatesLeft[0];
         Scalar thetar = cellStatesRight[3] + cellStatesRight[0];
 
+
+        //-------------------------------------------------------------
+        //
+        // Outer boundary -- change the variables of the outsideVolVars
+        //
+        //-------------------------------------------------------------
+        if (scvf.boundary())
+        {
+            cellStatesRight[0] = cellStatesLeft[0];
+            cellStatesRight[1] = -cellStatesLeft[1];
+            cellStatesRight[2] = -cellStatesLeft[2];
+        }
+
+        //-------------------------------------------------------------
+        //
+        // Inner boundary
+        //
+        //-------------------------------------------------------------
         //Hydrostatic reconstrucion after Audusse
         Scalar dzl = std::max(0.0,cellStatesRight[3] - cellStatesLeft[3]);
         cellStatesLeft[0] = std::max(0.0, hllc_hl - dzl);
