@@ -126,13 +126,16 @@ class ShallowWaterAdvectiveFlux
 
         Scalar cellStatesLeft[4] = {0.0};
         Scalar cellStatesRight[4] = {0.0};
-        cellStatesLeft[0] = insideVolVars.getH();
+        cellStatesLeft[0]  = insideVolVars.getH();
         cellStatesRight[0] = outsideVolVars.getH();
-        cellStatesLeft[1] = insideVolVars.getU();
+
+        cellStatesLeft[1]  = insideVolVars.getU();
         cellStatesRight[1] = outsideVolVars.getU();
-        cellStatesLeft[2] =  insideVolVars.getV();
-        cellStatesRight[3] = outsideVolVars.getV();
-        cellStatesLeft[3] = insideVolVars.getBottom();
+
+        cellStatesLeft[2]  = insideVolVars.getV();
+        cellStatesRight[2] = outsideVolVars.getV();
+
+        cellStatesLeft[3]  = insideVolVars.getBottom();
         cellStatesRight[3] = outsideVolVars.getBottom();
 
         Scalar hllc_hl = cellStatesLeft[0];
