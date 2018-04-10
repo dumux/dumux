@@ -16,6 +16,12 @@ if(MPI_FOUND)
                    --command "${MPIEXEC} -np 4 ${CMAKE_CURRENT_BINARY_DIR}/test_el2p")
 endif()
 
+
+# compile triaxial_el2p
+add_dumux_test(triaxial_el2p triaxial_el2p triaxial_el2p.cc
+  echo
+  )
+
 #install sources
 install(FILES
 el2pco2tables.hh

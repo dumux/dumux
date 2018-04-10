@@ -21,8 +21,8 @@
  * \brief Definition of a problem, for the two-phase flow linear elasticity problem:
  * Problem definition for the deformation of an elastic solid.
  */
-#ifndef DUMUX_EL2P_TESTPROBLEM_HH
-#define DUMUX_EL2P_TESTPROBLEM_HH
+#ifndef DUMUX_EL2P_TRIAXIALPROBLEM_HH
+#define DUMUX_EL2P_TRIAXIALPROBLEM_HH
 
 #if HAVE_ALUGRID
 #include <dune/grid/alugrid/2d/alugrid.hh>
@@ -45,14 +45,14 @@
 #include <dumux/geomechanics/el2p/model.hh>
 
 #include "el2pco2tables.hh"
-#include "Rutqvist2Dspatialparams.hh"
+#include "triaxialspatialparams.hh"
 
 #include <dumux/linear/amgbackend.hh>
 
 namespace Dumux
 {
 template<class TypeTag>
-class El2P_TestProblem;
+class El2P_TriaxialProblem;
 
 
 // initial conditions for momentum balance equation
@@ -64,19 +64,19 @@ template<class GridView, class Scalar>
 class InitialPressSat;
 
 namespace Properties {
-NEW_TYPE_TAG(El2P_TestProblem, INHERITS_FROM(BoxModel, BoxElasticTwoP, ViscoEl2PSpatialParams));
+NEW_TYPE_TAG(El2P_TriaxialProblem, INHERITS_FROM(BoxModel, BoxElasticTwoP, TriaxialEl2PSpatialParams));
 NEW_PROP_TAG(InitialDisplacement); //!< The initial displacement function
 NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
 
 // Set the grid type
 // #if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(El2P_TestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(El2P_TriaxialProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 // #else
-// SET_TYPE_PROP(El2P_TestProblem, Grid, Dune::UGGrid<3>);
+// SET_TYPE_PROP(El2P_TriaxialProblem, Grid, Dune::UGGrid<3>);
 // #endif
 
 // Set the finite element map for the pressure
-SET_PROP(El2P_TestProblem, PressureFEM)
+SET_PROP(El2P_TriaxialProblem, PressureFEM)
 {
     typedef typename GET_PROP_TYPE(TypeTag,Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag,GridView) GridView;
@@ -85,7 +85,7 @@ public:
 };
 
 // Set the finite element map for the displacement
-SET_PROP(El2P_TestProblem, DisplacementFEM)
+SET_PROP(El2P_TriaxialProblem, DisplacementFEM)
 {
     typedef typename GET_PROP_TYPE(TypeTag,Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag,GridView) GridView;
@@ -94,53 +94,53 @@ public:
 };
 
 // Set the problem property
-SET_PROP(El2P_TestProblem, Problem)
+SET_PROP(El2P_TriaxialProblem, Problem)
 {
-    typedef Dumux::El2P_TestProblem<TypeTag> type;
+    typedef Dumux::El2P_TriaxialProblem<TypeTag> type;
 };
 
 
 // // Set fluid configuration
-// SET_PROP(El2P_TestProblem, FluidSystem)
+// SET_PROP(El2P_TriaxialProblem, FluidSystem)
 // {
 //     typedef Dumux::TwoPImmiscibleFluidSystem <TypeTag > type;
 // };
 
 // Set fluid configuration
-SET_PROP(El2P_TestProblem, FluidSystem)
+SET_PROP(El2P_TriaxialProblem, FluidSystem)
 {
     typedef Dumux::BrineCO2FluidSystem<TypeTag> type;
 };
 
 // // Set the wetting phase
-// SET_PROP(El2P_TestProblem, WettingPhase) /*@\label{tutorial-coupled:2p-system-start}@*/
+// SET_PROP(El2P_TriaxialProblem, WettingPhase) /*@\label{tutorial-coupled:2p-system-start}@*/
 // {
 // private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 // public: typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type; /*@\label{tutorial-coupled:wettingPhase}@*/
 // };
 //
 // // Set the non-wetting phase
-// SET_PROP(El2P_TestProblem, NonwettingPhase)
+// SET_PROP(El2P_TriaxialProblem, NonwettingPhase)
 // {
 // private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 // public: typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleCO2<Scalar> > type;
 // };
 //
-// SET_TYPE_PROP(El2P_TestProblem , FluidSystem , Dumux::TwoPImmiscibleFluidSystem <TypeTag >);
+// SET_TYPE_PROP(El2P_TriaxialProblem , FluidSystem , Dumux::TwoPImmiscibleFluidSystem <TypeTag >);
 
 // Set the CO2 table to be used; in this case not the the default table
-SET_TYPE_PROP(El2P_TestProblem, CO2Table, Dumux::El2P::CO2Tables);
+SET_TYPE_PROP(El2P_TriaxialProblem, CO2Table, Dumux::El2P::CO2Tables);
 // Set the salinity mass fraction of the brine in the reservoir
-SET_SCALAR_PROP(El2P_TestProblem, ProblemSalinity, 0);
+SET_SCALAR_PROP(El2P_TriaxialProblem, ProblemSalinity, 0);
 
 // Set the soil properties
-SET_PROP(El2P_TestProblem, SpatialParams)
+SET_PROP(El2P_TriaxialProblem, SpatialParams)
 {
-    typedef Dumux::ViscoEl2PSpatialParams<TypeTag> type;
+    typedef Dumux::TriaxialEl2PSpatialParams<TypeTag> type;
 };
 
 // Set the initial displacement function
-SET_PROP(El2P_TestProblem, InitialDisplacement)
+SET_PROP(El2P_TriaxialProblem, InitialDisplacement)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -151,7 +151,7 @@ public:
 };
 
 // Set the initial pressure and saturation function
-SET_PROP(El2P_TestProblem, InitialPressSat)
+SET_PROP(El2P_TriaxialProblem, InitialPressSat)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -160,30 +160,30 @@ public:
     typedef Dumux::InitialPressSat<GridView, Scalar> type;
 };
 
-SET_INT_PROP(El2P_TestProblem, LinearSolverVerbosity, 0);
+SET_INT_PROP(El2P_TriaxialProblem, LinearSolverVerbosity, 0);
 
-SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxRelativeShift, 1e-5);
-// SET_BOOL_PROP(El2P_TestProblem, NewtonWriteConvergence, true);
-SET_BOOL_PROP(El2P_TestProblem, NewtonUseLineSearch, true);
-SET_INT_PROP(El2P_TestProblem, NewtonMaxSteps, 5000);
+SET_SCALAR_PROP(El2P_TriaxialProblem, NewtonMaxRelativeShift, 1e-5);
+// SET_BOOL_PROP(El2P_TriaxialProblem, NewtonWriteConvergence, true);
+SET_BOOL_PROP(El2P_TriaxialProblem, NewtonUseLineSearch, true);
+SET_INT_PROP(El2P_TriaxialProblem, NewtonMaxSteps, 5000);
 
 // disable jacobian matrix recycling
-SET_BOOL_PROP(El2P_TestProblem, ImplicitEnableJacobianRecycling, false);
+SET_BOOL_PROP(El2P_TriaxialProblem, ImplicitEnableJacobianRecycling, false);
 // disable partial reassembling
-SET_BOOL_PROP(El2P_TestProblem, ImplicitEnablePartialReassemble, false);
+SET_BOOL_PROP(El2P_TriaxialProblem, ImplicitEnablePartialReassemble, false);
 // Enable gravity
-SET_BOOL_PROP(El2P_TestProblem, ProblemEnableGravity, true);
+SET_BOOL_PROP(El2P_TriaxialProblem, ProblemEnableGravity, false);
 
 // use the algebraic multigrid
-// SET_TYPE_PROP(El2P_TestProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
-SET_TYPE_PROP(El2P_TestProblem, LinearSolver, SuperLUBackend<TypeTag> );
+// SET_TYPE_PROP(El2P_TriaxialProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
+SET_TYPE_PROP(El2P_TriaxialProblem, LinearSolver, SuperLUBackend<TypeTag> );
 
 // central differences to calculate the jacobian by default
-SET_INT_PROP(El2P_TestProblem, ImplicitNumericDifferenceMethod, 0);
+SET_INT_PROP(El2P_TriaxialProblem, ImplicitNumericDifferenceMethod, 0);
 
 // write the stress and displacement output according to rock mechanics
 // sign convention (compressive stresses > 0)
-SET_BOOL_PROP(El2P_TestProblem, VtkRockMechanicsSignConvention, true);
+SET_BOOL_PROP(El2P_TriaxialProblem, VtkRockMechanicsSignConvention, true);
 }
 
 /*!
@@ -212,8 +212,8 @@ SET_BOOL_PROP(El2P_TestProblem, VtkRockMechanicsSignConvention, true);
  * period is applied as initial condition and for the definition of the lateral Dirichlet boundary conditions.
  * The solid  displacement field is set to zero and the injection is started.
  */
-template<class TypeTag = TTAG(El2P_TestProblem)>
-class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
+template<class TypeTag = TTAG(El2P_TriaxialProblem)>
+class El2P_TriaxialProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -278,7 +278,7 @@ public:
      * \param gridView The grid view
      * \param tInitEnd End of initialization period
      */
-    El2P_TestProblem(TimeManager &timeManager,
+    El2P_TriaxialProblem(TimeManager &timeManager,
                     const GridView &gridView)
         : ParentType(timeManager, gridView),
         gridView_(gridView),
@@ -286,7 +286,7 @@ public:
     {
         GridCreator::grid().globalRefine(GET_RUNTIME_PARAM(TypeTag, Scalar,Grid.Refine));
 
-        std::cout << "El2P_TestProblem: Initializing the fluid system for the El2P model\n";
+        std::cout << "El2P_TriaxialProblem: Initializing the fluid system for the El2P model\n";
 
         // initialize the tables of the fluid system
         FluidSystem::init(/*Tmin=*/273,
@@ -357,7 +357,7 @@ public:
             GlobalPosition globalPos = (*vIt).geometry().corner(0);
 
             // initial approximate pressure distribution at start of initialization run
-            pInit_[globalIdx] = -(1.0e5 + (depthBOR_ - globalPos[1]) * brineDensity_ * 9.81);
+            pInit_[globalIdx] = -(1.0e5 + (depthBOR_ /*- globalPos[1]*/) * brineDensity_ * 9.81);
         }
     }
 
@@ -388,7 +388,7 @@ public:
     void setPressure()
     {
         this->setInitializationRun(initializationRun_);
-        std::cout<<"El2P_TestProblem: initialized pressure field copied to pInit_"<<std::endl;
+        std::cout<<"El2P_TriaxialProblem: initialized pressure field copied to pInit_"<<std::endl;
         VertexIterator vIt = gridView_.template begin<dim>();
         VertexIterator vEndIt = gridView_.template end<dim>();
         for(; vIt != vEndIt; ++vIt)
@@ -422,14 +422,21 @@ public:
       rockDensity = this->spatialParams().rockDensity(globalPos);
 
       // initial total stress field here assumed to be isotropic, lithostatic
-      stress[0] = 0.6 * ( brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dimWorld-1])
-                  + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dimWorld-1]) );
+//       stress[0] = 1.0 * ( brineDensity_ * porosity * gravity * (depthBOR_/* - globalPos[dimWorld-1]*/ + 1.0e5)
+//                   + (1 - porosity) * rockDensity * gravity * (depthBOR_/* - globalPos[dimWorld-1]*/) );
+//       if(dimWorld >=2)
+//       stress[1] = 1.0 * ( brineDensity_ * porosity * gravity * (depthBOR_/* - globalPos[dimWorld-1]*/ + 1.0e5)
+//                   + (1 - porosity) * rockDensity * gravity * (depthBOR_/* - globalPos[dimWorld-1]*/) );
+//       if(dimWorld == 3)
+//       stress[2] = 1.0 * ( brineDensity_ * porosity * gravity * (depthBOR_/* - globalPos[dimWorld-1]*/ + 1.0e5)
+//                   + (1 - porosity) * rockDensity * gravity * (depthBOR_/* - globalPos[dimWorld-1]*/) );
+
+
+      stress[0] = 5e6;
       if(dimWorld >=2)
-      stress[1] = 1.0 * ( brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dimWorld-1])
-                  + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dimWorld-1]) );
+      stress[1] = 5e6;
       if(dimWorld == 3)
-      stress[2] = 1.0 * ( brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dimWorld-1])
-                  + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dimWorld-1]) );
+      stress[2] = 5e6;
 
       return stress;
     }
@@ -476,7 +483,7 @@ public:
     {
         Scalar pValue = 0.0;
 
-        typename El2P_TestProblem<TypeTag>::LocalFEMSpace feMap(this->gridView());
+        typename El2P_TriaxialProblem<TypeTag>::LocalFEMSpace feMap(this->gridView());
         const typename LocalFEMSpace::Traits::FiniteElementType
         &localFiniteElement = feMap.find(element.geometry().type());
         typedef Dune::FieldVector<CoordScalar, 1> ShapeValue;
@@ -569,47 +576,30 @@ public:
     {
         values.setAllNeumann();
 
-        // The solid displacement on the left is fixed in x and y.
-        if(globalPos[0] < eps_)
-        {
-            values.setDirichlet(Indices::u(0));
-            values.setDirichlet(Indices::u(1));
-        }
-
-        // The solid displacement at the bottom is fixed in y.
-        // The pressure is set to the initial pressure.
+        // The solid displacement on the bottom is fixed in x and y.
         if(globalPos[1] < eps_)
         {
+//             values.setDirichlet(Indices::u(0));
             values.setDirichlet(Indices::u(1));
-            values.setDirichlet(pressureIdx, contiWEqIdx);
-            values.setDirichlet(saturationIdx, contiNEqIdx);
         }
 
-        if(globalPos[0] > this->bBoxMax()[0]-eps_)
-        {
-            values.setDirichlet(pressureIdx, contiWEqIdx);
-            values.setDirichlet(saturationIdx, contiNEqIdx);
-        }
-
-        // The pressure on top is set to the initial pressure.
-        // The solid displacement is fixed in y
+        // The pressure on the top is fixed.
         if(globalPos[1] > this->bBoxMax()[1]-eps_)
         {
-            values.setDirichlet(pressureIdx, contiWEqIdx);
-            values.setDirichlet(saturationIdx, contiNEqIdx);
+             values.setDirichlet(pressureIdx, contiWEqIdx);
+             values.setDirichlet(saturationIdx, contiNEqIdx);
+             values.setDirichlet(Indices::u(1));
         }
 
-//         // The pressure on the front is fixed in y
-//         if(globalPos[1] < eps_)
-//         {
-//             values.setDirichlet(Indices::u(1));
-//         }
-//
-//         // The pressure on the back is fixed in y
-//         if(globalPos[1] > this->bBoxMax()[1]-eps_)
-//         {
-//             values.setDirichlet(Indices::u(1));
-//         }
+        if(initializationRun_)
+        {
+            if( (globalPos[0] > this->bBoxMax()[0]-eps_) ||
+                (globalPos[0] < eps_))
+            {
+                values.setDirichlet(pressureIdx, contiWEqIdx);
+                values.setDirichlet(saturationIdx, contiNEqIdx);
+            }
+        }
      }
 
     /*!
@@ -645,6 +635,35 @@ public:
         {
             values = 0.0;
         }
+
+        if (!initializationRun_)
+        {
+            if(globalPos[1] > this->bBoxMax()[1]-eps_)
+            {
+                Scalar time = this->timeManager().time();
+                Scalar factor= GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.DisplacementFactor);
+
+                values[uyIdx] = factor*time;
+            }
+        }
+
+//         if(!initializationRun_)
+//         {
+//             Scalar time = this->timeManager().time();
+//             Scalar factor= GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.DisplacementFactor);
+//
+//             if(globalPos[1] > this->bBoxMax()[1]-eps_)
+//             {
+//                 values[uxIdx] = time*factor;
+//                 values[uyIdx] = 0.0;
+//             }
+//
+//             if(globalPos[1] < eps_)
+//             {
+//                 values[uxIdx] = 0.0;
+//                 values[uyIdx] = 0.0;
+//             }
+//         }
     }
 
     /*!
@@ -712,38 +731,6 @@ public:
     void source(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
         values = 0.0;
-
-        if (initializationRun_ == false)
-        {
-            if(!this->model().anyFailure())
-            {
-//             if ( (globalPos[0] > GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.XSource) - 12.5 - eps_) &&
-//                  (globalPos[0] < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.XSource) + 12.5 + eps_) &&
-//                  (globalPos[1] > GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.YSource) - 5.0  - eps_) &&
-//                  (globalPos[1] < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.YSource) + 5.0  + eps_) &&
-//                  (globalPos[2] > GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.ZSource) - 20.0 - eps_) &&
-//                  (globalPos[2] < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.ZSource) + 20.0 + eps_))
-
-                if (this->timeManager().time() < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.InjectionStop))
-                {
-                    if ( ( (globalPos[0] > GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.XminSource1) - eps_) &&
-                        (globalPos[0] < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.XmaxSource1) + eps_) &&
-                        (globalPos[1] > GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.YminSource1) - eps_) &&
-                        (globalPos[1] < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.YmaxSource1) + eps_))
-                        ||
-                        ( (globalPos[0] > GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.XminSource2) - eps_) &&
-                        (globalPos[0] < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.XmaxSource2) + eps_) &&
-                        (globalPos[1] > GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.YminSource2) - eps_) &&
-                        (globalPos[1] < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.YmaxSource2) + eps_)) )
-                    {
-                        values[pressureIdx] = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.Rate);
-                        values[saturationIdx] = 0.0;
-                        values[uxIdx] = 0.0;
-                        values[uyIdx] = 0.0;
-                    }
-                }
-            }
-        }
     }
     // \}
 
@@ -814,86 +801,6 @@ public:
         }
         else
         {
-//             if( this->timeManager().episodeIndex() >= 2)
-//             {
-//                 episodeLength_ = episodeLength_ * 2.0;
-//             }
-//             if( this->timeManager().episodeIndex() == 7)
-//                 episodeLength_ = 1.0;
-
-            if( this->timeManager().episodeIndex() == 1)
-                episodeLength_ = 1800.0;
-            if( this->timeManager().episodeIndex() == 2)
-                episodeLength_ = 100.0;
-
-            if( this->timeManager().episodeIndex() == 15)
-                episodeLength_ = 0.98;
-            if( (this->timeManager().episodeIndex() == 24) ||
-                (this->timeManager().episodeIndex() == 34))
-                episodeLength_ = 0.99;
-            if( (this->timeManager().episodeIndex() == 16) ||
-                (this->timeManager().episodeIndex() == 25) ||
-                (this->timeManager().episodeIndex() == 35))
-                episodeLength_ = 4.00;
-            if( (this->timeManager().episodeIndex() == 17) ||
-                (this->timeManager().episodeIndex() == 26) ||
-                (this->timeManager().episodeIndex() == 36))
-                episodeLength_ = 15.00;
-            if( (this->timeManager().episodeIndex() == 18) ||
-                (this->timeManager().episodeIndex() == 27) ||
-                (this->timeManager().episodeIndex() == 37))
-                episodeLength_ = 20.00;
-            if( (this->timeManager().episodeIndex() == 22) ||
-                (this->timeManager().episodeIndex() == 31) ||
-                (this->timeManager().episodeIndex() == 41))
-                episodeLength_ = 100.00;
-
-//             if( this->timeManager().episodeIndex() == 29)
-//                 episodeLength_ = 0.96;
-//             if( (this->timeManager().episodeIndex() == 30) ||
-//                 (this->timeManager().episodeIndex() == 30) ||
-//                 (this->timeManager().episodeIndex() == 30))
-//                 episodeLength_ = 4.00;
-//             if( (this->timeManager().episodeIndex() == 31) ||
-//                 (this->timeManager().episodeIndex() == 31) ||
-//                 (this->timeManager().episodeIndex() == 31))
-//                 episodeLength_ = 15.00;
-//             if( (this->timeManager().episodeIndex() == 32) ||
-//                 (this->timeManager().episodeIndex() == 32) ||
-//                 (this->timeManager().episodeIndex() == 32))
-//                 episodeLength_ = 20.00;
-//             if( (this->timeManager().episodeIndex() == 36) ||
-//                 (this->timeManager().episodeIndex() == 36) ||
-//                 (this->timeManager().episodeIndex() == 36))
-//                 episodeLength_ = 100.00;
-//
-//             if( this->timeManager().episodeIndex() == 1)
-//                 episodeLength_ = 1800.0;
-//             if( this->timeManager().episodeIndex() == 2)
-//                 episodeLength_ = 100.0;
-
-//             if( (this->timeManager().episodeIndex() == 9) ||
-//                 (this->timeManager().episodeIndex() == 23))
-//                 episodeLength_ = 0.98;
-//             if(  this->timeManager().episodeIndex() == 12)
-//                 episodeLength_ = 0.99;
-//             if( (this->timeManager().episodeIndex() == 13) ||
-//                 (this->timeManager().episodeIndex() == 24) ||
-//                 (this->timeManager().episodeIndex() == 34))
-//                 episodeLength_ = 4.00;
-//             if( (this->timeManager().episodeIndex() == 14) ||
-//                 (this->timeManager().episodeIndex() == 25) ||
-//                 (this->timeManager().episodeIndex() == 35))
-//                 episodeLength_ = 15.00;
-//             if( (this->timeManager().episodeIndex() == 15) ||
-//                 (this->timeManager().episodeIndex() == 26) ||
-//                 (this->timeManager().episodeIndex() == 36))
-//                 episodeLength_ = 20.00;
-//             if( (this->timeManager().episodeIndex() == 19) ||
-//                 (this->timeManager().episodeIndex() == 30) ||
-//                 (this->timeManager().episodeIndex() == 40))
-//                 episodeLength_ = 100.00;
-
             this->timeManager().startNextEpisode(episodeLength_);
             this->timeManager().setTimeStepSize(episodeLength_);
         }

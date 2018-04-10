@@ -1,0 +1,49 @@
+[TimeManager]
+TInitEnd = 3600       # [s]
+TEnd = 9300.01        # [s]
+DtInitial = 3600       # [s]
+EpisodeLengthMainSimulation = 100  # [s]
+
+[Grid]
+UpperRight = 100 100
+Cells = 10 10
+Refine = 0
+
+[Damping]
+Beta = 0.0003
+
+[FailureParameters]
+MohrCoulombWorstCase = 1
+DeltaT = 0.01          # Timestep lenght of failure [s]
+DeltaSigma = 1.0e6  # Stress drop [Pa]
+
+SpatialTolerance = 150 # was 3 for the fine grid
+SpatialTolerance2 = 150 # was 3 for the fine grid
+FaultAngle = 90 # angle of the fault in degrees
+
+FrictionAngleMatrix = 20.0 # in degrees
+FrictionAngleFault  = 20.0 # in degrees
+CohesionMatrix = 0.0
+CohesionFault  = 0.0
+DilationAngle = 10
+
+DisplacementFactor = -0.0001
+
+[Injection]
+DepthBOR = 10     # Depth at the bottom of the scenario [m]
+
+[ElasticParameters]
+Ematrix = 1e9
+Efault = 0.5e9
+nuFault = 0.2
+nuMatrix = 0.2
+
+[TransportParameters]
+Kinit = 1.E-19  # initial permeability [m²]
+KMatrix     = 1.E-19  # permeability [m²]
+KFault = 5.E-13
+
+Phi   = 0.01     # porosity
+
+[Implicit]
+MobilityUpwindWeight = 1.0

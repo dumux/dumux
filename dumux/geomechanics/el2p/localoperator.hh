@@ -271,6 +271,10 @@ public:
                     effStress[i][j] += 2.0*mu*epsilon[i][j];
              }
 
+             int eIdx = model_.elementMapper().index(eg.entity());
+             if(model_.hasElementFailed(eIdx))
+                effStress = model_.calculateReducedStress(eIdx, effStress, false);
+
              // retrieve the shape functions for interpolating the primary variables at the
              // current quadrature point
              std::vector<RT_P> q(pressSize);

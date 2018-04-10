@@ -106,6 +106,7 @@ class ElTwoPModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, BaseModel) ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
@@ -207,6 +208,23 @@ public:
             inStream >> this->curSol().base()[numScv*(numEq-dim) + dofIdxGlobal*dim + j][0];}
     }
 
+    /*brief init function calls ParentType (ImplicitModel) to
+     initialize GridView properly
+     */
+    void init(Problem &problem)
+    {
+        ParentType::init(problem);
+
+        // initialise hasElementFailed
+        unsigned numElements = this->gridView().size(0);
+        hasElementFailed_.resize(numElements);
+        faultAngle_.resize(numElements);
+        stressSink_.resize(numElements);
+
+        // initialise anyFailure
+        anyFailure_ = false;
+    }
+
 
     /*!
      * \brief \copybrief ImplicitModel::addOutputVtkFields
@@ -235,11 +253,11 @@ public:
         ScalarField &sw = *writer.allocateManagedBuffer(numVertices);
         ScalarField &sn = *writer.allocateManagedBuffer(numVertices);
         VectorField &displacement = *writer.template allocateManagedBuffer<Scalar, dim>(numVertices);
+        VectorField &displacementRot = *writer.template allocateManagedBuffer<Scalar, dim>(numVertices);
         ScalarField &rhoW = *writer.allocateManagedBuffer(numVertices);
         ScalarField &rhoN = *writer.allocateManagedBuffer(numVertices);
         ScalarField &Te = *writer.allocateManagedBuffer(numVertices);
 
-        ScalarField &E = *writer.allocateManagedBuffer(numElements);
         // create the required fields for element data
         // effective stresses
         VectorField &deltaEffStressX = *writer.template allocateManagedBuffer<Scalar,
@@ -255,6 +273,12 @@ public:
                 Scalar, dim>(numElements);
         VectorField &totalEffStressZ = *writer.template allocateManagedBuffer<
                 Scalar, dim>(numElements);
+        // total stresses rotated
+        VectorField &totalEffStressRotatedX = *writer.template allocateManagedBuffer<
+                Scalar, dim>(numElements);
+        VectorField &totalEffStressRotatedY = *writer.template allocateManagedBuffer<
+                Scalar, dim>(numElements);
+
         // initial stresses
         VectorField &initStressX = *writer.template allocateManagedBuffer<
                 Scalar, dim>(numElements);
@@ -276,11 +300,19 @@ public:
         ScalarField &effectivePressure = *writer.allocateManagedBuffer(numElements);
         ScalarField &deltaEffPressure = *writer.allocateManagedBuffer(numElements);
         ScalarField &initialPressure = *writer.allocateManagedBuffer(numElements);
-        ScalarField &pInit = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &pInit = *writer.allocateManagedBuffer(numElements);
 
 
         ScalarField &Pcrtens = *writer.allocateManagedBuffer(numElements);
         ScalarField &Pcrshe = *writer.allocateManagedBuffer(numElements);
+
+        ScalarField &K = *writer.allocateManagedBuffer(numElements);
+        ScalarField &stressSink = *writer.allocateManagedBuffer(numElements);
+        ScalarField &faultAngle = *writer.allocateManagedBuffer(numElements);
+        ScalarField &anglePrincipalStresses = *writer.allocateManagedBuffer(numElements);
+
+        // set anyFailure to zero before evaluation
+        anyFailure_ = false;
 
         // initialize cell stresses, cell-wise hydraulic parameters and cell pressure with zero
 
@@ -319,6 +351,11 @@ public:
 
             Pcrtens[eIdx] = Scalar(0.0);
             Pcrshe[eIdx] = Scalar(0.0);
+
+            K[eIdx] = Scalar(0.0);
+            stressSink[eIdx] = Scalar(0.0);
+            faultAngle[eIdx] = Scalar(0.0);
+            anglePrincipalStresses[eIdx] = Scalar(0.0);
         }
 
         // calculate principal stresses i.e. the eigenvalues of the total stress tensor
@@ -367,6 +404,13 @@ public:
             fvGeometry.update(this->gridView_(), element);
             elemVolVars.update(this->problem_(), element, fvGeometry, false);
 
+            bool MohrCoulombWorstCase = GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.MohrCoulombWorstCase);
+
+            if (!MohrCoulombWorstCase)
+            {
+                faultAngle_[eIdx] = this->problem_().getAngleElement(eIdx);
+            }
+
             // loop over all local vertices of the cell
             int numScv = element.subEntities(dim);
 
@@ -395,6 +439,7 @@ public:
 //
 //                else
                     displacement[vIdxGlobal] = elemVolVars[scvIdx].displacement();
+                    displacementRot[vIdxGlobal] = this->calculateRotatedDisplacement(displacement[vIdxGlobal], faultAngle_[eIdx]);
 
                 double Keff;
                 double exponent;
@@ -417,6 +462,8 @@ public:
 
             deltaEffPressure[eIdx] = effectivePressure[eIdx] + this->problem_().pInit(cellCenter, cellCenterLocal, element);
             initialPressure[eIdx] = -1.0 * this->problem().pInit(cellCenter, cellCenterLocal, element);
+            pInit[eIdx] = this->problem_().pInit(cellCenter, cellCenterLocal, element);
+
             // determin changes in effective stress from current solution
             // evaluate gradient of displacement shape functions
             std::vector<JacobianType_V> vRefShapeGradient(dispSize);
@@ -443,6 +490,9 @@ public:
             const Scalar lambda = lameParams[0];
             const Scalar mu = lameParams[1];
 
+            K[eIdx] = lambda + 2/3*mu;
+            stressSink[eIdx] = stressSink_[eIdx];
+
             // calculate strain tensor
             Dune::FieldMatrix<RF, dim, dim> epsilon;
             for (int i = 0; i < dim; ++i)
@@ -460,6 +510,9 @@ public:
                 for (int j = 0; j < dim; ++j)
                     sigma[i][j] += 2.0 * mu * epsilon[i][j];
             }
+
+            if(hasElementFailed_[eIdx])
+                sigma = this->calculateReducedStress(eIdx, sigma, true);
 
             // in case of rock mechanics sign convention compressive stresses
             // are defined to be positive
@@ -537,14 +590,68 @@ public:
                 }
             }
 
-            eigenValues = Scalar(0);
-            totalEffStress = Scalar(0);
+            Dune::FieldMatrix<RF, dim, dim> deltaEffStress(0.0);
+            deltaEffStress[0][0] = deltaEffStressX[eIdx][0];
+            deltaEffStress[0][1] = deltaEffStressX[eIdx][1];
+            deltaEffStress[1][0] = deltaEffStressY[eIdx][0];
+            deltaEffStress[1][1] = deltaEffStressY[eIdx][1];
 
-            totalEffStress[0] = totalEffStressX[eIdx];
-            if (dim >= 2)
-                totalEffStress[1] = totalEffStressY[eIdx];
-            if (dim >= 3)
-                totalEffStress[2] = totalEffStressZ[eIdx];
+//             Dune::FieldMatrix<RF, dim, dim> totalEffStress(0.0);
+            totalEffStress[0][0] = totalEffStressX[eIdx][0];
+            totalEffStress[0][1] = totalEffStressX[eIdx][1];
+            totalEffStress[1][0] = totalEffStressY[eIdx][0];
+            totalEffStress[1][1] = totalEffStressY[eIdx][1];
+
+            // rotate total stress tensor
+            Dune::FieldMatrix<RF, dim, dim> totalEffStressRotated(0.0);
+            totalEffStressRotated = this->calculateRotatedStress(totalEffStress, faultAngle_[eIdx]);
+
+            // rotate delta stress tensor
+            Dune::FieldMatrix<RF, dim, dim> deltaEffStressRotated(0.0);
+            deltaEffStressRotated = this->calculateRotatedStress(deltaEffStress, faultAngle_[eIdx]);
+
+//             if( (eIdx == 1019) /*|| (eIdx == 1025)*/)
+// //             if(this->problem().getHasElementFailed(eIdx))
+//             {
+//                 std::cout << "element " << eIdx << " is inclined by " << angle << std::endl;
+//
+//                 std::cout << "deltaEffStress:" << std::endl;
+//                 std::cout << deltaEffStress[0][0] << " " << deltaEffStress[0][1] << std::endl;
+//                 std::cout << deltaEffStress[1][0] << " " << deltaEffStress[1][1] << std::endl;
+//                 std::cout << "" << std::endl;
+//
+//                 std::cout << "deltaEffStressRotated:" << std::endl;
+//                 std::cout << deltaEffStressRotated[0][0] << " " << deltaEffStressRotated[0][1] << std::endl;
+//                 std::cout << deltaEffStressRotated[1][0] << " " << deltaEffStressRotated[1][1] << std::endl;
+//                 std::cout << "" << std::endl;
+//
+//                 std::cout << "totalEffStress:" << std::endl;
+//                 std::cout << totalEffStress[0][0] << " " << totalEffStress[0][1] << std::endl;
+//                 std::cout << totalEffStress[1][0] << " " << totalEffStress[1][1] << std::endl;
+//                 std::cout << "" << std::endl;
+//
+//                 std::cout << "totalEffStressRotated:" << std::endl;
+//                 std::cout << totalEffStressRotated[0][0] << " " << totalEffStressRotated[0][1] << std::endl;
+//                 std::cout << totalEffStressRotated[1][0] << " " << totalEffStressRotated[1][1] << std::endl;
+//                 std::cout << "" << std::endl;
+//             }
+
+            if (dim == 2) {
+                totalEffStressRotatedX[eIdx][0] = totalEffStressRotated[0][0];
+                totalEffStressRotatedX[eIdx][1] = totalEffStressRotated[0][1];
+                totalEffStressRotatedY[eIdx][0] = totalEffStressRotated[1][0];
+                totalEffStressRotatedY[eIdx][1] = totalEffStressRotated[1][1];
+            }
+
+
+            eigenValues = Scalar(0);
+//             totalEffStress = Scalar(0);
+//
+//             totalEffStress[0] = totalEffStressX[eIdx];
+//             if (dim >= 2)
+//                 totalEffStress[1] = totalEffStressY[eIdx];
+//             if (dim >= 3)
+//                 totalEffStress[2] = totalEffStressZ[eIdx];
 
             calculateEigenValues<dim>(eigenValues, totalEffStress);
 
@@ -635,31 +742,112 @@ public:
                 sigmam = (principalStress1[eIdx] + principalStress3[eIdx]) / 2;
             }
 
-            bool MohrCoulombWorstCase = GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.MohrCoulombWorstCase);
             if (MohrCoulombWorstCase == true)
             {
+                if(!hasElementFailed_[eIdx])
+                {
 
-                Scalar Psc = -fabs(taum) / sin(frictionAngle) + cohesion * cos(frictionAngle) / sin(frictionAngle) + sigmam;
-                Pcrshe[eIdx] = Peff - Psc;
+                    Scalar Psc = -fabs(taum) / sin(frictionAngle) + cohesion * cos(frictionAngle) / sin(frictionAngle) + sigmam;
+                    Pcrshe[eIdx] = Peff - Psc;
+
+                    // angle between xy and principalStresses:
+                    // tan (2*angle) = 2 tau_xy / (sigma_x - sigma_y)
+                    if(std::abs(totalEffStressX[eIdx][1]) > eps_)
+                        anglePrincipalStresses[eIdx] = atan(2.0 * totalEffStressX[eIdx][1] / (totalEffStressX[eIdx][0] - totalEffStressY[eIdx][1]) ) / 2.0 / M_PI * 180.0;
+
+                    // angle between principal stresses and sigma_fault, Worst Case:
+                    // (90 + frictionAngle)/2
+                    Scalar angleB = (90 + frictionAngle/ M_PI * 180.0)/2;
+
+
+                    if(anglePrincipalStresses[eIdx] > eps_)
+                        faultAngle_[eIdx] = angleB-anglePrincipalStresses[eIdx];
+                    else
+                        faultAngle_[eIdx] = -angleB-anglePrincipalStresses[eIdx];
+                }
+                else{
+                    Scalar sigmaFault = 0.0;
+                    Scalar tauFault = 0.0;
+                    if (dim == 2)
+                    {
+                        sigmaFault = 0.5 * (totalEffStressX[eIdx][0] + totalEffStressY[eIdx][1]) + 0.5 * (totalEffStressX[eIdx][0] - totalEffStressY[eIdx][1])*cos(2.0*faultAngle_[eIdx] * M_PI / 180.0) + totalEffStressX[eIdx][1]*sin(2.0*faultAngle_[eIdx] * M_PI / 180.0);
+                        tauFault   =                                                       - 0.5 * (totalEffStressX[eIdx][0] - totalEffStressY[eIdx][1])*sin(2.0*faultAngle_[eIdx] * M_PI / 180.0) + totalEffStressX[eIdx][1]*cos(2.0*faultAngle_[eIdx] * M_PI / 180.0);
+                        Scalar sigmaFailureCurve = (std::abs(tauFault) - cohesion) / tan(frictionAngle);
+
+                        Pcrshe[eIdx] =  sigmaFailureCurve - sigmaFault;
+                        if ( Pcrshe[eIdx] > eps_ )
+                        {
+                            std::cout << "sigmaFault [ " << eIdx << "] is " << sigmaFault << std::endl;
+                            std::cout << "tauFault [ " << eIdx << "] is " << tauFault << std::endl;
+                            std::cout << "sigmaFailureCurve [ " << eIdx << "] is " << sigmaFailureCurve << std::endl;
+                        }
+                    }
+                    if (dim == 3)
+                    {
+                        std::cout << "WARNING: Inclined elements only implemented in 2D" << std::endl;
+                    }
+                }
+
+
+
             }
             else
             {
-                Scalar FaultAngle = GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.FaultAngle);
                 Scalar sigmaFault = 0.0;
                 Scalar tauFault = 0.0;
                 if (dim == 2)
                 {
-                    sigmaFault = 0.5 * (totalEffStressX[eIdx][0] + totalEffStressY[eIdx][1]) + 0.5 * (totalEffStressX[eIdx][0] - totalEffStressY[eIdx][1])*cos(2.0*FaultAngle * M_PI / 180.0) + totalEffStressX[eIdx][1]*sin(2.0*FaultAngle * M_PI / 180.0);
-                    tauFault   =                                                       - 0.5 * (totalEffStressX[eIdx][0] - totalEffStressY[eIdx][1])*sin(2.0*FaultAngle * M_PI / 180.0) + totalEffStressX[eIdx][1]*cos(2.0*FaultAngle * M_PI / 180.0);
+                    sigmaFault = 0.5 * (totalEffStressX[eIdx][0] + totalEffStressY[eIdx][1]) + 0.5 * (totalEffStressX[eIdx][0] - totalEffStressY[eIdx][1])*cos(2.0*faultAngle_[eIdx] * M_PI / 180.0) + totalEffStressX[eIdx][1]*sin(2.0*faultAngle_[eIdx] * M_PI / 180.0);
+                    tauFault   =                                                       - 0.5 * (totalEffStressX[eIdx][0] - totalEffStressY[eIdx][1])*sin(2.0*faultAngle_[eIdx] * M_PI / 180.0) + totalEffStressX[eIdx][1]*cos(2.0*faultAngle_[eIdx] * M_PI / 180.0);
+                    Scalar sigmaFailureCurve = (std::abs(tauFault) - cohesion) / tan(frictionAngle);
+
+                    Pcrshe[eIdx] =  sigmaFailureCurve - sigmaFault;
+                    if ( Pcrshe[eIdx] > eps_ )
+                    {
+                        std::cout << "sigmaFault [ " << eIdx << "] is " << sigmaFault << std::endl;
+                        std::cout << "tauFault [ " << eIdx << "] is " << tauFault << std::endl;
+                        std::cout << "sigmaFailureCurve [ " << eIdx << "] is " << sigmaFailureCurve << std::endl;
+                    }
                 }
                 if (dim == 3)
                 {
                     std::cout << "WARNING: Inclined elements only implemented in 2D" << std::endl;
                 }
 
-                Scalar sigmaFailureCurve = (std::abs(tauFault) - cohesion) / tan(frictionAngle);
+            }
 
-                Pcrshe[eIdx] =  sigmaFailureCurve - sigmaFault;
+            faultAngle[eIdx] = faultAngle_[eIdx];
+
+            // principal Stress is in fact the effective principal stress
+            if (dim == 2)
+                Pcrtens[eIdx] = principalStress2[eIdx];
+            if (dim == 3)
+                Pcrtens[eIdx] = principalStress3[eIdx];
+
+            bool initializationRun = this->problem_().initializationRun();
+            if (initializationRun == false)
+            {
+                    //bool isElementFailed = false;
+                if ( Pcrshe[eIdx] > eps_ )
+                {
+                    anyFailure_ = true;
+
+                    hasElementFailed_[eIdx] = true;
+                    std::cout << "Pcrshe of Element [ " << eIdx << "] is " << Pcrshe[eIdx] << "\n";
+
+                    Scalar deltaSigma = GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.DeltaSigma);
+
+                    // totalEffStressRotated[0][1] has the opposite sign of sigma
+                    if (totalEffStressRotated[0][1] < eps_)
+                    {
+                        stressSink_[eIdx] -= deltaSigma;
+                    }
+                    else
+                    {
+                        stressSink_[eIdx] += deltaSigma;
+                    }
+
+                }
             }
 
         }
@@ -673,6 +861,7 @@ public:
         writer.attachVertexData(rhoW, "rhoW");
         writer.attachVertexData(rhoN, "rhoN");
         writer.attachVertexData(displacement, "u", dim);
+        writer.attachVertexData(displacementRot, "uRot", dim);
 
         writer.attachCellData(deltaEffStressX, "effectiveStressChangesX", dim);
         if (dim >= 2)
@@ -692,6 +881,12 @@ public:
         if (dim >= 3)
             writer.attachCellData(totalEffStressZ, "totalstressesZ", dim);
 
+        if (dim == 2)
+        {
+            writer.attachCellData(totalEffStressRotatedX, "totalstressesRotatedX", dim);
+            writer.attachCellData(totalEffStressRotatedY, "totalstressesRotatedY", dim);
+        }
+
         writer.attachCellData(initStressX, "initialstressesX", dim);
         if (dim >= 2)
             writer.attachCellData(initStressY, "initialstressesY", dim);
@@ -699,14 +894,129 @@ public:
             writer.attachCellData(initStressZ, "initialstressesZ", dim);
 
         writer.attachCellData(deltaEffPressure, "deltapEff");
-        writer.attachVertexData(pInit, "pInit");
+        writer.attachCellData(pInit, "pInit");
         writer.attachCellData(effectivePressure, "effectivePressure");
         writer.attachCellData(Pcrtens, "Pcr_tensile");
         writer.attachCellData(Pcrshe, "Pcr_shear");
         writer.attachCellData(effKx, "effectiveKxx");
         writer.attachCellData(effPorosity, "effectivePorosity");
 
-        writer.attachCellData(E, "E");
+        writer.attachCellData(K, "K");
+        writer.attachCellData(stressSink, "stressSink");
+        writer.attachCellData(faultAngle, "faultAngle");
+        writer.attachCellData(anglePrincipalStresses, "anglePrincipalStresses");
+    }
+
+    bool hasElementFailed(const int eIdx) const
+    {
+        return hasElementFailed_[eIdx];
+    }
+
+    bool anyFailure() const
+    {
+        return anyFailure_;
+    }
+
+    DimVector calculateRotatedDisplacement(const DimVector originalDisplacement, Scalar angle) const
+    {
+        DimVector rotatedDisplacement(0.0);
+
+        // rotate stress vector in direction of element
+        Scalar s = sin(angle / 180 * M_PI);
+        Scalar c = cos(angle / 180 * M_PI);
+
+        rotatedDisplacement[0] = c * originalDisplacement[0] - s *  originalDisplacement[1];
+        rotatedDisplacement[1] = s * originalDisplacement[0] + c *  originalDisplacement[1];
+
+        return  rotatedDisplacement;
+    }
+
+    Dune::FieldMatrix<Scalar,dim,dim> calculateRotatedStress(const Dune::FieldMatrix<Scalar,dim,dim> originalStress, Scalar angle) const
+    {
+        Dune::FieldMatrix<Scalar,dim,dim> rotatedStress(0.0);
+
+        // rotate stress vector in direction of element
+        Scalar s = sin(2* angle / 180 * M_PI);
+        Scalar c = cos(2* angle / 180 * M_PI);
+
+        Scalar sigmam   = (originalStress[0][0] + originalStress[1][1])/2;
+        Scalar sigmadev = (originalStress[0][0] - originalStress[1][1])/2;
+
+        rotatedStress[0][0] = sigmam + sigmadev * c + originalStress[0][1] * s;
+        rotatedStress[1][1] = sigmam - sigmadev * c - originalStress[0][1] * s;
+        rotatedStress[0][1] = - sigmadev * s + originalStress[0][1] * c;
+        rotatedStress[1][0] = rotatedStress[0][1];
+
+        return  rotatedStress;
+    }
+
+    Dune::FieldMatrix<Scalar,dim,dim> calculateReducedStress(int eIdx, Dune::FieldMatrix<Scalar,dim,dim> originalStress, bool output)
+    {
+        Dune::FieldMatrix<Scalar,dim,dim> reducedStress(0.0);
+
+        if(output)
+        {
+            std::cout << "originalStress:" << std::endl;
+            std::cout << originalStress[0][0] << " " << originalStress[0][1] << std::endl;
+            std::cout << originalStress[1][0] << " " << originalStress[1][1] << std::endl;
+            std::cout << "" << std::endl;
+        }
+
+        if (dim == 2)
+        {
+            Dune::FieldMatrix<Scalar,dim,dim> rotatedStress(0.0);
+            bool MohrCoulombWorstCase = GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.MohrCoulombWorstCase);
+            Scalar angle = 0.0;
+
+            if (MohrCoulombWorstCase)
+                angle = faultAngle_[eIdx];
+            else
+                angle = this->problem_().getAngleElement(eIdx);
+
+            if(output)
+            {
+                std::cout << "element " << eIdx << " is inclined by " << angle << std::endl;
+            }
+
+            rotatedStress = calculateRotatedStress(originalStress, angle);
+
+            if(output)
+            {
+                std::cout << "rotatedStress:" << std::endl;
+                std::cout << rotatedStress[0][0] << " " << rotatedStress[0][1] << std::endl;
+                std::cout << rotatedStress[1][0] << " " << rotatedStress[1][1] << std::endl;
+                std::cout << "" << std::endl;
+            }
+
+            rotatedStress[0][1] += stressSink_[eIdx];
+            rotatedStress[1][0] += stressSink_[eIdx];
+
+
+
+            if(output)
+            {
+                std::cout << "rotatedStressReduced:" << std::endl;
+                std::cout << rotatedStress[0][0] << " " << rotatedStress[0][1] << std::endl;
+                std::cout << rotatedStress[1][0] << " " << rotatedStress[1][1] << std::endl;
+                std::cout << "" << std::endl;
+            }
+
+            reducedStress = calculateRotatedStress(rotatedStress, -angle);
+
+        }
+        else
+        {
+            std::cout << "WARNING: Inclined elements only implemented in 2D" << std::endl;
+        }
+        if(output)
+        {
+            std::cout << "reducedStress:" << std::endl;
+            std::cout << reducedStress[0][0] << " " << reducedStress[0][1] << std::endl;
+            std::cout << reducedStress[1][0] << " " << reducedStress[1][1] << std::endl;
+            std::cout << "" << std::endl;
+        }
+
+        return reducedStress;
     }
 
     /*!
@@ -741,7 +1051,14 @@ public:
     }
 
 private:
+    bool anyFailure_;
+    std::vector<bool> hasElementFailed_;
+    std::vector<Scalar> faultAngle_;
+
+    std::vector<Scalar> stressSink_;
+
     bool rockMechanicsSignConvention_;
+    Scalar eps_ = 1e-6;
 
 };
 }
