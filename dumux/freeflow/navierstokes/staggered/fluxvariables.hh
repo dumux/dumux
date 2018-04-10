@@ -432,7 +432,9 @@ private:
         const auto& outsideVolVars = elemVolVars[normalFace.outsideScvIdx()];
 
         // Get the averaged viscosity at the staggered face normal to the current scvf.
-        const Scalar muAvg = (insideVolVars.effectiveViscosity() + outsideVolVars.effectiveViscosity()) * 0.5;
+        const Scalar muAvg = normalFace.boundary()
+                             ? insideVolVars.effectiveViscosity()
+                             : (insideVolVars.effectiveViscosity() + outsideVolVars.effectiveViscosity()) * 0.5;
 
         // For the normal gradient, get the velocities perpendicular to the velocity at the current scvf.
         // The inner one is located at staggered face within the own element,
