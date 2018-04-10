@@ -86,6 +86,8 @@ public:
              const SubControlVolume& scv,
              const ElementSolutionVector& elemSol) const
     {
+        // Get the global index of the element
+        //const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);
         return 0.0;
     }
 

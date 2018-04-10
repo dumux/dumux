@@ -85,6 +85,10 @@ class SweTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+
+
     enum {
         // copy some indices for convenience
         massBalanceIdx = Indices::massBalanceIdx,
@@ -159,7 +163,7 @@ public:
         // use initial values as boundary conditions
 
         //TODO here we should return the new boundary conditions, depending
-        //on the bc_type whiche can be no flow, discharge q or water depth h
+        //on the bc_type which can be no flow, discharge q or water depth h
         //we need to use the Riemann invariants to generate the correct values
         //for the cell state of the ghost cell
         PrimaryVariables values(0.0);
@@ -185,6 +189,31 @@ public:
         return values;
     }
 
+    //! do some postprocessing
+    void postTimeStep(const SolutionVector& curSol,
+                      const GridVariables& gridVariables,
+                      const Scalar timeStepSize)
+    {
+        // compute the mass in the entire domain to make sure the tracer is conserved
+        Scalar tracerMass = 0.0;
+
+        // bulk elements
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
+
+            auto elemVolVars = localView(gridVariables.curGridVolVars());
+            elemVolVars.bindElement(element, fvGeometry, curSol);
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+
+            }
+        }
+
+
+    }
 
     /*!
      * \name Volume terms
@@ -206,6 +235,8 @@ public:
         values[massBalanceIdx] = 1.0;
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
+        values[massBalanceIdx] = 4.0;
+
 
         return values;
     };
