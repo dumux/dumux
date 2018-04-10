@@ -141,9 +141,9 @@ public:
         auto upwindTerm = [](const auto& volVars) { return volVars.density(); };
 
         // Check if we are on an outflow boundary.
-        const bool isOutflow = scvf.boundary() ?
-                               problem.boundaryTypesAtPos(scvf.center()).isOutflow(Indices::totalMassBalanceIdx)
-                             : false;
+        const bool isOutflow = scvf.boundary()
+                               ? problem.boundaryTypesAtPos(scvf.center()).isOutflow(Indices::totalMassBalanceIdx)
+                               : false;
 
         // Call the generic flux function.
         const Scalar flux = advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
@@ -363,9 +363,9 @@ private:
             return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
         };
 
-        const Scalar velocityParallel = scvf.hasParallelNeighbor(localSubFaceIdx) ?
-                                        faceVars.velocityParallel(localSubFaceIdx)
-                                      : getParallelVelocityFromBoundary();
+        const Scalar velocityParallel = scvf.hasParallelNeighbor(localSubFaceIdx)
+                                        ? faceVars.velocityParallel(localSubFaceIdx)
+                                        : getParallelVelocityFromBoundary();
 
         // Get the volume variables of the own and the neighboring element
         const auto& insideVolVars = elemVolVars[normalFace.insideScvIdx()];
@@ -448,15 +448,14 @@ private:
             return problem.dirichlet(element, ghostFace)[Indices::velocity(normalFace.directionIndex())];
         };
 
-        const Scalar outerNormalVelocity = scvf.hasFrontalNeighbor(localSubFaceIdx) ?
-                                           faceVars.velocityNormalOutside(localSubFaceIdx)
-                                         : getNormalVelocityFromBoundary();
-
+        const Scalar outerNormalVelocity = scvf.hasFrontalNeighbor(localSubFaceIdx)
+                                           ? faceVars.velocityNormalOutside(localSubFaceIdx)
+                                           : getNormalVelocityFromBoundary();
 
         // Calculate the velocity gradient in positive coordinate direction.
-        const Scalar normalDeltaV = scvf.normalInPosCoordDir() ?
-                                    (outerNormalVelocity - innerNormalVelocity)
-                                  : (innerNormalVelocity - outerNormalVelocity);
+        const Scalar normalDeltaV = scvf.normalInPosCoordDir()
+                                    ? (outerNormalVelocity - innerNormalVelocity)
+                                    : (innerNormalVelocity - outerNormalVelocity);
 
         const Scalar normalGradient = normalDeltaV / scvf.pairData(localSubFaceIdx).normalDistance;
 
@@ -475,9 +474,9 @@ private:
             return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
         };
 
-        const Scalar outerParallelVelocity = scvf.hasParallelNeighbor(localSubFaceIdx) ?
-                                             faceVars.velocityParallel(localSubFaceIdx)
-                                           : getParallelVelocityFromBoundary();
+        const Scalar outerParallelVelocity = scvf.hasParallelNeighbor(localSubFaceIdx)
+                                             ? faceVars.velocityParallel(localSubFaceIdx)
+                                             : getParallelVelocityFromBoundary();
 
         // The velocity gradient already accounts for the orientation
         // of the staggered face's outer normal vector.
@@ -527,10 +526,10 @@ private:
         }
 
         // Apply a pressure at the boudary.
-        const Scalar boundaryPressure = normalizePressure ?
-                                        (problem.dirichlet(element, scvf)[Indices::pressureIdx] -
-                                         problem.initialAtPos(scvf.center())[Indices::pressureIdx])
-                                      : problem.dirichlet(element, scvf)[Indices::pressureIdx];
+        const Scalar boundaryPressure = normalizePressure
+                                        ? (problem.dirichlet(element, scvf)[Indices::pressureIdx] -
+                                           problem.initialAtPos(scvf.center())[Indices::pressureIdx])
+                                        : problem.dirichlet(element, scvf)[Indices::pressureIdx];
         outflow += boundaryPressure;
 
         // Account for the orientation of the face at the boundary,
