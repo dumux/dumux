@@ -161,6 +161,11 @@ int main(int argc, char** argv) try
     // time loop
     timeLoop->start(); do
     {
+
+        //preprocessing
+        problem->preTimeStep(x, *gridVariables, timeLoop->timeStepSize());
+
+
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 

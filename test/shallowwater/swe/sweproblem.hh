@@ -189,6 +189,31 @@ public:
         return values;
     }
 
+    //! do some preprocessing
+    void preTimeStep(const SolutionVector& curSol,
+                      const GridVariables& gridVariables,
+                      const Scalar timeStepSize)
+    {
+        // compute the mass in the entire domain to make sure the tracer is conserved
+        Scalar tracerMass = 0.0;
+
+        // bulk elements
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
+
+            auto elemVolVars = localView(gridVariables.curGridVolVars());
+            elemVolVars.bindElement(element, fvGeometry, curSol);
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+
+            }
+        }
+    }
+
+
     //! do some postprocessing
     void postTimeStep(const SolutionVector& curSol,
                       const GridVariables& gridVariables,
@@ -211,8 +236,6 @@ public:
 
             }
         }
-
-
     }
 
     /*!
