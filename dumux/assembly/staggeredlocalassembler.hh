@@ -314,42 +314,42 @@ protected:
         auto& gridVariables = assembler.gridVariables();
         static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
 
-       // build derivatives with for cell center dofs w.r.t. cell center dofs
-       const auto cellCenterGlobalI = assembler.fvGridGeometry().elementMapper().index(element);
+        // build derivatives with for cell center dofs w.r.t. cell center dofs
+        const auto cellCenterGlobalI = assembler.fvGridGeometry().elementMapper().index(element);
 
-       const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
+        const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
 
-       for(const auto& globalJ : connectivityMap(cellCenterIdx, cellCenterIdx, cellCenterGlobalI))
-       {
-           // get the volVars of the element with respect to which we are going to build the derivative
-           auto&& scvJ = fvGeometry.scv(globalJ);
-           const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
-           auto& curVolVars =  getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
-           VolumeVariables origVolVars(curVolVars);
+        for(const auto& globalJ : connectivityMap(cellCenterIdx, cellCenterIdx, cellCenterGlobalI))
+        {
+            // get the volVars of the element with respect to which we are going to build the derivative
+            auto&& scvJ = fvGeometry.scv(globalJ);
+            const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
+            auto& curVolVars =  getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
+            VolumeVariables origVolVars(curVolVars);
 
-           for(auto pvIdx : priVarIndices_(cellCenterIdx))
-           {
-               CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][globalJ]);
+            for(auto pvIdx : priVarIndices_(cellCenterIdx))
+            {
+                CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][globalJ]);
 
-               const Scalar eps = numericEpsilon(priVars[pvIdx], cellCenterIdx, cellCenterIdx);
-               priVars[pvIdx] += eps;
-               auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
-               curVolVars.update(elemSol, problem, elementJ, scvJ);
+                const Scalar eps = numericEpsilon(priVars[pvIdx], cellCenterIdx, cellCenterIdx);
+                priVars[pvIdx] += eps;
+                auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
+                curVolVars.update(elemSol, problem, elementJ, scvJ);
 
-               const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry, prevElemVolVars, curElemVolVars,
-                                              prevElemFaceVars, curElemFaceVars,
-                                              elemBcTypes, elemFluxVarsCache);
+                const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry, prevElemVolVars, curElemVolVars,
+                                                                            prevElemFaceVars, curElemFaceVars,
+                                                                            elemBcTypes, elemFluxVarsCache);
 
-               auto partialDeriv = (deflectedResidual - ccResidual);
-               partialDeriv /= eps;
+                auto partialDeriv = (deflectedResidual - ccResidual);
+                partialDeriv /= eps;
 
-               // update the global jacobian matrix with the current partial derivatives
-               updateGlobalJacobian_(matrix[cellCenterIdx][cellCenterIdx], cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
+                // update the global jacobian matrix with the current partial derivatives
+                updateGlobalJacobian_(matrix[cellCenterIdx][cellCenterIdx], cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
 
-               // restore the original volVars
-               curVolVars = origVolVars;
-           }
-       }
+                // restore the original volVars
+                curVolVars = origVolVars;
+            }
+        }
     }
 
     /*!
@@ -382,33 +382,33 @@ protected:
        {
             const auto globalJ = scvfJ.dofIndex();
 
-           // get the faceVars of the face with respect to which we are going to build the derivative
-           auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), curElemFaceVars, scvfJ);
-           const auto origFaceVars(faceVars);
+            // get the faceVars of the face with respect to which we are going to build the derivative
+            auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), curElemFaceVars, scvfJ);
+            const auto origFaceVars(faceVars);
 
-           for(auto pvIdx : priVarIndices_(faceIdx))
-           {
-               FacePrimaryVariables facePriVars(curSol[faceIdx][globalJ]);
-               const Scalar eps = numericEpsilon(facePriVars[pvIdx], cellCenterIdx, faceIdx);
-               facePriVars[pvIdx] += eps;
+            for(auto pvIdx : priVarIndices_(faceIdx))
+            {
+                FacePrimaryVariables facePriVars(curSol[faceIdx][globalJ]);
+                const Scalar eps = numericEpsilon(facePriVars[pvIdx], cellCenterIdx, faceIdx);
+                facePriVars[pvIdx] += eps;
 
-               faceVars.updateOwnFaceOnly(facePriVars);
+                faceVars.updateOwnFaceOnly(facePriVars);
 
-               const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry,
-                                              prevElemVolVars, curElemVolVars,
-                                              prevElemFaceVars, curElemFaceVars,
-                                              elemBcTypes, elemFluxVarsCache);
+                const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry,
+                                                                            prevElemVolVars, curElemVolVars,
+                                                                            prevElemFaceVars, curElemFaceVars,
+                                                                            elemBcTypes, elemFluxVarsCache);
 
-               auto partialDeriv = (deflectedResidual - ccResidual);
-               partialDeriv /= eps;
+                auto partialDeriv = (deflectedResidual - ccResidual);
+                partialDeriv /= eps;
 
-               // update the global jacobian matrix with the current partial derivatives
-               updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], cellCenterGlobalI, globalJ, pvIdx - faceOffset, partialDeriv);
+                // update the global jacobian matrix with the current partial derivatives
+                updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], cellCenterGlobalI, globalJ, pvIdx - faceOffset, partialDeriv);
 
-               // restore the original faceVars
-               faceVars = origFaceVars;
-           }
-       }
+                // restore the original faceVars
+                faceVars = origFaceVars;
+            }
+        }
     }
 
     /*!
@@ -428,52 +428,52 @@ protected:
                           JacobianMatrix& matrix,
                           const FaceSolutionVector& cachedResidual)
     {
-       for(auto&& scvf : scvfs(fvGeometry))
-       {
-           const auto& problem = assembler.problem();
-           auto& localResidual = assembler.localResidual();
-           auto& gridVariables = assembler.gridVariables();
-           const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
-           static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
-           static constexpr auto faceIdx = FVGridGeometry::faceIdx();
+        for(auto&& scvf : scvfs(fvGeometry))
+        {
+            const auto& problem = assembler.problem();
+            auto& localResidual = assembler.localResidual();
+            auto& gridVariables = assembler.gridVariables();
+            const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
+            static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
+            static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
-           // set the actual dof index
-           const auto faceGlobalI = scvf.dofIndex();
+            // set the actual dof index
+            const auto faceGlobalI = scvf.dofIndex();
 
-           // build derivatives with for face dofs w.r.t. cell center dofs
-           for(const auto& globalJ : connectivityMap(faceIdx, cellCenterIdx, scvf.index()))
-           {
-               // get the volVars of the element with respect to which we are going to build the derivative
-               auto&& scvJ = fvGeometry.scv(globalJ);
-               const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
-               auto& curVolVars = getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
-               VolumeVariables origVolVars(curVolVars);
+            // build derivatives with for face dofs w.r.t. cell center dofs
+            for(const auto& globalJ : connectivityMap(faceIdx, cellCenterIdx, scvf.index()))
+            {
+                // get the volVars of the element with respect to which we are going to build the derivative
+                auto&& scvJ = fvGeometry.scv(globalJ);
+                const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
+                auto& curVolVars = getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
+                VolumeVariables origVolVars(curVolVars);
 
-               for(auto pvIdx : priVarIndices_(cellCenterIdx))
-               {
-                   CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][globalJ]);
+                for(auto pvIdx : priVarIndices_(cellCenterIdx))
+                {
+                    CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][globalJ]);
 
-                   const Scalar eps = numericEpsilon(priVars[pvIdx], faceIdx, cellCenterIdx);
-                   priVars[pvIdx] += eps;
-                   auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
-                   curVolVars.update(elemSol, problem, elementJ, scvJ);
+                    const Scalar eps = numericEpsilon(priVars[pvIdx], faceIdx, cellCenterIdx);
+                    priVars[pvIdx] += eps;
+                    auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
+                    curVolVars.update(elemSol, problem, elementJ, scvJ);
 
-                   const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
-                                                  prevElemVolVars, curElemVolVars,
-                                                  prevElemFaceVars, curElemFaceVars,
-                                                  elemBcTypes, elemFluxVarsCache);
+                    const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
+                                                                          prevElemVolVars, curElemVolVars,
+                                                                          prevElemFaceVars, curElemFaceVars,
+                                                                          elemBcTypes, elemFluxVarsCache);
 
-                   auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]);
-                   partialDeriv /= eps;
+                    auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]);
+                    partialDeriv /= eps;
 
-                   // update the global jacobian matrix with the current partial derivatives
-                   updateGlobalJacobian_(matrix[faceIdx][cellCenterIdx], faceGlobalI, globalJ, pvIdx, partialDeriv);
+                    // update the global jacobian matrix with the current partial derivatives
+                    updateGlobalJacobian_(matrix[faceIdx][cellCenterIdx], faceGlobalI, globalJ, pvIdx, partialDeriv);
 
-                   // restore the original volVars
-                   curVolVars = origVolVars;
-               }
-           }
-       }
+                    // restore the original volVars
+                    curVolVars = origVolVars;
+                }
+            }
+        }
     }
 
     /*!
@@ -499,43 +499,43 @@ protected:
         auto& gridVariables = assembler.gridVariables();
         static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
-       for(auto&& scvf : scvfs(fvGeometry))
-       {
-           // set the actual dof index
-           const auto faceGlobalI = scvf.dofIndex();
+        for(auto&& scvf : scvfs(fvGeometry))
+        {
+            // set the actual dof index
+            const auto faceGlobalI = scvf.dofIndex();
 
-           // build derivatives with for face dofs w.r.t. cell center dofs
-           for(const auto& globalJ : connectivityMap(faceIdx, faceIdx, scvf.index()))
-           {
-               // get the faceVars of the face with respect to which we are going to build the derivative
-            auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), curElemFaceVars, scvf);
-            const auto origFaceVars(faceVars);
+            // build derivatives with for face dofs w.r.t. cell center dofs
+            for(const auto& globalJ : connectivityMap(faceIdx, faceIdx, scvf.index()))
+            {
+                // get the faceVars of the face with respect to which we are going to build the derivative
+                auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), curElemFaceVars, scvf);
+                const auto origFaceVars(faceVars);
 
-               for(auto pvIdx : priVarIndices_(faceIdx))
-               {
-                   auto faceSolution = FaceSolution(scvf, curSol[faceIdx], assembler.fvGridGeometry());
+                for(auto pvIdx : priVarIndices_(faceIdx))
+                {
+                    auto faceSolution = FaceSolution(scvf, curSol[faceIdx], assembler.fvGridGeometry());
 
-                   const Scalar eps = numericEpsilon(faceSolution[globalJ][pvIdx], faceIdx, faceIdx);
+                    const Scalar eps = numericEpsilon(faceSolution[globalJ][pvIdx], faceIdx, faceIdx);
 
-                   faceSolution[globalJ][pvIdx] += eps;
-                   faceVars.update(faceSolution, problem, element, fvGeometry, scvf);
+                    faceSolution[globalJ][pvIdx] += eps;
+                    faceVars.update(faceSolution, problem, element, fvGeometry, scvf);
 
-                   const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
-                                                  prevElemVolVars, curElemVolVars,
-                                                  prevElemFaceVars, curElemFaceVars,
-                                                  elemBcTypes, elemFluxVarsCache);
+                    const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
+                                                                          prevElemVolVars, curElemVolVars,
+                                                                          prevElemFaceVars, curElemFaceVars,
+                                                                          elemBcTypes, elemFluxVarsCache);
 
-                   auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]);
-                   partialDeriv /= eps;
+                    auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]);
+                    partialDeriv /= eps;
 
-                   // update the global jacobian matrix with the current partial derivatives
-                   updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx - faceOffset, partialDeriv);
+                    // update the global jacobian matrix with the current partial derivatives
+                    updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx - faceOffset, partialDeriv);
 
-                   // restore the original faceVars
-                   faceVars = origFaceVars;
-               }
-           }
-       }
+                    // restore the original faceVars
+                    faceVars = origFaceVars;
+                }
+            }
+        }
     }
 
 
