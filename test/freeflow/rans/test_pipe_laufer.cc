@@ -54,8 +54,6 @@
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 
-#include <dumux/freeflow/navierstokes/staggered/fluxoverplane.hh>
-
 /*!
  * \brief Provides an interface for customizing error messages associated with
  *        reading in parameters.
