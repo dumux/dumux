@@ -61,7 +61,7 @@ SET_TYPE_PROP(Adaptive2p2c2d, Problem, Adaptive2p2c2d<TTAG(Adaptive2p2c2d)>);
 SET_PROP(Adaptive2p2c2d, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::H2OAir<Scalar, H2O<Scalar>, /*useComplexRelations=*/true>;
+    using type = FluidSystems::H2OAir<Scalar, Components::H2O<Scalar>, /*useComplexRelations=*/true>;
 };
 
 // Set the 2d Transport and Pressure model (already set as default in properties file)

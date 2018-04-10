@@ -72,8 +72,8 @@ SET_TYPE_PROP(ThreeDTwoPTestTypeTag, Problem, Test3D2PProblem<TypeTag>);
 SET_PROP(ThreeDTwoPTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
-    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
+    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 

@@ -25,9 +25,10 @@
 #define DUMUX_BENZENE_HH
 
 #include <dumux/material/idealgas.hh>
-#include "component.hh"
 
-#include <dune/common/deprecated.hh>
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
 
 namespace Dumux {
 namespace Components {
@@ -39,7 +40,10 @@ namespace Components {
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class Benzene : public Component<Scalar, Benzene<Scalar> >
+class Benzene
+: public Components::Base<Scalar, Benzene<Scalar> >
+, public Components::Liquid<Scalar, Benzene<Scalar> >
+, public Components::Gas<Scalar, Benzene<Scalar> >
 {
 
 public:
@@ -92,9 +96,6 @@ public:
 };
 
 } // end namespace Components
-
-template<class Scalar>
-using Benzene DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::Benzene<Scalar>;
 
 } // end namespace Dumux
 

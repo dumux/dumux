@@ -25,9 +25,10 @@
 #define DUMUX_TRICHLOROETHENE_HH
 
 #include <dumux/material/idealgas.hh>
-#include "component.hh"
 
-#include <dune/common/deprecated.hh>
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
 
 namespace Dumux {
 namespace Components {
@@ -39,7 +40,10 @@ namespace Components {
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class Trichloroethene : public Component<Scalar, Trichloroethene<Scalar> >
+class Trichloroethene
+: public Components::Base<Scalar, Trichloroethene<Scalar> >
+, public Components::Liquid<Scalar, Trichloroethene<Scalar> >
+, public Components::Gas<Scalar, Trichloroethene<Scalar> >
 {
 
 public:
@@ -155,9 +159,6 @@ public:
 };
 
 } // end namespace Components
-
-template<class Scalar>
-using Trichloroethene DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::Trichloroethene<Scalar>;
 
 } // end namespace Dumux
 

@@ -39,7 +39,7 @@ namespace Dumux
  * al. (2013).
  */
 template <class Scalar>
-class ModifiedCaO : public  CaO<Scalar>
+class ModifiedCaO : public  Components::CaO<Scalar>
 {
 public:
 

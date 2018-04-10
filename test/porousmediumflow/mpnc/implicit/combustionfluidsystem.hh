@@ -54,8 +54,8 @@ class CombustionFluidsystem
 
     // convenience using declarations
     using IdealGas = Dumux::IdealGas<Scalar>;
-    using SimpleH2O = Dumux::SimpleH2O<Scalar>;
-    using SimpleN2 = Dumux::N2<Scalar>;
+    using SimpleH2O = Dumux::Components::SimpleH2O<Scalar>;
+    using SimpleN2 = Dumux::Components::N2<Scalar>;
 
 public:
     /****************************************

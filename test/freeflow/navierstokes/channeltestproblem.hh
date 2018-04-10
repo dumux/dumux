@@ -50,7 +50,7 @@ SET_PROP(ChannelTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 #if NONISOTHERMAL
-    using type = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 #else
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 #endif

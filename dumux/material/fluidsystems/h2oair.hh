@@ -53,7 +53,7 @@ namespace FluidSystems {
  * default with the tabulated version of water of the IAPWS-formulation.
  */
 template <class Scalar,
-          class H2Otype = TabulatedComponent<H2O<Scalar> >,
+          class H2Otype = Components::TabulatedComponent<Components::H2O<Scalar> >,
           bool useComplexRelations = true>
 class H2OAir
 : public BaseFluidSystem<Scalar, H2OAir<Scalar, H2Otype, useComplexRelations> >
@@ -64,7 +64,7 @@ class H2OAir
 
 public:
     using H2O = H2Otype;
-    using Air = Dumux::Air<Scalar>;
+    using Air = Dumux::Components::Air<Scalar>;
 
     static constexpr int numPhases = 2;
 

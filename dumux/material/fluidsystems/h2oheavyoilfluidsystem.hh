@@ -41,7 +41,7 @@ namespace FluidSystems {
  *        components in both, the liquid and the gas phase.
  */
 template <class Scalar,
-          class H2OType = Dumux::TabulatedComponent<Dumux::H2O<Scalar> > >
+          class H2OType = Dumux::Components::TabulatedComponent<Dumux::Components::H2O<Scalar> > >
 class H2OHeavyOil
     : public BaseFluidSystem<Scalar, H2OHeavyOil<Scalar, H2OType> >
 {
@@ -49,7 +49,7 @@ class H2OHeavyOil
     using Base = BaseFluidSystem<Scalar, ThisType>;
 
 public:
-    using HeavyOil = Dumux::HeavyOil<Scalar>;
+    using HeavyOil = Dumux::Components::HeavyOil<Scalar>;
     using H2O = H2OType;
 
 

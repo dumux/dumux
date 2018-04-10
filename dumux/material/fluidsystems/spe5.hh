@@ -78,7 +78,7 @@ public:
     static const int oPhaseIdx = 2;
 
     //! The component for pure water to be used
-    using H2O = Dumux::H2O<Scalar>;
+    using H2O = Dumux::Components::H2O<Scalar>;
 
     /*!
      * \brief Return the human readable name of a fluid phase

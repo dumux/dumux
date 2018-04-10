@@ -37,8 +37,8 @@ namespace BinaryCoeff {
  */
 template<class Scalar, class CO2Tables, bool verbose = true>
 class Brine_CO2 {
-    using H2O = Dumux::H2O<Scalar>;
-    using CO2 = Dumux::CO2<Scalar, CO2Tables>;
+    using H2O = Dumux::Components::H2O<Scalar>;
+    using CO2 = Dumux::Components::CO2<Scalar, CO2Tables>;
     using IdealGas = Dumux::IdealGas<Scalar>;
     static const int lPhaseIdx = 0; // index of the liquid phase
     static const int gPhaseIdx = 1; // index of the gas phase
@@ -380,9 +380,9 @@ private:
 template<class Scalar, class CO2Tables, bool verbose = true>
 class Brine_CO2_Old
 {
-    using H2O = Dumux::H2O<Scalar>;
-  using Brine = Dumux::Brine<Scalar,H2O>;
-    using CO2 = Dumux::CO2<Scalar, CO2Tables>;
+    using H2O = Dumux::Components::H2O<Scalar>;
+  using Brine = Dumux::Components::Brine<Scalar,H2O>;
+    using CO2 = Dumux::Components::CO2<Scalar, CO2Tables>;
     using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:

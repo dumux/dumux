@@ -59,7 +59,7 @@ namespace FluidSystems
  */
 
 template <class Scalar,
-           class H2Otype = Dumux::TabulatedComponent<Dumux::H2O<Scalar>>,
+          class H2Otype = Dumux::Components::TabulatedComponent<Dumux::Components::H2O<Scalar>>,
           bool useComplexRelations=true>
 class ModifiedSteamN2CaO2H2
 : public BaseFluidSystem<Scalar, ModifiedSteamN2CaO2H2<Scalar, H2Otype, useComplexRelations> >
@@ -72,10 +72,10 @@ class ModifiedSteamN2CaO2H2
 public:
     using H2O = H2Otype;
     using H2O_N2 = Dumux::BinaryCoeff::H2O_N2;
-    using N2 = Dumux::N2<Scalar>;
+    using N2 = Dumux::Components::N2<Scalar>;
 
     using CaO = Dumux::ModifiedCaO<Scalar>;
-    using CaO2H2 =  Dumux::CaO2H2<Scalar>;
+    using CaO2H2 =  Dumux::Components::CaO2H2<Scalar>;
 
     // the type of parameter cache objects. this fluid system does not
     using ParameterCache = Dumux::NullParameterCache;

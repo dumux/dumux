@@ -49,7 +49,7 @@ namespace FluidSystems {
  * It assumes all phases to be ideal mixtures.
  */
 template <class Scalar,
-          class H2OType = TabulatedComponent<H2O<Scalar> > >
+          class H2OType = Components::TabulatedComponent<Components::H2O<Scalar> > >
 class H2OAirMesitylene
     : public BaseFluidSystem<Scalar, H2OAirMesitylene<Scalar, H2OType> >
 {
@@ -57,8 +57,8 @@ class H2OAirMesitylene
     using Base = BaseFluidSystem<Scalar, ThisType>;
 
 public:
-    using NAPL = Mesitylene<Scalar>;
-    using Air = Dumux::Air<Scalar>;
+    using NAPL = Components::Mesitylene<Scalar>;
+    using Air = Dumux::Components::Air<Scalar>;
     using H2O = H2OType;
 
 

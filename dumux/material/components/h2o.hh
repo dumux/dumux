@@ -31,14 +31,14 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/valgrind.hh>
 
-#include "component.hh"
-
 #include "iapws/common.hh"
 #include "iapws/region1.hh"
 #include "iapws/region2.hh"
 #include "iapws/region4.hh"
 
-#include <dune/common/deprecated.hh>
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
 
 namespace Dumux {
 namespace Components {
@@ -54,7 +54,10 @@ namespace Components {
  * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
  */
 template <class Scalar>
-class H2O : public Component<Scalar, H2O<Scalar> >
+class H2O
+: public Components::Base<Scalar, H2O<Scalar> >
+, public Components::Liquid<Scalar, H2O<Scalar> >
+, public Components::Gas<Scalar, H2O<Scalar> >
 {
 
     using Common = IAPWS::Common<Scalar>;
@@ -893,9 +896,6 @@ private:
 }; // end class
 
 } // end namespace Components
-
-template<class Scalar>
-using H2O DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::H2O<Scalar>;
 
 } // end namespace Dumux
 

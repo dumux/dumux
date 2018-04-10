@@ -46,9 +46,8 @@ void isSame(const char *str, Scalar v, Scalar vRef, Scalar tol=1e-3)
 int main()
 {
     using Scalar = double;
-    using IapwsH2O = Dumux::H2O<Scalar>;
-    using TabulatedH2O = Dumux::TabulatedComponent<IapwsH2O>;
-
+    using IapwsH2O = Dumux::Components::H2O<Scalar>;
+    using TabulatedH2O = Dumux::Components::TabulatedComponent<IapwsH2O>;
     Scalar tempMin = 274.15;
     Scalar tempMax = 622.15;
     int nTemp = static_cast<int>(tempMax - tempMin) * 6/8;

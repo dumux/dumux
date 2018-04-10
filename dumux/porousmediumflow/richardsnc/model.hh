@@ -159,7 +159,7 @@ SET_BOOL_PROP(RichardsNC, EnableWaterDiffusionInAir, false);
 SET_PROP(RichardsNC, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhaseTwoC<Scalar, SimpleH2O<Scalar>, Components::Constant<1, Scalar>>;
+    using type = FluidSystems::LiquidPhaseTwoC<Scalar, Components::SimpleH2O<Scalar>, Components::Constant<1, Scalar>>;
 };
 
 /*!

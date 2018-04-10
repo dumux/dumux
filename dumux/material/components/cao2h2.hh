@@ -26,12 +26,12 @@
 
 #include <dumux/common/exceptions.hh>
 #include <dune/common/deprecated.hh>
-#include <dumux/material/components/component.hh>
 
 #include <cmath>
 #include <iostream>
 
-#include <dune/common/deprecated.hh>
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/solid.hh>
 
 namespace Dumux {
 namespace Components {
@@ -41,7 +41,9 @@ namespace Components {
  * \brief A class for the CaO2H2 properties
  */
 template <class Scalar>
-class CaO2H2 : public Component<Scalar, CaO2H2<Scalar> >
+class CaO2H2
+: public Components::Base<Scalar, CaO2H2<Scalar> >
+, public Components::Solid<Scalar, CaO2H2<Scalar> >
 {
 public:
     /*!
@@ -78,9 +80,6 @@ public:
 };
 
 } // end namespace Components
-
-template<class Scalar>
-using CaO2H2 DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::CaO2H2<Scalar>;
 
 } // end namespace Dumux
 

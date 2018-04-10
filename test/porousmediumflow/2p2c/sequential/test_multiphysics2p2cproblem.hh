@@ -67,7 +67,7 @@ SET_INT_PROP(TestMultTwoPTwoCTypeTag, PressureFormulation, GET_PROP_TYPE(TypeTag
 SET_PROP(TestMultTwoPTwoCTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::H2OAir<Scalar, H2O<Scalar>, /*useComplexRelations=*/true>;
+    using type = FluidSystems::H2OAir<Scalar, Components::H2O<Scalar>, /*useComplexRelations=*/true>;
 };
 
 SET_BOOL_PROP(TestMultTwoPTwoCTypeTag, EnableCapillarity, true);

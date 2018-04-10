@@ -26,11 +26,10 @@
 
 #include <dumux/material/idealgas.hh>
 
-#include "component.hh"
-
 #include <cmath>
 
-#include <dune/common/deprecated.hh>
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/gas.hh>
 
 namespace Dumux {
 namespace Components {
@@ -42,7 +41,9 @@ namespace Components {
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class O2 : public Component<Scalar, O2<Scalar> >
+class O2
+: public Components::Base<Scalar, O2<Scalar> >
+, public Components::Gas<Scalar, O2<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
 
@@ -250,9 +251,6 @@ public:
 };
 
 } // end namespace Components
-
-template<class Scalar>
-using O2 DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::O2<Scalar>;
 
 } // end namespace Dumux
 

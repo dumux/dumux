@@ -65,7 +65,7 @@ SET_TYPE_PROP(Adaptive2p2c3d, PressureModel, FV3dPressure2P2CAdaptive<TTAG(Adapt
 SET_PROP(Adaptive2p2c3d, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::H2OAir<Scalar, H2O<Scalar>, /*useComplexRelations=*/false>;
+    using type = FluidSystems::H2OAir<Scalar, Components::H2O<Scalar>, /*useComplexRelations=*/false>;
 };
 
 // Specify indicator

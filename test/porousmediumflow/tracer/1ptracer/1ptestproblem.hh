@@ -59,7 +59,7 @@ SET_TYPE_PROP(IncompressibleTestTypeTag, LocalResidual, OnePIncompressibleLocalR
 SET_PROP(IncompressibleTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::OnePLiquid<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 
 // Enable caching

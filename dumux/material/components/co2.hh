@@ -25,14 +25,15 @@
 #define DUMUX_CO2_HH
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/material/components/component.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/idealgas.hh>
 
 #include <cmath>
 #include <iostream>
 
-#include <dune/common/deprecated.hh>
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/liquid.hh>
+#include <dumux/material/components/gas.hh>
 
 namespace Dumux {
 namespace Components {
@@ -50,7 +51,10 @@ namespace Components {
 
 // TODO: Is this component limited to supercritical conditions?
 template <class Scalar, class CO2Tables>
-class CO2 : public Component<Scalar, CO2<Scalar, CO2Tables> >
+class CO2
+: public Components::Base<Scalar, CO2<Scalar, CO2Tables> >
+, public Components::Liquid<Scalar, CO2<Scalar, CO2Tables> >
+, public Components::Gas<Scalar, CO2<Scalar, CO2Tables> >
 {
     static const Scalar R;
     using IdealGas = Dumux::IdealGas<Scalar>;
@@ -391,9 +395,6 @@ template <class Scalar, class CO2Tables>
 bool CO2<Scalar, CO2Tables>::warningThrown = false;
 
 } // end namespace Components
-
-template <class Scalar, class CO2Tables>
-using CO2 DUNE_DEPRECATED_MSG("Now in the namespace: Components") = Dumux::Components::CO2<Scalar, CO2Tables>;
 
 } // end namespace Dumux
 
