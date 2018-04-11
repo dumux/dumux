@@ -86,6 +86,7 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -99,7 +100,7 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
         snIdx = Indices::snIdx,
 
         // equation indices
-        contiNEqIdx = Indices::contiNEqIdx,
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::nPhaseIdx,
 
         // world dimension
         dimWorld = GridView::dimensionworld

@@ -113,12 +113,12 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
         temperatureIdx = Indices::temperatureIdx,
 
         //! equation indices
-        contiNEqIdx = Indices::contiNEqIdx,
+        contiN2EqIdx = Indices::conti0EqIdx + FluidSystem::N2Idx,
         energyEqIdx = Indices::energyEqIdx,
 
         //! phase indices
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
+        wPhaseIdx = FluidSystem::H2OIdx,
+        nPhaseIdx = FluidSystem::N2Idx,
 
         // world dimension
         dimWorld = GridView::dimensionworld
@@ -243,7 +243,7 @@ public:
         if (globalPos[1] < 13.75 + eps_ && globalPos[1] > 6.875 - eps_)
         {
             // inject air. negative values mean injection
-            values[contiNEqIdx] = -1e-3; // kg/(s*m^2)
+            values[contiN2EqIdx] = -1e-3; // kg/(s*m^2)
 
             // compute enthalpy flux associated with this injection [(J/(kg*s)]
             using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -255,7 +255,7 @@ public:
             fs.setTemperature(initialValues[temperatureIdx]);
 
             // energy flux is mass flux times specific enthalpy
-            values[energyEqIdx] = values[contiNEqIdx]*FluidSystem::enthalpy(fs, nPhaseIdx);
+            values[energyEqIdx] = values[contiN2EqIdx]*FluidSystem::enthalpy(fs, nPhaseIdx);
         }
 
         return values;

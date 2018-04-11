@@ -22,8 +22,8 @@
  * \ingroup TwoPModel
  * \brief Defines the indices required for the two-phase fully implicit model.
  */
-#ifndef DUMUX_BOX_2P_INDICES_HH
-#define DUMUX_BOX_2P_INDICES_HH
+#ifndef DUMUX_2P_INDICES_HH
+#define DUMUX_2P_INDICES_HH
 
 #include "formulation.hh"
 
@@ -41,19 +41,14 @@ struct TwoPCommonIndices
 
     // indices of the equations
     static const int conti0EqIdx = 0; //!< index of the first continuity equation
-    static const int contiWEqIdx = 0; //!< index of the continuity equation of the wetting phase
-    static const int contiNEqIdx = 1; //!< index of the continuity equation of the non-wetting phase
 };
-
 
 /*!
  * \ingroup TwoPModel
  * \brief The indices for the \f$p_w-S_n\f$ formulation of the
  *        isothermal two-phase model.
  *
- * \tparam FluidSystem The fluid system class
  * \tparam formulation The formulation, either pwsn or pnsw
- * \tparam PVOffset The first index in a primary variable vector.
  */
 template <TwoPFormulation formulation = TwoPFormulation::pwsn>
 struct TwoPIndices : public TwoPCommonIndices
@@ -67,9 +62,6 @@ struct TwoPIndices : public TwoPCommonIndices
  * \ingroup TwoPModel
  * \brief The indices for the \f$p_n-S_w\f$ formulation of the
  *        isothermal two-phase model.
- *
- * \tparam FluidSystem The fluid system class
- * \tparam PVOffset The first index in a primary variable vector.
  */
 template <>
 struct TwoPIndices<TwoPFormulation::pnsw>

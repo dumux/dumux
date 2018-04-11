@@ -95,7 +95,7 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     enum {
         pwIdx = Indices::pwIdx,
         snIdx = Indices::snIdx,
-        contiNEqIdx = Indices::contiNEqIdx
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::nPhaseIdx
     };
 
 public:
