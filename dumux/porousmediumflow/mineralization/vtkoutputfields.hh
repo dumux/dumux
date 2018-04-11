@@ -25,10 +25,7 @@
 #ifndef DUMUX_MINERALIZATION_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_MINERALIZATION_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup MineralizationModel
