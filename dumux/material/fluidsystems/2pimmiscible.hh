@@ -152,6 +152,21 @@ public:
     }
 
     /*!
+     * \brief Returns true if the liquid phase viscostiy is constant
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr bool viscosityIsConstant(int phaseIdx)
+    {
+        assert(0 <= phaseIdx && phaseIdx < numPhases);
+
+        // let the fluids decide
+        if (phaseIdx == wPhaseIdx)
+            return WettingFluid::viscosityIsConstant();
+        return NonwettingFluid::viscosityIsConstant();
+    }
+
+    /*!
      * \brief Returns true if and only if a fluid phase is assumed to
      *        be an ideal gas.
      *
