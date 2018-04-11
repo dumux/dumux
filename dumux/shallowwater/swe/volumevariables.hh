@@ -92,7 +92,7 @@ public:
         auto ustar_h = computeUstarH(ks,h,grav_,frictionlaw);
         frictionH_ = 0; // calculate from primary variables and spatial params
         frictionUstarH_ = 0; // calculate from primary variables and spatial params
-        bottom_ = problem.spatialParams().bottom();
+        bottom_ = problem.spatialParams().bottom(element,scv);
         auto ksH_ = computeKsH(ks,frictionlaw);
 
     }

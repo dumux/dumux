@@ -144,7 +144,7 @@ class ShallowWaterAdvectiveFlux
         Scalar thetar = cellStatesRight[3] + cellStatesRight[0];
 
         auto ks_av = std::max(outsideVolVars.getKsH(), insideVolVars.getKsH());
-        ks_av = std::max(ks_av,1.0E-6);
+        ks_av = std::max(ks_av,1.0E-9);
         ks_av = std::min(ks_av,0.1);
 
         Scalar mobility[3] = {1.0};
@@ -163,6 +163,8 @@ class ShallowWaterAdvectiveFlux
             cellStatesRight[1] = -cellStatesLeft[1];
             cellStatesRight[2] = -cellStatesLeft[2];
             cellStatesRight[3] =  cellStatesLeft[3];
+            hllc_hr = hllc_hl;
+            thetar = thetal;
         }
 
         //-------------------------------------------------------------
@@ -171,10 +173,10 @@ class ShallowWaterAdvectiveFlux
         //
         //-------------------------------------------------------------
         //Hydrostatic reconstrucion after Audusse
-        //Scalar dzl = std::max(0.0,cellStatesRight[3] - cellStatesLeft[3]);
-        //cellStatesLeft[0] = std::max(0.0, hllc_hl - dzl);
-        //Scalar dzr = std::max(0.0,cellStatesLeft[3] - cellStatesRight[3]);
-        //cellStatesRight[0] = std::max(0.0, hllc_hr - dzr);
+        Scalar dzl = std::max(0.0,cellStatesRight[3] - cellStatesLeft[3]);
+        cellStatesLeft[0] = std::max(0.0, hllc_hl - dzl);
+        Scalar dzr = std::max(0.0,cellStatesLeft[3] - cellStatesRight[3]);
+        cellStatesRight[0] = std::max(0.0, hllc_hr - dzr);
 
         //------------------ Flux rotation -------
         //make rotation for computing 1d HLLC flux
@@ -203,11 +205,10 @@ class ShallowWaterAdvectiveFlux
         Scalar hdxzr = 0.0;
         Scalar hdyzl = 0.0;
         Scalar hdyzr = 0.0;
-        //hdxzl = insideVolVars.getGravity() * nxy[0] * hgzl;
-        //hdyzl = insideVolVars.getGravity() * nxy[1] * hgzl;
-        //hdxzr = insideVolVars.getGravity() * nxy[0] * hgzr;
-        //hdyzr = insideVolVars.getGravity() * nxy[1] * hgzr;
-        //std::cout << " hdxzl "<< hdyzl << " hdyzl " << hgzr << std::endl;
+        hdxzl = insideVolVars.getGravity() * nxy[0] * hgzl;
+        hdyzl = insideVolVars.getGravity() * nxy[1] * hgzl;
+        hdxzr = insideVolVars.getGravity() * nxy[0] * hgzr;
+        hdyzr = insideVolVars.getGravity() * nxy[1] * hgzr;
 
         flux[0] = riemannFlux[0] * scvf.area() * mobility[0];
         flux[1] = (riemannFlux[1]  - hdxzl) * scvf.area() * mobility[1];

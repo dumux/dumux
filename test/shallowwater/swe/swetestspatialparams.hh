@@ -73,7 +73,7 @@ public:
    * \param globalPos The global position where we evaluate
    */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.4; }
+    { return 1.0; }
 
     /*! \brief Define the friction parameter ks.
     *
@@ -123,8 +123,13 @@ public:
     }
 
 
-    Scalar bottom() const
+    Scalar bottom(const Element& element,
+             const SubControlVolume& scv) const
     {
+        auto someInitSol = element.geometry().center();
+        if ((11.0 < someInitSol[0])&&(someInitSol[0] < 14.0)){
+            return 3.1;
+        }
         return 0.0;
     }
 

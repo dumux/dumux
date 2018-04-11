@@ -260,7 +260,7 @@ public:
     {
         PrimaryVariables values(0.0);
 
-        values[massBalanceIdx] = 1.0;
+        values[massBalanceIdx] = 0.001;
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
 
