@@ -168,6 +168,16 @@ public:
     }
 
     /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::H2OIdx; }
+
+    /*!
      * \brief Creates a gnuplot output of the pc-Sw curve
      */
     void plotMaterialLaws()

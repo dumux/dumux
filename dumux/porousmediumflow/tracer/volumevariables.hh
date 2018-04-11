@@ -41,7 +41,6 @@ class TracerVolumeVariables
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
-    static constexpr int numComponents = Traits::ModelTraits::numComponents();
 
 public:
     //! export fluid system type
@@ -72,7 +71,7 @@ public:
         fluidDensity_ = problem.spatialParams().fluidDensity(element, scv);
         fluidMolarMass_ = problem.spatialParams().fluidMolarMass(element, scv);
 
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        for (int compIdx = 0; compIdx < ParentType::numComponents(); ++compIdx)
         {
             moleOrMassFraction_[compIdx] = this->priVars()[compIdx];
             diffCoeff_[compIdx] = FluidSystem::binaryDiffusionCoefficient(compIdx, problem, element, scv);
@@ -172,8 +171,8 @@ protected:
     Scalar porosity_;    // Effective porosity within the control volume
     Scalar fluidDensity_, fluidMolarMass_;
     // DispersivityType dispersivity_;
-    std::array<Scalar, numComponents> diffCoeff_;
-    std::array<Scalar, numComponents> moleOrMassFraction_;
+    std::array<Scalar, ParentType::numComponents()> diffCoeff_;
+    std::array<Scalar, ParentType::numComponents()> moleOrMassFraction_;
 };
 
 } // end namespace Dumux

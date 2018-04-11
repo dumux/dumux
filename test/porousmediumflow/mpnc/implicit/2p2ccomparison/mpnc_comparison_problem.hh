@@ -104,10 +104,10 @@ class MPNCComparisonProblem
     enum {dimWorld = GridView::dimensionworld};
     enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
     enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
-    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum {wCompIdx = FluidSystem::wCompIdx};
-    enum {nCompIdx = FluidSystem::nCompIdx};
+    enum {gasPhaseIdx = FluidSystem::gasPhaseIdx};
+    enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
+    enum {wCompIdx = FluidSystem::H2OIdx};
+    enum {nCompIdx = FluidSystem::N2Idx};
     enum {fug0Idx = Indices::fug0Idx};
     enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
@@ -258,21 +258,21 @@ private:
         fs.setTemperature(this->temperatureAtPos(globalPos));
 
         // set water saturation
-        fs.setSaturation(wPhaseIdx, 0.8);
-        fs.setSaturation(nPhaseIdx, 1.0 - fs.saturation(wPhaseIdx));
+        fs.setSaturation(liquidPhaseIdx, 0.8);
+        fs.setSaturation(gasPhaseIdx, 1.0 - fs.saturation(liquidPhaseIdx));
         // set pressure of the gas phase
-        fs.setPressure(nPhaseIdx, 1e5);
+        fs.setPressure(gasPhaseIdx, 1e5);
         // calulate the capillary pressure
         const auto& matParams =
             this->spatialParams().materialLawParamsAtPos(globalPos);
         PhaseVector pc;
         MaterialLaw::capillaryPressures(pc, matParams, fs);
-        fs.setPressure(wPhaseIdx,
-                       fs.pressure(nPhaseIdx) + pc[wPhaseIdx] - pc[nPhaseIdx]);
+        fs.setPressure(liquidPhaseIdx,
+                       fs.pressure(gasPhaseIdx) + pc[liquidPhaseIdx] - pc[gasPhaseIdx]);
 
         // make the fluid state consistent with local thermodynamic
         // equilibrium
-         using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem, /*useKelvinEquation*/false>;
+         using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
         ParameterCache paramCache;
         MiscibleMultiPhaseComposition::solve(fs,
@@ -285,7 +285,7 @@ private:
 
         // all N component fugacities
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            values[fug0Idx + compIdx] = fs.fugacity(nPhaseIdx, compIdx);
+            values[fug0Idx + compIdx] = fs.fugacity(gasPhaseIdx, compIdx);
 
         // first M - 1 saturations
         for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)

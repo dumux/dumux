@@ -47,7 +47,7 @@ public:
      * \param element element (to be passed to spatialParams)
      * \param fvGeometry fvGeometry (to be passed to spatialParams)
      * \param scv the sub-control volume
-     *
+     * \todo TODO: Fix this law for changing wettability
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      */
     template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry, class SubControlVolume>
@@ -58,9 +58,9 @@ public:
                                                SubControlVolume& scv)
     {
         using FluidSystem = typename VolumeVariables::FluidSystem;
-        Scalar sw = volVars.saturation(FluidSystem::wPhaseIdx);
-        Scalar lambdaW = volVars.fluidThermalConductivity(FluidSystem::wPhaseIdx);
-        Scalar lambdaN = volVars.fluidThermalConductivity(FluidSystem::nPhaseIdx);
+        Scalar sw = volVars.saturation(FluidSystem::phase0Idx);
+        Scalar lambdaW = volVars.fluidThermalConductivity(FluidSystem::phase0Idx);
+        Scalar lambdaN = volVars.fluidThermalConductivity(FluidSystem::phase1Idx);
         Scalar lambdaSolid = volVars.solidThermalConductivity();
         Scalar porosity = volVars.porosity();
 

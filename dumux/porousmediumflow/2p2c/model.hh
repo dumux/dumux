@@ -106,14 +106,12 @@ namespace Dumux {
  * \brief Specifies a number properties of two-phase two-component models.
  *
  * \tparam f The two-phase formulation used
- * \tparam wCompIdx The index of the wetting component
- * \tparam nCompIdx The index of the non-wetting component
  * \tparam useM Boolean to specify if moles or masses are balanced
  */
-template<TwoPFormulation f, int wCompIdx, int nCompIdx, bool useM>
+template<TwoPFormulation f, bool useM>
 struct TwoPTwoCModelTraits
 {
-    using Indices = TwoPTwoCIndices<wCompIdx, nCompIdx>;
+    using Indices = TwoPTwoCIndices;
 
     static constexpr int numEq() { return 2; }
     static constexpr int numPhases() { return 2; }
@@ -176,8 +174,6 @@ private:
 
 public:
     using type = TwoPTwoCModelTraits< GET_PROP_VALUE(TypeTag, Formulation),
-                                      FluidSystem::wCompIdx,
-                                      FluidSystem::nCompIdx,
                                       GET_PROP_VALUE(TypeTag, UseMoles) >;
 };
 
@@ -201,10 +197,7 @@ public:
 
 //! Set the default formulation to pw-sn
 SET_PROP(TwoPTwoC, Formulation)
-{
-public:
-    static const TwoPFormulation value = TwoPFormulation::pwsn;
-};
+{ static constexpr TwoPFormulation value = TwoPFormulation::p0s1; };
 
 //! Set as default that no component mass balance is replaced by the total mass balance
 SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());
@@ -280,8 +273,6 @@ private:
     static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
     using Traits = TwoPTwoCModelTraits< GET_PROP_VALUE(TypeTag, Formulation),
-                                        FluidSystem::wCompIdx,
-                                        FluidSystem::nCompIdx,
                                         GET_PROP_VALUE(TypeTag, UseMoles) >;
 public:
     using type = PorousMediumFlowNIModelTraits< Traits >;

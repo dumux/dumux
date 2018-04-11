@@ -67,7 +67,7 @@ SET_TYPE_PROP(TwoPNCDiffusionTypeTag, MolecularDiffusionType, DIFFUSIONTYPE);
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
 SET_PROP(TwoPNCDiffusionTypeTag, Formulation)
-{ static constexpr auto value = TwoPFormulation::pwsn; };
+{ static constexpr auto value = TwoPFormulation::p0s1; };
 
 } // end namespace Properties
 
@@ -90,24 +90,7 @@ class TwoPNCDiffusionProblem : public PorousMediumFlowProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    enum {
-        pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx,
-
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
-
-        wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx,
-
-        wPhaseOnly = Indices::wPhaseOnly,
-
-        contiH2OEqIdx = Indices::conti0EqIdx + wCompIdx,
-        contiN2EqIdx = Indices::conti0EqIdx + nCompIdx
-    };
-
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -194,12 +177,12 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
          PrimaryVariables priVars;
-         priVars.setState(wPhaseOnly);
-         priVars[pressureIdx] = 1e5;
-         priVars[switchIdx] = 1e-5 ;
+         priVars.setState(Indices::firstPhaseOnly);
+         priVars[Indices::pressureIdx] = 1e5;
+         priVars[Indices::switchIdx] = 1e-5 ;
 
          if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
-             priVars[switchIdx] = 1e-3;
+             priVars[Indices::switchIdx] = 1e-3;
 
         return priVars;
     }
@@ -254,11 +237,11 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
-        priVars.setState(wPhaseOnly);
+        priVars.setState(Indices::firstPhaseOnly);
 
         //mole-fraction formulation
-        priVars[switchIdx] = 1e-5;
-        priVars[pressureIdx] = 1e5;
+        priVars[Indices::switchIdx] = 1e-5;
+        priVars[Indices::pressureIdx] = 1e5;
         return priVars;
     }
 

@@ -146,7 +146,7 @@ private:
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
     using NonMineralizationTraits = TwoPNCModelTraits<FluidSystem::numComponents,
                                                       GET_PROP_VALUE(TypeTag, UseMoles),
-                                                      GET_PROP_VALUE(TypeTag, SetMoleFractionsForWettingPhase),
+                                                      GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
                                                       GET_PROP_VALUE(TypeTag, Formulation)>;
 public:
     using type = MineralizationModelTraits<NonMineralizationTraits, FluidSystem::numSPhases>;
@@ -165,7 +165,7 @@ private:
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
     using TwoPNCTraits = TwoPNCModelTraits<FluidSystem::numComponents,
                                            GET_PROP_VALUE(TypeTag, UseMoles),
-                                           GET_PROP_VALUE(TypeTag, SetMoleFractionsForWettingPhase),
+                                           GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
                                            GET_PROP_VALUE(TypeTag, Formulation)>;
     using IsothermalTraits = MineralizationModelTraits<TwoPNCTraits, FluidSystem::numSPhases>;
 public:
@@ -174,7 +174,7 @@ public:
 };
 
 //! non-isothermal vtkoutput
-SET_PROP(TwoPNCMinNI, VtkOutputFields, EnergyVtkOutputFields<MineralizationVtkOutputFields<TwoPNCVtkOutputFields>>);
+SET_TYPE_PROP(TwoPNCMinNI, VtkOutputFields, EnergyVtkOutputFields<MineralizationVtkOutputFields<TwoPNCVtkOutputFields>>);
 
 } // end namespace Properties
 } // end namespace Dumux

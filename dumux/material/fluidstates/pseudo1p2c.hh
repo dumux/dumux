@@ -48,11 +48,11 @@ public:
            numComponents = FluidSystem::numComponents
         };
     enum {
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
+        phase0Idx = FluidSystem::phase0Idx,
+        phase1Idx = FluidSystem::phase1Idx,
 
-        wCompIdx = FluidSystem::wPhaseIdx,
-        nCompIdx = FluidSystem::nPhaseIdx
+        comp0Idx = FluidSystem::comp0Idx,
+        comp1Idx = FluidSystem::comp1Idx
     };
 
 public:
@@ -90,7 +90,7 @@ public:
      */
     Scalar partialPressure(int compIdx) const
     {
-        return partialPressure(nPhaseIdx, compIdx);
+        return partialPressure(phase1Idx, compIdx);
     }
 
     /*!
@@ -145,7 +145,7 @@ public:
         }
 
 
-        if (compIdx == wPhaseIdx)
+        if (compIdx == phase0Idx)
             return massFractionWater_;
         else
             return 1.-massFractionWater_;
@@ -172,7 +172,7 @@ public:
                 return 0.;
         }
 
-        if (compIdx == wPhaseIdx)
+        if (compIdx == phase0Idx)
             return moleFractionWater_;
         else
             return 1.-moleFractionWater_;
@@ -260,7 +260,7 @@ public:
      */
     void setMassFraction(int phaseIdx, int compIdx, Scalar value)
     {
-        if (compIdx == wCompIdx)
+        if (compIdx == comp0Idx)
             massFractionWater_ = value;
         else
             massFractionWater_ = 1- value;
@@ -275,7 +275,7 @@ public:
      */
     void setMoleFraction(int phaseIdx, int compIdx, Scalar value)
     {
-        if (compIdx == wCompIdx)
+        if (compIdx == comp0Idx)
             moleFractionWater_ = value;
         else
             moleFractionWater_ = 1-value;

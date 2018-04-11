@@ -53,8 +53,8 @@ public:
                                       "x_"+ FluidSystem::phaseName(i) + "^" + FluidSystem::componentName(j));
 
         for (int j = 0; j < VolumeVariables::numComponents(); ++j)
-            vtk.addVolumeVariable([j](const auto& v){ return v.molarity(FluidSystem::wPhaseIdx,j); },
-                                  "m_"+ FluidSystem::phaseName(FluidSystem::wPhaseIdx) + "^" + FluidSystem::componentName(j));
+            vtk.addVolumeVariable([j](const auto& v){ return v.molarity(FluidSystem::phase0Idx,j); },
+                                  "m_"+ FluidSystem::phaseName(FluidSystem::phase1Idx) + "^" + FluidSystem::componentName(j));
 
         vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phasePresence");
     }

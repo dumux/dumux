@@ -40,23 +40,19 @@ class TwoPOneCVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
     using FS = typename Traits::FluidSystem;
-    using Indices = typename Traits::ModelTraits::Indices;
+    using Idx = typename Traits::ModelTraits::Indices;
 
     enum {
         numPhases = Traits::ModelTraits::numPhases(),
-
-        wPhaseIdx = FS::wPhaseIdx,
-        nPhaseIdx = FS::nPhaseIdx,
-
-        switchIdx = Indices::switchIdx,
-        pressureIdx = Indices::pressureIdx
+        switchIdx = Idx::switchIdx,
+        pressureIdx = Idx::pressureIdx
     };
 
     // present phases
     enum {
-        twoPhases = Indices::twoPhases,
-        wPhaseOnly  = Indices::wPhaseOnly,
-        nPhaseOnly  = Indices::nPhaseOnly,
+        twoPhases = Idx::twoPhases,
+        liquidPhaseOnly  = Idx::liquidPhaseOnly,
+        gasPhaseOnly  = Idx::gasPhaseOnly,
     };
 
 public:
@@ -64,6 +60,13 @@ public:
     using FluidState = typename Traits::FluidState;
     //! The type of the fluid system
     using FluidSystem = typename Traits::FluidSystem;
+    //! The type of the indices
+    using Indices = typename Traits::ModelTraits::Indices;
+
+    // set liquid phase as wetting phase: TODO make this more flexible
+    static constexpr int wPhaseIdx = FluidSystem::liquidPhaseIdx;
+    // set gas phase as non-wetting phase: TODO make this more flexible
+    static constexpr int nPhaseIdx = FluidSystem::gasPhaseIdx;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -136,12 +139,12 @@ public:
             sw = priVars[switchIdx];
             sg = 1.0 - sw;
         }
-        else if (phasePresence == wPhaseOnly)
+        else if (phasePresence == liquidPhaseOnly)
         {
             sw = 1.0;
             sg = 0.0;
         }
-        else if (phasePresence == nPhaseOnly)
+        else if (phasePresence == gasPhaseOnly)
         {
             sw = 0.0;
             sg = 1.0;
@@ -168,7 +171,7 @@ public:
 
         // get temperature
         Scalar temperature;
-        if (phasePresence == wPhaseOnly || phasePresence == nPhaseOnly)
+        if (phasePresence == liquidPhaseOnly || phasePresence == gasPhaseOnly)
             temperature = priVars[switchIdx];
         else if (phasePresence == twoPhases)
             temperature = FluidSystem::vaporTemperature(fluidState, wPhaseIdx);

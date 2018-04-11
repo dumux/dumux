@@ -31,10 +31,8 @@
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/binarycoefficients/h2o_constant.hh>
 
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
 
 /*!
  * \ingroup Fluidsystems
@@ -52,21 +50,25 @@ class LiquidPhaseTwoC
 public:
     using ParameterCache = NullParameterCache;
 
-    /****************************************
-     * Fluid phase related static parameters
-     ****************************************/
-    static constexpr int mainCompIdx = 0;
-    static constexpr int secondCompIdx = 1;
-    static constexpr int wPhaseIdx = 0;
-    static constexpr int numPhases = 1;
-    static constexpr int numComponents = 2;
+    static constexpr int numPhases = 2; //!< Number of phases in the fluid system
+    static constexpr int numComponents = 2; //!< Number of components in the fluid system
+
+    static constexpr int phase0Idx = 0; //!< index of the only phase
+
+    static constexpr int comp0Idx = 0; //!< index of the frist component
+    static constexpr int comp1Idx = 1; //!< index of the second component
+    static constexpr int mainCompIdx = comp0Idx; //!< index of the main component
+    static constexpr int secondCompIdx = comp1Idx; //!< index of the secondary component
 
     /*!
-     * \brief Initialize the fluid system's static parameters generically
-     */
+    * \brief Initialize the fluid system's static parameters generically
+    */
     static void init()
     {}
 
+    /****************************************
+     * Fluid phase related static parameters
+     ****************************************/
     /*!
      * \brief Return the human readable name of a fluid phase
      *
@@ -191,8 +193,8 @@ public:
         const Scalar densityMain = MainComponent::liquidDensity(T, p);
         const Scalar molarDensity = densityMain/MainComponent::molarMass();
 
-        return molarDensity * (MainComponent::molarMass()*fluidState.moleFraction(wPhaseIdx, mainCompIdx)
-                               + SecondComponent::molarMass()*fluidState.moleFraction(wPhaseIdx, secondCompIdx));
+        return molarDensity * (MainComponent::molarMass()*fluidState.moleFraction(phase0Idx, mainCompIdx)
+                               + SecondComponent::molarMass()*fluidState.moleFraction(phase0Idx, secondCompIdx));
     }
 
     /*!

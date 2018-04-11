@@ -248,8 +248,10 @@ class NonEquilibriumVolumeVariablesImplementation< Traits,
     static constexpr auto numPhases = ModelTraits::numPhases();
     static constexpr auto numComponents = ModelTraits::numComponents();
 
-    static constexpr auto wPhaseIdx = FluidSystem::wPhaseIdx;
-    static constexpr auto nPhaseIdx = FluidSystem::nPhaseIdx;
+    static constexpr auto phase0Idx = FluidSystem::phase0Idx;
+    static constexpr auto phase1Idx = FluidSystem::phase1Idx;
+    static constexpr auto wCompIdx = FluidSystem::comp0Idx;
+    static constexpr auto nCompIdx = FluidSystem::comp1Idx;
 
     using DimLessNum = DimensionlessNumbers<Scalar>;
     using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
@@ -277,8 +279,8 @@ public:
         const auto& awnSurfaceParams = problem.spatialParams().aWettingNonWettingSurfaceParams(element, scv, elemSol) ;
         const auto& materialParams  = problem.spatialParams().materialLawParams(element, scv, elemSol) ;
 
-        const auto Sw = fluidState.saturation(wPhaseIdx) ;
-        const auto pc = fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx);
+        const auto Sw = fluidState.saturation(phase0Idx) ;
+        const auto pc = fluidState.pressure(phase1Idx) - fluidState.pressure(phase0Idx);
 
         // so far there is only a model for kinetic mass transfer between fluid phases
         using AwnSurface = typename Problem::SpatialParams::AwnSurface;
@@ -300,8 +302,8 @@ public:
             const auto diffCoeff = FluidSystem::binaryDiffusionCoefficient(fluidState,
                                                                            paramCache,
                                                                            phaseIdx,
-                                                                           FluidSystem::wCompIdx,
-                                                                           FluidSystem::nCompIdx);
+                                                                           wCompIdx,
+                                                                           nCompIdx);
 
             reynoldsNumber_[phaseIdx] = DimLessNum::reynoldsNumber(darcyMagVelocity, characteristicLength_, kinematicViscosity);
             schmidtNumber_[phaseIdx]  = DimLessNum::schmidtNumber(dynamicViscosity, density, diffCoeff);
@@ -369,8 +371,8 @@ public:
     const Scalar interfacialArea(const unsigned int phaseIIdx, const unsigned int phaseJIdx) const
     {
         // so far there is only a model for kinetic mass transfer between fluid phases
-        assert( (phaseIIdx == nPhaseIdx && phaseJIdx == wPhaseIdx)
-                || (phaseIIdx == wPhaseIdx && phaseJIdx == nPhaseIdx) );
+        assert( (phaseIIdx == phase1Idx && phaseJIdx == phase0Idx)
+                || (phaseIIdx == phase0Idx && phaseJIdx == phase1Idx) );
         return interfacialArea_;
     }
 
@@ -414,9 +416,11 @@ class NonEquilibriumVolumeVariablesImplementation< Traits,
     static constexpr auto numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
     static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
 
-    static constexpr auto wPhaseIdx = FluidSystem::wPhaseIdx;
-    static constexpr auto nPhaseIdx = FluidSystem::nPhaseIdx;
+    static constexpr auto phase0Idx = FluidSystem::phase0Idx;
+    static constexpr auto phase1Idx = FluidSystem::phase1Idx;
     static constexpr auto sPhaseIdx = FluidSystem::sPhaseIdx;
+    static constexpr auto wCompIdx = FluidSystem::comp0Idx;
+    static constexpr auto nCompIdx = FluidSystem::comp1Idx;
 
     using DimLessNum = DimensionlessNumbers<Scalar>;
     using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
@@ -448,8 +452,8 @@ public:
         const auto& aWettingNonWettingSurfaceParams = problem.spatialParams().aWettingNonWettingSurfaceParams(element, scv, elemSol);
         const auto& aNonWettingSolidSurfaceParams = problem.spatialParams().aNonWettingSolidSurfaceParams(element, scv, elemSol);
 
-        const Scalar pc = fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx);
-        const Scalar Sw = fluidState.saturation(wPhaseIdx);
+        const Scalar pc = fluidState.pressure(phase1Idx) - fluidState.pressure(phase0Idx);
+        const Scalar Sw = fluidState.saturation(phase0Idx);
 
         Scalar awn;
 
@@ -473,9 +477,9 @@ public:
 
         using AwnSurface = typename Problem::SpatialParams::AwnSurface;
         awn = AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams, Sw, pc );
-        interfacialArea_[wPhaseIdx][nPhaseIdx] = awn;
-        interfacialArea_[nPhaseIdx][wPhaseIdx] = interfacialArea_[wPhaseIdx][nPhaseIdx];
-        interfacialArea_[wPhaseIdx][wPhaseIdx] = 0.;
+        interfacialArea_[phase0Idx][phase1Idx] = awn;
+        interfacialArea_[phase1Idx][phase0Idx] = interfacialArea_[phase0Idx][phase1Idx];
+        interfacialArea_[phase0Idx][phase0Idx] = 0.;
 
         using AnsSurface = typename Problem::SpatialParams::AnsSurface;
         Scalar ans = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams,Sw, pc);
@@ -489,21 +493,21 @@ public:
         solidSurface_ = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams, /*Sw=*/0., pcMax);
 
         const Scalar aws = solidSurface_ - ans;
-        interfacialArea_[wPhaseIdx][sPhaseIdx] = aws;
-        interfacialArea_[sPhaseIdx][wPhaseIdx] = interfacialArea_[wPhaseIdx][sPhaseIdx];
+        interfacialArea_[phase0Idx][sPhaseIdx] = aws;
+        interfacialArea_[sPhaseIdx][phase0Idx] = interfacialArea_[phase0Idx][sPhaseIdx];
         interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.;
 #else
         using AwsSurface = typename Problem::SpatialParams::AwsSurface;
         const auto& aWettingSolidSurfaceParams = problem.spatialParams().aWettingSolidSurfaceParams();
         const auto aws = AwsSurface::interfacialArea(aWettingSolidSurfaceParams,materialParams, Sw, pc );
-        interfacialArea_[wPhaseIdx][sPhaseIdx] = aws ;
-        interfacialArea_[sPhaseIdx][wPhaseIdx] = interfacialArea_[wPhaseIdx][sPhaseIdx];
+        interfacialArea_[phase0Idx][sPhaseIdx] = aws ;
+        interfacialArea_[sPhaseIdx][phase0Idx] = interfacialArea_[phase0Idx][sPhaseIdx];
         interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.;
 #endif
 
-        interfacialArea_[nPhaseIdx][sPhaseIdx] = ans;
-        interfacialArea_[sPhaseIdx][nPhaseIdx] = interfacialArea_[nPhaseIdx][sPhaseIdx];
-        interfacialArea_[nPhaseIdx][nPhaseIdx] = 0.;
+        interfacialArea_[phase1Idx][sPhaseIdx] = ans;
+        interfacialArea_[sPhaseIdx][phase1Idx] = interfacialArea_[phase1Idx][sPhaseIdx];
+        interfacialArea_[phase1Idx][phase1Idx] = 0.;
 
         factorMassTransfer_ = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
         factorEnergyTransfer_ = problem.spatialParams().factorEnergyTransfer(element, scv, elemSol);
@@ -524,8 +528,8 @@ public:
             const auto diffCoeff = FluidSystem::binaryDiffusionCoefficient(fluidState,
                                                                            paramCache,
                                                                            phaseIdx,
-                                                                           FluidSystem::wCompIdx,
-                                                                           FluidSystem::nCompIdx);
+                                                                           wCompIdx,
+                                                                           nCompIdx);
 
             reynoldsNumber_[phaseIdx] = DimLessNum::reynoldsNumber(darcyMagVelocity, characteristicLength_, kinematicViscosity);
             prandtlNumber_[phaseIdx]  = DimLessNum::prandtlNumber(dynamicViscosity, heatCapacity, thermalConductivity);

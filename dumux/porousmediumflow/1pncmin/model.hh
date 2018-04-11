@@ -131,7 +131,7 @@ SET_TYPE_PROP(OnePNCMin, VtkOutputFields, MineralizationVtkOutputFields<OnePNCVt
 //////////////////////////////////////////////////////////////////
 
 //! non-isothermal vtk output
-SET_PROP(OnePNCMinNI, VtkOutputFields, EnergyVtkOutputFields<MineralizationVtkOutputFields<OnePNCVtkOutputFields>>);
+SET_TYPE_PROP(OnePNCMinNI, VtkOutputFields, EnergyVtkOutputFields<MineralizationVtkOutputFields<OnePNCVtkOutputFields>>);
 
 //! The non-isothermal model traits
 SET_PROP(OnePNCMinNI, ModelTraits)

@@ -84,31 +84,36 @@ public:
                                                const typename FVGeometry::SubControlVolume& scv)
     {
         using FluidSystem = typename VolumeVariables::FluidSystem;
+        static_assert(FluidSystem::numPhases == 2, "ThermalConductivitySomerton only works for two-phase fluid systems!");
+        static_assert(!FluidSystem::isLiquid(0) || !FluidSystem::isLiquid(1), "ThermalConductivitySomerton only works if one phase is gaseous and one is liquid!");
 
-        const Scalar sw = volVars.saturation(FluidSystem::wPhaseIdx);
-        const Scalar lambdaW = volVars.fluidThermalConductivity(FluidSystem::wPhaseIdx);
-        const Scalar lambdaN = volVars.fluidThermalConductivity(FluidSystem::nPhaseIdx);
+        constexpr int liquidPhaseIdx = FluidSystem::isLiquid(0) ? 0 : 1;
+        constexpr int gasPhaseIdx = FluidSystem::isLiquid(0) ? 1 : 0;
+
+        const Scalar satLiquid = volVars.saturation(liquidPhaseIdx);
+        const Scalar lambdaLiquid = volVars.fluidThermalConductivity(liquidPhaseIdx);
+        const Scalar lambdaGas = volVars.fluidThermalConductivity(gasPhaseIdx);
         const Scalar lambdaSolid = volVars.solidThermalConductivity();
         const Scalar porosity = volVars.porosity();
 
-        return effectiveThermalConductivity(sw, lambdaW, lambdaN, lambdaSolid, porosity);
+        return effectiveThermalConductivity(satLiquid, lambdaLiquid, lambdaGas, lambdaSolid, porosity);
     }
 
     /*!
      * \brief effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974 <BR>
      *
-     * \param sw The saturation of the wetting phase
-     * \param lambdaW The thermal conductivity of the wetting phase in \f$\mathrm{[W/(m K)]}\f$
-     * \param lambdaN The thermal conductivity of the non-wetting phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param satLiquid The saturation of the liquid phase
+     * \param lambdaLiquid The thermal conductivity of the liquid phase in \f$\mathrm{[W/(m K)]}\f$
+     * \param lambdaGas The thermal conductivity of the gas phase in \f$\mathrm{[W/(m K)]}\f$
      * \param lambdaSolid The thermal conductivity of the solid phase in \f$\mathrm{[W/(m K)]}\f$
      * \param porosity The porosity
      * \param rhoSolid The density of solid phase in \f$\mathrm{[kg/m^3]}\f$
      *
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$ after Somerton (1974) \cite somerton1974
      */
-    static Scalar effectiveThermalConductivity(const Scalar sw,
-                                               const Scalar lambdaW,
-                                               const Scalar lambdaN,
+    static Scalar effectiveThermalConductivity(const Scalar satLiquid,
+                                               const Scalar lambdaLiquid,
+                                               const Scalar lambdaGas,
                                                const Scalar lambdaSolid,
                                                const Scalar porosity,
                                                const Scalar rhoSolid = 0.0 /*unused*/)
@@ -116,13 +121,15 @@ public:
         using std::max;
         using std::pow;
         using std::sqrt;
-        const Scalar satW = max<Scalar>(0.0, sw);
+        const Scalar satLiquidPhysical = max<Scalar>(0.0, satLiquid);
         // geometric mean, using ls^(1-p)*l^p = ls*(l/ls)^p
-        const Scalar lSat = lambdaSolid * pow(lambdaW / lambdaSolid, porosity);
-        const Scalar lDry = lambdaSolid * pow(lambdaN / lambdaSolid, porosity);
+        const Scalar lSat = lambdaSolid * pow(lambdaLiquid / lambdaSolid, porosity);
+        const Scalar lDry = lambdaSolid * pow(lambdaGas / lambdaSolid, porosity);
 
-        return lDry + sqrt(satW) * (lSat - lDry);
+        return lDry + sqrt(satLiquidPhysical) * (lSat - lDry);
     }
 };
-}
+
+} // end namespace Dumux
+
 #endif

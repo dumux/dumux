@@ -99,8 +99,8 @@ public:
                       "2p/incompressiblelocalresidual.hh: Only incompressible fluids are allowed!");
         static_assert(ModelTraits::numPhases() == 2,
                       "2p/incompressiblelocalresidual.hh: Only two-phase models are allowed!");
-        static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::pwsn,
-                      "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for pn-sw formulation!");
+        static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
+                      "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p1-s0 formulation!");
 
         // we know that these values are constant throughout the simulation
         const auto poreVolume = scv.volume()*curVolVars.porosity();
@@ -167,8 +167,8 @@ public:
                       "2p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
         static_assert(ModelTraits::numPhases() == 2,
                       "2p/incompressiblelocalresidual.hh: Only two-phase models are allowed!");
-        static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::pwsn,
-                      "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for pn-sw formulation!");
+        static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
+                      "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p1-s0 formulation!");
 
         using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
@@ -285,8 +285,8 @@ public:
                       "2p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
         static_assert(ModelTraits::numPhases() == 2,
                       "2p/incompressiblelocalresidual.hh: Only two-phase models are allowed!");
-        static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::pwsn,
-                      "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for pn-sw formulation!");
+        static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
+                      "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p0-s1 formulation!");
 
         using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);

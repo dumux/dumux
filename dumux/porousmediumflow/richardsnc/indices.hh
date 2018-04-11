@@ -31,20 +31,25 @@ namespace Dumux {
 /*!
  * \ingroup RichardsNCModel
  * \brief The indices for the isothermal Richards, n-component model.
+ * \tparam fluidSystemPhaseIdx The index of the fluid phase in the fluid system
  */
+template<int phaseIdx>
 struct RichardsNCIndices
 {
     //! Component indices
-    static const int compMainIdx = 0; //!< main component index
+    static constexpr int compMainIdx = 0; //!< main component index
 
     //! primary variable indices
-    static const int pressureIdx = 0; //!< pressure
+    static constexpr int pressureIdx = 0; //!< pressure
+
+    //! the index of the fluid phase in the fluid system
+    static constexpr int fluidSystemPhaseIdx = phaseIdx;
 
     //! \note These indices make sense if the first balance is replaced by the
     //!       total mass balance.
 
     //! Equation indices
-    static const int conti0EqIdx = 0; //!< continuity equation index
+    static constexpr int conti0EqIdx = 0; //!< continuity equation index
 };
 
 } // end namespace Dumux

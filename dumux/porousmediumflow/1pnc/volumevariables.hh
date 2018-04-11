@@ -46,15 +46,15 @@ class OnePNCVolumeVariables
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
-    using Indices = typename Traits::ModelTraits::Indices;
+    using Idx = typename Traits::ModelTraits::Indices;
     static constexpr int numComp = ParentType::numComponents();
 
     enum
     {
-        fluidSystemPhaseIdx = Indices::fluidSystemPhaseIdx,
+        fluidSystemPhaseIdx = Idx::fluidSystemPhaseIdx,
 
         // pressure primary variable index
-        pressureIdx = Indices::pressureIdx,
+        pressureIdx = Idx::pressureIdx,
 
         // main component index
         mainCompMoleOrMassFracIdx = fluidSystemPhaseIdx
@@ -65,6 +65,8 @@ public:
     using FluidState = typename Traits::FluidState;
     //! export fluid system type
     using FluidSystem = typename Traits::FluidSystem;
+    //! export indices
+    using Indices = typename Traits::ModelTraits::Indices;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -182,7 +184,6 @@ public:
      */
     Scalar density(int phaseIdx = fluidSystemPhaseIdx) const
     {
-        assert(phaseIdx == fluidSystemPhaseIdx);
         return fluidState_.density(fluidSystemPhaseIdx);
     }
 
@@ -194,7 +195,6 @@ public:
      */
     Scalar molarDensity(int phaseIdx = fluidSystemPhaseIdx) const
     {
-        assert(phaseIdx == fluidSystemPhaseIdx);
         return fluidState_.molarDensity(fluidSystemPhaseIdx);
     }
 
@@ -219,7 +219,6 @@ public:
      Scalar moleFraction(int phaseIdx, int compIdx) const
      {
          // make sure this is only called with admissible indices
-         assert(phaseIdx == fluidSystemPhaseIdx);
          assert(compIdx < numComp);
          return fluidState_.moleFraction(fluidSystemPhaseIdx, compIdx);
      }
@@ -236,7 +235,6 @@ public:
      Scalar massFraction(int phaseIdx, int compIdx) const
      {
          // make sure this is only called with admissible indices
-         assert(phaseIdx == fluidSystemPhaseIdx);
          assert(compIdx < numComp);
          return fluidState_.massFraction(fluidSystemPhaseIdx, compIdx);
      }
@@ -252,7 +250,6 @@ public:
      */
     Scalar pressure(int phaseIdx = fluidSystemPhaseIdx) const
     {
-        assert(phaseIdx == fluidSystemPhaseIdx);
         return fluidState_.pressure(fluidSystemPhaseIdx);
     }
 
@@ -277,7 +274,6 @@ public:
      */
     Scalar mobility(int phaseIdx = fluidSystemPhaseIdx) const
     {
-        assert(phaseIdx == fluidSystemPhaseIdx);
         return 1.0/fluidState_.viscosity(fluidSystemPhaseIdx);
     }
 
@@ -290,7 +286,6 @@ public:
      */
     Scalar viscosity(int phaseIdx = fluidSystemPhaseIdx) const
     {
-        assert(phaseIdx == fluidSystemPhaseIdx);
         return fluidState_.viscosity(fluidSystemPhaseIdx);
     }
 
@@ -305,7 +300,6 @@ public:
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
-        assert(phaseIdx == fluidSystemPhaseIdx);
         assert(compIdx < numComp);
         return diffCoeff_[compIdx];
     }

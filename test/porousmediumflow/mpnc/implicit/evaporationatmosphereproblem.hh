@@ -131,8 +131,8 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     enum { p0Idx = Indices::p0Idx };
     enum { conti00EqIdx    = Indices::conti0EqIdx };
     enum { energyEq0Idx    = Indices::energyEqIdx };
-    enum { wPhaseIdx       = FluidSystem::wPhaseIdx };
-    enum { nPhaseIdx       = FluidSystem::nPhaseIdx };
+    enum { liquidPhaseIdx       = FluidSystem::liquidPhaseIdx };
+    enum { gasPhaseIdx       = FluidSystem::gasPhaseIdx };
     enum { wCompIdx        = FluidSystem::H2OIdx };
     enum { nCompIdx        = FluidSystem::N2Idx };
     enum { numEnergyEqFluid = ModelTraits::numEnergyEqFluid() };
@@ -268,8 +268,8 @@ public:
             fluidState.setPressure(phaseIdx, pnInitial_);
         }
 
-        fluidState.setTemperature(nPhaseIdx, TInject_ );
-        fluidState.setTemperature(wPhaseIdx, TInitial_ ); // this value is a good one, TInject does not work
+        fluidState.setTemperature(gasPhaseIdx, TInject_ );
+        fluidState.setTemperature(liquidPhaseIdx, TInitial_ ); // this value is a good one, TInject does not work
 
         // This solves the system of equations defining x=x(p,T)
         ConstraintSolver::solve(fluidState,
@@ -278,14 +278,14 @@ public:
                                 /*setEnthalpy=*/false) ;
 
         // Now let's make the air phase less than fully saturated with water
-        fluidState.setMoleFraction(nPhaseIdx, wCompIdx, fluidState.moleFraction(nPhaseIdx, wCompIdx)*percentOfEquil_ ) ;
-        fluidState.setMoleFraction(nPhaseIdx, nCompIdx, 1.-fluidState.moleFraction(nPhaseIdx, wCompIdx) ) ;
+        fluidState.setMoleFraction(gasPhaseIdx, wCompIdx, fluidState.moleFraction(gasPhaseIdx, wCompIdx)*percentOfEquil_ ) ;
+        fluidState.setMoleFraction(gasPhaseIdx, nCompIdx, 1.-fluidState.moleFraction(gasPhaseIdx, wCompIdx) ) ;
 
         // compute density of injection phase
         const Scalar density = FluidSystem::density(fluidState,
                                                      dummyCache,
-                                                     nPhaseIdx);
-        fluidState.setDensity(nPhaseIdx, density);
+                                                     gasPhaseIdx);
+        fluidState.setDensity(gasPhaseIdx, density);
 
         for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
         {
@@ -295,18 +295,18 @@ public:
                 fluidState.setEnthalpy(phaseIdx, h);
         }
 
-        const Scalar molarFlux = massFluxInjectedPhase / fluidState.averageMolarMass(nPhaseIdx);
+        const Scalar molarFlux = massFluxInjectedPhase / fluidState.averageMolarMass(gasPhaseIdx);
 
         // actually setting the fluxes
         if (onLeftBoundary_(globalPos) && this->spatialParams().inFF_(globalPos))
         {
-            values[conti00EqIdx + nPhaseIdx * numComponents + wCompIdx]
-             = -molarFlux * fluidState.moleFraction(nPhaseIdx, wCompIdx);
-            values[conti00EqIdx + nPhaseIdx * numComponents + nCompIdx]
-             = -molarFlux * fluidState.moleFraction(nPhaseIdx, nCompIdx);
+            values[conti00EqIdx + gasPhaseIdx * numComponents + wCompIdx]
+             = -molarFlux * fluidState.moleFraction(gasPhaseIdx, wCompIdx);
+            values[conti00EqIdx + gasPhaseIdx * numComponents + nCompIdx]
+             = -molarFlux * fluidState.moleFraction(gasPhaseIdx, nCompIdx);
             // energy equations are specified mass specifically
-            values[energyEq0Idx + nPhaseIdx] = - massFluxInjectedPhase
-                                                    * fluidState.enthalpy(nPhaseIdx) ;
+            values[energyEq0Idx + gasPhaseIdx] = - massFluxInjectedPhase
+                                                    * fluidState.enthalpy(gasPhaseIdx) ;
         }
         return values;
     }
@@ -359,12 +359,12 @@ private:
         Scalar S[numPhases];
 
         if (this->spatialParams().inPM_(globalPos)){
-            S[wPhaseIdx]    = SwPMInitial_;
-            S[nPhaseIdx]    = 1. - S[wPhaseIdx] ;
+            S[liquidPhaseIdx]    = SwPMInitial_;
+            S[gasPhaseIdx]    = 1. - S[liquidPhaseIdx] ;
         }
         else if (this->spatialParams().inFF_(globalPos)){
-            S[wPhaseIdx]    = SwFFInitial_;
-            S[nPhaseIdx]    = 1. - S[wPhaseIdx] ;
+            S[liquidPhaseIdx]    = SwFFInitial_;
+            S[gasPhaseIdx]    = 1. - S[liquidPhaseIdx] ;
         }
         else
             DUNE_THROW(Dune::InvalidStateException,
@@ -394,12 +394,12 @@ private:
         if (this->spatialParams().inPM_(globalPos)){
             // Use homogenous pressure in the domain and let the newton find the pressure distribution
             using std::abs;
-            p[wPhaseIdx] = pnInitial_  - abs(capPress[wPhaseIdx]);
-            p[nPhaseIdx] = p[wPhaseIdx] + abs(capPress[wPhaseIdx]);
+            p[liquidPhaseIdx] = pnInitial_  - abs(capPress[liquidPhaseIdx]);
+            p[gasPhaseIdx] = p[liquidPhaseIdx] + abs(capPress[liquidPhaseIdx]);
         }
         else if (this->spatialParams().inFF_(globalPos)){
-            p[nPhaseIdx] = pnInitial_ ;
-            p[wPhaseIdx] = pnInitial_  ;
+            p[gasPhaseIdx] = pnInitial_ ;
+            p[liquidPhaseIdx] = pnInitial_  ;
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
@@ -407,12 +407,12 @@ private:
         if(pressureFormulation == mostWettingFirst){
             // This means that the pressures are sorted from the most wetting to the least wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pw
-            priVars[p0Idx] = p[wPhaseIdx];
+            priVars[p0Idx] = p[liquidPhaseIdx];
         }
         else if(pressureFormulation == leastWettingFirst){
             // This means that the pressures are sorted from the least wetting to the most wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pn
-            priVars[p0Idx] = p[nPhaseIdx];
+            priVars[p0Idx] = p[gasPhaseIdx];
         }
         else DUNE_THROW(Dune::InvalidStateException, "EvaporationAtmosphereProblem does not support the chosen pressure formulation.");
 
@@ -431,8 +431,8 @@ private:
 
         FluidState dryFluidState(equilibriumFluidState);
         // Now let's make the air phase less than fully saturated with vapor
-        dryFluidState.setMoleFraction(nPhaseIdx, wCompIdx, dryFluidState.moleFraction(nPhaseIdx, wCompIdx) * percentOfEquil_ ) ;
-        dryFluidState.setMoleFraction(nPhaseIdx, nCompIdx, 1.0-dryFluidState.moleFraction(nPhaseIdx, wCompIdx) ) ;
+        dryFluidState.setMoleFraction(gasPhaseIdx, wCompIdx, dryFluidState.moleFraction(gasPhaseIdx, wCompIdx) * percentOfEquil_ ) ;
+        dryFluidState.setMoleFraction(gasPhaseIdx, nCompIdx, 1.0-dryFluidState.moleFraction(gasPhaseIdx, wCompIdx) ) ;
 
         /* Difference between kinetic and MPNC:
          * number of component related primVar and how they are calculated (mole fraction, fugacities, resp.)
@@ -458,7 +458,7 @@ private:
         {
             // in the case I am using the "standard" mpnc model, the variables to be set are the "fugacities"
             const Scalar fugH2O = FluidSystem::H2O::vaporPressure(T) ;
-            const Scalar fugN2 = p[nPhaseIdx] - fugH2O ;
+            const Scalar fugN2 = p[gasPhaseIdx] - fugH2O ;
 
             priVars[conti00EqIdx + FluidSystem::N2Idx] = fugN2 ;
             priVars[conti00EqIdx + FluidSystem::H2OIdx] = fugH2O ;
@@ -468,8 +468,8 @@ private:
 
             const Scalar Henry              = BinaryCoeff::H2O_N2::henry(TInitial_);
             const Scalar satVapPressure     = FluidSystem::H2O::vaporPressure(TInitial_);
-            xl[FluidSystem::H2OIdx]         = x_[wPhaseIdx][wCompIdx];
-            xl[FluidSystem::N2Idx]          = x_[wPhaseIdx][nCompIdx];
+            xl[FluidSystem::H2OIdx]         = x_[liquidPhaseIdx][wCompIdx];
+            xl[FluidSystem::N2Idx]          = x_[liquidPhaseIdx][nCompIdx];
             beta[FluidSystem::H2OIdx]       = satVapPressure ;
             beta[FluidSystem::N2Idx]        = Henry ;
 

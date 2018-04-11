@@ -37,13 +37,11 @@
 
 #include "steaminjectionspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class InjectionProblem;
 
-namespace Properties
-{
+namespace Properties {
 NEW_TYPE_TAG(InjectionProblemTypeTag, INHERITS_FROM(TwoPOneCNI, InjectionProblemSpatialParams));
 NEW_TYPE_TAG(TwoPOneCNIBoxTypeTag, INHERITS_FROM(BoxModel, InjectionProblemTypeTag));
 NEW_TYPE_TAG(TwoPOneCNICCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InjectionProblemTypeTag));
@@ -67,7 +65,7 @@ public:
 
 //Define whether spurious cold-water flow into the steam is blocked
 SET_BOOL_PROP(InjectionProblemTypeTag, UseBlockingOfSpuriousFlow, true);
-}
+} // end namespace Properties
 
 /*!
  * \ingroup TwoPOneCTests
@@ -104,7 +102,7 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx,
 
         // phase state
-        wPhaseOnly = Indices::wPhaseOnly
+        liquidPhaseOnly = Indices::liquidPhaseOnly
     };
 
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -231,7 +229,7 @@ public:
         values[pressureIdx] = 101300.0 + (this->fvGridGeometry().bBoxMax()[1] - globalPos[1])*densityW*9.81; // hydrostatic pressure
         values[switchIdx] = 283.13;
 
-        values.setState(wPhaseOnly);
+        values.setState(liquidPhaseOnly);
 
         return values;
     }

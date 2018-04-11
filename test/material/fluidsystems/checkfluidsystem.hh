@@ -136,6 +136,12 @@ public:
         return BaseFluidState::temperature(phaseIdx);
     }
 
+    Scalar wettingPhase() const
+    {
+        assert(allowComposition_);
+        return BaseFluidState::wettingPhase();
+    }
+
     Scalar partialPressure(int phaseIdx, int compIdx) const
     {
         assert(allowComposition_);

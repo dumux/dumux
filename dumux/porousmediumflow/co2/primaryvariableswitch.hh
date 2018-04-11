@@ -56,13 +56,15 @@ protected:
         using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
 
         using FluidSystem = typename VolumeVariables::FluidSystem;
-        static constexpr int wPhaseIdx = FluidSystem::wPhaseIdx;
-        static constexpr int nPhaseIdx = FluidSystem::nPhaseIdx;
-        static constexpr int wCompIdx = FluidSystem::wCompIdx;
-        static constexpr int nCompIdx = FluidSystem::nCompIdx;
+        static constexpr int phase0Idx = FluidSystem::phase0Idx;
+        static constexpr int phase1Idx = FluidSystem::phase1Idx;
+        static constexpr int comp0Idx = FluidSystem::comp0Idx;
+        static constexpr int comp1Idx = FluidSystem::comp1Idx;
 
         static constexpr bool useMoles = VolumeVariables::useMoles();
         static constexpr auto formulation = VolumeVariables::priVarFormulation();
+        static_assert( (formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0),
+                        "Chosen TwoPFormulation not supported!");
 
         using Indices = typename VolumeVariables::Indices;
         static constexpr int switchIdx = Indices::switchIdx;
@@ -76,11 +78,11 @@ protected:
         typename FluidSystem::ParameterCache paramCache;
 
         // check if a primary var switch is necessary
-        if (phasePresence == Indices::nPhaseOnly)
+        if (phasePresence == Indices::secondPhaseOnly)
         {
-            // calculate wetting component mole fraction in the non-wetting phase
-            Scalar xnw = volVars.moleFraction(nPhaseIdx, wCompIdx);
-            Scalar xnwMax = FluidSystem::equilibriumMoleFraction(volVars.fluidState(), paramCache, nPhaseIdx);
+            // calculate wetting component mole fraction in the second phase
+            Scalar xnw = volVars.moleFraction(phase1Idx, comp0Idx);
+            Scalar xnwMax = FluidSystem::equilibriumMoleFraction(volVars.fluidState(), paramCache, phase1Idx);
 
             // if it is larger than the equilibirum mole fraction switch
             if(xnw > xnwMax)
@@ -89,27 +91,25 @@ protected:
             if (this->wasSwitched_[dofIdxGlobal])
                 xnwMax *= 1.02;
 
-            // if it is larger than the equilibirum mole fraction switch wetting phase appears
+            // if it is larger than the equilibirum mole fraction switch: first phase appears
             if (xnw > xnwMax)
             {
                 // wetting phase appears
-                std::cout << "wetting phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xnw > xnwMax: "
+                std::cout << "First phase appears at vertex " << dofIdxGlobal
+                          << ", coordinates: " << globalPos << ", x10 > x10_max: "
                           << xnw << " > " << xnwMax << std::endl;
                 newPhasePresence = Indices::bothPhases;
-                if (formulation == TwoPFormulation::pnsw)
+                if (formulation == TwoPFormulation::p1s0)
                     priVars[switchIdx] = 0.0;
-                else if (formulation == TwoPFormulation::pwsn)
-                    priVars[switchIdx] = 1.0;
                 else
-                    DUNE_THROW(Dune::InvalidStateException, "Chosen TwoPFormulation not supported");
+                    priVars[switchIdx] = 1.0;
             }
         }
-        else if (phasePresence == Indices::wPhaseOnly)
+        else if (phasePresence == Indices::firstPhaseOnly)
         {
-            // calculate non-wetting component mole fraction in the wetting phase
-            Scalar xwn = volVars.moleFraction(wPhaseIdx, nCompIdx);
-            Scalar xwnMax = FluidSystem::equilibriumMoleFraction(volVars.fluidState(), paramCache, wPhaseIdx);
+            // calculate second component mole fraction in the wetting phase
+            Scalar xwn = volVars.moleFraction(phase0Idx, comp1Idx);
+            Scalar xwnMax = FluidSystem::equilibriumMoleFraction(volVars.fluidState(), paramCache, phase0Idx);
 
             // if it is larger than the equilibirum mole fraction switch
             if(xwn > xwnMax)
@@ -118,20 +118,18 @@ protected:
             if (this->wasSwitched_[dofIdxGlobal])
                 xwnMax *= 1.02;
 
-            // if it is larger than the equilibirum mole fraction switch non-wetting phase appears
+            // if it is larger than the equilibirum mole fraction switch second phase appears
             if(xwn > xwnMax)
             {
-                // nonwetting phase appears
-                std::cout << "nonwetting phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xwn > xwnMax: "
+                // Second phase appears
+                std::cout << "Second phase appears at vertex " << dofIdxGlobal
+                          << ", coordinates: " << globalPos << ", x01 > x01_max: "
                           << xwn << " > " << xwnMax << std::endl;
                 newPhasePresence = Indices::bothPhases;
-                if (formulation == TwoPFormulation::pnsw)
+                if (formulation == TwoPFormulation::p1s0)
                     priVars[switchIdx] = 0.999;
-                else if (formulation == TwoPFormulation::pwsn)
-                    priVars[switchIdx] = 0.001;
                 else
-                    DUNE_THROW(Dune::InvalidStateException, "Chosen TwoPFormulation not supported");
+                    priVars[switchIdx] = 0.001;
             }
         }
         // TODO: this is the same as for the 2p2c model maybe factor out
@@ -141,33 +139,33 @@ protected:
             if (this->wasSwitched_[dofIdxGlobal])
                 Smin = -0.01;
 
-            if (volVars.saturation(nPhaseIdx) <= Smin)
+            if (volVars.saturation(phase1Idx) <= Smin)
             {
                 wouldSwitch = true;
                 // nonwetting phase disappears
-                std::cout << "Nonwetting phase disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sn: "
-                          << volVars.saturation(nPhaseIdx) << std::endl;
-                newPhasePresence = Indices::wPhaseOnly;
+                std::cout << "Second phase disappears at vertex " << dofIdxGlobal
+                          << ", coordinates: " << globalPos << ", s1: "
+                          << volVars.saturation(phase1Idx) << std::endl;
+                newPhasePresence = Indices::firstPhaseOnly;
 
                 if(useMoles) // mole-fraction formulation
-                    priVars[switchIdx] = volVars.moleFraction(wPhaseIdx, nCompIdx);
+                    priVars[switchIdx] = volVars.moleFraction(phase0Idx, comp1Idx);
                 else // mass-fraction formulation
-                    priVars[switchIdx] = volVars.massFraction(wPhaseIdx, nCompIdx);
+                    priVars[switchIdx] = volVars.massFraction(phase0Idx, comp1Idx);
             }
-            else if (volVars.saturation(wPhaseIdx) <= Smin)
+            else if (volVars.saturation(phase0Idx) <= Smin)
             {
                 wouldSwitch = true;
                 // wetting phase disappears
-                std::cout << "Wetting phase disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sw: "
-                          << volVars.saturation(wPhaseIdx) << std::endl;
-                newPhasePresence = Indices::nPhaseOnly;
+                std::cout << "First phase disappears at vertex " << dofIdxGlobal
+                          << ", coordinates: " << globalPos << ", s0: "
+                          << volVars.saturation(phase0Idx) << std::endl;
+                newPhasePresence = Indices::secondPhaseOnly;
 
                 if(useMoles) // mole-fraction formulation
-                    priVars[switchIdx] = volVars.moleFraction(nPhaseIdx, wCompIdx);
+                    priVars[switchIdx] = volVars.moleFraction(phase1Idx, comp0Idx);
                 else // mass-fraction formulation
-                    priVars[switchIdx] = volVars.massFraction(nPhaseIdx, wCompIdx);
+                    priVars[switchIdx] = volVars.massFraction(phase1Idx, comp0Idx);
             }
         }
 

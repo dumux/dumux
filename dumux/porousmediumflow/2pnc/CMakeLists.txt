@@ -1,7 +1,6 @@
 
 #install headers
 install(FILES
-indices.hh
 model.hh
 primaryvariableswitch.hh
 volumevariables.hh

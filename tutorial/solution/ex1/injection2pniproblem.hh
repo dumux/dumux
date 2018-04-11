@@ -90,6 +90,12 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
     enum { dimWorld = GridView::dimensionworld };
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
+    enum {
+        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx, // water transport equation index
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::N2Idx, // nitrogen transport equation index
+        energyEqIdx = Indices::energyEqIdx,
+    };
+
 public:
     InjectionProblem2PNI(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -181,9 +187,9 @@ public:
         {
             // inject nitrogen. negative values mean injection
             // units kg/(s*m^2)
-            values[Indices::contiNEqIdx] = -1e-4;
-            values[Indices::contiWEqIdx] = 0.0;
-            values[Indices::energyEqIdx] = 0.0;
+            values[contiNEqIdx] = -1e-4;
+            values[contiWEqIdx] = 0.0;
+            values[energyEqIdx] = 0.0;
         }
 
         return values;

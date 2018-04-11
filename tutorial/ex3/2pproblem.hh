@@ -117,6 +117,13 @@ class ExerciseThreeProblemTwoP : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
+    enum {
+        waterPressureIdx = Indices::pressureIdx,
+        naplSaturationIdx = Indices::saturationIdx,
+        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::comp0Idx, // water transport equation index
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::comp1Idx // napl transport equation index
+    };
+
 public:
     ExerciseThreeProblemTwoP(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -196,8 +203,8 @@ public:
     {
         PrimaryVariables priVars;
 
-        priVars[Indices::pwIdx] = 200.0e3 + 9.81*1000*(depthBOR_ - globalPos[dimWorld-1]); // 200 kPa = 2 bar
-        priVars[Indices::snIdx] = 0.0; // 0 % oil saturation on left boundary
+        priVars[waterPressureIdx] = 200.0e3 + 9.81*1000*(depthBOR_ - globalPos[dimWorld-1]); // 200 kPa = 2 bar
+        priVars[naplSaturationIdx] = 0.0; // 0 % oil saturation on left boundary
        return priVars;
     }
 
@@ -221,12 +228,12 @@ public:
         // extraction of oil on the right boundary for approx. 1.e6 seconds
         if (globalPos[dimWorld-1] > up - eps_ && globalPos[0] > 20 && globalPos[0] < 40) {
             // oil outflux of 30 g/(m * s) on the right boundary.
-            values[Indices::contiWEqIdx] = 0;
-            values[Indices::contiNEqIdx] = -3e-2;
+            values[contiWEqIdx] = 0;
+            values[contiNEqIdx] = -3e-2;
         } else {
             // no-flow on the remaining Neumann-boundaries.
-            values[Indices::contiWEqIdx] = 0;
-            values[Indices::contiNEqIdx] = 0;
+            values[contiWEqIdx] = 0;
+            values[contiNEqIdx] = 0;
         }
 
         return values;
@@ -252,8 +259,8 @@ public:
     {
         PrimaryVariables values(0.0);
 
-        values[Indices::pwIdx] = 200.0e3 + 9.81*1000*(depthBOR_ - globalPos[dimWorld-1]); // 200 kPa = 2 bar
-        values[Indices::snIdx] = 0.0;
+        values[waterPressureIdx] = 200.0e3 + 9.81*1000*(depthBOR_ - globalPos[dimWorld-1]); // 200 kPa = 2 bar (pw)
+        values[naplSaturationIdx] = 0.0; // (sn)
 
         return values;
     }

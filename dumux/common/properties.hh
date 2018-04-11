@@ -128,7 +128,7 @@ NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);
 // Additional properties used by the 2pnc and 2pncmin models:
 //////////////////////////////////////////////////////////////
 NEW_PROP_TAG(Chemistry);                           //!< The chemistry class with which solves equlibrium reactions
-NEW_PROP_TAG(SetMoleFractionsForWettingPhase);     //!< Set the mole fraction in the wetting or non-wetting phase
+NEW_PROP_TAG(SetMoleFractionsForFirstPhase);       //!< Set the mole fraction in the wetting or non-wetting phase
 
 //////////////////////////////////////////////////////////////
 // Additional properties used by the richards model

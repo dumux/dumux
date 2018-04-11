@@ -25,16 +25,16 @@
 #ifndef DUMUX_2P_FORMULATION_INDICES_HH
 #define DUMUX_2P_FORMULATION_INDICES_HH
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup TwoPModel
  * \brief Enumerates the formulations which the two-phase model accepts.
  */
 enum class TwoPFormulation
 {
-    pwsn, //!< pw and sn as primary variables
-    pnsw  //!< pn and sw as primary variables
+    p0s1, //!< first phase pressure and second phase saturation as primary variables
+    p1s0  //!< first phase saturation and second phase pressure as primary variables
 };
 
 } // namespace Dumux

@@ -67,7 +67,7 @@ SET_TYPE_PROP(EvaporationAtmosphereSpatialParams, SpatialParams, EvaporationAtmo
 SET_PROP(EvaporationAtmosphereSpatialParams, MaterialLaw)
 {
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    enum {wPhaseIdx   = FluidSystem::wPhaseIdx};
+    enum {liquidPhaseIdx   = FluidSystem::liquidPhaseIdx};
 
 private:
     // define the material law which is parameterized by effective
@@ -103,7 +103,7 @@ private:
 
     using TwoPMaterialLaw = EffToAbsLaw<EffectiveLaw>;
     public:
-        using type = TwoPAdapter<wPhaseIdx, TwoPMaterialLaw>;
+        using type = TwoPAdapter<liquidPhaseIdx, TwoPMaterialLaw>;
 };
 
 

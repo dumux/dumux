@@ -233,7 +233,7 @@ public:
 };
 
 //! The primary variable switch for the richards model
-SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSwitch<TypeTag>);
+SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSwitch);
 
 //! The primary variable switch for the richards model
 // SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);

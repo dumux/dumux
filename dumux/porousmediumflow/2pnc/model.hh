@@ -100,8 +100,8 @@
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
+#include <dumux/porousmediumflow/2p2c/indices.hh>
 
-#include "indices.hh"
 #include "volumevariables.hh"
 #include "primaryvariableswitch.hh"
 #include "vtkoutputfields.hh"
@@ -114,12 +114,12 @@ namespace Dumux {
  *
  * \tparam nComp the number of components to be considered.
  * \tparam useMol whether to use molar or mass balances
- * \tparam setMoleFractionForWP whether to set mole fractions for wetting or non-wetting phase
+ * \tparam setMoleFractionForFP whether to set mole fractions for first or second phase
  */
-template<int nComp, bool useMol, bool setMoleFractionForWP, TwoPFormulation formulation>
+template<int nComp, bool useMol, bool setMoleFractionForFP, TwoPFormulation formulation>
 struct TwoPNCModelTraits
 {
-    using Indices = TwoPNCIndices;
+    using Indices = TwoPTwoCIndices;
 
     static constexpr int numEq() { return nComp; }
     static constexpr int numPhases() { return 2; }
@@ -130,7 +130,7 @@ struct TwoPNCModelTraits
     static constexpr bool enableEnergyBalance() { return false; }
 
     static constexpr bool useMoles() { return useMol; }
-    static constexpr bool setMoleFractionsForWettingPhase() { return setMoleFractionForWP; }
+    static constexpr bool setMoleFractionsForFirstPhase() { return setMoleFractionForFP; }
 
     static constexpr TwoPFormulation priVarFormulation() { return formulation; }
 };
@@ -204,7 +204,7 @@ private:
 public:
     using type = TwoPNCModelTraits<FluidSystem::numComponents,
                                    GET_PROP_VALUE(TypeTag, UseMoles),
-                                   GET_PROP_VALUE(TypeTag, SetMoleFractionsForWettingPhase),
+                                   GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
                                    GET_PROP_VALUE(TypeTag, Formulation)>;
 };
 
@@ -217,9 +217,9 @@ SET_INT_PROP(TwoPNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numC
 
 //! Default formulation is pw-Sn, overwrite if necessary
 SET_PROP(TwoPNC, Formulation)
-{ static constexpr auto value = TwoPFormulation::pwsn; };
+{ static constexpr auto value = TwoPFormulation::p0s1; };
 
-SET_BOOL_PROP(TwoPNC, SetMoleFractionsForWettingPhase, true);  //!< Set the primary variables mole fractions for the wetting or non-wetting phase
+SET_BOOL_PROP(TwoPNC, SetMoleFractionsForFirstPhase, true);  //!< Set the primary variables mole fractions for the wetting or non-wetting phase
 SET_BOOL_PROP(TwoPNC, UseMoles, true);                         //!< Use mole fractions in the balance equations by default
 
 //! Use the model after Millington (1961) for the effective diffusivity
@@ -248,7 +248,7 @@ private:
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
     using IsothermalTraits = TwoPNCModelTraits<FluidSystem::numComponents,
                                                GET_PROP_VALUE(TypeTag, UseMoles),
-                                               GET_PROP_VALUE(TypeTag, SetMoleFractionsForWettingPhase),
+                                               GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
                                                GET_PROP_VALUE(TypeTag, Formulation)>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;

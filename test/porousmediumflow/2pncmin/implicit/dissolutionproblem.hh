@@ -68,7 +68,7 @@ SET_TYPE_PROP(DissolutionTypeTag, SpatialParams, DissolutionSpatialparams<TypeTa
 //Set properties here to override the default property settings
 SET_INT_PROP(DissolutionTypeTag, ReplaceCompEqIdx, 1); //!< Replace gas balance by total mass balance
 SET_PROP(DissolutionTypeTag, Formulation)
-{ static constexpr auto value = TwoPFormulation::pnsw; };
+{ static constexpr auto value = TwoPFormulation::p1s0; };
 
 } // end namespace Properties
 
@@ -100,22 +100,30 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
-    enum {
+    enum
+    {
+        // primary variable indices
         pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx, //Saturation
+        switchIdx = Indices::switchIdx,
+
+        // component indices
+        // TODO: using xwNaClIdx as privaridx works here, but
+        //       looks like magic. Can this be done differently??
         xwNaClIdx = FluidSystem::NaClIdx,
         precipNaClIdx = FluidSystem::numComponents,
 
-        //Indices of the components
-        wCompIdx = FluidSystem::H2OIdx,
+        // Indices of the components
+        H2OIdx = FluidSystem::H2OIdx,
         NaClIdx = FluidSystem::NaClIdx,
 
-        //Indices of the phases
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
-        sPhaseIdx = FluidSystem::sPhaseIdx,
+        // Indices of the phases
+        liquidPhaseIdx = FluidSystem::liquidPhaseIdx,
+        gasPhaseIdx = FluidSystem::gasPhaseIdx,
 
-        //Index of the primary component of G and L phase
+        // TODO: this shouldn't be in the fluid system
+        sPhaseIdx = FluidSystem::solidPhaseIdx,
+
+        // Index of the primary component of G and L phase
         conti0EqIdx = Indices::conti0EqIdx,
         precipNaClEqIdx = Indices::conti0EqIdx + FluidSystem::numComponents,
 
@@ -325,25 +333,25 @@ public:
 
         const auto& volVars = elemVolVars[scv];
 
-        Scalar moleFracNaCl_wPhase = volVars.moleFraction(wPhaseIdx, NaClIdx);
-        Scalar moleFracNaCl_nPhase = volVars.moleFraction(nPhaseIdx, NaClIdx);
+        Scalar moleFracNaCl_wPhase = volVars.moleFraction(liquidPhaseIdx, NaClIdx);
+        Scalar moleFracNaCl_nPhase = volVars.moleFraction(gasPhaseIdx, NaClIdx);
         Scalar massFracNaCl_Max_wPhase = this->spatialParams().solubilityLimit();
         Scalar moleFracNaCl_Max_wPhase = massToMoleFrac_(massFracNaCl_Max_wPhase);
-        Scalar moleFracNaCl_Max_nPhase = moleFracNaCl_Max_wPhase / volVars.pressure(nPhaseIdx);
+        Scalar moleFracNaCl_Max_nPhase = moleFracNaCl_Max_wPhase / volVars.pressure(gasPhaseIdx);
         Scalar saltPorosity = this->spatialParams().minPorosity(element, scv);
 
         // liquid phase
         using std::abs;
-        Scalar precipSalt = volVars.porosity() * volVars.molarDensity(wPhaseIdx)
-                                               * volVars.saturation(wPhaseIdx)
+        Scalar precipSalt = volVars.porosity() * volVars.molarDensity(liquidPhaseIdx)
+                                               * volVars.saturation(liquidPhaseIdx)
                                                * abs(moleFracNaCl_wPhase - moleFracNaCl_Max_wPhase);
 
         if (moleFracNaCl_wPhase < moleFracNaCl_Max_wPhase)
             precipSalt *= -1;
 
         // gas phase
-        precipSalt += volVars.porosity() * volVars.molarDensity(nPhaseIdx)
-                                         * volVars.saturation(nPhaseIdx)
+        precipSalt += volVars.porosity() * volVars.molarDensity(gasPhaseIdx)
+                                         * volVars.saturation(gasPhaseIdx)
                                          * abs(moleFracNaCl_nPhase - moleFracNaCl_Max_nPhase);
 
         // make sure we don't dissolve more salt than previously precipitated
@@ -396,7 +404,7 @@ private:
      */
     static Scalar massToMoleFrac_(Scalar XwNaCl)
     {
-       const Scalar Mw = 18.015e-3; //FluidSystem::molarMass(wCompIdx); /* molecular weight of water [kg/mol] */ //TODO use correct link to FluidSyswem later
+       const Scalar Mw = 18.015e-3; //FluidSystem::molarMass(H2OIdx); /* molecular weight of water [kg/mol] */ //TODO use correct link to FluidSyswem later
        const Scalar Ms = 58.44e-3;  //FluidSystem::molarMass(NaClIdx); /* molecular weight of NaCl  [kg/mol] */
 
        const Scalar X_NaCl = XwNaCl;

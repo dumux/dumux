@@ -196,8 +196,8 @@ public:
         {
             // inject nitrogen. negative values mean injection
             // units kg/(s*m^2)
-            values[Indices::contiNEqIdx] = -1e-4;
-            values[Indices::contiWEqIdx] = 0.0;
+            values[Indices::conti0EqIdx + FluidSystem::N2Idx] = -1e-4;
+            values[Indices::conti0EqIdx + FluidSystem::H2OIdx] = 0.0;
         }
 
         return values;

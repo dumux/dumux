@@ -33,43 +33,14 @@ namespace Dumux {
  * \ingroup TwoPModel
  * \brief Defines the indices required for the two-phase fully implicit model.
  */
-struct TwoPCommonIndices
+struct TwoPIndices
 {
     // Primary variable indices
-    static const int pressureIdx = 0; //!< index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int saturationIdx = 1; //!< index of the saturation of the non-wetting/wetting phase
+    static constexpr int pressureIdx = 0; //!< index for first/second phase pressure (depending on formulation) in a solution vector
+    static constexpr int saturationIdx = 1; //!< index of the saturation of the first/second phase
 
     // indices of the equations
-    static const int conti0EqIdx = 0; //!< index of the first continuity equation
-};
-
-/*!
- * \ingroup TwoPModel
- * \brief The indices for the \f$p_w-S_n\f$ formulation of the
- *        isothermal two-phase model.
- *
- * \tparam formulation The formulation, either pwsn or pnsw
- */
-template <TwoPFormulation formulation = TwoPFormulation::pwsn>
-struct TwoPIndices : public TwoPCommonIndices
-{
-    // indices of the primary variables
-    static constexpr int pwIdx = 0; //!< index of the wetting phase pressure
-    static constexpr int snIdx = 1; //!< index of the nonwetting phase saturation
-};
-
-/*!
- * \ingroup TwoPModel
- * \brief The indices for the \f$p_n-S_w\f$ formulation of the
- *        isothermal two-phase model.
- */
-template <>
-struct TwoPIndices<TwoPFormulation::pnsw>
-: public TwoPCommonIndices
-{
-    // indices of the primary variables
-    static constexpr int pnIdx = 0; //!< index of the nonwetting phase pressure
-    static constexpr int swIdx = 1; //!< index of the wetting phase saturation
+    static constexpr int conti0EqIdx = 0; //!< index of the first continuity equation
 };
 
 } // namespace Dumux

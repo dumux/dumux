@@ -148,6 +148,16 @@ public:
         return outerMaterialParams_;
     }
 
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::phase0Idx; }
+
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {

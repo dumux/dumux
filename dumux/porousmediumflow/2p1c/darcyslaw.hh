@@ -70,8 +70,8 @@ class TwoPOneCDarcysLaw : public DarcysLaw<TypeTag>
     // copy some indices for convenience
     enum {
         // phase indices
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
+        liquidPhaseIdx = FluidSystem::liquidPhaseIdx,
+        gasPhaseIdx = FluidSystem::gasPhaseIdx,
     };
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
@@ -91,7 +91,7 @@ public:
         const Scalar flux = ParentType::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarCache);
 
         // only block wetting-phase (i.e. liquid water) fluxes
-        if((!GET_PROP_VALUE(TypeTag, UseBlockingOfSpuriousFlow)) || phaseIdx != wPhaseIdx)
+        if((!GET_PROP_VALUE(TypeTag, UseBlockingOfSpuriousFlow)) || phaseIdx != liquidPhaseIdx)
             return flux;
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
@@ -118,8 +118,8 @@ private:
         const Scalar tDn = dn.temperature(); //temperature of the downstream SCV (where the cold water is potentially intruding into a steam zone)
         const Scalar tUp = up.temperature(); //temperature of the upstream SCV
 
-        const Scalar sgDn = dn.saturation(nPhaseIdx); //gas phase saturation of the downstream SCV
-        const Scalar sgUp = up.saturation(nPhaseIdx); //gas phase saturation of the upstream SCV
+        const Scalar sgDn = dn.saturation(gasPhaseIdx); //gas phase saturation of the downstream SCV
+        const Scalar sgUp = up.saturation(gasPhaseIdx); //gas phase saturation of the upstream SCV
 
         bool upIsNotSteam = false;
         bool downIsSteam = false;
@@ -131,7 +131,7 @@ private:
         if(sgDn > 1e-5)
             downIsSteam = true;
 
-        if(upIsNotSteam && downIsSteam  && tDn > tUp && phaseIdx == wPhaseIdx)
+        if(upIsNotSteam && downIsSteam  && tDn > tUp && phaseIdx == liquidPhaseIdx)
           spuriousFlow = true;
 
         if(spuriousFlow)

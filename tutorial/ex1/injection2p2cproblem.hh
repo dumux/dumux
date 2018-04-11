@@ -200,8 +200,8 @@ public:
 
             // inject nitrogen. negative values mean injection
             // convert from units kg/(s*m^2) to mole/(s*m^2)
-            values[Indices::contiNEqIdx] = -1e-4/FluidSystem::molarMass(FluidSystem::nCompIdx);
-            values[Indices::contiWEqIdx] = 0.0;
+            values[Indices::conti0EqIdx + FluidSystem::N2Idx] = -1e-4/FluidSystem::molarMass(FluidSystem::N2Idx);
+            values[Indices::conti0EqIdx + FluidSystem::H2OIdx] = 0.0;
         }
 
         return values;
@@ -226,7 +226,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values.setState(Indices::wPhaseOnly);
+        values.setState(Indices::firstPhaseOnly);
         // get the water density at atmospheric conditions
         const Scalar densityW = FluidSystem::H2O::liquidDensity(temperature(), 1.0e5);
 

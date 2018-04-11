@@ -35,9 +35,9 @@ class TwoPOneCIndices
 {
 public:
     // Present phases (-> 'pseudo' primary variable)
-    static const int twoPhases = 1; //!< Both wetting and non-wetting phase are present.
-    static const int wPhaseOnly = 2; //!< Only the wetting phase is present.
-    static const int nPhaseOnly = 3; //!< Only non-wetting phase is present.
+    static const int twoPhases = 1; //!< Both liquid and gas phase are present.
+    static const int liquidPhaseOnly = 2; //!< Only the liquid phase is present.
+    static const int gasPhaseOnly = 3; //!< Only gas phase is present.
 
     // Primary variable indices
     static const int pressureIdx = 0; //!< Index for phase pressure in a solution vector.

@@ -46,14 +46,15 @@ class TwoPVolumeVariables
     using Indices = typename ModelTraits::Indices;
     static constexpr auto formulation = ModelTraits::priVarFormulation();
     using Scalar = typename Traits::PrimaryVariables::value_type;
+    using FS = typename Traits::FluidSystem;
 
     enum
     {
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
-        wPhaseIdx = Traits::FluidSystem::wPhaseIdx,
-        nPhaseIdx = Traits::FluidSystem::nPhaseIdx,
-        numPhases = ModelTraits::numPhases()
+
+        phase0Idx = FS::phase0Idx,
+        phase1Idx = FS::phase1Idx
     };
 
 
@@ -82,9 +83,12 @@ public:
 
         completeFluidState(elemSol, problem, element, scv, fluidState_);
 
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
+        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        const int nPhaseIdx = 1 - wPhaseIdx;
+
         mobility_[wPhaseIdx] =
             MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
             / fluidState_.viscosity(wPhaseIdx);
@@ -111,44 +115,49 @@ public:
      * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
      */
     template<class ElemSol, class Problem, class Element, class Scv>
-    static void completeFluidState(const ElemSol& elemSol,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const Scv& scv,
-                                   FluidState& fluidState)
+    void completeFluidState(const ElemSol& elemSol,
+                            const Problem& problem,
+                            const Element& element,
+                            const Scv& scv,
+                            FluidState& fluidState)
     {
         Scalar t =  ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
 
-        if (formulation == TwoPFormulation::pwsn) {
-            Scalar sn = priVars[saturationIdx];
-            fluidState.setSaturation(nPhaseIdx, sn);
-            fluidState.setSaturation(wPhaseIdx, 1 - sn);
-
-            Scalar pw = priVars[pressureIdx];
-            fluidState.setPressure(wPhaseIdx, pw);
-            fluidState.setPressure(nPhaseIdx,
-                                   pw + MaterialLaw::pc(materialParams, 1 - sn));
+        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        if (formulation == TwoPFormulation::p0s1)
+        {
+            fluidState.setSaturation(phase1Idx, priVars[saturationIdx]);
+            fluidState.setSaturation(phase0Idx, 1 - priVars[saturationIdx]);
         }
-        else if (formulation == TwoPFormulation::pnsw) {
-            Scalar sw = priVars[saturationIdx];
-            fluidState.setSaturation(wPhaseIdx, sw);
-            fluidState.setSaturation(nPhaseIdx, 1 - sw);
+        else if (formulation == TwoPFormulation::p1s0)
+        {
+            fluidState.setSaturation(phase0Idx, priVars[saturationIdx]);
+            fluidState.setSaturation(phase1Idx, 1 - priVars[saturationIdx]);
+        }
 
-            Scalar pn = priVars[pressureIdx];
-            fluidState.setPressure(nPhaseIdx, pn);
-            fluidState.setPressure(wPhaseIdx,
-                                   pn - MaterialLaw::pc(materialParams, sw));
+        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+        if (formulation == TwoPFormulation::p0s1)
+        {
+            fluidState.setPressure(phase0Idx, priVars[pressureIdx]);
+            fluidState.setPressure(phase1Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] + pc_
+                                                                       : priVars[pressureIdx] - pc_);
+        }
+        else if (formulation == TwoPFormulation::p1s0)
+        {
+            fluidState.setPressure(phase1Idx, priVars[pressureIdx]);
+            fluidState.setPressure(phase0Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] - pc_
+                                                                       : priVars[pressureIdx] + pc_);
         }
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
 
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx) {
             // compute and set the viscosity
             Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
             fluidState.setViscosity(phaseIdx, mu);
@@ -201,7 +210,7 @@ public:
      * in \f$[kg/(m*s^2)=N/m^2=Pa]\f$.
      */
     Scalar capillaryPressure() const
-    { return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); }
+    { return pc_; }
 
     /*!
      * \brief Returns temperature inside the sub-control volume
@@ -248,9 +257,10 @@ protected:
     FluidState fluidState_;
 
 private:
+    Scalar pc_;
     Scalar porosity_;
     PermeabilityType permeability_;
-    Scalar mobility_[numPhases];
+    Scalar mobility_[ModelTraits::numPhases()];
 };
 
 } // end namespace Dumux

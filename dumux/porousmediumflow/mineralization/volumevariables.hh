@@ -38,12 +38,6 @@ class MineralizationVolumeVariables : public NonMineralizationVolVars
     using ParentType = NonMineralizationVolVars;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using ModelTraits = typename Traits::ModelTraits;
-    enum
-    {
-        numPhases = ModelTraits::numPhases(),
-        numSPhases =  ModelTraits::numSPhases(),
-        numComponents = ModelTraits::numComponents()
-    };
 
 public:
     //! export the type of the fluid state
@@ -65,9 +59,9 @@ public:
         auto&& priVars = elemSol[scv.indexInElement()];
 
         sumPrecipitates_ = 0.0;
-        for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
+        for(int sPhaseIdx = 0; sPhaseIdx < ModelTraits::numSPhases(); ++sPhaseIdx)
         {
-           precipitateVolumeFraction_[sPhaseIdx] = priVars[numComponents + sPhaseIdx];
+           precipitateVolumeFraction_[sPhaseIdx] = priVars[ModelTraits::numComponents() + sPhaseIdx];
            sumPrecipitates_+= precipitateVolumeFraction_[sPhaseIdx];
         }
     }
@@ -79,16 +73,17 @@ public:
      * \param phaseIdx the index of the solid phase
      */
     Scalar precipitateVolumeFraction(int phaseIdx) const
-    { return precipitateVolumeFraction_[phaseIdx - numPhases]; }
+    { return precipitateVolumeFraction_[phaseIdx - ModelTraits::numPhases()]; }
 
     /*!
      * \brief Returns the density of the phase for all fluid and solid phases
      *
      * \param phaseIdx the index of the fluid phase
+     * \todo TODO: This fails for 1pnc if fluidSystemPhaseIdx is not 0
      */
     Scalar density(int phaseIdx) const
     {
-        if (phaseIdx < numPhases)
+        if (phaseIdx < ModelTraits::numPhases())
             return this->fluidState_.density(phaseIdx);
         else
             return FluidSystem::precipitateDensity(phaseIdx);
@@ -99,10 +94,11 @@ public:
      *        control volume.
      *
      * \param phaseIdx The phase index
+     * \todo TODO: This fails for 1pnc if fluidSystemPhaseIdx is not 0
      */
     Scalar molarDensity(int phaseIdx) const
     {
-        if (phaseIdx < numPhases)
+        if (phaseIdx < ModelTraits::numPhases())
             return this->fluidState_.molarDensity(phaseIdx);
         else
             return FluidSystem::precipitateMolarDensity(phaseIdx);
@@ -128,7 +124,7 @@ public:
     }
 
 protected:
-    Scalar precipitateVolumeFraction_[numSPhases];
+    Scalar precipitateVolumeFraction_[ModelTraits::numSPhases()];
     Scalar sumPrecipitates_;
 };
 } // end namespace Dumux

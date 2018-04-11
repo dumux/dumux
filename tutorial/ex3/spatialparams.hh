@@ -118,12 +118,22 @@ public:
      *
      * \return the material parameters object
      */
-     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
         if (isInLens(globalPos))
             return materialParamsLens_;
         return materialParams_;
     }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::phase0Idx; }
 
     /*!
      * \brief The constructor

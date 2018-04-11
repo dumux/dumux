@@ -56,15 +56,15 @@ SET_PROP(MPNCComparisonSpatialParams, MaterialLaw)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
+    enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
     // define the material law
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using EffMaterialLaw = RegularizedBrooksCorey<Scalar>;
     using TwoPMaterialLaw = EffToAbsLaw<EffMaterialLaw>;
 public:
-    using type = TwoPAdapter<wPhaseIdx, TwoPMaterialLaw>;
+    using type = TwoPAdapter<liquidPhaseIdx, TwoPMaterialLaw>;
 };
-}
+} // end namespace Properties
 
 /**
  * \ingroup MPNCModel

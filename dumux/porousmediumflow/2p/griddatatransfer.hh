@@ -84,24 +84,24 @@ class TwoPGridDataTransfer : public GridDataTransfer
     // phase indices
     enum
     {
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
+        phase0Idx = FluidSystem::phase0Idx,
+        phase1Idx = FluidSystem::phase1Idx,
     };
 
     // formulations
-    static constexpr auto pwsn = TwoPFormulation::pwsn;
-    static constexpr auto pnsw = TwoPFormulation::pnsw;
+    static constexpr auto p0s1 = TwoPFormulation::p0s1;
+    static constexpr auto p1s0 = TwoPFormulation::p1s0;
 
     // the formulation that is actually used
     static constexpr auto formulation = ModelTraits::priVarFormulation();
 
     // This won't work (mass conservative) for compressible fluids
-    static_assert(!FluidSystem::isCompressible(wPhaseIdx)
-                  && !FluidSystem::isCompressible(nPhaseIdx),
+    static_assert(!FluidSystem::isCompressible(phase0Idx)
+                  && !FluidSystem::isCompressible(phase1Idx),
                   "This adaption helper is only mass conservative for incompressible fluids!");
 
     // check if the used formulation is implemented here
-    static_assert(formulation == pwsn || formulation == pnsw, "Chosen formulation not known to the TwoPGridDataTransfer");
+    static_assert(formulation == p0s1 || formulation == p1s0, "Chosen formulation not known to the TwoPGridDataTransfer");
 
 public:
     /*! \brief Constructor
@@ -158,8 +158,8 @@ public:
                         volVars.update(adaptedValues.u, *problem_, element, scv);
 
                         const auto poreVolume = scv.volume()*volVars.porosity();
-                        adaptedValues.associatedMass[nPhaseIdx] += poreVolume * volVars.density(nPhaseIdx) * volVars.saturation(nPhaseIdx);
-                        adaptedValues.associatedMass[wPhaseIdx] += poreVolume * volVars.density(wPhaseIdx) * volVars.saturation(wPhaseIdx);
+                        adaptedValues.associatedMass[phase1Idx] += poreVolume * volVars.density(phase1Idx) * volVars.saturation(phase1Idx);
+                        adaptedValues.associatedMass[phase0Idx] += poreVolume * volVars.density(phase0Idx) * volVars.saturation(phase0Idx);
                     }
 
                     // leaf elements always start with count = 1
@@ -243,15 +243,15 @@ public:
                         // only recalculate the saturations if element hasn't been leaf before adaptation
                         if (!adaptedValues.wasLeaf)
                         {
-                            if (formulation == pwsn)
+                            if (formulation == p0s1)
                             {
-                                sol_[dofIdxGlobal][saturationIdx] = adaptedValues.associatedMass[nPhaseIdx];
-                                sol_[dofIdxGlobal][saturationIdx] /= elementVolume * volVars.density(nPhaseIdx) * volVars.porosity();
+                                sol_[dofIdxGlobal][saturationIdx] = adaptedValues.associatedMass[phase1Idx];
+                                sol_[dofIdxGlobal][saturationIdx] /= elementVolume * volVars.density(phase1Idx) * volVars.porosity();
                             }
-                            else if (formulation == pnsw)
+                            else if (formulation == p1s0)
                             {
-                                sol_[dofIdxGlobal][saturationIdx] = adaptedValues.associatedMass[wPhaseIdx];
-                                sol_[dofIdxGlobal][saturationIdx] /= elementVolume * volVars.density(wPhaseIdx) * volVars.porosity();
+                                sol_[dofIdxGlobal][saturationIdx] = adaptedValues.associatedMass[phase0Idx];
+                                sol_[dofIdxGlobal][saturationIdx] /= elementVolume * volVars.density(phase0Idx) * volVars.porosity();
                             }
                         }
                     }
@@ -260,15 +260,15 @@ public:
                     else
                     {
                         const auto scvVolume = scv.volume();
-                        if (formulation == pwsn)
+                        if (formulation == p0s1)
                         {
-                            massCoeff[dofIdxGlobal] += scvVolume * volVars.density(nPhaseIdx) * volVars.porosity();
-                            associatedMass[dofIdxGlobal] += scvVolume / elementVolume * adaptedValues.associatedMass[nPhaseIdx];
+                            massCoeff[dofIdxGlobal] += scvVolume * volVars.density(phase1Idx) * volVars.porosity();
+                            associatedMass[dofIdxGlobal] += scvVolume / elementVolume * adaptedValues.associatedMass[phase1Idx];
                         }
-                        else if (formulation == pnsw)
+                        else if (formulation == p1s0)
                         {
-                            massCoeff[dofIdxGlobal] += scvVolume * volVars.density(wPhaseIdx) * volVars.porosity();
-                            associatedMass[dofIdxGlobal] += scvVolume / elementVolume * adaptedValues.associatedMass[wPhaseIdx];
+                            massCoeff[dofIdxGlobal] += scvVolume * volVars.density(phase0Idx) * volVars.porosity();
+                            associatedMass[dofIdxGlobal] += scvVolume / elementVolume * adaptedValues.associatedMass[phase0Idx];
                         }
                     }
                 }
@@ -289,10 +289,10 @@ public:
 
                     // obtain the mass contained in father
                     Scalar massFather = 0.0;
-                    if (formulation == pwsn)
-                        massFather = adaptedValuesFather.associatedMass[nPhaseIdx];
-                    else if (formulation == pnsw)
-                        massFather = adaptedValuesFather.associatedMass[wPhaseIdx];
+                    if (formulation == p0s1)
+                        massFather = adaptedValuesFather.associatedMass[phase1Idx];
+                    else if (formulation == p1s0)
+                        massFather = adaptedValuesFather.associatedMass[phase0Idx];
 
                     // obtain the element solution through the father
                     auto elemSolSon = adaptedValuesFather.u;
@@ -311,10 +311,10 @@ public:
 
                         // overwrite the saturation by a mass conservative one here
                         Scalar massCoeffSon = 0.0;
-                        if (formulation == pwsn)
-                            massCoeffSon = scv.volume() * volVars.density(nPhaseIdx) * volVars.porosity();
-                        else if (formulation == pnsw)
-                            massCoeffSon = scv.volume() * volVars.density(wPhaseIdx) * volVars.porosity();
+                        if (formulation == p0s1)
+                            massCoeffSon = scv.volume() * volVars.density(phase1Idx) * volVars.porosity();
+                        else if (formulation == p1s0)
+                            massCoeffSon = scv.volume() * volVars.density(phase0Idx) * volVars.porosity();
                         sol_[scv.dofIndex()][saturationIdx] = (scv.volume() / fatherElement.geometry().volume() * massFather)/massCoeffSon;
                     }
                 }
@@ -343,15 +343,15 @@ public:
 
                         const auto dofIdxGlobal = scv.dofIndex();
                         const auto scvVolume = scv.volume();
-                        if (formulation == pwsn)
+                        if (formulation == p0s1)
                         {
-                            massCoeff[dofIdxGlobal] += scvVolume * volVars.density(nPhaseIdx) * volVars.porosity();
-                            associatedMass[dofIdxGlobal] += scvVolume / fatherElementVolume * adaptedValuesFather.associatedMass[nPhaseIdx];
+                            massCoeff[dofIdxGlobal] += scvVolume * volVars.density(phase1Idx) * volVars.porosity();
+                            associatedMass[dofIdxGlobal] += scvVolume / fatherElementVolume * adaptedValuesFather.associatedMass[phase1Idx];
                         }
-                        else if (formulation == pnsw)
+                        else if (formulation == p1s0)
                         {
-                            massCoeff[dofIdxGlobal] += scvVolume * volVars.density(wPhaseIdx) * volVars.porosity();
-                            associatedMass[dofIdxGlobal] += scvVolume / fatherElementVolume * adaptedValuesFather.associatedMass[wPhaseIdx];
+                            massCoeff[dofIdxGlobal] += scvVolume * volVars.density(phase0Idx) * volVars.porosity();
+                            associatedMass[dofIdxGlobal] += scvVolume / fatherElementVolume * adaptedValuesFather.associatedMass[phase0Idx];
                         }
 
                         // store constructed (pressure) values of son in the current solution (saturation comes later)

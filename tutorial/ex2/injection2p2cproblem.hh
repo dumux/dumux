@@ -207,8 +207,8 @@ public:
         {
             // set the Neumann values for the Nitrogen component balance
             // convert from units kg/(s*m^2) to mole/(s*m^2)
-            values[Indices::contiNEqIdx] = -totalAreaSpecificInflow_/FluidSystem::molarMass(FluidSystem::nCompIdx);
-            values[Indices::contiWEqIdx] = 0.0;
+            values[Indices::conti0EqIdx + FluidSystem::H2OIdx] = -totalAreaSpecificInflow_/FluidSystem::molarMass(FluidSystem::N2Idx);
+            values[Indices::conti0EqIdx + FluidSystem::N2Idx] = 0.0;
         }
 
         return values;
@@ -232,7 +232,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values.setState(Indices::wPhaseOnly);
+        values.setState(Indices::firstPhaseOnly);
 
         // get the water density at atmospheric conditions
         const Scalar densityW = FluidSystem::H2O::liquidDensity(temperature(), 1.0e5);

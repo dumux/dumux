@@ -60,13 +60,12 @@ class BrineAir
     using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:
-
     using H2O = H2Otype;
+    using Air = Components::Air<Scalar>;
+    using Brine = Components::Brine<Scalar, H2Otype>;
+    using NaCl = Components::NaCl<Scalar>;
     using H2O_Air = BinaryCoeff::H2O_Air;
-    using Air = Dumux::Components::Air<Scalar>;
     using Brine_Air = BinaryCoeff::Brine_Air<Scalar, Air>;
-    using Brine = Dumux::Components::Brine<Scalar,H2Otype>;
-    using NaCl = Dumux::Components::NaCl<Scalar>;
 
     // the type of parameter cache objects. this fluid system does not
     using ParameterCache = NullParameterCache;
@@ -74,19 +73,25 @@ public:
     /****************************************
      * Fluid phase related static parameters
      ****************************************/
-    static const int numPhases = 2; // liquid and gas phases
-    static const int numSPhases = 1;// precipitated solid phases
-    static const int lPhaseIdx = 0; // index of the liquid phase
-    static const int gPhaseIdx = 1; // index of the gas phase
-    static const int sPhaseIdx = 2; // index of the precipitated salt
-    static const int wPhaseIdx = lPhaseIdx; // index of the wetting phase
-    static const int nPhaseIdx = gPhaseIdx; // index of the non-wetting phase
+    static constexpr int numPhases = 2; // liquid and gas phases
+    static constexpr int numComponents = 3; // H2O, Air, NaCl
+    static constexpr int numSPhases = 1;// precipitated solid phases // TODO: remove
+
+    static constexpr int liquidPhaseIdx = 0; // index of the liquid phase
+    static constexpr int gasPhaseIdx = 1; // index of the gas phase
+    static constexpr int solidPhaseIdx = 2; // index of the precipitated salt // TODO: remove
+
+    static constexpr int phase0Idx = liquidPhaseIdx; // index of the first phase
+    static constexpr int phase1Idx = gasPhaseIdx; // index of the second phase
 
     // export component indices to indicate the main component
     // of the corresponding phase at atmospheric pressure 1 bar
     // and room temperature 20°C:
-    static const int wCompIdx = wPhaseIdx;
-    static const int nCompIdx = nPhaseIdx;
+    static constexpr int H2OIdx = 0;
+    static constexpr int AirIdx = 1;
+    static constexpr int comp0Idx = H2OIdx;
+    static constexpr int comp1Idx = AirIdx;
+    static constexpr int NaClIdx  = 2; // TODO: remove
 
     /*!
      * \brief Return the human readable name of a fluid phase
@@ -96,9 +101,9 @@ public:
     static std::string phaseName(int phaseIdx)
     {
         switch (phaseIdx) {
-        case wPhaseIdx: return "liquid";
-        case nPhaseIdx: return "gas";
-        case sPhaseIdx: return "NaCl";
+        case phase0Idx: return "liquid";
+        case phase1Idx: return "gas";
+        case solidPhaseIdx: return "NaCl";
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -118,7 +123,7 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        return phaseIdx != nPhaseIdx;
+        return phaseIdx != phase1Idx;
     }
 
     /*!
@@ -158,7 +163,7 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         // ideal gases are always compressible
-        if (phaseIdx == nPhaseIdx)
+        if (phaseIdx == phase1Idx)
             return true;
         // the water component decides for the liquid phase...
         return H2O::liquidIsCompressible();
@@ -175,7 +180,7 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
         // let the fluids decide
-        if (phaseIdx == nPhaseIdx)
+        if (phaseIdx == phase1Idx)
             return H2O::gasIsIdeal() && Air::gasIsIdeal();
         return false; // not a gas
     }
@@ -183,12 +188,6 @@ public:
     /****************************************
      * Component related static parameters
      ****************************************/
-    static const int numComponents = 3; // H2O, Air, NaCl
-
-    static const int H2OIdx = wCompIdx;//0
-    static const int AirIdx = nCompIdx;//1
-    static const int NaClIdx  = 2;
-
     /*!
      * \brief Return the human readable name of a component
      *
@@ -228,8 +227,8 @@ public:
      */
     static Scalar precipitateDensity(int phaseIdx)
     {
-        if(phaseIdx != sPhaseIdx)
-            DUNE_THROW(Dune::InvalidStateException, "Invalid solid phase index " << sPhaseIdx);
+        if(phaseIdx != solidPhaseIdx)
+            DUNE_THROW(Dune::InvalidStateException, "Invalid solid phase index " << solidPhaseIdx);
         return NaCl::density();
     }
 
@@ -336,14 +335,14 @@ public:
         Scalar pressure = fluidState.pressure(phaseIdx);
 
         switch (phaseIdx) {
-            case lPhaseIdx:
+            case liquidPhaseIdx:
                 return Brine::liquidDensity(temperature,
                               pressure,
-                              fluidState.massFraction(lPhaseIdx, NaClIdx));
-            case gPhaseIdx:
+                              fluidState.massFraction(liquidPhaseIdx, NaClIdx));
+            case gasPhaseIdx:
                 return gasDensity_(temperature,
                             pressure,
-                            fluidState.moleFraction(gPhaseIdx, H2OIdx));
+                            fluidState.moleFraction(gasPhaseIdx, H2OIdx));
 
             default:
                 DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
@@ -372,12 +371,12 @@ public:
         Scalar pressure = fluidState.pressure(phaseIdx);
         Scalar result = 0;
 
-        if (phaseIdx == lPhaseIdx)
+        if (phaseIdx == liquidPhaseIdx)
         {
-            Scalar XNaCl = fluidState.massFraction(lPhaseIdx, NaClIdx);
+            Scalar XNaCl = fluidState.massFraction(liquidPhaseIdx, NaClIdx);
             result = Brine::liquidViscosity(temperature, pressure, XNaCl);
         }
-        else if (phaseIdx == gPhaseIdx)
+        else if (phaseIdx == gasPhaseIdx)
         {
             result = Air::gasViscosity(temperature, pressure);
         }
@@ -423,10 +422,10 @@ public:
         assert(T > 0);
         assert(p > 0);
 
-        if (phaseIdx == gPhaseIdx)
+        if (phaseIdx == gasPhaseIdx)
             return 1.0;
 
-        else if (phaseIdx == lPhaseIdx)
+        else if (phaseIdx == liquidPhaseIdx)
         {
         if (compIdx == H2OIdx)
             return Brine::vaporPressure(T)/p;
@@ -438,15 +437,6 @@ public:
         else
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
-
-    template <class FluidState>
-    static Scalar kelvinVaporPressure(const FluidState &fluidState,
-                                      const int phaseIdx,
-                                      const int compIdx)
-    {
-        DUNE_THROW(Dune::NotImplemented, "FluidSystems::BrineAir::kelvinVaporPressure()");
-    }
-
 
     using Base::diffusionCoefficient;
     template <class FluidState>
@@ -481,7 +471,7 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
 
-        if (phaseIdx == lPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx) {
             Scalar result = 0.0;
             if(compJIdx == AirIdx)
                 result = Brine_Air::liquidDiffCoeff(temperature, pressure);
@@ -495,7 +485,7 @@ public:
             return result;
         }
         else {
-            assert(phaseIdx == gPhaseIdx);
+            assert(phaseIdx == gasPhaseIdx);
 
             if (compIIdx != AirIdx)
             {
@@ -546,7 +536,7 @@ public:
         Scalar T = fluidState.temperature(phaseIdx);
         Scalar p = fluidState.pressure(phaseIdx);
 
-        if (phaseIdx == lPhaseIdx)
+        if (phaseIdx == liquidPhaseIdx)
         {
             Scalar XlNaCl = fluidState.massFraction(phaseIdx, NaClIdx);
             Scalar result = Brine::liquidEnthalpy(T, p, XlNaCl);
@@ -555,8 +545,8 @@ public:
         }
         else
         {
-            Scalar XAir = fluidState.massFraction(gPhaseIdx, AirIdx);
-            Scalar XH2O = fluidState.massFraction(gPhaseIdx, H2OIdx);
+            Scalar XAir = fluidState.massFraction(gasPhaseIdx, AirIdx);
+            Scalar XH2O = fluidState.massFraction(gasPhaseIdx, H2OIdx);
 
             Scalar result = 0;
             result += XH2O * H2O::gasEnthalpy(T, p);
@@ -577,16 +567,16 @@ public:
                                     int phaseIdx,
                                     int componentIdx)
     {
-        Scalar T = fluidState.temperature(nPhaseIdx);
-        Scalar p = fluidState.pressure(nPhaseIdx);
+        Scalar T = fluidState.temperature(phase1Idx);
+        Scalar p = fluidState.pressure(phase1Idx);
         Valgrind::CheckDefined(T);
         Valgrind::CheckDefined(p);
 
-        if (phaseIdx == wPhaseIdx)
+        if (phaseIdx == phase0Idx)
         {
             DUNE_THROW(Dune::NotImplemented, "The component enthalpies in the liquid phase are not implemented.");
         }
-        else if (phaseIdx == nPhaseIdx)
+        else if (phaseIdx == phase1Idx)
         {
             if (componentIdx ==  H2OIdx)
             {
@@ -616,7 +606,7 @@ public:
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
     {
-        if (phaseIdx == lPhaseIdx)
+        if (phaseIdx == liquidPhaseIdx)
             return H2O::liquidThermalConductivity(fluidState.temperature(phaseIdx),
                                                   fluidState.pressure(phaseIdx));
         else // gas phase
@@ -641,14 +631,14 @@ public:
     {
         const Scalar temperature  = fluidState.temperature(phaseIdx);
         const Scalar pressure = fluidState.pressure(phaseIdx);
-        if (phaseIdx == wPhaseIdx)
+        if (phaseIdx == phase0Idx)
         {
             return H2O::liquidHeatCapacity(temperature, pressure);
         }
-        else if (phaseIdx == nPhaseIdx)
+        else if (phaseIdx == phase1Idx)
         {
-            return Air::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(nPhaseIdx, AirIdx)
-                   + H2O::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(nPhaseIdx, H2OIdx);
+            return Air::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(phase1Idx, AirIdx)
+                   + H2O::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(phase1Idx, H2OIdx);
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);

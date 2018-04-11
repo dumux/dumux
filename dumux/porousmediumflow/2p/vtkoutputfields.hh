@@ -37,18 +37,20 @@ public:
     static void init(VtkOutputModule& vtk)
     {
         using VolumeVariables = typename VtkOutputModule::VolumeVariables;
-        using FluidSystem = typename VolumeVariables::FluidSystem;
+        using FS = typename VolumeVariables::FluidSystem;
 
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(FluidSystem::wPhaseIdx); }, "Sw");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(FluidSystem::nPhaseIdx); }, "Sn");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(FluidSystem::wPhaseIdx); }, "pw");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(FluidSystem::nPhaseIdx); }, "pn");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.capillaryPressure(); }, "pc");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(FluidSystem::wPhaseIdx); }, "rhoW");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(FluidSystem::nPhaseIdx); }, "rhoN");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.mobility(FluidSystem::wPhaseIdx); }, "mobW");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.mobility(FluidSystem::nPhaseIdx); }, "mobN");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.porosity(); }, "porosity");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.capillaryPressure(); }, "pc");
+
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(FS::phase0Idx); }, "Sw");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(FS::phase0Idx); }, "pw");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(FS::phase0Idx); }, "rhoW");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.mobility(FS::phase0Idx); }, "mobW");
+
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(FS::phase1Idx); }, "Sn");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(FS::phase1Idx); }, "pn");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(FS::phase1Idx); }, "rhoN");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.mobility(FS::phase1Idx); }, "mobN");
     }
 };
 

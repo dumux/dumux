@@ -30,10 +30,6 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/fluidsystems/1pgas.hh>
-#include <dumux/material/fluidstates/compositional.hh>
-
 #include "base.hh"
 
 namespace Dumux {
@@ -51,17 +47,19 @@ class TwoPOneC
     using Component = ComponentType;
 
 public:
+    static constexpr int numPhases = 2; //!< Number of phases in the fluid system
+    static constexpr int numComponents = 1; //!< Number of components in the fluid system
+
+    static constexpr int liquidPhaseIdx = 0; //!< index of the liquid phase
+    static constexpr int gasPhaseIdx = 1; //!< index of the gas phase
+    static constexpr int phase0Idx = liquidPhaseIdx; //!< index of the first phase
+    static constexpr int phase1Idx = gasPhaseIdx; //!< index of the second phase
+
+    static constexpr int comp0Idx = 0; //!< index of the only component
+
     /****************************************
-     * Fluid phase related static parameters
-     ****************************************/
-
-    //! Number of phases in the fluid system
-    static constexpr int numPhases = 2;
-
-    static constexpr int wPhaseIdx = 0; // index of the wetting phase
-    static constexpr int nPhaseIdx = 1; // index of the non-wetting phase
-
-
+    * Fluid phase related static parameters
+    ****************************************/
     /*!
      * \brief Return the human readable name of a fluid phase
      *
@@ -89,10 +87,10 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isLiquid(int phaseIdx)
+    static constexpr bool isLiquid(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        return phaseIdx == wPhaseIdx;
+        return phaseIdx == liquidPhaseIdx;
     }
 
     /*!
@@ -109,7 +107,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isIdealMixture(int phaseIdx)
+    static constexpr bool isIdealMixture(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         // we assume Henry's and Raoult's laws for the water phase and
@@ -131,7 +129,7 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         // gases are always compressible
-        if (phaseIdx == nPhaseIdx)
+        if (phaseIdx == gasPhaseIdx)
             return true;
         // the component decides for the liquid phase...
         return Component::liquidIsCompressible();
@@ -143,11 +141,11 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isIdealGas(int phaseIdx)
+    static constexpr bool isIdealGas(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        if (phaseIdx == nPhaseIdx)
+        if (phaseIdx == gasPhaseIdx)
             // let the components decide
             return Component::gasIsIdeal();
         return false; // not a gas
@@ -156,12 +154,6 @@ public:
     /****************************************
      * Component related static parameters
      ****************************************/
-
-    //! Number of components in the fluid system
-    static constexpr int numComponents = 1;
-
-    static constexpr int ComponentIdx = 0;
-
 
     /*!
      * \brief Return the human readable name of a component
@@ -291,10 +283,10 @@ public:
         Scalar p = fluidState.pressure(phaseIdx);
 
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx) {
                 return Component::liquidDensity(T, p);
         }
-        else if (phaseIdx == nPhaseIdx)// gas phase
+        else if (phaseIdx == gasPhaseIdx)// gas phase
         {
             return Component::gasDensity(T, p);
         }
@@ -319,10 +311,10 @@ public:
         Scalar p = fluidState.pressure(phaseIdx);
 
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx) {
                 return Component::liquidViscosity(T, p);
         }
-        else if (phaseIdx == nPhaseIdx) // gas phase
+        else if (phaseIdx == gasPhaseIdx) // gas phase
         {
             return Component::gasViscosity(T, p) ;
         }
@@ -341,7 +333,7 @@ public:
                                    const unsigned int phaseIdx)
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
-        Scalar pressure = fluidState.pressure(nPhaseIdx) ;
+        Scalar pressure = fluidState.pressure(gasPhaseIdx) ;
 
         return Component::vaporTemperature(pressure) ;
     }
@@ -386,7 +378,7 @@ public:
         Scalar p = fluidState.pressure(phaseIdx);
 
         // liquid phase
-        if (phaseIdx == wPhaseIdx)
+        if (phaseIdx == liquidPhaseIdx)
            return Component::vaporPressure(T)/p;
 
         // for the gas phase, assume an ideal gas when it comes to
@@ -449,11 +441,11 @@ public:
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx) {
             return Component::liquidEnthalpy(fluidState.temperature(phaseIdx),
                                            fluidState.pressure(phaseIdx));
         }
-        else if (phaseIdx == nPhaseIdx) // gas phase
+        else if (phaseIdx == gasPhaseIdx) // gas phase
         {
             return Component::gasEnthalpy(fluidState.temperature(phaseIdx),
                                            fluidState.pressure(phaseIdx));
@@ -477,11 +469,11 @@ public:
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx) {
                  return Component::liquidThermalConductivity(fluidState.temperature(phaseIdx),
                                                         fluidState.pressure(phaseIdx)); //0.68 ;
         }
-        else if (phaseIdx == nPhaseIdx) // gas phase
+        else if (phaseIdx == gasPhaseIdx) // gas phase
         {
             return Component::gasThermalConductivity(fluidState.temperature(phaseIdx),
                                                         fluidState.pressure(phaseIdx)); //0.0248;
@@ -504,11 +496,11 @@ public:
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx) {
                  return Component::liquidHeatCapacity(fluidState.temperature(phaseIdx),
                                            fluidState.pressure(phaseIdx));//4.217e3 ;
         }
-        else if (phaseIdx == nPhaseIdx) // gas phase
+        else if (phaseIdx == gasPhaseIdx) // gas phase
         {
             return Component::gasHeatCapacity(fluidState.temperature(phaseIdx),
                                            fluidState.pressure(phaseIdx));//2.029e3;

@@ -92,6 +92,11 @@ class Injection2p2cProblem : public PorousMediumFlowProblem<TypeTag>
     enum { dimWorld = GridView::dimensionworld };
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
+    enum {
+        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx, // water transport equation index
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::N2Idx, // nitrogen transport equation index
+    };
+
 public:
     Injection2p2cProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -195,8 +200,8 @@ public:
 
             // inject nitrogen. negative values mean injection
             // convert from units kg/(s*m^2) to mole/(s*m^2)
-            values[Indices::contiNEqIdx] = totalAreaSpecificInflow_/FluidSystem::molarMass(FluidSystem::nCompIdx);
-            values[Indices::contiWEqIdx] = 0.0;
+            values[contiNEqIdx] = totalAreaSpecificInflow_/FluidSystem::molarMass(FluidSystem::N2Idx);
+            values[contiWEqIdx] = 0.0;
         }
 
         return values;
@@ -221,7 +226,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values.setState(Indices::wPhaseOnly);
+        values.setState(Indices::firstPhaseOnly);
         // get the water density at atmospheric conditions
         const Scalar densityW = FluidSystem::H2O::liquidDensity(temperature(), 1.0e5);
 

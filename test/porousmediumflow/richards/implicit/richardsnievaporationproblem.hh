@@ -208,8 +208,8 @@ public:
         if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
         {
              values[conti0EqIdx] = 1e-3;
-             values[energyEqIdx] = FluidSystem::enthalpy( volVars.fluidState(),Indices::nPhaseIdx) * values[conti0EqIdx];
-             values[energyEqIdx] += FluidSystem::thermalConductivity(volVars.fluidState(), Indices::nPhaseIdx)
+             values[energyEqIdx] = FluidSystem::enthalpy( volVars.fluidState(), FluidSystem::gasPhaseIdx) * values[conti0EqIdx];
+             values[energyEqIdx] += FluidSystem::thermalConductivity(volVars.fluidState(), FluidSystem::gasPhaseIdx)
                                     * (volVars.temperature() - temperatureInitial_)/boundaryLayerThickness;
         }
         return values;

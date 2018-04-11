@@ -180,6 +180,16 @@ public:
     Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
     { return lambdaSolid_; }
 
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::H2OIdx; }
+
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
     { return globalPos[dimWorld-1] > layerBottom_; }

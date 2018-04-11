@@ -136,14 +136,9 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
         switchIdx = Indices::switchIdx,
 
         // phase presence index
-        wPhaseOnly = Indices::wPhaseOnly,
-
-        // phase indices
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
+        firstPhaseOnly = Indices::firstPhaseOnly,
 
         // component indices
-        nCompIdx = FluidSystem::nCompIdx,
         BrineIdx = FluidSystem::BrineIdx,
         CO2Idx = FluidSystem::CO2Idx,
 
@@ -250,8 +245,8 @@ public:
         vtk.addField(vtkBoxVolume_, "boxVolume");
 
 #if !ISOTHERMAL
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(wPhaseIdx); }, "enthalpyW");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(nPhaseIdx); }, "enthalpyN");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(BrineIdx); }, "enthalpyW");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(CO2Idx); }, "enthalpyN");
 #else
         vtkTemperature_.resize(numDofs, 0.0);
         vtk.addField(vtkTemperature_, "temperature");
@@ -385,7 +380,7 @@ public:
          // kg/(m^2*s) or mole/(m^2*s) depending on useMoles
         if (boundaryId == injectionBottom_)
         {
-            fluxes[contiCO2EqIdx] = useMoles ? -injectionRate_/FluidSystem::molarMass(nCompIdx) : -injectionRate_;
+            fluxes[contiCO2EqIdx] = useMoles ? -injectionRate_/FluidSystem::molarMass(CO2Idx) : -injectionRate_;
 #if !ISOTHERMAL
             // energy fluxes are always mass specific
             fluxes[energyEqIdx] = -injectionRate_/*kg/(m^2 s)*/*CO2::gasEnthalpy(
@@ -430,7 +425,7 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values.setState(wPhaseOnly);
+        values.setState(firstPhaseOnly);
 
         const Scalar temp = initialTemperatureField_(globalPos);
         const Scalar densityW = FluidSystem::Brine::liquidDensity(temp, 1e7);

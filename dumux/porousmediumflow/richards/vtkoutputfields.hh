@@ -41,23 +41,23 @@ public:
     {
         using FluidSystem = typename VtkOutputModule::VolumeVariables::FluidSystem;
 
-        vtk.addVolumeVariable([](const auto& v){ return v.saturation(FluidSystem::wPhaseIdx); }, "Sw");
-        vtk.addVolumeVariable([](const auto& v){ return v.saturation(FluidSystem::nPhaseIdx); }, "Sn");
-        vtk.addVolumeVariable([](const auto& v){ return v.pressure(FluidSystem::wPhaseIdx); }, "pw");
-        vtk.addVolumeVariable([](const auto& v){ return v.pressure(FluidSystem::nPhaseIdx); }, "pn");
+        vtk.addVolumeVariable([](const auto& v){ return v.saturation(FluidSystem::liquidPhaseIdx); }, "Sw");
+        vtk.addVolumeVariable([](const auto& v){ return v.saturation(FluidSystem::gasPhaseIdx); }, "Sn");
+        vtk.addVolumeVariable([](const auto& v){ return v.pressure(FluidSystem::liquidPhaseIdx); }, "pw");
+        vtk.addVolumeVariable([](const auto& v){ return v.pressure(FluidSystem::gasPhaseIdx); }, "pn");
         vtk.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); }, "pc");
-        vtk.addVolumeVariable([](const auto& v){ return v.density(FluidSystem::wPhaseIdx); }, "density");
-        vtk.addVolumeVariable([](const auto& v){ return v.mobility(FluidSystem::wPhaseIdx); }, "mobility");
-        vtk.addVolumeVariable([](const auto& v){ return v.relativePermeability(FluidSystem::wPhaseIdx); }, "kr");
+        vtk.addVolumeVariable([](const auto& v){ return v.density(FluidSystem::liquidPhaseIdx); }, "density");
+        vtk.addVolumeVariable([](const auto& v){ return v.mobility(FluidSystem::liquidPhaseIdx); }, "mobility");
+        vtk.addVolumeVariable([](const auto& v){ return v.relativePermeability(FluidSystem::liquidPhaseIdx); }, "kr");
         vtk.addVolumeVariable([](const auto& v){ return v.porosity(); }, "porosity");
 
         static const bool gravity = getParamFromGroup<bool>(vtk.paramGroup(), "Problem.EnableGravity");
 
         if(gravity)
-            vtk.addVolumeVariable([](const auto& v){ return v.pressureHead(FluidSystem::wPhaseIdx); }, "pressure head");
+            vtk.addVolumeVariable([](const auto& v){ return v.pressureHead(FluidSystem::liquidPhaseIdx); }, "pressure head");
         if (enableWaterDiffusionInAir)
             vtk.addVolumeVariable([](const auto& v){ return v.moleFraction(1, 0); }, "x^w_air");
-        vtk.addVolumeVariable([](const auto& v){ return v.waterContent(FluidSystem::wPhaseIdx); },"water content");
+        vtk.addVolumeVariable([](const auto& v){ return v.waterContent(FluidSystem::liquidPhaseIdx); },"water content");
 
         vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phasePresence");
     }

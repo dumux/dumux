@@ -107,11 +107,11 @@ public:
       std::cout << "If you want to use simplices instead of cubes, install and use dune-ALUGrid or UGGrid." << std::endl;
 #endif // !(HAVE_DUNE_ALUGRID || HAVE_UG)
 
-      // initialize the fluid system
-      FluidSystem::init();
+        // initialize the fluid system
+        FluidSystem::init();
 
-      // set the depth of the bottom of the reservoir
-      depthBOR_ = this->fvGridGeometry().bBoxMax()[dimWorld-1];
+        // set the depth of the bottom of the reservoir
+        depthBOR_ = this->fvGridGeometry().bBoxMax()[dimWorld-1];
 
         // name of the problem and output file
         name_ = getParam<std::string>("Problem.Name");
@@ -170,7 +170,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars;
-        priVars.setState(Indices::wPhaseOnly);
+        priVars.setState(Indices::firstPhaseOnly);
         priVars[Indices::pressureIdx] = 200.0e3 + 9.81*1000*(depthBOR_ - globalPos[dimWorld-1]);
         priVars[Indices::switchIdx] = 0.0; // 0 % oil saturation on left boundary
        return priVars;
@@ -196,12 +196,12 @@ public:
         if (globalPos[dimWorld-1] > up - eps_ && globalPos[0] > 20 && globalPos[0] < 40) {
             // oil outflux of 30 g/(m * s) on the right boundary.
             // we solve for the mole balance, so we have to divide by the molar mass
-            values[Indices::contiWEqIdx] = 0;
-            values[Indices::contiNEqIdx] = -3e-2/FluidSystem::MyCompressibleComponent::molarMass();
+            values[Indices::conti0EqIdx + FluidSystem::H2OIdx] = 0;
+            values[Indices::conti0EqIdx + FluidSystem::NAPLIdx] = -3e-2/FluidSystem::MyCompressibleComponent::molarMass();
         } else {
             // no-flow on the remaining Neumann-boundaries.
-            values[Indices::contiWEqIdx] = 0;
-            values[Indices::contiNEqIdx] = 0;
+            values[Indices::conti0EqIdx + FluidSystem::H2OIdx] = 0;
+            values[Indices::conti0EqIdx + FluidSystem::NAPLIdx] = 0;
         }
 
         return values;
@@ -226,7 +226,7 @@ public:
 
     {
         PrimaryVariables values(0.0);
-        values.setState(Indices::wPhaseOnly);
+        values.setState(Indices::firstPhaseOnly);
 
         values[Indices::pressureIdx] = 200.0e3 + 9.81*1000*(depthBOR_ - globalPos[dimWorld-1]); // 200 kPa = 2 bar
         values[Indices::switchIdx] = 0.0;

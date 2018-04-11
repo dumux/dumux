@@ -54,12 +54,13 @@ class ThreePWaterOilVolumeVariables
     using ParentType = PorousMediumFlowVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits>>;
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
-    using Indices = typename Traits::ModelTraits::Indices;
+    using ModelTraits = typename Traits::ModelTraits;
+    using Indices = typename ModelTraits::Indices;
     using FS = typename Traits::FluidSystem;
 
     enum {
-        numPhases = Traits::ModelTraits::numPhases(),
-        numComponents = Traits::ModelTraits::numComponents(),
+        numPs = ParentType::numPhases(),
+        numComps = ParentType::numComponents(),
 
         wCompIdx = FS::wCompIdx,
         nCompIdx = FS::nCompIdx,
@@ -625,7 +626,7 @@ public:
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
             }
 
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numPs; ++phaseIdx) {
             // Mobilities
             const Scalar mu =
                 FluidSystem::viscosity(fluidState_,
@@ -665,7 +666,7 @@ public:
 
 //         fluidState_.setTemperature(temp_);
         // the enthalpies (internal energies are directly calculated in the fluidstate
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numPs; ++phaseIdx) {
             Scalar h = FluidSystem::enthalpy(fluidState_, phaseIdx);
             fluidState_.setEnthalpy(phaseIdx, h);
 
@@ -778,7 +779,7 @@ public:
      * \brief Returns the diffusivity coefficient matrix
      */
     DUNE_DEPRECATED_MSG("diffusionCoefficient() is deprecated. Use diffusionCoefficient(int phaseIdx) instead.")
-    Dune::FieldVector<Scalar, numPhases> diffusionCoefficient() const
+    Dune::FieldVector<Scalar, numPs> diffusionCoefficient() const
     {
         return diffusionCoefficient_;
     }
@@ -821,17 +822,17 @@ protected:
 private:
     Scalar sw_, sg_, sn_, pg_, pw_, pn_, temp_;
 
-    Scalar moleFrac_[numPhases][numComponents];
-    Scalar massFrac_[numPhases][numComponents];
+    Scalar moleFrac_[numPs][numComps];
+    Scalar massFrac_[numPs][numComps];
 
     Scalar porosity_;        //!< Effective porosity within the control volume
     Scalar permeability_;        //!< Effective porosity within the control volume
-    Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
+    Scalar mobility_[numPs];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
     /* We need a tensor here !! */
     //!< Binary diffusion coefficients of the 3 components in the phases
-    Dune::FieldVector<Scalar, numPhases> diffusionCoefficient_;
-    std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
+    Dune::FieldVector<Scalar, numPs> diffusionCoefficient_;
+    std::array<std::array<Scalar, numComps-1>, numPs> diffCoefficient_;
 
 };
 } // end namespace Dumux

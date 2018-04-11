@@ -52,7 +52,7 @@ SET_TYPE_PROP(ChannelNCTestTypeTag, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 SET_INT_PROP(ChannelNCTestTypeTag, PhaseIdx,
-             GET_PROP_TYPE(TypeTag, FluidSystem)::nPhaseIdx);
+             GET_PROP_TYPE(TypeTag, FluidSystem)::phase1Idx);
 
 SET_INT_PROP(ChannelNCTestTypeTag, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, PhaseIdx));
 
@@ -70,7 +70,7 @@ SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridVolumeVariablesCache, true);
 
 // Enable gravity
 SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, true);
-}
+} // end namespace Properties
 
 /*!
  * \ingroup RANSNCTests

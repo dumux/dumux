@@ -71,7 +71,7 @@ SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, Scalar, double);
 SET_PROP(TwoPTwoCComparisonTypeTag, Formulation)
 {
 public:
-    static const TwoPFormulation value = TwoPFormulation::pnsw;
+    static const TwoPFormulation value = TwoPFormulation::p1s0;
 };
 
 SET_BOOL_PROP(TwoPTwoCComparisonTypeTag, UseMoles, true);
@@ -104,23 +104,6 @@ class TwoPTwoCComparisonProblem : public PorousMediumFlowProblem<TypeTag>
 
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using Indices = typename ModelTraits::Indices;
-
-    // world dimension
-    enum {numPhases = ModelTraits::numPhases()};
-    enum {numComponents = ModelTraits::numComponents()};
-    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum {wCompIdx = FluidSystem::wCompIdx};
-    enum {nCompIdx = FluidSystem::nCompIdx};
-    enum
-    {
-        pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx,
-        contiH2OEqIdx = Indices::contiWEqIdx,
-        contiN2EqIdx = Indices::contiNEqIdx
-    };
-
-    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 
 public:
     /*!
@@ -218,11 +201,9 @@ public:
         NeumannFluxes values(0.0);
         const auto& globalPos = scvf.ipGlobal();
         Scalar injectedAirMass = -1e-3;
-        Scalar injectedAirMolarMass = injectedAirMass/FluidSystem::molarMass(nCompIdx);
+        Scalar injectedAirMolarMass = injectedAirMass/FluidSystem::molarMass(FluidSystem::N2Idx);
         if (onInlet_(globalPos))
-        {
-          values[Indices::conti0EqIdx+1] = injectedAirMolarMass;
-        }
+            values[Indices::conti0EqIdx + FluidSystem::N2Idx] = injectedAirMolarMass;
         return values;
     }
 
@@ -249,8 +230,8 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1e5;
-        values[switchIdx] = 0.8;
+        values[Indices::pressureIdx] = 1e5; // air pressure
+        values[Indices::switchIdx] = 0.8; // water saturation
         values.setState(Indices::bothPhases);
 
         return values;

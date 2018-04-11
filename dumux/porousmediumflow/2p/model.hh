@@ -85,7 +85,7 @@ namespace Dumux
 template<TwoPFormulation formulation>
 struct TwoPModelTraits
 {
-    using Indices = TwoPIndices<formulation>;
+    using Indices = TwoPIndices;
 
     static constexpr TwoPFormulation priVarFormulation()
     { return formulation; }
@@ -139,7 +139,7 @@ NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP));
 ///////////////////////////////////////////////////////////////////////////
  //!< Set the default formulation to pwsn
 SET_PROP(TwoP, Formulation)
-{ static constexpr auto value = TwoPFormulation::pwsn; };
+{ static constexpr auto value = TwoPFormulation::p0s1; };
 
 SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //!< Use the immiscible local residual operator for the 2p model
 SET_TYPE_PROP(TwoP, SpatialParams, FVSpatialParams<TypeTag>);                 //!< The spatial parameters. Use FVSpatialParams by default.

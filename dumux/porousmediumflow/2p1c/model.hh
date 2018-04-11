@@ -168,7 +168,7 @@ public:
 };
 
 //! The primary variable switch for the 2p1cni model.
-SET_TYPE_PROP(TwoPOneCNI, PrimaryVariableSwitch, TwoPOneCPrimaryVariableSwitch<TypeTag>);
+SET_TYPE_PROP(TwoPOneCNI, PrimaryVariableSwitch, TwoPOneCPrimaryVariableSwitch);
 
 //! The primary variables vector for the 2p1cni model.
 SET_PROP(TwoPOneCNI, PrimaryVariables)

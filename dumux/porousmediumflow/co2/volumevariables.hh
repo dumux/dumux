@@ -47,17 +47,17 @@ class TwoPTwoCCO2VolumeVariables
     // component indices
     enum
     {
-        wCompIdx = Traits::FluidSystem::wCompIdx,
-        nCompIdx = Traits::FluidSystem::nCompIdx,
-        wPhaseIdx = Traits::FluidSystem::wPhaseIdx,
-        nPhaseIdx = Traits::FluidSystem::nPhaseIdx
+        comp0Idx = Traits::FluidSystem::comp0Idx,
+        comp1Idx = Traits::FluidSystem::comp1Idx,
+        phase0Idx = Traits::FluidSystem::phase0Idx,
+        phase1Idx = Traits::FluidSystem::phase1Idx
     };
 
     // phase presence indices
     enum
     {
-        wPhaseOnly = ModelTraits::Indices::wPhaseOnly,
-        nPhaseOnly = ModelTraits::Indices::nPhaseOnly,
+        firstPhaseOnly = ModelTraits::Indices::firstPhaseOnly,
+        secondPhaseOnly = ModelTraits::Indices::secondPhaseOnly,
         bothPhases = ModelTraits::Indices::bothPhases
     };
 
@@ -68,11 +68,10 @@ class TwoPTwoCCO2VolumeVariables
         pressureIdx = ModelTraits::Indices::pressureIdx
     };
 
-    // formulations
+    // formulation
     static constexpr auto formulation = ModelTraits::priVarFormulation();
-    static constexpr auto pwsn = TwoPFormulation::pwsn;
-    static constexpr auto pnsw = TwoPFormulation::pnsw;
 
+    // type used for the permeability
     using PermeabilityType = typename Traits::PermeabilityType;
 public:
     //! The type of the object returned by the fluidState() method
@@ -88,6 +87,7 @@ public:
     // check for permissive combinations
     static_assert(ModelTraits::numPhases() == 2, "NumPhases set in the model is not two!");
     static_assert(ModelTraits::numComponents() == 2, "NumComponents set in the model is not two!");
+    static_assert((formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0), "Chosen TwoPFormulation not supported!");
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -111,14 +111,17 @@ public:
 
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& matParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
-        {
-            // relative permeabilities -> require wetting phase saturation as parameter!
-            relativePermeability_[phaseIdx] = (phaseIdx == wPhaseIdx) ? MaterialLaw::krw(matParams, saturation(wPhaseIdx))
-                                                                      : MaterialLaw::krn(matParams, saturation(wPhaseIdx));
-            // binary diffusion coefficients
-            diffCoeff_[phaseIdx] = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phaseIdx, wCompIdx, nCompIdx);
-        }
+
+        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        const int nPhaseIdx = 1 - wPhaseIdx;
+
+        // relative permeabilities -> require wetting phase saturation as parameter!
+        relativePermeability_[wPhaseIdx] = MaterialLaw::krw(matParams, saturation(wPhaseIdx));
+        relativePermeability_[nPhaseIdx] = MaterialLaw::krn(matParams, saturation(wPhaseIdx));
+
+        // binary diffusion coefficients
+        diffCoeff_[phase0Idx] = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phase0Idx, comp0Idx, comp1Idx);
+        diffCoeff_[phase1Idx] = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phase1Idx, comp0Idx, comp1Idx);
 
         // porosity & permeabilty
         porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
@@ -138,57 +141,66 @@ public:
      * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
      */
     template<class ElemSol, class Problem, class Element, class Scv>
-    static void completeFluidState(const ElemSol& elemSol,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const Scv& scv,
-                                   FluidState& fluidState)
+    void completeFluidState(const ElemSol& elemSol,
+                            const Problem& problem,
+                            const Element& element,
+                            const Scv& scv,
+                            FluidState& fluidState)
     {
-
-        const Scalar t = ParentType::temperature(elemSol, problem, element, scv);
+        const auto t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
         const auto phasePresence = priVars.state();
 
-        // set the saturations
-        Scalar sn;
-        if (phasePresence == nPhaseOnly)
-            sn = 1.0;
-        else if (phasePresence == wPhaseOnly)
-            sn = 0.0;
-        else if (phasePresence == bothPhases)
-        {
-            if (formulation == pwsn)
-                sn = priVars[switchIdx];
-            else if (formulation == pnsw)
-                sn = 1.0 - priVars[switchIdx];
-            else
-                DUNE_THROW(Dune::InvalidStateException, "Chosen TwoPFormulation is invalid.");
-        }
-        else DUNE_THROW(Dune::InvalidStateException, "Invalid phase presence.");
-
-        fluidState.setSaturation(wPhaseIdx, 1 - sn);
-        fluidState.setSaturation(nPhaseIdx, sn);
-
-        // capillary pressure parameters
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        Scalar pc = MaterialLaw::pc(materialParams, 1 - sn);
+        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        fluidState.setWettingPhase(wPhaseIdx);
 
-        if (formulation == pwsn) {
-            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
-            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
+        // set the saturations
+        if (phasePresence == secondPhaseOnly)
+        {
+            fluidState.setSaturation(phase0Idx, 0.0);
+            fluidState.setSaturation(phase1Idx, 1.0);
         }
-        else if (formulation == pnsw) {
-            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx]);
-            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pc);
+        else if (phasePresence == firstPhaseOnly)
+        {
+            fluidState.setSaturation(phase0Idx, 1.0);
+            fluidState.setSaturation(phase1Idx, 0.0);
         }
-        else DUNE_THROW(Dune::InvalidStateException, "Chosen TwoPFormulation is invalid.");
+        else if (phasePresence == bothPhases)
+        {
+            if (formulation == TwoPFormulation::p0s1)
+            {
+                fluidState.setSaturation(phase1Idx, priVars[switchIdx]);
+                fluidState.setSaturation(phase0Idx, 1 - priVars[switchIdx]);
+            }
+            else
+            {
+                fluidState.setSaturation(phase0Idx, priVars[switchIdx]);
+                fluidState.setSaturation(phase1Idx, 1 - priVars[switchIdx]);
+            }
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase presence.");
 
-        /////////////
+        // set pressures of the fluid phases
+        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+        if (formulation == TwoPFormulation::p0s1)
+        {
+            fluidState.setPressure(phase0Idx, priVars[pressureIdx]);
+            fluidState.setPressure(phase1Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] + pc_
+                                                                       : priVars[pressureIdx] - pc_);
+        }
+        else
+        {
+            fluidState.setPressure(phase1Idx, priVars[pressureIdx]);
+            fluidState.setPressure(phase0Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] - pc_
+                                                                       : priVars[pressureIdx] + pc_);
+        }
+
         // calculate the phase compositions
-        /////////////
         typename FluidSystem::ParameterCache paramCache;
         // both phases are present
         if (phasePresence == bothPhases)
@@ -196,67 +208,67 @@ public:
             //Get the equilibrium mole fractions from the FluidSystem and set them in the fluidState
             //xCO2 = equilibrium mole fraction of CO2 in the liquid phase
             //yH2O = equilibrium mole fraction of H2O in the gas phase
-            const auto xwCO2 = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, wPhaseIdx);
-            const auto xgH2O = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, nPhaseIdx);
+            const auto xwCO2 = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, phase0Idx);
+            const auto xgH2O = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, phase1Idx);
             const auto xwH2O = 1 - xwCO2;
             const auto xgCO2 = 1 - xgH2O;
-            fluidState.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
-            fluidState.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
-            fluidState.setMoleFraction(nPhaseIdx, wCompIdx, xgH2O);
-            fluidState.setMoleFraction(nPhaseIdx, nCompIdx, xgCO2);
+            fluidState.setMoleFraction(phase0Idx, comp0Idx, xwH2O);
+            fluidState.setMoleFraction(phase0Idx, comp1Idx, xwCO2);
+            fluidState.setMoleFraction(phase1Idx, comp0Idx, xgH2O);
+            fluidState.setMoleFraction(phase1Idx, comp1Idx, xgCO2);
         }
 
         // only the nonwetting phase is present, i.e. nonwetting phase
         // composition is stored explicitly.
-        else if (phasePresence == nPhaseOnly)
+        else if (phasePresence == secondPhaseOnly)
         {
             if( useMoles() ) // mole-fraction formulation
             {
                 // set the fluid state
-                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, priVars[switchIdx]);
-                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, 1-priVars[switchIdx]);
+                fluidState.setMoleFraction(phase1Idx, comp0Idx, priVars[switchIdx]);
+                fluidState.setMoleFraction(phase1Idx, comp1Idx, 1-priVars[switchIdx]);
                 // TODO give values for non-existing wetting phase
-                const auto xwCO2 = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, wPhaseIdx);
+                const auto xwCO2 = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, phase0Idx);
                 const auto xwH2O = 1 - xwCO2;
-                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
-                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
+                fluidState.setMoleFraction(phase0Idx, comp1Idx, xwCO2);
+                fluidState.setMoleFraction(phase0Idx, comp0Idx, xwH2O);
             }
             else // mass-fraction formulation
             {
                 // setMassFraction() has only to be called 1-numComponents times
-                fluidState.setMassFraction(nPhaseIdx, wCompIdx, priVars[switchIdx]);
+                fluidState.setMassFraction(phase1Idx, comp0Idx, priVars[switchIdx]);
                 // TODO give values for non-existing wetting phase
-                const auto xwCO2 = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, wPhaseIdx);
+                const auto xwCO2 = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, phase0Idx);
                 const auto xwH2O = 1 - xwCO2;
-                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
-                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
+                fluidState.setMoleFraction(phase0Idx, comp1Idx, xwCO2);
+                fluidState.setMoleFraction(phase0Idx, comp0Idx, xwH2O);
             }
         }
 
         // only the wetting phase is present, i.e. wetting phase
         // composition is stored explicitly.
-        else if (phasePresence == wPhaseOnly)
+        else if (phasePresence == firstPhaseOnly)
         {
             if( useMoles() ) // mole-fraction formulation
             {
                 // convert mass to mole fractions and set the fluid state
-                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, 1-priVars[switchIdx]);
-                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, priVars[switchIdx]);
+                fluidState.setMoleFraction(phase0Idx, comp0Idx, 1-priVars[switchIdx]);
+                fluidState.setMoleFraction(phase0Idx, comp1Idx, priVars[switchIdx]);
                 //  TODO give values for non-existing nonwetting phase
-                Scalar xnH2O = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, nPhaseIdx);
+                Scalar xnH2O = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, phase1Idx);
                 Scalar xnCO2 = 1 - xnH2O;
-                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, xnCO2);
-                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, xnH2O);
+                fluidState.setMoleFraction(phase1Idx, comp1Idx, xnCO2);
+                fluidState.setMoleFraction(phase1Idx, comp0Idx, xnH2O);
             }
             else // mass-fraction formulation
             {
                 // setMassFraction() has only to be called 1-numComponents times
-                fluidState.setMassFraction(wPhaseIdx, nCompIdx, priVars[switchIdx]);
+                fluidState.setMassFraction(phase0Idx, comp1Idx, priVars[switchIdx]);
                 //  TODO give values for non-existing nonwetting phase
-                Scalar xnH2O = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, nPhaseIdx);
+                Scalar xnH2O = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, phase1Idx);
                 Scalar xnCO2 = 1 - xnH2O;
-                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, xnCO2);
-                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, xnH2O);
+                fluidState.setMoleFraction(phase1Idx, comp1Idx, xnCO2);
+                fluidState.setMoleFraction(phase1Idx, comp0Idx, xnH2O);
             }
         }
 
@@ -379,7 +391,7 @@ public:
      *        in \f$[kg/(m*s^2)=N/m^2=Pa]\f$.
      */
     Scalar capillaryPressure() const
-    { return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); }
+    { return fluidState_.pressure(phase1Idx) - fluidState_.pressure(phase0Idx); }
 
     /*!
      * \brief Returns the average porosity within the control volume in \f$[-]\f$.
@@ -406,6 +418,7 @@ public:
 
 private:
     FluidState fluidState_;
+    Scalar pc_;                     //!< The capillary pressure
     Scalar porosity_;               //!< Effective porosity within the control volume
     PermeabilityType permeability_; //!< Effective permeability within the control volume
 
