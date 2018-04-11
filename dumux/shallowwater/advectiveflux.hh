@@ -143,6 +143,13 @@ class ShallowWaterAdvectiveFlux
         Scalar thetal = cellStatesLeft[3] + cellStatesLeft[0];
         Scalar thetar = cellStatesRight[3] + cellStatesRight[0];
 
+        auto ks_av = std::max(outsideVolVars.getKsH(), insideVolVars.getKsH());
+        ks_av = std::max(ks_av,1.0E-6);
+        ks_av = std::min(ks_av,0.1);
+
+        Scalar mobility[3] = {1.0};
+        letmobility(cellStatesLeft[0],cellStatesRight[0],ks_av,mobility);
+
 
         //-------------------------------------------------------------
         //
@@ -151,9 +158,11 @@ class ShallowWaterAdvectiveFlux
         //-------------------------------------------------------------
         if (scvf.boundary())
         {
-            cellStatesRight[0] = cellStatesLeft[0];
+            //no flow boundary
+            cellStatesRight[0] =  cellStatesLeft[0];
             cellStatesRight[1] = -cellStatesLeft[1];
             cellStatesRight[2] = -cellStatesLeft[2];
+            cellStatesRight[3] =  cellStatesLeft[3];
         }
 
         //-------------------------------------------------------------
@@ -162,10 +171,10 @@ class ShallowWaterAdvectiveFlux
         //
         //-------------------------------------------------------------
         //Hydrostatic reconstrucion after Audusse
-        Scalar dzl = std::max(0.0,cellStatesRight[3] - cellStatesLeft[3]);
-        cellStatesLeft[0] = std::max(0.0, hllc_hl - dzl);
-        Scalar dzr = std::max(0.0,cellStatesLeft[3] - cellStatesRight[3]);
-        cellStatesRight[0] = std::max(0.0, hllc_hr - dzr);
+        //Scalar dzl = std::max(0.0,cellStatesRight[3] - cellStatesLeft[3]);
+        //cellStatesLeft[0] = std::max(0.0, hllc_hl - dzl);
+        //Scalar dzr = std::max(0.0,cellStatesLeft[3] - cellStatesRight[3]);
+        //cellStatesRight[0] = std::max(0.0, hllc_hr - dzr);
 
         //------------------ Flux rotation -------
         //make rotation for computing 1d HLLC flux
@@ -176,13 +185,6 @@ class ShallowWaterAdvectiveFlux
         //compute the HLLC flux
         //---------------------------------
         Scalar riemannFlux[3] = {0.0};
-
-        auto ks_av = std::max(outsideVolVars.getKsH(), insideVolVars.getKsH());
-        ks_av = std::max(ks_av,1.0E-6);
-        ks_av = std::min(ks_av,0.1);
-
-        Scalar mobility[3] = {1.0};
-        letmobility(cellStatesLeft[0],cellStatesRight[0],ks_av,mobility);
         computeExactRiemann(riemannFlux,cellStatesLeft[0],cellStatesRight[0],
                             cellStatesLeft[1],cellStatesRight[1],
                             cellStatesLeft[2],cellStatesRight[2],insideVolVars.getGravity());
@@ -201,14 +203,15 @@ class ShallowWaterAdvectiveFlux
         Scalar hdxzr = 0.0;
         Scalar hdyzl = 0.0;
         Scalar hdyzr = 0.0;
-        hdxzl = insideVolVars.getGravity() * nxy[0] * hgzl;
-        hdyzl = insideVolVars.getGravity() * nxy[1] * hgzl;
-        hdxzr = insideVolVars.getGravity() * nxy[0] * hgzr;
-        hdyzr = insideVolVars.getGravity() * nxy[1] * hgzr;
+        //hdxzl = insideVolVars.getGravity() * nxy[0] * hgzl;
+        //hdyzl = insideVolVars.getGravity() * nxy[1] * hgzl;
+        //hdxzr = insideVolVars.getGravity() * nxy[0] * hgzr;
+        //hdyzr = insideVolVars.getGravity() * nxy[1] * hgzr;
+        //std::cout << " hdxzl "<< hdyzl << " hdyzl " << hgzr << std::endl;
 
         flux[0] = riemannFlux[0] * scvf.area() * mobility[0];
-        flux[1] =  (riemannFlux[1]  - hdxzl) * scvf.area() * mobility[1];
-        flux[2] =  (riemannFlux[2]  - hdyzl) * scvf.area() * mobility[2];
+        flux[1] = (riemannFlux[1]  - hdxzl) * scvf.area() * mobility[1];
+        flux[2] = (riemannFlux[2]  - hdyzl) * scvf.area() * mobility[2];
 
         return flux;
     }
