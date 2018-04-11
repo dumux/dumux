@@ -57,7 +57,7 @@ class MPFATwoPTestProblem;
 namespace Properties
 {
 
-NEW_TYPE_TAG(MPFATwoPTestTypeTag, INHERITS_FROM(SequentialModel, Test2PSpatialParams));
+NEW_TYPE_TAG(MPFATwoPTestTypeTag, INHERITS_FROM(Test2PSpatialParams));
 
 // Set the grid type
 #if HAVE_UG
