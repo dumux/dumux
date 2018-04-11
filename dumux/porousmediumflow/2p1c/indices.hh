@@ -41,7 +41,7 @@ public:
 
     // Primary variable indices
     static const int pressureIdx = 0; //!< Index for phase pressure in a solution vector.
-    static const int switch1Idx = 1; //!< Index of saturation or temperature.
+    static const int switchIdx = 1; //!< Index of saturation or temperature.
 
     // Equation indices
     static const int conti0EqIdx = 0; //!< Index of the mass conservation equation for the water component.

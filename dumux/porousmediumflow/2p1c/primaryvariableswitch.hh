@@ -51,7 +51,7 @@ class TwoPOneCPrimaryVariableSwitch
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {
-        switchIdx = Indices::switch1Idx,
+        switchIdx = Indices::switchIdx,
 
         pressureIdx = Indices::pressureIdx,
 

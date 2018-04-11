@@ -48,7 +48,7 @@ class TwoPOneCVolumeVariables
         wPhaseIdx = FS::wPhaseIdx,
         nPhaseIdx = FS::nPhaseIdx,
 
-        switch1Idx = Indices::switch1Idx,
+        switchIdx = Indices::switchIdx,
         pressureIdx = Indices::pressureIdx
     };
 
@@ -133,7 +133,7 @@ public:
         Scalar sg(0.0);
         if (phasePresence == twoPhases)
         {
-            sw = priVars[switch1Idx];
+            sw = priVars[switchIdx];
             sg = 1.0 - sw;
         }
         else if (phasePresence == wPhaseOnly)
@@ -169,7 +169,7 @@ public:
         // get temperature
         Scalar temperature;
         if (phasePresence == wPhaseOnly || phasePresence == nPhaseOnly)
-            temperature = priVars[switch1Idx];
+            temperature = priVars[switchIdx];
         else if (phasePresence == twoPhases)
             temperature = FluidSystem::vaporTemperature(fluidState, wPhaseIdx);
         else

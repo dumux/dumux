@@ -98,7 +98,7 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     // copy some indices for convenience
     enum {
         pressureIdx = Indices::pressureIdx,
-        switch1Idx = Indices::switch1Idx,
+        switchIdx = Indices::switchIdx,
 
         conti0EqIdx = Indices::conti0EqIdx,
         energyEqIdx = Indices::energyEqIdx,
@@ -229,7 +229,7 @@ public:
 
         const Scalar densityW = 1000.0;
         values[pressureIdx] = 101300.0 + (this->fvGridGeometry().bBoxMax()[1] - globalPos[1])*densityW*9.81; // hydrostatic pressure
-        values[switch1Idx] = 283.13;
+        values[switchIdx] = 283.13;
 
         values.setState(wPhaseOnly);
 
