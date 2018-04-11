@@ -158,6 +158,8 @@ class ShallowWaterAdvectiveFlux
         //-------------------------------------------------------------
         if (scvf.boundary())
         {
+            const auto flag = scvf.boundaryFlag();
+            std::cout << "Debug flag " << flag << std::endl;
             //no flow boundary
             cellStatesRight[0] =  cellStatesLeft[0];
             cellStatesRight[1] = -cellStatesLeft[1];

@@ -127,9 +127,9 @@ public:
              const SubControlVolume& scv) const
     {
         auto someInitSol = element.geometry().center();
-        if ((11.0 < someInitSol[0])&&(someInitSol[0] < 14.0)){
+        /*if ((11.0 < someInitSol[0])&&(someInitSol[0] < 14.0)){
             return 3.1;
-        }
+        }*/
         return 0.0;
     }
 
