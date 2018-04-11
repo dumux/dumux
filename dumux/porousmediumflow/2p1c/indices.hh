@@ -30,9 +30,6 @@ namespace Dumux {
 /*!
  * \ingroup TwoPOneCModel
  * \brief The indices for the two-phase one-component model.
- *
- * \tparam FluidSystem The fluid system class
- * \tparam PVOffset The first index in a primary variable vector.
  */
 class TwoPOneCIndices
 {

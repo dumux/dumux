@@ -24,8 +24,7 @@
 #ifndef DUMUX_1P_INDICES_HH
 #define DUMUX_1P_INDICES_HH
 
-namespace Dumux
-{
+namespace Dumux {
 // \{
 
 /*!

@@ -24,10 +24,7 @@
 #ifndef DUMUX_2P2C_INDICES_HH
 #define DUMUX_2P2C_INDICES_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \brief The indices for the isothermal two-phase two-component model.

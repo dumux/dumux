@@ -25,19 +25,13 @@
 #ifndef DUMUX_BOX_2P_INDICES_HH
 #define DUMUX_BOX_2P_INDICES_HH
 
-#include <dumux/common/properties.hh>
 #include "formulation.hh"
 
-namespace Dumux
-{
-// \{
+namespace Dumux {
 
 /*!
  * \ingroup TwoPModel
  * \brief Defines the indices required for the two-phase fully implicit model.
- *
- * \tparam FluidSystem The fluid system class
- * \tparam PVOffset The first index in a primary variable vector.
  */
 struct TwoPCommonIndices
 {
@@ -86,7 +80,6 @@ struct TwoPIndices<TwoPFormulation::pnsw>
     static constexpr int swIdx = 1; //!< index of the wetting phase saturation
 };
 
-// \}
 } // namespace Dumux
 
 

@@ -24,10 +24,7 @@
 #ifndef DUMUX_MPNC_INDICES_HH
 #define DUMUX_MPNC_INDICES_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup MPNCModel
