@@ -51,7 +51,7 @@ class TwoPNCPrimaryVariableSwitch
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     static const int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
-    static const int numMajorComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numMajorComponents();
+    static const int numMajorComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
 
     enum {
 

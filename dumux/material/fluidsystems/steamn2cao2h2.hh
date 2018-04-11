@@ -39,10 +39,9 @@
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
+
 /*!
  * \ingroup Fluidsystems
  *
@@ -181,7 +180,6 @@ public:
     ****************************************/
 
     static const int numComponents = 2; // H2O, Air
-    static const int numMajorComponents = 2;// H2O, Air
     static const int numSComponents = 2;// CaO2H2, CaO
 
 

@@ -128,7 +128,6 @@ NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);
 // Additional properties used by the 2pnc and 2pncmin models:
 //////////////////////////////////////////////////////////////
 NEW_PROP_TAG(Chemistry);                           //!< The chemistry class with which solves equlibrium reactions
-NEW_PROP_TAG(NumMajorComponents);                  //!< Number of major fluid components which are considered in the calculation of the phase density
 NEW_PROP_TAG(SetMoleFractionsForWettingPhase);     //!< Set the mole fraction in the wetting or non-wetting phase
 
 //////////////////////////////////////////////////////////////

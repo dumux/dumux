@@ -42,10 +42,9 @@
 // we use a modified implementation of the CaO component
 #include "modifiedcao.hh"
 
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
+
 /*!
  * \ingroup OnePNCMinTests
  *
@@ -178,7 +177,6 @@ public:
     ****************************************/
 
     static const int numComponents = 2; // H2O, Air
-    static const int numMajorComponents = 2;// H2O, Air
     static const int numSComponents = 2;// CaO2H2, CaO
 
 

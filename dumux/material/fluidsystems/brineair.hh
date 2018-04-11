@@ -74,7 +74,6 @@ public:
     /****************************************
      * Fluid phase related static parameters
      ****************************************/
-    static const int numSecComponents = 0; //needed to set property not used for 2pncMin model
     static const int numPhases = 2; // liquid and gas phases
     static const int numSPhases = 1;// precipitated solid phases
     static const int lPhaseIdx = 0; // index of the liquid phase
@@ -185,7 +184,6 @@ public:
      * Component related static parameters
      ****************************************/
     static const int numComponents = 3; // H2O, Air, NaCl
-    static const int numMajorComponents = 2;// H2O, Air
 
     static const int H2OIdx = wCompIdx;//0
     static const int AirIdx = nCompIdx;//1

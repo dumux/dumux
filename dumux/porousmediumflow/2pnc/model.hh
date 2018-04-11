@@ -124,7 +124,6 @@ struct TwoPNCModelTraits
     static constexpr int numEq() { return nComp; }
     static constexpr int numPhases() { return 2; }
     static constexpr int numComponents() { return nComp; }
-    static constexpr int numMajorComponents() { return 2; }
 
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }

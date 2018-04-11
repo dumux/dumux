@@ -60,7 +60,7 @@ class TwoPNCVolumeVariables
     {
         numPhases = Traits::ModelTraits::numPhases(),
         numComponents = Traits::ModelTraits::numComponents(),
-        numMajorComponents = Traits::ModelTraits::numMajorComponents(),
+        numMajorComponents = Traits::ModelTraits::numPhases(),
 
         // phase indices
         wPhaseIdx = FS::wPhaseIdx,

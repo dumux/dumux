@@ -180,9 +180,6 @@ public:
 
     //! Number of components in the fluid system
     static constexpr int numComponents = 3;
-    // There are no secondary components (still 2pNc model needs this parameter)
-    static const int numSecComponents = 1;
-    static const int numMajorComponents = 2;
 
     static constexpr int H2OIdx = 0;//first major component
     static constexpr int N2Idx = 1;//second major component
