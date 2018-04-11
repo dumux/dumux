@@ -174,7 +174,7 @@ public:
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
-        static const Scalar upwindWeight = getParam<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
         const auto flux_w = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars, scvf, 0, elemFluxVarsCache);
         const auto flux_n = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars, scvf, 1, elemFluxVarsCache);
         const auto insideWeight_w = std::signbit(flux_w) ? (1.0 - upwindWeight) : upwindWeight;
@@ -292,7 +292,7 @@ public:
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
-        static const Scalar upwindWeight = getParam<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
         const auto flux_w = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars, scvf, 0, elemFluxVarsCache);
         const auto flux_n = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars, scvf, 1, elemFluxVarsCache);
         const auto insideWeight_w = std::signbit(flux_w) ? (1.0 - upwindWeight) : upwindWeight;
@@ -437,7 +437,7 @@ public:
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
-        static const Scalar upwindWeight = getParam<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
         const auto flux_w = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars, scvf, 0, elemFluxVarsCache);
         const auto flux_n = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars, scvf, 1, elemFluxVarsCache);
         const auto insideWeight_w = std::signbit(flux_w) ? (1.0 - upwindWeight) : upwindWeight;
