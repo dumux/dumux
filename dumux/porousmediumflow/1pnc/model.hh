@@ -142,13 +142,7 @@ public:
 };
 
 //! Set as default that no component mass balance is replaced by the total mass balance
-SET_PROP(OnePNC, ReplaceCompEqIdx)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-public:
-    static constexpr auto value = FluidSystem::numComponents;
-};
+SET_INT_PROP(OnePNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());
 
 /*!
  * \brief The fluid state which is used by the volume variables to
