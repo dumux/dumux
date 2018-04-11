@@ -37,19 +37,19 @@ public:
     static void init(VtkOutputModule& vtk)
     {
         using VolumeVariables = typename VtkOutputModule::VolumeVariables;
-        using Indices = typename VolumeVariables::Indices;
+        using FluidSystem = typename VolumeVariables::FluidSystem;
 
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(Indices::phaseIdx); }, "pressure");
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.density(Indices::phaseIdx); }, "rho");
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.viscosity(Indices::phaseIdx); }, "mu");
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(Indices::phaseIdx) - 1e5; }, "delp");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(); }, "pressure");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.density(); }, "rho");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.viscosity(); }, "mu");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure() - 1e5; }, "delp");
 
         for (int i = 0; i < VolumeVariables::numComponents(); ++i)
-           vtk.addVolumeVariable([i](const auto& volVars){ return volVars.moleFraction(Indices::phaseIdx, i); },
+           vtk.addVolumeVariable([i](const auto& volVars){ return volVars.moleFraction(0, i); },
                                      "x_" + std::string(FluidSystem::componentName(i)));
 
         for (int i = 0; i < VolumeVariables::numComponents(); ++i)
-           vtk.addVolumeVariable([i](const auto& volVars){ return volVars.massFraction(Indices::phaseIdx,i); },
+           vtk.addVolumeVariable([i](const auto& volVars){ return volVars.massFraction(0,i); },
                                      "X_" + std::string(FluidSystem::componentName(i)));
     }
 };

@@ -119,16 +119,14 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
-        massOrMoleFracIdx = Indices::firstMoleFracIdx,
 
         // indices of the equations
-        conti0EqIdx = Indices::conti0EqIdx,
-        transportEqIdx = Indices::firstTransportEqIdx
+        contiH2OEqIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx,
+        contiN2EqIdx = Indices::conti0EqIdx + FluidSystem::N2Idx
     };
 
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static const auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static const bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 
     static const int dimWorld = GridView::dimensionworld;
@@ -199,7 +197,7 @@ public:
         // condition for the N2 molefraction at left boundary
         if (globalPos[0] < eps_ )
         {
-            values[massOrMoleFracIdx] = 2.0e-5;
+            values[FluidSystem::N2Idx] = 2.0e-5;
         }
 
         return values;
@@ -244,9 +242,9 @@ public:
         // otherwise compute the acutal fluxes explicitly
         if(isBox && useNitscheTypeBc_)
         {
-            flux[conti0EqIdx] = (volVars.pressure(phaseIdx) - dirichletPressure) * 1e7;
-            flux[transportEqIdx] = flux[conti0EqIdx]  * (useMoles ? volVars.moleFraction(phaseIdx, massOrMoleFracIdx) :
-                                                                    volVars.massFraction(phaseIdx, massOrMoleFracIdx));
+            flux[contiH2OEqIdx] = (volVars.pressure() - dirichletPressure) * 1e7;
+            flux[contiN2EqIdx] = flux[contiH2OEqIdx]  * (useMoles ? volVars.moleFraction(0, FluidSystem::N2Idx) :
+                                                                    volVars.massFraction(0, FluidSystem::N2Idx));
             return flux;
         }
 
@@ -284,16 +282,16 @@ public:
         }();
 
         const Scalar K = volVars.permeability();
-        const Scalar density = useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx);
+        const Scalar density = useMoles ? volVars.molarDensity() : volVars.density();
 
         // calculate the flux
         Scalar tpfaFlux = gradient * scvf.unitOuterNormal();
         tpfaFlux *= -1.0  * K;
-        tpfaFlux *=  density * volVars.mobility(phaseIdx);
-        flux[conti0EqIdx] = tpfaFlux;
+        tpfaFlux *=  density * volVars.mobility();
+        flux[contiH2OEqIdx] = tpfaFlux;
 
         // emulate an outflow condition for the component transport on the right side
-        flux[transportEqIdx] = tpfaFlux  * (useMoles ? volVars.moleFraction(phaseIdx, massOrMoleFracIdx) : volVars.massFraction(phaseIdx, massOrMoleFracIdx));
+        flux[contiN2EqIdx] = tpfaFlux  * (useMoles ? volVars.moleFraction(0, FluidSystem::N2Idx) : volVars.massFraction(0, FluidSystem::N2Idx));
 
         return flux;
     }
@@ -338,7 +336,7 @@ private:
     {
         PrimaryVariables priVars;
         priVars[pressureIdx] = 2e5 - 1e5*globalPos[0]; // initial condition for the pressure
-        priVars[massOrMoleFracIdx] = 0.0;  // initial condition for the N2 molefraction
+        priVars[FluidSystem::N2Idx] = 0.0;  // initial condition for the N2 molefraction
         return priVars;
     }
         static constexpr Scalar eps_ = 1e-6;

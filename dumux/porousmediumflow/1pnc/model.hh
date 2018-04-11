@@ -82,12 +82,12 @@ namespace Dumux {
  *        consider a single-phase with multiple components.
  *
  * \tparam nComp the number of components to be considered.
- * \tparam phaseIdx the phase index of the main phase
+ * \tparam fluidSystemPhaseIdx The index of the fluid phase in the fluid system
  */
-template<int nComp, int phaseIdx>
+template<int nComp, int fluidSystemPhaseIdx>
 struct OnePNCModelTraits
 {
-    using Indices = OnePNCIndices<phaseIdx>;
+    using Indices = OnePNCIndices<fluidSystemPhaseIdx>;
 
     static constexpr int numEq() { return nComp; }
     static constexpr int numPhases() { return 1; }
@@ -157,11 +157,12 @@ public:
  *        This can be done in the problem.
  */
 SET_PROP(OnePNC, FluidState){
-    private:
-        using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
-        using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    public:
-        using type = Dumux::CompositionalFluidState<Scalar, FluidSystem>;
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+public:
+    using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
 //! Use the model after Millington (1961) for the effective diffusivity
@@ -180,6 +181,8 @@ private:
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+    static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
+    static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
 
     using Traits = OnePNCVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
 public:

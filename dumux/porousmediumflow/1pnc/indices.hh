@@ -32,26 +32,17 @@ namespace Dumux {
  * \ingroup OnePNCModel
  * \brief The indices for the isothermal one-phase n-component model.
  *
- * \tparam phaseIndex The default phase index
+ * \tparam phaseIdx The index of the fluid phase in the fluid system
  */
-template <int phaseIndex>
+template<int phaseIdx>
 struct OnePNCIndices
 {
-    //! Set the default phase used by the fluid system to the first one
-    static constexpr int phaseIdx = phaseIndex;
-
-    //! Component indices
-    static constexpr int phaseCompIdx = phaseIdx;//!< The index of the main component of the considered phase
-
-    //! Equation indices
-    static constexpr int conti0EqIdx = 0; //!< Reference index for mass conservation equation.
-
-    //! Primary variable indices
-    static constexpr int pressureIdx = 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static constexpr int firstMoleFracIdx = 1; //!< Index of the either the saturation or the mass fraction of the fluid phase
-
-    //Component indices
-    static constexpr int firstTransportEqIdx = 1; //!< transport equation index
+    //! Reference index for mass conservation equation.
+    static constexpr int conti0EqIdx = 0;
+    //! Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static constexpr int pressureIdx = phaseIdx;
+    //! The index of the fluid phase in the fluid system
+    static constexpr int fluidSystemPhaseIdx = phaseIdx;
 };
 
 } // end namespace Dumux
