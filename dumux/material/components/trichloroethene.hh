@@ -117,6 +117,12 @@ public:
     { return false; }
 
     /*!
+     * \brief Returns true if the liquid phase viscostiy is constant
+     */
+    static constexpr bool liquidViscosityIsConstant()
+    { return true; }
+
+    /*!
      * \brief The density of steam at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
