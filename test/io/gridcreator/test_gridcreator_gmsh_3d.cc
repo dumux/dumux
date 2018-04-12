@@ -34,7 +34,8 @@ int main(int argc, char** argv) try
     Dune::MPIHelper::instance(argc, argv);
     Parameters::init(argc, argv, "test_gridcreator_gmsh_3d.input");
     const auto name = getParam<std::string>("Problem.Name");
-    GridCreatorTests<GRIDTYPE>::testBoundaryAndElementMarkers("gmsh", name);
+    const auto refine = Dumux::getParam<bool>("Grid.Refine", true);
+    GridCreatorTests<GRIDTYPE>::testBoundaryAndElementMarkers("gmsh", name, refine);
 
     return 0;
 }

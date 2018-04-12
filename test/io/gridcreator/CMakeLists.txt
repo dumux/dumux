@@ -23,30 +23,26 @@ dune_symlink_to_source_files(FILES "test_gridcreator_gmsh_3d.input"
                                    "test_gridcreator_gmsh_e_markers.input"
                                    "test_gridcreator_dgf_e_markers.input")
 
-#add_executable(test_gridcreator_gmsh_3d_alu EXCLUDE_FROM_ALL test_gridcreator_gmsh_3d.cc)
-#target_compile_definitions(test_gridcreator_gmsh_3d_alu PUBLIC GRIDTYPE=Dune::ALUGrid<3,3,Dune::simplex,Dune::conforming>)
+add_executable(test_gridcreator_gmsh_3d_alu EXCLUDE_FROM_ALL test_gridcreator_gmsh_3d.cc)
+target_compile_definitions(test_gridcreator_gmsh_3d_alu PUBLIC GRIDTYPE=Dune::ALUGrid<3,3,Dune::simplex,Dune::nonconforming>)
 
-#dune_add_test(NAME test_gridcreator_gmsh_3d_alu
-#              TARGET test_gridcreator_gmsh_3d_alu
-#              CMAKE_GUARD dune-uggrid_FOUND
-#              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#              CMD_ARGS --script fuzzy
-#                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_3d_alu -Problem.Name bifurcation_alu"
-#                       --files ${CMAKE_SOURCE_DIR}/test/references/bifurcation_alu-reference.vtu
-#                               ${CMAKE_CURRENT_BINARY_DIR}/bifurcation_alu-00000.vtu
-#                               ${CMAKE_SOURCE_DIR}/test/references/bifurcation_alu-reference-refined.vtu
-#                               ${CMAKE_CURRENT_BINARY_DIR}/bifurcation_alu-00001.vtu)
+dune_add_test(NAME test_gridcreator_gmsh_3d_alu
+              TARGET test_gridcreator_gmsh_3d_alu
+              CMAKE_GUARD dune-uggrid_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_3d_alu -Problem.Name bifurcation_alu -Grid.Refine false"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/bifurcation_alu-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/bifurcation_alu-00000.vtu)
 
-#dune_add_test(NAME test_gridcreator_gmsh_3d_alu_parallel
-#              TARGET test_gridcreator_gmsh_3d_alu
-#              CMAKE_GUARD dune-uggrid_FOUND
-#              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#              CMD_ARGS --script fuzzy
-#                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_3d_alu -Problem.Name bifurcation_alu"
-#                       --files ${CMAKE_SOURCE_DIR}/test/references/bifurcation_alu-reference-parallel.vtu
-#                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-bifurcation_alu-00000.vtu
-#                               ${CMAKE_SOURCE_DIR}/test/references/bifurcation_alu-reference-refined-parallel.vtu
-#                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-bifurcation_alu-00001.vtu)
+dune_add_test(NAME test_gridcreator_gmsh_3d_alu_parallel
+              TARGET test_gridcreator_gmsh_3d_alu
+              CMAKE_GUARD dune-uggrid_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_3d_alu -Problem.Name bifurcation_alu -Grid.Refine false"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/bifurcation_alu-reference-parallel.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-bifurcation_alu-00000.vtu)
 
 add_executable(test_gridcreator_gmsh_3d_ug EXCLUDE_FROM_ALL test_gridcreator_gmsh_3d.cc)
 target_compile_definitions(test_gridcreator_gmsh_3d_ug PUBLIC GRIDTYPE=Dune::UGGrid<3>)

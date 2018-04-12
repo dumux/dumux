@@ -45,7 +45,8 @@ class GridCreatorTests
 public:
 
     static void testBoundaryAndElementMarkers(const std::string& type = "gmsh",
-                                              const std::string& vtkFileName = "test")
+                                              const std::string& vtkFileName = "test",
+                                              bool refine = true)
     {
         // initialize the grid
         initialize_();
@@ -63,16 +64,20 @@ public:
         vtkWriter.addCellData(rank, "rank");
         vtkWriter.write(0);
 
-        // refine grid once and write out the markers again
-        GridCreator::grid().globalRefine(1);
-        getBoundaryMarkers_(boundaryMarker);
-        getElementMarkers_(elementMarker, type);
-        getRank_(rank);
-        vtkWriter.write(1);
+        if (refine)
+        {
+            // refine grid once and write out the markers again
+            GridCreator::grid().globalRefine(1);
+            getBoundaryMarkers_(boundaryMarker);
+            getElementMarkers_(elementMarker, type);
+            getRank_(rank);
+            vtkWriter.write(1);
+        }
     }
 
     static void testElementMarkers(const std::string& type = "gmsh",
-                                   const std::string& vtkFileName = "test")
+                                   const std::string& vtkFileName = "test",
+                                   bool refine = true)
     {
         // initialize the grid
         initialize_();
@@ -88,11 +93,14 @@ public:
         vtkWriter.addCellData(rank, "rank");
         vtkWriter.write(0);
 
-        // refine grid once and write out the markers again
-        GridCreator::grid().globalRefine(1);
-        getElementMarkers_(elementMarker, type);
-        getRank_(rank);
-        vtkWriter.write(1);
+        if (refine)
+        {
+            // refine grid once and write out the markers again
+            GridCreator::grid().globalRefine(1);
+            getElementMarkers_(elementMarker, type);
+            getRank_(rank);
+            vtkWriter.write(1);
+        }
     }
 
 private:
