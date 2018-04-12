@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 1e-1 # [s]
+DtInitial = 1e-3 # [s]
 TEnd = 100 # [s]
 
 [Grid]
@@ -11,7 +11,7 @@ Cells1 = 8 8
 Grading1 = 1.4 -1.4
 
 [Problem]
-Name = pipe_laufer_zeroeq_reference
+Name = pipe_laufer_reference
 InletVelocity = 2.5 # [m/s]
 EnableGravity = false
 
@@ -24,7 +24,8 @@ NumericDifference.BaseEpsilon = 1e-8
 
 [Newton]
 MaxSteps = 10
-MaxRelativeShift = 1e-5
+TargetSteps = 5
+MaxRelativeShift = 1e-6
 
 [Vtk]
 AddVelocity = true

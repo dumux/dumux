@@ -123,7 +123,7 @@ public:
                     wallPositions.push_back(global);
                     for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
                     {
-                        if (abs(intersection.centerUnitOuterNormal()[dimIdx]) > 1e-10)
+                        if (abs(intersection.centerUnitOuterNormal()[dimIdx]) > 1e-8)
                             wallNormalAxisTemp.push_back(dimIdx);
                     }
                 }

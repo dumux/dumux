@@ -192,6 +192,12 @@ public:
         values.setOutflow(Indices::conti0EqIdx);
         values.setDirichlet(Indices::momentumXBalanceIdx);
         values.setDirichlet(Indices::momentumYBalanceIdx);
+        if (isOutlet(globalPos))
+        {
+            values.setDirichlet(Indices::conti0EqIdx);
+            values.setOutflow(Indices::momentumXBalanceIdx);
+            values.setOutflow(Indices::momentumYBalanceIdx);
+        }
 
 #if NONISOTHERMAL
         values.setDirichlet(Indices::energyBalanceIdx);
@@ -210,14 +216,6 @@ public:
             values.setOutflow(Indices::dissipationEqIdx);
         }
 #endif
-
-        // set a fixed pressure in one cell
-        if (isOutlet(globalPos))
-        {
-            values.setDirichlet(Indices::conti0EqIdx);
-            values.setOutflow(Indices::momentumXBalanceIdx);
-            values.setOutflow(Indices::momentumYBalanceIdx);
-        }
 
         return values;
     }

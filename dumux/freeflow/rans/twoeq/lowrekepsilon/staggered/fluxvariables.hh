@@ -95,8 +95,8 @@ public:
 
         // calculate advective flux
         const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-        const bool isOutflowK = bcTypes.isOutflow(turbulentKineticEnergyEqIdx);
-        const bool isOutflowEpsilon = bcTypes.isOutflow(dissipationEqIdx);
+        const bool isOutflowK = scvf.boundary() && bcTypes.isOutflow(turbulentKineticEnergyEqIdx);
+        const bool isOutflowEpsilon = scvf.boundary() && bcTypes.isOutflow(dissipationEqIdx);
         auto upwindTermK = [](const auto& volVars)
         {
             return volVars.turbulentKineticEnergy();

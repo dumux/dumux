@@ -149,11 +149,11 @@ public:
     { return uPlus_; }
 
     /*!
-     * \brief Return the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow within the
+     * \brief Return the kinematic eddy viscosity \f$\mathrm{[m^2/s]}\f$ of the flow within the
      *        control volume.
      */
-    Scalar dynamicEddyViscosity() const
-    { return dynamicEddyViscosity_; }
+    Scalar kinematicEddyViscosity() const
+    { return dynamicEddyViscosity() / asImp_().density(); }
 
     /*!
      * \brief Return the kinematic viscosity \f$\mathrm{[m^2/s]}\f$ of the fluid within the
@@ -163,11 +163,11 @@ public:
     { return asImp_().viscosity() / asImp_().density(); }
 
     /*!
-     * \brief Return the kinematic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow within the
+     * \brief Return the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow within the
      *        control volume.
      */
-    Scalar kinematicEddyViscosity() const
-    { return dynamicEddyViscosity() / asImp_().density(); }
+    Scalar dynamicEddyViscosity() const
+    { return dynamicEddyViscosity_; }
 
 protected:
     DimVector velocity_;

@@ -113,6 +113,19 @@ public:
     using type = LowReKEpsilonVtkOutputFields<FVGridGeometry>;
 };
 
+//! Set one or different base epsilons for the calculations of the localJacobian's derivatives
+SET_PROP(LowReKEpsilon, BaseEpsilon)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+public:
+    static constexpr auto getEps()
+    {
+        return std::array<std::array<Scalar, 2>, 2>{{{1e-6/*dCCdCC*/, 1e-8/*dCCdFace*/},
+                                                     {1e-6/*dFacedCC*/, 1e-8/*dFacedFace*/}}};
+    }
+};
+
 //////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal low-Reynolds k-epsilon model
 //////////////////////////////////////////////////////////////////

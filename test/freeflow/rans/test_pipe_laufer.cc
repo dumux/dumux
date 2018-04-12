@@ -24,16 +24,16 @@
  * This test simulates is based on pipe flow experiments by
  * John Laufers experiments in 1954 \cite Laufer1954a.
  */
- #include <config.h>
+#include <config.h>
 
- #include <ctime>
- #include <iostream>
+#include <ctime>
+#include <iostream>
 
- #include <dune/common/parallel/mpihelper.hh>
- #include <dune/common/timer.hh>
- #include <dune/grid/io/file/dgfparser/dgfexception.hh>
- #include <dune/grid/io/file/vtk.hh>
- #include <dune/istl/io.hh>
+#include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/timer.hh>
+#include <dune/grid/io/file/dgfparser/dgfexception.hh>
+#include <dune/grid/io/file/vtk.hh>
+#include <dune/istl/io.hh>
 
 #include "pipelauferproblem.hh"
 
@@ -204,8 +204,8 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
 
 #if HAVE_PVPYTHON
-    bool plotLawOfTheWall = getParam<bool>("Output.PlotLawOfTheWall", false);
-    bool plotVelocityProfile = getParam<bool>("Output.PlotVelocityProfile", false);
+    static const bool plotLawOfTheWall = getParam<bool>("Output.PlotLawOfTheWall", false);
+    static const bool plotVelocityProfile = getParam<bool>("Output.PlotVelocityProfile", false);
     if (plotLawOfTheWall || plotVelocityProfile)
     {
         char fileName[255];

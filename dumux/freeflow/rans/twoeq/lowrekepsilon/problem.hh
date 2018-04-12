@@ -73,6 +73,7 @@ public:
         {
             DUNE_THROW(Dune::NotImplemented, "This low-Re k-epsilon model is not implemented: " << lowReKEpsilonModel_);
         }
+        useStoredEddyViscosity_ = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.UseStoredEddyViscosity", true);
     }
 
     /*!
@@ -131,6 +132,7 @@ public:
     std::vector<Scalar> storedKinematicEddyViscosity_;
     std::vector<Scalar> storedTurbulentKineticEnergy_;
     int lowReKEpsilonModel_;
+    bool useStoredEddyViscosity_;
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)

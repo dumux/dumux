@@ -24,7 +24,7 @@
 #ifndef DUMUX_LOWREKEPSILON_INDICES_HH
 #define DUMUX_LOWREKEPSILON_INDICES_HH
 
-#include <dumux/freeflow//navierstokes/indices.hh>
+#include <dumux/freeflow/navierstokes/indices.hh>
 
 namespace Dumux {
 

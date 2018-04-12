@@ -54,6 +54,19 @@ public:
         vtk.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "turbulentKineticEnergy");
         vtk.addVolumeVariable([](const auto& v){ return v.dissipationTilde(); }, "dissipation");
         vtk.addVolumeVariable([](const auto& v){ return v.stressTensorScalarProduct(); }, "stressTensorScalarProduct");
+        vtk.addVolumeVariable([](const auto& v){ return v.kinematicEddyViscosity(); }, "eddyViscosity");
+        vtk.addVolumeVariable([](const auto& v){ return 2.0 * v.kinematicEddyViscosity()
+                                               * v.stressTensorScalarProduct(); }, "production_k");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.cOneEpsilon() * volVars.fOne()
+                                    * volVars.dissipationTilde() / volVars.turbulentKineticEnergy()
+                                    * 2.0 * volVars.kinematicEddyViscosity()
+                                    * volVars.stressTensorScalarProduct(); }, "production_eps");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.dissipationTilde(); }, "destruction_k");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.cTwoEpsilon() * volVars.fTwo()
+                                    * volVars.dissipationTilde() * volVars.dissipationTilde()
+                                    / volVars.turbulentKineticEnergy(); }, "destruction_eps");
+        vtk.addVolumeVariable([](const auto& v){ return v.dValue(); }, "dValue");
+        vtk.addVolumeVariable([](const auto& v){ return v.eValue(); }, "eValue");
     }
 };
 

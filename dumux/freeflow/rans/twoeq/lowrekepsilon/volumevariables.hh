@@ -110,9 +110,8 @@ public:
         storedDissipationTilde_ = problem.storedDissipationTilde_[ParentType::elementID()];
         storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[ParentType::elementID()];
         stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[ParentType::elementID()];
-        dofPosition_ = scv.dofPosition();
-        if (getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.UseStoredEddyViscosity", true))
-            ParentType::setDynamicEddyViscosity(problem.storedKinematicEddyViscosity_[ParentType::elementID()] * ParentType::density());
+        if (problem.useStoredEddyViscosity_)
+            ParentType::setKinematicEddyViscosity(problem.storedKinematicEddyViscosity_[ParentType::elementID()]);
         else
             calculateEddyViscosity();
     }
@@ -124,8 +123,18 @@ public:
     {
         Scalar kinematicEddyViscosity
             = cMu() * fMu() * turbulentKineticEnergy() * turbulentKineticEnergy()
-              / std::max(dissipationTilde(), getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.MinDissipation", -1));
-        ParentType::setDynamicEddyViscosity(kinematicEddyViscosity * ParentType::density());
+              / dissipationTilde();
+//         if (std::isnan(kinematicEddyViscosity) || dissipationTilde() < 1e-8)
+//         {
+        Dune::dinfo /*<< " scv.dofPosition() " << dofPosition_
+                    */<< " cMu() " << cMu()
+                    << " fMu() " << fMu()
+                    << " turbulentKineticEnergy() " << turbulentKineticEnergy()
+                    << " dissipationTilde() " << dissipationTilde()
+                    << " kinematicEddyViscosity " << kinematicEddyViscosity
+                    << std::endl;
+//         }
+        ParentType::setKinematicEddyViscosity(kinematicEddyViscosity);
     }
 
     /*!
@@ -303,7 +312,6 @@ public:
     }
 
 protected:
-    Dune::FieldVector<Scalar, 2> dofPosition_;
     int lowReKEpsilonModel_;
     Scalar turbulentKineticEnergy_;
     Scalar dissipationTilde_;
