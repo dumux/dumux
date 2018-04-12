@@ -223,33 +223,51 @@ int main(int argc, char** argv) try
         syscom =  command + " -p1 8.0 0.0 0.0"
                           + " -p2 8.0 0.2469 0.0"
                           + " -of " + std::string(fileName) + "\n";
-//         std::cout << syscom << std::endl;
-        system(syscom.c_str());
 
-        char gnuplotFileName[255];
-        Dumux::GnuplotInterface<Scalar> gnuplot;
-        sprintf(gnuplotFileName, fileNameFormat.c_str(), "lawOfTheWall", timeLoop->timeStepIndex());
-        gnuplot.setOpenPlotWindow(plotLawOfTheWall);
-        gnuplot.setDatafileSeparator(',');
-        gnuplot.resetPlot();
-        gnuplot.setXlabel("y^+ [-]");
-        gnuplot.setYlabel("u_+ [-]");
-        gnuplot.setOption("set log x");
-        gnuplot.setOption("set xrange [1:3000]");
-        gnuplot.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer 1954, Re=50000'");
-        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l");
-        gnuplot.plot(std::string(gnuplotFileName));
+        if (!system(syscom.c_str()))
+        {
+            Dumux::GnuplotInterface<Scalar> gnuplot_lawOfTheWall;
+            Dumux::GnuplotInterface<Scalar> gnuplot_velocityProfile;
+            char gnuplotFileName[255];
+            sprintf(gnuplotFileName, fileNameFormat.c_str(), "lawOfTheWall", timeLoop->timeStepIndex());
+            gnuplot_lawOfTheWall.setOpenPlotWindow(plotLawOfTheWall);
+            gnuplot_lawOfTheWall.setDatafileSeparator(',');
+            gnuplot_lawOfTheWall.resetPlot();
+            gnuplot_lawOfTheWall.setXlabel("y^+ [-]");
+            gnuplot_lawOfTheWall.setYlabel("u_+ [-]");
+            gnuplot_lawOfTheWall.setOption("set log x");
+            gnuplot_lawOfTheWall.setOption("set xrange [1:3000]");
+            gnuplot_lawOfTheWall.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer 1954, Re=50000'");
+#if LOWREKEPSILON
+            gnuplot_lawOfTheWall.addFileToPlot("pdelab-lowrekepsilon.csv", "u 23:22 w l lw 2 t 'PDELab Low-Re k-epsilon'");
+            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l");
+#else
+            gnuplot_lawOfTheWall.addFileToPlot("pdelab-zeroeq.csv", "u 22:21 w l lw 2 t 'PDELab 0-Eq.'");
+            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l");
+#endif
+            gnuplot_lawOfTheWall.plot(std::string(gnuplotFileName));
 
-        sprintf(gnuplotFileName, fileNameFormat.c_str(), "velProfile", timeLoop->timeStepIndex());
-        gnuplot.resetAll();
-        gnuplot.setOpenPlotWindow(plotVelocityProfile);
-        gnuplot.setDatafileSeparator(',');
-        gnuplot.setXlabel("v_x/v_{x,max} [-]");
-        gnuplot.setYRange(0.0, 1.0);
-        gnuplot.setYlabel("y [-]");
-        gnuplot.addFileToPlot("laufer_re50000.csv", "u 2:1 w p t 'Laufer 1954, Re=50000'");
-        gnuplot.addFileToPlot(std::string(fileName) + ".csv", "u 7:($24/0.2456) w l");
-        gnuplot.plot(std::string(gnuplotFileName));
+            sprintf(gnuplotFileName, fileNameFormat.c_str(), "velProfile", timeLoop->timeStepIndex());
+            gnuplot_velocityProfile.setOpenPlotWindow(plotVelocityProfile);
+            gnuplot_velocityProfile.setDatafileSeparator(',');
+            gnuplot_velocityProfile.resetPlot();
+            gnuplot_velocityProfile.setXlabel("v_x/v_{x,max} [-]");
+            gnuplot_velocityProfile.setYRange(0.0, 1.0);
+            gnuplot_velocityProfile.setYlabel("y [-]");
+            gnuplot_velocityProfile.addFileToPlot("laufer_re50000.csv", "u 2:1 w p t 'Laufer 1954, Re=50000'");
+#if LOWREKEPSILON
+            gnuplot_velocityProfile.addFileToPlot("pdelab-lowrekepsilon.csv", "u 5:($27/0.2456) w l lw 2 t 'PDELab Low-Re k-epsilon'");
+            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($32/0.2456) w l");
+#else
+            gnuplot_velocityProfile.addFileToPlot("pdelab-zeroeq.csv", "u 5:($26/0.2456) w l lw 2 t 'PDELab 0-Eq.'");
+            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($24/0.2456) w l");
+#endif
+            gnuplot_velocityProfile.plot(std::string(gnuplotFileName));
+        }
+        else
+        {
+            std::cerr << "An error occurred when calling pvpython.";
+        }
     }
 #endif
 

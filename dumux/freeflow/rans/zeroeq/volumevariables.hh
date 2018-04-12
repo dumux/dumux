@@ -105,8 +105,8 @@ public:
                               const SubControlVolume& scv)
     {
         ParentType::updateRANSProperties(elemSol, problem, element, scv);
-        additionalRoughnessLength_ = problem.additionalRoughnessLength_[this->elementID()];
-        yPlusRough_ = wallDistanceRough() * this->uStar() / this->kinematicViscosity();
+        additionalRoughnessLength_ = problem.additionalRoughnessLength_[ParentType::elementID()];
+        yPlusRough_ = wallDistanceRough() * ParentType::uStar() / ParentType::kinematicViscosity();
         calculateEddyViscosity(elemSol, problem, element, scv);
     }
 
@@ -128,37 +128,34 @@ public:
         using std::exp;
         using std::sqrt;
         Scalar kinematicEddyViscosity = 0.0;
-        static const auto eddyViscosityModel
-            = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.EddyViscosityModel");
-        unsigned int elementID = problem.fvGridGeometry().elementMapper().index(element);
-        unsigned int flowNormalAxis = problem.flowNormalAxis_[elementID];
-        unsigned int wallNormalAxis = problem.wallNormalAxis_[elementID];
+        unsigned int flowNormalAxis = problem.flowNormalAxis_[ParentType::elementID()];
+        unsigned int wallNormalAxis = problem.wallNormalAxis_[ParentType::elementID()];
         Scalar velGrad = abs(ParentType::velocityGradients()[flowNormalAxis][wallNormalAxis]);
 
-        if (eddyViscosityModel == EddyViscosityModels::none)
+        if (problem.eddyViscosityModel_ == EddyViscosityModels::none)
         {
             // kinematicEddyViscosity = 0.0
         }
-        else if (eddyViscosityModel == EddyViscosityModels::prandtl)
+        else if (problem.eddyViscosityModel_ == EddyViscosityModels::prandtl)
         {
             Scalar mixingLength = problem.karmanConstant() * wallDistanceRough();
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
-        else if (eddyViscosityModel == EddyViscosityModels::modifiedVanDriest)
+        else if (problem.eddyViscosityModel_ == EddyViscosityModels::modifiedVanDriest)
         {
             Scalar mixingLength = problem.karmanConstant() * wallDistanceRough()
                                   * (1.0 - exp(-yPlusRough() / 26.0))
                                   / sqrt(1.0 - exp(-0.26 * yPlusRough()));
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
-        else if (eddyViscosityModel == EddyViscosityModels::baldwinLomax)
+        else if (problem.eddyViscosityModel_ == EddyViscosityModels::baldwinLomax)
         {
-            kinematicEddyViscosity = problem.kinematicEddyViscosity_[elementID];
+            kinematicEddyViscosity = problem.kinematicEddyViscosity_[ParentType::elementID()];
         }
         else
         {
             DUNE_THROW(Dune::NotImplemented,
-                       "This eddy viscosity model is not implemented: " << eddyViscosityModel);
+                       "This eddy viscosity model is not implemented: " << problem.eddyViscosityModel_);
         }
         ParentType::setDynamicEddyViscosity(kinematicEddyViscosity * ParentType::density());
     }
@@ -167,7 +164,7 @@ public:
      * \brief Return the wall distance \f$\mathrm{[m]}\f$ including an additional roughness length
      */
     Scalar wallDistanceRough() const
-    { return this->wallDistance() + additionalRoughnessLength_; }
+    { return ParentType::wallDistance() + additionalRoughnessLength_; }
 
     /*!
      * \brief Return the dimensionless wall distance \f$\mathrm{[-]}\f$  including an additional roughness length

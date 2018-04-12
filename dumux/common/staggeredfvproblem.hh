@@ -89,9 +89,8 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for
-     * an element (for cell-centered models)
-     * or vertex (for box / vertex-centered models)
+     * \brief Evaluate the initial value for an element (for cell-centered primary variables)
+     * or face (for velocities)
      *
      * \param entity The dof entity (element or vertex)
      */
