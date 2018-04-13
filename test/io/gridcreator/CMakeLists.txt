@@ -26,7 +26,7 @@ dune_symlink_to_source_files(FILES "test_gridcreator_gmsh_3d.input"
 add_executable(test_gridcreator_gmsh_3d_alu EXCLUDE_FROM_ALL test_gridcreator_gmsh_3d.cc)
 target_compile_definitions(test_gridcreator_gmsh_3d_alu PUBLIC GRIDTYPE=Dune::ALUGrid<3,3,Dune::simplex,Dune::nonconforming>)
 
-dune_add_test(NAME test_gridcreator_gmsh_3d_alu
+dune_add_test(NAME test_gridcreator_gmsh_3d_alu_sequential
               TARGET test_gridcreator_gmsh_3d_alu
               CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -47,7 +47,7 @@ dune_add_test(NAME test_gridcreator_gmsh_3d_alu_parallel
 add_executable(test_gridcreator_gmsh_3d_ug EXCLUDE_FROM_ALL test_gridcreator_gmsh_3d.cc)
 target_compile_definitions(test_gridcreator_gmsh_3d_ug PUBLIC GRIDTYPE=Dune::UGGrid<3>)
 
-dune_add_test(NAME test_gridcreator_gmsh_3d_ug
+dune_add_test(NAME test_gridcreator_gmsh_3d_ug_sequential
               TARGET test_gridcreator_gmsh_3d_ug
               CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -72,7 +72,7 @@ dune_add_test(NAME test_gridcreator_gmsh_3d_ug_parallel
 add_executable(test_gridcreator_gmsh_e_markers_alu EXCLUDE_FROM_ALL test_gridcreator_gmsh_e_markers.cc)
 target_compile_definitions(test_gridcreator_gmsh_e_markers_alu PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>)
 
-dune_add_test(NAME test_gridcreator_gmsh_e_markers_alu
+dune_add_test(NAME test_gridcreator_gmsh_e_markers_alu_sequential
               TARGET test_gridcreator_gmsh_e_markers_alu
               CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -97,7 +97,7 @@ dune_add_test(NAME test_gridcreator_gmsh_e_markers_alu_parallel
 add_executable(test_gridcreator_gmsh_e_markers_ug EXCLUDE_FROM_ALL test_gridcreator_gmsh_e_markers.cc)
 target_compile_definitions(test_gridcreator_gmsh_e_markers_ug PUBLIC GRIDTYPE=Dune::UGGrid<2>)
 
-dune_add_test(NAME test_gridcreator_gmsh_e_markers_ug
+dune_add_test(NAME test_gridcreator_gmsh_e_markers_ug_sequential
               TARGET test_gridcreator_gmsh_e_markers_ug
               CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -122,7 +122,7 @@ dune_add_test(NAME test_gridcreator_gmsh_e_markers_ug_parallel
 add_executable(test_gridcreator_dgf_e_markers_alu EXCLUDE_FROM_ALL test_gridcreator_dgf_e_markers.cc)
 target_compile_definitions(test_gridcreator_dgf_e_markers_alu PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>)
 
-dune_add_test(NAME test_gridcreator_dgf_e_markers_alu
+dune_add_test(NAME test_gridcreator_dgf_e_markers_alu_sequential
               TARGET test_gridcreator_dgf_e_markers_alu
               CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -147,7 +147,7 @@ dune_add_test(NAME test_gridcreator_dgf_e_markers_alu_parallel
 add_executable(test_gridcreator_dgf_e_markers_ug EXCLUDE_FROM_ALL test_gridcreator_dgf_e_markers.cc)
 target_compile_definitions(test_gridcreator_dgf_e_markers_ug PUBLIC GRIDTYPE=Dune::UGGrid<2>)
 
-dune_add_test(NAME test_gridcreator_dgf_e_markers_ug
+dune_add_test(NAME test_gridcreator_dgf_e_markers_ug_sequential
               TARGET test_gridcreator_dgf_e_markers_ug
               CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
