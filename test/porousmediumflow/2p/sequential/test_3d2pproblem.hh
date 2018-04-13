@@ -58,7 +58,7 @@ class Test3D2PProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(ThreeDTwoPTestTypeTag, INHERITS_FROM(SequentialModel, Test3d2pSpatialParams));
+NEW_TYPE_TAG(ThreeDTwoPTestTypeTag, INHERITS_FROM(Test3d2pSpatialParams));
 
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
@@ -79,20 +79,6 @@ SET_PROP(ThreeDTwoPTestTypeTag, FluidSystem)
 
 #if PROBLEM == 1
 SET_INT_PROP(ThreeDTwoPTestTypeTag, Formulation, SequentialTwoPCommonIndices::pnSw);
-#endif
-
-// Set the spatial parameters
-SET_PROP(ThreeDTwoPTestTypeTag, SpatialParams)
-{
-private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-
-public:
-    using type = Test3d2pSpatialParams<TypeTag>;
-};
-
-#if PROBLEM == 1
 SET_TYPE_PROP(ThreeDTwoPTestTypeTag, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
 #endif
 
