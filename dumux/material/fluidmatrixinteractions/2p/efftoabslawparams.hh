@@ -26,6 +26,8 @@
 #ifndef DUMUX_EFF_TO_ABS_LAW_PARAMS_HH
 #define DUMUX_EFF_TO_ABS_LAW_PARAMS_HH
 
+#include <dune/common/float_cmp.hh>
+
 namespace Dumux
 {
 /*!
@@ -44,6 +46,17 @@ public:
     EffToAbsLawParams()
         : EffLawParams()
     { swr_ = snr_ = 0; }
+
+    /*!
+     * \brief Equality comparison with another set of params
+     */
+    template<class OtherParams>
+    bool operator== (const OtherParams& otherParams) const
+    {
+        return Dune::FloatCmp::eq(swr_, otherParams.swr(), /*eps*/1e-6*swr_)
+               && Dune::FloatCmp::eq(snr_, otherParams.snr(), /*eps*/1e-6*snr_)
+               && EffLawParamsT::operator==(otherParams);
+    }
 
     /*!
      * \brief Return the residual wetting saturation.

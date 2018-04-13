@@ -25,6 +25,8 @@
 #ifndef VAN_GENUCHTEN_PARAMS_HH
 #define VAN_GENUCHTEN_PARAMS_HH
 
+#include <dune/common/float_cmp.hh>
+
 namespace Dumux
 {
 /*!
@@ -48,6 +50,16 @@ public:
     {
         setVgAlpha(vgAlpha);
         setVgn(vgn);
+    }
+
+    /*!
+     * \brief Equality comparison with another set of params
+     */
+    template<class OtherParams>
+    bool operator== (const OtherParams& otherParams) const
+    {
+        return Dune::FloatCmp::eq(vgAlpha_, otherParams.vgAlpha(), /*eps*/1e-6*vgAlpha_)
+               && Dune::FloatCmp::eq(vgn_, otherParams.vgn(), /*eps*/1e-6*vgn_);
     }
 
     /*!

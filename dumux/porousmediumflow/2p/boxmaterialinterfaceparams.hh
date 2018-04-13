@@ -73,7 +73,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Determination of the interface material parameters with "
                                                     "this class only makes sense when using the box method!");
 
-        isOnMaterialInterface_.resize(fvGridGeometry.numDofs(), true);
+        isOnMaterialInterface_.resize(fvGridGeometry.numDofs(), false);
         dofParams_.resize(fvGridGeometry.numDofs(), nullptr);
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {
@@ -85,13 +85,20 @@ public:
             {
                 const auto& params = spatialParams.materialLawParams(element, scv, elemSol);
 
-                // is no parameters had been set, set them now
+                // if no parameters had been set, set them now
                 if (dofParams_[scv.dofIndex()] == nullptr)
                     dofParams_[scv.dofIndex()] = &params;
 
                 // otherwise only use the current ones if endPointPc (e.g. Brooks-Corey entry pressure) is lower
                 else if (MaterialLaw::endPointPc( params ) < MaterialLaw::endPointPc( *(dofParams_[scv.dofIndex()]) ))
+                {
                     dofParams_[scv.dofIndex()] = &params;
+                    isOnMaterialInterface_[scv.dofIndex()] = true;
+                }
+
+                // keep track of material interfaces in any case
+                else if ( !(params == *(dofParams_[scv.dofIndex()])) )
+                    isOnMaterialInterface_[scv.dofIndex()] = true;
             }
         }
     }
