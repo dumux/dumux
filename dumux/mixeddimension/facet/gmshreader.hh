@@ -30,6 +30,7 @@
 #include <sstream>
 #include <typeinfo>
 
+#include <dune/common/timer.hh>
 #include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
@@ -88,6 +89,7 @@ public:
     //! Reads the data from a given mesh file
     void read(const std::string& fileName, std::size_t boundarySegThresh, bool verbose = false)
     {
+        Dune::Timer watch;
         if (verbose) std::cout << "Opening " << fileName << std::endl;
         std::ifstream gridFile(fileName);
         if (gridFile.fail())
@@ -269,7 +271,7 @@ public:
                 std::cout << " vertices";
                 if (id < numGrids-1) std::cout << "," << std::endl;
             }
-            std::cout << " have been read." << std::endl;
+            std::cout << " have been read in " << watch.elapsed() << " seconds." << std::endl;
         }
     }
 
@@ -278,11 +280,10 @@ public:
     { return bulkGridvertices_; }
 
     //! Returns a low-dim grid's vertex indices
-    const VertexIndexSet& vertexIndices(std::size_t id) const
+    VertexIndexSet& lowDimVertexIndices(std::size_t id)
     {
-        assert(id < numGrids "Index exceeds number of grids provided");
-        if (id == 0)
-            DUNE_THROW(Dune::InvalidStateException, "vertex indices can only be obtained for the low-dim grids");
+        assert(id < numGrids && "Index exceeds number of grids provided");
+        assert(id > 0 && "For bulk vertex indices you should call bulkGridVertices()");
         return lowDimGridVertexIndices_[id-1];
     }
 
