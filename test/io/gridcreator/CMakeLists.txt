@@ -28,7 +28,7 @@ target_compile_definitions(test_gridcreator_gmsh_3d_alu PUBLIC GRIDTYPE=Dune::AL
 
 dune_add_test(NAME test_gridcreator_gmsh_3d_alu_sequential
               TARGET test_gridcreator_gmsh_3d_alu
-              CMAKE_GUARD dune-uggrid_FOUND
+              CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_3d_alu -Problem.Name bifurcation_alu -Grid.Refine false"
@@ -37,7 +37,7 @@ dune_add_test(NAME test_gridcreator_gmsh_3d_alu_sequential
 
 dune_add_test(NAME test_gridcreator_gmsh_3d_alu_parallel
               TARGET test_gridcreator_gmsh_3d_alu
-              CMAKE_GUARD dune-uggrid_FOUND
+              CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_3d_alu -Problem.Name bifurcation_alu -Grid.Refine false"
@@ -99,7 +99,7 @@ target_compile_definitions(test_gridcreator_gmsh_e_markers_ug PUBLIC GRIDTYPE=Du
 
 dune_add_test(NAME test_gridcreator_gmsh_e_markers_ug_sequential
               TARGET test_gridcreator_gmsh_e_markers_ug
-              CMAKE_GUARD dune-alugrid_FOUND
+              CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_e_markers_ug -Problem.Name fracture_ug"
@@ -110,7 +110,7 @@ dune_add_test(NAME test_gridcreator_gmsh_e_markers_ug_sequential
 
 dune_add_test(NAME test_gridcreator_gmsh_e_markers_ug_parallel
               TARGET test_gridcreator_gmsh_e_markers_ug
-              CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
+              CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_e_markers_ug -Problem.Name fracture_ug"
@@ -149,7 +149,7 @@ target_compile_definitions(test_gridcreator_dgf_e_markers_ug PUBLIC GRIDTYPE=Dun
 
 dune_add_test(NAME test_gridcreator_dgf_e_markers_ug_sequential
               TARGET test_gridcreator_dgf_e_markers_ug
-              CMAKE_GUARD dune-alugrid_FOUND
+              CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_dgf_e_markers_ug -Problem.Name co2_ug"
@@ -160,7 +160,7 @@ dune_add_test(NAME test_gridcreator_dgf_e_markers_ug_sequential
 
 dune_add_test(NAME test_gridcreator_dgf_e_markers_ug_parallel
               TARGET test_gridcreator_dgf_e_markers_ug
-              CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
+              CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_dgf_e_markers_ug -Problem.Name co2_ug"
