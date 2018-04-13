@@ -166,6 +166,10 @@ public:
     typename Traits::EmbedmentMap& embedmentMap(std::size_t id)
     { assert(id < numGrids); return embedmentMaps_[id]; }
 
+    //! Returns map from low dim vertex index to bulk vertex index (insertion indices)
+    const std::vector<typename Traits::IndexType>& lowDimVertexIndices(std::size_t id) const
+    { assert(id > 0 && id < Traits::numGrids); return lowDimGridVertexIndices_[id-1]; }
+
     //! creates the grids from a given grid file using the parameter tree
     void makeGrids(const std::string& fileName, const std::string& paramGroup = "")
     {
@@ -182,7 +186,7 @@ public:
             const auto thresh = getParamFromGroup<std::size_t>(paramGroup, "Grid.GmshPhysicalEntityThreshold", 0);
             FacetCouplingGmshReader<Traits> gmshReader;
             gmshReader.read(fileName, (boundarySegments ? thresh : 0), verbose);
-            passDataFromReader(gmshReader, paramGroup, domainMarkers, boundarySegments);
+            passDataFromReader(gmshReader, domainMarkers, boundarySegments);
         }
         else
             DUNE_THROW(Dune::NotImplemented, "Reader for grid files of type ." + ext);
@@ -211,7 +215,7 @@ private:
 
     //! Creates the grids using the data in a mesh file reader
     template<typename MeshFileReader>
-    void passDataFromReader(MeshFileReader& reader, const std::string& paramGroup, bool domainMarkers, bool boundarySegments)
+    void passDataFromReader(MeshFileReader& reader, bool domainMarkers, bool boundarySegments)
     {
         const auto& bulkGridVertices = reader.bulkGridVertices();
         using namespace Dune::Hybrid;
@@ -224,8 +228,11 @@ private:
                 for (const auto& v : bulkGridVertices)
                     factory.insertVertex(v);
             else
-                for (const auto idx : reader.vertexIndices(id))
+            {
+                for (const auto idx : reader.lowDimVertexIndices(id))
                     factory.insertVertex(bulkGridVertices[idx]);
+                std::swap(lowDimGridVertexIndices_[id-1], reader.lowDimVertexIndices(id));
+            }
 
             // insert elements
             const auto& elements = reader.elementData(id);
@@ -270,6 +277,9 @@ private:
     //! data on domain and boundary markers
     std::array< typename Traits::ElementToDomainMarkerMap, Traits::numGrids > elementMarkerMaps_;
     std::array< typename Traits::BoundarySegmentToMarkerMap, Traits::numGrids > boundaryMarkerMaps_;
+
+    //! maps a low-dim vertex insertion index to the bulk grid vertex insertion index
+    std::array< std::vector<typename Traits::IndexType>, Traits::numGrids-1 > lowDimGridVertexIndices_;
 };
 
 } // end namespace Dumux
