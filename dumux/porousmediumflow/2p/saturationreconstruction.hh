@@ -1,0 +1,105 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 2 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ * \ingroup TwoPModel
+ * \brief copydoc Dumux::TwoPScvSaturationReconstruction
+ */
+#ifndef DUMUX_2P_SCV_SATURATION_RECONSTRUCTION_HH
+#define DUMUX_2P_SCV_SATURATION_RECONSTRUCTION_HH
+
+#include <dumux/discretization/methods.hh>
+
+namespace Dumux {
+
+/*!
+ * \ingroup TwoPModel
+ * \brief Class that computes the non-wetting saturation in an scv from the saturation
+ *        at the global degree of freedom. This is only necessary in conjunction with
+ *        the box scheme where the degrees of freedom lie on material interfaces. There
+ *        the non-wetting phase saturation is generally discontinuous.
+ */
+template<DiscretizationMethod M, bool enableReconstruction>
+class TwoPScvSaturationReconstruction
+{
+public:
+    /*!
+     * \brief Compute the non-wetting phase saturation.
+     * \note In the general case, we don't do anything. We do
+     *       stuff only in the specialization for the box scheme below.
+     *
+     * \param SpatialParams Class encapsulating the spatial parameters
+     * \param element The finite element the scv is embedded in
+     * \param scv The sub-control volume for which the saturation is computed
+     * \param elemSol The solution at all dofs inside this element
+     * \param Sn The non-wetting phase saturation at the global dof
+     */
+    template<class SpatialParams, class Element, class Scv, class ElemSol>
+    static typename ElemSol::PrimaryVariables::value_type
+    reconstructSn(const SpatialParams& spatialParams,
+                  const Element& element,
+                  const Scv& scv,
+                  const ElemSol& elemSol,
+                  typename ElemSol::PrimaryVariables::value_type Sn)
+    { return Sn; }
+};
+
+//! Specialization for the box scheme with the interface solver enabled
+template<>
+class TwoPScvSaturationReconstruction<DiscretizationMethod::box, /*enableReconstruction*/true>
+{
+public:
+    /*!
+     * \brief Compute
+     *
+     * \param SpatialParams Class encapsulating the spatial parameters
+     * \param element The finite element the scv is embedded in
+     * \param scv The sub-control volume for which the saturation is computed
+     * \param elemSol The solution at all dofs inside this element
+     * \param Sn The non-wetting phase saturation at the global dof
+     */
+    template<class SpatialParams, class Element, class Scv, class ElemSol>
+    static typename ElemSol::PrimaryVariables::value_type
+    reconstructSn(const SpatialParams& spatialParams,
+                  const Element& element,
+                  const Scv& scv,
+                  const ElemSol& elemSol,
+                  typename ElemSol::PrimaryVariables::value_type Sn)
+    {
+        // if this dof doesn't lie on a material interface, simply return Sn
+        if (!spatialParams.materialInterfaceParams().isOnMaterialInterface(scv))
+            return Sn;
+
+        using MaterialLaw = typename SpatialParams::MaterialLaw;
+        // compute capillary pressure using material parameters associated with the dof
+        const auto& ifMaterialParams = spatialParams.materialInterfaceParams().getDofParams(scv);
+        const auto pc = MaterialLaw::pc(ifMaterialParams, /*Sw=*/1.0 - Sn);
+
+        // reconstruct by inverting the pc-sw curve
+        const auto& materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
+        const auto pcMin = MaterialLaw::endPointPc(materialLawParams);
+
+        if (pc < pcMin && pcMin > 0.0) return 0.0;
+        else return 1.0 - MaterialLaw::sw(materialLawParams, pc);
+    }
+};
+
+}
+
+#endif

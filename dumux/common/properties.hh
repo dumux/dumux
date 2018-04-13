@@ -124,6 +124,9 @@ NEW_PROP_TAG(UseKelvinEquation);                   //!< If we use Kelvin equatio
 // or at the scvf center for analytical permeability fields (e.g. convergence studies)
 NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);
 
+// When using the box method in a multi-phase context, an interface solver might be necessary
+NEW_PROP_TAG(EnableBoxInterfaceSolver);
+
 //////////////////////////////////////////////////////////////
 // Additional properties used by the 2pnc and 2pncmin models:
 //////////////////////////////////////////////////////////////
