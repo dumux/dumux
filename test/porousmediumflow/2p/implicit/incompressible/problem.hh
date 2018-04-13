@@ -38,6 +38,10 @@
 
 #include "spatialparams.hh"
 
+#ifndef ENABLEINTERFACESOLVER
+#define ENABLEINTERFACESOLVER 0
+#endif
+
 namespace Dumux
 {
 // forward declarations
@@ -72,6 +76,9 @@ SET_PROP(TwoPIncompressible, FluidSystem)
 SET_BOOL_PROP(TwoPIncompressible, EnableGridVolumeVariablesCache, false);
 SET_BOOL_PROP(TwoPIncompressible, EnableGridFluxVariablesCache, false);
 SET_BOOL_PROP(TwoPIncompressible, EnableFVGridGeometryCache, false);
+
+// Maybe enable the box-interface solver
+SET_BOOL_PROP(TwoPIncompressible, EnableBoxInterfaceSolver, ENABLEINTERFACESOLVER);
 } // end namespace Properties
 
 /*!

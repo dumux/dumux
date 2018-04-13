@@ -23,10 +23,13 @@
 #ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/discretization/methods.hh>
 
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+
+#include <dumux/porousmediumflow/2p/boxmaterialinterfaceparams.hh>
 
 namespace Dumux {
 
@@ -63,12 +66,14 @@ public:
 template<class TypeTag>
 class TwoPTestSpatialParams : public FVSpatialParams<TypeTag>
 {
+    using ThisType = TwoPTestSpatialParams<TypeTag>;
     using ParentType = FVSpatialParams<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -158,6 +163,18 @@ public:
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     { return FluidSystem::phase0Idx; }
 
+    //! Updates the map of which material parameters are associated with a nodal dof.
+    template<class SolutionVector>
+    void updateMaterialInterfaceParams(const SolutionVector& x)
+    {
+        if (FVGridGeometry::discMethod == DiscretizationMethod::box)
+            materialInterfaceParams_.update(this->problem().fvGridGeometry(), *this, x);
+    }
+
+    //! Returns the material parameters associated with a nodal dof
+    const BoxMaterialInterfaceParams<ThisType>& materialInterfaceParams() const
+    { return materialInterfaceParams_; }
+
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {
@@ -175,6 +192,9 @@ private:
     Scalar outerK_;
     MaterialLawParams lensMaterialParams_;
     MaterialLawParams outerMaterialParams_;
+
+    // Determines the parameters associated with the dofs at material interfaces
+    BoxMaterialInterfaceParams<ThisType> materialInterfaceParams_;
 
     static constexpr Scalar eps_ = 1.5e-7;
 };
