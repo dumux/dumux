@@ -1,4 +1,5 @@
 add_subdirectory("1p_1p")
+add_subdirectory("box")
 dune_symlink_to_source_files(FILES "grid.msh" "grid2.msh" "test_gridcreator.input")
 
 dune_add_test(NAME test_facetgridcreator_alu
