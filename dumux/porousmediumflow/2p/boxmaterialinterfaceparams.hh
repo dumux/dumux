@@ -73,6 +73,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Determination of the interface material parameters with "
                                                     "this class only makes sense when using the box method!");
 
+        isUpdated_ = true;
         isOnMaterialInterface_.resize(fvGridGeometry.numDofs(), false);
         dofParams_.resize(fvGridGeometry.numDofs(), nullptr);
         for (const auto& element : elements(fvGridGeometry.gridView()))
@@ -106,14 +107,15 @@ public:
     //! Return if this scv is connected to a material interface
     template<class Scv>
     bool isOnMaterialInterface(const Scv& scv) const
-    { return isOnMaterialInterface_[scv.dofIndex()]; }
+    { assert(isUpdated_); return isOnMaterialInterface_[scv.dofIndex()]; }
 
     //! Return the material parameters associated with the dof
     template<class Scv>
     const MaterialLawParams& getDofParams(const Scv& scv) const
-    { return *(dofParams_[scv.dofIndex()]); }
+    { assert(isUpdated_); return *(dofParams_[scv.dofIndex()]); }
 
 private:
+    bool isUpdated_{false};
     std::vector<bool> isOnMaterialInterface_;
     std::vector<const MaterialLawParams*> dofParams_;
 };
