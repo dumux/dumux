@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup TwoPModel
- * \brief copydoc Dumux::TwoPScvSaturationReconstruction
+ * \brief copydoc Dumux::BoxMaterialInterfaceParams
  */
 #ifndef DUMUX_2P_BOX_MATERIAL_INTERFACE_PARAMS_HH
 #define DUMUX_2P_BOX_MATERIAL_INTERFACE_PARAMS_HH

@@ -40,9 +40,10 @@ class TwoPScvSaturationReconstruction
 {
 public:
     /*!
-     * \brief Compute the non-wetting phase saturation.
-     * \note In the general case, we don't do anything. We do
-     *       stuff only in the specialization for the box scheme below.
+     * \brief Compute the non-wetting phase saturation in an scv
+     * \note In the default case, we don't reconstruct anything. We do
+     *       Reconstruction is only done when using the box method
+     *       and enableReconstruction = true.
      *
      * \param SpatialParams Class encapsulating the spatial parameters
      * \param element The finite element the scv is embedded in
@@ -66,7 +67,7 @@ class TwoPScvSaturationReconstruction<DiscretizationMethod::box, /*enableReconst
 {
 public:
     /*!
-     * \brief Compute
+     * \brief Compute the non-wetting phase saturation in an scv
      *
      * \param SpatialParams Class encapsulating the spatial parameters
      * \param element The finite element the scv is embedded in
