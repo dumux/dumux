@@ -25,37 +25,25 @@
 #define DUMUX_STAGGERED_NAVIERSTOKES_NC_INDICES_HH
 
 #include <dumux/freeflow/navierstokes/indices.hh>
-#include <dumux/common/properties.hh>
 
 namespace Dumux {
 
-// \{
 /*!
  * \ingroup NavierStokesNCModel
  * \brief The common indices for the isothermal multi-component Navier-Stokes model.
- *
- * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int dimension, int numEquations,
-          int thePhaseIdx, int theReplaceCompEqIdx,
-          int PVOffset = 0>
-struct NavierStokesNCIndices : public NavierStokesIndices<dimension, numEquations, PVOffset>
+          int thePhaseIdx, int theReplaceCompEqIdx>
+struct NavierStokesNCIndices : public NavierStokesIndices<dimension>
 {
-private:
-    using ParentType = NavierStokesIndices<dimension, numEquations, PVOffset>;
-
 public:
     static constexpr int phaseIdx = thePhaseIdx; //!< The phase index
     static constexpr int mainCompIdx = phaseIdx; //!< The index of the main component
 
     //! The index of the component whose mass balance will be replaced by the total one
     static constexpr int replaceCompEqIdx = theReplaceCompEqIdx;
-    static constexpr int totalMassBalanceIdx = replaceCompEqIdx; //!< Index of the total mass balance equation
-    static constexpr int conti0EqIdx = PVOffset; //!< The base index of the transport equations
-    static constexpr int pressureIdx = totalMassBalanceIdx; //!< Index of the pressure in a solution vector
 };
 
-// \}
-} // end namespace
+} // end namespace Dumux
 
 #endif

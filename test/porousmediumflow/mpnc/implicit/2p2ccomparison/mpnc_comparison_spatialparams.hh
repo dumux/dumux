@@ -56,15 +56,15 @@ SET_PROP(MPNCComparisonSpatialParams, MaterialLaw)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
+    enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
     // define the material law
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using EffMaterialLaw = RegularizedBrooksCorey<Scalar>;
     using TwoPMaterialLaw = EffToAbsLaw<EffMaterialLaw>;
 public:
-    using type = TwoPAdapter<wPhaseIdx, TwoPMaterialLaw>;
+    using type = TwoPAdapter<liquidPhaseIdx, TwoPMaterialLaw>;
 };
-}
+} // end namespace Properties
 
 /**
  * \ingroup MPNCModel
@@ -83,17 +83,16 @@ class MPNCComparisonSpatialParams : public FVSpatialParams<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     enum {dimWorld=GridView::dimensionworld};
 
 public:
-     using PermeabilityType = Scalar;
+    using PermeabilityType = Scalar;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
-
-    MPNCComparisonSpatialParams(const Problem &problem)
-        : ParentType(problem)
+    //! The constructor
+    MPNCComparisonSpatialParams(const Problem &problem) : ParentType(problem)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;

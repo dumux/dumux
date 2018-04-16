@@ -91,11 +91,13 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
-        pwIdx = Indices::pwIdx,
-        snIdx = Indices::snIdx,
-        contiNEqIdx = Indices::contiNEqIdx
+        pressureH2OIdx = Indices::pressureIdx,
+        saturationDNAPLIdx = Indices::saturationIdx,
+        contiDNAPLEqIdx = Indices::conti0EqIdx + FluidSystem::comp1Idx,
+        waterPhaseIdx = FluidSystem::phase0Idx,
+        dnaplPhaseIdx = FluidSystem::phase1Idx
     };
 
 public:
@@ -132,10 +134,10 @@ public:
         PrimaryVariables values;
         typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
         fluidState.setTemperature(temperature());
-        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
-        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);
 
-        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
+        Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
 
         Scalar height = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
         Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
@@ -144,8 +146,8 @@ public:
         Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
 
         // hydrostatic pressure scaled by alpha
-        values[pwIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;
-        values[snIdx] = 0.0;
+        values[pressureH2OIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;
+        values[saturationDNAPLIdx] = 0.0;
 
         return values;
     }
@@ -165,7 +167,7 @@ public:
     {
         NumEqVector values(0.0);
         if (onInlet_(globalPos))
-            values[contiNEqIdx] = -0.04; // kg / (m * s)
+            values[contiDNAPLEqIdx] = -0.04; // kg / (m * s)
         return values;
     }
 
@@ -181,16 +183,16 @@ public:
         PrimaryVariables values;
         typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
         fluidState.setTemperature(temperature());
-        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
-        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(waterPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(dnaplPhaseIdx, /*pressure=*/1e5);
 
-        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
+        Scalar densityW = FluidSystem::density(fluidState, waterPhaseIdx);
 
         Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
 
         // hydrostatic pressure
-        values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
-        values[snIdx] = 0.0;
+        values[pressureH2OIdx] = 1e5 - densityW*this->gravity()[1]*depth;
+        values[saturationDNAPLIdx] = 0;
         return values;
     }
 

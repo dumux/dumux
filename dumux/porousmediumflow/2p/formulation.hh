@@ -20,30 +20,23 @@
 /*!
  * \file
  * \ingroup TwoPModel
- * \brief Defines the indices required for the two-phase fully implicit model.
+ * \brief Defines an enumeration for the formulations accepted by the two-phase model.
  */
-#ifndef DUMUX_2P_INDICES_HH
-#define DUMUX_2P_INDICES_HH
-
-#include "formulation.hh"
+#ifndef DUMUX_2P_FORMULATION_INDICES_HH
+#define DUMUX_2P_FORMULATION_INDICES_HH
 
 namespace Dumux {
 
 /*!
  * \ingroup TwoPModel
- * \brief Defines the indices required for the two-phase fully implicit model.
+ * \brief Enumerates the formulations which the two-phase model accepts.
  */
-struct TwoPIndices
+enum class TwoPFormulation
 {
-    // Primary variable indices
-    static constexpr int pressureIdx = 0; //!< index for first/second phase pressure (depending on formulation) in a solution vector
-    static constexpr int saturationIdx = 1; //!< index of the saturation of the first/second phase
-
-    // indices of the equations
-    static constexpr int conti0EqIdx = 0; //!< index of the first continuity equation
+    p0s1, //!< first phase pressure and second phase saturation as primary variables
+    p1s0  //!< first phase saturation and second phase pressure as primary variables
 };
 
 } // namespace Dumux
-
 
 #endif

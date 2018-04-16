@@ -94,7 +94,8 @@ class Injection2p2cProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -194,10 +195,10 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
         // initialize values to zero, i.e. no-flow Neumann boundary conditions
-        PrimaryVariables values(0.0);
+        NumEqVector values(0.0);
 
         //if we are inside the injection zone set inflow Neumann boundary conditions
         if (time_ < injectionDuration_
@@ -205,8 +206,7 @@ public:
         {
             // set the Neumann values for the Nitrogen component balance
             // convert from units kg/(s*m^2) to mole/(s*m^2)
-            values[Indices::contiNEqIdx] = -totalAreaSpecificInflow_/FluidSystem::molarMass(FluidSystem::nCompIdx);
-            values[Indices::contiWEqIdx] = 0.0;
+            values[Indices::conti0EqIdx + FluidSystem::N2Idx] = -totalAreaSpecificInflow_/FluidSystem::molarMass(FluidSystem::N2Idx);
         }
 
         return values;
@@ -230,7 +230,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values.setState(Indices::wPhaseOnly);
+        values.setState(Indices::firstPhaseOnly);
 
         // get the water density at atmospheric conditions
         const Scalar densityW = FluidSystem::H2O::liquidDensity(temperature(), 1.0e5);

@@ -81,9 +81,6 @@ class FuelCellSpatialParams : public FVSpatialParams<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-
-    using MaterialLawParams = typename MaterialLaw::Params;
     using CoordScalar = typename GridView::ctype;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -93,6 +90,8 @@ class FuelCellSpatialParams : public FVSpatialParams<TypeTag>
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
     /*!
@@ -147,6 +146,16 @@ public:
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     { return materialParams_; }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::H2OIdx; }
 
 private:
     DimWorldMatrix K_;

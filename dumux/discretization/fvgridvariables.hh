@@ -24,6 +24,7 @@
 #ifndef DUMUX_FV_GRID_VARIABLES_HH
 #define DUMUX_FV_GRID_VARIABLES_HH
 
+#include <type_traits>
 #include <memory>
 
 namespace Dumux {
@@ -35,13 +36,31 @@ namespace Dumux {
  * \tparam the type of the grid volume variables
  * \tparam the type of the grid flux variables cache
  */
-template<class FVGridGeometry, class GridVolumeVariables, class GridFluxVariablesCache>
+template<class GG, class GVV, class GFVC>
 class FVGridVariables
 {
 public:
+    //! export type of the finite volume grid geometry
+    using GridGeometry = GG;
+
+    //! export type of the finite volume grid geometry
+    using GridVolumeVariables = GVV;
+
+    //! export type of the volume variables
+    using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
+
+    //! export primary variable type
+    using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
+
+    //! export scalar type (TODO get it directly from the volvars)
+    using Scalar = std::decay_t<decltype(std::declval<PrimaryVariables>()[0])>;
+
+    //! export type of the finite volume grid geometry
+    using GridFluxVariablesCache = GFVC;
+
     template<class Problem>
     FVGridVariables(std::shared_ptr<Problem> problem,
-                    std::shared_ptr<FVGridGeometry> fvGridGeometry)
+                    std::shared_ptr<GridGeometry> fvGridGeometry)
     : fvGridGeometry_(fvGridGeometry)
     , curGridVolVars_(*problem)
     , prevGridVolVars_(*problem)
@@ -130,7 +149,7 @@ public:
 
 protected:
 
-    std::shared_ptr<const FVGridGeometry> fvGridGeometry_; //!< pointer to the constant grid geometry
+    std::shared_ptr<const GridGeometry> fvGridGeometry_; //!< pointer to the constant grid geometry
 
 private:
     GridVolumeVariables curGridVolVars_; //!< the current volume variables (primary and secondary variables)

@@ -18,24 +18,24 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup PorousMediumFlow
- * \brief Base class for the model specific class which provides
- *        access to all volume averaged quantities.
+ * \ingroup MPNCModel
+ * \brief Enumeration of the formulations accepted by the MpNc model.
  */
-#ifndef DUMUX_DISCRETIZATION_VOLUME_VARIABLES_DEPR_HH
-#define DUMUX_DISCRETIZATION_VOLUME_VARIABLES_DEPR_HH
-
-#warning "This header is deprecated. Use PorousMediumFlowVolumeVariables from dumux/porousmediumflow/volumevariables.hh"
-#include <dune/common/deprecated.hh>
-#include <dumux/porousmediumflow/volumevariables.hh>
+#ifndef DUMUX_MPNC_PRESSUREFORMULATION_HH
+#define DUMUX_MPNC_PRESSUREFORMULATION_HH
 
 namespace Dumux
 {
 
-template<class TypeTag>
-using ImplicitVolumeVariables DUNE_DEPRECATED_MSG("Use PorousMediumFlowVolumeVariables from dumux/porousmediumflow/volumevariables.hh")
-= PorousMediumFlowVolumeVariables<TypeTag>;
+/*!
+ * \ingroup MPNCModel
+ * \brief Enumerates the formulations which the MpNc model accepts.
+ */
+enum class MpNcPressureFormulation
+{
+    mostWettingFirst, leastWettingFirst
+};
 
-} // end namespace Dumux
+}
 
 #endif

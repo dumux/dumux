@@ -74,7 +74,7 @@ SET_BOOL_PROP(FractureTypeTag, EnableGridFluxVariablesCache, true);
 
 // permeablility is solution-independent
 SET_BOOL_PROP(FractureTypeTag, SolutionDependentAdvection, false);
-}
+} // end namespace Properties
 
 /*!
  * \ingroup TwoPTests
@@ -86,20 +86,21 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
-    enum {
-
+    enum
+    {
         // primary variable indices
-        pwIdx = Indices::pwIdx,
-        snIdx = Indices::snIdx,
+        pressureIdx = Indices::pressureIdx,
+        saturationIdx = Indices::saturationIdx,
 
         // equation indices
-        contiNEqIdx = Indices::contiNEqIdx,
+        contiTCEEqIdx = Indices::conti0EqIdx + FluidSystem::comp1Idx,
 
         // world dimension
         dimWorld = GridView::dimensionworld
@@ -193,8 +194,8 @@ public:
         const auto g = this->gravityAtPos(globalPos)[dimWorld-1];
 
         PrimaryVariables values;
-        values[pwIdx] = 1e5 + 1000*g*depth;
-        values[snIdx] = 0.0;
+        values[pressureIdx] = 1e5 + 1000*g*depth;
+        values[saturationIdx] = 0.0;
         return values;
     }
 
@@ -213,7 +214,7 @@ public:
     {
         NumEqVector values(0.0);
         if (onInlet_(globalPos)) {
-            values[contiNEqIdx] = -0.04; // kg / (m * s)
+            values[contiTCEEqIdx] = -0.04; // kg / (m * s)
         }
         return values;
     }

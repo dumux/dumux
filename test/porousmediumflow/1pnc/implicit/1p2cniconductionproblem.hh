@@ -102,7 +102,7 @@ class OnePTwoCNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -120,14 +120,11 @@ class OnePTwoCNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
-        massOrMoleFracIdx = Indices::firstMoleFracIdx,
         temperatureIdx = Indices::temperatureIdx,
     };
 
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static const auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
@@ -169,7 +166,7 @@ public:
         volVars.update(someElemSol, *this, someElement, someScv);
 
         const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
-        const auto densityW = volVars.density(phaseIdx);
+        const auto densityW = volVars.density();
         const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
         const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
         const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
@@ -302,7 +299,7 @@ private:
     {
         PrimaryVariables priVars;
         priVars[pressureIdx] = 1e5; // initial condition for the pressure
-        priVars[massOrMoleFracIdx] = 1e-5;  // initial condition for the N2 molefraction
+        priVars[FluidSystem::N2Idx] = 1e-5;  // initial condition for the N2 molefraction
         priVars[temperatureIdx] = 290.;
         return priVars;
     }

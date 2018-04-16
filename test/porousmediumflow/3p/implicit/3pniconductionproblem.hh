@@ -119,14 +119,14 @@ class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
         // index of the primary variables
         pressureIdx = Indices::pressureIdx,
         swIdx = Indices::swIdx,
         snIdx = Indices::snIdx,
         temperatureIdx = Indices::temperatureIdx,
-        wPhaseIdx = Indices::wPhaseIdx
+        wPhaseIdx = FluidSystem::wPhaseIdx
     };
 
     enum { dimWorld = GridView::dimensionworld };

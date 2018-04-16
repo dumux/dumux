@@ -25,8 +25,6 @@
 #ifndef DUMUX_1PNC_VOLUME_VARIABLES_HH
 #define DUMUX_1PNC_VOLUME_VARIABLES_HH
 
-#include <dune/common/fvector.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 
 namespace Dumux {
@@ -36,45 +34,39 @@ namespace Dumux {
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the one-phase, n-component model.
  *
- * \note The return functions for the fluid state variables always forward to the actual
- *       fluid state using the phaseIdx from the DuMuX property system. Furthermore, the
- *       default value is not used, but is only here to enable calling these functions
- *       without handing in a phase index (as in a single-phasic context there is only one phase).
- *       This way one can use two-phase fluid systems for this one-phasic flow and transport
- *       model by specifying which phase is present through the DuMuX property system.
+ * \note The default value for the phase index given in the fluid property interfaces is not used,
+ *       but is only here to enable calling these functions without handing in a phase index
+ *       (as in a single-phasic context there is only one phase).
  */
-template <class TypeTag>
-class OnePNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
+template <class Traits>
+class OnePNCVolumeVariables
+: public PorousMediumFlowVolumeVariables<Traits, OnePNCVolumeVariables<Traits>>
 {
-    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables<Traits, OnePNCVolumeVariables<Traits>>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using PermeabilityType = typename Traits::PermeabilityType;
+    using Idx = typename Traits::ModelTraits::Indices;
+    static constexpr int numComp = ParentType::numComponents();
 
     enum
     {
-        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
+        fluidSystemPhaseIdx = Idx::fluidSystemPhaseIdx,
 
-        phaseIdx = Indices::phaseIdx,
-        phaseCompIdx = Indices::phaseCompIdx,
+        // pressure primary variable index
+        pressureIdx = Idx::pressureIdx,
 
-        // primary variable indices
-        pressureIdx = Indices::pressureIdx,
-        firstMoleFracIdx = Indices::firstMoleFracIdx,
-
+        // main component index
+        mainCompMoleOrMassFracIdx = fluidSystemPhaseIdx
     };
 
 public:
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    //! export fluid state type
+    using FluidState = typename Traits::FluidState;
+    //! export fluid system type
+    using FluidSystem = typename Traits::FluidSystem;
+    //! export indices
+    using Indices = typename Traits::ModelTraits::Indices;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -85,11 +77,11 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume &scv)
+                const Scv &scv)
     {
         ParentType::update(elemSol, problem, element, scv);
 
@@ -102,21 +94,18 @@ public:
         // Could be avoided if diffusion coefficients also
         // became part of the fluid state.
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState_, phaseIdx);
+        paramCache.updatePhase(fluidState_, fluidSystemPhaseIdx);
 
-        int compIIdx = phaseCompIdx;
-
-        for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
+        int compIIdx = mainCompMoleOrMassFracIdx;
+        for (unsigned int compJIdx = 0; compJIdx < numComp; ++compJIdx)
         {
             diffCoeff_[compJIdx] = 0.0;
-            if(compIIdx!= compJIdx)
-                {
+            if(compIIdx != compJIdx)
                 diffCoeff_[compJIdx] = FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                             paramCache,
-                                                             phaseIdx,
-                                                             compIIdx,
-                                                             compJIdx);
-                }
+                                                                               paramCache,
+                                                                               fluidSystemPhaseIdx,
+                                                                               compIIdx,
+                                                                               compJIdx);
         }
 
     }
@@ -131,50 +120,53 @@ public:
      * \param scv The sub-control volume
      * \param fluidState A container with the current (physical) state of the fluid
      */
-    template<class ElementSolution>
-    static void completeFluidState(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    static void completeFluidState(const ElemSol &elemSol,
                                    const Problem& problem,
                                    const Element& element,
-                                   const SubControlVolume &scv,
+                                   const Scv &scv,
                                    FluidState& fluidState)
 
     {
         Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
-        fluidState.setSaturation(phaseIdx, 1.);
+        fluidState.setSaturation(fluidSystemPhaseIdx, 1.0);
 
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
-        fluidState.setPressure(phaseIdx, priVars[pressureIdx]);
+        fluidState.setPressure(fluidSystemPhaseIdx, priVars[pressureIdx]);
 
         // calculate the phase composition
-        Dune::FieldVector<Scalar, numComponents> moleFrac;
+        Dune::FieldVector<Scalar, numComp> moleFrac;
 
-        Scalar sumMoleFracNotWater = 0;
-
-        for (int compIdx=firstMoleFracIdx; compIdx<numComponents; ++compIdx){
-             moleFrac[compIdx] = priVars[compIdx];
-             sumMoleFracNotWater +=moleFrac[compIdx];
+        Scalar sumMoleFracNotMainComp = 0;
+        for (int compIdx = 0; compIdx < numComp; ++compIdx)
+        {
+            if (compIdx != mainCompMoleOrMassFracIdx)
+            {
+                moleFrac[compIdx] = priVars[compIdx];
+                sumMoleFracNotMainComp += moleFrac[compIdx];
             }
-        moleFrac[0] = 1- sumMoleFracNotWater;
+        }
+        moleFrac[mainCompMoleOrMassFracIdx] = 1- sumMoleFracNotMainComp;
 
         // Set fluid state mole fractions
-        for (int compIdx=0; compIdx<numComponents; ++compIdx)
+        for (int compIdx = 0; compIdx < numComp; ++compIdx)
         {
-            fluidState.setMoleFraction(phaseIdx, compIdx, moleFrac[compIdx]);
+            fluidState.setMoleFraction(fluidSystemPhaseIdx, compIdx, moleFrac[compIdx]);
         }
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
 
-        Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
-        Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+        Scalar rho = FluidSystem::density(fluidState, paramCache, fluidSystemPhaseIdx);
+        Scalar mu = FluidSystem::viscosity(fluidState, paramCache, fluidSystemPhaseIdx);
 
-        fluidState.setDensity(phaseIdx, rho);
-        fluidState.setViscosity(phaseIdx, mu);
+        fluidState.setDensity(fluidSystemPhaseIdx, rho);
+        fluidState.setViscosity(fluidSystemPhaseIdx, mu);
 
         // compute and set the enthalpy
-        Scalar h = Implementation::enthalpy(fluidState, paramCache, phaseIdx);
-        fluidState.setEnthalpy(phaseIdx, h);
+        Scalar h = ParentType::enthalpy(fluidState, paramCache, fluidSystemPhaseIdx);
+        fluidState.setEnthalpy(fluidSystemPhaseIdx, h);
     }
 
     /*!
@@ -188,26 +180,22 @@ public:
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
      *
      * \note the phase index passed to this function is for compatibility reasons
-     *       with multiphasic models. We always forward to the fluid state with the
-     *       phaseIdx property (see class description).
+     *       with multiphasic models.
      */
-    Scalar density(int pIdx = phaseIdx) const
+    Scalar density(int phaseIdx = fluidSystemPhaseIdx) const
     {
-        assert(pIdx == phaseIdx);
-        return fluidState_.density(phaseIdx);
+        return fluidState_.density(fluidSystemPhaseIdx);
     }
 
     /*!
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
      *
      * \note the phase index passed to this function is for compatibility reasons
-     *       with multiphasic models. We always forward to the fluid state with the
-     *       phaseIdx property (see class description).
+     *       with multiphasic models.
      */
-    Scalar molarDensity(int pIdx = phaseIdx) const
+    Scalar molarDensity(int phaseIdx = fluidSystemPhaseIdx) const
     {
-        assert(pIdx == phaseIdx);
-        return fluidState_.molarDensity(phaseIdx);
+        return fluidState_.molarDensity(fluidSystemPhaseIdx);
     }
 
     /*!
@@ -216,7 +204,7 @@ public:
      * This method is here for compatibility reasons with other models. The saturation
      * is always 1.0 in a one-phasic context.
      */
-    Scalar saturation(int pIdx = phaseIdx) const
+    Scalar saturation(int phaseIdx = fluidSystemPhaseIdx) const
     { return 1.0; }
 
      /*!
@@ -226,15 +214,13 @@ public:
       * \param compIdx the index of the component
       *
       * \note the phase index passed to this function is for compatibility reasons
-      *       with multiphasic models. We always forward to the fluid state with the
-      *       phaseIdx property (see class description).
+      *       with multiphasic models.
       */
-     Scalar moleFraction(int pIdx, int compIdx) const
+     Scalar moleFraction(int phaseIdx, int compIdx) const
      {
          // make sure this is only called with admissible indices
-         assert(pIdx == phaseIdx);
-         assert(compIdx < numComponents);
-         return fluidState_.moleFraction(phaseIdx, compIdx);
+         assert(compIdx < numComp);
+         return fluidState_.moleFraction(fluidSystemPhaseIdx, compIdx);
      }
 
      /*!
@@ -244,15 +230,13 @@ public:
       * \param compIdx the index of the component
       *
       * \note the phase index passed to this function is for compatibility reasons
-      *       with multiphasic models. We always forward to the fluid state with the
-      *       phaseIdx property (see class description).
+      *       with multiphasic models.
       */
-     Scalar massFraction(int pIdx, int compIdx) const
+     Scalar massFraction(int phaseIdx, int compIdx) const
      {
          // make sure this is only called with admissible indices
-         assert(pIdx == phaseIdx);
-         assert(compIdx < numComponents);
-         return fluidState_.massFraction(phaseIdx, compIdx);
+         assert(compIdx < numComp);
+         return fluidState_.massFraction(fluidSystemPhaseIdx, compIdx);
      }
 
     /*!
@@ -262,13 +246,11 @@ public:
      * \param phaseIdx The phase index
      *
      * \note the phase index passed to this function is for compatibility reasons
-     *       with multiphasic models. We always forward to the fluid state with the
-     *       phaseIdx property (see class description).
+     *       with multiphasic models.
      */
-    Scalar pressure(int pIdx = phaseIdx) const
+    Scalar pressure(int phaseIdx = fluidSystemPhaseIdx) const
     {
-        assert(pIdx == phaseIdx);
-        return fluidState_.pressure(phaseIdx);
+        return fluidState_.pressure(fluidSystemPhaseIdx);
     }
 
     /*!
@@ -288,13 +270,11 @@ public:
      * The method is here for compatibility reasons with other models.
      *
      * \note the phase index passed to this function is for compatibility reasons
-     *       with multiphasic models. We always forward to the fluid state with the
-     *       phaseIdx property (see class description).
+     *       with multiphasic models.
      */
-    Scalar mobility(int pIdx = phaseIdx) const
+    Scalar mobility(int phaseIdx = fluidSystemPhaseIdx) const
     {
-        assert(pIdx == phaseIdx);
-        return 1.0/fluidState_.viscosity(phaseIdx);
+        return 1.0/fluidState_.viscosity(fluidSystemPhaseIdx);
     }
 
     /*!
@@ -302,13 +282,11 @@ public:
      *        control volume.
      *
      * \note the phase index passed to this function is for compatibility reasons
-     *       with multiphasic models. We always forward to the fluid state with the
-     *       phaseIdx property (see class description).
+     *       with multiphasic models.
      */
-    Scalar viscosity(int pIdx = phaseIdx) const
+    Scalar viscosity(int phaseIdx = fluidSystemPhaseIdx) const
     {
-        assert(pIdx == phaseIdx);
-        return fluidState_.viscosity(phaseIdx);
+        return fluidState_.viscosity(fluidSystemPhaseIdx);
     }
 
     /*!
@@ -320,10 +298,9 @@ public:
     /*!
      * \brief Return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
      */
-    Scalar diffusionCoefficient(int pIdx, int compIdx) const
+    Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
-        assert(pIdx == phaseIdx);
-        assert(compIdx < numComponents);
+        assert(compIdx < numComp);
         return diffCoeff_[compIdx];
     }
 
@@ -334,8 +311,8 @@ public:
      */
     Scalar molarity(int compIdx) const // [moles/m^3]
     {
-        assert(compIdx < numComponents);
-        return fluidState_.molarity(phaseIdx, compIdx);
+        assert(compIdx < numComp);
+        return fluidState_.molarity(fluidSystemPhaseIdx, compIdx);
     }
 
      /*!
@@ -345,8 +322,8 @@ public:
       */
      Scalar massFraction(int compIdx) const
      {
-         assert(compIdx < numComponents);
-         return this->fluidState_.massFraction(phaseIdx, compIdx);
+         assert(compIdx < numComp);
+         return this->fluidState_.massFraction(fluidSystemPhaseIdx, compIdx);
      }
 
     /*!
@@ -362,10 +339,9 @@ private:
     Scalar porosity_;        //!< Effective porosity within the control volume
     PermeabilityType permeability_;
     Scalar density_;
-    Dune::FieldVector<Scalar, numComponents> diffCoeff_;
-
+    Dune::FieldVector<Scalar, numComp> diffCoeff_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

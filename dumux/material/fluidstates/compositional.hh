@@ -74,6 +74,14 @@ public:
      * on thermodynamic equilibrium required)
      *****************************************************/
     /*!
+     * \brief Returns the index of the wetting phase in the
+     *        fluid-solid configuration (for porous medium systems).
+     *
+     * \param phaseIdx the index of the phase
+     */
+    int wettingPhase() const { return wPhaseIdx_; }
+
+    /*!
      * \brief Returns the saturation \f$S_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
      *
      * The saturation is defined as the pore space occupied by the fluid divided by the total pore space:
@@ -293,6 +301,7 @@ public:
             viscosity_[phaseIdx] = fs.viscosity(phaseIdx);
         }
         temperature_ = fs.temperature(0);
+        wPhaseIdx_ = fs.wettingPhase();
     }
 
     /*!
@@ -428,6 +437,12 @@ public:
     { viscosity_[phaseIdx] = value; }
 
     /*!
+     * \brief Set the index of the wetting phase
+     */
+    void setWettingPhase(int phaseIdx)
+    { wPhaseIdx_ = phaseIdx; }
+
+    /*!
      * \brief Make sure that all attributes are defined.
      *
      * This method does not do anything if the program is not run
@@ -467,6 +482,10 @@ protected:
     Scalar enthalpy_[numPhases];
     Scalar viscosity_[numPhases];
     Scalar temperature_;
+
+    // For porous medium flow models, here we ... the index of the wetting
+    // phase (needed for vapor pressure evaluation if kelvin equation is used)
+    int wPhaseIdx_{0};
 };
 
 } // end namespace Dumux

@@ -58,20 +58,19 @@ public:
     typedef Dumux::MyCompressibleComponent<Scalar> MyCompressibleComponent;
     typedef H2OType H2O;
 
-    static const int numPhases = 2;
-    static const int numComponents = 2;
+    static constexpr int numPhases = 2;
+    static constexpr int numComponents = 2;
 
-    static const int wPhaseIdx = 0; // index of the water phase
-    static const int nPhaseIdx = 1; // index of the NAPL phase
+    static constexpr int phase0Idx = 0; // index of the first phase
+    static constexpr int phase1Idx = 1; // index of the second phase
 
-    static const int H2OIdx = 0;
-    static const int NAPLIdx = 1;
-
+    static constexpr int H2OIdx = 0;
+    static constexpr int NAPLIdx = 1;
     // export component indices to indicate the main component
     // of the corresponding phase at atmospheric pressure 1 bar
     // and room temperature 20°C:
-    static const int wCompIdx = H2OIdx;
-    static const int nCompIdx = NAPLIdx;
+    static constexpr int comp0Idx = H2OIdx;
+    static constexpr int comp1Idx = NAPLIdx;
 
     /*!
      * \brief Initialize the fluid system's static parameters generically
@@ -119,13 +118,13 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isLiquid(int phaseIdx)
+    static constexpr bool isLiquid(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         return true;
     }
 
-    static bool isIdealGas(int phaseIdx)
+    static constexpr bool isIdealGas(int phaseIdx)
     { return H2O::gasIsIdeal() && MyCompressibleComponent::gasIsIdeal(); }
 
     /*!
@@ -142,7 +141,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isIdealMixture(int phaseIdx)
+    static constexpr bool isIdealMixture(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         return true;
@@ -157,10 +156,10 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isCompressible(int phaseIdx)
+    static constexpr bool isCompressible(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        if (phaseIdx == wPhaseIdx)
+        if (phaseIdx == phase0Idx)
             // the water component decides for the water phase...
             return H2O::liquidIsCompressible();
 
@@ -174,8 +173,8 @@ public:
     static std::string phaseName(int phaseIdx)
     {
         switch (phaseIdx) {
-        case wPhaseIdx: return "w";
-        case nPhaseIdx: return "n";
+        case phase0Idx: return "w";
+        case phase1Idx: return "n";
         };
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -213,14 +212,14 @@ public:
     static Scalar density(const FluidState &fluidState, int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == phase0Idx) {
             // See: doctoral thesis of Steffen Ochs 2007
             // Steam injection into saturated porous media : process analysis including experimental and numerical investigations
             // http://elib.uni-stuttgart.de/bitstream/11682/271/1/Diss_Ochs_OPUS.pdf
             Scalar rholH2O = H2O::liquidDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
             Scalar clH2O = rholH2O/H2O::molarMass();
-            Scalar x_H2O = fluidState.moleFraction(wPhaseIdx, H2OIdx);
-            Scalar x_myComp = fluidState.moleFraction(wPhaseIdx, NAPLIdx);
+            Scalar x_H2O = fluidState.moleFraction(phase0Idx, H2OIdx);
+            Scalar x_myComp = fluidState.moleFraction(phase0Idx, NAPLIdx);
 
             // return composition-dependent water phase density
             return clH2O*(H2O::molarMass()*x_H2O + MyCompressibleComponent::molarMass()*x_myComp);
@@ -241,7 +240,7 @@ public:
                             int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == phase0Idx) {
             // assume pure water viscosity
             return H2O::liquidViscosity(fluidState.temperature(phaseIdx),
                                         fluidState.pressure(phaseIdx));
@@ -300,10 +299,10 @@ public:
         const Scalar T = fluidState.temperature(phaseIdx);
         const Scalar p = fluidState.pressure(phaseIdx);
 
-        if (compIdx == NAPLIdx && phaseIdx == wPhaseIdx)
+        if (compIdx == NAPLIdx && phaseIdx == phase0Idx)
             return Dumux::BinaryCoeff::H2O_MyCompressibleComponent::henryMyCompressibleComponentInWater(T)/p;
 
-        else if (phaseIdx == nPhaseIdx && compIdx == H2OIdx)
+        else if (phaseIdx == phase1Idx && compIdx == H2OIdx)
             return Dumux::BinaryCoeff::H2O_MyCompressibleComponent::henryWaterInMyCompressibleComponent(T)/p;
 
         else
@@ -336,7 +335,7 @@ public:
         Scalar T = fluidState.temperature(phaseIdx);
         Scalar p = fluidState.pressure(phaseIdx);
 
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == phase0Idx) {
             if (compIdx == H2OIdx)
                 return H2O::vaporPressure(T)/p;
             else if (compIdx == NAPLIdx)
@@ -410,7 +409,7 @@ public:
                            int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == phase0Idx) {
             return H2O::liquidEnthalpy(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
         }
         else {
@@ -436,7 +435,7 @@ public:
 
         const Scalar temperature  = fluidState.temperature(phaseIdx) ;
         const Scalar pressure = fluidState.pressure(phaseIdx);
-        if (phaseIdx == wPhaseIdx)
+        if (phaseIdx == phase0Idx)
         {
             return H2O::liquidThermalConductivity(temperature, pressure);
         }

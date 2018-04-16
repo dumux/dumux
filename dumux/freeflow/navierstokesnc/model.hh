@@ -74,12 +74,15 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief Traits for the Navier-Stokes multi-component model
  */
-template<int dim, int nComp>
+template<int dimension, int nComp, int phaseIdx, int replaceCompEqIdx>
 struct NavierStokesNCModelTraits
 {
+    //! The dimension of the model
+    static constexpr int dim() { return dimension; }
+
     //! There are as many momentum balance equations as dimensions
     //! and as many balance equations as components.
-    static constexpr int numEq() { return dim+nComp; }
+    static constexpr int numEq() { return dimension+nComp; }
 
     //! The number of phases is always 1
     static constexpr int numPhases() { return 1; }
@@ -95,6 +98,9 @@ struct NavierStokesNCModelTraits
 
     //! The model is isothermal
     static constexpr bool enableEnergyBalance() { return false; }
+
+    //! the indices
+    using Indices = NavierStokesNCIndices<dim(), numEq(), phaseIdx, replaceCompEqIdx>;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -124,8 +130,10 @@ private:
     static constexpr int dim = GridView::dimension;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int numComponents = FluidSystem::numComponents;
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
 public:
-    using type = NavierStokesNCModelTraits<dim, numComponents>;
+    using type = NavierStokesNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx>;
 };
 
 SET_INT_PROP(NavierStokesNC, PhaseIdx, 0); //!< Defines the phaseIdx
@@ -140,18 +148,6 @@ SET_TYPE_PROP(NavierStokesNC, VolumeVariables, NavierStokesNCVolumeVariables<Typ
 
 //! The flux variables
 SET_TYPE_PROP(NavierStokesNC, FluxVariables, NavierStokesNCFluxVariables<TypeTag>);
-
-//! The indices
-SET_PROP(NavierStokesNC, Indices)
-{
-private:
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-public:
-    using type = NavierStokesNCIndices<dim, numEq, phaseIdx, replaceCompEqIdx>;
-};
 
 //! The specific vtk output fields
 SET_PROP(NavierStokesNC, VtkOutputFields)
@@ -194,22 +190,11 @@ private:
     static constexpr int dim = GridView::dimension;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int numComponents = FluidSystem::numComponents;
-    using IsothermalModelTraits = NavierStokesNCModelTraits<dim, numComponents>;
-public:
-    using type = NavierStokesNIModelTraits<IsothermalModelTraits>;
-};
-
-//! The non-isothermal indices
-SET_PROP(NavierStokesNCNI, Indices)
-{
-private:
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-    using IsothermalIndices = NavierStokesNCIndices<dim, numEq, phaseIdx, replaceCompEqIdx>;
+    using IsothermalModelTraits = NavierStokesNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx>;
 public:
-    using type = NavierStokesNonIsothermalIndices<dim, numEq, IsothermalIndices>;
+    using type = NavierStokesNIModelTraits<IsothermalModelTraits>;
 };
 
 //! The non-isothermal vtk output fields

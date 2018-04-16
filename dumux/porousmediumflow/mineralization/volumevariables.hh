@@ -25,10 +25,6 @@
 #ifndef DUMUX_MINERALIZATION_VOLUME_VARIABLES_HH
 #define DUMUX_MINERALIZATION_VOLUME_VARIABLES_HH
 
-#include <dumux/common/math.hh>
-#include <dumux/common/properties.hh>
-#include <dumux/material/fluidstates/compositional.hh>
-
 namespace Dumux {
 
 /*!
@@ -36,34 +32,25 @@ namespace Dumux {
  * \brief Contains the quantities which are are constant within a sub-control volume
  *        of the finite volume grid in an m-phase, n-component, mineralization model.
  */
-template <class TypeTag, class NonMineralizationVolVars>
+template <class Traits, class NonMineralizationVolVars>
 class MineralizationVolumeVariables : public NonMineralizationVolVars
 {
     using ParentType = NonMineralizationVolVars;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    enum
-    {
-        numPhases = ModelTraits::numPhases(),
-        numSPhases =  ModelTraits::numSPhases(),
-        numComponents = ModelTraits::numComponents()
-    };
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using ModelTraits = typename Traits::ModelTraits;
 
 public:
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    //! export the type of the fluid state
+    using FluidState = typename Traits::FluidState;
+    //! export the type of the fluid system
+    using FluidSystem = typename Traits::FluidSystem;
 
     //! updates all required quantities inside the given scv
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume& scv)
+                const Scv& scv)
     {
         // Update parent type (also completes the fluid state)
         ParentType::update(elemSol, problem, element, scv);
@@ -72,9 +59,9 @@ public:
         auto&& priVars = elemSol[scv.indexInElement()];
 
         sumPrecipitates_ = 0.0;
-        for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
+        for(int sPhaseIdx = 0; sPhaseIdx < ModelTraits::numSPhases(); ++sPhaseIdx)
         {
-           precipitateVolumeFraction_[sPhaseIdx] = priVars[numComponents + sPhaseIdx];
+           precipitateVolumeFraction_[sPhaseIdx] = priVars[ModelTraits::numComponents() + sPhaseIdx];
            sumPrecipitates_+= precipitateVolumeFraction_[sPhaseIdx];
         }
     }
@@ -86,16 +73,17 @@ public:
      * \param phaseIdx the index of the solid phase
      */
     Scalar precipitateVolumeFraction(int phaseIdx) const
-    { return precipitateVolumeFraction_[phaseIdx - numPhases]; }
+    { return precipitateVolumeFraction_[phaseIdx - ModelTraits::numPhases()]; }
 
     /*!
      * \brief Returns the density of the phase for all fluid and solid phases
      *
      * \param phaseIdx the index of the fluid phase
+     * \todo TODO: This fails for 1pnc if fluidSystemPhaseIdx is not 0
      */
     Scalar density(int phaseIdx) const
     {
-        if (phaseIdx < numPhases)
+        if (phaseIdx < ModelTraits::numPhases())
             return this->fluidState_.density(phaseIdx);
         else
             return FluidSystem::precipitateDensity(phaseIdx);
@@ -106,10 +94,11 @@ public:
      *        control volume.
      *
      * \param phaseIdx The phase index
+     * \todo TODO: This fails for 1pnc if fluidSystemPhaseIdx is not 0
      */
     Scalar molarDensity(int phaseIdx) const
     {
-        if (phaseIdx < numPhases)
+        if (phaseIdx < ModelTraits::numPhases())
             return this->fluidState_.molarDensity(phaseIdx);
         else
             return FluidSystem::precipitateMolarDensity(phaseIdx);
@@ -135,7 +124,7 @@ public:
     }
 
 protected:
-    Scalar precipitateVolumeFraction_[numSPhases];
+    Scalar precipitateVolumeFraction_[ModelTraits::numSPhases()];
     Scalar sumPrecipitates_;
 };
 } // end namespace Dumux

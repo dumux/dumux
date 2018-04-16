@@ -55,7 +55,7 @@ class FluxOverPlane
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum {
@@ -413,7 +413,7 @@ private:
             }();
 
             CellCenterPrimaryVariables tmp(0.0);
-            tmp[Indices::totalMassBalanceIdx] = cumulativeFlux / avgDensity;
+            tmp[0] = cumulativeFlux / avgDensity;
             return tmp;
         };
 
@@ -435,8 +435,7 @@ private:
                                const auto& elemFluxVarsCache)
         {
             const Scalar totalMassFlux = localResidual_.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars,
-                                                                                 elemFaceVars, scvf, elemFluxVarsCache)
-                                                                                [Indices::totalMassBalanceIdx];
+                                                                                 elemFaceVars, scvf, elemFluxVarsCache)[0];
 
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
@@ -444,7 +443,7 @@ private:
             const auto avgDensity = 0.5*insideVolVars.density() + 0.5*outsideVolVars.density();
 
             CellCenterPrimaryVariables tmp(0.0);
-            tmp[Indices::totalMassBalanceIdx] = totalMassFlux / avgDensity;
+            tmp[0] = totalMassFlux / avgDensity;
             return tmp;
         };
 

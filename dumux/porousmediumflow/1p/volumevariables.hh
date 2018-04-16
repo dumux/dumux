@@ -34,26 +34,24 @@ namespace Dumux {
  * \ingroup OnePModel
  * \brief Contains the quantities which are constant within a
  *        finite volume in the one-phase model.
+ *
+ * \tparam Traits Class encapsulating types to be used by the vol vars
  */
-template <class TypeTag>
-class OnePVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
+template<class Traits>
+class OnePVolumeVariables : public PorousMediumFlowVolumeVariables< Traits, OnePVolumeVariables<Traits> >
 {
-    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
+    using ThisType = OnePVolumeVariables<Traits>;
+    using ParentType = PorousMediumFlowVolumeVariables<Traits, ThisType>;
+
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using Indices = typename Traits::ModelTraits::Indices;
+    using PermeabilityType = typename Traits::PermeabilityType;
 
 public:
-
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    //! export the underlying fluid system
+    using FluidSystem = typename Traits::FluidSystem;
+    //! export the fluid state type
+    using FluidState = typename Traits::FluidState;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -64,11 +62,11 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume& scv)
+                const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
 
@@ -88,11 +86,11 @@ public:
      * \param scv The sub-control volume
      * \param fluidState A container with the current (physical) state of the fluid
      */
-    template<class ElementSolution>
-    static void completeFluidState(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    static void completeFluidState(const ElemSol &elemSol,
                                    const Problem& problem,
                                    const Element& element,
-                                   const SubControlVolume& scv,
+                                   const Scv& scv,
                                    FluidState& fluidState)
     {
         Scalar t = ParentType::temperature(elemSol, problem, element, scv);
@@ -193,12 +191,6 @@ protected:
     FluidState fluidState_;
     Scalar porosity_;
     PermeabilityType permeability_;
-
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 };
 
 }

@@ -21,5 +21,4 @@ stationaryvelocityfield.hh
 subcontrolvolumebase.hh
 subcontrolvolumefacebase.hh
 upwindscheme.hh
-volumevariables.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization)

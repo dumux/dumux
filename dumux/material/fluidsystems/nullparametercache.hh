@@ -26,18 +26,12 @@
 
 #include "parametercachebase.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup Fluidsystems
  * \brief The a parameter cache which does nothing
  */
-class NullParameterCache : public ParameterCacheBase<NullParameterCache>
-{
-public:
-    NullParameterCache()
-    {};
-};
+class NullParameterCache : public ParameterCacheBase<NullParameterCache> {};
 
 } // end namespace
 

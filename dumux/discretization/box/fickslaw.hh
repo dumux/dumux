@@ -54,16 +54,17 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::box>
     using FluxVarCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
     enum
     {
-        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
-        numComponents =  GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()
+        numPhases = ModelTraits::numPhases(),
+        numComponents = ModelTraits::numComponents()
     };
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;

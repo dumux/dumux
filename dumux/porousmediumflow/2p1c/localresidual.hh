@@ -50,7 +50,7 @@ class TwoPOneCLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     // first index for the mass balance
     enum { conti0EqIdx = Indices::conti0EqIdx };
 

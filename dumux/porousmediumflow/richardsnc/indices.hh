@@ -26,36 +26,32 @@
 #ifndef DUMUX_RICHARDSNC_INDICES_HH
 #define DUMUX_RICHARDSNC_INDICES_HH
 
-namespace Dumux
-{
-// \{
+namespace Dumux {
 
 /*!
  * \ingroup RichardsNCModel
  * \brief The indices for the isothermal Richards, n-component model.
+ * \tparam fluidSystemPhaseIdx The index of the fluid phase in the fluid system
  */
-template <int PVOffset = 0>
+template<int phaseIdx>
 struct RichardsNCIndices
 {
-
-    //! Set the index of the phases for accessing the volvars
-    static const int wPhaseIdx = 0;
-    static const int nPhaseIdx = 1;
-
     //! Component indices
-    static const int compMainIdx = PVOffset + 0; //!< main component index
+    static constexpr int compMainIdx = 0; //!< main component index
 
     //! primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< pressure
+    static constexpr int pressureIdx = 0; //!< pressure
+
+    //! the index of the fluid phase in the fluid system
+    static constexpr int fluidSystemPhaseIdx = phaseIdx;
 
     //! \note These indices make sense if the first balance is replaced by the
     //!       total mass balance.
 
     //! Equation indices
-    static const int conti0EqIdx = PVOffset + 0; //!< continuity equation index
+    static constexpr int conti0EqIdx = 0; //!< continuity equation index
 };
 
-// \}
-}
+} // end namespace Dumux
 
 #endif

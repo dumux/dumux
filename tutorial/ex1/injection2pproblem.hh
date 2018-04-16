@@ -81,7 +81,7 @@ class InjectionProblem2P : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -196,8 +196,8 @@ public:
         {
             // inject nitrogen. negative values mean injection
             // units kg/(s*m^2)
-            values[Indices::contiNEqIdx] = -1e-4;
-            values[Indices::contiWEqIdx] = 0.0;
+            values[Indices::conti0EqIdx + FluidSystem::N2Idx] = -1e-4;
+            values[Indices::conti0EqIdx + FluidSystem::H2OIdx] = 0.0;
         }
 
         return values;

@@ -24,25 +24,23 @@
 #ifndef DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup TracerModel
  * \brief Adds vtk output fields specific to the tracer model
  */
-template<class FluidSystem>
 class TracerVtkOutputFields
 {
-
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
+        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+
         // register standardized vtk output fields
-        for (int compIdx = 0; compIdx < FluidSystem::numComponents; ++compIdx)
+        for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
         {
             vtk.addVolumeVariable( [compIdx](const auto& v){  return v.moleFraction(0, compIdx); },
                                    "x_" + std::string(FluidSystem::componentName(compIdx)));

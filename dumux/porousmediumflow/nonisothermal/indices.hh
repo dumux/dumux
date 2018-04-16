@@ -25,26 +25,20 @@
 #ifndef DUMUX_ENERGY_INDICES_HH
 #define DUMUX_ENERGY_INDICES_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup NIModel
  * \brief Indices for the non-isothermal two-phase two-component model
  *
- * \tparam formulation The formulation, either pwsn or pnsw.
- * \tparam PVOffset The first index in a primary variable vector.
+ * \tparam IsothermalIndices The indices of the isothermal model
+ * \tparam numEq the number of equations of the non-isothermal model
  */
-template <class IsothermalIndices, int numEquation, int PVOffset = 0>
-class EnergyIndices : public IsothermalIndices
+template <class IsothermalIndices, int numEq>
+struct EnergyIndices : public IsothermalIndices
 {
-public:
-    static const int numEq = numEquation;
-    static const int temperatureIdx = PVOffset + numEq -1; //!< The index for temperature in primary variable vectors.
-    static const int energyEqIdx = PVOffset + numEq -1; //!< The index for energy in equation vectors.
-
+    static const int temperatureIdx = numEq - 1; //!< The index for temperature in primary variable vectors.
+    static const int energyEqIdx = numEq - 1;    //!< The index for energy in equation vectors.
 };
 
 } // end namespace Dumux

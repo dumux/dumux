@@ -119,14 +119,14 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using IapwsH2O = Components::H2O<Scalar>;
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
         // index of the primary variables
         pressureIdx = Indices::pressureIdx,
         swIdx = Indices::swIdx,
         snIdx = Indices::snIdx,
         temperatureIdx = Indices::temperatureIdx,
-        wPhaseIdx = Indices::wPhaseIdx,
+        wPhaseIdx = FluidSystem::wPhaseIdx,
         conti0EqIdx = Indices::conti0EqIdx,
         energyEqIdx = Indices::energyEqIdx
     };

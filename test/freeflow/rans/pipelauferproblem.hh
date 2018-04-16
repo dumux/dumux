@@ -79,32 +79,16 @@ class PipeLauferProblem : public ZeroEqProblem<TypeTag>
 {
     using ParentType = ZeroEqProblem<TypeTag>;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum { dimWorld = GridView::dimensionworld };
-    enum {
-#if NONISOTHERMAL
-        temperatureIdx = Indices::temperatureIdx,
-        energyBalanceIdx = Indices::energyBalanceIdx,
-#endif
-        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        pressureIdx = Indices::pressureIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx
-    };
-
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-
+    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
@@ -150,9 +134,9 @@ public:
      *
      * \param globalPos The global position
      */
-    SourceValues sourceAtPos(const GlobalPosition &globalPos) const
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return SourceValues(0.0);
+        return NumEqVector(0.0);
     }
     // \}
    /*!
@@ -171,23 +155,25 @@ public:
         BoundaryTypes values;
 
         // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(momentumBalanceIdx);
+        values.setDirichlet(Indices::momentumXBalanceIdx);
+        values.setDirichlet(Indices::momentumYBalanceIdx);
 #if NONISOTHERMAL
-        values.setDirichlet(energyBalanceIdx);
+        values.setDirichlet(Indices::energyBalanceIdx);
         if (isOutlet(globalPos))
         {
-            values.setOutflow(energyBalanceIdx);
+            values.setOutflow(Indices::energyBalanceIdx);
         }
 #endif
 
         // set a fixed pressure in one cell
         if (isOutlet(globalPos))
         {
-            values.setDirichlet(totalMassBalanceIdx);
-            values.setOutflow(momentumBalanceIdx);
+            values.setDirichlet(Indices::conti0EqIdx);
+            values.setOutflow(Indices::momentumXBalanceIdx);
+            values.setOutflow(Indices::momentumYBalanceIdx);
         }
         else
-            values.setOutflow(totalMassBalanceIdx);
+            values.setOutflow(Indices::conti0EqIdx);
 
         return values;
     }
@@ -204,10 +190,10 @@ public:
 #if NONISOTHERMAL
         if (time() > 10.0)
         {
-            values[temperatureIdx] = inletTemperature_;
+            values[Indices::temperatureIdx] = inletTemperature_;
             if (isOnWall(globalPos))
             {
-                values[temperatureIdx] = wallTemperature_;
+                values[Indices::temperatureIdx] = wallTemperature_;
             }
         }
 #endif
@@ -229,18 +215,18 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.0e+5;
-        values[velocityXIdx] = inletVelocity_;
+        values[Indices::pressureIdx] = 1.0e+5;
+        values[Indices::velocityXIdx] = inletVelocity_;
 #if NONISOTHERMAL
-        values[temperatureIdx] = inletTemperature_;
+        values[Indices::temperatureIdx] = inletTemperature_;
         if (isOnWall(globalPos))
         {
-            values[temperatureIdx] = wallTemperature_;
+            values[Indices::temperatureIdx] = wallTemperature_;
         }
 #endif
         if (isOnWall(globalPos))
         {
-            values[velocityXIdx] = 0.0;
+            values[Indices::velocityXIdx] = 0.0;
         }
 
         return values;

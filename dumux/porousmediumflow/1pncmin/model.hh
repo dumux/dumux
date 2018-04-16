@@ -98,9 +98,16 @@ NEW_TYPE_TAG(OnePNCMinNI, INHERITS_FROM(OnePNCMin));
 SET_PROP(OnePNCMin, VolumeVariables)
 {
 private:
-    using NonMinVolVars = OnePNCVolumeVariables<TypeTag>;
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = OnePNCVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+    using NonMinVolVars = OnePNCVolumeVariables<Traits>;
 public:
-    using type = MineralizationVolumeVariables<TypeTag, NonMinVolVars>;
+    using type = MineralizationVolumeVariables<Traits, NonMinVolVars>;
 };
 
 // Use the mineralization local residual
@@ -111,44 +118,27 @@ SET_PROP(OnePNCMin, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-    using NonMinTraits = OnePNCModelTraits<FluidSystem::numComponents>;
+    using NonMinTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx)>;
 public:
     using type = MineralizationModelTraits<NonMinTraits, FluidSystem::numSPhases>;
 };
 
 //! Use the mineralization vtk output fields
-SET_PROP(OnePNCMin, VtkOutputFields)
-{
-private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-   static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-   using NonMineralizationFields = OnePNCVtkOutputFields<FluidSystem, phaseIdx>;
-public:
-    using type = MineralizationVtkOutputFields<NonMineralizationFields, FluidSystem>;
-};
+SET_TYPE_PROP(OnePNCMin, VtkOutputFields, MineralizationVtkOutputFields<OnePNCVtkOutputFields>);
 
 //////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
 
 //! non-isothermal vtk output
-SET_PROP(OnePNCMinNI, VtkOutputFields)
-{
-private:
-    using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    using NonMineralizationFields =  OnePNCVtkOutputFields<FluidSystem, phaseIdx>;
-    using IsothermalFields = MineralizationVtkOutputFields<NonMineralizationFields, FluidSystem>;
-public:
-    using type = EnergyVtkOutputFields<IsothermalFields>;
-};
+SET_TYPE_PROP(OnePNCMinNI, VtkOutputFields, EnergyVtkOutputFields<MineralizationVtkOutputFields<OnePNCVtkOutputFields>>);
 
 //! The non-isothermal model traits
 SET_PROP(OnePNCMinNI, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-    using OnePNCTraits = OnePNCModelTraits<FluidSystem::numComponents>;
+    using OnePNCTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx)>;
     using IsothermalTraits = MineralizationModelTraits<OnePNCTraits, FluidSystem::numSPhases>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
@@ -158,16 +148,6 @@ public:
 SET_TYPE_PROP(OnePNCMinNI,
               ThermalConductivityModel,
               ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-//! Indices of the non-isothermal model
-SET_PROP(OnePNCMinNI, Indices)
-{
-private:
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-    using IsothermalIndices = OnePNCIndices<GET_PROP_VALUE(TypeTag, PhaseIdx)>;
-public:
-    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
-};
 
 } // end namespace Properties
 } // end namespace Dumux

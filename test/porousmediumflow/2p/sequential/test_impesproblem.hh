@@ -121,7 +121,7 @@ using ParentType = IMPESProblem2P<TypeTag>;
 using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 using Grid = typename GridView::Grid;
 
-using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
 using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
 

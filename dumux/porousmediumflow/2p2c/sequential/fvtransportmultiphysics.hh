@@ -58,7 +58,7 @@ class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 

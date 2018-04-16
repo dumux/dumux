@@ -38,10 +38,8 @@
 
 #include "base.hh"
 
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
 
 /*!
  * \ingroup Fluidsystems
@@ -62,22 +60,27 @@ class H2ON2
     using SimpleN2 = Dumux::Components::N2<Scalar>;
 
 public:
+    using H2O = TabulatedH2O; //!< The components for pure water
+    using N2 = SimpleN2; //!< The components for pure nitrogen
+
+    static constexpr int numPhases = 2; //!< Number of phases in the fluid system
+    static constexpr int numComponents = 2; //!< Number of components in the fluid system
+
+    static constexpr int liquidPhaseIdx = 0; //!< index of the liquid phase
+    static constexpr int gasPhaseIdx = 1; //!< index of the gas phase
+    static constexpr int phase0Idx = liquidPhaseIdx; //!< index of the first phase
+    static constexpr int phase1Idx = gasPhaseIdx; //!< index of the second phase
+
+    static constexpr int H2OIdx = 0;
+    static constexpr int N2Idx = 1;
+    static constexpr int comp0Idx = H2OIdx; //!< index of the first component
+    static constexpr int comp1Idx = N2Idx; //!< index of the second component
+    static constexpr int liquidCompIdx = H2OIdx; //!< index of the liquid component
+    static constexpr int gasCompIdx = N2Idx; //!< index of the gas component
+
     /****************************************
      * Fluid phase related static parameters
      ****************************************/
-
-    //! Number of phases in the fluid system
-    static constexpr int numPhases = 2;
-
-    static constexpr int wPhaseIdx = 0; // index of the wetting phase
-    static constexpr int nPhaseIdx = 1; // index of the non-wetting phase
-
-    // export component indices to indicate the main component
-    // of the corresponding phase at atmospheric pressure 1 bar
-    // and room temperature 20°C:
-    static const int wCompIdx = wPhaseIdx;
-    static const int nCompIdx = nPhaseIdx;
-
     /*!
      * \brief Return the human readable name of a fluid phase
      *
@@ -101,10 +104,10 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isLiquid(int phaseIdx)
+    static constexpr bool isLiquid(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        return phaseIdx != nPhaseIdx;
+        return phaseIdx != gasPhaseIdx;
     }
 
     /*!
@@ -143,7 +146,7 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         // gases are always compressible
-        if (phaseIdx == nPhaseIdx)
+        if (phaseIdx == gasPhaseIdx)
             return true;
         // the water component decides for the liquid phase...
         return H2O::liquidIsCompressible();
@@ -159,7 +162,7 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        if (phaseIdx == nPhaseIdx)
+        if (phaseIdx == gasPhaseIdx)
             // let the components decide
             return H2O::gasIsIdeal() && N2::gasIsIdeal();
         return false; // not a gas
@@ -168,19 +171,6 @@ public:
     /****************************************
      * Component related static parameters
      ****************************************/
-
-    //! Number of components in the fluid system
-    static constexpr int numComponents = 2;
-
-    static constexpr int H2OIdx = wCompIdx;
-    static constexpr int N2Idx = nCompIdx;
-
-    //! The components for pure water
-    using H2O = TabulatedH2O;
-
-    //! The components for pure nitrogen
-    using N2 = SimpleN2;
-
     /*!
      * \brief Return the human readable name of a component
      *
@@ -259,12 +249,12 @@ public:
                                       const int phaseIdx,
                                       const int compIdx)
     {
-        assert(compIdx == wCompIdx && phaseIdx == wPhaseIdx);
+        assert(compIdx == wCompIdx && phaseIdx == liquidPhaseIdx);
 
         using std::exp;
         return fugacityCoefficient(fluidState, phaseIdx, compIdx)
                * fluidState.pressure(phaseIdx)
-               * exp(-(fluidState.pressure(nPhaseIdx)-fluidState.pressure(wPhaseIdx))
+               * exp(-(fluidState.pressure(gasPhaseIdx)-fluidState.pressure(liquidPhaseIdx))
                           / density(fluidState, phaseIdx)
                           / (Dumux::Constants<Scalar>::R / molarMass(compIdx))
                           / fluidState.temperature());
@@ -373,7 +363,7 @@ public:
             sumMoleFrac += fluidState.moleFraction(phaseIdx, compIdx);
 
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx) {
             if (!useComplexRelations)
                 // assume pure water
                 return H2O::liquidDensity(T, p);
@@ -387,9 +377,9 @@ public:
                 // water molecule in the liquid
                 return
                     clH2O
-                    * (H2O::molarMass()*fluidState.moleFraction(wPhaseIdx, H2OIdx)
+                    * (H2O::molarMass()*fluidState.moleFraction(liquidPhaseIdx, H2OIdx)
                        +
-                       N2::molarMass()*fluidState.moleFraction(wPhaseIdx, N2Idx))
+                       N2::molarMass()*fluidState.moleFraction(liquidPhaseIdx, N2Idx))
                     / sumMoleFrac;
             }
         }
@@ -400,12 +390,12 @@ public:
             // for the gas phase assume an ideal gas
             return
                 IdealGas::molarDensity(T, p)
-                * fluidState.averageMolarMass(nPhaseIdx)
+                * fluidState.averageMolarMass(gasPhaseIdx)
                 / max(1e-5, sumMoleFrac);
 
         // assume ideal mixture: steam and nitrogen don't "see" each other
-        Scalar rho_gH2O = H2O::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, H2OIdx));
-        Scalar rho_gN2 = N2::gasDensity(T, p*fluidState.moleFraction(nPhaseIdx, N2Idx));
+        Scalar rho_gH2O = H2O::gasDensity(T, p*fluidState.moleFraction(gasPhaseIdx, H2OIdx));
+        Scalar rho_gN2 = N2::gasDensity(T, p*fluidState.moleFraction(gasPhaseIdx, N2Idx));
         return (rho_gH2O + rho_gN2) / max(1e-5, sumMoleFrac);
     }
 
@@ -432,7 +422,7 @@ public:
         Scalar p = fluidState.pressure(phaseIdx);
 
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx) {
             // assume pure water for the liquid phase
             return H2O::liquidViscosity(T, p);
         }
@@ -514,7 +504,7 @@ public:
         Scalar p = fluidState.pressure(phaseIdx);
 
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx) {
             if (compIdx == H2OIdx)
                 return H2O::vaporPressure(T)/p;
             return BinaryCoeff::H2O_N2::henry(T)/p;
@@ -600,7 +590,7 @@ public:
         Scalar p = fluidState.pressure(phaseIdx);
 
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx) {
             if (compIIdx == H2OIdx && compJIdx == N2Idx)
                 return BinaryCoeff::H2O_N2::liquidDiffCoeff(T, p);
             return undefined;
@@ -635,7 +625,7 @@ public:
         Valgrind::CheckDefined(p);
 
         // liquid phase
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx) {
             return H2O::liquidEnthalpy(T, p);
         }
         // gas phase
@@ -644,10 +634,10 @@ public:
             // that the total specific enthalpy is the sum of the
             // "partial specific enthalpies" of the components.
             Scalar hH2O =
-                fluidState.massFraction(nPhaseIdx, H2OIdx)
+                fluidState.massFraction(gasPhaseIdx, H2OIdx)
                 * H2O::gasEnthalpy(T, p);
             Scalar hN2 =
-                fluidState.massFraction(nPhaseIdx, N2Idx)
+                fluidState.massFraction(gasPhaseIdx, N2Idx)
                 * N2::gasEnthalpy(T, p);
             return hH2O + hN2;
         }
@@ -670,7 +660,7 @@ public:
 
         const Scalar temperature  = fluidState.temperature(phaseIdx) ;
         const Scalar pressure = fluidState.pressure(phaseIdx);
-        if (phaseIdx == wPhaseIdx)
+        if (phaseIdx == liquidPhaseIdx)
         {
             return H2O::liquidThermalConductivity(temperature, pressure);
         }
@@ -703,7 +693,7 @@ public:
     static Scalar heatCapacity(const FluidState &fluidState,
                                int phaseIdx)
     {
-        if (phaseIdx == wPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx) {
             return H2O::liquidHeatCapacity(fluidState.temperature(phaseIdx),
                                            fluidState.pressure(phaseIdx));
         }
@@ -736,8 +726,8 @@ public:
 
         // mangle both components together
         return
-            c_pH2O*fluidState.massFraction(nPhaseIdx, H2OIdx)
-            + c_pN2*fluidState.massFraction(nPhaseIdx, N2Idx);
+            c_pH2O*fluidState.massFraction(gasPhaseIdx, H2OIdx)
+            + c_pN2*fluidState.massFraction(gasPhaseIdx, N2Idx);
     }
 };
 

@@ -109,7 +109,6 @@ class ObstacleProblem
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
@@ -125,16 +124,19 @@ class ObstacleProblem
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using ParameterCache = typename FluidSystem::ParameterCache;
 
-    enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
-    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
-    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum {wCompIdx = FluidSystem::wCompIdx};
-    enum {nCompIdx = FluidSystem::nCompIdx};
-    enum {fug0Idx = Indices::fug0Idx};
-    enum {s0Idx = Indices::s0Idx};
-    enum {p0Idx = Indices::p0Idx};
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    enum { dimWorld = GridView::dimensionworld };
+    enum { numPhases = ModelTraits::numPhases() };
+    enum { numComponents = ModelTraits::numComponents() };
+    enum { gasPhaseIdx = FluidSystem::gasPhaseIdx };
+    enum { liquidPhaseIdx = FluidSystem::liquidPhaseIdx };
+    enum { H2OIdx = FluidSystem::H2OIdx };
+    enum { N2Idx = FluidSystem::N2Idx };
+    enum { fug0Idx = Indices::fug0Idx };
+    enum { s0Idx = Indices::s0Idx };
+    enum { p0Idx = Indices::p0Idx };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
@@ -308,33 +310,33 @@ private:
         if (onInlet_(globalPos))
         {
             // only liquid on inlet
-            refPhaseIdx = wPhaseIdx;
-            otherPhaseIdx = nPhaseIdx;
+            refPhaseIdx = liquidPhaseIdx;
+            otherPhaseIdx = gasPhaseIdx;
 
             // set liquid saturation
-            fs.setSaturation(wPhaseIdx, 1.0);
+            fs.setSaturation(liquidPhaseIdx, 1.0);
 
             // set pressure of the liquid phase
-            fs.setPressure(wPhaseIdx, 2e5);
+            fs.setPressure(liquidPhaseIdx, 2e5);
 
             // set the liquid composition to pure water
-            fs.setMoleFraction(wPhaseIdx, nCompIdx, 0.0);
-            fs.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);
+            fs.setMoleFraction(liquidPhaseIdx, N2Idx, 0.0);
+            fs.setMoleFraction(liquidPhaseIdx, H2OIdx, 1.0);
         }
         else {
             // elsewhere, only gas
-            refPhaseIdx = nPhaseIdx;
-            otherPhaseIdx = wPhaseIdx;
+            refPhaseIdx = gasPhaseIdx;
+            otherPhaseIdx = liquidPhaseIdx;
 
             // set gas saturation
-            fs.setSaturation(nPhaseIdx, 1.0);
+            fs.setSaturation(gasPhaseIdx, 1.0);
 
             // set pressure of the gas phase
-            fs.setPressure(nPhaseIdx, 1e5);
+            fs.setPressure(gasPhaseIdx, 1e5);
 
             // set the gas composition to 99% nitrogen and 1% steam
-            fs.setMoleFraction(nPhaseIdx, nCompIdx, 0.99);
-            fs.setMoleFraction(nPhaseIdx, wCompIdx, 0.01);
+            fs.setMoleFraction(gasPhaseIdx, N2Idx, 0.99);
+            fs.setMoleFraction(gasPhaseIdx, H2OIdx, 0.01);
         }
 
         // set the other saturation

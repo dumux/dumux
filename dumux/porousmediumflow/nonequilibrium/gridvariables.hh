@@ -47,7 +47,6 @@ class NonEquilibriumGridVariables
                                        typename GET_PROP_TYPE(TypeTag, GridVolumeVariables),
                                        typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
@@ -60,16 +59,17 @@ class NonEquilibriumGridVariables
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
 
 public:
+    //! export the type used for scalar values
+    using typename ParentType::Scalar;
+
     //! Constructor
     NonEquilibriumGridVariables(std::shared_ptr<Problem> problem,
                                 std::shared_ptr<FVGridGeometry> fvGridGeometry)
     : ParentType(problem, fvGridGeometry)
     , problem_(problem)
     {
-        for (int phaseIdx =0; phaseIdx<numPhases; ++phaseIdx)
-        {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             velocityNorm_[phaseIdx].assign(fvGridGeometry->numDofs(), 0.0);
-        }
     }
 
     template<class SolutionVector>
@@ -95,7 +95,6 @@ public:
             auto elemVolVars = localView(this->curGridVolVars());
 
             fvGeometry.bind(element);
-
             elemVolVars.bind(element, fvGeometry, curSol);
 
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)

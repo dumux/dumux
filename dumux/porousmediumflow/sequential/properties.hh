@@ -116,6 +116,7 @@ SET_PROP(SequentialModel, ModelTraits)
 private:
     struct DummyTraits
     {
+        using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
         static constexpr int numEq() { return GET_PROP_VALUE(TypeTag, NumEq); }
     };
 public:

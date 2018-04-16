@@ -97,10 +97,7 @@ public:
 //! Boundary types at a single degree of freedom
 SET_PROP(StaggeredFreeFlowModel, BoundaryTypes)
 {
-private:
-    static constexpr auto size = GET_PROP_VALUE(TypeTag, NumEqCellCenter) + GET_PROP_VALUE(TypeTag, NumEqFace);
-public:
-    using type = StaggeredFreeFlowBoundaryTypes<size>;
+    using type = StaggeredFreeFlowBoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
 };
 
 //! The velocity output

@@ -24,34 +24,27 @@
 #ifndef DUMUX_NONEQUILIBRIUM_INDICES_HH
 #define DUMUX_NONEQUILIBRIUM_INDICES_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup PorousmediumNonEquilibriumModel
  * \brief The primary variable and equation indices for the MpNc model.
  */
-template <class EquilibriumIndices, class FluidSystem, int numEnergyEquationFluid, int numEnergyEquationSolid, int numEq, int BasePVOffset = 0>
-class NonEquilbriumIndices: public EquilibriumIndices
+template <class EquilibriumIndices, int numEnergyEqFluid, int numEnergyEqSolid, int numEq>
+class NonEquilbriumIndices : public EquilibriumIndices
 {
 public:
-     enum { numPhases = FluidSystem::numPhases };
-     enum { numEnergyEqFluid = numEnergyEquationFluid };
-     enum { numEnergyEqSolid = numEnergyEquationSolid };
-
     /*!
      * \brief Index for the temperature of the wetting phase in a vector of primary
      *        variables.
      */
-    static constexpr unsigned int temperature0Idx = BasePVOffset + numEq - numEnergyEqFluid - numEnergyEqSolid;
+    static constexpr unsigned int temperature0Idx = numEq - numEnergyEqFluid - numEnergyEqSolid;
 
     /*!
      * \brief Index for the temperature of the solid phase in a vector of primary
      *        variables.
      */
-    static constexpr unsigned int temperatureSolidIdx = BasePVOffset + numEq - numEnergyEqSolid;
+    static constexpr unsigned int temperatureSolidIdx = numEq - numEnergyEqSolid;
     /*!
      * \brief Compatibility with non kinetic models
      */
@@ -59,7 +52,7 @@ public:
     /*!
      * \brief Equation index of the energy equation.
      */
-    static constexpr unsigned int energyEq0Idx = BasePVOffset + numEq - numEnergyEqFluid - numEnergyEqSolid;
+    static constexpr unsigned int energyEq0Idx = numEq - numEnergyEqFluid - numEnergyEqSolid;
     /*!
      * \brief Compatibility with non kinetic models
      */
@@ -68,7 +61,7 @@ public:
     /*!
      * \brief Equation index of the energy equation.
      */
-    static constexpr unsigned int energyEqSolidIdx = BasePVOffset + numEq - numEnergyEqSolid;
+    static constexpr unsigned int energyEqSolidIdx = numEq - numEnergyEqSolid;
 };
 
 } // end namespace Dumux

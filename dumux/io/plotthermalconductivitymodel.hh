@@ -41,9 +41,12 @@ template<class Scalar, class ThermalConductivityModel, class FluidSystem>
 class PlotThermalConductivityModel
 {
     using FluidState = CompositionalFluidState<Scalar, FluidSystem>;
-    enum {
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx
+
+    // phase indices
+    enum
+    {
+        phase0Idx = FluidSystem::phase0Idx,
+        phase1Idx = FluidSystem::phase1Idx
     };
 
 public:
@@ -61,10 +64,10 @@ public:
     {
         FluidState fluidstate;
         fluidstate.setTemperature(temperature);
-        fluidstate.setPressure(wPhaseIdx, pressure);
-        fluidstate.setPressure(nPhaseIdx, pressure);
-        lambdaW_ = FluidSystem::thermalConductivity(fluidstate, wPhaseIdx);
-        lambdaN_ = FluidSystem::thermalConductivity(fluidstate, nPhaseIdx);
+        fluidstate.setPressure(phase0Idx, pressure);
+        fluidstate.setPressure(phase1Idx, pressure);
+        lambdaW_ = FluidSystem::thermalConductivity(fluidstate, phase0Idx);
+        lambdaN_ = FluidSystem::thermalConductivity(fluidstate, phase1Idx);
     }
 
     /*!

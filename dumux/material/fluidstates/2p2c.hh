@@ -40,8 +40,8 @@ class TwoPTwoCFluidState
 {
 public:
     enum {
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
+        phase0Idx = FluidSystem::phase0Idx,
+        phase1Idx = FluidSystem::phase1Idx,
     };
 
     enum {  numPhases = FluidSystem::numPhases,
@@ -49,6 +49,13 @@ public:
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
 
 public:
+
+    // comply with new style 2p2c models
+    int wettingPhase() const
+    {
+        return phase0Idx;
+    }
+
     /*!
      * \name access functions
      * \todo doc me!
@@ -65,7 +72,7 @@ public:
      */
     Scalar saturation(int phaseIdx) const
     {
-        if (phaseIdx == wPhaseIdx)
+        if (phaseIdx == phase0Idx)
         {
             return sw_;
         }
@@ -124,7 +131,7 @@ public:
      */
     Scalar partialPressure(int compIdx) const
     {
-        return partialPressure(nPhaseIdx, compIdx);
+        return partialPressure(phase1Idx, compIdx);
     }
 
     /*!
@@ -146,7 +153,7 @@ public:
      * \brief Returns the capillary pressure \f$\mathrm{[Pa]}\f$
      */
     Scalar capillaryPressure() const
-    { return phasePressure_[nPhaseIdx] - phasePressure_[wPhaseIdx]; }
+    { return phasePressure_[phase1Idx] - phasePressure_[phase0Idx]; }
 
     /*!
      * \brief The temperature within the domain \f$\mathrm{[K]}\f$
@@ -181,8 +188,8 @@ public:
       using std::isnan;
         if (isnan(nu_[phaseIdx]))  //in contrast to the standard update() method, satflash() does not calculate nu.
         {
-            nu_[wPhaseIdx] = sw_ * density_[wPhaseIdx] / (sw_ * density_[wPhaseIdx] + (1. - sw_) * density_[nPhaseIdx]);
-            nu_[nPhaseIdx] = 1. - nu_[wPhaseIdx];
+            nu_[phase0Idx] = sw_ * density_[phase0Idx] / (sw_ * density_[phase0Idx] + (1. - sw_) * density_[phase1Idx]);
+            nu_[phase1Idx] = 1. - nu_[phase0Idx];
             return nu_[phaseIdx];
         }
         return nu_[phaseIdx];
@@ -247,7 +254,7 @@ public:
      */
     void setSaturation(int phaseIdx, Scalar value)
     {
-        if (phaseIdx == wPhaseIdx)
+        if (phaseIdx == phase0Idx)
             sw_ = value;
         else
             sw_ = 1.-value;

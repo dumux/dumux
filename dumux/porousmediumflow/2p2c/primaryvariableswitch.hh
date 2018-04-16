@@ -25,7 +25,7 @@
 #define DUMUX_2P2C_PRIMARY_VARIABLE_SWITCH_HH
 
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
-#include "indices.hh" // for TwoPTwoCFormulation
+#include <dumux/porousmediumflow/2p/formulation.hh>
 
 namespace Dumux
 {
@@ -33,63 +33,48 @@ namespace Dumux
  * \ingroup TwoPTwoCModel
  * \brief The primary variable switch controlling the phase presence state variable
  */
-template<class TypeTag>
-class TwoPTwoCPrimaryVariableSwitch
-: public PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), TwoPTwoCPrimaryVariableSwitch<TypeTag>>
+class TwoPTwoCPrimaryVariableSwitch : public PrimaryVariableSwitch<TwoPTwoCPrimaryVariableSwitch>
 {
-    using ParentType = PrimaryVariableSwitch<typename GET_PROP_TYPE(TypeTag, FVGridGeometry), TwoPTwoCPrimaryVariableSwitch<TypeTag>>;
+    using ParentType = PrimaryVariableSwitch<TwoPTwoCPrimaryVariableSwitch>;
     friend ParentType;
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
-
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-    enum {
-        switchIdx = Indices::switchIdx,
-
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-        wCompIdx = Indices::wCompIdx,
-        nCompIdx = Indices::nCompIdx,
-
-        wPhaseOnly = Indices::wPhaseOnly,
-        nPhaseOnly = Indices::nPhaseOnly,
-        bothPhases = Indices::bothPhases,
-
-        pwsn = TwoPTwoCFormulation::pwsn,
-        pnsw = TwoPTwoCFormulation::pnsw,
-        formulation = GET_PROP_VALUE(TypeTag, Formulation)
-    };
-
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-
 public:
     using ParentType::ParentType;
 
 protected:
-
     // perform variable switch at a degree of freedom location
-    bool update_(PrimaryVariables& priVars,
+    template<class VolumeVariables, class IndexType, class GlobalPosition>
+    bool update_(typename VolumeVariables::PrimaryVariables& priVars,
                  const VolumeVariables& volVars,
                  IndexType dofIdxGlobal,
                  const GlobalPosition& globalPos)
     {
+        using Scalar = typename VolumeVariables::PrimaryVariables::value_type;
+
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+        static constexpr int phase0Idx = FluidSystem::phase0Idx;
+        static constexpr int phase1Idx = FluidSystem::phase1Idx;
+        static constexpr int comp0Idx = FluidSystem::comp0Idx;
+        static constexpr int comp1Idx = FluidSystem::comp1Idx;
+
+        static constexpr bool useMoles = VolumeVariables::useMoles();
+        static constexpr auto formulation = VolumeVariables::priVarFormulation();
+        static_assert( (formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0),
+                        "Chosen TwoPFormulation not supported!");
+
+        using Indices = typename VolumeVariables::Indices;
+        static constexpr int switchIdx = Indices::switchIdx;
+
         // evaluate primary variable switch
         bool wouldSwitch = false;
         int phasePresence = priVars.state();
         int newPhasePresence = phasePresence;
 
         // check if a primary var switch is necessary
-        if (phasePresence == nPhaseOnly)
+        if (phasePresence == Indices::secondPhaseOnly)
         {
-            // calculate mole fraction in the hypothetic wetting phase
-            Scalar xww = volVars.moleFraction(wPhaseIdx, wCompIdx);
-            Scalar xwn = volVars.moleFraction(wPhaseIdx, nCompIdx);
+            // calculate mole fraction in the hypothetic first phase
+            Scalar xww = volVars.moleFraction(phase0Idx, comp0Idx);
+            Scalar xwn = volVars.moleFraction(phase0Idx, comp1Idx);
 
             Scalar xwMax = 1.0;
             if (xww + xwn > xwMax)
@@ -98,26 +83,26 @@ protected:
                 xwMax *= 1.02;
 
             // if the sum of the mole fractions is larger than
-            // 100%, wetting phase appears
+            // 100%, first phase appears
             if (xww + xwn > xwMax)
             {
                 // wetting phase appears
-                std::cout << "wetting phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xww + xwn: "
+                std::cout << "first phase appears at vertex " << dofIdxGlobal
+                          << ", coordinates: " << globalPos << ", x00 + x01: "
                           << xww + xwn << std::endl;
-                newPhasePresence = bothPhases;
-                if (formulation == pnsw)
+                newPhasePresence = Indices::bothPhases;
+                if (formulation == TwoPFormulation::p1s0)
                     priVars[switchIdx] = 0.0001;
-                else if (formulation == pwsn)
+                else
                     priVars[switchIdx] = 0.9999;
             }
         }
-        else if (phasePresence == wPhaseOnly)
+        else if (phasePresence == Indices::firstPhaseOnly)
         {
             // calculate fractions of the partial pressures in the
             // hypothetic nonwetting phase
-            Scalar xnw = volVars.moleFraction(nPhaseIdx, wCompIdx);
-            Scalar xnn = volVars.moleFraction(nPhaseIdx, nCompIdx);
+            Scalar xnw = volVars.moleFraction(phase1Idx, comp0Idx);
+            Scalar xnn = volVars.moleFraction(phase1Idx, comp1Idx);
 
             Scalar xgMax = 1.0;
             if (xnw + xnn > xgMax)
@@ -130,61 +115,49 @@ protected:
             if (xnw + xnn > xgMax)
             {
                 // nonwetting phase appears
-                std::cout << "nonwetting phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xnw + xnn: "
+                std::cout << "second phase appears at vertex " << dofIdxGlobal
+                          << ", coordinates: " << globalPos << ", x10 + x11: "
                           << xnw + xnn << std::endl;
-                newPhasePresence = bothPhases;
-                if (formulation == pnsw)
+                newPhasePresence = Indices::bothPhases;
+                if (formulation == TwoPFormulation::p1s0)
                     priVars[switchIdx] = 0.9999;
-                else if (formulation == pwsn)
+                else
                     priVars[switchIdx] = 0.0001;
             }
         }
-        else if (phasePresence == bothPhases)
+        else if (phasePresence == Indices::bothPhases)
         {
             Scalar Smin = 0.0;
             if (this->wasSwitched_[dofIdxGlobal])
                 Smin = -0.01;
 
-            if (volVars.saturation(nPhaseIdx) <= Smin)
+            if (volVars.saturation(phase1Idx) <= Smin)
             {
                 wouldSwitch = true;
                 // nonwetting phase disappears
-                std::cout << "Nonwetting phase disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sn: "
-                          << volVars.saturation(nPhaseIdx) << std::endl;
-                newPhasePresence = wPhaseOnly;
+                std::cout << "second phase disappears at vertex " << dofIdxGlobal
+                          << ", coordinates: " << globalPos << ", s1: "
+                          << volVars.saturation(phase1Idx) << std::endl;
+                newPhasePresence = Indices::firstPhaseOnly;
 
                 if(useMoles) // mole-fraction formulation
-                {
-                    priVars[switchIdx]
-                        = volVars.moleFraction(wPhaseIdx, nCompIdx);
-                }
+                    priVars[switchIdx] = volVars.moleFraction(phase0Idx, comp1Idx);
                 else // mass-fraction formulation
-                {
-                    priVars[switchIdx]
-                        = volVars.massFraction(wPhaseIdx, nCompIdx);
-                }
+                    priVars[switchIdx] = volVars.massFraction(phase0Idx, comp1Idx);
             }
-            else if (volVars.saturation(wPhaseIdx) <= Smin)
+            else if (volVars.saturation(phase0Idx) <= Smin)
             {
                 wouldSwitch = true;
                 // wetting phase disappears
-                std::cout << "Wetting phase disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sw: "
-                          << volVars.saturation(wPhaseIdx) << std::endl;
-                newPhasePresence = nPhaseOnly;
+                std::cout << "first phase disappears at vertex " << dofIdxGlobal
+                          << ", coordinates: " << globalPos << ", s0: "
+                          << volVars.saturation(phase0Idx) << std::endl;
+                newPhasePresence = Indices::secondPhaseOnly;
 
                 if(useMoles) // mole-fraction formulation
-                {
-                    priVars[switchIdx]
-                        = volVars.moleFraction(nPhaseIdx, wCompIdx);
-                }
+                    priVars[switchIdx] = volVars.moleFraction(phase1Idx, comp0Idx);
                 else // mass-fraction formulation
-                {
-                    priVars[switchIdx]
-                        = volVars.massFraction(nPhaseIdx, wCompIdx);
-                }
+                    priVars[switchIdx] = volVars.massFraction(phase1Idx, comp0Idx);
             }
         }
 

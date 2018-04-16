@@ -58,12 +58,14 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    static const int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
-    static const int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
+    static const int numPhases = ModelTraits::numPhases();
+    static const int numComponents = ModelTraits::numComponents();
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;

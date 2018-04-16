@@ -46,7 +46,7 @@ class TwoPGridAdaptIndicator
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     enum { saturationIdx = Indices::saturationIdx };

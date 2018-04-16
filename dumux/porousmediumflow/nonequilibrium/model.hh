@@ -56,8 +56,10 @@ namespace Dumux
  * \tparam therm Boolean to indicate if thermal non-equilibrium is to be considered
  * \tparam numEF Number of energy balance equations to be solved for the fluids
  * \tparam numES Number of energy balance equations to be solved for the solids
+ * \tparam nf Formulation used for the computation of the nusselt number
+ * \tparam sf Formulation used for the computation of the sherwood number
  */
-template<class ET, bool chem, bool therm, int numEF, int numES>
+template<class ET, bool chem, bool therm, int numEF, int numES, NusseltFormulation nf, SherwoodFormulation sf>
 struct NonEquilibriumModelTraits : public ET
 {
     static constexpr int numEq() { return numEnergyEqFluid()+numEnergyEqSolid()+numTransportEq()+ET::numConstraintEq(); }
@@ -69,6 +71,11 @@ struct NonEquilibriumModelTraits : public ET
     static constexpr bool enableEnergyBalance() { return ET::enableEnergyBalance() || therm; }
     static constexpr bool enableThermalNonEquilibrium() { return therm; }
     static constexpr bool enableChemicalNonEquilibrium() { return chem; }
+
+    static constexpr NusseltFormulation nusseltFormulation() { return nf; }
+    static constexpr SherwoodFormulation sherwoodFormulation() { return sf; }
+
+    using Indices = NonEquilbriumIndices<typename ET::Indices, numEnergyEqFluid(), numEnergyEqSolid(), numEq()>;
 };
 
 namespace Properties
@@ -92,8 +99,10 @@ private:
     static constexpr bool enableCNE = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
     static constexpr int numEF = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid);
     static constexpr int numES = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
+    static constexpr auto nf = GET_PROP_VALUE(TypeTag, NusseltFormulation);
+    static constexpr auto ns = GET_PROP_VALUE(TypeTag, SherwoodFormulation);
 public:
-    using type = NonEquilibriumModelTraits<EquiTraits, enableCNE, enableTNE, numEF, numES>;
+    using type = NonEquilibriumModelTraits<EquiTraits, enableCNE, enableTNE, numEF, numES, nf, ns>;
 };
 
 //! Per default, we consider both thermal and chemical non-equilibrium
@@ -102,31 +111,11 @@ SET_BOOL_PROP(NonEquilibrium, EnableChemicalNonEquilibrium, true);
 
 //! Default values for the number of energy balance equations
 SET_INT_PROP(NonEquilibrium, NumEnergyEqSolid, 1);
-SET_PROP(NonEquilibrium, NumEnergyEqFluid)
-{
-private:
-    using EquiTraits = typename GET_PROP_TYPE(TypeTag, EquilibriumModelTraits);
-public:
-    static const int value = EquiTraits::numPhases();
-};
+SET_INT_PROP(NonEquilibrium, NumEnergyEqFluid, GET_PROP_TYPE(TypeTag, EquilibriumModelTraits)::numPhases());
 
 SET_TYPE_PROP(NonEquilibrium, EnergyLocalResidual, EnergyLocalResidualNonEquilibrium<TypeTag, GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)>);
 SET_TYPE_PROP(NonEquilibrium, LocalResidual, NonEquilibriumLocalResidual<TypeTag>);
 SET_TYPE_PROP(NonEquilibrium, HeatConductionType, FouriersLawNonEquilibrium<TypeTag>);
-
-//! indices for non-isothermal models
-SET_PROP(NonEquilibrium, Indices)
-{
-private:
-    using EquilibriumIndices = typename GET_PROP_TYPE(TypeTag, EquilibriumIndices);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    static constexpr int numEF = ModelTraits::numEnergyEqFluid();
-    static constexpr int numES = ModelTraits::numEnergyEqSolid();
-    static constexpr int numEq = ModelTraits::numEq();
-public:
-    using type = NonEquilbriumIndices<EquilibriumIndices, FluidSystem, numEF, numES, numEq, 0>;
-};
 
 SET_PROP(NonEquilibrium, FluidState)
 {
@@ -145,34 +134,25 @@ SET_PROP(NonEquilibrium, VtkOutputFields)
 {
 private:
     using EquilibriumVtkOutputFields = typename GET_PROP_TYPE(TypeTag, EquilibriumVtkOutputFields);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    static constexpr int numEF = GET_PROP_TYPE(TypeTag, ModelTraits)::numEnergyEqFluid();
-    static constexpr int numES = GET_PROP_TYPE(TypeTag, ModelTraits)::numEnergyEqSolid();
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 public:
-     using type = NonEquilibriumVtkOutputFields<EquilibriumVtkOutputFields, FluidSystem, numEF, numES>;
+     using type = NonEquilibriumVtkOutputFields<ModelTraits, EquilibriumVtkOutputFields>;
 };
 
 SET_PROP(NonEquilibrium, NusseltFormulation)
 {
-    private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using DimLessNum =  DimensionlessNumbers<Scalar>;
-    public:
-    static constexpr int value = DimLessNum::NusseltFormulation::WakaoKaguei;
+public:
+    static constexpr NusseltFormulation value = NusseltFormulation::WakaoKaguei;
 };
 
 /*!
  * \brief Set the default formulation for the sherwood correlation
  *        Other possible parametrizations can be found in the dimensionlessnumbers
  */
-SET_PROP(NonEquilibrium, SherwoodFormulation )
+SET_PROP(NonEquilibrium, SherwoodFormulation)
 {
-    private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using DimLessNum =  DimensionlessNumbers<Scalar>;
-    public:
-    static constexpr int value = DimLessNum::SherwoodFormulation::WakaoKaguei;
+public:
+    static constexpr SherwoodFormulation value = SherwoodFormulation::WakaoKaguei;
 };
 
 } //end namespace Properties

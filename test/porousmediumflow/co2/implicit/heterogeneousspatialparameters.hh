@@ -220,6 +220,16 @@ public:
     }
 
     /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::BrineIdx; }
+
+    /*!
      * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
      *
      * This is only required for non-isothermal models.

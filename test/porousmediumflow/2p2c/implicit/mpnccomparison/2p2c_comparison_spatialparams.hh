@@ -80,17 +80,18 @@ class TwoPTwoCComparisonSpatialParams : public FVSpatialParams<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     enum {dimWorld=GridView::dimensionworld};
 
 public:
-     using PermeabilityType = Scalar;
+    //! export permeability type
+    using PermeabilityType = Scalar;
+    //! export the type used for the material law
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
 
-    TwoPTwoCComparisonSpatialParams(const Problem &problem)
-        : ParentType(problem)
+    TwoPTwoCComparisonSpatialParams(const Problem &problem) : ParentType(problem)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;
@@ -152,6 +153,16 @@ public:
         else
             return coarseMaterialParams_;
     }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::H2OIdx; }
 
 private:
     /*!

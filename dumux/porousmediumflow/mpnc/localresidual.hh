@@ -50,9 +50,10 @@ class MPNCLocalResidual : public CompositionalLocalResidual<TypeTag>
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
-    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
+    enum {numPhases = ModelTraits::numPhases()};
     enum {phase0NcpIdx = Indices::phase0NcpIdx};
 
 public:

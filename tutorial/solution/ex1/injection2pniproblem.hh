@@ -80,7 +80,7 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -89,6 +89,12 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
 
     enum { dimWorld = GridView::dimensionworld };
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
+
+    enum {
+        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx, // water transport equation index
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::N2Idx, // nitrogen transport equation index
+        energyEqIdx = Indices::energyEqIdx,
+    };
 
 public:
     InjectionProblem2PNI(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -181,9 +187,9 @@ public:
         {
             // inject nitrogen. negative values mean injection
             // units kg/(s*m^2)
-            values[Indices::contiNEqIdx] = -1e-4;
-            values[Indices::contiWEqIdx] = 0.0;
-            values[Indices::energyEqIdx] = 0.0;
+            values[contiNEqIdx] = -1e-4;
+            values[contiWEqIdx] = 0.0;
+            values[energyEqIdx] = 0.0;
         }
 
         return values;

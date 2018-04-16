@@ -24,10 +24,7 @@
 #ifndef DUMUX_ENERGY_OUTPUT_FIELDS_HH
 #define DUMUX_ENERGY_OUTPUT_FIELDS_HH
 
-#include <dumux/common/properties.hh>
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup NIModel

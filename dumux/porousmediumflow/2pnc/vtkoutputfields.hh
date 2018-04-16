@@ -34,24 +34,27 @@ namespace Dumux
  * \ingroup TwoPNCModel
  * \brief Adds vtk output fields specific to the TwoPNC model
  */
-template<class FluidSystem, class Indices>
 class TwoPNCVtkOutputFields
 {
-
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
+        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
+        using FluidSystem = typename VolumeVariables::FluidSystem;
+
         // use default fields from the 2p model
-        TwoPVtkOutputFields<Indices>::init(vtk);
+        TwoPVtkOutputFields::init(vtk);
 
         //output additional to TwoP output:
-        for (int i = 0; i < FluidSystem::numPhases; ++i)
-            for (int j = 0; j < FluidSystem::numComponents; ++j)
-                vtk.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },"x_"+ FluidSystem::phaseName(i) + "^" + FluidSystem::componentName(j));
+        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+            for (int j = 0; j < VolumeVariables::numComponents(); ++j)
+                vtk.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },
+                                      "x_"+ FluidSystem::phaseName(i) + "^" + FluidSystem::componentName(j));
 
-        for (int j = 0; j < FluidSystem::numComponents; ++j)
-            vtk.addVolumeVariable([j](const auto& v){ return v.molarity(Indices::wPhaseIdx,j); },"m_"+ FluidSystem::phaseName(Indices::wPhaseIdx) + "^" + FluidSystem::componentName(j));
+        for (int j = 0; j < VolumeVariables::numComponents(); ++j)
+            vtk.addVolumeVariable([j](const auto& v){ return v.molarity(FluidSystem::phase0Idx,j); },
+                                  "m_"+ FluidSystem::phaseName(FluidSystem::phase1Idx) + "^" + FluidSystem::componentName(j));
 
         vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phasePresence");
     }

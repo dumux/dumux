@@ -52,7 +52,7 @@ SET_TYPE_PROP(ChannelNCTestTypeTag, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 SET_INT_PROP(ChannelNCTestTypeTag, PhaseIdx,
-             GET_PROP_TYPE(TypeTag, FluidSystem)::nPhaseIdx);
+             GET_PROP_TYPE(TypeTag, FluidSystem)::phase1Idx);
 
 SET_INT_PROP(ChannelNCTestTypeTag, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, PhaseIdx));
 
@@ -70,7 +70,7 @@ SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridVolumeVariablesCache, true);
 
 // Enable gravity
 SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, true);
-}
+} // end namespace Properties
 
 /*!
  * \ingroup RANSNCTests
@@ -85,39 +85,19 @@ template <class TypeTag>
 class ChannelNCTestProblem : public ZeroEqProblem<TypeTag>
 {
     using ParentType = ZeroEqProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
-    // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum { dimWorld = GridView::dimensionworld };
-    enum {
-        totalMassBalanceIdx = Indices::totalMassBalanceIdx,
-        transportEqIdx = 1-GET_PROP_VALUE(TypeTag, PhaseIdx),
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        pressureIdx = Indices::pressureIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx,
-#if NONISOTHERMAL
-        temperatureIdx = Indices::temperatureIdx,
-        energyBalanceIdx = Indices::energyBalanceIdx,
-#endif
-        transportCompIdx = 1-GET_PROP_VALUE(TypeTag, PhaseIdx)
-    };
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
+    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
 public:
     ChannelNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -169,46 +149,40 @@ public:
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+        static constexpr auto transportEqIdx = Indices::conti0EqIdx+1;
         BoundaryTypes values;
 
-        values.setDirichlet(momentumBalanceIdx);
-        values.setOutflow(totalMassBalanceIdx);
+        values.setDirichlet(Indices::momentumXBalanceIdx);
+        values.setDirichlet(Indices::momentumYBalanceIdx);
+        values.setOutflow(Indices::conti0EqIdx);
         values.setOutflow(transportEqIdx);
 #if NONISOTHERMAL
-        values.setOutflow(energyBalanceIdx);
+        values.setOutflow(Indices::energyBalanceIdx);
 #endif
 
-        if(isInlet(globalPos))
+        if(isInlet_(globalPos))
         {
-            values.setDirichlet(momentumBalanceIdx);
-            values.setOutflow(totalMassBalanceIdx);
             values.setDirichlet(transportEqIdx);
+            values.setDirichlet(Indices::conti0EqIdx);
 #if NONISOTHERMAL
-            values.setDirichlet(energyBalanceIdx);
+            values.setDirichlet(Indices::energyBalanceIdx);
 #endif
         }
-        else if(isOutlet(globalPos))
+        else if(isOutlet_(globalPos))
         {
-            values.setOutflow(momentumBalanceIdx);
-            values.setDirichlet(totalMassBalanceIdx);
+            values.setOutflow(Indices::momentumXBalanceIdx);
+            values.setOutflow(Indices::momentumYBalanceIdx);
+            values.setDirichlet(Indices::conti0EqIdx);
             values.setOutflow(transportEqIdx);
 #if NONISOTHERMAL
-            values.setOutflow(energyBalanceIdx);
+            values.setOutflow(Indices::energyBalanceIdx);
 #endif
         }
         else if (isOnWall(globalPos))
         {
-            values.setDirichlet(velocityXIdx);
-            values.setOutflow(velocityYIdx);
-            values.setOutflow(totalMassBalanceIdx);
-            values.setOutflow(transportEqIdx);
 #if NONISOTHERMAL
-            values.setDirichlet(energyBalanceIdx);
+            values.setDirichlet(Indices::energyBalanceIdx);
 #endif
-        }
-        else if (isSymmetry(globalPos))
-        {
-            values.isSymmetry();
         }
 
         return values;
@@ -221,11 +195,12 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
+        static constexpr auto transportCompIdx = Indices::conti0EqIdx+1;
         PrimaryVariables values = initialAtPos(globalPos);
 
         if (time() > 10.0)
         {
-            if (isInlet(globalPos)
+            if (isInlet_(globalPos)
                 && globalPos[1] > 0.4 * this->fvGridGeometry().bBoxMax()[1]
                 && globalPos[1] < 0.6 * this->fvGridGeometry().bBoxMax()[1])
             {
@@ -234,7 +209,7 @@ public:
 #if NONISOTHERMAL
             if (isOnWall(globalPos))
             {
-                values[temperatureIdx] += 30.;
+                values[Indices::temperatureIdx] += 30.;
             }
 #endif
         }
@@ -256,18 +231,19 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
+        static constexpr auto transportCompIdx = Indices::conti0EqIdx+1;
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.0e+5;
+        values[Indices::pressureIdx] = 1.0e+5;
         values[transportCompIdx] = 0.0;
 #if NONISOTHERMAL
-        values[temperatureIdx] = temperature();
+        values[Indices::temperatureIdx] = temperature();
 #endif
 
         // block velocity profile
-        values[velocityXIdx] = 0.0;
+        values[Indices::velocityXIdx] = 0.0;
         if (!isOnWall(globalPos))
-            values[velocityXIdx] =  inletVelocity_;
-        values[velocityYIdx] = 0.0;
+            values[Indices::velocityXIdx] =  inletVelocity_;
+        values[Indices::velocityYIdx] = 0.0;
 
         return values;
     }
@@ -289,19 +265,15 @@ public:
         return globalPos[1] < eps_;
     }
 
-    bool isSymmetry(const GlobalPosition& globalPos) const
-    {
-        return globalPos[1] > this->fvGridGeometry().bBoxMax()[0] - eps_;
-    }
-
 private:
 
-    bool isInlet(const GlobalPosition& globalPos) const
+
+    bool isInlet_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] < eps_;
     }
 
-    bool isOutlet(const GlobalPosition& globalPos) const
+    bool isOutlet_(const GlobalPosition& globalPos) const
     {
         return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
     }

@@ -51,7 +51,7 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);

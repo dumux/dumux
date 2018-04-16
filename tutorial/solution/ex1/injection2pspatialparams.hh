@@ -144,12 +144,22 @@ public:
      *
      * \return the material parameters object
      */
-     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
         if (isInAquitard_(globalPos))
             return aquitardMaterialParams_;
         return aquiferMaterialParams_;
     }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::H2OIdx; }
 
     /*!
      *  These parameters are only needed for nonisothermal models. Comment them in if you want to implement the 2pni model.

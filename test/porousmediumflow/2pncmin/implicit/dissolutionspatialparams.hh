@@ -170,6 +170,11 @@ public:
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     { return materialParams_; }
 
+    // define which phase is to be considered as the wetting phase
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::H2OIdx; }
+
 private:
 
     MaterialLawParams materialParams_;

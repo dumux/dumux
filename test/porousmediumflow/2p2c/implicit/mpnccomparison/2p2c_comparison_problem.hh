@@ -68,20 +68,16 @@ SET_TYPE_PROP(TwoPTwoCComparisonTypeTag,
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, Scalar, double);
-SET_INT_PROP(TwoPTwoCComparisonTypeTag, Formulation, TwoPTwoCFormulation::pnsw);
+SET_PROP(TwoPTwoCComparisonTypeTag, Formulation)
+{
+public:
+    static const TwoPFormulation value = TwoPFormulation::p1s0;
+};
 
 SET_BOOL_PROP(TwoPTwoCComparisonTypeTag, UseMoles, true);
 
-SET_PROP(TwoPTwoCComparisonTypeTag, VtkOutputFields)
-{
-private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-public:
-    using type = TwoPTwoCMPNCVtkOutputFields<FluidSystem, Indices>;
-};
-}
+SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields);
+} // end namespace Properties
 
 
 /*!
@@ -90,12 +86,10 @@ public:
  *
  */
 template <class TypeTag>
-class TwoPTwoCComparisonProblem
-    : public PorousMediumFlowProblem<TypeTag>
+class TwoPTwoCComparisonProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -105,26 +99,11 @@ class TwoPTwoCComparisonProblem
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
-    // world dimension
-    enum {dimWorld = GridView::dimensionworld};
-    enum {numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()};
-    enum {numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()};
-    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum {wCompIdx = FluidSystem::wCompIdx};
-    enum {nCompIdx = FluidSystem::nCompIdx};
-    enum
-    {
-        pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx,
-        contiH2OEqIdx = Indices::contiWEqIdx,
-        contiN2EqIdx = Indices::contiNEqIdx
-    };
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
 public:
     /*!
@@ -222,11 +201,9 @@ public:
         NeumannFluxes values(0.0);
         const auto& globalPos = scvf.ipGlobal();
         Scalar injectedAirMass = -1e-3;
-        Scalar injectedAirMolarMass = injectedAirMass/FluidSystem::molarMass(nCompIdx);
+        Scalar injectedAirMolarMass = injectedAirMass/FluidSystem::molarMass(FluidSystem::N2Idx);
         if (onInlet_(globalPos))
-        {
-          values[Indices::conti0EqIdx+1] = injectedAirMolarMass;
-        }
+            values[Indices::conti0EqIdx + FluidSystem::N2Idx] = injectedAirMolarMass;
         return values;
     }
 
@@ -253,8 +230,8 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1e5;
-        values[switchIdx] = 0.8;
+        values[Indices::pressureIdx] = 1e5; // air pressure
+        values[Indices::switchIdx] = 0.8; // water saturation
         values.setState(Indices::bothPhases);
 
         return values;

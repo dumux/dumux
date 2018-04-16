@@ -50,9 +50,11 @@ class FVSpatialParams: public FVSpatialParamsOneP<TypeTag>
     using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 
 public:
-    FVSpatialParams(const Problem& problem)
-    : FVSpatialParamsOneP<TypeTag>(problem)
-    {}
+    //! export the type used for the material law
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+
+    //! The constructor
+    FVSpatialParams(const Problem& problem) : FVSpatialParamsOneP<TypeTag>(problem) {}
 
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
@@ -81,6 +83,36 @@ public:
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "
                    "a materialLawParamsAtPos() method.");
+    }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the wetting phase index
+     */
+    template<class FluidSystem, class ElementSolution>
+    int wettingPhase(const Element& element,
+                     const SubControlVolume& scv,
+                     const ElementSolution& elemSol) const
+    {
+        return this->asImp_().template wettingPhaseAtPos<FluidSystem>(scv.center());
+    }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The spatial parameters do not provide "
+                   "a wettingPhaseAtPos() method.");
     }
 };
 

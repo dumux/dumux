@@ -84,7 +84,7 @@ class OnePSingularityProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum { dimWorld = GridView::dimensionworld };
     enum {
         // index of the primary variable

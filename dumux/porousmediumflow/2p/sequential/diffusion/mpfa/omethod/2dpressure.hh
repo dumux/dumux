@@ -84,7 +84,7 @@ class FvMpfaO2dPressure2p: public FVPressure<TypeTag>
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);

@@ -117,13 +117,13 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using IapwsH2O = Components::H2O<Scalar>;
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum { dimWorld = GridView::dimensionworld };
 
     enum {
         pressureIdx = Indices::pressureIdx,
-        wPhaseOnly = Indices::wPhaseOnly,
-        wPhaseIdx = Indices::wPhaseIdx,
+        liquidPhaseOnly = Indices::liquidPhaseOnly,
+        liquidPhaseIdx = FluidSystem::liquidPhaseIdx,
         temperatureIdx = Indices::temperatureIdx
     };
 
@@ -175,7 +175,7 @@ public:
         volVars.update(someElemSol, *this, someElement, someScv);
 
         const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
-        const auto densityW = volVars.density(wPhaseIdx);
+        const auto densityW = volVars.density(liquidPhaseIdx);
         const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
         const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
         const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
@@ -277,9 +277,9 @@ public:
 
         if(globalPos[0] < eps_)
         {
-            values[pressureIdx] = -darcyVelocity_*elemVolVars[scvf.insideScvIdx()].density(wPhaseIdx);
-            values[temperatureIdx] = -darcyVelocity_*elemVolVars[scvf.insideScvIdx()].density(wPhaseIdx)
-                                     *IapwsH2O::liquidEnthalpy(temperatureHigh_, elemVolVars[scvf.insideScvIdx()].pressure(wPhaseIdx));
+            values[pressureIdx] = -darcyVelocity_*elemVolVars[scvf.insideScvIdx()].density(liquidPhaseIdx);
+            values[temperatureIdx] = -darcyVelocity_*elemVolVars[scvf.insideScvIdx()].density(liquidPhaseIdx)
+                                     *IapwsH2O::liquidEnthalpy(temperatureHigh_, elemVolVars[scvf.insideScvIdx()].pressure(liquidPhaseIdx));
         }
         return values;
     }
@@ -327,7 +327,7 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
-        priVars.setState(wPhaseOnly);
+        priVars.setState(liquidPhaseOnly);
         priVars[pressureIdx] = pressureLow_; // initial condition for the pressure
         priVars[temperatureIdx] = temperatureLow_;
         return priVars;

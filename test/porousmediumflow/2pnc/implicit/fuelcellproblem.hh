@@ -54,7 +54,8 @@ SET_TYPE_PROP(FuelCellTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(FuelCellTypeTag, Problem, FuelCellProblem<TypeTag>);
 // Set the primary variable combination for the 2pnc model
-SET_INT_PROP(FuelCellTypeTag, Formulation, TwoPNCFormulation::pnsw);
+SET_PROP(FuelCellTypeTag, Formulation)
+{ static constexpr auto value = TwoPFormulation::p1s0; };
 
 // Set fluid configuration
 SET_PROP(FuelCellTypeTag, FluidSystem)
@@ -81,7 +82,7 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -95,20 +96,7 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     // Select the electrochemistry method
-    using ElectroChemistry = typename Dumux::ElectroChemistry<Scalar, Indices, FVGridGeometry, ElectroChemistryModel::Ochs>;
-
-    enum { numComponents = FluidSystem::numComponents };
-
-    enum { wPhaseIdx = Indices::wPhaseIdx };
-
-    enum { bothPhases = Indices::bothPhases };
-
-    // privar indices
-    enum
-    {
-        pressureIdx = Indices::pressureIdx, //gas-phase pressure
-        switchIdx = Indices::switchIdx //liquid saturation or mole fraction
-    };
+    using ElectroChemistry = typename Dumux::ElectroChemistry<Scalar, Indices, FluidSystem, FVGridGeometry, ElectroChemistryModel::Ochs>;
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -222,9 +210,9 @@ public:
         if(onUpperBoundary_(globalPos))
         {
             Scalar pn = 1.0e5;
-            priVars[pressureIdx] = pn;
-            priVars[switchIdx] = 0.3;//Sw for bothPhases
-            priVars[switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
+            priVars[Indices::pressureIdx] = pn;
+            priVars[Indices::switchIdx] = 0.3;//Sw for bothPhases
+            priVars[Indices::switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
         }
 
         return priVars;
@@ -287,8 +275,8 @@ public:
                     auto i = ElectroChemistry::calculateCurrentDensity(volVars);
                     ElectroChemistry::reactionSource(source, i);
 
-                    reactionSourceH2O_[dofIdxGlobal] = source[wPhaseIdx];
-                    reactionSourceO2_[dofIdxGlobal] = source[numComponents-1];
+                    reactionSourceH2O_[dofIdxGlobal] = source[Indices::conti0EqIdx + FluidSystem::H2OIdx];
+                    reactionSourceO2_[dofIdxGlobal] = source[Indices::conti0EqIdx + FluidSystem::O2Idx];
 
                     //Current Output in A/cm^2
                     currentDensity_[dofIdxGlobal] = i/10000;
@@ -310,12 +298,12 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
-        priVars.setState(bothPhases);
+        priVars.setState(Indices::bothPhases);
 
         Scalar pn = 1.0e5;
-        priVars[pressureIdx] = pn;
-        priVars[switchIdx] = 0.3;//Sw for bothPhases
-        priVars[switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
+        priVars[Indices::pressureIdx] = pn;
+        priVars[Indices::switchIdx] = 0.3;//Sw for bothPhases
+        priVars[Indices::switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
 
         return priVars;
     }

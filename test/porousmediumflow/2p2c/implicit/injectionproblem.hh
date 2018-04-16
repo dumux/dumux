@@ -34,8 +34,7 @@
 
 #include "injectionspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 #ifndef ENABLECACHING
 #define ENABLECACHING 0
@@ -44,8 +43,7 @@ namespace Dumux
 template <class TypeTag>
 class InjectionProblem;
 
-namespace Properties
-{
+namespace Properties {
 NEW_TYPE_TAG(InjectionTypeTag, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams));
 NEW_TYPE_TAG(InjectionBoxTypeTag, INHERITS_FROM(BoxModel, InjectionTypeTag));
 NEW_TYPE_TAG(InjectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InjectionTypeTag));
@@ -69,8 +67,7 @@ SET_BOOL_PROP(InjectionTypeTag, UseMoles, true);
 SET_BOOL_PROP(InjectionTypeTag, EnableFVGridGeometryCache, ENABLECACHING);
 SET_BOOL_PROP(InjectionTypeTag, EnableGridVolumeVariablesCache, ENABLECACHING);
 SET_BOOL_PROP(InjectionTypeTag, EnableGridFluxVariablesCache, ENABLECACHING);
-}
-
+} // end namespace Properties
 
 /*!
  * \ingroup TwoPTwoCTests
@@ -102,26 +99,33 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    enum {
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    // primary variable indices
+    enum
+    {
         pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx,
-
-        // world dimension
-        dimWorld = GridView::dimensionworld
+        switchIdx = Indices::switchIdx
     };
 
-    enum {
-        nPhaseIdx = Indices::nPhaseIdx,
+    // phase presence
+    enum { wPhaseOnly = Indices::firstPhaseOnly };
 
-        wPhaseOnly = Indices::wPhaseOnly,
+    // equation indices
+    enum
+    {
+        contiH2OEqIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx,
+        contiN2EqIdx = Indices::conti0EqIdx + FluidSystem::N2Idx,
+    };
 
-        wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx,
-
-        contiH2OEqIdx = Indices::contiWEqIdx,
-        contiN2EqIdx = Indices::contiNEqIdx
+    // phase indices
+    enum
+    {
+        gasPhaseIdx = FluidSystem::N2Idx,
+        H2OIdx = FluidSystem::H2OIdx,
+        N2Idx = FluidSystem::N2Idx
     };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -129,12 +133,12 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     //! property that defines whether mole or mass fractions are used
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = ModelTraits::useMoles();
 
 public:
     /*!
@@ -246,20 +250,20 @@ public:
      * Negative values indicate an inflow.
      */
     NumEqVector neumann(const Element& element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolumeFace& scvf) const
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolVars,
+                        const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
 
         const auto& globalPos = scvf.ipGlobal();
 
         Scalar injectedPhaseMass = 1e-3;
-        Scalar moleFracW = elemVolVars[scvf.insideScvIdx()].moleFraction(nPhaseIdx, wCompIdx);
+        Scalar moleFracW = elemVolVars[scvf.insideScvIdx()].moleFraction(gasPhaseIdx, H2OIdx);
         if (globalPos[1] < 14 - eps_ && globalPos[1] > 6.5 - eps_)
         {
-            values[contiN2EqIdx] = -(1-moleFracW)*injectedPhaseMass/FluidSystem::molarMass(nCompIdx); //mole/(m^2*s) -> kg/(s*m^2)
-            values[contiH2OEqIdx] = -moleFracW*injectedPhaseMass/FluidSystem::molarMass(wCompIdx); //mole/(m^2*s) -> kg/(s*m^2)
+            values[contiN2EqIdx] = -(1-moleFracW)*injectedPhaseMass/FluidSystem::molarMass(N2Idx); //mole/(m^2*s) -> kg/(s*m^2)
+            values[contiH2OEqIdx] = -moleFracW*injectedPhaseMass/FluidSystem::molarMass(H2OIdx); //mole/(m^2*s) -> kg/(s*m^2)
         }
         return values;
     }
@@ -279,9 +283,7 @@ public:
      * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    {
-        return initial_(globalPos);
-    }
+    { return initial_(globalPos); }
 
     // \}
 
@@ -307,8 +309,8 @@ private:
         Scalar moleFracLiquidH2O = 1.0 - moleFracLiquidN2;
 
         Scalar meanM =
-            FluidSystem::molarMass(wCompIdx)*moleFracLiquidH2O +
-            FluidSystem::molarMass(nCompIdx)*moleFracLiquidN2;
+            FluidSystem::molarMass(H2OIdx)*moleFracLiquidH2O +
+            FluidSystem::molarMass(N2Idx)*moleFracLiquidN2;
         if(useMoles)
         {
             //mole-fraction formulation
@@ -317,7 +319,7 @@ private:
         else
         {
             //mass fraction formulation
-            Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(nCompIdx)/meanM;
+            Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(N2Idx)/meanM;
             priVars[switchIdx] = massFracLiquidN2;
         }
         priVars[pressureIdx] = pl;

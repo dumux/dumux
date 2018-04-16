@@ -30,7 +30,7 @@
 namespace Dumux {
 
 // forward declaration
-template <class TypeTag, bool enableEnergyBalance>
+template<class Traits, class Impl, bool enableEnergyBalance>
 class PorousMediumFlowVolumeVariablesImplementation;
 
 /*!
@@ -38,27 +38,35 @@ class PorousMediumFlowVolumeVariablesImplementation;
  * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities. The volume variables base class
  *        is specialized for isothermal and non-isothermal models.
+ *
+ * \tparam Traits The volume variables traits
+ * \tparam Impl The implementation of the volume variables
  */
-template <class TypeTag>
-using PorousMediumFlowVolumeVariables = PorousMediumFlowVolumeVariablesImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>;
+template<class Traits, class Impl>
+using PorousMediumFlowVolumeVariables = PorousMediumFlowVolumeVariablesImplementation<Traits, Impl, Traits::ModelTraits::enableEnergyBalance()>;
 
 /*!
  * \ingroup PorousmediumFlow
  * \brief The isothermal base class
+ *
+ * \tparam Traits The volume variables traits
+ * \tparam Impl The implementation of the volume variables
  */
-template<class TypeTag>
-class PorousMediumFlowVolumeVariablesImplementation<TypeTag, false>
+template<class Traits, class Impl>
+class PorousMediumFlowVolumeVariablesImplementation<Traits, Impl, false>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
 
 public:
-    //! export the primary variables type
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    //! export the type used for the primary variables
+    using PrimaryVariables = typename Traits::PrimaryVariables;
+    //! export the type encapsulating primary variable indices
+    using Indices = typename Traits::ModelTraits::Indices;
+
+    //! return number of phases considered by the model
+    static constexpr int numPhases() { return Traits::ModelTraits::numPhases(); }
+    //! return number of components considered by the model
+    static constexpr int numComponents() { return Traits::ModelTraits::numComponents(); }
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -69,11 +77,11 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume &scv)
+                const Scv &scv)
     {
         priVars_ = extractDofPriVars(elemSol, scv);
         extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
@@ -81,10 +89,13 @@ public:
 
     /*!
      * \brief Returns the primary variables at the dof associated with a given scv.
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param scv The sub-control volume
      */
-    template<class ElementSolution>
-    static const PrimaryVariables& extractDofPriVars(const ElementSolution& elemSol,
-                                                     const SubControlVolume& scv)
+    template<class ElemSol, class Scv>
+    static const PrimaryVariables& extractDofPriVars(const ElemSol& elemSol,
+                                                     const Scv& scv)
     { return elemSol[scv.indexInElement()]; }
 
     /*!
@@ -114,11 +125,11 @@ public:
     { return extrusionFactor_; }
 
     //! The temperature is obtained from the problem as a constant for isothermal models
-    template<class ElementSolution>
-    static Scalar temperature(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    static Scalar temperature(const ElemSol &elemSol,
                               const Problem& problem,
                               const Element &element,
-                              const SubControlVolume &scv)
+                              const Scv &scv)
     {
         return problem.temperatureAtPos(scv.dofPosition());
     }
@@ -138,25 +149,27 @@ private:
     Scalar extrusionFactor_;
 };
 
-//! The non-isothermal implicit volume variables base class
-template <class TypeTag>
-class PorousMediumFlowVolumeVariablesImplementation<TypeTag, true>
-: public PorousMediumFlowVolumeVariablesImplementation<TypeTag, false>
+/*!
+ * \ingroup PorousmediumFlow
+ * \brief  The non-isothermal base class
+ *
+ * \tparam Traits The volume variables traits
+ * \tparam Impl The implementation of the volume variables
+ */
+template<class Traits, class Impl>
+class PorousMediumFlowVolumeVariablesImplementation<Traits, Impl, true>
+: public PorousMediumFlowVolumeVariablesImplementation<Traits, Impl, false>
 {
-    using ParentType = PorousMediumFlowVolumeVariablesImplementation<TypeTag, false>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-    static const int temperatureIdx = Indices::temperatureIdx;
+    using ParentType = PorousMediumFlowVolumeVariablesImplementation<Traits, Impl, false>;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
 
 public:
+    //! export the type used for the primary variables
+    using PrimaryVariables = typename Traits::PrimaryVariables;
+    //! export the underlying fluid system
+    using FluidSystem = typename Traits::FluidSystem;
+    //! export the type encapsulating primary variable indices
+    using Indices = typename Traits::ModelTraits::Indices;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -168,11 +181,11 @@ public:
      * \param fvGeometry The finite volume geometry for the element
      * \param scvIdx Local index of the sub control volume which is inside the element
      */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume &scv)
+                const Scv &scv)
     {
         ParentType::update(elemSol, problem, element, scv);
 
@@ -228,13 +241,13 @@ public:
     { return solidThermalConductivity_; }
 
     //! The temperature is a primary variable for non-isothermal models
-    template<class ElementSolution>
-    static Scalar temperature(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    static Scalar temperature(const ElemSol &elemSol,
                               const Problem& problem,
                               const Element &element,
-                              const SubControlVolume &scv)
+                              const Scv &scv)
     {
-        return ParentType::extractDofPriVars(elemSol, scv)[temperatureIdx];
+        return ParentType::extractDofPriVars(elemSol, scv)[Indices::temperatureIdx];
     }
 
     //! The phase enthalpy is zero for isothermal models
@@ -248,10 +261,8 @@ public:
     }
 
 protected:
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
+    const Impl &asImp_() const { return *static_cast<const Impl*>(this); }
+    Impl &asImp_() { return *static_cast<Impl*>(this); }
 
 private:
     Scalar solidHeatCapacity_;

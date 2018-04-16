@@ -24,7 +24,6 @@
 #ifndef DUMUX_ELECTROCHEMISTRY_NI_HH
 #define DUMUX_ELECTROCHEMISTRY_NI_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/chemistry/electrochemistry/electrochemistry.hh>
 
@@ -36,30 +35,23 @@ namespace Dumux {
  * with the electrochemical models suggested by Ochs (2008) \cite ochs2008 or Acosta (2006) \cite A3:acosta:2006
  * for the non-isothermal case.
  * \todo TODO: Scalar type should be extracted from VolumeVariables!
+ * \todo TODO: This shouldn't depend on discretization and grid!!
  */
 template <class Scalar, class Indices, class FVGridGeometry, ElectroChemistryModel electroChemistryModel>
 class ElectroChemistryNI : public ElectroChemistry<Scalar, Indices, FVGridGeometry, electroChemistryModel>
 {
     using ParentType = ElectroChemistry<Scalar, Indices, FVGridGeometry, electroChemistryModel>;
-    using GridView = typename FVGridGeometry::GridView;
     using Constant = Constants<Scalar>;
 
     enum {
-        //indices of the components
-        wCompIdx = Indices::wCompIdx, //major component of the liquid phase
-        nCompIdx = Indices::nCompIdx, //major component of the gas phase
-        O2Idx = wCompIdx + 2
-    };
-    enum { //equation indices
-            conti0EqIdx = Indices::conti0EqIdx,
-            contiH2OEqIdx = conti0EqIdx + wCompIdx,
-            contiO2EqIdx = conti0EqIdx + wCompIdx + 2,
-            energyEqIdx = Indices::energyEqIdx, //energy equation
+        //equation indices
+        contiH2OEqIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx,
+        contiO2EqIdx = Indices::conti0EqIdx + FluidSystem::O2Idx,
+        energyEqIdx = Indices::energyEqIdx, //energy equation
     };
 
+    using GridView = typename FVGridGeometry::GridView;
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
-    enum { dofCodim = isBox ? GridView::dimension : 0 };
-
     using GlobalPosition = typename Dune::FieldVector<typename GridView::ctype, GridView::dimensionworld>;
     using CellVector = typename Dune::FieldVector<typename GridView::ctype, GridView::dimension>;
 

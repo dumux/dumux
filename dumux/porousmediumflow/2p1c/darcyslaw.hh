@@ -58,7 +58,8 @@ class TwoPOneCDarcysLaw : public DarcysLaw<TypeTag>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
     using CoordScalar = typename GridView::ctype;
@@ -69,8 +70,8 @@ class TwoPOneCDarcysLaw : public DarcysLaw<TypeTag>
     // copy some indices for convenience
     enum {
         // phase indices
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
+        liquidPhaseIdx = FluidSystem::liquidPhaseIdx,
+        gasPhaseIdx = FluidSystem::gasPhaseIdx,
     };
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
@@ -90,7 +91,7 @@ public:
         const Scalar flux = ParentType::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarCache);
 
         // only block wetting-phase (i.e. liquid water) fluxes
-        if((!GET_PROP_VALUE(TypeTag, UseBlockingOfSpuriousFlow)) || phaseIdx != wPhaseIdx)
+        if((!GET_PROP_VALUE(TypeTag, UseBlockingOfSpuriousFlow)) || phaseIdx != liquidPhaseIdx)
             return flux;
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
@@ -117,8 +118,8 @@ private:
         const Scalar tDn = dn.temperature(); //temperature of the downstream SCV (where the cold water is potentially intruding into a steam zone)
         const Scalar tUp = up.temperature(); //temperature of the upstream SCV
 
-        const Scalar sgDn = dn.saturation(nPhaseIdx); //gas phase saturation of the downstream SCV
-        const Scalar sgUp = up.saturation(nPhaseIdx); //gas phase saturation of the upstream SCV
+        const Scalar sgDn = dn.saturation(gasPhaseIdx); //gas phase saturation of the downstream SCV
+        const Scalar sgUp = up.saturation(gasPhaseIdx); //gas phase saturation of the upstream SCV
 
         bool upIsNotSteam = false;
         bool downIsSteam = false;
@@ -130,7 +131,7 @@ private:
         if(sgDn > 1e-5)
             downIsSteam = true;
 
-        if(upIsNotSteam && downIsSteam  && tDn > tUp && phaseIdx == wPhaseIdx)
+        if(upIsNotSteam && downIsSteam  && tDn > tUp && phaseIdx == liquidPhaseIdx)
           spuriousFlow = true;
 
         if(spuriousFlow)

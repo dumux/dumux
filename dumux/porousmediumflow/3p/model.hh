@@ -80,6 +80,8 @@ namespace Dumux {
  */
 struct ThreePModelTraits
 {
+    using Indices = ThreePIndices;
+
     static constexpr int numEq() { return 3; }
     static constexpr int numPhases() { return 3; }
     static constexpr int numComponents() { return 3; }
@@ -87,6 +89,26 @@ struct ThreePModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return false; }
     static constexpr bool enableEnergyBalance() { return false; }
+};
+
+/*!
+ * \ingroup ThreePModel
+ * \brief Traits class for the two-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ */
+template<class PV, class FSY, class FST, class PT, class MT>
+struct ThreePVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
 };
 
 namespace Properties {
@@ -117,16 +139,19 @@ SET_PROP(ThreeP, ModelTraits)
 //! The local residual function of the conservation equations
 SET_TYPE_PROP(ThreeP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
-//! The VolumeVariables property
-SET_TYPE_PROP(ThreeP, VolumeVariables, ThreePVolumeVariables<TypeTag>);
-
-//! The indices required by the isothermal 3p model
-SET_PROP(ThreeP, Indices)
+//! Set the volume variables property
+SET_PROP(ThreeP, VolumeVariables)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = ThreePVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
 public:
-    using type = ThreePIndices<FluidSystem,/*PVOffset=*/0>;
+    using type = ThreePVolumeVariables<Traits>;
 };
 
 //! The spatial parameters to be employed.
@@ -153,10 +178,10 @@ public:
 SET_PROP(ThreeP, VtkOutputFields)
 {
 private:
-   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+   using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
 public:
-    using type = ThreePVtkOutputFields<Indices>;
+    using type = ThreePVtkOutputFields;
 };
 
 /////////////////////////////////////////////////
@@ -168,30 +193,18 @@ SET_PROP(ThreePNI, ThermalConductivityModel)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    using type = ThermalConductivitySomerton<Scalar, Indices>;
+    using type = ThermalConductivitySomerton<Scalar>;
 };
 
 //! Set non-isothermal output fields
 SET_PROP(ThreePNI, VtkOutputFields)
 {
 private:
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using IsothermalFields = ThreePVtkOutputFields<Indices>;
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using IsothermalFields = ThreePVtkOutputFields;
 public:
     using type = EnergyVtkOutputFields<IsothermalFields>;
-};
-
-//! Set non-isothermal Indices
-SET_PROP(ThreePNI, Indices)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using IsothermalIndices = ThreePIndices<FluidSystem,/*PVOffset=*/0>;
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-public:
-    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
 };
 
 //! Set non-isothermal model traits

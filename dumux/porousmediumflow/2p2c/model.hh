@@ -82,6 +82,7 @@
 // property forward declarations
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/properties.hh>
+#include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
@@ -103,16 +104,50 @@ namespace Dumux {
 /*!
  * \ingroup TwoPTwoCModel
  * \brief Specifies a number properties of two-phase two-component models.
+ *
+ * \tparam f The two-phase formulation used
+ * \tparam useM Boolean to specify if moles or masses are balanced
  */
+template<TwoPFormulation f, bool useM>
 struct TwoPTwoCModelTraits
 {
+    using Indices = TwoPTwoCIndices;
+
     static constexpr int numEq() { return 2; }
     static constexpr int numPhases() { return 2; }
     static constexpr int numComponents() { return 2; }
 
+    static constexpr bool useMoles() { return useM; }
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
     static constexpr bool enableEnergyBalance() { return false; }
+
+    static constexpr TwoPFormulation priVarFormulation() { return f; }
+};
+
+/*!
+ * \ingroup TwoPTwoCModel
+ * \brief Traits class for the two-phase two-component model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ * \tparam useKE boolean to indicate if kelvin equation is used for vapour pressure
+ * \tparam useCS boolean to indicate if a constraint solver is to be used
+ */
+template<class PV, class FSY, class FST, class PT, class MT, bool useKE, bool useCS>
+struct TwoPTwoCVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+
+    static constexpr bool useKelvinEquation = useKE;
+    static constexpr bool useConstraintSolver = useCS;
 };
 
 namespace Properties {
@@ -136,20 +171,14 @@ private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
+
 public:
-    using type = TwoPTwoCModelTraits;
+    using type = TwoPTwoCModelTraits< GET_PROP_VALUE(TypeTag, Formulation),
+                                      GET_PROP_VALUE(TypeTag, UseMoles) >;
 };
 
 //! Set the vtk output fields specific to this model
-SET_PROP(TwoPTwoC, VtkOutputFields)
-{
-private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-public:
-    using type = TwoPTwoCVtkOutputFields<FluidSystem, Indices>;
-};
+SET_TYPE_PROP(TwoPTwoC, VtkOutputFields, TwoPTwoCVtkOutputFields);
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -167,7 +196,8 @@ public:
 };
 
 //! Set the default formulation to pw-sn
-SET_INT_PROP(TwoPTwoC, Formulation, TwoPTwoCFormulation::pwsn);
+SET_PROP(TwoPTwoC, Formulation)
+{ static constexpr TwoPFormulation value = TwoPFormulation::p0s1; };
 
 //! Set as default that no component mass balance is replaced by the total mass balance
 SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());
@@ -176,7 +206,7 @@ SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::nu
 SET_TYPE_PROP(TwoPTwoC, LocalResidual, CompositionalLocalResidual<TypeTag>);
 
 //! The primary variable switch for the 2p2c model
-SET_TYPE_PROP(TwoPTwoC, PrimaryVariableSwitch, TwoPTwoCPrimaryVariableSwitch<TypeTag>);
+SET_TYPE_PROP(TwoPTwoC, PrimaryVariableSwitch, TwoPTwoCPrimaryVariableSwitch);
 
 //! The primary variables vector for the 2p2c model
 SET_PROP(TwoPTwoC, PrimaryVariables)
@@ -189,10 +219,22 @@ public:
 };
 
 //! Use the 2p2c VolumeVariables
-SET_TYPE_PROP(TwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
+SET_PROP(TwoPTwoC, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-//! Set the indices required by the isothermal 2p2c
-SET_TYPE_PROP(TwoPTwoC, Indices, TwoPTwoCIndices<typename GET_PROP_TYPE(TypeTag, FluidSystem), /*PVOffset=*/0>);
+    static constexpr bool useKE = GET_PROP_VALUE(TypeTag, UseKelvinEquation);
+    static constexpr bool useCS = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
+
+    using Traits = TwoPTwoCVolumeVariablesTraits<PV, FSY, FST, PT, MT, useKE, useCS>;
+public:
+    using type = TwoPTwoCVolumeVariables<Traits>;
+};
 
 //! Use the FVSpatialParams by default
 SET_TYPE_PROP(TwoPTwoC, SpatialParams, FVSpatialParams<TypeTag>);
@@ -215,24 +257,13 @@ SET_PROP(TwoPTwoCNI, ThermalConductivityModel)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    using type = ThermalConductivitySomerton<Scalar, Indices>;
+    using type = ThermalConductivitySomerton<Scalar>;
 };
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
-
-//! Set non-isothermal Indices
-SET_PROP(TwoPTwoCNI, Indices)
-{
-private:
-    using IsothermalIndices = TwoPTwoCIndices<typename GET_PROP_TYPE(TypeTag, FluidSystem), /*PVOffset=*/0>;
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-public:
-    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
-};
 
 //! Set the non-isothermal model traits
 SET_PROP(TwoPTwoCNI, ModelTraits)
@@ -241,20 +272,14 @@ private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
+    using Traits = TwoPTwoCModelTraits< GET_PROP_VALUE(TypeTag, Formulation),
+                                        GET_PROP_VALUE(TypeTag, UseMoles) >;
 public:
-    using type = PorousMediumFlowNIModelTraits<TwoPTwoCModelTraits>;
+    using type = PorousMediumFlowNIModelTraits< Traits >;
 };
 
 //! Set non-isothermal output fields
-SET_PROP(TwoPTwoCNI, VtkOutputFields)
-{
-private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-   using IsothermalFields = TwoPTwoCVtkOutputFields<FluidSystem, Indices>;
-public:
-    using type = EnergyVtkOutputFields<IsothermalFields>;
-};
+SET_TYPE_PROP(TwoPTwoCNI, VtkOutputFields, EnergyVtkOutputFields<TwoPTwoCVtkOutputFields>);
 
 } // end namespace Properties
 } // end namespace Dumux

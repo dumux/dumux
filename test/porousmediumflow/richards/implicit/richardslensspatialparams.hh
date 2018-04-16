@@ -77,10 +77,10 @@ class RichardsLensSpatialParams : public FVSpatialParams<TypeTag>
     enum { dimWorld=GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
 
 public:
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
     // export permeability type
     using PermeabilityType = Scalar;
 
@@ -173,4 +173,3 @@ private:
 } // end namespace Dumux
 
 #endif
-

@@ -47,31 +47,27 @@ namespace Dumux {
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the three-phase, two-component model.
  */
-template <class TypeTag>
-class ThreePWaterOilVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
+template <class Traits>
+class ThreePWaterOilVolumeVariables
+: public PorousMediumFlowVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits>>
 {
-    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ParentType = PorousMediumFlowVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits>>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using ModelTraits = typename Traits::ModelTraits;
+    using Indices = typename ModelTraits::Indices;
+    using FS = typename Traits::FluidSystem;
 
     enum {
-        numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
-        numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
+        numPs = ParentType::numPhases(),
+        numComps = ParentType::numComponents(),
 
-        wCompIdx = Indices::wCompIdx,
-        nCompIdx = Indices::nCompIdx,
+        wCompIdx = FS::wCompIdx,
+        nCompIdx = FS::nCompIdx,
 
-        wPhaseIdx = Indices::wPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = FS::wPhaseIdx,
+        gPhaseIdx = FS::gPhaseIdx,
+        nPhaseIdx = FS::nPhaseIdx,
 
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
@@ -88,30 +84,29 @@ class ThreePWaterOilVolumeVariables : public PorousMediumFlowVolumeVariables<Typ
         wgPhaseOnly = Indices::wgPhaseOnly
     };
 
-    using Element = typename GridView::template Codim<0>::Entity;
-
 public:
     //! The type of the object returned by the fluidState() method
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using ParentType::enthalpy;
-
+    using FluidState = typename Traits::FluidState;
+    //! The type of the fluid system
+    using FluidSystem = typename Traits::FluidSystem;
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume& scv)
+                const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
         const auto phasePresence = priVars.state();
 
-        bool onlyGasPhaseCanDisappear = GET_PROP_VALUE(TypeTag, OnlyGasPhaseCanDisappear);
+        bool onlyGasPhaseCanDisappear = Traits::ModelTraits::onlyGasPhaseCanDisappear();
 
         // capillary pressure parameters
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
         if(!onlyGasPhaseCanDisappear)
@@ -631,7 +626,7 @@ public:
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
             }
 
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numPs; ++phaseIdx) {
             // Mobilities
             const Scalar mu =
                 FluidSystem::viscosity(fluidState_,
@@ -671,7 +666,7 @@ public:
 
 //         fluidState_.setTemperature(temp_);
         // the enthalpies (internal energies are directly calculated in the fluidstate
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numPs; ++phaseIdx) {
             Scalar h = FluidSystem::enthalpy(fluidState_, phaseIdx);
             fluidState_.setEnthalpy(phaseIdx, h);
 
@@ -784,7 +779,7 @@ public:
      * \brief Returns the diffusivity coefficient matrix
      */
     DUNE_DEPRECATED_MSG("diffusionCoefficient() is deprecated. Use diffusionCoefficient(int phaseIdx) instead.")
-    Dune::FieldVector<Scalar, numPhases> diffusionCoefficient() const
+    Dune::FieldVector<Scalar, numPs> diffusionCoefficient() const
     {
         return diffusionCoefficient_;
     }
@@ -822,30 +817,24 @@ public:
     { return fluidState_.enthalpy(phaseIdx); };
 
 protected:
-
-    Scalar sw_, sg_, sn_, pg_, pw_, pn_, temp_;
-
-    Scalar moleFrac_[numPhases][numComponents];
-    Scalar massFrac_[numPhases][numComponents];
-
-    Scalar porosity_;        //!< Effective porosity within the control volume
-    Scalar permeability_;        //!< Effective porosity within the control volume
-    Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
-    Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
-    /* We need a tensor here !! */
-    //!< Binary diffusion coefficients of the 3 components in the phases
-    Dune::FieldVector<Scalar, numPhases> diffusionCoefficient_;
     FluidState fluidState_;
 
 private:
-    std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
+    Scalar sw_, sg_, sn_, pg_, pw_, pn_, temp_;
 
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
+    Scalar moleFrac_[numPs][numComps];
+    Scalar massFrac_[numPs][numComps];
 
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
+    Scalar porosity_;        //!< Effective porosity within the control volume
+    Scalar permeability_;        //!< Effective porosity within the control volume
+    Scalar mobility_[numPs];  //!< Effective mobility within the control volume
+    Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
+    /* We need a tensor here !! */
+    //!< Binary diffusion coefficients of the 3 components in the phases
+    Dune::FieldVector<Scalar, numPs> diffusionCoefficient_;
+    std::array<std::array<Scalar, numComps-1>, numPs> diffCoefficient_;
+
 };
-} // end namespace
+} // end namespace Dumux
 
 #endif

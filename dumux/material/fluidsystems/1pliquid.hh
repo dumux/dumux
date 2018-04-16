@@ -32,10 +32,8 @@
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/components/componenttraits.hh>
 
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
 
 /*!
  * \ingroup Fluidsystems
@@ -54,11 +52,11 @@ public:
     using Component = ComponentT;
     using ParameterCache = NullParameterCache;
 
-    /****************************************
-     * Fluid phase related static parameters
-     ****************************************/
-    static constexpr int numPhases = 1;
-    static constexpr int numComponents = 1;
+    static constexpr int numPhases = 1;  //!< Number of phases in the fluid system
+    static constexpr int numComponents = 1; //!< Number of components in the fluid system
+
+    static constexpr int phase0Idx = 0; //!< index of the only phase
+    static constexpr int comp0Idx = 0; //!< index of the only component
 
     /*!
      * \brief Initialize the fluid system's static parameters generically
@@ -66,6 +64,9 @@ public:
     static void init()
     { }
 
+    /****************************************
+     * Fluid phase related static parameters
+     ****************************************/
     /*!
      * \brief Return the human readable name of a fluid phase
      *

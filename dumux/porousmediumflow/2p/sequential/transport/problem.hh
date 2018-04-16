@@ -67,7 +67,7 @@ class TransportProblem2P : public OneModelProblem<TypeTag>
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum {
         dim = Grid::dimension,

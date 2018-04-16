@@ -54,7 +54,7 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     static const int dim = GridView::dimension;

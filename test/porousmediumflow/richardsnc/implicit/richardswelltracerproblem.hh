@@ -33,8 +33,8 @@
 
 #include "richardswelltracerspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup RichardsNCTests
  * \brief A water infiltration problem with a low-permeability lens
@@ -105,14 +105,14 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     enum {
         pressureIdx = Indices::pressureIdx,
         compIdx = Indices::compMainIdx + 1,
-        wPhaseIdx = Indices::wPhaseIdx,
+        liquidPhaseIdx = FluidSystem::phase0Idx,
 
         dimWorld = GridView::dimensionworld
     };
@@ -161,8 +161,8 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
-                tracerMass += volVars.massFraction(wPhaseIdx, compIdx)*volVars.density(wPhaseIdx)
-                              * scv.volume() * volVars.saturation(wPhaseIdx) * volVars.porosity() * volVars.extrusionFactor();
+                tracerMass += volVars.massFraction(liquidPhaseIdx, compIdx)*volVars.density(liquidPhaseIdx)
+                              * scv.volume() * volVars.saturation(liquidPhaseIdx) * volVars.porosity() * volVars.extrusionFactor();
 
                 accumulatedSource_ += this->scvPointSources(element, fvGeometry, elemVolVars, scv)[compIdx]
                                        * scv.volume() * volVars.extrusionFactor()
@@ -287,8 +287,8 @@ public:
                         const auto& volVars = elemVolVars[scv];
                         //! convert pump rate from kg/s to mol/s
                         //! We assume we can't keep up the pump rate if the saturation sinks
-                        const Scalar value = pumpRate_*volVars.molarDensity(wPhaseIdx)/volVars.density(wPhaseIdx)*volVars.saturation(wPhaseIdx);
-                        return PrimaryVariables({-value, -value*volVars.moleFraction(wPhaseIdx, compIdx)});
+                        const Scalar value = pumpRate_*volVars.molarDensity(liquidPhaseIdx)/volVars.density(liquidPhaseIdx)*volVars.saturation(liquidPhaseIdx);
+                        return PrimaryVariables({-value, -value*volVars.moleFraction(liquidPhaseIdx, compIdx)});
                     });
     }
 

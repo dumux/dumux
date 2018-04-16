@@ -66,8 +66,6 @@ class InjectionSpatialParams : public FVSpatialParams<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
@@ -75,15 +73,18 @@ class InjectionSpatialParams : public FVSpatialParams<TypeTag>
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
+    //! export the type used for the permeability
     using PermeabilityType = Scalar;
+    //! export the material law type used
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
     /*!
      * \brief The constructor
      *
      * \param gridView The grid view
      */
-    InjectionSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    InjectionSpatialParams(const Problem& problem) : ParentType(problem)
     {
         layerBottom_ = 22.5;
 
@@ -178,6 +179,16 @@ public:
      */
     Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
     { return lambdaSolid_; }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    { return FluidSystem::H2OIdx; }
 
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const

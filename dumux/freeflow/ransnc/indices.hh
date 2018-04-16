@@ -25,7 +25,6 @@
 #define DUMUX_STAGGERED_RANS_NC_INDICES_HH
 
 #include <dumux/freeflow/navierstokesnc/indices.hh>
-#include <dumux/common/properties.hh>
 
 namespace Dumux {
 
@@ -45,13 +44,13 @@ class DummyIndices
  */
 template <int dimension, int numEquations,
           int thePhaseIdx, int theReplaceCompEqIdx,
-          class SinglePhaseIndices = DummyIndices, int PVOffset = 0>
+          class SinglePhaseIndices = DummyIndices>
 struct RANSNCIndices
-    : public NavierStokesNCIndices<dimension, numEquations, thePhaseIdx, theReplaceCompEqIdx, PVOffset>,
+    : public NavierStokesNCIndices<dimension, numEquations, thePhaseIdx, theReplaceCompEqIdx>,
       public SinglePhaseIndices
 { };
 
 // \}
-} // end namespace
+} // end namespace Dumux
 
 #endif

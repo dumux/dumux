@@ -44,7 +44,7 @@ namespace FluidSystems
 /*!
  * \ingroup Fluidsystems
  * \brief A two-phase fluid system with two components water \f$(\mathrm{H_2O})\f$
- *        Nitrogen \f$(\mathrm{N_2})\f$ for non-equilibrium models.
+ *        Nitrogen \f$(\mathrm{N_2})\f$ for non-equilibrium models. TODO: Is this fluid system necessary??
  */
 template <class Scalar, bool useComplexRelations = true>
 class H2ON2Kinetic :
@@ -85,7 +85,7 @@ public:
         Valgrind::CheckDefined(T);
         Valgrind::CheckDefined(p);
         switch (phaseIdx){
-            case ParentType::wPhaseIdx:
+            case ParentType::liquidPhaseIdx:
                 switch(compIdx){
                 case ParentType::H2OIdx:
                     return ParentType::H2O::liquidEnthalpy(T, p);
@@ -97,7 +97,7 @@ public:
                     break;
                 }// end switch compIdx
                 break;
-            case ParentType::nPhaseIdx:
+            case ParentType::gasPhaseIdx:
                 switch(compIdx){
                 case ParentType::H2OIdx:
                     return ParentType::H2O::gasEnthalpy(T, p);
@@ -137,10 +137,10 @@ public:
                                                     const unsigned int referencePhaseIdx,
                                                     const unsigned int calcCompIdx)
     {
-        const unsigned int nPhaseIdx   = ParentType::nPhaseIdx;
-        const unsigned int wPhaseIdx   = ParentType::wPhaseIdx;
-        const unsigned int nCompIdx    = ParentType::nCompIdx;
-        const unsigned int wCompIdx    = ParentType::wCompIdx;
+        const unsigned int nPhaseIdx   = ParentType::gasPhaseIdx;
+        const unsigned int wPhaseIdx   = ParentType::liquidPhaseIdx;
+        const unsigned int nCompIdx    = ParentType::N2Idx;
+        const unsigned int wCompIdx    = ParentType::H2OIdx;
 
         assert(0 <= referencePhaseIdx && referencePhaseIdx < ParentType::numPhases);
         assert(0 <= calcCompIdx && calcCompIdx < ParentType::numComponents);
@@ -265,10 +265,10 @@ public:
     static void calculateEquilibriumMoleFractions(FluidState & fluidState,
                                                   const ParameterCache & paramCache)
     {
-        const unsigned int nPhaseIdx    = ParentType::nPhaseIdx;
-        const unsigned int wPhaseIdx    = ParentType::wPhaseIdx;
-        const unsigned int nCompIdx     = ParentType::nCompIdx;
-        const unsigned int wCompIdx     = ParentType::wCompIdx;
+        const unsigned int nPhaseIdx    = ParentType::gasPhaseIdx;
+        const unsigned int wPhaseIdx    = ParentType::liquidPhaseIdx;
+        const unsigned int nCompIdx     = ParentType::N2Idx;
+        const unsigned int wCompIdx     = ParentType::H2OIdx;
         const unsigned int numPhases    = ParentType::numPhases;
         const unsigned int numComponents= ParentType::numComponents;
 

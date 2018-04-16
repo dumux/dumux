@@ -26,11 +26,15 @@
 #define DUMUX_2P_INCOMPRESSIBLE_TEST_LOCAL_RESIDUAL_HH
 
 #include <cmath>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/elementsolution.hh>
+
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
+#include <dumux/porousmediumflow/2p/formulation.hh>
 
 namespace Dumux {
 
@@ -58,16 +62,12 @@ class TwoPIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    // first index for the mass balance
-    enum
-    {
-        contiWEqIdx = Indices::contiWEqIdx,
-        contiNEqIdx = Indices::contiNEqIdx,
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
-        pressureIdx = Indices::pressureIdx,
-        saturationIdx = Indices::saturationIdx
-    };
+    static constexpr int numPhases = ModelTraits::numPhases();
+    static constexpr int pressureIdx = ModelTraits::Indices::pressureIdx;
+    static constexpr int saturationIdx = ModelTraits::Indices::saturationIdx;
+    static constexpr int conti0EqIdx = ModelTraits::Indices::conti0EqIdx;
 
 public:
     using ParentType::ParentType;
@@ -93,26 +93,26 @@ public:
                                const VolumeVariables& curVolVars,
                                const SubControlVolume& scv) const
     {
-        static_assert(!FluidSystem::isCompressible(FluidSystem::wPhaseIdx),
+        static_assert(!FluidSystem::isCompressible(0),
                       "2p/incompressiblelocalresidual.hh: Only incompressible fluids are allowed!");
-        static_assert(!FluidSystem::isCompressible(FluidSystem::nPhaseIdx),
+        static_assert(!FluidSystem::isCompressible(1),
                       "2p/incompressiblelocalresidual.hh: Only incompressible fluids are allowed!");
+        static_assert(ModelTraits::numPhases() == 2,
+                      "2p/incompressiblelocalresidual.hh: Only two-phase models are allowed!");
+        static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
+                      "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p1-s0 formulation!");
 
         // we know that these values are constant throughout the simulation
-        static const auto phi = curVolVars.porosity();
-        static const auto phi_rho_w = phi*curVolVars.density(FluidSystem::wPhaseIdx);
-        static const auto phi_rho_n = phi*curVolVars.density(FluidSystem::nPhaseIdx);
+        const auto poreVolume = scv.volume()*curVolVars.porosity();
+        static const std::array<Scalar, numPhases> rhos = { curVolVars.density(0), curVolVars.density(1) };
 
-        const auto volume = scv.volume();
-
-        // partial derivative of wetting phase storage term w.r.t. p_w
-        partialDerivatives[contiWEqIdx][pressureIdx] += 0.0;
-        // partial derivative of wetting phase storage term w.r.t. S_n
-        partialDerivatives[contiWEqIdx][saturationIdx] -= volume*phi_rho_w/this->timeLoop().timeStepSize();
-        // partial derivative of non-wetting phase storage term w.r.t. p_w
-        partialDerivatives[contiNEqIdx][pressureIdx] += 0.0;
-        // partial derivative of non-wetting phase storage term w.r.t. S_n
-        partialDerivatives[contiNEqIdx][saturationIdx] += volume*phi_rho_n/this->timeLoop().timeStepSize();
+        for (int pIdx = 0; pIdx < ModelTraits::numPhases(); ++pIdx)
+        {
+            // partial derivative of wetting phase storage term w.r.t. p_w
+            partialDerivatives[conti0EqIdx+pIdx][pressureIdx] += 0.0;
+            // partial derivative of wetting phase storage term w.r.t. S_n
+            partialDerivatives[conti0EqIdx+pIdx][saturationIdx] -= poreVolume*rhos[pIdx]/this->timeLoop().timeStepSize();
+        }
     }
 
     /*!
@@ -157,24 +157,26 @@ public:
                        const ElementFluxVariablesCache& elemFluxVarsCache,
                        const SubControlVolumeFace& scvf) const
     {
-        static_assert(!FluidSystem::isCompressible(FluidSystem::wPhaseIdx),
+        static_assert(!FluidSystem::isCompressible(0),
                       "2p/incompressiblelocalresidual.hh: Only incompressible fluids are allowed!");
-        static_assert(!FluidSystem::isCompressible(FluidSystem::nPhaseIdx),
+        static_assert(!FluidSystem::isCompressible(1),
                       "2p/incompressiblelocalresidual.hh: Only incompressible fluids are allowed!");
-        static_assert(FluidSystem::viscosityIsConstant(FluidSystem::wPhaseIdx),
+        static_assert(FluidSystem::viscosityIsConstant(0),
                       "2p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
-        static_assert(FluidSystem::viscosityIsConstant(FluidSystem::nPhaseIdx),
+        static_assert(FluidSystem::viscosityIsConstant(1),
                       "2p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
+        static_assert(ModelTraits::numPhases() == 2,
+                      "2p/incompressiblelocalresidual.hh: Only two-phase models are allowed!");
+        static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
+                      "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p1-s0 formulation!");
 
         using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
-        static const Scalar upwindWeight = getParam<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
-        const auto flux_w = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars,
-                                                scvf, FluidSystem::wPhaseIdx, elemFluxVarsCache);
-        const auto flux_n = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars,
-                                                scvf, FluidSystem::nPhaseIdx, elemFluxVarsCache);
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        const auto flux_w = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars, scvf, 0, elemFluxVarsCache);
+        const auto flux_n = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars, scvf, 1, elemFluxVarsCache);
         const auto insideWeight_w = std::signbit(flux_w) ? (1.0 - upwindWeight) : upwindWeight;
         const auto outsideWeight_w = 1.0 - insideWeight_w;
         const auto insideWeight_n = std::signbit(flux_n) ? (1.0 - upwindWeight) : upwindWeight;
@@ -200,18 +202,18 @@ public:
         auto& dI_dJ = derivativeMatrices[outsideScvIdx];
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
-        static const auto rho_w = insideVolVars.density(FluidSystem::wPhaseIdx);
-        static const auto rho_n = insideVolVars.density(FluidSystem::nPhaseIdx);
-        static const auto rhow_muw = rho_w/insideVolVars.viscosity(FluidSystem::wPhaseIdx);
-        static const auto rhon_mun = rho_n/insideVolVars.viscosity(FluidSystem::nPhaseIdx);
-        const auto rhowKrw_muw_inside = rho_w*insideVolVars.mobility(FluidSystem::wPhaseIdx);
-        const auto rhonKrn_mun_inside = rho_n*insideVolVars.mobility(FluidSystem::nPhaseIdx);
-        const auto rhowKrw_muw_outside = rho_w*outsideVolVars.mobility(FluidSystem::wPhaseIdx);
-        const auto rhonKrn_mun_outside = rho_n*outsideVolVars.mobility(FluidSystem::nPhaseIdx);
+        static const auto rho_w = insideVolVars.density(0);
+        static const auto rho_n = insideVolVars.density(1);
+        static const auto rhow_muw = rho_w/insideVolVars.viscosity(0);
+        static const auto rhon_mun = rho_n/insideVolVars.viscosity(1);
+        const auto rhowKrw_muw_inside = rho_w*insideVolVars.mobility(0);
+        const auto rhonKrn_mun_inside = rho_n*insideVolVars.mobility(1);
+        const auto rhowKrw_muw_outside = rho_w*outsideVolVars.mobility(0);
+        const auto rhonKrn_mun_outside = rho_n*outsideVolVars.mobility(1);
 
         // derivative w.r.t. to Sn is the negative of the one w.r.t. Sw
-        const auto insideSw = insideVolVars.saturation(FluidSystem::wPhaseIdx);
-        const auto outsideSw = outsideVolVars.saturation(FluidSystem::wPhaseIdx);
+        const auto insideSw = insideVolVars.saturation(0);
+        const auto outsideSw = outsideVolVars.saturation(0);
         const auto dKrw_dSn_inside = MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
         const auto dKrw_dSn_outside = MaterialLaw::dkrw_dsw(outsideMaterialParams, outsideSw);
         const auto dKrn_dSn_inside = MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
@@ -230,24 +232,24 @@ public:
         const auto tij_up_n = tij*up_n;
 
         // partial derivative of the wetting phase flux w.r.t. p_w
-        dI_dI[contiWEqIdx][pressureIdx] += tij_up_w;
-        dI_dJ[contiWEqIdx][pressureIdx] -= tij_up_w;
+        dI_dI[conti0EqIdx+0][pressureIdx] += tij_up_w;
+        dI_dJ[conti0EqIdx+0][pressureIdx] -= tij_up_w;
 
         // partial derivative of the wetting phase flux w.r.t. S_n
-        dI_dI[contiWEqIdx][saturationIdx] -= rho_mu_flux_w*dKrw_dSn_inside*insideWeight_w;
-        dI_dJ[contiWEqIdx][saturationIdx] -= rho_mu_flux_w*dKrw_dSn_outside*outsideWeight_w;
+        dI_dI[conti0EqIdx+0][saturationIdx] -= rho_mu_flux_w*dKrw_dSn_inside*insideWeight_w;
+        dI_dJ[conti0EqIdx+0][saturationIdx] -= rho_mu_flux_w*dKrw_dSn_outside*outsideWeight_w;
 
         // partial derivative of the non-wetting phase flux w.r.t. p_w
-        dI_dI[contiNEqIdx][pressureIdx] += tij_up_n;
-        dI_dJ[contiNEqIdx][pressureIdx] -= tij_up_n;
+        dI_dI[conti0EqIdx+1][pressureIdx] += tij_up_n;
+        dI_dJ[conti0EqIdx+1][pressureIdx] -= tij_up_n;
 
         // partial derivative of the non-wetting phase flux w.r.t. S_n (relative permeability derivative contribution)
-        dI_dI[contiNEqIdx][saturationIdx] -= rho_mu_flux_n*dKrn_dSn_inside*insideWeight_n;
-        dI_dJ[contiNEqIdx][saturationIdx] -= rho_mu_flux_n*dKrn_dSn_outside*outsideWeight_n;
+        dI_dI[conti0EqIdx+1][saturationIdx] -= rho_mu_flux_n*dKrn_dSn_inside*insideWeight_n;
+        dI_dJ[conti0EqIdx+1][saturationIdx] -= rho_mu_flux_n*dKrn_dSn_outside*outsideWeight_n;
 
         // partial derivative of the non-wetting phase flux w.r.t. S_n (capillary pressure derivative contribution)
-        dI_dI[contiNEqIdx][saturationIdx] -= tij_up_n*dpc_dSn_inside;
-        dI_dJ[contiNEqIdx][saturationIdx] += tij_up_n*dpc_dSn_outside;
+        dI_dI[conti0EqIdx+1][saturationIdx] -= tij_up_n*dpc_dSn_inside;
+        dI_dJ[conti0EqIdx+1][saturationIdx] += tij_up_n*dpc_dSn_outside;
     }
 
     /*!
@@ -273,24 +275,26 @@ public:
                        const ElementFluxVariablesCache& elemFluxVarsCache,
                        const SubControlVolumeFace& scvf) const
     {
-        static_assert(!FluidSystem::isCompressible(FluidSystem::wPhaseIdx),
+        static_assert(!FluidSystem::isCompressible(0),
                       "2p/incompressiblelocalresidual.hh: Only incompressible fluids are allowed!");
-        static_assert(!FluidSystem::isCompressible(FluidSystem::nPhaseIdx),
+        static_assert(!FluidSystem::isCompressible(1),
                       "2p/incompressiblelocalresidual.hh: Only incompressible fluids are allowed!");
-        static_assert(FluidSystem::viscosityIsConstant(FluidSystem::wPhaseIdx),
+        static_assert(FluidSystem::viscosityIsConstant(0),
                       "2p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
-        static_assert(FluidSystem::viscosityIsConstant(FluidSystem::nPhaseIdx),
+        static_assert(FluidSystem::viscosityIsConstant(1),
                       "2p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
+        static_assert(ModelTraits::numPhases() == 2,
+                      "2p/incompressiblelocalresidual.hh: Only two-phase models are allowed!");
+        static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
+                      "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p0-s1 formulation!");
 
         using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
-        static const Scalar upwindWeight = getParam<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
-        const auto flux_w = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars,
-                                                scvf, FluidSystem::wPhaseIdx, elemFluxVarsCache);
-        const auto flux_n = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars,
-                                                scvf, FluidSystem::nPhaseIdx, elemFluxVarsCache);
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        const auto flux_w = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars, scvf, 0, elemFluxVarsCache);
+        const auto flux_n = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars, scvf, 1, elemFluxVarsCache);
         const auto insideWeight_w = std::signbit(flux_w) ? (1.0 - upwindWeight) : upwindWeight;
         const auto outsideWeight_w = 1.0 - insideWeight_w;
         const auto insideWeight_n = std::signbit(flux_n) ? (1.0 - upwindWeight) : upwindWeight;
@@ -310,14 +314,14 @@ public:
         const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(element, outsideScv, elemSol);
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
-        static const auto rho_w = insideVolVars.density(FluidSystem::wPhaseIdx);
-        static const auto rho_n = insideVolVars.density(FluidSystem::nPhaseIdx);
-        static const auto rhow_muw = rho_w/insideVolVars.viscosity(FluidSystem::wPhaseIdx);
-        static const auto rhon_mun = rho_n/insideVolVars.viscosity(FluidSystem::nPhaseIdx);
-        const auto rhowKrw_muw_inside = rho_w*insideVolVars.mobility(FluidSystem::wPhaseIdx);
-        const auto rhonKrn_mun_inside = rho_n*insideVolVars.mobility(FluidSystem::nPhaseIdx);
-        const auto rhowKrw_muw_outside = rho_w*outsideVolVars.mobility(FluidSystem::wPhaseIdx);
-        const auto rhonKrn_mun_outside = rho_n*outsideVolVars.mobility(FluidSystem::nPhaseIdx);
+        static const auto rho_w = insideVolVars.density(0);
+        static const auto rho_n = insideVolVars.density(1);
+        static const auto rhow_muw = rho_w/insideVolVars.viscosity(0);
+        static const auto rhon_mun = rho_n/insideVolVars.viscosity(1);
+        const auto rhowKrw_muw_inside = rho_w*insideVolVars.mobility(0);
+        const auto rhonKrn_mun_inside = rho_n*insideVolVars.mobility(1);
+        const auto rhowKrw_muw_outside = rho_w*outsideVolVars.mobility(0);
+        const auto rhonKrn_mun_outside = rho_n*outsideVolVars.mobility(1);
 
         // let the Law for the advective fluxes calculate the transmissibilities
         const auto ti = AdvectionType::calculateTransmissibilities(problem,
@@ -348,61 +352,61 @@ public:
 
             // partial derivative of the wetting phase flux w.r.t. p_w
             const auto tj_up_w = tj*up_w;
-            dI_dJ_inside[globalJ][contiWEqIdx][pressureIdx] += tj_up_w;
-            dI_dJ_outside[globalJ][contiWEqIdx][pressureIdx] -= tj_up_w;
+            dI_dJ_inside[globalJ][conti0EqIdx+0][pressureIdx] += tj_up_w;
+            dI_dJ_outside[globalJ][conti0EqIdx+0][pressureIdx] -= tj_up_w;
 
             // partial derivative of the non-wetting phase flux w.r.t. p_w
             const auto tj_up_n = tj*up_n;
-            dI_dJ_inside[globalJ][contiNEqIdx][pressureIdx] += tj_up_n;
-            dI_dJ_outside[globalJ][contiNEqIdx][pressureIdx] -= tj_up_n;
+            dI_dJ_inside[globalJ][conti0EqIdx+1][pressureIdx] += tj_up_n;
+            dI_dJ_outside[globalJ][conti0EqIdx+1][pressureIdx] -= tj_up_n;
 
             // partial derivatives w.r.t. S_n (are the negative of those w.r.t sw)
             // relative permeability contributions only for inside/outside
             if (localJ == insideScvIdx)
             {
                 // partial derivative of the wetting phase flux w.r.t. S_n
-                const auto insideSw = insideVolVars.saturation(FluidSystem::wPhaseIdx);
+                const auto insideSw = insideVolVars.saturation(0);
                 const auto dKrw_dSn_inside = MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
                 const auto dFluxW_dSnJ = rho_mu_flux_w*dKrw_dSn_inside*insideWeight_w;
-                dI_dJ_inside[globalJ][contiWEqIdx][saturationIdx] -= dFluxW_dSnJ;
-                dI_dJ_outside[globalJ][contiWEqIdx][saturationIdx] += dFluxW_dSnJ;
+                dI_dJ_inside[globalJ][conti0EqIdx+0][saturationIdx] -= dFluxW_dSnJ;
+                dI_dJ_outside[globalJ][conti0EqIdx+0][saturationIdx] += dFluxW_dSnJ;
 
                 // partial derivative of the non-wetting phase flux w.r.t. S_n (k_rn contribution)
                 const auto dKrn_dSn_inside = MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
                 const auto dFluxN_dSnJ_krn = rho_mu_flux_n*dKrn_dSn_inside*insideWeight_n;
-                dI_dJ_inside[globalJ][contiNEqIdx][saturationIdx] -= dFluxN_dSnJ_krn;
-                dI_dJ_outside[globalJ][contiWEqIdx][saturationIdx] += dFluxN_dSnJ_krn;
+                dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_krn;
+                dI_dJ_outside[globalJ][conti0EqIdx+0][saturationIdx] += dFluxN_dSnJ_krn;
 
                 // partial derivative of the non-wetting phase flux w.r.t. S_n (p_c contribution)
                 const auto dFluxN_dSnJ_pc = tj_up_n*MaterialLaw::dpc_dsw(insideMaterialParams, insideSw);
-                dI_dJ_inside[globalJ][contiNEqIdx][saturationIdx] -= dFluxN_dSnJ_pc;
-                dI_dJ_outside[globalJ][contiNEqIdx][saturationIdx] += dFluxN_dSnJ_pc;
+                dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_pc;
+                dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_pc;
             }
             else if (localJ == outsideScvIdx)
             {
                 // see comments for (globalJ == insideScvIdx)
-                const auto outsideSw = outsideVolVars.saturation(FluidSystem::wPhaseIdx);
+                const auto outsideSw = outsideVolVars.saturation(0);
                 const auto dKrw_dSn_outside = MaterialLaw::dkrw_dsw(outsideMaterialParams, outsideSw);
                 const auto dFluxW_dSnJ = rho_mu_flux_w*dKrw_dSn_outside*outsideWeight_w;
-                dI_dJ_inside[globalJ][contiWEqIdx][saturationIdx] -= dFluxW_dSnJ;
-                dI_dJ_outside[globalJ][contiWEqIdx][saturationIdx] += dFluxW_dSnJ;
+                dI_dJ_inside[globalJ][conti0EqIdx+0][saturationIdx] -= dFluxW_dSnJ;
+                dI_dJ_outside[globalJ][conti0EqIdx+0][saturationIdx] += dFluxW_dSnJ;
 
                 const auto dKrn_dSn_outside = MaterialLaw::dkrn_dsw(outsideMaterialParams, outsideSw);
                 const auto dFluxN_dSnJ_krn = rho_mu_flux_n*dKrn_dSn_outside*outsideWeight_n;
-                dI_dJ_inside[globalJ][contiNEqIdx][saturationIdx] -= dFluxN_dSnJ_krn;
-                dI_dJ_outside[globalJ][contiNEqIdx][saturationIdx] += dFluxN_dSnJ_krn;
+                dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_krn;
+                dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_krn;
 
                 const auto dFluxN_dSnJ_pc = tj_up_n*MaterialLaw::dpc_dsw(outsideMaterialParams, outsideSw);
-                dI_dJ_inside[globalJ][contiNEqIdx][saturationIdx] -= dFluxN_dSnJ_pc;
-                dI_dJ_outside[globalJ][contiNEqIdx][saturationIdx] += dFluxN_dSnJ_pc;
+                dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_pc;
+                dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_pc;
             }
             else
             {
                 const auto& paramsJ = problem.spatialParams().materialLawParams(element, scvJ, elemSol);
-                const auto swJ = curElemVolVars[scvJ].saturation(FluidSystem::wPhaseIdx);
+                const auto swJ = curElemVolVars[scvJ].saturation(0);
                 const auto dFluxN_dSnJ_pc = tj_up_n*MaterialLaw::dpc_dsw(paramsJ, swJ);
-                dI_dJ_inside[globalJ][contiNEqIdx][saturationIdx] -= dFluxN_dSnJ_pc;
-                dI_dJ_outside[globalJ][contiNEqIdx][saturationIdx] += dFluxN_dSnJ_pc;
+                dI_dJ_inside[globalJ][conti0EqIdx+1][saturationIdx] -= dFluxN_dSnJ_pc;
+                dI_dJ_outside[globalJ][conti0EqIdx+1][saturationIdx] += dFluxN_dSnJ_pc;
             }
         }
     }
@@ -433,11 +437,9 @@ public:
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
-        static const Scalar upwindWeight = getParam<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
-        const auto flux_w = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars,
-                                                     scvf, FluidSystem::wPhaseIdx, elemFluxVarsCache);
-        const auto flux_n = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars,
-                                                        scvf, FluidSystem::nPhaseIdx, elemFluxVarsCache);
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        const auto flux_w = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars, scvf, 0, elemFluxVarsCache);
+        const auto flux_n = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars, scvf, 1, elemFluxVarsCache);
         const auto insideWeight_w = std::signbit(flux_w) ? (1.0 - upwindWeight) : upwindWeight;
         const auto outsideWeight_w = 1.0 - insideWeight_w;
         const auto insideWeight_n = std::signbit(flux_n) ? (1.0 - upwindWeight) : upwindWeight;
@@ -453,20 +455,20 @@ public:
                                                                                      elementSolution<FVElementGeometry>(insideVolVars.priVars()));
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
-        static const auto rho_w = insideVolVars.density(FluidSystem::wPhaseIdx);
-        static const auto rho_n = insideVolVars.density(FluidSystem::nPhaseIdx);
-        static const auto rhow_muw = rho_w/insideVolVars.viscosity(FluidSystem::wPhaseIdx);
-        static const auto rhon_mun = rho_n/insideVolVars.viscosity(FluidSystem::nPhaseIdx);
-        const auto rhowKrw_muw_inside = rho_w*insideVolVars.mobility(FluidSystem::wPhaseIdx);
-        const auto rhonKrn_mun_inside = rho_n*insideVolVars.mobility(FluidSystem::nPhaseIdx);
-        const auto rhowKrw_muw_outside = rho_w*outsideVolVars.mobility(FluidSystem::wPhaseIdx);
-        const auto rhonKrn_mun_outside = rho_n*outsideVolVars.mobility(FluidSystem::nPhaseIdx);
+        static const auto rho_w = insideVolVars.density(0);
+        static const auto rho_n = insideVolVars.density(1);
+        static const auto rhow_muw = rho_w/insideVolVars.viscosity(0);
+        static const auto rhon_mun = rho_n/insideVolVars.viscosity(1);
+        const auto rhowKrw_muw_inside = rho_w*insideVolVars.mobility(0);
+        const auto rhonKrn_mun_inside = rho_n*insideVolVars.mobility(1);
+        const auto rhowKrw_muw_outside = rho_w*outsideVolVars.mobility(0);
+        const auto rhonKrn_mun_outside = rho_n*outsideVolVars.mobility(1);
 
         // get reference to the inside derivative matrix
         auto& dI_dI = derivativeMatrices[insideScvIdx];
 
         // derivative w.r.t. to Sn is the negative of the one w.r.t. Sw
-        const auto insideSw = insideVolVars.saturation(FluidSystem::wPhaseIdx);
+        const auto insideSw = insideVolVars.saturation(0);
         const auto dKrw_dSn_inside = -1.0*MaterialLaw::dkrw_dsw(insideMaterialParams, insideSw);
         const auto dKrn_dSn_inside = -1.0*MaterialLaw::dkrn_dsw(insideMaterialParams, insideSw);
         const auto dpc_dSn_inside = -1.0*MaterialLaw::dpc_dsw(insideMaterialParams, insideSw);
@@ -474,20 +476,20 @@ public:
         const auto tij = elemFluxVarsCache[scvf].advectionTij();
         // partial derivative of the wetting phase flux w.r.t. p_w
         const auto up_w = rhowKrw_muw_inside*insideWeight_w + rhowKrw_muw_outside*outsideWeight_w;
-        dI_dI[contiWEqIdx][pressureIdx] += tij*up_w;
+        dI_dI[conti0EqIdx+0][pressureIdx] += tij*up_w;
 
         // partial derivative of the wetting phase flux w.r.t. S_n
-        dI_dI[contiWEqIdx][saturationIdx] += rhow_muw*flux_w*dKrw_dSn_inside*insideWeight_w;
+        dI_dI[conti0EqIdx+0][saturationIdx] += rhow_muw*flux_w*dKrw_dSn_inside*insideWeight_w;
 
         // partial derivative of the non-wetting phase flux w.r.t. p_w
         const auto up_n = rhonKrn_mun_inside*insideWeight_n + rhonKrn_mun_outside*outsideWeight_n;
-        dI_dI[contiNEqIdx][pressureIdx] += tij*up_n;
+        dI_dI[conti0EqIdx+1][pressureIdx] += tij*up_n;
 
         // partial derivative of the non-wetting phase flux w.r.t. S_n (relative permeability derivative contribution)
-        dI_dI[contiNEqIdx][saturationIdx] += rhon_mun*flux_n*dKrn_dSn_inside*insideWeight_n;
+        dI_dI[conti0EqIdx+1][saturationIdx] += rhon_mun*flux_n*dKrn_dSn_inside*insideWeight_n;
 
         // partial derivative of the non-wetting phase flux w.r.t. S_n (capillary pressure derivative contribution)
-        dI_dI[contiNEqIdx][saturationIdx] += tij*dpc_dSn_inside*up_n;
+        dI_dI[conti0EqIdx+1][saturationIdx] += tij*dpc_dSn_inside*up_n;
     }
 
     /*!

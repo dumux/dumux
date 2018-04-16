@@ -83,17 +83,18 @@ class CombustionSpatialParams : public FVSpatialParams<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     enum {dimWorld = GridView::dimensionworld};
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    //! export the type used for the permeability
     using PermeabilityType = Scalar;
+    //! export the material law type used
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
-    CombustionSpatialParams(const Problem &problem)
-        : ParentType(problem)
+    CombustionSpatialParams(const Problem &problem) : ParentType(problem)
     {
         // this is the parameter value from file part
         porosity_ = getParam<Scalar>("SpatialParams.PorousMedium.porosity");
@@ -151,8 +152,7 @@ public:
                     const SubControlVolume &scv,
                     const ElementSolution &elemSol) const
     {
-        const auto& globalPos =  scv.dofPosition();
-        if ( inOutFlow(globalPos) )
+        if ( inOutFlow(scv.dofPosition()) )
             return porosityOutFlow_ ;
         else
             return porosity_ ;
@@ -161,10 +161,8 @@ public:
     /*!
      * \brief Return a reference to the material parameters of the material law.
      * \param globalPos The position in global coordinates. */
-    const MaterialLawParams & materialLawParamsAtPos(const GlobalPosition & globalPos) const
-    {
-            return materialParams_ ;
-    }
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition & globalPos) const
+    { return materialParams_ ; }
 
     /*!\brief Return the characteristic length for the mass transfer.
      *
@@ -178,10 +176,7 @@ public:
                                       const SubControlVolume &scv,
                                       const ElementSolution &elemSol) const
 
-    {
-        const auto& globalPos =  scv.center();
-        return characteristicLengthAtPos(globalPos);
-    }
+    { return characteristicLengthAtPos(scv.center()); }
 
 
     /*!\brief Return the characteristic length for the mass transfer.
@@ -200,18 +195,13 @@ public:
     const Scalar factorEnergyTransfer(const Element &element,
                                       const SubControlVolume &scv,
                                       const ElementSolution &elemSol) const
-    {
-       const auto& globalPos =  scv.dofPosition();
-        return factorEnergyTransferAtPos(globalPos);
-    }
+    { return factorEnergyTransferAtPos(scv.dofPosition()); }
 
 
     /*!\brief Return the pre factor the the energy transfer
      * \param globalPos The position in global coordinates.*/
     const Scalar factorEnergyTransferAtPos(const  GlobalPosition & globalPos) const
-    {
-        return factorEnergyTransfer_ ;
-    }
+    { return factorEnergyTransfer_; }
 
 
     /*!\brief Return the pre factor the the mass transfer
@@ -225,17 +215,12 @@ public:
     const Scalar factorMassTransfer(const Element &element,
                                     const SubControlVolume &scv,
                                     const ElementSolution &elemSol) const
-    {
-       const auto& globalPos =  scv.dofPosition();
-       return factorMassTransferAtPos(globalPos);
-    }
+    { return factorMassTransferAtPos(scv.dofPosition()); }
 
     /*!\brief Return the pre factor the the mass transfer
      * \param globalPos The position in global coordinates.*/
     const Scalar factorMassTransferAtPos(const  GlobalPosition & globalPos) const
-    {
-        return factorMassTransfer_ ;
-    }
+    { return factorMassTransfer_; }
 
 
     /*!
@@ -246,9 +231,7 @@ public:
      * \param globalPos The global position
      */
     Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    {
-        return solidHeatCapacity_ ;// specific heat capacity of solid  [J / (kg K)]
-    }
+    { return solidHeatCapacity_; }
 
     /*!
      * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
@@ -258,9 +241,7 @@ public:
      * \param globalPos The global position
      */
     Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    {
-        return solidDensity_ ;// density of solid [kg/m^3]
-    }
+    { return solidDensity_; }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
@@ -274,34 +255,18 @@ public:
                                     const SubControlVolume &scv,
                                     const ElementSolution &elemSol) const
     {
-        const auto& globalPos =  scv.dofPosition();
-        if ( inOutFlow(globalPos) )
-            return solidThermalConductivityOutflow_ ;// conductivity of solid  [W / (m K ) ]
+        if ( inOutFlow(scv.dofPosition()) )
+            return solidThermalConductivityOutflow_ ;
         else
             return solidThermalConductivity_ ;
     }
 
-    /*!
-     * \brief Give back whether the tested position (input) is a specific region (right end of porous medium) in the domain
-     */
-    bool inOutFlow(const GlobalPosition & globalPos) const
-    { return globalPos[0] > (lengthPM_ - eps_) ;    }
-
-    /*!
-     * \brief Give back how long the porous medium domain is.
-     */
-    Scalar lengthPM() const
-    {
-        return lengthPM_ ;
-    }
-
-    /*!
-     * \brief Give back the itnerfacial tension
-     */
-    Scalar interfacialTension() const
-    {
-        return interfacialTension_ ;
-    }
+    //! Return if the tested position (input) is a specific region (right end of porous medium) in the domain
+    bool inOutFlow(const GlobalPosition & globalPos) const { return globalPos[0] > (lengthPM_ - eps_) ;    }
+    //! Return the length of the porous medium domain
+    Scalar lengthPM() const { return lengthPM_ ; }
+    //! Return the interfacial tension
+    Scalar interfacialTension() const { return interfacialTension_ ; }
 
 private:
     static constexpr Scalar eps_ = 1e-6;
@@ -312,7 +277,7 @@ private:
     Scalar factorEnergyTransfer_ ;
     Scalar factorMassTransfer_ ;
     Scalar characteristicLength_ ;
-    MaterialLawParams   materialParams_ ;
+    MaterialLawParams materialParams_ ;
 
     // Outflow Domain
     Scalar intrinsicPermeabilityOutFlow_ ;

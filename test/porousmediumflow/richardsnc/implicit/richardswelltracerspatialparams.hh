@@ -33,8 +33,8 @@
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/plotmateriallaw.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup RichardsNCTests
  * \brief spatial parameters for the RichardsWellTracerProblem
@@ -76,10 +76,10 @@ class RichardsWellTracerSpatialParams : public FVSpatialParams<TypeTag>
     enum { dimWorld=GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
 
 public:
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
     // export permeability type
     using PermeabilityType = Scalar;
 

@@ -115,10 +115,11 @@
 #include "volumevariables.hh"
 #include "vtkoutputfields.hh"
 #include "localresidual.hh"
+#include "pressureformulation.hh"
 
 /*!
- * \ingroup \ingroup MPNCModel
- * \brief  Defines the properties required for the MpNc fully implicit model.
+ * \ingroup MPNCModel
+ * \brief Defines the properties required for the MpNc fully implicit model.
  */
 namespace Dumux
 {
@@ -130,7 +131,7 @@ namespace Dumux
  * \tparam nPhases the number of phases to be considered
  * \tparam nComp the number of components to be considered
  */
-template<int nPhases, int nComp>
+template<int nPhases, int nComp, MpNcPressureFormulation formulation>
 struct MPNCModelTraits
 {
     static constexpr int numEq() { return numTransportEq()+numConstraintEq(); }
@@ -144,6 +145,59 @@ struct MPNCModelTraits
     static constexpr bool enableEnergyBalance() { return false; }
     static constexpr bool enableThermalNonEquilibrium() { return false; }
     static constexpr bool enableChemicalNonEquilibrium() { return false; }
+
+    static constexpr MpNcPressureFormulation pressureFormulation() { return formulation; }
+
+    //! Per default, we use the indices without offset
+    using Indices = MPNCIndices< numPhases(), numEq() >;
+};
+
+/*!
+ * \ingroup PorousmediumNonEquilibriumModel
+ * \brief Specifies a number properties of the m-phase n-component model
+ *        in conjunction with non-equilibrium. This is necessary because
+ *        the mpnc indices are affected by the non-equilibrium which can
+ *        thus not be plugged on top of it that easily.
+ *
+ * \tparam NonEquilTraits The model traits of the original non-equilibrium model
+ */
+template<class NonEquilTraits>
+struct MPNCNonequilibriumModelTraits : public NonEquilTraits
+{
+private:
+    //! we overwrite the indices as the underlying mpnc indices depend on numTransportEq,
+    //! which is again dependent on which form of non-equilibrium is considered
+    using MpNcIndices = MPNCIndices< NonEquilTraits::numPhases(),
+                                     NonEquilTraits::numTransportEq()+NonEquilTraits::numConstraintEq() >;
+public:
+    using Indices = NonEquilbriumIndices< MpNcIndices,
+                                          NonEquilTraits::numEnergyEqFluid(),
+                                          NonEquilTraits::numEnergyEqSolid(),
+                                          NonEquilTraits::numEq() >;
+};
+
+/*!
+ * \ingroup MPNCModel
+ * \brief Traits class for the mpnc volume variables.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ */
+template<class PV,
+         class FSY,
+         class FST,
+         class PT,
+         class MT>
+struct MPNCVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
 };
 
 namespace Properties
@@ -161,20 +215,8 @@ NEW_TYPE_TAG(MPNCNonequil, INHERITS_FROM(MPNC, NonEquilibrium));
 // Properties for the isothermal mpnc model
 //////////////////////////////////////////////////////////////////
 
-//! The indices required by the mpnc model
-SET_PROP(MPNC, Indices)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-public:
-    using type = MPNCIndices<FluidSystem, numEq, /*PVOffset=*/0>;
-};
-
 //! Use the MpNc local residual for the MpNc model
-SET_TYPE_PROP(MPNC,
-              LocalResidual,
-              MPNCLocalResidual<TypeTag>);
+SET_TYPE_PROP(MPNC, LocalResidual,  MPNCLocalResidual<TypeTag>);
 
 //! Set the model traits property
 SET_PROP(MPNC, ModelTraits)
@@ -182,7 +224,9 @@ SET_PROP(MPNC, ModelTraits)
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    using type = MPNCModelTraits<FluidSystem::numPhases, FluidSystem::numComponents>;
+    using type = MPNCModelTraits<FluidSystem::numPhases,
+                                 FluidSystem::numComponents,
+                                 GET_PROP_VALUE(TypeTag, PressureFormulation)>;
 };
 
 //! This model uses the compositional fluid state
@@ -195,10 +239,23 @@ public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
+//! Set the volume variables property
+SET_PROP(MPNC, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = MPNCVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+public:
+    using type = MPNCVolumeVariables<Traits>;
+};
+
 //! Use ImplicitSpatialParams by default.
 SET_TYPE_PROP(MPNC, SpatialParams, FVSpatialParams<TypeTag>);
-//! the VolumeVariables property
-SET_TYPE_PROP(MPNC, VolumeVariables, MPNCVolumeVariables<TypeTag>);
 //! Per default, no component mass balance is replaced
 SET_INT_PROP(MPNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);
 //! Use mole fractions in the balance equations by default
@@ -206,20 +263,14 @@ SET_BOOL_PROP(MPNC, UseMoles, true);
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(MPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 //! Set the default pressure formulation to the pressure of the (most) wetting phase
-SET_INT_PROP(MPNC,
-             PressureFormulation,
-             MpNcPressureFormulation::mostWettingFirst);
+SET_PROP(MPNC, PressureFormulation)
+{
+public:
+    static const MpNcPressureFormulation value = MpNcPressureFormulation::mostWettingFirst;
+};
 
 //! Set the vtk output fields specific to this model
-SET_PROP(MPNC, VtkOutputFields)
-{
-private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-public:
-    using type = MPNCVtkOutputFields<FluidSystem, Indices>;
-};
+SET_TYPE_PROP(MPNC, VtkOutputFields, MPNCVtkOutputFields);
 
 /////////////////////////////////////////////////
 // Properties for the non-isothermal mpnc model
@@ -230,23 +281,11 @@ SET_PROP(MPNCNI, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using IsothermalTraits = MPNCModelTraits<FluidSystem::numPhases, FluidSystem::numComponents>;
+    using IsothermalTraits = MPNCModelTraits<FluidSystem::numPhases,
+                                             FluidSystem::numComponents,
+                                             GET_PROP_VALUE(TypeTag, PressureFormulation)>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
-};
-
-//! set non-isothermal Indices
-SET_PROP(MPNCNI, Indices)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-
-    //! The mpnc indices require to be passed the number of equations without energy balance
-    //! TODO can the mpnc model/indexing be realized in a more transparent way?
-    using IsothermalIndices = MPNCIndices<FluidSystem, numEq-1, /*PVOffset=*/0>;
-public:
-    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
 };
 
 /////////////////////////////////////////////////
@@ -256,26 +295,24 @@ public:
 SET_TYPE_PROP(MPNCNonequil, EquilibriumLocalResidual, MPNCLocalResidual<TypeTag>);
 
 //! Set the vtk output fields specific to this model
-SET_PROP(MPNCNonequil, EquilibriumVtkOutputFields)
+SET_TYPE_PROP(MPNCNonequil, EquilibriumVtkOutputFields, MPNCVtkOutputFields);
+
+//! For non-equilibrium with mpnc we have to overwrite the model traits again,
+//! because the mpnc indices depend on the status of the non-equilibrium model traits
+SET_PROP(MPNCNonequil, ModelTraits)
 {
 private:
-   using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
-   using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-public:
-    using type = MPNCVtkOutputFields<FluidSystem, Indices>;
-};
+    using EquiTraits = typename GET_PROP_TYPE(TypeTag, EquilibriumModelTraits);
+    static constexpr bool enableTNE = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
+    static constexpr bool enableCNE = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
+    static constexpr int numEF = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid);
+    static constexpr int numES = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
+    static constexpr auto nf = GET_PROP_VALUE(TypeTag, NusseltFormulation);
+    static constexpr auto ns = GET_PROP_VALUE(TypeTag, SherwoodFormulation);
 
-SET_PROP(MPNCNonequil, EquilibriumIndices)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-
-    //! the mpnc indices need the number of all transport equations plus constraint equations
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numTransportEq()
-                                 +GET_PROP_TYPE(TypeTag, ModelTraits)::numConstraintEq();
+    using NonEquilTraits = NonEquilibriumModelTraits<EquiTraits, enableCNE, enableTNE, numEF, numES, nf, ns>;
 public:
-    using type = MPNCIndices<FluidSystem, numEq, /*PVOffset=*/0>;
+    using type = MPNCNonequilibriumModelTraits< NonEquilTraits >;
 };
 
 //! set equilibrium model traits
@@ -284,7 +321,9 @@ SET_PROP(MPNCNonequil, EquilibriumModelTraits)
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    using type = MPNCModelTraits<FluidSystem::numPhases, FluidSystem::numComponents>;
+    using type = MPNCModelTraits<FluidSystem::numPhases,
+                                 FluidSystem::numComponents,
+                                 GET_PROP_VALUE(TypeTag, PressureFormulation)>;
 };
 
 //! in case we do not assume full non-equilibrium one needs a thermal conductivity
@@ -292,9 +331,8 @@ SET_PROP(MPNCNonequil, ThermalConductivityModel)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    using type = ThermalConductivitySimpleFluidLumping<Scalar, GET_PROP_VALUE(TypeTag, NumEnergyEqFluid), Indices>;
+    using type = ThermalConductivitySimpleFluidLumping<Scalar, GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)>;
 };
 
 } //end namespace Properties

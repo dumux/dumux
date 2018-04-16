@@ -24,9 +24,6 @@
 #ifndef DUMUX_TRACER_VOLUME_VARIABLES_HH
 #define DUMUX_TRACER_VOLUME_VARIABLES_HH
 
-#include <dune/common/fvector.hh>
-
-#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 
 namespace Dumux {
@@ -35,25 +32,19 @@ namespace Dumux {
  * \ingroup TracerModel
  * \brief Contains the quantities which are constant within a
  *        finite volume for the tracer model.
- * \todo: We need a scalar, vector, tensor type -> Scalar + dimWorld should be good template params
- *        Furthermore, we need the fluid system and stuff like useMoles -> ModelTraits?
  */
-template <class TypeTag>
-class TracerVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
+template <class Traits>
+class TracerVolumeVariables
+: public PorousMediumFlowVolumeVariables<Traits, TracerVolumeVariables<Traits>>
 {
-    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables<Traits, TracerVolumeVariables<Traits>>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-
-    static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr int numComponents = FluidSystem::numComponents;
-
-    using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    static constexpr bool useMoles = Traits::ModelTraits::useMoles();
 
 public:
+    //! export fluid system type
+    using FluidSystem = typename Traits::FluidSystem;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -64,24 +55,23 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution, class Problem,
-             class Element, class SubControlVolume>
-    void update(const ElementSolution &elemSol,
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume &scv)
+                const Scv &scv)
     {
         // update parent type sets primary variables
         ParentType::update(elemSol, problem, element, scv);
 
         porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
-        dispersivity_ = problem.spatialParams().dispersivity(element, scv, elemSol);
+        // dispersivity_ = problem.spatialParams().dispersivity(element, scv, elemSol);
 
         // the spatial params special to the tracer model
         fluidDensity_ = problem.spatialParams().fluidDensity(element, scv);
         fluidMolarMass_ = problem.spatialParams().fluidMolarMass(element, scv);
 
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        for (int compIdx = 0; compIdx < ParentType::numComponents(); ++compIdx)
         {
             moleOrMassFraction_[compIdx] = this->priVars()[compIdx];
             diffCoeff_[compIdx] = FluidSystem::binaryDiffusionCoefficient(compIdx, problem, element, scv);
@@ -164,11 +154,12 @@ public:
     Scalar diffusionCoefficient(int pIdx, int compIdx) const
     { return diffCoeff_[compIdx]; }
 
-    /*!
-     * \brief Returns the dispersivity of the fluid's streamlines.
-     */
-    const GlobalPosition &dispersivity() const
-    { return dispersivity_; }
+    // /*!
+    //  * \brief Returns the dispersivity of the fluid's streamlines.
+    //  * \todo implement me
+    //  */
+    // const DispersivityType &dispersivity() const
+    // { return dispersivity_; }
 
     /*!
      * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
@@ -179,9 +170,9 @@ public:
 protected:
     Scalar porosity_;    // Effective porosity within the control volume
     Scalar fluidDensity_, fluidMolarMass_;
-    GlobalPosition dispersivity_;
-    std::array<Scalar, numComponents> diffCoeff_;
-    std::array<Scalar, numComponents> moleOrMassFraction_;
+    // DispersivityType dispersivity_;
+    std::array<Scalar, ParentType::numComponents()> diffCoeff_;
+    std::array<Scalar, ParentType::numComponents()> moleOrMassFraction_;
 };
 
 } // end namespace Dumux

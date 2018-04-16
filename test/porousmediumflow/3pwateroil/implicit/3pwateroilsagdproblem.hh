@@ -79,19 +79,19 @@ class SagdProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
 
-        contiWEqIdx = Indices::contiWEqIdx,
-        contiNEqIdx = Indices::contiNEqIdx,
+        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::wCompIdx,
+        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::nCompIdx,
         energyEqIdx = Indices::energyEqIdx,
 
         // phase indices
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx,
 
         // phase state
         wnPhaseOnly = Indices::wnPhaseOnly,

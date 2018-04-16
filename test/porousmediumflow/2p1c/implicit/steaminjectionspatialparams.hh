@@ -67,9 +67,6 @@ class InjectionProblemSpatialParams : public FVSpatialParams<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-
-    using MaterialLawParams = typename MaterialLaw::Params;
     using CoordScalar = typename GridView::ctype;
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
@@ -80,6 +77,8 @@ class InjectionProblemSpatialParams : public FVSpatialParams<TypeTag>
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 public:
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
     /*!

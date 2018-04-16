@@ -24,39 +24,32 @@
 #ifndef DUMUX_MPNC_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_MPNC_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/common/properties.hh>
-
 namespace Dumux {
 
 /*!
  * \ingroup MPNCModel
  * \brief Adds vtk output fields specific to the twop model
  */
-template<class FluidSystem, class Indices>
 class MPNCVtkOutputFields
 {
-
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        for (int i = 0; i < FluidSystem::numPhases; ++i)
-            vtk.addVolumeVariable([i](const auto& v){ return v.saturation(i); }, "S_"+ FluidSystem::phaseName(i));
-
-        for (int i = 0; i < FluidSystem::numPhases; ++i)
-            vtk.addVolumeVariable([i](const auto& v){ return v.pressure(i); }, "p_"+ FluidSystem::phaseName(i));
-
-        for (int i = 0; i < FluidSystem::numPhases; ++i)
-            vtk.addVolumeVariable([i](const auto& v){ return v.density(i); }, "rho_"+ FluidSystem::phaseName(i));
-
-        for (int i = 0; i < FluidSystem::numPhases; ++i)
-            vtk.addVolumeVariable([i](const auto& v){ return v.mobility(i); },"lambda_"+ FluidSystem::phaseName(i));
+        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
+        using FluidSystem = typename VolumeVariables::FluidSystem;
 
         vtk.addVolumeVariable([](const auto& v){ return v.porosity(); }, "porosity");
+        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+        {
+            vtk.addVolumeVariable([i](const auto& v){ return v.saturation(i); }, "S_"+ FluidSystem::phaseName(i));
+            vtk.addVolumeVariable([i](const auto& v){ return v.pressure(i); }, "p_"+ FluidSystem::phaseName(i));
+            vtk.addVolumeVariable([i](const auto& v){ return v.density(i); }, "rho_"+ FluidSystem::phaseName(i));
+            vtk.addVolumeVariable([i](const auto& v){ return v.mobility(i); },"lambda_"+ FluidSystem::phaseName(i));
 
-        for (int i = 0; i < FluidSystem::numPhases; ++i)
-            for (int j = 0; j < FluidSystem::numComponents; ++j)
+            for (int j = 0; j < VolumeVariables::numComponents(); ++j)
                 vtk.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },"x_"+ FluidSystem::phaseName(i) + "^" + FluidSystem::componentName(j));
+        }
     }
 };
 

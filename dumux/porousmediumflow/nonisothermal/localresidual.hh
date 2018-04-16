@@ -113,7 +113,7 @@ class EnergyLocalResidualImplementation<TypeTag, true>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum { energyEqIdx = Indices::energyEqIdx };
 

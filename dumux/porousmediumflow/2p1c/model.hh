@@ -77,8 +77,7 @@
 #include "volumevariables.hh"
 #include "primaryvariableswitch.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup TwoPOneCModel
@@ -87,6 +86,8 @@ namespace Dumux
  */
 struct TwoPOneCModelTraits
 {
+    using Indices = TwoPOneCIndices;
+
     static constexpr int numEq() { return 1; }
     static constexpr int numPhases() { return 2; }
     static constexpr int numComponents() { return 1; }
@@ -96,8 +97,27 @@ struct TwoPOneCModelTraits
     static constexpr bool enableEnergyBalance() { return false; }
 };
 
-namespace Properties
+/*!
+ * \ingroup TwoPOneCModel
+ * \brief Traits class for the two-phase model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam PT The type used for permeabilities
+ * \tparam MT The model traits
+ */
+template<class PV, class FSY, class FST, class PT, class MT>
+struct TwoPOneCVolumeVariablesTraits
 {
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using PermeabilityType = PT;
+    using ModelTraits = MT;
+};
+
+namespace Properties {
 //! The type tag for the non-isothermal two-phase one-component model.
 NEW_TYPE_TAG(TwoPOneCNI, INHERITS_FROM(PorousMediumFlow));
 
@@ -132,11 +152,23 @@ SET_TYPE_PROP(TwoPOneCNI, LocalResidual, TwoPOneCLocalResidual<TypeTag>);
 //! Use a modified version of Darcy's law which allows for blocking of spurious flows.
 SET_TYPE_PROP(TwoPOneCNI, AdvectionType, TwoPOneCDarcysLaw<TypeTag>);
 
-//! The specific volume variable (i.e. secondary variables).
-SET_TYPE_PROP(TwoPOneCNI, VolumeVariables, TwoPOneCVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(TwoPOneCNI, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = TwoPOneCVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+public:
+    using type = TwoPOneCVolumeVariables<Traits>;
+};
 
 //! The primary variable switch for the 2p1cni model.
-SET_TYPE_PROP(TwoPOneCNI, PrimaryVariableSwitch, TwoPOneCPrimaryVariableSwitch<TypeTag>);
+SET_TYPE_PROP(TwoPOneCNI, PrimaryVariableSwitch, TwoPOneCPrimaryVariableSwitch);
 
 //! The primary variables vector for the 2p1cni model.
 SET_PROP(TwoPOneCNI, PrimaryVariables)
@@ -149,14 +181,7 @@ public:
 };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity.
-SET_PROP(TwoPOneCNI, ThermalConductivityModel)
-{
-private:
-     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-public:
-     using type = ThermalConductivitySomerton<Scalar>;
-};
+SET_TYPE_PROP(TwoPOneCNI, ThermalConductivityModel, ThermalConductivitySomerton<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
@@ -173,25 +198,8 @@ public:
     using type = PorousMediumFlowNIModelTraits<TwoPOneCModelTraits>;
 };
 
-//! Set non-isothermal Indices.
-SET_PROP(TwoPOneCNI, Indices)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using IsothermalIndices = TwoPOneCIndices<FluidSystem, 0>;
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-public:
-    using type = EnergyIndices<IsothermalIndices, numEq, 0>;
-};
-
 //! The non-isothermal vtk output fields.
-SET_PROP(TwoPOneCNI, VtkOutputFields)
-{
-private:
-    using IsothermalFields = TwoPOneCVtkOutputFields<typename GET_PROP_TYPE(TypeTag, Indices)>;
-public:
-    using type = EnergyVtkOutputFields<IsothermalFields>;
-};
+SET_TYPE_PROP(TwoPOneCNI, VtkOutputFields, EnergyVtkOutputFields<TwoPOneCVtkOutputFields>);
 
 } // end namespace Properties
 } // end namespace Dumux

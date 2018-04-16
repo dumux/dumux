@@ -28,10 +28,29 @@
 #define DIMENSIONLESS_NUMBERS_HH
 
 #include <cmath>
+#include <iostream>
 
 #include <dune/common/exceptions.hh>
 
 namespace Dumux {
+
+/*!
+ * \brief A container for possible values of the property for selecting which nusselt parametrization to choose.
+ *        The actual value is set vie the property NusseltFormulation
+ */
+enum class NusseltFormulation
+{
+    dittusBoelter, WakaoKaguei, VDI
+};
+
+/*!
+ * \brief A container for possible values of the property for selecting which sherwood parametrization to choose.
+ *        The actual value is set vie the property SherwoodFormulation
+ */
+enum class SherwoodFormulation
+{
+    WakaoKaguei
+};
 
 /*!
  * \brief Collection of functions which calculate dimensionless numbers.
@@ -103,17 +122,6 @@ static Scalar prandtlNumber(const Scalar dynamicViscosity,
 }
 
 /*!
- * \brief A container for possible values of the property for selecting which nusselt parametrization to choose.
- *        The actual value is set vie the property NusseltFormulation
- */
-struct NusseltFormulation
-{
-    static const int dittusBoelter = 0;
-    static const int WakaoKaguei = 1;
-    static const int VDI = 2;
-};
-
-/*!
  * \brief   Calculate the Nusselt Number [-] (Nu).
  *
  *          The Nusselt Number is a measure for the relation of convective- to conductive heat exchange.
@@ -142,7 +150,7 @@ struct NusseltFormulation
 static Scalar nusseltNumberForced(const Scalar reynoldsNumber,
                                   const Scalar prandtlNumber,
                                   const Scalar porosity,
-                                  const int formulation )
+                                  NusseltFormulation formulation)
 {
     if (formulation == NusseltFormulation::dittusBoelter){
        /* example: very common and simple case: flow straight circular pipe, only convection (no boiling),
@@ -219,15 +227,6 @@ static Scalar schmidtNumber(const Scalar dynamicViscosity,
 }
 
 /*!
- * \brief A container for possible values of the property for selecting which sherwood parametrization to choose.
- *        The actual value is set vie the property SherwoodFormulation
- */
-struct SherwoodFormulation
-{
-    static const int WakaoKaguei = 0;
-};
-
-/*!
  * \brief   Calculate the Sherwood Number [-] (Sh).
  *
  *          The Sherwood Number is a measure for the relation of convective- to diffusive mass exchange.
@@ -258,7 +257,7 @@ struct SherwoodFormulation
 
 static Scalar sherwoodNumber(const Scalar reynoldsNumber,
                              const Scalar schmidtNumber,
-                             const int formulation)
+                             SherwoodFormulation formulation)
 {
     if (formulation == SherwoodFormulation::WakaoKaguei){
         /* example: flow through porous medium *single phase*

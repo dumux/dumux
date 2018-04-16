@@ -26,10 +26,8 @@
 #define DUMUX_3P2CNI_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/porousmediumflow/3p3c/localresidual.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup ThreePWaterOilModel
  * \brief Element-wise calculation of the local residual for problems
@@ -38,11 +36,10 @@ namespace Dumux
  * This class is used to fill the gaps in the CompositionalLocalResidual for the 3PWaterOil flow.
  */
 template<class TypeTag>
-class ThreePWaterOilLocalResidual: public ThreePThreeCLocalResidual<TypeTag>
+class ThreePWaterOilLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
 protected:
-    using ParentType = ThreePThreeCLocalResidual<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
@@ -51,27 +48,27 @@ protected:
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
-
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {
         numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(),
         numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents(),
 
         conti0EqIdx = Indices::conti0EqIdx,//!< Index of the mass conservation equation for the water component
-        conti1EqIdx = Indices::conti1EqIdx,//!< Index of the mass conservation equation for the contaminant component
+        conti1EqIdx = conti0EqIdx + 1,//!< Index of the mass conservation equation for the contaminant component
 
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx,
+        gPhaseIdx = FluidSystem::gPhaseIdx,
 
-        wCompIdx = Indices::wCompIdx,
-        nCompIdx = Indices::nCompIdx,
+        wCompIdx = FluidSystem::wCompIdx,
+        nCompIdx = FluidSystem::nCompIdx,
     };
 
     //! property that defines whether mole or mass fractions are used
@@ -193,20 +190,8 @@ public:
 
         return flux;
     }
-
-
-protected:
-    Implementation *asImp_()
-    {
-        return static_cast<Implementation *> (this);
-    }
-
-    const Implementation *asImp_() const
-    {
-        return static_cast<const Implementation *> (this);
-    }
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

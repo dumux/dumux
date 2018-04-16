@@ -49,8 +49,7 @@
 #include "volumevariables.hh"
 #include "vtkoutputfields.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 // \{
 ///////////////////////////////////////////////////////////////////////////
@@ -100,17 +99,6 @@ public:
     using type = NavierStokesNIModelTraits<IsothermalTraits>;
 };
 
-//! The indices required by the non-isothermal single-phase model
-SET_PROP(RANSNI, Indices)
-{
-private:
-    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    using IsothermalIndices = NavierStokesIndices<dim, numEq>;
-public:
-    using type = NavierStokesNonIsothermalIndices<dim, numEq, IsothermalIndices>;
-};
-
 //! The specific non-isothermal vtk output fields
 SET_PROP(RANSNI, VtkOutputFields)
 {
@@ -126,8 +114,7 @@ public:
 SET_TYPE_PROP(RANSNI, HeatConductionType, FouriersLaw<TypeTag>);
 
 // \}
-}
-
-} // end namespace
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif // DUMUX_RANS_MODEL_HH

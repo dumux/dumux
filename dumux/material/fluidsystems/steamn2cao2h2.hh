@@ -39,10 +39,9 @@
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
+
 /*!
  * \ingroup Fluidsystems
  *
@@ -77,21 +76,29 @@ public:
     // the type of parameter cache objects. this fluid system does not
     using ParameterCache = Dumux::NullParameterCache;
 
+    //! Number of phases in the fluid system
+    static constexpr int numPhases = 1; //gas phase: N2 and steam
+    static constexpr int numComponents = 2; // H2O, Air
+    static constexpr int numSPhases = 2;//  solid phases CaO and CaO2H2 TODO: Remove
+    static constexpr int numSComponents = 2;// CaO2H2, CaO TODO: Remove
+
+    static constexpr int gasPhaseIdx = 0;  //!< index of the gas phase
+    static constexpr int phase0Idx = gasPhaseIdx; //!< index of the only phase
+
+    static constexpr int cPhaseIdx = 1; // CaO-phaseIdx TODO: Remove
+    static constexpr int hPhaseIdx = 2; // CaO2H2-phaseIdx TODO: Remove
+
+    static constexpr int N2Idx = 0;
+    static constexpr int H2OIdx = 1;
+    static constexpr int comp0Idx = N2Idx;
+    static constexpr int comp1Idx = H2OIdx;
+
+    static constexpr int CaOIdx  = 2; // CaO-phaseIdx TODO: Remove
+    static constexpr int CaO2H2Idx  = 3; // CaO-phaseIdx TODO: Remove
+
     /****************************************
      * Fluid phase related static parameters
      ****************************************/
-
-    //! Number of phases in the fluid system
-    static constexpr int numPhases = 1; //gas phase: N2 and steam
-    static const int numSPhases = 2;//  solid phases CaO and CaO2H2
-
-    static constexpr int gPhaseIdx = 0;
-    static const int nPhaseIdx = gPhaseIdx; // index of the gas phase
-
-    static constexpr int cPhaseIdx = 1; // CaO-phaseIdx
-    static constexpr int hPhaseIdx = 2; // CaO2H2-phaseIdx
-
-
     /*!
      * \brief Return the human readable name of a fluid phase
      *
@@ -100,7 +107,7 @@ public:
     static std::string phaseName(int phaseIdx)
     {
         switch (phaseIdx) {
-        case nPhaseIdx: return "gas";
+        case gasPhaseIdx: return "gas";
         case cPhaseIdx : return "CaO";
         case hPhaseIdx : return "CaOH2";
         }
@@ -118,10 +125,10 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isGas (int phaseIdx)
+    static constexpr bool isGas (int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        return phaseIdx == nPhaseIdx;
+        return phaseIdx == gasPhaseIdx;
     }
 
     /*!
@@ -138,7 +145,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isIdealMixture(int phaseIdx)
+    static constexpr bool isIdealMixture(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         // we assume no interaction between gas molecules of different
@@ -155,7 +162,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isCompressible(int phaseIdx)
+    static constexpr bool isCompressible(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -168,7 +175,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isIdealGas(int phaseIdx)
+    static constexpr bool isIdealGas(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -179,18 +186,6 @@ public:
     /****************************************
     * Component related static parameters
     ****************************************/
-
-    static const int numComponents = 2; // H2O, Air
-    static const int numMajorComponents = 2;// H2O, Air
-    static const int numSComponents = 2;// CaO2H2, CaO
-
-
-    static const int N2Idx = 0;
-    static const int H2OIdx = 1;
-    static const int CaOIdx  = 2;
-    static const int CaO2H2Idx  = 3;
-
-
     /*!
      * \brief Return the human readable name of a component
      *
@@ -355,13 +350,13 @@ public:
             // for the gas phase assume an ideal gas
             return
                 IdealGas::molarDensity(T, p)
-                * fluidState.averageMolarMass(nPhaseIdx)
+                * fluidState.averageMolarMass(gasPhaseIdx)
                 / std::max(1e-5, sumMoleFrac);
         else
         {
             return
-                (H2O::gasDensity(T, fluidState.partialPressure(nPhaseIdx, H2OIdx)) +
-                N2::gasDensity(T, fluidState.partialPressure(nPhaseIdx, N2Idx)));
+                (H2O::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, H2OIdx)) +
+                N2::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, N2Idx)));
         }
       }
 
@@ -440,7 +435,7 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
 
-        assert(phaseIdx == gPhaseIdx);
+        assert(phaseIdx == gasPhaseIdx);
 
         if (compIIdx != N2Idx)
             std::swap(compIIdx, compJIdx);
@@ -476,13 +471,13 @@ public:
     static Scalar enthalpy(const FluidState &fluidState,
                            int phaseIdx)
     {
-        assert(phaseIdx == gPhaseIdx);
+        assert(phaseIdx == gasPhaseIdx);
 
         Scalar T = fluidState.temperature(phaseIdx);
         Scalar p = fluidState.pressure(phaseIdx);
 
-        Scalar XN2 = fluidState.massFraction(gPhaseIdx, N2Idx);
-        Scalar XH2O = fluidState.massFraction(gPhaseIdx, H2OIdx);
+        Scalar XN2 = fluidState.massFraction(gasPhaseIdx, N2Idx);
+        Scalar XH2O = fluidState.massFraction(gasPhaseIdx, H2OIdx);
 
         Scalar result = 0;
         result += XH2O * H2O::gasEnthalpy(T, p);
@@ -503,8 +498,8 @@ public:
                                     int phaseIdx,
                                     int componentIdx)
     {
-        Scalar T = fluidState.temperature(nPhaseIdx);
-        Scalar p = fluidState.pressure(nPhaseIdx);
+        Scalar T = fluidState.temperature(gasPhaseIdx);
+        Scalar p = fluidState.pressure(gasPhaseIdx);
         Valgrind::CheckDefined(T);
         Valgrind::CheckDefined(p);
 
@@ -525,7 +520,7 @@ public:
                                     int componentIdx)
     {
         Scalar T = 573.15;
-        Scalar p = fluidState.pressure(nPhaseIdx);
+        Scalar p = fluidState.pressure(gasPhaseIdx);
         Valgrind::CheckDefined(T);
         Valgrind::CheckDefined(p);
 
@@ -609,7 +604,7 @@ public:
                                     fluidState.pressure(phaseIdx)
                                     * fluidState.moleFraction(phaseIdx, H2OIdx));
 
-        return c_pH2O*fluidState.moleFraction(nPhaseIdx, H2OIdx) + c_pN2*fluidState.moleFraction(nPhaseIdx, N2Idx);
+        return c_pH2O*fluidState.moleFraction(gasPhaseIdx, H2OIdx) + c_pN2*fluidState.moleFraction(gasPhaseIdx, N2Idx);
     }
 
 };

@@ -89,7 +89,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -100,7 +100,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ReactionRate =ThermoChemReaction<TypeTag>;
+    using ReactionRate = ThermoChemReaction;
 
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
@@ -109,7 +109,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     {
         // Indices of the primary variables
         pressureIdx = Indices::pressureIdx, //gas-phase pressure
-        firstMoleFracIdx = Indices::firstMoleFracIdx, // mole fraction water
+        H2OIdx = FluidSystem::H2OIdx, // mole fraction water
 
         CaOIdx = FluidSystem::numComponents,
         CaO2H2Idx = FluidSystem::numComponents+1,
@@ -180,7 +180,7 @@ public:
 
         // we don't set any BCs for the solid phases
         values.setDirichlet(pressureIdx);
-        values.setDirichlet(firstMoleFracIdx);
+        values.setDirichlet(H2OIdx);
         values.setDirichlet(temperatureIdx);
 
         return values;
@@ -197,7 +197,7 @@ public:
         PrimaryVariables priVars(0.0);
 
         priVars[pressureIdx] = boundaryPressure_;
-        priVars[firstMoleFracIdx] = boundaryVaporMoleFrac_;
+        priVars[H2OIdx] = boundaryVaporMoleFrac_;
         priVars[temperatureIdx] = boundaryTemperature_;
         priVars[CaO2H2Idx] = 0.0;
         priVars[CaOIdx] = 0.2;
@@ -250,7 +250,7 @@ public:
         CaO2H2Init = getParam<Scalar>("Problem.CaO2H2Initial");
 
         priVars[pressureIdx] = pInit;
-        priVars[firstMoleFracIdx]   = h2oInit;
+        priVars[H2OIdx]   = h2oInit;
         priVars[temperatureIdx] = tInit;
 
         // these values are not used, as we didn't set BCs
@@ -292,7 +292,7 @@ public:
         Scalar qMass = rrate_.thermoChemReaction(volVars);
 
         const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-        Scalar qMole = qMass/FluidSystem::molarMass(firstMoleFracIdx)*(1-this->spatialParams().porosity(element, scv, elemSol));
+        Scalar qMole = qMass/FluidSystem::molarMass(H2OIdx)*(1-this->spatialParams().porosity(element, scv, elemSol));
 
         // make sure not more solid reacts than present
         // In this test, we only consider discharge. Therefore, we use the cPhaseIdx for CaO.
@@ -303,7 +303,7 @@ public:
 
         source[conti0EqIdx+CaO2H2Idx] = qMole;
         source[conti0EqIdx+CaOIdx] = - qMole;
-        source[conti0EqIdx+firstMoleFracIdx] = - qMole;
+        source[conti0EqIdx+H2OIdx] = - qMole;
 
         Scalar deltaH = 108e3; // J/mol
         source[energyEqIdx] = qMole * deltaH;

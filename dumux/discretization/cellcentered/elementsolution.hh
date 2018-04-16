@@ -145,6 +145,20 @@ auto elementSolution(PrimaryVariables&& priVars)
     return CCElementSolution<FVElementGeometry, PrimaryVariables>(std::move(priVars));
 }
 
+/*!
+ * \ingroup CCDiscretization
+ * \brief  Make an element solution for cell-centered schemes
+ * \note This is e.g. used to contruct an element solution at Dirichlet boundaries
+ */
+template<class FVElementGeometry, class PrimaryVariables>
+auto elementSolution(const PrimaryVariables& priVars)
+-> std::enable_if_t<FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::cctpfa ||
+                    FVElementGeometry::FVGridGeometry::discMethod == DiscretizationMethod::ccmpfa,
+                    CCElementSolution<FVElementGeometry, PrimaryVariables>>
+{
+    return CCElementSolution<FVElementGeometry, PrimaryVariables>(priVars);
+}
+
 } // end namespace Dumux
 
 #endif

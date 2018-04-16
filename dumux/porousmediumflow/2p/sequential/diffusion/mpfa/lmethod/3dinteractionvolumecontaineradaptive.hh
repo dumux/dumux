@@ -61,7 +61,7 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Vertex = typename GridView::Traits::template Codim<dim>::Entity;

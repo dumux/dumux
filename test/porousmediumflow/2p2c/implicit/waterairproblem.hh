@@ -36,8 +36,7 @@
 
 #include "waterairspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup TwoPTwoCTests
  * \brief Non-isothermal gas injection problem where a gas (e.g. air)
@@ -46,8 +45,7 @@ namespace Dumux
 template <class TypeTag>
 class WaterAirProblem;
 
-namespace Properties
-{
+namespace Properties {
 NEW_TYPE_TAG(WaterAirTypeTag, INHERITS_FROM(TwoPTwoCNI, WaterAirSpatialParams));
 NEW_TYPE_TAG(WaterAirBoxTypeTag, INHERITS_FROM(BoxModel, WaterAirTypeTag));
 NEW_TYPE_TAG(WaterAirCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, WaterAirTypeTag));
@@ -63,8 +61,7 @@ SET_TYPE_PROP(WaterAirTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PRO
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(WaterAirTypeTag, UseMoles, true);
-}
-
+} // end namespace Dumux
 
 /*!
  * \ingroup TwoPTwoCModel
@@ -103,43 +100,47 @@ SET_BOOL_PROP(WaterAirTypeTag, UseMoles, true);
 template <class TypeTag >
 class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
 {
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
+
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    // primary variable indices
+    enum
+    {
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
-
-        nCompIdx = FluidSystem::nCompIdx,
-
         temperatureIdx = Indices::temperatureIdx,
-        energyEqIdx = Indices::energyEqIdx,
-
-        // phase state
-        wPhaseOnly = Indices::wPhaseOnly,
-
-        // world dimension
-        dimWorld = GridView::dimensionworld,
-
-        conti0EqIdx = Indices::conti0EqIdx,
-        contiNEqIdx = conti0EqIdx + Indices::nCompIdx
+        energyEqIdx = Indices::energyEqIdx
     };
+
+    // equation indices
+    enum
+    {
+        contiH2OEqIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx,
+        contiN2EqIdx = Indices::conti0EqIdx + FluidSystem::N2Idx
+    };
+
+    // phase presence
+    enum { wPhaseOnly = Indices::firstPhaseOnly };
+    // component index
+    enum { N2Idx = FluidSystem::N2Idx };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
     //! property that defines whether mole or mass fractions are used
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = ModelTraits::useMoles();
 
 public:
     /*!
@@ -230,7 +231,7 @@ public:
         // we inject pure gasious nitrogen at the initial condition temperature and pressure  from the bottom (negative values mean injection)
         if (globalPos[0] > 14.8 - eps_ && globalPos[0] < 25.2 + eps_ && globalPos[1] < eps_)
         {
-            values[contiNEqIdx] = useMoles ? -1e-3/FluidSystem::molarMass(nCompIdx) : -1e-3; // kg/(m^2*s) or mole/(m^2*s)
+            values[contiN2EqIdx] = useMoles ? -1e-3/FluidSystem::molarMass(N2Idx) : -1e-3; // kg/(m^2*s) or mole/(m^2*s)
 
             const auto initialValues = initial_(globalPos);
             const auto& mParams = this->spatialParams().materialLawParamsAtPos(globalPos);
