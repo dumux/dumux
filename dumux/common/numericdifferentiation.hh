@@ -43,9 +43,8 @@ public:
      * \param value The value of the variable with respect to which we are differentiating
      */
     template<class Scalar>
-    static Scalar epsilon(const Scalar value)
+    static Scalar epsilon(const Scalar value, const Scalar baseEps = 1e-10)
     {
-        static constexpr Scalar baseEps = 1e-10;
         assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
         // the epsilon value used for the numeric differentiation is
         // now scaled by the absolute value of the primary variable...
