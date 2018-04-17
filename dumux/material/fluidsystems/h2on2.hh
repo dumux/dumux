@@ -249,7 +249,7 @@ public:
                                       const int phaseIdx,
                                       const int compIdx)
     {
-        assert(compIdx == wCompIdx && phaseIdx == liquidPhaseIdx);
+        assert(compIdx == H2OIdx && phaseIdx == liquidPhaseIdx);
 
         using std::exp;
         return fugacityCoefficient(fluidState, phaseIdx, compIdx)
