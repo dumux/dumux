@@ -12,7 +12,10 @@ Name = test_densitydrivenflow # name passed to the output routines
 EnableGravity = true
 UseWholeLength = false
 
-[ Newton ]
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-8
 
