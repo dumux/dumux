@@ -1,4 +1,5 @@
 add_input_file_links()
+dune_symlink_to_source_files(FILES convergence.sh)
 set(CMAKE_BUILD_TYPE Debug)
 add_executable(test_closedsystem EXCLUDE_FROM_ALL test_closedsystem.cc)
 
@@ -79,6 +80,15 @@ dune_add_test(NAME test_stokes_donea
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes-donea-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_donea-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes_donea")
+
+dune_add_test(NAME test_navierstokes_1d
+              SOURCES test_navierstokes_1d.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_navierstokes_1d.vtp
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_navierstokes_1d-00001.vtp
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_navierstokes_1d")
 
 dune_add_test(NAME test_navierstokes_kovasznay
               SOURCES test_kovasznay.cc

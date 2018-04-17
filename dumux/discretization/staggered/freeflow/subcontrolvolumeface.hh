@@ -55,7 +55,7 @@ class FreeFlowStaggeredSubControlVolumeFace
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
 
-    static constexpr int numPairs = (dimworld == 2) ? 2 : 4;
+    static constexpr int numPairs = 2 * (dimworld - 1);
 
 public:
     using GlobalPosition = typename T::GlobalPosition;
