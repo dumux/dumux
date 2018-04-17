@@ -233,7 +233,7 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 const int dofIdxFace = scvf.dofIndex();
-                const auto numericalSolutionFace = curSol[FVGridGeometry::faceIdx()][dofIdxFace][momentumBalanceIdx];
+                const auto numericalSolutionFace = curSol[FVGridGeometry::faceIdx()][dofIdxFace][Indices::velocity(scvf.directionIndex())];
                 velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
             }
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
@@ -275,6 +275,29 @@ public:
                 {
                     maxVelocity = abs(velocity_[elementID][dimIdx]);
                     flowNormalAxis_[elementID] = dimIdx;
+                }
+            }
+
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                unsigned int normDim = scvf.directionIndex();
+                if (scvf.boundary() && !asImp_().boundaryTypes(element, scvf).isOutflow(Indices::velocity(normDim)))
+                {
+                    for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                    {
+                        // face Value
+                        Scalar dirichletVelocity = asImp_().dirichlet(element, scvf)[Indices::velocity(velIdx)];
+
+                        unsigned int neighborID = neighborID_[elementID][normDim][0];
+                        if (scvf.center()[normDim] < cellCenter_[elementID][normDim])
+                            neighborID = neighborID_[elementID][normDim][1];
+
+                        velocityGradients_[elementID][velIdx][normDim]
+                            = (velocity_[neighborID][velIdx] - dirichletVelocity)
+                              / (cellCenter_[neighborID][normDim] - scvf.center()[normDim]);
+                    }
                 }
             }
         }
