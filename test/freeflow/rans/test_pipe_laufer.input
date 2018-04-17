@@ -23,6 +23,10 @@ SandGrainRoughness = 0.0 # [m] # not implemented for EddyViscosityModel = 3
 [RANS]
 EddyViscosityModel = 3
 
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
+
 [Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-5

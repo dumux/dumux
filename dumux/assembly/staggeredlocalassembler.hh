@@ -25,23 +25,23 @@
 #ifndef DUMUX_STAGGERED_LOCAL_ASSEMBLER_HH
 #define DUMUX_STAGGERED_LOCAL_ASSEMBLER_HH
 
-#include <dune/istl/matrixindexset.hh>
-#include <dune/istl/bvector.hh>
-
-#include <dumux/common/properties.hh>
-#include <dumux/assembly/diffmethod.hh>
-
-#include <dumux/discretization/staggered/facesolution.hh>
-#include <dumux/discretization/staggered/elementsolution.hh>
-
 #include <dune/common/version.hh>
-
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/rangeutilities.hh>
 #else
 #include <dumux/common/intrange.hh>
 #endif
+
+#include <dune/istl/matrixindexset.hh>
+#include <dune/istl/bvector.hh>
+
+#include <dumux/assembly/diffmethod.hh>
+#include <dumux/assembly/numericepsilon.hh>
+#include <dumux/common/numericdifferentiation.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/staggered/facesolution.hh>
+#include <dumux/discretization/staggered/elementsolution.hh>
 
 namespace Dumux {
 
@@ -96,6 +96,7 @@ class StaggeredLocalAssembler<TypeTag,
     using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
+    static constexpr int numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
 
 public:
@@ -318,40 +319,48 @@ protected:
 
         const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
 
-       for(const auto& globalJ : connectivityMap(cellCenterIdx, cellCenterIdx, cellCenterGlobalI))
-       {
-           // get the volVars of the element with respect to which we are going to build the derivative
-           auto&& scvJ = fvGeometry.scv(globalJ);
-           const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
-           auto& curVolVars =  getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
-           VolumeVariables origVolVars(curVolVars);
+        for(const auto& globalJ : connectivityMap(cellCenterIdx, cellCenterIdx, cellCenterGlobalI))
+        {
+            // get the volVars of the element with respect to which we are going to build the derivative
+            auto&& scvJ = fvGeometry.scv(globalJ);
+            const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
+            auto& curVolVars =  getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
+            VolumeVariables origVolVars(curVolVars);
 
-           for(auto pvIdx : priVarIndices_(cellCenterIdx))
-           {
-               using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
-               const auto& cellCenterPriVars = curSol[cellCenterIdx][globalJ];
-               PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
+            for(auto pvIdx : priVarIndices_(cellCenterIdx))
+            {
+                using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
+                const auto& cellCenterPriVars = curSol[cellCenterIdx][globalJ];
+                PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
 
-               constexpr auto offset = PrimaryVariables::dimension - CellCenterPrimaryVariables::dimension;
-               const Scalar eps = numericEpsilon(priVars[pvIdx + offset], cellCenterIdx, cellCenterIdx);
-               priVars[pvIdx + offset] += eps;
-               auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
-               curVolVars.update(elemSol, problem, elementJ, scvJ);
+                constexpr auto offset = PrimaryVariables::dimension - CellCenterPrimaryVariables::dimension;
+                NumCellCenterEqVector partialDeriv(0.0);
 
-               const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry, prevElemVolVars, curElemVolVars,
-                                              prevElemFaceVars, curElemFaceVars,
-                                              elemBcTypes, elemFluxVarsCache);
+                auto evalResidual = [&](Scalar priVar)
+                {
+                      // update the volume variables and compute element residual
+                      priVars[pvIdx + offset] = priVar;
+                      auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
+                      curVolVars.update(elemSol, problem, elementJ, scvJ);
+                      return localResidual.evalCellCenter(problem, element, fvGeometry,
+                                                          prevElemVolVars, curElemVolVars,
+                                                          prevElemFaceVars, curElemFaceVars,
+                                                          elemBcTypes, elemFluxVarsCache);
+                };
 
-               auto partialDeriv = (deflectedResidual - ccResidual);
-               partialDeriv /= eps;
+                // derive the residuals numerically
+                static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
+                static const NumericEpsilon<Scalar, numEq> eps{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
+                NumericDifferentiation::partialDerivative(evalResidual, priVars[pvIdx + offset], partialDeriv, ccResidual,
+                                                          eps(priVars[pvIdx + offset], pvIdx + offset), numDiffMethod);
 
-               // update the global jacobian matrix with the current partial derivatives
-               updateGlobalJacobian_(matrix[cellCenterIdx][cellCenterIdx], cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
+                // update the global jacobian matrix with the current partial derivatives
+                updateGlobalJacobian_(matrix[cellCenterIdx][cellCenterIdx], cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
 
-               // restore the original volVars
-               curVolVars = origVolVars;
-           }
-       }
+                // restore the original volVars
+                curVolVars = origVolVars;
+            }
+        }
     }
 
     /*!
@@ -391,18 +400,24 @@ protected:
             for(auto pvIdx : priVarIndices_(faceIdx))
             {
                 FacePrimaryVariables facePriVars(curSol[faceIdx][globalJ]);
-                const Scalar eps = numericEpsilon(facePriVars[pvIdx], cellCenterIdx, faceIdx);
-                facePriVars[pvIdx] += eps;
+                NumCellCenterEqVector partialDeriv(0.0);
 
-                faceVars.updateOwnFaceOnly(facePriVars);
+                auto evalResidual = [&](Scalar priVar)
+                {
+                      // update the face variables and compute element residual
+                      facePriVars[pvIdx] = priVar;
+                      faceVars.updateOwnFaceOnly(facePriVars);
+                      return localResidual.evalCellCenter(problem, element, fvGeometry,
+                                                          prevElemVolVars, curElemVolVars,
+                                                          prevElemFaceVars, curElemFaceVars,
+                                                          elemBcTypes, elemFluxVarsCache);
+                };
 
-                const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry,
-                                                                            prevElemVolVars, curElemVolVars,
-                                                                            prevElemFaceVars, curElemFaceVars,
-                                                                            elemBcTypes, elemFluxVarsCache);
-
-                auto partialDeriv = (deflectedResidual - ccResidual);
-                partialDeriv /= eps;
+                // derive the residuals numerically
+                static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
+                static const NumericEpsilon<Scalar, numEq> eps{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
+                NumericDifferentiation::partialDerivative(evalResidual, facePriVars[pvIdx], partialDeriv, ccResidual,
+                                                          eps(facePriVars, Indices::velocity(scvfJ.directionIndex())), numDiffMethod);
 
                 // update the global jacobian matrix with the current partial derivatives
                 updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
@@ -458,18 +473,25 @@ protected:
                     PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
 
                     constexpr auto offset = PrimaryVariables::dimension - CellCenterPrimaryVariables::dimension;
-                    const Scalar eps = numericEpsilon(priVars[pvIdx + offset], faceIdx, cellCenterIdx);
-                    priVars[pvIdx + offset] += eps;
-                    auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
-                    curVolVars.update(elemSol, problem, elementJ, scvJ);
+                    FacePrimaryVariables partialDeriv(0.0);
 
-                    const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
-                                                   prevElemVolVars, curElemVolVars,
-                                                   prevElemFaceVars, curElemFaceVars,
-                                                   elemBcTypes, elemFluxVarsCache);
+                    auto evalResidual = [&](Scalar priVar)
+                    {
+                          // update the volume variables and compute element residual
+                          priVars[pvIdx + offset] = priVar;
+                          auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
+                          curVolVars.update(elemSol, problem, elementJ, scvJ);
+                          return localResidual.evalFace(problem, element, fvGeometry, scvf,
+                                                        prevElemVolVars, curElemVolVars,
+                                                        prevElemFaceVars, curElemFaceVars,
+                                                        elemBcTypes, elemFluxVarsCache);
+                    };
 
-                    auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]);
-                    partialDeriv /= eps;
+                    // derive the residuals numerically
+                    static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
+                    static const NumericEpsilon<Scalar, numEq> eps{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
+                    NumericDifferentiation::partialDerivative(evalResidual, priVars[pvIdx + offset], partialDeriv, cachedResidual[scvf.localFaceIdx()],
+                                                              eps(priVars[pvIdx + offset], pvIdx + offset), numDiffMethod);
 
                     // update the global jacobian matrix with the current partial derivatives
                     updateGlobalJacobian_(matrix[faceIdx][cellCenterIdx], faceGlobalI, globalJ, pvIdx, partialDeriv);
@@ -519,19 +541,24 @@ protected:
                 for(auto pvIdx : priVarIndices_(faceIdx))
                 {
                     auto faceSolution = FaceSolution(scvf, curSol[faceIdx], assembler.fvGridGeometry());
+                    FacePrimaryVariables partialDeriv(0.0);
 
-                    const Scalar eps = numericEpsilon(faceSolution[globalJ][pvIdx], faceIdx, faceIdx);
+                    auto evalResidual = [&](Scalar priVar)
+                    {
+                          // update the volume variables and compute element residual
+                          faceSolution[globalJ][pvIdx] = priVar;
+                          faceVars.update(faceSolution, problem, element, fvGeometry, scvf);
+                          return localResidual.evalFace(problem, element, fvGeometry, scvf,
+                                                        prevElemVolVars, curElemVolVars,
+                                                        prevElemFaceVars, curElemFaceVars,
+                                                        elemBcTypes, elemFluxVarsCache);
+                    };
 
-                    faceSolution[globalJ][pvIdx] += eps;
-                    faceVars.update(faceSolution, problem, element, fvGeometry, scvf);
-
-                    const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
-                                                                          prevElemVolVars, curElemVolVars,
-                                                                          prevElemFaceVars, curElemFaceVars,
-                                                                          elemBcTypes, elemFluxVarsCache);
-
-                    auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]);
-                    partialDeriv /= eps;
+                    // derive the residuals numerically
+                    static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
+                    static const NumericEpsilon<Scalar, numEq> eps{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
+                    NumericDifferentiation::partialDerivative(evalResidual, faceSolution[globalJ][pvIdx], partialDeriv, cachedResidual[scvf.localFaceIdx()],
+                                                              eps(faceSolution[globalJ], Indices::velocity(scvf.directionIndex())), numDiffMethod);
 
                     // update the global jacobian matrix with the current partial derivatives
                     updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx, partialDeriv);
@@ -542,38 +569,6 @@ protected:
             }
         }
     }
-
-
-    /*!
-     * \brief Computes the epsilon used for numeric differentiation
-     *        for a given value of a primary variable for
-     *        an equation residual with respect to a primary variable
-     *
-     * \param priVar The value of the primary variable
-     * \param eqIdx The equation index of the equation
-     * \param pvIdx The index of the primary variable
-     */
-    static Scalar numericEpsilon(const Scalar priVar, const int eqIdx, const int pvIdx)
-    {
-        // define the base epsilon as the geometric mean of 1 and the
-        // resolution of the scalar type. E.g. for standard 64 bit
-        // floating point values, the resolution is about 10^-16 and
-        // the base epsilon is thus approximately 10^-8.
-        /*
-        static const Scalar baseEps
-            = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
-        */
-        using BaseEpsilon = typename GET_PROP(TypeTag, BaseEpsilon);
-        const std::array<std::array<Scalar, 2>, 2> baseEps_ = BaseEpsilon::getEps();
-
-
-        static const Scalar baseEps = baseEps_[eqIdx][pvIdx];
-        assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
-        // the epsilon value used for the numeric differentiation is
-        // now scaled by the absolute value of the primary variable...
-        return baseEps*(std::abs(priVar) + 1.0);
-    }
-
 
     /*!
      * \brief Updates the current global Jacobian matrix with the

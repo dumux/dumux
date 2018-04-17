@@ -17,9 +17,12 @@ EnableGravity = false
 LiquidDensity = 1
 LiquidKinematicViscosity = 1e-3
 
-[ Newton ]
+[Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-8
+
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
 
 [Vtk]
 AddVelocity = true

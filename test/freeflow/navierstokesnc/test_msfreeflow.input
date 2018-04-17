@@ -11,7 +11,10 @@ Cells = 30 30
 Name = test_msfreeflow # name passed to the output routines
 EnableGravity = false
 
-[ Newton ]
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-8
 

@@ -19,6 +19,10 @@ EnableGravity = false
 EddyViscosityModel = 3
 TurbulentSchmidtNumber = 0.7
 
+[Assembly]
+NumericDifferenceMethod = 0
+NumericEpsilon.BaseEpsilon = 1e-8
+
 [Newton]
 MaxSteps = 10
 TargetSteps = 8

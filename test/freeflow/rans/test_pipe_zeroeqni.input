@@ -20,6 +20,10 @@ EnableGravity = false
 [RANS]
 EddyViscosityModel = 3
 
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
+
 [Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-5

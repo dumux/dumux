@@ -16,7 +16,10 @@ PrintL2Error = false
 LiquidDensity = 1
 LiquidKinematicViscosity = 0.1
 
-[ Newton ]
+[Assembly]
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-5
 

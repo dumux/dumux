@@ -145,24 +145,6 @@ SET_TYPE_PROP(StaggeredModel,
 //! Boundary types at a single degree of freedom
 SET_TYPE_PROP(StaggeredModel, BoundaryTypes, BoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
 
-//! Set one or different base epsilons for the calculations of the localJacobian's derivatives
-SET_PROP(StaggeredModel, BaseEpsilon)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    static constexpr Scalar dCCdCC = 1e-8;
-    static constexpr Scalar dCCdFace = 1e-8;
-    static constexpr Scalar dFacedCC = 1e-8;
-    static constexpr Scalar dFacedFace = 1e-8;
-
-public:
-    static constexpr auto getEps()
-    {
-        return std::array<std::array<Scalar, 2>, 2>{{{dCCdCC, dCCdFace},
-                                                     {dFacedCC, dFacedFace}}};
-    }
-};
-
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits
 

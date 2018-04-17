@@ -57,7 +57,7 @@ public:
     Scalar operator() (Scalar priVar, int priVarIdx) const noexcept
     {
         return magnitude_[priVarIdx] > 0.0 ? baseEps_*magnitude_[priVarIdx]
-                                           : NumericDifferentiation::epsilon(priVar);
+                                           : NumericDifferentiation::epsilon(priVar, baseEps_);
     }
 
 private:
