@@ -126,6 +126,10 @@ int main(int argc, char** argv) try
     problem->applyInitialSolution(x);
     auto xOld = x;
 
+    // maybe update the interface parameters
+    if (ENABLEINTERFACESOLVER)
+        problem->spatialParams().updateMaterialInterfaceParams(x);
+
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);

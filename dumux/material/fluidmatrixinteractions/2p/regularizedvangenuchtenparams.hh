@@ -26,6 +26,8 @@
 #ifndef REGULARIZED_VAN_GENUCHTEN_PARAMS_HH
 #define REGULARIZED_VAN_GENUCHTEN_PARAMS_HH
 
+#include <dune/common/float_cmp.hh>
+
 #include "vangenuchtenparams.hh"
 
 namespace Dumux
@@ -51,6 +53,19 @@ public:
         : Parent(vgAlpha, vgN)
     {
         initialize();
+    }
+
+    /*!
+     * \brief Equality comparison with another set of params
+     */
+    template<class OtherParams>
+    bool operator== (const OtherParams& otherParams) const
+    {
+        return Dune::FloatCmp::eq(pcLowSw_, otherParams.pcLowSw(), /*eps*/1e-6*pcLowSw_)
+               && Dune::FloatCmp::eq(pcHighSw_, otherParams.pcHighSw(), /*eps*/1e-6*pcHighSw_)
+               && Dune::FloatCmp::eq(krnLowSw_, otherParams.krnLowSw(), /*eps*/1e-6*krnLowSw_)
+               && Dune::FloatCmp::eq(krwHighSw_, otherParams.krwHighSw(), /*eps*/1e-6*krwHighSw_)
+               && Parent::operator==(otherParams);
     }
 
     /*!

@@ -20,6 +20,19 @@ dune_add_test(NAME test_2p_incompressible_box
                                ${CMAKE_CURRENT_BINARY_DIR}/2p_box-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box test_2p.input -Problem.Name 2p_box")
 
+# using box with interface solver
+dune_add_test(NAME test_2p_incompressible_box_ifsolver
+              SOURCES test_2p_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox
+              COMPILE_DEFINITIONS ENABLEINTERFACESOLVER=true
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/lensbox_ifsolver-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/2p_box_ifsolver-00018.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box_ifsolver test_2p.input
+                                                                                                  -Problem.Name 2p_box_ifsolver
+                                                                                                  -Box.UseInterfaceSolver true")
+
 # using mpfa
 dune_add_test(NAME test_2p_incompressible_mpfa
               SOURCES test_2p_fv.cc

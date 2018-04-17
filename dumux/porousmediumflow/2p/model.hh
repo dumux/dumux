@@ -75,6 +75,7 @@
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "vtkoutputfields.hh"
+#include "saturationreconstruction.hh"
 
 namespace Dumux
 {
@@ -108,8 +109,10 @@ struct TwoPModelTraits
  * \tparam FST The fluid state type
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
+ * \tparam SR The class used for reconstruction of
+ *            non-wetting phase saturations in scvs
  */
-template<class PV, class FSY, class FST, class PT, class MT>
+template<class PV, class FSY, class FST, class PT, class MT, class SR>
 struct TwoPVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
@@ -117,6 +120,7 @@ struct TwoPVolumeVariablesTraits
     using FluidState = FST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
+    using SaturationReconstruction = SR;
 };
 
 ////////////////////////////////
@@ -160,7 +164,12 @@ private:
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-    using Traits = TwoPVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+    static constexpr auto DM = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod;
+    static constexpr bool enableIS = GET_PROP_VALUE(TypeTag, EnableBoxInterfaceSolver);
+    // class used for scv-wise reconstruction of non-wetting phase saturations
+    using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
+
+    using Traits = TwoPVolumeVariablesTraits<PV, FSY, FST, PT, MT, SR>;
 public:
     using type = TwoPVolumeVariables<Traits>;
 };

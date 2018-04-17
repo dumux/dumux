@@ -79,6 +79,9 @@ SET_TYPE_PROP(PorousMediumFlow, VelocityOutput, PorousMediumFlowVelocityOutput<T
 SET_TYPE_PROP(PorousMediumFlow, PrimaryVariableSwitch, NoPrimaryVariableSwitch);
 
 SET_BOOL_PROP(PorousMediumFlow, EnableThermalNonEquilibrium, false);
+
+//! Per default, we disable the box interface solver
+SET_BOOL_PROP(PorousMediumFlow, EnableBoxInterfaceSolver, false);
 } // namespace Properties
 } // namespace Dumux
 

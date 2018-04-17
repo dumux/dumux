@@ -44,7 +44,6 @@ class TwoPVolumeVariables
     using PermeabilityType = typename Traits::PermeabilityType;
     using ModelTraits = typename Traits::ModelTraits;
     using Indices = typename ModelTraits::Indices;
-    static constexpr auto formulation = ModelTraits::priVarFormulation();
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using FS = typename Traits::FluidSystem;
 
@@ -57,6 +56,7 @@ class TwoPVolumeVariables
         phase1Idx = FS::phase1Idx
     };
 
+    static constexpr auto formulation = ModelTraits::priVarFormulation();
 
 public:
     //! export type of fluid system
@@ -131,27 +131,43 @@ public:
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         if (formulation == TwoPFormulation::p0s1)
         {
-            fluidState.setSaturation(phase1Idx, priVars[saturationIdx]);
-            fluidState.setSaturation(phase0Idx, 1 - priVars[saturationIdx]);
-        }
-        else if (formulation == TwoPFormulation::p1s0)
-        {
-            fluidState.setSaturation(phase0Idx, priVars[saturationIdx]);
-            fluidState.setSaturation(phase1Idx, 1 - priVars[saturationIdx]);
-        }
-
-        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
-        if (formulation == TwoPFormulation::p0s1)
-        {
             fluidState.setPressure(phase0Idx, priVars[pressureIdx]);
-            fluidState.setPressure(phase1Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] + pc_
-                                                                       : priVars[pressureIdx] - pc_);
+            if (wPhaseIdx == phase1Idx)
+            {
+                fluidState.setSaturation(phase1Idx, priVars[saturationIdx]);
+                fluidState.setSaturation(phase0Idx, 1 - priVars[saturationIdx]);
+                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+                fluidState.setPressure(phase1Idx, priVars[pressureIdx] - pc_);
+            }
+            else
+            {
+                const auto Sn = Traits::SaturationReconstruction::reconstructSn(problem.spatialParams(), element,
+                                                                                scv, elemSol, priVars[saturationIdx]);
+                fluidState.setSaturation(phase1Idx, Sn);
+                fluidState.setSaturation(phase0Idx, 1 - Sn);
+                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+                fluidState.setPressure(phase1Idx, priVars[pressureIdx] + pc_);
+            }
         }
         else if (formulation == TwoPFormulation::p1s0)
         {
             fluidState.setPressure(phase1Idx, priVars[pressureIdx]);
-            fluidState.setPressure(phase0Idx, (wPhaseIdx == phase0Idx) ? priVars[pressureIdx] - pc_
-                                                                       : priVars[pressureIdx] + pc_);
+            if (wPhaseIdx == phase1Idx)
+            {
+                const auto Sn = Traits::SaturationReconstruction::reconstructSn(problem.spatialParams(), element,
+                                                                                scv, elemSol, priVars[saturationIdx]);
+                fluidState.setSaturation(phase0Idx, Sn);
+                fluidState.setSaturation(phase1Idx, 1 - Sn);
+                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+                fluidState.setPressure(phase0Idx, priVars[pressureIdx] + pc_);
+            }
+            else
+            {
+                fluidState.setSaturation(phase1Idx, priVars[saturationIdx]);
+                fluidState.setSaturation(phase0Idx, 1 - priVars[saturationIdx]);
+                pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+                fluidState.setPressure(phase0Idx, priVars[pressureIdx] - pc_);
+            }
         }
 
         typename FluidSystem::ParameterCache paramCache;
