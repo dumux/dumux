@@ -19,31 +19,35 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::FluxOverPlane
+ * \copydoc Dumux::FluxOverSurface
  */
-#ifndef DUMUX_FLUX_OVER_PLANE_STAGGERED_HH
-#define DUMUX_FLUX_OVER_PLANE_STAGGERED_HH
+#ifndef DUMUX_FLUX_OVER_SURFACE_STAGGERED_HH
+#define DUMUX_FLUX_OVER_SURFACE_STAGGERED_HH
 
 #include <numeric>
+#include <functional>
+#include <type_traits>
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
 #include <dune/geometry/type.hh>
-#include <dune/geometry/affinegeometry.hh>
+#include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/geometry/intersectspointgeometry.hh>
+#include <dumux/common/geometry/makegeometry.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup NavierStokesModel
- * \brief  Class used to calculate fluxes over planes. This only works for the staggered grid discretization.
+ * \brief  Class used to calculate fluxes over surfaces. This only works for the staggered grid discretization.
  */
 template <class TypeTag>
-class FluxOverPlane
+class FluxOverSurface
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -64,54 +68,53 @@ class FluxOverPlane
         dimWorld = GridView::dimensionworld
     };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dim>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    static constexpr auto planeDim = dim - 1;
-    using PlaneGeometryType = Dune::AffineGeometry< Scalar, planeDim, dim >;
-
+    static constexpr auto surfaceDim = dimWorld - 1;
+    using SurfaceGeometryType = Dune::MultiLinearGeometry< Scalar, surfaceDim, dimWorld >;
 
     /*!
-     * \brief Auxiliary class that holds the plane-specific data.
+     * \brief Auxiliary class that holds the surface-specific data.
      */
     template<int mydim, int coordDim, class Scalar=double>
-    class PlaneData
+    class SurfaceData
     {
-        using Geo = Dune::AffineGeometry< Scalar, mydim, coordDim >;
+        using Geo = SurfaceGeometryType;
     public:
 
-        PlaneData() {}
+        SurfaceData() {}
 
-        PlaneData(Geo&& geo)
+        SurfaceData(Geo&& geo)
         {
             values_.resize(1);
             geometries_.push_back(std::move(geo));
         }
 
-        PlaneData(std::vector<Geo>&& geo)
+        SurfaceData(std::vector<Geo>&& geo)
         {
             values_.resize(geo.size());
             geometries_ = std::forward<decltype(geo)>(geo);
         }
 
-        void addValue(int planeIdx, const CellCenterPrimaryVariables& value)
+        void addValue(int surfaceIdx, const CellCenterPrimaryVariables& value)
         {
-            values_[planeIdx] += value;
+            values_[surfaceIdx] += value;
         }
 
-        void addSubPlane(Geo&& geo)
+        void addSubSurface(Geo&& geo)
         {
             values_.emplace_back(0.0);
             geometries_.push_back(std::move(geo));
         }
 
-        auto& subPlanes() const
+        auto& subSurfaces() const
         {
             return geometries_;
         }
 
-        CellCenterPrimaryVariables& value(int planeIdx) const
+        CellCenterPrimaryVariables& value(int surfaceIdx) const
         {
-            return values_[planeIdx];
+            return values_[surfaceIdx];
         }
 
         auto& values() const
@@ -119,11 +122,11 @@ class FluxOverPlane
             return values_;
         }
 
-        void printPlaneBoundaries(int planeIdx) const
+        void printSurfaceBoundaries(int surfaceIdx) const
         {
-            const auto& geometry = geometries_[planeIdx];
+            const auto& geometry = geometries_[surfaceIdx];
             for(int i = 0; i < geometry.corners(); ++i)
-                std::cout << geometry.corner(i) << "  ";
+                std::cout << "(" << geometry.corner(i) << ")  ";
         }
 
         void resetValues()
@@ -140,7 +143,7 @@ class FluxOverPlane
 
 public:
 
-    using PlaneList = std::vector<PlaneGeometryType>;
+    using SurfaceList = std::vector<SurfaceGeometryType>;
 
     /*!
      * \brief The constructor
@@ -149,101 +152,87 @@ public:
      * \param sol The solution vector
      */
     template<class Assembler>
-    FluxOverPlane(const Assembler& assembler,
-                  const SolutionVector& sol)
-    : problem_(assembler.problem())
-    , gridVariables_(assembler.gridVariables())
-    , sol_(sol)
+    FluxOverSurface(const Assembler& assembler,
+                    const SolutionVector& sol)
+    : problem_(assembler.problem()),
+      gridVariables_(assembler.gridVariables()),
+      sol_(sol)
     {
-        verbose_  = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "FluxOverPlane.Verbose", false);
+        verbose_  = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "FluxOverSurface.Verbose", false);
     }
 
     /*!
-     * \brief Add a collection of sub planes under a given name
+     * \brief Add a collection of sub surfaces under a given name
      *
-     * \param name The name of the plane
-     * \param planes The list of sub planes
+     * \param name The name of the surface
+     * \param surfaces The list of sub surfaces
      */
-    void addPlane(const std::string& name, PlaneList&& planes )
+    void addSurface(const std::string& name, SurfaceList&& surfaces)
     {
-        planes_[name] = PlaneData<planeDim,dim>(std::forward<decltype(planes)>(planes));
+        surfaces_[name] = SurfaceData<surfaceDim,dim>(std::forward<decltype(surfaces)>(surfaces));
     }
 
     /*!
-     * \brief Add a plane under a given name, specifing the plane's corner points.
-     *        This is a specialization for 2D, therefore the plane is actually a line.
+     * \brief Add a surface under a given name, specifying the surface's corner points.
+     *        This is a specialization for 2D, therefore the surface is actually a line.
      *
-     * \param name The name of the plane
+     * \param name The name of the surface
      * \param p0 The first corner
      * \param p1 The second corner
      */
-    void addPlane(const std::string& name, const GlobalPosition& p0, const GlobalPosition& p1)
+    void addSurface(const std::string& name, const GlobalPosition& p0, const GlobalPosition& p1)
     {
-        planes_[name].addSubPlane(makePlane(p0, p1));
+        surfaces_[name].addSubSurface(makeSurface(std::vector<GlobalPosition>{p0, p1}));
     }
 
     /*!
-     * \brief Add a plane under a given name, specifing the plane's corner points.
+     * \brief Add a surface under a given name, specifying the surface's corner points.
      *        This is a specialization for 3D.
      *
-     * \param name The name of the plane
+     * \param name The name of the surface
      * \param p0 The first corner
      * \param p1 The second corner
      * \param p2 The third corner
      * \param p3 The fourth corner
      */
-    void addPlane(const std::string& name,
-                  const GlobalPosition& p0,
-                  const GlobalPosition& p1,
-                  const GlobalPosition& p2,
-                  const GlobalPosition& p3)
+    void addSurface(const std::string& name,
+                    const GlobalPosition& p0,
+                    const GlobalPosition& p1,
+                    const GlobalPosition& p2,
+                    const GlobalPosition& p3)
     {
-        planes_[name].addSubPlane(makePlane(p0, p1, p2, p3));
+        surfaces_[name].addSubSurface(makeSurface(std::vector<GlobalPosition>{p0, p1, p2, p3}));
     }
 
     /*!
-     * \brief Creates a geometrical plane object.
-     *        This is a specialization for 2D, therefore the plane is actually a line.
+     * \brief Creates a geometrical surface object for (2D).
      *
-     * \param p0 The first corner
-     * \param p1 The second corner
+     * \param corners The vector storing the surface's corners
      */
-    static PlaneGeometryType makePlane(const GlobalPosition& p0, const GlobalPosition& p1)
+    static SurfaceGeometryType makeSurface(const std::vector<Dune::FieldVector<Scalar, 2>>& corners)
     {
-        const std::vector< Dune::FieldVector< Scalar, dim > > corners = {p0, p1};
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-        return PlaneGeometryType(Dune::GeometryTypes::line, corners);
+            return SurfaceGeometryType(Dune::GeometryTypes::line, corners);
 #else
-        static Dune::GeometryType gt(Dune::GeometryType::simplex, dim-1);
-        return PlaneGeometryType(gt, corners);
+        {
+            static Dune::GeometryType gt2d(Dune::GeometryType::simplex, dim-1);
+            return SurfaceGeometryType(gt2d, corners);
+        }
 #endif
     }
 
     /*!
-     * \brief Creates a geometrical plane object.
-     *        This is a specialization for 3D.
+     * \brief Creates a geometrical surface object for (3D).
      *
-     * \param p0 The first corner
-     * \param p1 The second corner
-     * \param p2 The third corner
-     * \param p3 The fourth corner
+     * \param corners The vector storing the surface's corners
      */
-    static PlaneGeometryType makePlane(const GlobalPosition& p0,
-                                       const GlobalPosition& p1,
-                                       const GlobalPosition& p2,
-                                       const GlobalPosition& p3)
+    static SurfaceGeometryType makeSurface(const std::vector<Dune::FieldVector<Scalar, 3>>& corners)
     {
-        const std::vector< Dune::FieldVector< Scalar, dim > > corners = {p0, p1, p2, p3};
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-        return PlaneGeometryType(Dune::GeometryTypes::quadrilateral, corners);
-#else
-        static Dune::GeometryType gt(Dune::GeometryType::cube, dim-1);
-        return PlaneGeometryType(gt, corners);
-#endif
+        return makeDuneQuadrilaterial(corners);
     }
 
     /*!
-     * \brief Calculate the mass or mole fluxes over all planes
+     * \brief Calculate the mass or mole fluxes over all surfaces
      */
     void calculateMassOrMoleFluxes()
     {
@@ -262,8 +251,7 @@ public:
     }
 
     /*!
-     * \brief Calculate the volume fluxes over all planes.
-     *        This method simply averages the densities between two adjacent cells.
+     * \brief Calculate the volume fluxes over all surfaces.
      */
     void calculateVolumeFluxes()
     {
@@ -272,7 +260,7 @@ public:
     }
 
     /*!
-     * \brief Calculate the fluxes over all planes for a given flux type.
+     * \brief Calculate the fluxes over all surfaces for a given flux type.
      *
      * \param fluxType The flux type. This can be a lambda of the following form:
      *                 [](const auto& problem,
@@ -287,9 +275,9 @@ public:
     template<class FluxType>
     void calculateFluxes(const FluxType& fluxType)
     {
-        // make sure to reset all the values of the planes, in case this method has been called already before
-        for(auto&& plane : planes_)
-            plane.second.resetValues();
+        // make sure to reset all the values of the surfaces, in case this method has been called already before
+        for(auto&& surface : surfaces_)
+            surface.second.resetValues();
 
         // make sure not to iterate over the same dofs twice
         std::vector<bool> dofVisited(problem_.fvGridGeometry().numFaceDofs(), false);
@@ -317,26 +305,26 @@ public:
 
                 dofVisited[dofIdx] = true;
 
-                // iterate through all planes and check if the flux at the given position
-                // should be accounted for in the respective plane
-                for(auto&& plane : planes_)
+                // iterate through all surfaces and check if the flux at the given position
+                // should be accounted for in the respective surface
+                for(auto&& surface : surfaces_)
                 {
-                    const auto& subPlanes = plane.second.subPlanes();
+                    const auto& subSurfaces = surface.second.subSurfaces();
 
-                    for(int planeIdx = 0; planeIdx < subPlanes.size(); ++planeIdx)
+                    for(int surfaceIdx = 0; surfaceIdx < subSurfaces.size(); ++surfaceIdx)
                     {
-                        if(intersectsPointGeometry(scvf.center(), subPlanes[planeIdx]))
+                        if(intersectsPointGeometry(scvf.center(), subSurfaces[surfaceIdx]))
                         {
                             const auto result = fluxType(problem_, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
 
-                            plane.second.addValue(planeIdx, result);
+                            surface.second.addValue(surfaceIdx, result);
 
                             if(verbose_)
                             {
-                                std::cout << "Flux at face "  << scvf.center() << " (" << plane.first << "): " << result;
-                                std::cout << " (directionIndex: " << scvf.directionIndex() << "; plane boundaries: ";
-                                plane.second.printPlaneBoundaries(planeIdx);
-                                std::cout << ", planeIdx " << planeIdx << ")" << std::endl;
+                                std::cout << "Flux at face "  << scvf.center() << " (" << surface.first << "): " << result;
+                                std::cout << " (directionIndex: " << scvf.directionIndex() << "; surface boundaries: ";
+                                surface.second.printSurfaceBoundaries(surfaceIdx);
+                                std::cout << ", surfaceIdx " << surfaceIdx << ")" << std::endl;
                             }
                         }
                     }
@@ -346,30 +334,30 @@ public:
     }
 
     /*!
-     * \brief Return the fluxes of the individual sub planes of a given name.
+     * \brief Return the fluxes of the individual sub surface of a given name.
      *
-     * \param name The name of the plane
+     * \param name The name of the surface
      */
     auto& values(const std::string& name) const
     {
-        return planes_.at(name).values();
+        return surfaces_.at(name).values();
     }
 
     /*!
-     * \brief Return the cumulative net fluxes of a plane of a given name.
+     * \brief Return the cumulative net fluxes of a surface of a given name.
      *
-     * \param name The name of the plane
+     * \param name The name of the surface
      */
     auto netFlux(const std::string& name) const
     {
-        const auto& planeResults = values(name);
-        return std::accumulate(planeResults.begin(), planeResults.end(), CellCenterPrimaryVariables(0.0));
+        const auto& surfaceResults = values(name);
+        return std::accumulate(surfaceResults.begin(), surfaceResults.end(), CellCenterPrimaryVariables(0.0));
     }
 
 private:
 
     /*!
-     * \brief Calculate the volume fluxes over all planes for compositional models.
+     * \brief Calculate the volume fluxes over all surfaces for compositional models.
      *        This method simply averages the densities between two adjacent cells.
      */
     void calculateVolumeFluxesImpl_(std::true_type)
@@ -421,7 +409,7 @@ private:
     }
 
     /*!
-     * \brief Calculate the volume fluxes over all planes for non-compositional models.
+     * \brief Calculate the volume fluxes over all surfaces for non-compositional models.
      *        This method simply averages the densities between two adjacent cells.
      */
     void calculateVolumeFluxesImpl_(std::false_type)
@@ -450,7 +438,7 @@ private:
         calculateFluxes(fluxType);
     }
 
-    std::map<std::string, PlaneData<planeDim ,dim> > planes_;
+    std::map<std::string, SurfaceData<surfaceDim ,dim> > surfaces_;
     const Problem& problem_;
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;

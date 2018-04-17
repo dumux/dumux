@@ -50,7 +50,7 @@
 
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 
-#include <dumux/freeflow/navierstokes/staggered/fluxoverplane.hh>
+#include <dumux/freeflow/navierstokes/staggered/fluxoversurface.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -153,7 +153,7 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     StaggeredVtkOutputModule<TypeTag, GET_PROP_VALUE(TypeTag, PhaseIdx)> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
@@ -171,8 +171,8 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
-    // set up two planes over which fluxes are calculated
-    FluxOverPlane<TypeTag> flux(*assembler, x);
+    // set up two surfaces over which fluxes are calculated
+    FluxOverSurface<TypeTag> flux(*assembler, x);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
@@ -181,23 +181,23 @@ int main(int argc, char** argv) try
     const Scalar yMin = fvGridGeometry->bBoxMin()[1];
     const Scalar yMax = fvGridGeometry->bBoxMax()[1];
 
-    // The first plane shall be placed at the middle of the channel.
+    // The first surface shall be placed at the middle of the channel.
     // If we have an odd number of cells in x-direction, there would not be any cell faces
-    // at the postion of the plane (which is required for the flux calculation).
+    // at the position of the surface (which is required for the flux calculation).
     // In this case, we add half a cell-width to the x-position in order to make sure that
-    // the cell faces lie on the plane. This assumes a regular cartesian grid.
+    // the cell faces lie on the surface. This assumes a regular cartesian grid.
     const Scalar planePosMiddleX = xMin + 0.5*(xMax - xMin);
     const int numCellsX = getParam<std::vector<int>>("Grid.Cells")[0];
     const Scalar offsetX = (numCellsX % 2 == 0) ? 0.0 : 0.5*((xMax - xMin) / numCellsX);
 
     const auto p0middle = GlobalPosition{planePosMiddleX + offsetX, yMin};
     const auto p1middle = GlobalPosition{planePosMiddleX + offsetX, yMax};
-    flux.addPlane("middle", p0middle, p1middle);
+    flux.addSurface("middle", p0middle, p1middle);
 
-    // The second plane is placed at the outlet of the channel.
+    // The second surface is placed at the outlet of the channel.
     const auto p0outlet = GlobalPosition{xMax, yMin};
     const auto p1outlet = GlobalPosition{xMax, yMax};
-    flux.addPlane("outlet", p0outlet, p1outlet);
+    flux.addSurface("outlet", p0outlet, p1outlet);
 
     // time loop
     timeLoop->start(); do
