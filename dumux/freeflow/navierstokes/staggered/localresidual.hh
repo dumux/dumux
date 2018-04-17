@@ -117,7 +117,7 @@ public:
         CellCenterPrimaryVariables result(0.0);
 
         // get the values from the problem
-        const auto sourceValues = problem.sourceAtPos(scv.center());
+        const auto sourceValues = problem.source(element, fvGeometry, elemVolVars, elemFaceVars, scv);
 
         // copy the respective cell center related values to the result
         for (int i = 0; i < result.size(); ++i)
@@ -155,6 +155,8 @@ public:
 
     //! Evaluate the source term for the face control volume.
     FacePrimaryVariables computeSourceForFace(const Problem& problem,
+                                              const Element& element,
+                                              const FVElementGeometry& fvGeometry,
                                               const SubControlVolumeFace& scvf,
                                               const ElementVolumeVariables& elemVolVars,
                                               const ElementFaceVariables& elementFaceVars) const
@@ -163,8 +165,7 @@ public:
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideVolVars = elemVolVars[insideScvIdx];
         source += problem.gravity()[scvf.directionIndex()] * insideVolVars.density();
-
-        source += problem.sourceAtPos(scvf.center())[Indices::velocity(scvf.directionIndex())];
+        source += problem.source(element, fvGeometry, elemVolVars, elementFaceVars, scvf)[Indices::velocity(scvf.directionIndex())];
 
         return source;
     }

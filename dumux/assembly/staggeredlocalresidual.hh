@@ -281,7 +281,7 @@ protected:
                                 const ElementBoundaryTypes &bcTypes) const
     {
         // the source term:
-        auto faceSource = asImp_().computeSourceForFace(problem, scvf, curElemVolVars, curFaceVars);
+        auto faceSource = asImp_().computeSourceForFace(problem, element, fvGeometry, scvf, curElemVolVars, curFaceVars);
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
         const auto curExtrusionFactor = curElemVolVars[scv].extrusionFactor();
         faceSource *= 0.5*scv.volume()*curExtrusionFactor;
@@ -367,10 +367,9 @@ protected:
         residual -= std::move(prevFaceStorage);
         residual *= (scv.volume()/2.0);
         residual /= timeLoop_->timeStepSize();
-        // residuals[scvf.localFaceIdx()] += faceStorageTerms_[scvf.localFaceIdx()];
 
         // the source term:
-        auto faceSource = asImp_().computeSourceForFace(problem, scvf, curElemVolVars, curFaceVars);
+        auto faceSource = asImp_().computeSourceForFace(problem, element, fvGeometry, scvf, curElemVolVars, curFaceVars);
         faceSource *= 0.5*scv.volume()*curVolVars.extrusionFactor();
         residual -= faceSource;
     }
