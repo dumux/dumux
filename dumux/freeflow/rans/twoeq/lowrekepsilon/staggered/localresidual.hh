@@ -55,6 +55,7 @@ class LowReKEpsilonResidualImpl<TypeTag, DiscretizationMethod::staggered>
 
     using GridFluxVariablesCache = typename GridVariables::GridFluxVariablesCache;
     using ElementFluxVariablesCache = typename GridFluxVariablesCache::LocalView;
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
 
     using GridFaceVariables = typename GridVariables::GridFaceVariables;
     using ElementFaceVariables = typename GridFaceVariables::LocalView;
@@ -69,8 +70,6 @@ class LowReKEpsilonResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-
-    using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
 
 public:
     using ParentType::ParentType;

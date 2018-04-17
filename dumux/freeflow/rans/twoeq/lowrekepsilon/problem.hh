@@ -107,8 +107,9 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const int dofIdx = scv.dofIndex();
-                CellCenterPrimaryVariables priVars(curSol[FVGridGeometry::cellCenterIdx()][dofIdx]);
-                auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
+                const auto& cellCenterPriVars = curSol[FVGridGeometry::cellCenterIdx()][dofIdx];
+                PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
+                auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
                 // NOTE: first update the turbulence quantities
                 storedDissipationTilde_[elementID] = elemSol[0][Indices::dissipationEqIdx];
                 storedTurbulentKineticEnergy_[elementID] = elemSol[0][Indices::turbulentKineticEnergyEqIdx];

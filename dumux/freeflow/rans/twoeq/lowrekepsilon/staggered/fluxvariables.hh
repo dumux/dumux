@@ -138,7 +138,7 @@ public:
         // average and distance
         Scalar coeff_k = (insideCoeff_k + outsideCoeff_k) * 0.5;
         Scalar coeff_e = (insideCoeff_e + outsideCoeff_e) * 0.5;
-        Scalar distance = (outsideScv.dofPosition() - insideScv.dofPosition()).two_norm();
+        Scalar distance = 0.0;
 
         // adapt boundary handling
         if (scvf.boundary())
@@ -146,6 +146,10 @@ public:
             distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
             coeff_k = insideCoeff_k;
             coeff_e = insideCoeff_e;
+        }
+        else
+        {
+            distance = (outsideScv.dofPosition() - insideScv.dofPosition()).two_norm();
         }
 
         if (!isOutflowK)

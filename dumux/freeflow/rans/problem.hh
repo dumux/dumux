@@ -96,6 +96,7 @@ public:
         neighborID_.resize(this->fvGridGeometry().elementMapper().size());
         cellCenter_.resize(this->fvGridGeometry().elementMapper().size(), GlobalPosition(0.0));
         velocity_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
+        velocityMaximum_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
         velocityGradients_.resize(this->fvGridGeometry().elementMapper().size(), DimMatrix(0.0));
         stressTensorScalarProduct_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
         flowNormalAxis_.resize(this->fvGridGeometry().elementMapper().size(), 0);
@@ -229,7 +230,6 @@ public:
 
             // calculate velocities
             DimVector velocityTemp(0.0);
-            static constexpr auto momentumBalanceIdx = 0;
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 const int dofIdxFace = scvf.dofIndex();

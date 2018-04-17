@@ -89,7 +89,6 @@ public:
     {
         CellCenterPrimaryVariables flux(0.0);
 
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 

@@ -147,10 +147,8 @@ public:
                                : false;
 
         // Call the generic flux function.
-        const Scalar flux = advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
-
         CellCenterPrimaryVariables result(0.0);
-        result[Indices::conti0EqIdx - ModelTraits::dim()] = flux;
+        result[Indices::conti0EqIdx - ModelTraits::dim()] = advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
 
         return result;
     }

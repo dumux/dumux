@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 1e-5 # [s]
+DtInitial = 1e-3 # [s]
 TEnd = 100 # [s]
 
 [Grid]
@@ -9,12 +9,6 @@ Positions1 = 0.0 0.12345 0.2469
 Cells0 = 25
 Cells1 = 25 25
 Grading1 = 1.2 -1.2
-# Cells0 = 5
-# Cells1 = 15 15
-# Grading1 = 1.5 -1.5
-# Cells0 = 2
-# Cells1 = 1 1
-# Grading1 = 4.0 -4.0
 
 [Output]
 PlotLawOfTheWall = true
@@ -35,10 +29,8 @@ NumericDifferenceMethod = 0
 NumericDifference.BaseEpsilon = 1e-8
 
 [Newton]
-MaxSteps = 7
 TargetSteps = 6
-MaxRelativeShift = 1e-8
-UseLineSearch = true
+MaxRelativeShift = 1e-5
 
 [Vtk]
 AddVelocity = true
