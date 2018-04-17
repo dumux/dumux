@@ -25,7 +25,10 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_VOLUMEVARIABLES_HH
 
 #include <algorithm>
+#include <cassert>
 #include <iterator>
+#include <vector>
+
 #include <dune/common/exceptions.hh>
 
 namespace Dumux {

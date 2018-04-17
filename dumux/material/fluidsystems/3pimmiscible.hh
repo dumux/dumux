@@ -24,8 +24,9 @@
 #ifndef DUMUX_3P_IMMISCIBLE_FLUID_SYSTEM_HH
 #define DUMUX_3P_IMMISCIBLE_FLUID_SYSTEM_HH
 
-#include <limits>
 #include <cassert>
+#include <limits>
+#include <iostream>
 
 #include <dune/common/exceptions.hh>
 

@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 #define DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 
+#include <vector>
+
 namespace Dumux {
 
 /*!

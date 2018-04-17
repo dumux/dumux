@@ -24,6 +24,8 @@
 #ifndef DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
 
+#include <string>
+
 namespace Dumux {
 
 /*!

@@ -24,6 +24,8 @@
 #ifndef DUMUX_RICHARDSNC_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_RICHARDSNC_VTK_OUTPUT_FIELDS_HH
 
+#include <dumux/common/parameters.hh>
+
 namespace Dumux {
 
 /*!
