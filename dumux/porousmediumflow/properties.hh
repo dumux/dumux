@@ -66,9 +66,6 @@ SET_BOOL_PROP(PorousMediumFlow, SolutionDependentAdvection, true);
 SET_BOOL_PROP(PorousMediumFlow, SolutionDependentMolecularDiffusion, true);
 SET_BOOL_PROP(PorousMediumFlow, SolutionDependentHeatConduction, true);
 
-//! By default, we evaluate the permeability in the volume
-SET_BOOL_PROP(PorousMediumFlow, EvaluatePermeabilityAtScvfIP, false);
-
 //! The default implementation of the energy balance equation for flow problems in porous media.
 SET_TYPE_PROP(PorousMediumFlow, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
 

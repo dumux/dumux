@@ -144,6 +144,14 @@ public:
     }
 
     /*!
+     * \brief If the permeability should be evaluated directly at the scvf integration point
+     *        (for convergence tests with analytical and continuous perm functions) or is evaluated
+     *        at the scvs (for permeability fields with discontinuities) -> default
+     */
+    static constexpr bool evaluatePermeabilityAtScvfIP()
+    { return false; }
+
+    /*!
      * \brief Function for defining the porosity.
      *        That is possibly solution dependent.
      *
