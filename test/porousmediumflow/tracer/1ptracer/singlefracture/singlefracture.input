@@ -3,9 +3,9 @@ File = ./single_equi.msh
 DomainMarkers = true
 
 [SpatialParams]
-BottomLayerPermeability = 1e-12
-UpperLayerPermeability = 1e-13
-FracturePermeability = 1e-10
+BottomLayerPermeability = 1e-5
+UpperLayerPermeability = 1e-6
+FracturePermeability = 1e-1
 BottomLayerPorosity = 0.25
 UpperLayerPorosity = 0.2
 FracturePorosity = 0.4
@@ -16,12 +16,12 @@ Name = single_reference.txt
 [TimeLoop]
 TEnd = 1e8 # [s]
 NumOutputFiles = 1
-MaxTimeStepSize = 1e8
+MaxTimeStepSize = 1e6
 
 [Problem]
 Name = singlefracture_reference # name passed to the output routines
-OverPressure = 3e5
-BoundaryMoleFrac = 1e-2
+HeadAtInlet = 4
+ConcentrationAtInlet = 1e-2
 EnableGravity = false # disable gravity
 
 [LinearSolver]

@@ -171,8 +171,7 @@ int main(int argc, char** argv) try
         volumeFlux.resize(fvGridGeometry->numScvf(), 0.0);
 
         using FluxVariables =  typename GET_PROP_TYPE(OnePTypeTag, FluxVariables);
-        auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
-        auto massUpwindTerm = [](const auto& volVars) { return volVars.density(0)*volVars.mobility(0); };
+        auto upwindTerm = [](const auto& volVars) { return 1.0; };
         for (const auto& element : elements(leafGridView))
         {
             auto fvGeometry = localView(*fvGridGeometry);
@@ -225,9 +224,9 @@ int main(int argc, char** argv) try
                             sumInflux += volumeFlux[idx];
 
                         if (problemOneP->isOnInflowBoundary(scvf.ipGlobal()))
-                            massInflux += fluxVars.advectiveFlux(0, massUpwindTerm);
+                            massInflux += volumeFlux[idx];
                         else if (problemOneP->isOnOutflowBoundary(scvf.ipGlobal()))
-                            massOutflux += fluxVars.advectiveFlux(0, massUpwindTerm);
+                            massOutflux += volumeFlux[idx];
                         else
                             DUNE_THROW(Dune::InvalidStateException, "Wrong Dirichlet BCs set");
                     }
@@ -284,10 +283,10 @@ int main(int argc, char** argv) try
 
         //! add caption for tracer data
         file << std::endl << "time [s] \t | \t "
-                             "tracer influx [kg/s] \t | \t "
-                             "tracer Outflux [kg/s] \t | \t "
-                             "tracer mass fracture [kg] \t | \t "
-                             "tracer mass lower layer [kg]" << std::endl;
+                             "tracer influx [1/s] \t | \t "
+                             "tracer Outflux [1/s] \t | \t "
+                             "poro*tracer integral fracture [-] \t | \t "
+                             "poro*tracer integral lower matrix layer [-]" << std::endl;
     }
 
     ////////////////////////////////////////////////////////////

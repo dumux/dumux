@@ -29,7 +29,7 @@
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
@@ -61,7 +61,7 @@ SET_TYPE_PROP(IncompressibleTestProblem, LocalResidual, OnePIncompressibleLocalR
 SET_PROP(IncompressibleTestProblem, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::LiquidPhase<Scalar, Dumux::Components::Constant<0, Scalar> >;
 };
 
 // Enable caching
@@ -128,7 +128,7 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 public:
     OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
-        overPressure_ = getParam<Scalar>("Problem.OverPressure");
+        headAtInlet_ = getParam<Scalar>("Problem.HeadAtInlet");
     }
 
     //! Specifies which kind of boundary condition should be used
@@ -145,8 +145,9 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         if (isOnInflowBoundary(globalPos))
-            return PrimaryVariables(1.0e+5+overPressure_);
-        return PrimaryVariables(1.0e+5);
+            return PrimaryVariables(headAtInlet_);
+        else
+            return PrimaryVariables(1.0);
     }
 
     //! Returns the temperature in the domain
@@ -180,7 +181,7 @@ public:
     }
 
 private:
-    Scalar overPressure_;
+    Scalar headAtInlet_;
     std::vector<Scalar> kField_;
     std::vector<Scalar> poro_;
 };

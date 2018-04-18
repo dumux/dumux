@@ -93,11 +93,11 @@ public:
     //! They can possible vary with space but are usually constants
 
     //! fluid density
-    static constexpr Scalar fluidDensity() { return 1000.0; }
+    static constexpr Scalar fluidDensity() { return 1.0; }
     Scalar fluidDensity(const Element &element, const SubControlVolume& scv) const { return fluidDensity(); }
 
     //! fluid molar mass
-    static constexpr Scalar fluidMolarMass() { return 18.0e-3; }
+    static constexpr Scalar fluidMolarMass() { return 1.; }
     Scalar fluidMolarMass(const Element &element, const SubControlVolume& scv) const { return fluidMolarMass(); }
     Scalar fluidMolarMass(const GlobalPosition &globalPos) const { return fluidMolarMass(); }
 

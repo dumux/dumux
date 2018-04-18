@@ -64,9 +64,48 @@ SET_TYPE_PROP(TracerTestProblem, Problem, TracerTestProblem<TypeTag>);
 SET_TYPE_PROP(TracerTestProblem, SpatialParams, TracerTestSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(TracerTestProblem, UseMoles, false);
 SET_BOOL_PROP(TracerTestCCProblem, EnableMolecularDiffusion, false);
 SET_BOOL_PROP(TracerTestCCProblem, SolutionDependentAdvection, false);
+
+// use the static interaction volume type with sizes known at compile time
+SET_PROP(TracerTestProblem, PrimaryInteractionVolume)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+
+    // use the default traits
+    using Traits = CCMpfaODefaultStaticInteractionVolumeTraits< NodalIndexSet, Scalar, 8, 12 >;
+public:
+    using type = CCMpfaOStaticInteractionVolume< Traits >;
+};
+
+// sizes of the ivs are known, use Dune::ReservedVector in index sets
+SET_PROP(TracerTestProblem, DualGridNodalIndexSet)
+{
+    using GV = typename GET_PROP_TYPE(TypeTag, GridView);
+    static constexpr int dim = GV::dimension;
+    static constexpr int dimWorld = GV::dimensionworld;
+private:
+    struct Traits
+    {
+        using GridView = GV;
+        using GridIndexType = typename GV::IndexSet::IndexType;
+        using LocalIndexType = std::uint8_t;
+
+        //! per default, we use dynamic data containers (iv size unknown)
+        template< class T > using NodalScvDataStorage = Dune::ReservedVector< T, 8 >;
+        template< class T > using NodalScvfDataStorage = Dune::ReservedVector< T, 24 >;
+
+        //! store data on neighbors of scvfs in static containers if possible
+        template< class T >
+        using ScvfNeighborDataStorage = typename std::conditional_t< (dim<dimWorld),
+                                                                     std::vector< T >,
+                                                                     Dune::ReservedVector< T, 2 > >;
+    };
+public:
+    using type = CCMpfaDualGridNodalIndexSet< Traits >;
+};
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
@@ -88,9 +127,9 @@ public:
     //! The number of components
     static constexpr int numComponents = 1;
     //! Human readable component name (index compIdx) (for vtk output)
-    static std::string componentName(int compIdx) { return "tracer_" + std::to_string(compIdx); }
+    static std::string componentName(int compIdx) { return "c"; }
     //! Human readable phase name (index phaseIdx) (for velocity vtk output)
-    static std::string phaseName(int phaseIdx = 0) { return "Groundwater"; }
+    static std::string phaseName(int phaseIdx = 0) { return "h2o"; }
     //! Molar mass in kg/mol of the component with index compIdx
     static constexpr Scalar molarMass(unsigned int compIdx) { return 1.; }
     //! binary diffusion coefficient
@@ -148,12 +187,8 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
 public:
     TracerTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeom) : ParentType(fvGridGeom)
     {
-        boundaryMoleFrac_ = getParam<Scalar>("Problem.BoundaryMoleFrac");
+        concAtInlet_ = getParam<Scalar>("Problem.ConcentrationAtInlet");
         outputFileName_ = getParam<std::string>("OutputFile.Name");
-
-        // state in the console whether mole or mass fractions are used
-        if(useMoles) std::cout<<"problem uses mole fractions" << '\n';
-        else std::cout<<"problem uses mass fractions" << '\n';
     }
 
     //! writes the mass distribution in the layers to output file
@@ -188,12 +223,7 @@ public:
             const auto& vv = elemVolVars[eIdx];
             for (const auto& scv : scvs(fvGeometry))
             {
-                const auto mass = this->spatialParams().porosity(element, scv, elemSol)
-                                  *FluidSystem::molarMass(0)
-                                  *vv.moleFraction(0, 0)
-                                  /this->spatialParams().fluidMolarMass()
-                                  *this->spatialParams().fluidDensity()
-                                  *scv.volume();
+                const auto mass = vv.porosity()*vv.moleFraction(0, 0)*scv.volume();
 
                 if (marker == SpatialParams::LayerMarkers::lowerLayer)
                     massLowerLayer += mass;
@@ -207,7 +237,7 @@ public:
 
             // evaluate influx/outflux of tracer
             const auto c = element.geometry().center();
-            if (c[2] > 90.0 || c[2] < 10.0)
+            if (c[2] > 80.0 || c[2] < 10.0) // discard those elements that are clearly not connected to inflow/outflow boundaries
             {
                 for (const auto& scvf : scvfs(fvGeometry))
                 {
@@ -245,23 +275,15 @@ public:
         //! influx
         if (isOnInflowBoundary(scvf.ipGlobal()))
         {
-            const auto influx = this->spatialParams().volumeFlux(scvf)
-                                *this->spatialParams().fluidDensity()
-                                /this->spatialParams().fluidMolarMass()
-                                *boundaryMoleFrac_
-                                *FluidSystem::molarMass(0)
-                                /scvf.area();
+            const auto influx = this->spatialParams().volumeFlux(scvf)*concAtInlet_/scvf.area();
             return NumEqVector(influx);
         }
         //! outflux
         else if (isOnOutflowBoundary(scvf.ipGlobal()))
         {
             const auto outFlux = this->spatialParams().volumeFlux(scvf)
-                                 *this->spatialParams().fluidDensity()
-                                 /this->spatialParams().fluidMolarMass()
                                  *elemVolVars[scvf.insideScvIdx()].moleFraction(0, 0)
-                                 *FluidSystem::molarMass(0)/
-                                 scvf.area();
+                                 /scvf.area();
             return NumEqVector(outFlux);
         }
         //! remaining boundaries
@@ -269,7 +291,7 @@ public:
     }
 
     //! Evaluate the initial value for a control volume.
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const { return PrimaryVariables(0.0); }
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(0.0); }
 
     //! Returns if a given position is on inflow boundary
     bool isOnInflowBoundary(const GlobalPosition& globalPos) const { return globalPos[0] < 1.0e-6 && globalPos[2] > 90.0; }
@@ -278,7 +300,7 @@ public:
     bool isOnOutflowBoundary(const GlobalPosition& globalPos) const { return globalPos[1] < 1.0e-6 && globalPos[2] < 10.0; }
 
 private:
-    Scalar boundaryMoleFrac_;
+    Scalar concAtInlet_;
     std::string outputFileName_;
 };
 
