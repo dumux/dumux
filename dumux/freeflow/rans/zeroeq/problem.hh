@@ -34,8 +34,7 @@
 #include "model.hh"
 #include "models.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ZeroEqModel
@@ -71,11 +70,15 @@ class ZeroEqProblem : public RANSProblem<TypeTag>
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    //! The constructor sets the gravity, if desired by the user.
-    ZeroEqProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    /*!
+     * \brief The constructor
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    ZeroEqProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup)
     {
-        eddyViscosityModel_ = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.EddyViscosityModel", 1);
+        eddyViscosityModel_ = getParamFromGroup<int>(paramGroup, "RANS.EddyViscosityModel", 1);
     }
 
     /*!
@@ -277,6 +280,6 @@ private:
     { return *static_cast<const Implementation *>(this); }
 };
 
-}
+} // end namespace Dumux
 
 #endif

@@ -25,11 +25,10 @@
 
 #include <dumux/common/fvproblem.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup ImplicitBaseProblems
+ * \ingroup PorousmediumFlow
  * \brief Base class for all fully implicit porous media problems
  * TODO: derive from base problem property?
  */
@@ -56,14 +55,15 @@ public:
      * \brief The constructor
      *
      * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    PorousMediumFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    PorousMediumFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup)
     , gravity_(0.0)
     , spatialParams_(std::make_shared<SpatialParams>(this->asImp_()))
     {
         // TODO: spatial params init?
-        const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        const bool enableGravity = getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity");
         if (enableGravity)
             gravity_[dimWorld-1]  = -9.81;
     }

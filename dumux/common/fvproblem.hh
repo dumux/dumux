@@ -83,12 +83,14 @@ public:
     /*!
      * \brief Constructor
      * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    FVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    FVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : fvGridGeometry_(fvGridGeometry)
+    , paramGroup_(paramGroup)
     {
         // set a default name for the problem
-        problemName_ = getParamFromGroup<std::string>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.Name");
+        problemName_ = getParamFromGroup<std::string>(paramGroup, "Problem.Name");
     }
 
     /*!
@@ -550,6 +552,10 @@ public:
     const FVGridGeometry& fvGridGeometry() const
     { return *fvGridGeometry_; }
 
+    //! The parameter group in which to retrieve runtime parameters
+    const std::string& paramGroup() const
+    { return paramGroup_; }
+
 protected:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
@@ -586,6 +592,9 @@ private:
 
     //! The finite volume grid geometry
     std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
+
+    //! The parameter group in which to retrieve runtime parameters
+    std::string paramGroup_;
 
     //! The name of the problem
     std::string problemName_;
