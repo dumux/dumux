@@ -29,9 +29,7 @@
 #include <dumux/discretization/methods.hh>
 #include "model.hh"
 
-namespace Dumux
-{
-
+namespace Dumux {
 
 //! The implementation is specialized for the different discretizations
 template<class TypeTag, DiscretizationMethod discMethod> struct NavierStokesParentProblemImpl;
@@ -66,7 +64,7 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using GridView = typename FVGridGeometry::GridView;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -80,12 +78,16 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    //! The constructor sets the gravity, if desired by the user.
-    NavierStokesProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry),
-          gravity_(0)
+    /*!
+     * \brief The constructor
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    NavierStokesProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup)
+    , gravity_(0.0)
     {
-        if (getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity"))
+        if (getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity"))
             gravity_[dim-1]  = -9.81;
     }
 
@@ -140,6 +142,6 @@ private:
     GlobalPosition gravity_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

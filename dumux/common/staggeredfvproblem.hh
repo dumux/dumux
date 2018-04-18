@@ -68,10 +68,11 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
 public:
     /*!
      * \brief Constructor
-    * \param fvGridGeometry The finite volume grid geometry
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
-    StaggeredFVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    StaggeredFVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup)
     { }
 
     /*!

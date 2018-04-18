@@ -33,8 +33,7 @@
 
 #include "model.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup RANSModel
@@ -71,9 +70,13 @@ class RANSProblem : public NavierStokesProblem<TypeTag>
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    //! The constructor sets the gravity, if desired by the user.
-    RANSProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    /*!
+     * \brief The constructor
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    RANSProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup)
     { }
 
     /*!
@@ -350,6 +353,6 @@ private:
     { return *static_cast<const Implementation *>(this); }
 };
 
-}
+} // end namespace Dumux
 
 #endif
