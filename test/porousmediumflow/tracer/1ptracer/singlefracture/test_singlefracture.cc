@@ -107,6 +107,8 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
     // setup & solve 1p problem on this grid
     ////////////////////////////////////////////////////////////
+
+    // Put this in a block to release memory after solving 1p problem
     {
         //! create the finite volume grid geometry
         using FVGridGeometry = typename GET_PROP_TYPE(OnePTypeTag, FVGridGeometry);
@@ -272,6 +274,7 @@ int main(int argc, char** argv) try
         Dune::VTKWriter<GridView> onepWriter(leafGridView);
         onepWriter.addCellData(p, "pressure");
         onepWriter.addCellData(Field(leafGridView, fvGridGeometry->elementMapper(), v, "velocity", dimWorld, 0).get());
+        problemOneP->addVtkFields(onepWriter);
         onepWriter.write("1p_" + problemOneP->name());
 
         //! write influx/outflux (should be the same) into output file
@@ -283,7 +286,6 @@ int main(int argc, char** argv) try
         file << std::endl << "time [s] \t | \t "
                              "tracer influx [kg/s] \t | \t "
                              "tracer Outflux [kg/s] \t | \t "
-                             "tracer mass upper layer [kg] \t | \t "
                              "tracer mass fracture [kg] \t | \t "
                              "tracer mass lower layer [kg]" << std::endl;
     }

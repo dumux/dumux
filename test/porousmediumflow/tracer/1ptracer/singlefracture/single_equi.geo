@@ -8,12 +8,12 @@
 a = 1.0;
 
 ref = 1.0;                    // refinement in z-direction towards fracture plane (ref < 1.0)
-numPointsZ_layer1 = 20;       // no vertices in z in layer one
-numPointsZ_layer2_below = 20; // no vertices in z in layer two below the fault
-numPointsZ_layer2_above = 50; // no vertices in z in layer two above the fault
-numPointsZ_fault = 10;        // no vertices in z inside the fault
-numPointsX = 100;             // no vertices in x direction
-numPointsY = 100;             // no vertices in y direction
+numPointsZ_layer1 = 5;       // no vertices in z in layer one
+numPointsZ_layer2_below = 5; // no vertices in z in layer two below the fault
+numPointsZ_layer2_above = 5; // no vertices in z in layer two above the fault
+numPointsZ_fault = 5;        // no vertices in z inside the fault
+numPointsX = 10;             // no vertices in x direction
+numPointsY = 10;             // no vertices in y direction
 
 // domain bounding box
 Point(1) = {0.0, 0.0, 0.0, 1.0};

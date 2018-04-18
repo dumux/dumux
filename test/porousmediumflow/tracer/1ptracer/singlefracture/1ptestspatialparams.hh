@@ -72,6 +72,9 @@ public:
     const Scalar permeability(const Element &element,
                               const SubControlVolume &scv,
                               const ElementSolutionVector &elemSol) const
+    { return permeability(element); }
+
+    const Scalar permeability(const Element &element) const
     {
         const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);
         const auto marker = GridCreator::getElementDomainMarker(eIdx);
@@ -89,6 +92,9 @@ public:
     Scalar porosity(const Element &element,
                     const SubControlVolume &scv,
                     const ElementSolutionVector &elemSol) const
+    { return porosity(element); }
+
+    Scalar porosity(const Element& element) const
     {
         const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);
         const auto marker = GridCreator::getElementDomainMarker(eIdx);

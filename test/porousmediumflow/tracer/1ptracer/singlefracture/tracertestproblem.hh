@@ -164,7 +164,6 @@ public:
     {
         std::ofstream file(outputFileName_, std::ofstream::out | std::ofstream::app);
 
-        Scalar massUpperLayer = 0.0;
         Scalar massLowerLayer = 0.0;
         Scalar massFracture = 0.0;
         Scalar massInflow = 0.0;
@@ -199,7 +198,7 @@ public:
                 if (marker == SpatialParams::LayerMarkers::lowerLayer)
                     massLowerLayer += mass;
                 else if (marker == SpatialParams::LayerMarkers::upperLayer)
-                    massUpperLayer += mass;
+                { /*do nothing*/ }
                 else if (marker == SpatialParams::LayerMarkers::fracture)
                     massFracture += mass;
                 else
@@ -224,7 +223,6 @@ public:
         file << t << "\t\t\t"
              << massInflow << "\t\t\t"
              << massOutflow << "\t\t\t"
-             << massUpperLayer << "\t\t\t"
              << massFracture << "\t\t\t"
              << massLowerLayer << "\n";
         file.close();

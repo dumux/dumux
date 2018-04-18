@@ -158,8 +158,31 @@ public:
     //! Returns if a given position is on outflow boundary
     bool isOnOutflowBoundary(const GlobalPosition& globalPos) const { return globalPos[1] < 1.0e-6 && globalPos[2] < 10.0; }
 
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    template<class VTKWriter>
+    void addVtkFields(VTKWriter& vtk)
+    {
+        const auto& gridView = this->fvGridGeometry().gridView();
+        kField_.resize(gridView.size(0));
+        poro_.resize(gridView.size(0));
+
+        for (const auto& e : elements(this->fvGridGeometry().gridView()))
+        {
+            const auto eIdx = this->fvGridGeometry().elementMapper().index(e);
+            kField_[eIdx] = this->spatialParams().permeability(e);
+            poro_[eIdx] = this->spatialParams().porosity(e);
+        }
+
+        vtk.addCellData(kField_, "Permeability");
+        vtk.addCellData(poro_, "Porosity");
+    }
+
 private:
     Scalar overPressure_;
+    std::vector<Scalar> kField_;
+    std::vector<Scalar> poro_;
 };
 
 } // end namespace Dumux
