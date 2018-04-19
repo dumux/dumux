@@ -281,7 +281,7 @@ public:
         // In the case of a kinetic consideration, mass transfer
         // between phases is realized via source terms there is a
         // balance equation for each component in each phase
-        const auto& localScvIdx = scv.indexInElement();
+        const auto& localScvIdx = scv.localDofIndex();
         const auto& volVars = elemVolVars[localScvIdx];
         ComponentVector componentIntoPhaseMassTransfer[numPhases];
 #define FUNKYMASSTRANSFER 0

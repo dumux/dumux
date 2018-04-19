@@ -270,9 +270,9 @@ public:
      * Negative values indicate an inflow.
      */
     NumEqVector neumann(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolvars,
-                             const SubControlVolumeFace& scvf) const
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolvars,
+                        const SubControlVolumeFace& scvf) const
     {
         NumEqVector values(0.0);
         const auto globalPos = scvf.ipGlobal();

@@ -139,7 +139,7 @@ public:
     }
 
     //! The global index of this scv
-    LocalIndexType indexInElement() const
+    LocalIndexType localDofIndex() const
     {
         return 0;
     }

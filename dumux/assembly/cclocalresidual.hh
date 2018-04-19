@@ -64,7 +64,7 @@ public:
                   const SubControlVolumeFace& scvf) const
     {
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto localScvIdx = scv.indexInElement();
+        const auto localScvIdx = scv.localDofIndex();
         residual[localScvIdx] += this->asImp().evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
     }
 

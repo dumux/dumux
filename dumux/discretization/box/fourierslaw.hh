@@ -96,7 +96,7 @@ public:
         // compute the temperature gradient with the shape functions
         GlobalPosition gradTemp(0.0);
         for (auto&& scv : scvs(fvGeometry))
-            gradTemp.axpy(elemVolVars[scv].temperature(), fluxVarsCache.gradN(scv.indexInElement()));
+            gradTemp.axpy(elemVolVars[scv].temperature(), fluxVarsCache.gradN(scv.localDofIndex()));
 
         // comute the heat conduction flux
         return -1.0*vtmv(scvf.unitOuterNormal(), lambda, gradTemp)*scvf.area();

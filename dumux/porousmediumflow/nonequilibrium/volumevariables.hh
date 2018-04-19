@@ -174,20 +174,20 @@ public:
             // retrieve temperature from solution vector
             for(int phaseIdx=0; phaseIdx < numEnergyEqFluid; ++phaseIdx)
             {
-                const auto T = elemSol[scv.indexInElement()][Indices::temperature0Idx + phaseIdx];
+                const auto T = elemSol[scv.localDofIndex()][Indices::temperature0Idx + phaseIdx];
                 fluidState.setTemperature(phaseIdx, T);
             }
         }
         else
         {
-            const auto T = elemSol[scv.indexInElement()][Indices::temperature0Idx];
+            const auto T = elemSol[scv.localDofIndex()][Indices::temperature0Idx];
             fluidState.setTemperature(T);
         }
 
         // set solid temperatures
         static_assert(numEnergyEqSolid == 1, "Solid system not yet implemented");
         for (int solidPhaseIdx = numEnergyEqFluid; solidPhaseIdx < numEnergyEqFluid+numEnergyEqSolid; ++solidPhaseIdx)
-            temperatureSolid_ = elemSol[scv.indexInElement()][Indices::temperature0Idx + solidPhaseIdx];
+            temperatureSolid_ = elemSol[scv.localDofIndex()][Indices::temperature0Idx + solidPhaseIdx];
     }
 
     /*!
@@ -606,12 +606,12 @@ public:
         for(int phaseIdx=0; phaseIdx < numEnergyEqFluid; ++phaseIdx)
         {
             // retrieve temperature from solution vector
-            const Scalar T = elemSol[scv.indexInElement()][Indices::temperature0Idx + phaseIdx];
+            const Scalar T = elemSol[scv.localDofIndex()][Indices::temperature0Idx + phaseIdx];
             fluidState.setTemperature(phaseIdx, T);
         }
 
         for(int solidPhaseIdx = numEnergyEqFluid; solidPhaseIdx < numEnergyEqFluid+numEnergyEqSolid; ++solidPhaseIdx)
-            temperatureSolid_ = elemSol[scv.indexInElement()][Indices::temperature0Idx + solidPhaseIdx];
+            temperatureSolid_ = elemSol[scv.localDofIndex()][Indices::temperature0Idx + solidPhaseIdx];
     }
 
     /*!

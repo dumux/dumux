@@ -72,7 +72,7 @@ public:
         for (auto&& scv : scvs(fvGeometry))
         {
             //here we need to set the constraints of the mpnc model into the residual
-            const auto localScvIdx = scv.indexInElement();
+            const auto localScvIdx = scv.localDofIndex();
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                 residual[localScvIdx][phase0NcpIdx + phaseIdx] = elemVolVars[scv].phaseNcp(phaseIdx);
         }

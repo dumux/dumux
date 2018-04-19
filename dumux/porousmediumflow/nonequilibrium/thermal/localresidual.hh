@@ -164,7 +164,7 @@ public:
                                     const SubControlVolume &scv)
     {
         //specialization for 2 fluid phases
-        const auto& localScvIdx = scv.indexInElement();
+        const auto& localScvIdx = scv.localDofIndex();
         const auto& volVars = elemVolVars[localScvIdx];
         const auto& fs = volVars.fluidState() ;
         const Scalar characteristicLength = volVars.characteristicLength()  ;
@@ -415,7 +415,7 @@ public:
                                     const SubControlVolume &scv)
     {
         //specialization for 2 fluid phases
-        const auto &localScvIdx = scv.indexInElement();
+        const auto &localScvIdx = scv.localDofIndex();
         const auto &volVars = elemVolVars[localScvIdx];
 
         const Scalar awn = volVars.interfacialArea(phase0Idx, phase1Idx);

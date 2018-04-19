@@ -122,9 +122,9 @@ public:
         {
             // compute the temperature gradient with the shape functions
             if (phaseIdx < numEnergyEqFluid)
-                gradTemp.axpy(elemVolVars[scv].temperature(phaseIdx), fluxVarsCache.gradN(scv.indexInElement()));
+                gradTemp.axpy(elemVolVars[scv].temperature(phaseIdx), fluxVarsCache.gradN(scv.localDofIndex()));
             else
-               gradTemp.axpy(elemVolVars[scv].temperatureSolid(), fluxVarsCache.gradN(scv.indexInElement()));
+               gradTemp.axpy(elemVolVars[scv].temperatureSolid(), fluxVarsCache.gradN(scv.localDofIndex()));
         }
 
         // comute the heat conduction flux

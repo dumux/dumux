@@ -234,7 +234,7 @@ public:
                     volVars.update(elemSol, *problem_, element, scv);
 
                     // write solution at dof in current solution vector
-                    sol_[scv.dofIndex()] = elemSol[scv.indexInElement()];
+                    sol_[scv.dofIndex()] = elemSol[scv.localDofIndex()];
 
                     const auto dofIdxGlobal = scv.dofIndex();
                     // For cc schemes, overwrite the saturation by a mass conservative one here
@@ -329,7 +329,7 @@ public:
                     ElementSolution elemSolSon(element, sol_, *fvGridGeometry_);
                     const auto fatherGeometry = fatherElement.geometry();
                     for (const auto& scv : scvs(fvGeometry))
-                        elemSolSon[scv.indexInElement()] = evalSolution(fatherElement,
+                        elemSolSon[scv.localDofIndex()] = evalSolution(fatherElement,
                                                                         fatherGeometry,
                                                                         adaptedValuesFather.u,
                                                                         scv.dofPosition());
@@ -355,7 +355,7 @@ public:
                         }
 
                         // store constructed (pressure) values of son in the current solution (saturation comes later)
-                        sol_[dofIdxGlobal] = elemSolSon[scv.indexInElement()];
+                        sol_[dofIdxGlobal] = elemSolSon[scv.localDofIndex()];
                     }
                 }
             }

@@ -63,7 +63,7 @@ public:
         const auto numVert = element.subEntities(GridView::dimension);
         priVars_.resize(numVert);
         for (const auto& scv : scvs(fvGeometry))
-            priVars_[scv.indexInElement()] = elemVolVars[scv].priVars();
+            priVars_[scv.localDofIndex()] = elemVolVars[scv].priVars();
     }
 
     //! extract the element solution from the solution vector using a mapper
@@ -85,7 +85,7 @@ public:
         const auto numVert = element.subEntities(GridView::dimension);
         priVars_.resize(numVert);
         for (const auto& scv : scvs(fvGeometry))
-            priVars_[scv.indexInElement()] = sol[scv.dofIndex()];
+            priVars_[scv.localDofIndex()] = sol[scv.dofIndex()];
     }
 
     //! bracket operator const access

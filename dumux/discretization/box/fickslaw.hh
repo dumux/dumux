@@ -93,7 +93,7 @@ public:
         // density interpolation
         Scalar rho(0.0);
         for (auto&& scv : scvs(fvGeometry))
-            rho += elemVolVars[scv].molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
+            rho += elemVolVars[scv].molarDensity(phaseIdx)*shapeValues[scv.localDofIndex()][0];
 
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
@@ -119,7 +119,7 @@ public:
             // the mole/mass fraction gradient
             GlobalPosition gradX(0.0);
             for (auto&& scv : scvs(fvGeometry))
-                gradX.axpy(elemVolVars[scv].moleFraction(phaseIdx, compIdx), fluxVarsCache.gradN(scv.indexInElement()));
+                gradX.axpy(elemVolVars[scv].moleFraction(phaseIdx, compIdx), fluxVarsCache.gradN(scv.localDofIndex()));
 
             // compute the diffusive flux
             componentFlux[compIdx] = -1.0*rho*vtmv(scvf.unitOuterNormal(), D, gradX)*scvf.area();
@@ -142,7 +142,7 @@ public:
         Scalar rho(0.0);
         const auto& shapeValues = fluxVarCache.shapeValues();
         for (auto&& scv : scvs(fvGeometry))
-            rho += elemVolVars[scv].molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
+            rho += elemVolVars[scv].molarDensity(phaseIdx)*shapeValues[scv.localDofIndex()][0];
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
@@ -171,7 +171,7 @@ public:
 
             ti[compIdx].resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
-                ti[compIdx][scv.indexInElement()] = -rho*vtmv(scvf.unitOuterNormal(), D, fluxVarCache.gradN(scv.indexInElement()))*scvf.area();
+                ti[compIdx][scv.localDofIndex()] = -rho*vtmv(scvf.unitOuterNormal(), D, fluxVarCache.gradN(scv.localDofIndex()))*scvf.area();
         }
 
         return ti;

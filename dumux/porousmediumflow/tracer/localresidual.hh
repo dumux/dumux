@@ -297,8 +297,8 @@ public:
             for (const auto& scv : scvs(fvGeometry))
             {
                 // diffusive term
-                const auto diffDeriv = useMoles ? ti[compIdx][scv.indexInElement()]
-                                                : ti[compIdx][scv.indexInElement()]*FluidSystem::molarMass(compIdx);
+                const auto diffDeriv = useMoles ? ti[compIdx][scv.localDofIndex()]
+                                                : ti[compIdx][scv.localDofIndex()]*FluidSystem::molarMass(compIdx);
                 A[insideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] += diffDeriv;
                 A[outsideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] -= diffDeriv;
             }

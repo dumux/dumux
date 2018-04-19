@@ -91,7 +91,7 @@ int main (int argc, char *argv[]) try
 
         for (auto&& scv : scvs(fvGeometry))
         {
-            std::cout << "-- scv " << scv.indexInElement() << " center at: " << scv.center() << " , volume: " << scv.volume()  << std::endl;
+            std::cout << "-- scv " << scv.localDofIndex() << " center at: " << scv.center() << " , volume: " << scv.volume()  << std::endl;
         }
 
         auto range2 = scvfs(fvGeometry);

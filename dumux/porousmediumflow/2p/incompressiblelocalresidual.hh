@@ -345,7 +345,7 @@ public:
         for (const auto& scvJ : scvs(fvGeometry))
         {
             const auto globalJ = scvJ.dofIndex();
-            const auto localJ = scvJ.indexInElement();
+            const auto localJ = scvJ.localDofIndex();
 
             // the transmissibily associated with the scvJ
             const auto tj = ti[localJ];
