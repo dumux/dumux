@@ -120,10 +120,6 @@ NEW_PROP_TAG(Formulation);                         //!< The formulation of the m
 NEW_PROP_TAG(UseConstraintSolver);                 //!< Whether to use a contraint solver for computing the secondary variables
 NEW_PROP_TAG(UseKelvinEquation);                   //!< If we use Kelvin equation to lower the vapor pressure as a function of capillary pressure, temperature
 
-// specify if we evaluate the permeability in the volume (for discontinuous fields)
-// or at the scvf center for analytical permeability fields (e.g. convergence studies)
-NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);
-
 // When using the box method in a multi-phase context, an interface solver might be necessary
 NEW_PROP_TAG(EnableBoxInterfaceSolver);
 
