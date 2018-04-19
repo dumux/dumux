@@ -26,7 +26,6 @@
 
 #include <array>
 #include <dune/common/version.hh>
-#include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/math.hh>

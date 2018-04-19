@@ -25,6 +25,7 @@
 #define DUMUX_DISCRETIZATION_BOX_SUBCONTROLVOLUME_HH
 
 #include <dune/common/version.hh>
+#include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
