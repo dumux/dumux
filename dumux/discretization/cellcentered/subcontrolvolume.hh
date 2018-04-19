@@ -138,7 +138,7 @@ public:
         return elementIndex();
     }
 
-    //! The global index of this scv
+    //! The element-local index of the dof this scv is embedded in
     LocalIndexType localDofIndex() const
     {
         return 0;

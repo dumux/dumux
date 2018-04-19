@@ -113,7 +113,7 @@ public:
       center_(0.0),
       volume_(geometryHelper.scvVolume(corners_)),
       elementIndex_(elementIndex),
-      scvIdx_(scvIdx),
+      localDofIdx_(scvIdx),
       dofIndex_(dofIndex)
     {
         // compute center point
@@ -145,10 +145,10 @@ public:
 #endif
     }
 
-    //! The global index of this scv
+    //! The element-local index of the dof this scv is embedded in
     LocalIndexType localDofIndex() const
     {
-        return scvIdx_;
+        return localDofIdx_;
     }
 
     //! The index of the dof this scv is embedded in
@@ -182,7 +182,7 @@ private:
     GlobalPosition center_;
     Scalar volume_;
     GridIndexType elementIndex_;
-    LocalIndexType scvIdx_;
+    LocalIndexType localDofIdx_;
     GridIndexType dofIndex_;
 };
 
