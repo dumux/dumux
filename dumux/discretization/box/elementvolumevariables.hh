@@ -133,11 +133,7 @@ public:
         // resize volume variables to the required size
         volumeVariables_.resize(fvGeometry.numScv());
         for (auto&& scv : scvs(fvGeometry))
-        {
-            // TODO: INTERFACE SOLVER
-            // gridVolVars().problem().model().boxInterfaceConditionSolver().updateScvVolVars(element, scv, sol);
             volumeVariables_[scv.indexInElement()].update(elemSol, gridVolVars().problem(), element, scv);
-        }
     }
 
     const VolumeVariables& operator [](std::size_t scvIdx) const
