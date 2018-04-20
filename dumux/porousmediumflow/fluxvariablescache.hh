@@ -91,7 +91,7 @@ public:
         const auto& localBasis = fvGeometry.feLocalBasis();
 
         // evaluate shape functions and gradients at the integration point
-        const auto ipLocal = geometry.local(scvf.center());
+        const auto ipLocal = geometry.local(scvf.ipGlobal());
         jacInvT_ = geometry.jacobianInverseTransposed(ipLocal);
         localBasis.evaluateJacobian(ipLocal, shapeJacobian_);
         localBasis.evaluateFunction(ipLocal, shapeValues_); // shape values for rho
