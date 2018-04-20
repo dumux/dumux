@@ -100,6 +100,27 @@ struct NavierStokesModelTraits
     using Indices = NavierStokesIndices<dim()>;
 };
 
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Traits class for the volume variables of the Navier-Stokes model.
+ *
+ * \tparam PV The type used for primary variables
+ * \tparam FSY The fluid system type
+ * \tparam FST The fluid state type
+ * \tparam MT The model traits
+ */
+template<class PV,
+         class FSY,
+         class FST,
+         class MT>
+struct NavierStokesVolumeVariablesTraits
+{
+    using PrimaryVariables = PV;
+    using FluidSystem = FSY;
+    using FluidState = FST;
+    using ModelTraits = MT;
+};
+
 // \{
 ///////////////////////////////////////////////////////////////////////////
 // properties for the single-phase Navier-Stokes model
@@ -150,8 +171,23 @@ public:
 //! The local residual
 SET_TYPE_PROP(NavierStokes, LocalResidual, NavierStokesResidual<TypeTag>);
 
-//! The volume variables
-SET_TYPE_PROP(NavierStokes, VolumeVariables, NavierStokesVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(NavierStokes, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    static_assert(MT::numPhases() == 1 && MT::numComponents() == 1 &&
+                  FSY::numPhases == 1 && FSY::numComponents == 1,
+                  "The Navier-Stokes model only works with a single-phase fluid system.");
+
+    using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
+public:
+    using type = NavierStokesVolumeVariables<Traits>;
+};
 
 //! The flux variables
 SET_TYPE_PROP(NavierStokes, FluxVariables, NavierStokesFluxVariables<TypeTag>);

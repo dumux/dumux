@@ -53,32 +53,13 @@
 #define DUMUX_RANS_NC_MODEL_HH
 
 #include <dumux/common/properties.hh>
-
-#include <dumux/freeflow/rans/model.hh>
-#include <dumux/freeflow/rans/zeroeq/model.hh>
 #include <dumux/freeflow/navierstokesnc/model.hh>
-#include <dumux/freeflow/nonisothermal/model.hh>
-#include <dumux/freeflow/nonisothermal/indices.hh>
-#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "vtkoutputfields.hh"
 
 namespace Dumux {
-
-/*!
- * \ingroup RANSModel
- * \brief Traits for the RANS multi-component model
- */
-template<int dim, int nComp, int phaseIdx, int replaceCompEqIdx>
-struct RANSNCModelTraits : NavierStokesNCModelTraits<dim, nComp, phaseIdx, replaceCompEqIdx>
-{
-private:
-    using ParentType = NavierStokesNCModelTraits<dim, nComp, phaseIdx, replaceCompEqIdx>;
-public:
-    using Indices = RANSNCIndices<dim, ParentType::numEq(), phaseIdx, replaceCompEqIdx>;
-};
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the single-phase, multi-component RANS model
@@ -90,16 +71,28 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the single-phase, multi-component isothermal RANS model
-NEW_TYPE_TAG(RANSNC, INHERITS_FROM(RANS, NavierStokesNC));
-NEW_TYPE_TAG(ZeroEqNC, INHERITS_FROM(ZeroEq, RANSNC));
+NEW_TYPE_TAG(RANSNC, INHERITS_FROM(NavierStokesNC));
+NEW_TYPE_TAG(ZeroEqNC, INHERITS_FROM(RANSNC));
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values
 ///////////////////////////////////////////////////////////////////////////
 
-//! The volume variables
-SET_TYPE_PROP(RANSNC, VolumeVariables, RANSNCVolumeVariables<TypeTag>);
-SET_TYPE_PROP(ZeroEqNC, SinglePhaseVolumeVariables, ZeroEqVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(ZeroEqNC, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
+    using NSVolVars = NavierStokesNCVolumeVariables<Traits>;
+    using RANSVolVars = ZeroEqVolumeVariables<Traits, NSVolVars>;
+public:
+    using type = RANSNCVolumeVariables<Traits, RANSVolVars>;
+};
 
 //! The specific vtk output fields
 SET_PROP(ZeroEqNC, VtkOutputFields)
@@ -118,26 +111,23 @@ public:
 //////////////////////////////////////////////////////////////////////////
 
 //! The type tags for the single-phase, multi-component non-isothermal RANS models
-NEW_TYPE_TAG(RANSNCNI, INHERITS_FROM(RANSNI, NavierStokesNC));
-NEW_TYPE_TAG(ZeroEqNCNI, INHERITS_FROM(ZeroEqNI, RANSNCNI));
+NEW_TYPE_TAG(RANSNCNI, INHERITS_FROM(NavierStokesNCNI));
+NEW_TYPE_TAG(ZeroEqNCNI, INHERITS_FROM(RANSNCNI));
 
-//! The volume variables
-SET_TYPE_PROP(RANSNCNI, VolumeVariables, RANSNCVolumeVariables<TypeTag>);
-SET_TYPE_PROP(ZeroEqNCNI, SinglePhaseVolumeVariables, ZeroEqVolumeVariables<TypeTag>);
-
-//! The model traits of the non-isothermal model
-SET_PROP(RANSNCNI, ModelTraits)
+//! Set the volume variables property
+SET_PROP(ZeroEqNCNI, VolumeVariables)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
-    static constexpr int dim = GridView::dimension;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int numComponents = FluidSystem::numComponents;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-    using IsothermalModelTraits = NavierStokesNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx>;
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
+    using NSVolVars = NavierStokesNCVolumeVariables<Traits>;
+    using RANSVolVars = ZeroEqVolumeVariables<Traits, NSVolVars>;
 public:
-    using type = NavierStokesNIModelTraits<IsothermalModelTraits>;
+    using type = RANSNCVolumeVariables<Traits, RANSVolVars>;
 };
 
 //! The specific vtk output fields

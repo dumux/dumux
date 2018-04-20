@@ -144,7 +144,7 @@ class FreeFlowVolumeVariablesImplementation<Traits, Impl, true>
 {
     using ParentType = FreeFlowVolumeVariablesImplementation<Traits, Impl, false>;
     using Scalar = typename Traits::PrimaryVariables::value_type;
-    static constexpr int phaseIdx = Traits::phaseIndex();
+    static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
 
 public:
     //! export the type used for the primary variables
@@ -178,26 +178,26 @@ public:
      * \brief Returns the total internal energy of a phase in the
      *        sub-control volume.
      *
-     * \param phaseIdx The phase index
+     * \param fluidSystemPhaseIdx The phase index
      */
     Scalar internalEnergy() const
-    { return asImp_().fluidState().internalEnergy(phaseIdx); }
+    { return asImp_().fluidState().internalEnergy(fluidSystemPhaseIdx); }
 
     /*!
      * \brief Returns the total enthalpy of a phase in the sub-control
      *        volume.
      *
-     * \param phaseIdx The phase index
+     * \param fluidSystemPhaseIdx The phase index
      */
     Scalar enthalpy() const
-    { return asImp_().fluidState().enthalpy(phaseIdx); }
+    { return asImp_().fluidState().enthalpy(fluidSystemPhaseIdx); }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
      *        of the fluid phase in the sub-control volume.
      */
     Scalar thermalConductivity() const
-    { return FluidSystem::thermalConductivity(asImp_().fluidState(), phaseIdx); }
+    { return FluidSystem::thermalConductivity(asImp_().fluidState(), fluidSystemPhaseIdx); }
 
     /*!
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
@@ -213,7 +213,7 @@ public:
      *        in the sub-control volume.
      */
     Scalar heatCapacity() const
-    { return FluidSystem::heatCapacity(asImp_().fluidState(), phaseIdx); }
+    { return FluidSystem::heatCapacity(asImp_().fluidState(), fluidSystemPhaseIdx); }
 
     //! The temperature is a primary variable for non-isothermal models
     template<class ElemSol, class Problem, class Element, class Scv>
@@ -231,7 +231,7 @@ public:
     static Scalar enthalpy(const FluidState& fluidState,
                            const ParameterCache& paramCache)
     {
-        return FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
+        return FluidSystem::enthalpy(fluidState, paramCache, fluidSystemPhaseIdx);
     }
 
 protected:

@@ -25,51 +25,38 @@
 #ifndef DUMUX_ZEROEQ_VOLUME_VARIABLES_HH
 #define DUMUX_ZEROEQ_VOLUME_VARIABLES_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/common/parameters.hh>
-#include <dumux/material/fluidstates/immiscible.hh>
+#include <dune/common/exceptions.hh>
 #include <dumux/freeflow/rans/volumevariables.hh>
-
 #include "models.hh"
 
 namespace Dumux
 {
 
-// forward declaration
-template <class TypeTag, bool enableEnergyBalance>
-class ZeroEqVolumeVariablesImplementation;
-
 /*!
  * \ingroup ZeroEqModel
  * \brief Volume variables for the single-phase 0-Eq. model.
- *        The class is specialized for isothermal and non-isothermal models.
  */
-template <class TypeTag>
-using ZeroEqVolumeVariables = ZeroEqVolumeVariablesImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>;
-
-/*!
- * \ingroup ZeroEqModel
- * \brief Volume variables for the isothermal single-phase 0-Eq. model.
- */
-template <class TypeTag>
-class ZeroEqVolumeVariablesImplementation<TypeTag, false>
-: virtual public RANSVolumeVariablesImplementation<TypeTag, false>
+template <class Traits, class NSVolumeVariables>
+class ZeroEqVolumeVariables
+:  public RANSVolumeVariables< Traits, ZeroEqVolumeVariables<Traits, NSVolumeVariables> >
+,  public NSVolumeVariables
 {
-    using ParentType = RANSVolumeVariablesImplementation<TypeTag, false>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
+    using ThisType = ZeroEqVolumeVariables<Traits, NSVolumeVariables>;
+    using RANSParentType = RANSVolumeVariables<Traits, ThisType>;
+    using NavierStokesParentType = NSVolumeVariables;
 
-    static const int defaultPhaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using Indices = typename Traits::ModelTraits::Indices;
+
+    static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
+
+
 
 public:
-    using FluidSystem = typename ParentType::FluidSystem;
-    using FluidState = typename ParentType::FluidState;
+    //! export the underlying fluid system
+    using FluidSystem = typename Traits::FluidSystem;
+    //! export the fluid state type
+    using FluidState = typename Traits::FluidState;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -80,36 +67,35 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution>
+    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
     void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::update(elemSol, problem, element, scv);
-        updateRANSProperties(elemSol, problem, element, scv);
+        NavierStokesParentType::update(elemSol, problem, element, scv);
+        RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
     }
 
     /*!
-     * \brief Update all turbulent quantities for a given control volume
-     *
-     * Wall and roughness related quantities are stored. Eddy viscosity is set.
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
+     * \brief Return the effective dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
+     *        control volume.
      */
-    template<class ElementSolution>
-    void updateRANSProperties(const ElementSolution &elemSol,
-                              const Problem &problem,
-                              const Element &element,
-                              const SubControlVolume& scv)
+    Scalar effectiveViscosity() const
     {
-        ParentType::updateRANSProperties(elemSol, problem, element, scv);
-        additionalRoughnessLength_ = problem.additionalRoughnessLength_[ParentType::elementID()];
-        yPlusRough_ = wallDistanceRough() * ParentType::uStar() / ParentType::kinematicViscosity();
-        calculateEddyViscosity(elemSol, problem, element, scv);
+        return NavierStokesParentType::viscosity()
+               + RANSParentType::dynamicEddyViscosity();
+    }
+
+    /*!
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
+     *        of the fluid-flow in the sub-control volume.
+     */
+    template<bool eB = enableEnergyBalance, typename std::enable_if_t<eB, int> = 0>
+    Scalar effectiveThermalConductivity() const
+    {
+        return NavierStokesParentType::thermalConductivity()
+               + RANSParentType::eddyThermalConductivity();
     }
 
     /*!
@@ -120,19 +106,22 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution>
-    void calculateEddyViscosity(const ElementSolution &elemSol,
-                                const Problem &problem,
-                                const Element &element,
-                                const SubControlVolume& scv)
+    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
+    Scalar calculateEddyViscosity(const ElementSolution &elemSol,
+                                  const Problem &problem,
+                                  const Element &element,
+                                  const SubControlVolume& scv)
     {
+        additionalRoughnessLength_ = problem.additionalRoughnessLength_[RANSParentType::elementID()];
+        yPlusRough_ = wallDistanceRough() * RANSParentType::uStar() / RANSParentType::kinematicViscosity();
+
         using std::abs;
         using std::exp;
         using std::sqrt;
         Scalar kinematicEddyViscosity = 0.0;
-        unsigned int flowNormalAxis = problem.flowNormalAxis_[ParentType::elementID()];
-        unsigned int wallNormalAxis = problem.wallNormalAxis_[ParentType::elementID()];
-        Scalar velGrad = abs(ParentType::velocityGradients()[flowNormalAxis][wallNormalAxis]);
+        unsigned int flowNormalAxis = problem.flowNormalAxis_[RANSParentType::elementID()];
+        unsigned int wallNormalAxis = problem.wallNormalAxis_[RANSParentType::elementID()];
+        Scalar velGrad = abs(RANSParentType::velocityGradients()[flowNormalAxis][wallNormalAxis]);
 
         if (problem.eddyViscosityModel_ == EddyViscosityModels::none)
         {
@@ -152,21 +141,22 @@ public:
         }
         else if (problem.eddyViscosityModel_ == EddyViscosityModels::baldwinLomax)
         {
-            kinematicEddyViscosity = problem.kinematicEddyViscosity_[ParentType::elementID()];
+            kinematicEddyViscosity = problem.kinematicEddyViscosity_[RANSParentType::elementID()];
         }
         else
         {
             DUNE_THROW(Dune::NotImplemented,
                        "This eddy viscosity model is not implemented: " << problem.eddyViscosityModel_);
         }
-        ParentType::setDynamicEddyViscosity(kinematicEddyViscosity * ParentType::density());
+
+        return kinematicEddyViscosity * NavierStokesParentType::density();
     }
 
     /*!
      * \brief Return the wall distance \f$\mathrm{[m]}\f$ including an additional roughness length
      */
     Scalar wallDistanceRough() const
-    { return ParentType::wallDistance() + additionalRoughnessLength_; }
+    { return RANSParentType::wallDistance() + additionalRoughnessLength_; }
 
     /*!
      * \brief Return the dimensionless wall distance \f$\mathrm{[-]}\f$  including an additional roughness length
@@ -174,72 +164,18 @@ public:
     Scalar yPlusRough() const
     { return yPlusRough_; }
 
+    /*!
+     * \brief Return the fluid state of the control volume.
+     */
+    const FluidState& fluidState() const
+    { return NavierStokesParentType::fluidState_; }
+
 protected:
+
     Scalar additionalRoughnessLength_;
     Scalar yPlusRough_;
 };
 
-/*!
- * \ingroup ZeroEqModel
- * \brief Volume variables for the non-isothermal single-phase 0-Eq. model.
- */
-template <class TypeTag>
-class ZeroEqVolumeVariablesImplementation<TypeTag, true>
-: virtual public ZeroEqVolumeVariablesImplementation<TypeTag, false>,
-  virtual public RANSVolumeVariablesImplementation<TypeTag, true>
-{
-    using ParentTypeNonIsothermal = RANSVolumeVariablesImplementation<TypeTag, true>;
-    using ParentTypeIsothermal = ZeroEqVolumeVariablesImplementation<TypeTag, false>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
+} // end namespace Dumux
 
-public:
-    using FluidSystem = typename ParentTypeIsothermal::FluidSystem;
-    using FluidState = typename ParentTypeIsothermal::FluidState;
-
-    /*!
-     * \brief Update all quantities for a given control volume
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
-     */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
-                const Problem &problem,
-                const Element &element,
-                const SubControlVolume &scv)
-    {
-        ParentTypeNonIsothermal::update(elemSol, problem, element, scv);
-        updateRANSProperties(elemSol, problem, element, scv);
-    }
-
-    /*!
-     * \brief Update all turbulent quantities for a given control volume
-     *
-     * Wall and roughness related quantities are stored. Eddy viscosity is set.
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
-     */
-    template<class ElementSolution>
-    void updateRANSProperties(const ElementSolution &elemSol,
-                              const Problem &problem,
-                              const Element &element,
-                              const SubControlVolume& scv)
-    {
-        ParentTypeIsothermal::updateRANSProperties(elemSol, problem, element, scv);
-        ParentTypeNonIsothermal::calculateEddyThermalConductivity();
-    }
-};
-}
-
-#endif
+#endif // DUMUX_ZEROEQ_VOLUME_VARIABLES_HH

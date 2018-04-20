@@ -36,6 +36,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/rans/model.hh>
+#include <dumux/freeflow/navierstokes/volumevariables.hh>
 
 #include "volumevariables.hh"
 
@@ -49,8 +50,20 @@ namespace Properties {
 //! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes 0-Eq. model
 NEW_TYPE_TAG(ZeroEq, INHERITS_FROM(RANS));
 
-//! The volume variables
-SET_TYPE_PROP(ZeroEq, VolumeVariables, ZeroEqVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(ZeroEq, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
+    using NSVolVars = NavierStokesVolumeVariables<Traits>;
+public:
+    using type = ZeroEqVolumeVariables<Traits, NSVolVars>;
+};
 
 //////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal RANS 0-Eq. model
@@ -59,8 +72,20 @@ SET_TYPE_PROP(ZeroEq, VolumeVariables, ZeroEqVolumeVariables<TypeTag>);
 //! The type tag for the single-phase, isothermal Reynolds-Averaged Navier-Stokes model
 NEW_TYPE_TAG(ZeroEqNI, INHERITS_FROM(RANSNI));
 
-//! The volume variables
-SET_TYPE_PROP(ZeroEqNI, VolumeVariables, ZeroEqVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(ZeroEqNI, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
+    using NSVolVars = NavierStokesVolumeVariables<Traits>;
+public:
+    using type = ZeroEqVolumeVariables<Traits, NSVolVars>;
+};
 
 // \}
 }
