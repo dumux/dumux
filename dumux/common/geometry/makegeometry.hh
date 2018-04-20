@@ -150,7 +150,7 @@ auto makeDuneQuadrilaterial(const std::vector<Dune::FieldVector<Scalar, 3>>& poi
     const auto quadrilateral = GeometryType(Dune::GeometryTypes::quadrilateral, corners);
 #else
     static Dune::GeometryType gt(Dune::GeometryType::cube, dim);
-    const auto quadrilateral = GeometryType(gt, points);
+    const auto quadrilateral = GeometryType(gt, corners);
 #endif
 
     const auto eps = 1e-20;
