@@ -118,21 +118,21 @@ public:
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
                 auto initPriVars = asImp_().initial(scv);
-                asImp_().applyInititalCellCenterSolution(sol, scv, initPriVars);
+                asImp_().applyInitialCellCenterSolution(sol, scv, initPriVars);
             }
 
             // loop over faces
             for(auto&& scvf : scvfs(fvGeometry))
             {
                 auto initPriVars = asImp_().initial(scvf);
-                asImp_().applyInititalFaceSolution(sol, scvf, initPriVars);
+                asImp_().applyInitialFaceSolution(sol, scvf, initPriVars);
             }
         }
     }
 
 
     //! Applys the initial cell center solution
-    void applyInititalCellCenterSolution(SolutionVector& sol,
+    void applyInitialCellCenterSolution(SolutionVector& sol,
                                          const SubControlVolume& scv,
                                          const PrimaryVariables& initSol) const
     {
@@ -145,7 +145,7 @@ public:
     }
 
     //! Applys the initial face solution
-    void applyInititalFaceSolution(SolutionVector& sol,
+    void applyInitialFaceSolution(SolutionVector& sol,
                                    const SubControlVolumeFace& scvf,
                                    const PrimaryVariables& initSol) const
     {

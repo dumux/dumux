@@ -157,6 +157,7 @@ public:
             setResidualSize();
         }
 
+        resetResidual_();
         assembleResidual(*residual_, curSol);
     }
 
