@@ -239,7 +239,7 @@ public:
                 // calculate the subcontrolvolume velocity by the Piola transformation
                 Dune::FieldVector<CoordScalar, dimWorld> scvVelocity(0);
 
-                jacobianT2.mtv(scvVelocities[scv.localDofIndex()], scvVelocity);
+                jacobianT2.mtv(scvVelocities[scv.indexInElement()], scvVelocity);
                 scvVelocity /= geometry.integrationElement(localPos)*cellNum_[vIdxGlobal];
                 // add up the wetting phase subcontrolvolume velocities for each vertex
                 velocity[vIdxGlobal] += scvVelocity;

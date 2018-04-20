@@ -144,6 +144,13 @@ public:
         return 0;
     }
 
+    //! The element-local index of this scv.
+    //! In cell-centered schemes there is always only one scv per element.
+    LocalIndexType indexInElement() const
+    {
+        return 0;
+    }
+
     // The position of the dof this scv is embedded in
     const GlobalPosition& dofPosition() const
     {

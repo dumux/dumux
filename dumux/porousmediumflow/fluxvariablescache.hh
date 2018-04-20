@@ -99,8 +99,7 @@ public:
         // compute the gradN at for every scv/dof
         gradN_.resize(fvGeometry.numScv());
         for (const auto& scv: scvs(fvGeometry))
-            jacInvT_.mv(shapeJacobian_[scv.localDofIndex()][0], gradN_[scv.localDofIndex()]);
-
+            jacInvT_.mv(shapeJacobian_[scv.localDofIndex()][0], gradN_[scv.indexInElement()]);
     }
 
     const std::vector<ShapeJacobian>& shapeJacobian() const

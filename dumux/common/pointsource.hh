@@ -303,7 +303,7 @@ public:
                     for (auto&& scv : scvs(fvGeometry))
                     {
                         if (intersectsPointGeometry(globalPos, scv.geometry()))
-                            scvIndices.push_back(scv.localDofIndex());
+                            scvIndices.push_back(scv.indexInElement());
                     }
                     // for all scvs that where tested positiv add the point sources
                     // to the element/scv to point source map

@@ -103,14 +103,14 @@ public:
             const auto& volVars = elemVolVars[scv];
 
             // density interpolation
-            rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.localDofIndex()][0];
+            rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
             // the ansatz function gradient
-            jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.localDofIndex()]);
+            jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
 
             //interpolate the mole fraction for the diffusion matrix
             for (int compIdx = 0; compIdx < numComponents; compIdx++)
             {
-              moleFrac[compIdx] += volVars.moleFraction(phaseIdx, compIdx)*shapeValues[scv.localDofIndex()][0];
+              moleFrac[compIdx] += volVars.moleFraction(phaseIdx, compIdx)*shapeValues[scv.indexInElement()][0];
             }
         }
 
@@ -124,7 +124,7 @@ public:
                 const auto& volVars = elemVolVars[scv];
 
                 // the mole/mass fraction gradient
-                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), gradN[scv.localDofIndex()]);
+                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), gradN[scv.indexInElement()]);
             }
 
            normalX[compIdx] = gradX *scvf.unitOuterNormal();

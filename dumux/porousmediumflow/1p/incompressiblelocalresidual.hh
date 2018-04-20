@@ -195,7 +195,7 @@ public:
                                  / curElemVolVars[scvf.insideScvIdx()].viscosity();
         for (const auto& scv : scvs(fvGeometry))
         {
-            auto d = up*ti[scv.localDofIndex()];
+            auto d = up*ti[scv.indexInElement()];
             A[insideScv.dofIndex()][scv.dofIndex()][conti0EqIdx][pressureIdx] += d;
             A[outsideScv.dofIndex()][scv.dofIndex()][conti0EqIdx][pressureIdx] -= d;
         }

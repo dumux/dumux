@@ -88,17 +88,17 @@ public:
             // update the volvars of the element
             volumeVariables_[eIdx].resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
-                volumeVariables_[eIdx][scv.localDofIndex()].update(elemSol, problem(), element, scv);
+                volumeVariables_[eIdx][scv.indexInElement()].update(elemSol, problem(), element, scv);
         }
     }
 
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     const VolumeVariables& volVars(const SubControlVolume& scv) const
-    { return volumeVariables_[scv.elementIndex()][scv.localDofIndex()]; }
+    { return volumeVariables_[scv.elementIndex()][scv.indexInElement()]; }
 
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     VolumeVariables& volVars(const SubControlVolume& scv)
-    { return volumeVariables_[scv.elementIndex()][scv.localDofIndex()]; }
+    { return volumeVariables_[scv.elementIndex()][scv.indexInElement()]; }
 
     const VolumeVariables& volVars(const std::size_t eIdx, const std::size_t scvIdx) const
     { return volumeVariables_[eIdx][scvIdx]; }

@@ -98,10 +98,10 @@ public:
             const auto& volVars = elemVolVars[scv];
 
             if (enableGravity)
-                rho += volVars.density(phaseIdx)*shapeValues[scv.localDofIndex()][0];
+                rho += volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
 
             // the global shape function gradient
-            gradP.axpy(volVars.pressure(phaseIdx), fluxVarCache.gradN(scv.localDofIndex()));
+            gradP.axpy(volVars.pressure(phaseIdx), fluxVarCache.gradN(scv.indexInElement()));
         }
 
         if (enableGravity)
@@ -135,8 +135,8 @@ public:
 
         std::vector<Scalar> ti(fvGeometry.numScv());
         for (const auto& scv : scvs(fvGeometry))
-            ti[scv.localDofIndex()] =
-                -1.0*scvf.area()*vtmv(scvf.unitOuterNormal(), K, fluxVarCache.gradN(scv.localDofIndex()));
+            ti[scv.indexInElement()] =
+                -1.0*scvf.area()*vtmv(scvf.unitOuterNormal(), K, fluxVarCache.gradN(scv.indexInElement()));
 
         return ti;
     }

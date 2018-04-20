@@ -63,7 +63,7 @@ public:
 
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return gridVolVars().volVars(eIdx_, scv.localDofIndex()); }
+    { return gridVolVars().volVars(eIdx_, scv.indexInElement()); }
 
     // For compatibility reasons with the case of not storing the vol vars.
     // function to be called before assembling an element, preparing the vol vars within the stencil
@@ -133,7 +133,7 @@ public:
         // resize volume variables to the required size
         volumeVariables_.resize(fvGeometry.numScv());
         for (auto&& scv : scvs(fvGeometry))
-            volumeVariables_[scv.localDofIndex()].update(elemSol, gridVolVars().problem(), element, scv);
+            volumeVariables_[scv.indexInElement()].update(elemSol, gridVolVars().problem(), element, scv);
     }
 
     const VolumeVariables& operator [](std::size_t scvIdx) const
@@ -144,11 +144,11 @@ public:
 
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return volumeVariables_[scv.localDofIndex()]; }
+    { return volumeVariables_[scv.indexInElement()]; }
 
     template<class SubControlVolume, typename std::enable_if_t<!std::is_integral<SubControlVolume>::value, int> = 0>
     VolumeVariables& operator [](const SubControlVolume& scv)
-    { return volumeVariables_[scv.localDofIndex()]; }
+    { return volumeVariables_[scv.indexInElement()]; }
 
     //! The global volume variables object we are a restriction of
     const GridVolumeVariables& gridVolVars() const

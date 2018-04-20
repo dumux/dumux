@@ -151,6 +151,13 @@ public:
         return localDofIdx_;
     }
 
+    //! The element-local index of this scv.
+    //! For the standard box scheme this is the local dof index.
+    LocalIndexType indexInElement() const
+    {
+        return localDofIdx_;
+    }
+
     //! The index of the dof this scv is embedded in
     GridIndexType dofIndex() const
     {

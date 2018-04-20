@@ -407,7 +407,7 @@ public:
                                 const SubControlVolume &scv) const
     {
         NumEqVector source(0);
-        auto scvIdx = scv.localDofIndex();
+        auto scvIdx = scv.indexInElement();
         auto key = std::make_pair(fvGridGeometry_->elementMapper().index(element), scvIdx);
         if (pointSourceMap_.count(key))
         {
