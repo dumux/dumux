@@ -81,7 +81,8 @@ public:
     }
 
     //! Create the sub control volume face geometries on the boundary
-    ScvfCornerStorage getBoundaryScvfCorners(const typename Intersection::Geometry& geometry,
+    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
+                                             const typename Intersection::Geometry& geometry,
                                              unsigned int indexInIntersection) const
     {
         return ScvfCornerStorage{{geometry.corner(0)}};
@@ -126,8 +127,9 @@ class BoxGeometryHelper<GridView, 2, ScvType, ScvfType>
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
 
-    using ReferenceElements = typename Dune::ReferenceElements<Scalar, GridView::dimension>;
-    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto dimWorld = GridView::dimensionworld;
+    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
 
     //! the maximum number of helper points used to construct the geometries
     //! Using a statically sized point array is much faster than dynamic allocation
@@ -136,9 +138,9 @@ class BoxGeometryHelper<GridView, 2, ScvType, ScvfType>
 public:
 
     BoxGeometryHelper(const typename Element::Geometry& geometry)
-    : elementGeometry_(geometry), corners_(geometry.corners())
+    : elementGeometry_(geometry)
+    , corners_(geometry.corners())
     {
-        // extract the corners of the sub control volumes
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(geometry.type());
 #else
@@ -199,8 +201,8 @@ public:
                                       p[map[localScvIdx][3]]} };
         }
         default:
-            DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << GridView::dimension
-                                                            << " dimWorld=" << GridView::dimensionworld
+            DUNE_THROW(Dune::NotImplemented, "Box scv geometries for dim=" << dim
+                                                            << " dimWorld=" << dimWorld
                                                             << " corners=" << corners_);
         }
     }
@@ -242,20 +244,28 @@ public:
                                        p[map[localScvfIdx][1]]} };
         }
         default:
-            DUNE_THROW(Dune::NotImplemented, "Box scvf geometries for dim=" << GridView::dimension
-                                                            << " dimWorld=" << GridView::dimensionworld
+            DUNE_THROW(Dune::NotImplemented, "Box scvf geometries for dim=" << dim
+                                                            << " dimWorld=" << dimWorld
                                                             << " corners=" << corners_);
         }
     }
 
     //! Create the sub control volume face geometries on the boundary
-    ScvfCornerStorage getBoundaryScvfCorners(const typename Intersection::Geometry& geometry,
+    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
+                                             const typename Intersection::Geometry& isGeom,
                                              unsigned int indexInIntersection) const
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        const auto referenceElement = ReferenceElements::general(elementGeometry_.type());
+#else
+        const auto& referenceElement = ReferenceElements::general(elementGeometry_.type());
+#endif
+
+        const auto vIdxLocal = referenceElement.subEntity(is.indexInInside(), 1, indexInIntersection, dim);
         if (indexInIntersection == 0)
-            return ScvfCornerStorage({geometry.corner(0), geometry.center()});
+            return ScvfCornerStorage({p[vIdxLocal+1], isGeom.center()});
         else if (indexInIntersection == 1)
-            return ScvfCornerStorage({geometry.center(), geometry.corner(1)});
+            return ScvfCornerStorage({isGeom.center(), p[vIdxLocal+1]});
         else
             DUNE_THROW(Dune::InvalidStateException, "local index exceeds the number of corners of 2d intersections");
     }
@@ -355,9 +365,9 @@ class BoxGeometryHelper<GridView, 3, ScvType, ScvfType>
     static constexpr int maxPoints = 27;
 public:
     BoxGeometryHelper(const typename Element::Geometry& geometry)
-    : elementGeometry_(geometry), corners_(geometry.corners())
+    : elementGeometry_(geometry)
+    , corners_(geometry.corners())
     {
-        // extract the corners of the sub control volumes
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(geometry.type());
 #else
@@ -503,29 +513,39 @@ public:
     }
 
     //! Create the sub control volume face geometries on the boundary
-    ScvfCornerStorage getBoundaryScvfCorners(const typename Intersection::Geometry& geometry,
+    ScvfCornerStorage getBoundaryScvfCorners(const Intersection& is,
+                                             const typename Intersection::Geometry& geometry,
                                              unsigned int indexInIntersection) const
     {
-        // extract the corners of the sub control volumes
+
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-        const auto referenceElement = FaceReferenceElements::general(geometry.type());
+        const auto referenceElement = ReferenceElements::general(elementGeometry_.type());
+        const auto faceRefElem = FaceReferenceElements::general(geometry.type());
 #else
-        const auto& referenceElement = FaceReferenceElements::general(geometry.type());
+        const auto& referenceElement = ReferenceElements::general(elementGeometry_.type());
+        const auto& faceRefElem = FaceReferenceElements::general(geometry.type());
 #endif
 
         GlobalPosition pi[9];
         auto corners = geometry.corners();
 
-        // the element center
+        // the facet center
         pi[0] = geometry.center();
 
-        // vertices
+        // corners
+        const auto idxInInside = is.indexInInside();
         for (int i = 0; i < corners; ++i)
-            pi[i+1] = geometry.corner(i);
+        {
+            const auto vIdxLocal = referenceElement.subEntity(idxInInside, 1, i, dim);
+            pi[i+1] = elementGeometry_.corner(vIdxLocal);
+        }
 
-        // face midpoints
-        for (int i = 0; i < referenceElement.size(1); ++i)
-            pi[i+corners+1] = geometry.global(referenceElement.position(i, 1));
+        // edge midpoints
+        for (int i = 0; i < faceRefElem.size(1); ++i)
+        {
+            const auto edgeIdxLocal = referenceElement.subEntity(idxInInside, 1, i, dim-1);
+            pi[i+corners+1] = p[edgeIdxLocal+corners_+1];
+        }
 
         // procees according to number of corners
         switch (corners)
