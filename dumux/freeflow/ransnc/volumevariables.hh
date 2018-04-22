@@ -25,37 +25,21 @@
 #ifndef DUMUX_RANS_NC_VOLUMEVARIABLES_HH
 #define DUMUX_RANS_NC_VOLUMEVARIABLES_HH
 
-#include <dumux/common/properties.hh>
-
-#include <dumux/freeflow/rans/volumevariables.hh>
-#include <dumux/freeflow/navierstokesnc/volumevariables.hh>
-
 namespace Dumux {
 
 /*!
  * \ingroup RANSNCModel
  * \brief Volume variables for the single-phase, multi-component Reynolds-averaged Navier-Stokes model.
  */
-template <class TypeTag>
-class RANSNCVolumeVariables
-    : virtual public GET_PROP_TYPE(TypeTag, SinglePhaseVolumeVariables),
-      virtual public NavierStokesNCVolumeVariables<TypeTag>
+template <class Traits, class RANSVolVars>
+class RANSNCVolumeVariables : public RANSVolVars
 {
-    using ParentTypeSinglePhase = typename GET_PROP_TYPE(TypeTag, SinglePhaseVolumeVariables);
-    using ParentTypeCompositional = NavierStokesNCVolumeVariables<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = RANSVolVars;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
 
-    static constexpr auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
 
 public:
-    using FluidSystem = typename ParentTypeCompositional::FluidSystem;
-    using FluidState = typename ParentTypeCompositional::FluidState;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -66,27 +50,27 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution>
+    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
     void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentTypeCompositional::update(elemSol, problem, element, scv);
-        ParentTypeSinglePhase::updateRANSProperties(elemSol, problem, element, scv);
-        calculateEddyDiffusivity();
+        ParentType::update(elemSol, problem, element, scv);
+        calculateEddyDiffusivity(problem);
     }
 
     /*!
      * \brief Calculates the eddy diffusivity \f$\mathrm{[m^2/s]}\f$ based
      *        on the kinematic eddy viscosity and the turbulent schmidt number
      */
-    void calculateEddyDiffusivity()
+    template<class Problem>
+    void calculateEddyDiffusivity(const Problem& problem)
     {
         static const auto turbulentSchmidtNumber
-            = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
+            = getParamFromGroup<Scalar>(problem.paramGroup(),
                                         "RANS.TurbulentSchmidtNumber", 1.0);
-        eddyDiffusivity_ = ParentTypeSinglePhase::kinematicEddyViscosity()
+        eddyDiffusivity_ = ParentType::kinematicEddyViscosity()
                            / turbulentSchmidtNumber;
     }
 
@@ -104,13 +88,13 @@ public:
      * \param compIIdx the index of the component which diffusive
      * \param compJIdx the index of the component with respect to which compIIdx diffuses
      */
-    Scalar effectiveDiffusivity(int compIIdx, int compJIdx = phaseIdx) const
+    Scalar effectiveDiffusivity(int compIIdx, int compJIdx = fluidSystemPhaseIdx) const
     {
-        return ParentTypeCompositional::diffusionCoefficient(compIIdx, compJIdx)
+        return ParentType::diffusionCoefficient(compIIdx, fluidSystemPhaseIdx)
                + eddyDiffusivity();
     }
 
-protected:
+private:
     Scalar eddyDiffusivity_;
 };
 

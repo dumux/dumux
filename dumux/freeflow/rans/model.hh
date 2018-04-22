@@ -38,15 +38,9 @@
 #define DUMUX_RANS_MODEL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
-#include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
-#include <dumux/freeflow/navierstokes/indices.hh>
-#include <dumux/freeflow/nonisothermal/indices.hh>
 #include <dumux/freeflow/nonisothermal/ransvtkoutputfields.hh>
-#include <dumux/material/fluidstates/immiscible.hh>
 
-#include "volumevariables.hh"
 #include "vtkoutputfields.hh"
 
 namespace Dumux {
@@ -68,9 +62,6 @@ NEW_TYPE_TAG(RANS, INHERITS_FROM(NavierStokes));
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 SET_BOOL_PROP(RANS, EnableInertiaTerms, true); //!< Explicitly force the consideration of inertia terms by default
-
-//! The volume variables
-SET_TYPE_PROP(RANS, VolumeVariables, RANSVolumeVariables<TypeTag>);
 
 //! The specific vtk output fields
 SET_PROP(RANS, VtkOutputFields)
@@ -94,6 +85,10 @@ SET_PROP(RANSNI, ModelTraits)
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr int dim = GridView::dimension;
+    static constexpr bool enableInertiaTerms = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
+
+    static_assert(enableInertiaTerms, "The RANS model only works with intertia terms enabled!");
+
     using IsothermalTraits = NavierStokesModelTraits<dim>;
 public:
     using type = NavierStokesNIModelTraits<IsothermalTraits>;

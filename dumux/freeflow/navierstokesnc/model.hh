@@ -74,7 +74,7 @@ namespace Dumux {
  * \ingroup NavierStokesModel
  * \brief Traits for the Navier-Stokes multi-component model
  */
-template<int dimension, int nComp, int phaseIdx, int replaceCompEqIdx>
+template<int dimension, int nComp, int phaseIdx, int replaceCompEqIdx, bool useM>
 struct NavierStokesNCModelTraits
 {
     //! The dimension of the model
@@ -89,6 +89,9 @@ struct NavierStokesNCModelTraits
 
     //! The number of components
     static constexpr int numComponents() { return nComp; }
+
+    //! Use moles or not
+    static constexpr bool useMoles() { return useM; }
 
     //! Enable advection
     static constexpr bool enableAdvection() { return true; }
@@ -113,7 +116,7 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the single-phase, multi-component isothermal Navier-Stokes model
-NEW_TYPE_TAG(NavierStokesNC, INHERITS_FROM(NavierStokes));
+NEW_TYPE_TAG(NavierStokesNC, INHERITS_FROM(FreeFlow));
 
 //! The type tag for the single-phase, multi-component non-isothermal Navier-Stokes model
 NEW_TYPE_TAG(NavierStokesNCNI, INHERITS_FROM(NavierStokesNC));
@@ -132,22 +135,41 @@ private:
     static constexpr int numComponents = FluidSystem::numComponents;
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 public:
-    using type = NavierStokesNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx>;
+    using type = NavierStokesNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
 };
 
 SET_INT_PROP(NavierStokesNC, PhaseIdx, 0); //!< Defines the phaseIdx
 SET_BOOL_PROP(NavierStokesNC, UseMoles, false); //!< Defines whether molar (true) or mass (false) density is used
 SET_INT_PROP(NavierStokesNC, ReplaceCompEqIdx, 0); //<! Set the ReplaceCompEqIdx to 0 by default
+SET_BOOL_PROP(NavierStokesNC, EnableInertiaTerms, true); //!< Consider inertia terms by default
+SET_BOOL_PROP(NavierStokesNC, NormalizePressure, true); //!< Normalize the pressure term in the momentum balance by default
+
 
 //! The local residual
 SET_TYPE_PROP(NavierStokesNC, LocalResidual, NavierStokesNCResidual<TypeTag>);
 
-//! The volume variables
-SET_TYPE_PROP(NavierStokesNC, VolumeVariables, NavierStokesNCVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(NavierStokesNC, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
+public:
+    using type = NavierStokesNCVolumeVariables<Traits>;
+};
+
 
 //! The flux variables
 SET_TYPE_PROP(NavierStokesNC, FluxVariables, NavierStokesNCFluxVariables<TypeTag>);
+
+//! The flux variables cache class, by default the one for free flow
+SET_TYPE_PROP(NavierStokesNC, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
 //! The specific vtk output fields
 SET_PROP(NavierStokesNC, VtkOutputFields)
@@ -192,7 +214,8 @@ private:
     static constexpr int numComponents = FluidSystem::numComponents;
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-    using IsothermalModelTraits = NavierStokesNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx>;
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    using IsothermalModelTraits = NavierStokesNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
 public:
     using type = NavierStokesNIModelTraits<IsothermalModelTraits>;
 };

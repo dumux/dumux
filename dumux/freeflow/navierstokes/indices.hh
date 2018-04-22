@@ -61,6 +61,9 @@ struct NavierStokesIndices
     {
         return dirIdx;
     }
+
+    //! The index of the fluid phase in the fluid system (for compatibility reasons)
+    static constexpr int fluidSystemPhaseIdx = 0;
 };
 
 } // end namespace Dumux

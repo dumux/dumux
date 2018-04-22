@@ -33,12 +33,15 @@ namespace Dumux {
  * \brief The common indices for the isothermal multi-component Navier-Stokes model.
  */
 template <int dimension, int numEquations,
-          int thePhaseIdx, int theReplaceCompEqIdx>
+          int phaseIdx, int theReplaceCompEqIdx>
 struct NavierStokesNCIndices : public NavierStokesIndices<dimension>
 {
 public:
-    static constexpr int phaseIdx = thePhaseIdx; //!< The phase index
-    static constexpr int mainCompIdx = phaseIdx; //!< The index of the main component
+    //! The index of the fluid phase in the fluid system
+    static constexpr int fluidSystemPhaseIdx = phaseIdx;
+
+    //! The index of the main component
+    static constexpr int mainCompIdx = fluidSystemPhaseIdx;
 
     //! The index of the component whose mass balance will be replaced by the total one
     static constexpr int replaceCompEqIdx = theReplaceCompEqIdx;

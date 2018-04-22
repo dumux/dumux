@@ -74,7 +74,6 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
         pressureIdx = Indices::pressureIdx,
         conti0EqIdx = Indices::conti0EqIdx,
         replaceCompEqIdx = Indices::replaceCompEqIdx,
-        phaseIdx = Indices::phaseIdx
     };
 
 public:
