@@ -55,11 +55,12 @@ public:
         // TODO: pass this from outside?
         static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
 
+        const auto& elemVolVars = fluxVars.elemVolVars();
         const auto& scvf = fluxVars.scvFace();
         const auto& insideScv = fluxVars.fvGeometry().scv(scvf.insideScvIdx());
         const auto& outsideScv = fluxVars.fvGeometry().scv(scvf.outsideScvIdx());
-        const auto& insideVolVars = fluxVars.elemVolVars()[insideScv];
-        const auto& outsideVolVars = fluxVars.elemVolVars()[outsideScv];
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = elemVolVars[outsideScv];
 
         if (std::signbit(flux)) // if sign of flux is negative
             return flux*(upwindWeight*upwindTerm(outsideVolVars)
