@@ -138,7 +138,14 @@ public:
         return elementIndex();
     }
 
-    //! The global index of this scv
+    //! The element-local index of the dof this scv is embedded in
+    LocalIndexType localDofIndex() const
+    {
+        return 0;
+    }
+
+    //! The element-local index of this scv.
+    //! In cell-centered schemes there is always only one scv per element.
     LocalIndexType indexInElement() const
     {
         return 0;

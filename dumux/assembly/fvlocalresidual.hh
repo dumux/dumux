@@ -112,7 +112,7 @@ public:
         // all sub control volumes
         for (auto&& scv : scvs(fvGeometry))
         {
-            auto localScvIdx = scv.indexInElement();
+            auto localScvIdx = scv.localDofIndex();
             const auto& volVars = elemVolVars[scv];
             storage[localScvIdx] = asImp().computeStorage(scv, volVars);
             storage[localScvIdx] *= scv.volume() * volVars.extrusionFactor();
@@ -382,7 +382,7 @@ public:
         storage *= scv.volume();
         storage /= timeLoop_->timeStepSize();
 
-        residual[scv.indexInElement()] += storage;
+        residual[scv.localDofIndex()] += storage;
     }
 
     /*!
@@ -411,7 +411,7 @@ public:
         source *= scv.volume()*curVolVars.extrusionFactor();
 
         //! subtract source from local rate (sign convention in user interface)
-        residual[scv.indexInElement()] -= source;
+        residual[scv.localDofIndex()] -= source;
     }
 
     /*!

@@ -65,9 +65,9 @@ public:
     }
 
     //! The index of the dof this scv is embedded in (box)
-    LocalIndexType indexInElement() const
+    LocalIndexType localDofIndex() const
     {
-        return asImp_().indexInElement();
+        return asImp_().localDofIndex();
     }
 
     // The position of the dof this scv is embedded in

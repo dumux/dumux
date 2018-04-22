@@ -91,7 +91,7 @@ public:
         const auto& localBasis = fvGeometry.feLocalBasis();
 
         // evaluate shape functions and gradients at the integration point
-        const auto ipLocal = geometry.local(scvf.center());
+        const auto ipLocal = geometry.local(scvf.ipGlobal());
         jacInvT_ = geometry.jacobianInverseTransposed(ipLocal);
         localBasis.evaluateJacobian(ipLocal, shapeJacobian_);
         localBasis.evaluateFunction(ipLocal, shapeValues_); // shape values for rho
@@ -99,8 +99,7 @@ public:
         // compute the gradN at for every scv/dof
         gradN_.resize(fvGeometry.numScv());
         for (const auto& scv: scvs(fvGeometry))
-            jacInvT_.mv(shapeJacobian_[scv.indexInElement()][0], gradN_[scv.indexInElement()]);
-
+            jacInvT_.mv(shapeJacobian_[scv.localDofIndex()][0], gradN_[scv.indexInElement()]);
     }
 
     const std::vector<ShapeJacobian>& shapeJacobian() const

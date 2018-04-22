@@ -256,7 +256,7 @@ public:
             if(isBox)
                 for(auto&& scvf : scvfs(fvGeometry))
                     if(scvf.center()[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
-                        sol[fvGeometry.scv(scvf.insideScvIdx()).indexInElement()][pressureIdx] = dirichletPressure;
+                        sol[fvGeometry.scv(scvf.insideScvIdx()).localDofIndex()][pressureIdx] = dirichletPressure;
 
             return sol;
         }();

@@ -96,7 +96,7 @@ public:
     template<class ElemSol, class Scv>
     static const PrimaryVariables& extractDofPriVars(const ElemSol& elemSol,
                                                      const Scv& scv)
-    { return elemSol[scv.indexInElement()]; }
+    { return elemSol[scv.localDofIndex()]; }
 
     /*!
      * \brief Return the vector of primary variables

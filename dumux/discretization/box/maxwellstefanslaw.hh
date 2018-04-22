@@ -105,7 +105,7 @@ public:
             // density interpolation
             rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
             // the ansatz function gradient
-            jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradN[scv.indexInElement()]);
+            jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
 
             //interpolate the mole fraction for the diffusion matrix
             for (int compIdx = 0; compIdx < numComponents; compIdx++)

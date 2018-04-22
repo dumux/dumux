@@ -73,13 +73,13 @@ public:
         {
             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
             const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-            residual[insideScv.indexInElement()] += flux;
-            residual[outsideScv.indexInElement()] -= flux;
+            residual[insideScv.localDofIndex()] += flux;
+            residual[outsideScv.localDofIndex()] -= flux;
         }
         else
         {
             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-            residual[insideScv.indexInElement()] += flux;
+            residual[insideScv.localDofIndex()] += flux;
         }
     }
 
@@ -104,7 +104,7 @@ public:
         else
         {
             const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-            const auto& bcTypes = elemBcTypes[scv.indexInElement()];
+            const auto& bcTypes = elemBcTypes[scv.localDofIndex()];
 
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())

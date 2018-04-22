@@ -226,8 +226,8 @@ public:
                     // Get bcTypes and maybe mark for refinement on Dirichlet boundaries
                     for (const auto& scv : scvs(fvGeometry))
                     {
-                        bcTypes[scv.indexInElement()] = problem_->boundaryTypes(element, scv);
-                        if (refineAtDirichletBC_ && bcTypes[scv.indexInElement()].hasDirichlet())
+                        bcTypes[scv.localDofIndex()] = problem_->boundaryTypes(element, scv);
+                        if (refineAtDirichletBC_ && bcTypes[scv.localDofIndex()].hasDirichlet())
                         {
                             indicatorVector_[eIdx] = true;
                             break; // element is marked, escape scv loop

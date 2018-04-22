@@ -86,13 +86,13 @@ public:
         {
             const auto residual = this->asImp_().evalLocalResidual(); // forward to the internal implementation
             for (const auto& scv : scvs(this->fvGeometry()))
-                res[scv.dofIndex()] += residual[scv.indexInElement()];
+                res[scv.dofIndex()] += residual[scv.localDofIndex()];
         }
         else
         {
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
             for (const auto& scv : scvs(this->fvGeometry()))
-                res[scv.dofIndex()] += residual[scv.indexInElement()];
+                res[scv.dofIndex()] += residual[scv.localDofIndex()];
         }
 
         auto applyDirichlet = [&] (const auto& scvI,
@@ -104,7 +104,7 @@ public:
             for (const auto& scvJ : scvs(this->fvGeometry()))
             {
                 jac[scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
-                if (scvI.indexInElement() == scvJ.indexInElement())
+                if (scvI.localDofIndex() == scvJ.localDofIndex())
                     jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
             }
         };
@@ -129,7 +129,7 @@ public:
             for (const auto& scvJ : scvs(this->fvGeometry()))
             {
                 jac[scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
-                if (scvI.indexInElement() == scvJ.indexInElement())
+                if (scvI.localDofIndex() == scvJ.localDofIndex())
                     jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
             }
         };
@@ -146,7 +146,7 @@ public:
         const auto residual = this->evalLocalResidual();
 
         for (const auto& scv : scvs(this->fvGeometry()))
-            res[scv.dofIndex()] += residual[scv.indexInElement()];
+            res[scv.dofIndex()] += residual[scv.localDofIndex()];
 
         auto applyDirichlet = [&] (const auto& scvI,
                                    const auto& dirichletValues,
@@ -171,7 +171,7 @@ public:
         {
             for (const auto& scvI : scvs(this->fvGeometry()))
             {
-                const auto bcTypes = this->elemBcTypes()[scvI.indexInElement()];
+                const auto bcTypes = this->elemBcTypes()[scvI.localDofIndex()];
                 if (bcTypes.hasDirichlet())
                 {
                     const auto dirichletValues = this->problem().dirichlet(this->element(), scvI);
@@ -281,7 +281,7 @@ public:
                 auto evalResiduals = [&](Scalar priVar)
                 {
                     // update the volume variables and compute element residual
-                    elemSol[scv.indexInElement()][pvIdx] = priVar;
+                    elemSol[scv.localDofIndex()][pvIdx] = priVar;
                     curVolVars.update(elemSol, this->problem(), element, scv);
                     return this->evalLocalResidual();
                 };
@@ -289,8 +289,8 @@ public:
                 // derive the residuals numerically
                 static const NumericEpsilon<Scalar, numEq> eps_{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
                 static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.indexInElement()][pvIdx], partialDerivs, origResiduals,
-                                                          eps_(elemSol[scv.indexInElement()][pvIdx], pvIdx), numDiffMethod);
+                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origResiduals,
+                                                          eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
                 for (auto&& scvJ : scvs(fvGeometry))
@@ -305,7 +305,7 @@ public:
                             // the residual of equation 'eqIdx' at dof 'i'
                             // depending on the primary variable 'pvIdx' at dof
                             // 'col'.
-                            A[scvJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
+                            A[scvJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[scvJ.localDofIndex()][eqIdx];
                         }
                     }
                 }
@@ -314,7 +314,7 @@ public:
                 curVolVars = origVolVars;
 
                 // restore the original element solution
-                elemSol[scv.indexInElement()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
+                elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
                 // TODO additional dof dependencies
             }
         }
@@ -401,7 +401,7 @@ public:
                 auto evalStorage = [&](Scalar priVar)
                 {
                     // auto partialDerivsTmp = partialDerivs;
-                    elemSol[scv.indexInElement()][pvIdx] = priVar;
+                    elemSol[scv.localDofIndex()][pvIdx] = priVar;
                     curVolVars.update(elemSol, this->problem(), element, scv);
                     return this->evalLocalStorageResidual();
                 };
@@ -409,8 +409,8 @@ public:
                 // derive the residuals numerically
                 static const NumericEpsilon<Scalar, numEq> eps_{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
                 static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalStorage, elemSol[scv.indexInElement()][pvIdx], partialDerivs, origResiduals,
-                                                          eps_(elemSol[scv.indexInElement()][pvIdx], pvIdx), numDiffMethod);
+                NumericDifferentiation::partialDerivative(evalStorage, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origResiduals,
+                                                          eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
                 for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
@@ -419,14 +419,14 @@ public:
                     // the residual of equation 'eqIdx' at dof 'i'
                     // depending on the primary variable 'pvIdx' at dof
                     // 'col'.
-                    A[dofIdx][dofIdx][eqIdx][pvIdx] += partialDerivs[scv.indexInElement()][eqIdx];
+                    A[dofIdx][dofIdx][eqIdx][pvIdx] += partialDerivs[scv.localDofIndex()][eqIdx];
                 }
 
                 // restore the original state of the scv's volume variables
                 curVolVars = origVolVars;
 
                 // restore the original element solution
-                elemSol[scv.indexInElement()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
+                elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
                 // TODO additional dof dependencies
             }
         }
@@ -534,7 +534,7 @@ public:
             else
             {
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-                if (this->elemBcTypes()[insideScv.indexInElement()].hasNeumann())
+                if (this->elemBcTypes()[insideScv.localDofIndex()].hasNeumann())
                 {
                     // add flux term derivatives
                     this->localResidual().addRobinFluxDerivatives(A[insideScv.dofIndex()],

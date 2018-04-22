@@ -56,7 +56,7 @@ public:
         ParentType::update(elemSol, problem, element, scv);
 
         // calculate the remaining quantities
-        auto&& priVars = elemSol[scv.indexInElement()];
+        auto&& priVars = elemSol[scv.localDofIndex()];
 
         sumPrecipitates_ = 0.0;
         for(int sPhaseIdx = 0; sPhaseIdx < ModelTraits::numSPhases(); ++sPhaseIdx)

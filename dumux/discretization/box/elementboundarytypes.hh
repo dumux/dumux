@@ -62,7 +62,7 @@ public:
 
         for (const auto& scv : scvs(fvGeometry))
         {
-            int scvIdxLocal = scv.indexInElement();
+            int scvIdxLocal = scv.localDofIndex();
             vertexBCTypes_[scvIdxLocal].reset();
 
             if (fvGeometry.fvGridGeometry().dofOnBoundary(scv.dofIndex()))
