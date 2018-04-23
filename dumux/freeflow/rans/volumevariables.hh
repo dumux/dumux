@@ -95,9 +95,6 @@ public:
         uStar_ = max(uStar_, 1e-10); // zero values lead to numerical problems in some turbulence models
         yPlus_ = wallDistance_ * uStar_ / problem.kinematicViscosity_[elementID_];
         uPlus_ = velocity_[flowNormalAxis] / uStar_;
-
-        // get the dynamic eddy viscosity from the specific RANS implementation
-        dynamicEddyViscosity_ = asImp_().calculateEddyViscosity(elemSol, problem, element, scv);
     }
 
     /*!
@@ -153,7 +150,7 @@ public:
      *        control volume.
      */
     Scalar kinematicEddyViscosity() const
-    { return dynamicEddyViscosity() / asImp_().density(); }
+    { return asImp_().dynamicEddyViscosity() / asImp_().density(); }
 
     /*!
      * \brief Return the kinematic viscosity \f$\mathrm{[m^2/s]}\f$ of the fluid within the
@@ -162,18 +159,10 @@ public:
     Scalar kinematicViscosity() const
     { return asImp_().viscosity() / asImp_().density(); }
 
-    /*!
-     * \brief Return the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow within the
-     *        control volume.
-     */
-    Scalar dynamicEddyViscosity() const
-    { return dynamicEddyViscosity_; }
-
 protected:
     DimVector velocity_;
     DimVector velocityMaximum_;
     DimMatrix velocityGradients_;
-    Scalar dynamicEddyViscosity_;
     std::size_t elementID_;
     std::size_t wallElementID_;
     Scalar wallDistance_;

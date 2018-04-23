@@ -101,8 +101,20 @@ SET_TYPE_PROP(LowReKEpsilon, FluxVariables, LowReKEpsilonFluxVariables<TypeTag>)
 //! The local residual
 SET_TYPE_PROP(LowReKEpsilon, LocalResidual, LowReKEpsilonResidual<TypeTag>);
 
-//! The volume variables
-SET_TYPE_PROP(LowReKEpsilon, VolumeVariables, LowReKEpsilonVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(LowReKEpsilon, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
+    using NSVolVars = NavierStokesVolumeVariables<Traits>;
+public:
+    using type = LowReKEpsilonVolumeVariables<Traits, NSVolVars>;
+};
 
 //! The specific vtk output fields
 SET_PROP(LowReKEpsilon, VtkOutputFields)
@@ -120,8 +132,20 @@ public:
 //! The type tag for the single-phase, isothermal low-Reynolds k-epsilon model
 NEW_TYPE_TAG(LowReKEpsilonNI, INHERITS_FROM(RANSNI));
 
-//! The volume variables
-SET_TYPE_PROP(LowReKEpsilonNI, VolumeVariables, LowReKEpsilonVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(LowReKEpsilonNI, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
+    using NSVolVars = NavierStokesVolumeVariables<Traits>;
+public:
+    using type = LowReKEpsilonVolumeVariables<Traits, NSVolVars>;
+};
 
 // \}
 }

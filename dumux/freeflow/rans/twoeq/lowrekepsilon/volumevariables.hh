@@ -35,38 +35,27 @@
 namespace Dumux
 {
 
-// forward declaration
-template <class TypeTag, bool enableEnergyBalance>
-class LowReKEpsilonVolumeVariablesImplementation;
-
-/*!
- * \ingroup LowReKEpsilonModel
- * \brief Volume variables for the single-phase 0-Eq. model.
- *        The class is specialized for isothermal and non-isothermal models.
- */
-template <class TypeTag>
-using LowReKEpsilonVolumeVariables = LowReKEpsilonVolumeVariablesImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>;
-
 /*!
  * \ingroup LowReKEpsilonModel
  * \brief Volume variables for the isothermal single-phase 0-Eq. model.
  */
-template <class TypeTag>
-class LowReKEpsilonVolumeVariablesImplementation<TypeTag, false>
-: virtual public RANSVolumeVariablesImplementation<TypeTag, false>
+template <class Traits, class NSVolumeVariables>
+class LowReKEpsilonVolumeVariables
+:  public RANSVolumeVariables< Traits, LowReKEpsilonVolumeVariables<Traits, NSVolumeVariables> >
+,  public NSVolumeVariables
 {
-    using ParentType = RANSVolumeVariablesImplementation<TypeTag, false>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
+    using ThisType = LowReKEpsilonVolumeVariables<Traits, NSVolumeVariables>;
+    using RANSParentType = RANSVolumeVariables<Traits, ThisType>;
+    using NavierStokesParentType = NSVolumeVariables;
+
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using Indices = typename Traits::ModelTraits::Indices;
+
+    static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
 
 public:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    //! export the underlying fluid system
+    using FluidSystem = typename Traits::FluidSystem;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -77,13 +66,13 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution>
+    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
     void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::update(elemSol, problem, element, scv);
+        NavierStokesParentType::update(elemSol, problem, element, scv);
         updateRANSProperties(elemSol, problem, element, scv);
     }
 
@@ -97,44 +86,56 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution>
+    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
     void updateRANSProperties(const ElementSolution &elemSol,
                               const Problem &problem,
                               const Element &element,
                               const SubControlVolume& scv)
     {
-        ParentType::updateRANSProperties(elemSol, problem, element, scv);
+        RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
         lowReKEpsilonModel_ = problem.lowReKEpsilonModel();
         turbulentKineticEnergy_ = elemSol[0][Indices::turbulentKineticEnergyIdx];
         dissipationTilde_ = elemSol[0][Indices::dissipationIdx];
-        storedDissipationTilde_ = problem.storedDissipationTilde_[ParentType::elementID()];
-        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[ParentType::elementID()];
-        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[ParentType::elementID()];
+        storedDissipationTilde_ = problem.storedDissipationTilde_[RANSParentType::elementID()];
+        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementID()];
+        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementID()];
         if (problem.useStoredEddyViscosity_)
-            ParentType::setKinematicEddyViscosity(problem.storedKinematicEddyViscosity_[ParentType::elementID()]);
+            dynamicEddyViscosity_ = problem.storedDynamicEddyViscosity_[RANSParentType::elementID()];
         else
-            calculateEddyViscosity();
+            dynamicEddyViscosity_ = calculateEddyViscosity();
     }
 
     /*!
-     * \brief Calculate and set the dynamic eddy viscosity.
+     * \brief Return the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow
      */
-    void calculateEddyViscosity()
+    Scalar dynamicEddyViscosity() const
+    { return dynamicEddyViscosity_; }
+
+    /*!
+     * \brief Return the effective dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
+     *        control volume.
+     */
+    Scalar effectiveViscosity() const
+    { return NavierStokesParentType::viscosity() + dynamicEddyViscosity(); }
+
+    /*!
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
+     *        of the fluid-flow in the sub-control volume.
+     */
+    template<bool eB = enableEnergyBalance, typename std::enable_if_t<eB, int> = 0>
+    Scalar effectiveThermalConductivity() const
     {
-        Scalar kinematicEddyViscosity
-            = cMu() * fMu() * turbulentKineticEnergy() * turbulentKineticEnergy()
-              / dissipationTilde();
-//         if (std::isnan(kinematicEddyViscosity) || dissipationTilde() < 1e-8)
-//         {
-        Dune::dinfo /*<< " scv.dofPosition() " << dofPosition_
-                    */<< " cMu() " << cMu()
-                    << " fMu() " << fMu()
-                    << " turbulentKineticEnergy() " << turbulentKineticEnergy()
-                    << " dissipationTilde() " << dissipationTilde()
-                    << " kinematicEddyViscosity " << kinematicEddyViscosity
-                    << std::endl;
-//         }
-        ParentType::setKinematicEddyViscosity(kinematicEddyViscosity);
+        return NavierStokesParentType::thermalConductivity()
+               + RANSParentType::eddyThermalConductivity();
+    }
+
+    /*!
+     * \brief Returns the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$.
+     */
+    Scalar calculateEddyViscosity()
+    {
+        return cMu() * fMu() * turbulentKineticEnergy() * turbulentKineticEnergy()
+               / dissipationTilde() *  NavierStokesParentType::density();
     }
 
     /*!
@@ -181,15 +182,15 @@ public:
     const Scalar reT() const
     {
         return turbulentKineticEnergy() * turbulentKineticEnergy()
-               / ParentType::kinematicViscosity() / dissipationTilde();
+               / RANSParentType::kinematicViscosity() / dissipationTilde();
     }
 
     //! \brief Returns the \$f Re_\textrm{y} \$f value
     const Scalar reY() const
     {
         using std::sqrt;
-        return sqrt(turbulentKineticEnergy()) * ParentType::wallDistance()
-               / ParentType::kinematicViscosity();
+        return sqrt(turbulentKineticEnergy()) * RANSParentType::wallDistance()
+               / RANSParentType::kinematicViscosity();
     }
 
     //! \brief Returns the \$f C_\mu \$f constant
@@ -255,8 +256,8 @@ public:
         else if (lowReKEpsilonModel_ == LowReKEpsilonModels::lamBremhorst)
             return 0.0;
         else // use default model by Chien
-            return 2.0 * ParentType::kinematicViscosity() * turbulentKineticEnergy()
-                   / ParentType::wallDistance() / ParentType::wallDistance();
+            return 2.0 * RANSParentType::kinematicViscosity() * turbulentKineticEnergy()
+                   / RANSParentType::wallDistance() / RANSParentType::wallDistance();
     }
 
     //! \brief Returns the \$f f_\mu \$f value
@@ -270,7 +271,7 @@ public:
             return pow((1.0 - exp(-0.0165 * reY())), 2.0)
                    * (1.0 + 20.5 / reT());
         else // use default model by Chien
-            return 1.0 - exp(-0.0115 * ParentType::yPlus());
+            return 1.0 - exp(-0.0115 * RANSParentType::yPlus());
     }
 
     //! \brief Returns the \$f f_1 \$f value
@@ -306,13 +307,14 @@ public:
         else if (lowReKEpsilonModel_ == LowReKEpsilonModels::lamBremhorst)
             return 0.0;
         else // use default model by Chien
-            return -2.0 * ParentType::kinematicViscosity() * dissipationTilde()
-                   / ParentType::wallDistance() / ParentType::wallDistance()
-                   * exp(-0.5 * ParentType::yPlus());
+            return -2.0 * RANSParentType::kinematicViscosity() * dissipationTilde()
+                   / RANSParentType::wallDistance() / RANSParentType::wallDistance()
+                   * exp(-0.5 * RANSParentType::yPlus());
     }
 
 protected:
     int lowReKEpsilonModel_;
+    Scalar dynamicEddyViscosity_;
     Scalar turbulentKineticEnergy_;
     Scalar dissipationTilde_;
     Scalar storedTurbulentKineticEnergy_;
@@ -320,64 +322,6 @@ protected:
     Scalar stressTensorScalarProduct_;
 };
 
-/*!
- * \ingroup LowReKEpsilonModel
- * \brief Volume variables for the non-isothermal single-phase 0-Eq. model.
- */
-template <class TypeTag>
-class LowReKEpsilonVolumeVariablesImplementation<TypeTag, true>
-: virtual public LowReKEpsilonVolumeVariablesImplementation<TypeTag, false>,
-  virtual public RANSVolumeVariablesImplementation<TypeTag, true>
-{
-    using ParentTypeNonIsothermal = RANSVolumeVariablesImplementation<TypeTag, true>;
-    using ParentTypeIsothermal = LowReKEpsilonVolumeVariablesImplementation<TypeTag, false>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-
-public:
-    /*!
-     * \brief Update all quantities for a given control volume
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
-     */
-    template<class ElementSolution>
-    void update(const ElementSolution &elemSol,
-                const Problem &problem,
-                const Element &element,
-                const SubControlVolume &scv)
-    {
-        ParentTypeNonIsothermal::update(elemSol, problem, element, scv);
-        updateRANSProperties(elemSol, problem, element, scv);
-    }
-
-    /*!
-     * \brief Update all turbulent quantities for a given control volume
-     *
-     * Wall and roughness related quantities are stored. Eddy viscosity is set.
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
-     */
-    template<class ElementSolution>
-    void updateRANSProperties(const ElementSolution &elemSol,
-                              const Problem &problem,
-                              const Element &element,
-                              const SubControlVolume& scv)
-    {
-        ParentTypeIsothermal::updateRANSProperties(elemSol, problem, element, scv);
-        ParentTypeNonIsothermal::calculateEddyThermalConductivity();
-    }
-};
 }
 
 #endif

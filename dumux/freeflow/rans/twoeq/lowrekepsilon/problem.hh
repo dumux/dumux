@@ -85,7 +85,7 @@ public:
 
         // update size and initial values of the global vectors
         storedDissipationTilde_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedKinematicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        storedDynamicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
         storedTurbulentKineticEnergy_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
     }
 
@@ -116,8 +116,7 @@ public:
                 // NOTE: then update the volVars
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
-                volVars.calculateEddyViscosity();
-                storedKinematicEddyViscosity_[elementID] = volVars.kinematicEddyViscosity();
+                storedDynamicEddyViscosity_[elementID] = volVars.calculateEddyViscosity();
             }
         }
     }
@@ -130,7 +129,7 @@ public:
 
 public:
     std::vector<Scalar> storedDissipationTilde_;
-    std::vector<Scalar> storedKinematicEddyViscosity_;
+    std::vector<Scalar> storedDynamicEddyViscosity_;
     std::vector<Scalar> storedTurbulentKineticEnergy_;
     int lowReKEpsilonModel_;
     bool useStoredEddyViscosity_;
