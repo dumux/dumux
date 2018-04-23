@@ -30,7 +30,6 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/freeflow/navierstokes/fluxvariables.hh>
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/fluxvariables.hh>
-#include <dumux/freeflow/rans/twoeq/lowrekepsilon/models.hh>
 
 namespace Dumux
 {
@@ -162,8 +161,7 @@ public:
                                                  * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
                                                  * scvf.area();
         }
-        if (!isOutflowEpsilon
-            && problem.lowReKEpsilonModel() != LowReKEpsilonModels::lamBremhorst)
+        if (!isOutflowEpsilon)
         {
             flux[dissipationEqIdx - ModelTraits::dim()]
                 += coeff_e / distance

@@ -30,8 +30,6 @@
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/freeflow/rans/volumevariables.hh>
 
-#include "models.hh"
-
 namespace Dumux
 {
 
@@ -93,7 +91,6 @@ public:
                               const SubControlVolume& scv)
     {
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
-        lowReKEpsilonModel_ = problem.lowReKEpsilonModel();
         turbulentKineticEnergy_ = elemSol[0][Indices::turbulentKineticEnergyIdx];
         dissipationTilde_ = elemSol[0][Indices::dissipationIdx];
         storedDissipationTilde_ = problem.storedDissipationTilde_[RANSParentType::elementID()];
@@ -195,69 +192,29 @@ public:
 
     //! \brief Returns the \$f C_\mu \$f constant
     const Scalar cMu() const
-    {
-        if (lowReKEpsilonModel_ == LowReKEpsilonModels::standardHighReKEpsilon)
-            return 0.09;
-        else if (lowReKEpsilonModel_ == LowReKEpsilonModels::lamBremhorst)
-            return 0.09;
-        else // use default model by Chien
-            return 0.09;
-    }
+    { return 0.09; }
 
     //! \brief Returns the \$f \sigma_\textrm{k} \$f constant
     const Scalar sigmaK() const
-    {
-        if (lowReKEpsilonModel_ == LowReKEpsilonModels::standardHighReKEpsilon)
-            return 1.0;
-        else if (lowReKEpsilonModel_ == LowReKEpsilonModels::lamBremhorst)
-            return 1.0;
-        else // use default model by Chien
-            return 1.0;
-    }
+    { return 1.0; }
 
     //! \brief Returns the \$f \sigma_\varepsilon \$f constant
     const Scalar sigmaEpsilon() const
-    {
-        if (lowReKEpsilonModel_ == LowReKEpsilonModels::standardHighReKEpsilon)
-            return 1.3;
-        else if (lowReKEpsilonModel_ == LowReKEpsilonModels::lamBremhorst)
-            return 1.3;
-        else // use default model by Chien
-            return 1.3;
-    }
+    { return 1.3; }
 
     //! \brief Returns the \$f C_{1\tilde{\varepsilon}}  \$f constant
     const Scalar cOneEpsilon() const
-    {
-        if (lowReKEpsilonModel_ == LowReKEpsilonModels::standardHighReKEpsilon)
-            return 1.44;
-        else if (lowReKEpsilonModel_ == LowReKEpsilonModels::lamBremhorst)
-            return 1.44;
-        else // use default model by Chien
-            return 1.35;
-    }
+    { return 1.35; }
 
     //! \brief Returns the \$f C_{2\tilde{\varepsilon}} \$f constant
     const Scalar cTwoEpsilon() const
-    {
-        if (lowReKEpsilonModel_ == LowReKEpsilonModels::standardHighReKEpsilon)
-            return 1.92;
-        else if (lowReKEpsilonModel_ == LowReKEpsilonModels::lamBremhorst)
-            return 1.92;
-        else // use default model by Chien
-            return 1.8;
-    }
+    { return 1.8; }
 
     //! \brief Returns the \$f D \$f value
     const Scalar dValue() const
     {
-        if (lowReKEpsilonModel_ == LowReKEpsilonModels::standardHighReKEpsilon)
-            return 0.0;
-        else if (lowReKEpsilonModel_ == LowReKEpsilonModels::lamBremhorst)
-            return 0.0;
-        else // use default model by Chien
-            return 2.0 * RANSParentType::kinematicViscosity() * turbulentKineticEnergy()
-                   / RANSParentType::wallDistance() / RANSParentType::wallDistance();
+        return 2.0 * RANSParentType::kinematicViscosity() * turbulentKineticEnergy()
+               / RANSParentType::wallDistance() / RANSParentType::wallDistance();
     }
 
     //! \brief Returns the \$f f_\mu \$f value
@@ -265,55 +222,30 @@ public:
     {
         using std::exp;
         using std::pow;
-        if (lowReKEpsilonModel_ == LowReKEpsilonModels::standardHighReKEpsilon)
-            return 1.0;
-        else if (lowReKEpsilonModel_ == LowReKEpsilonModels::lamBremhorst)
-            return pow((1.0 - exp(-0.0165 * reY())), 2.0)
-                   * (1.0 + 20.5 / reT());
-        else // use default model by Chien
-            return 1.0 - exp(-0.0115 * RANSParentType::yPlus());
+        return 1.0 - exp(-0.0115 * RANSParentType::yPlus());
     }
 
     //! \brief Returns the \$f f_1 \$f value
     const Scalar fOne() const
-    {
-        using std::pow;
-        if (lowReKEpsilonModel_ == LowReKEpsilonModels::standardHighReKEpsilon)
-            return 1.0;
-        else if (lowReKEpsilonModel_ == LowReKEpsilonModels::lamBremhorst)
-            return 1.0 + pow((0.05 / fMu()), 3.0);
-        else // use default model by Chien
-            return 1.0;
-    }
+    { return 1.0; }
 
     //! \brief Returns the \$f f_2 \$f value
     const Scalar fTwo() const
     {
         using std::exp;
-        if(lowReKEpsilonModel_ == LowReKEpsilonModels::standardHighReKEpsilon)
-            return 1.0;
-        else if (lowReKEpsilonModel_ == LowReKEpsilonModels::lamBremhorst)
-            return 1.0 - exp(-1.0 * (reT() * reT()));
-        else // use default model by Chien
-            return 1.0 - 0.22 * exp(-1.0 * (reT() * reT() / 6.0 / 6.0));
+        return 1.0 - 0.22 * exp(-1.0 * (reT() * reT() / 6.0 / 6.0));
     }
 
     //! \brief Returns the \$f E \$f value
     const Scalar eValue() const
     {
         using std::exp;
-        if(lowReKEpsilonModel_ == LowReKEpsilonModels::standardHighReKEpsilon)
-            return 0.0;
-        else if (lowReKEpsilonModel_ == LowReKEpsilonModels::lamBremhorst)
-            return 0.0;
-        else // use default model by Chien
-            return -2.0 * RANSParentType::kinematicViscosity() * dissipationTilde()
-                   / RANSParentType::wallDistance() / RANSParentType::wallDistance()
-                   * exp(-0.5 * RANSParentType::yPlus());
+        return -2.0 * RANSParentType::kinematicViscosity() * dissipationTilde()
+                / RANSParentType::wallDistance() / RANSParentType::wallDistance()
+                * exp(-0.5 * RANSParentType::yPlus());
     }
 
 protected:
-    int lowReKEpsilonModel_;
     Scalar dynamicEddyViscosity_;
     Scalar turbulentKineticEnergy_;
     Scalar dissipationTilde_;

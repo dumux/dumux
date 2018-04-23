@@ -32,7 +32,6 @@
 #include <dumux/freeflow/rans/problem.hh>
 
 #include "model.hh"
-#include "models.hh"
 
 namespace Dumux
 {
@@ -66,13 +65,6 @@ public:
     LowReKEpsilonProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        lowReKEpsilonModel_ = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.LowReKEpsilonModel", 1);
-        if (lowReKEpsilonModel_ != LowReKEpsilonModels::standardHighReKEpsilon
-            && lowReKEpsilonModel_ != LowReKEpsilonModels::chien
-            && lowReKEpsilonModel_ != LowReKEpsilonModels::lamBremhorst)
-        {
-            DUNE_THROW(Dune::NotImplemented, "This low-Re k-epsilon model is not implemented: " << lowReKEpsilonModel_);
-        }
         useStoredEddyViscosity_ = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.UseStoredEddyViscosity", true);
     }
 
@@ -121,17 +113,10 @@ public:
         }
     }
 
-    /*!
-     * \brief Returns the index of the used low-Re k-epsilon model
-     */
-    const int lowReKEpsilonModel() const
-    { return lowReKEpsilonModel_; }
-
 public:
     std::vector<Scalar> storedDissipationTilde_;
     std::vector<Scalar> storedDynamicEddyViscosity_;
     std::vector<Scalar> storedTurbulentKineticEnergy_;
-    int lowReKEpsilonModel_;
     bool useStoredEddyViscosity_;
 
 private:
