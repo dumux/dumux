@@ -21,10 +21,10 @@
  * \ingroup RANSNCModel
  * \copydoc Dumux::RANSNCIndices
  */
-#ifndef DUMUX_STAGGERED_RANS_NC_INDICES_HH
-#define DUMUX_STAGGERED_RANS_NC_INDICES_HH
+#ifndef DUMUX_RANS_NC_INDICES_HH
+#define DUMUX_RANS_NC_INDICES_HH
 
-#include <dumux/freeflow/navierstokesnc/indices.hh>
+#include <dumux/freeflow/compositional/indices.hh>
 
 namespace Dumux {
 
@@ -44,10 +44,10 @@ class DummyIndices
  */
 template <int dimension, int numEquations,
           int thePhaseIdx, int theReplaceCompEqIdx,
-          class SinglePhaseIndices = DummyIndices>
+          class MomentumIndices = DummyIndices>
 struct RANSNCIndices
-    : public NavierStokesNCIndices<dimension, numEquations, thePhaseIdx, theReplaceCompEqIdx>,
-      public SinglePhaseIndices
+    : public FreeflowNCIndices<dimension, numEquations, thePhaseIdx, theReplaceCompEqIdx>,
+      public MomentumIndices
 { };
 
 // \}

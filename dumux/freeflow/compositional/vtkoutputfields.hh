@@ -16,36 +16,47 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup NavierStokesNCModel
-  * \copydoc Dumux::NavierStokesNCResidual
-  */
-#ifndef DUMUX_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
-#define DUMUX_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
+/*!
+ * \file
+ * \ingroup FreeflowNCModel
+ * \copydoc Dumux::FreeflowNCVtkOutputFields
+ */
+#ifndef DUMUX_FREEFLOW_NC_VTK_OUTPUT_FIELDS_HH
+#define DUMUX_FREEFLOW_NC_VTK_OUTPUT_FIELDS_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
-#include <dumux/freeflow/navierstokes/localresidual.hh>
-#include <dumux/freeflow/navierstokesnc/staggered/localresidual.hh>
+#include <dumux/freeflow/navierstokes/vtkoutputfields.hh>
 
 namespace Dumux
 {
 
-// forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
-class NavierStokesNCResidualImpl;
-
 /*!
- * \ingroup NavierStokesNCModel
- * \brief The local residual class for the Navier-Stokes multi-component model (balance equations).
-          This is a convenience alias for the actual,
-          discretization-specific local residual.
- * \note  Not all specializations are currently implemented
+ * \ingroup FreeflowNCModel
+ * \brief Adds vtk output fields specific to the FreeflowNC model
  */
-template<class TypeTag>
-using NavierStokesNCResidual = NavierStokesNCResidualImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+template<class FVGridGeometry, class FluidSystem, int phaseIdx>
+class FreeflowNCVtkOutputFields
+{
 
-}
+public:
+    //! Initialize the FreeflowNC specific vtk output fields.
+    template <class VtkOutputModule>
+    static void init(VtkOutputModule& vtk)
+    {
+        NavierStokesVtkOutputFields<FVGridGeometry>::init(vtk);
 
-#endif   // DUMUX_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
+        for (int j = 0; j < FluidSystem::numComponents; ++j)
+        {
+            vtk.addVolumeVariable([j](const auto& v){ return v.massFraction(j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+            vtk.addVolumeVariable([j](const auto& v){ return v.moleFraction(j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+            if (j != phaseIdx)
+            {
+                vtk.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+            }
+        }
+    }
+};
+
+} // end namespace Dumux
+
+#endif

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesNCModel
+ * \ingroup FreeflowNCModel
  *
  * \copydoc Dumux::NavierStokesModel
  *
@@ -44,8 +44,8 @@
  * So far, only the staggered grid spatial discretization (for structured grids) is available.
  */
 
-#ifndef DUMUX_NAVIERSTOKES_NC_MODEL_HH
-#define DUMUX_NAVIERSTOKES_NC_MODEL_HH
+#ifndef DUMUX_FREEFLOW_NC_MODEL_HH
+#define DUMUX_FREEFLOW_NC_MODEL_HH
 
 #include <dumux/common/properties.hh>
 
@@ -71,8 +71,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesModel
- * \brief Traits for the Navier-Stokes multi-component model
+ * \ingroup FreeflowNCModel
+ * \brief Traits for the multi-component free-flow model
  */
 template<int dimension, int nComp, int phaseIdx, int replaceCompEqIdx, bool useM>
 struct NavierStokesNCModelTraits
@@ -103,11 +103,11 @@ struct NavierStokesNCModelTraits
     static constexpr bool enableEnergyBalance() { return false; }
 
     //! the indices
-    using Indices = NavierStokesNCIndices<dim(), numEq(), phaseIdx, replaceCompEqIdx>;
+    using Indices = FreeflowNCIndices<dim(), numEq(), phaseIdx, replaceCompEqIdx>;
 };
 
 ///////////////////////////////////////////////////////////////////////////
-// properties for the single-phase, multi-component Navier-Stokes model
+// properties for the single-phase, multi-component free-flow model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 
@@ -115,17 +115,17 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the single-phase, multi-component isothermal Navier-Stokes model
+//! The type tag for the single-phase, multi-component isothermal free-flow model
 NEW_TYPE_TAG(NavierStokesNC, INHERITS_FROM(FreeFlow));
 
-//! The type tag for the single-phase, multi-component non-isothermal Navier-Stokes model
+//! The type tag for the single-phase, multi-component non-isothermal free-flow model
 NEW_TYPE_TAG(NavierStokesNCNI, INHERITS_FROM(NavierStokesNC));
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values
 ///////////////////////////////////////////////////////////////////////////
 
-//!< states some specifics of the Navier-Stokes model
+//!< states some specifics of the free-flow model
 SET_PROP(NavierStokesNC, ModelTraits)
 {
 private:
@@ -148,7 +148,7 @@ SET_BOOL_PROP(NavierStokesNC, NormalizePressure, true); //!< Normalize the press
 
 
 //! The local residual
-SET_TYPE_PROP(NavierStokesNC, LocalResidual, NavierStokesNCResidual<TypeTag>);
+SET_TYPE_PROP(NavierStokesNC, LocalResidual, FreeflowNCResidual<TypeTag>);
 
 //! Set the volume variables property
 SET_PROP(NavierStokesNC, VolumeVariables)
@@ -161,12 +161,12 @@ private:
 
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
 public:
-    using type = NavierStokesNCVolumeVariables<Traits>;
+    using type = FreeflowNCVolumeVariables<Traits>;
 };
 
 
 //! The flux variables
-SET_TYPE_PROP(NavierStokesNC, FluxVariables, NavierStokesNCFluxVariables<TypeTag>);
+SET_TYPE_PROP(NavierStokesNC, FluxVariables, FreeflowNCFluxVariables<TypeTag>);
 
 //! The flux variables cache class, by default the one for free flow
 SET_TYPE_PROP(NavierStokesNC, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
@@ -179,7 +179,7 @@ private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 public:
-     using type = NavierStokesNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>;
+     using type = FreeflowNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>;
 };
 
 /*!
@@ -201,7 +201,7 @@ public:
 SET_TYPE_PROP(NavierStokesNC, MolecularDiffusionType, FicksLaw<TypeTag>);
 
 //////////////////////////////////////////////////////////////////////////
-// Property values for non-isothermal multi-component Navier-Stokes model
+// Property values for non-isothermal multi-component free-flow model
 //////////////////////////////////////////////////////////////////////////
 
 //! The model traits of the non-isothermal model
@@ -227,7 +227,7 @@ private:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    using IsothermalFields = NavierStokesNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>;
+    using IsothermalFields = FreeflowNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>;
 public:
      using type = NavierStokesNonIsothermalVtkOutputFields<IsothermalFields>;
 };

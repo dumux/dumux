@@ -18,12 +18,12 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesNCModel
+ * \ingroup FreeflowNCModel
  *
- * \copydoc Dumux::NavierStokesNCVolumeVariables
+ * \copydoc Dumux::FreeflowNCVolumeVariables
  */
-#ifndef DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
-#define DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
+#ifndef DUMUX_FREEFLOW_NC_VOLUMEVARIABLES_HH
+#define DUMUX_FREEFLOW_NC_VOLUMEVARIABLES_HH
 
 #include <dune/common/exceptions.hh>
 
@@ -32,13 +32,13 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesNCModel
- * \brief Volume variables for the single-phase, multi-component Navier-Stokes model.
+ * \ingroup FreeflowNCModel
+ * \brief Volume variables for the single-phase, multi-component free-flow model.
  */
 template <class Traits>
-class NavierStokesNCVolumeVariables : public FreeFlowVolumeVariables< Traits, NavierStokesNCVolumeVariables<Traits> >
+class FreeflowNCVolumeVariables : public FreeFlowVolumeVariables< Traits, FreeflowNCVolumeVariables<Traits> >
 {
-    using ThisType = NavierStokesNCVolumeVariables<Traits>;
+    using ThisType = FreeflowNCVolumeVariables<Traits>;
     using ParentType = FreeFlowVolumeVariables<Traits, ThisType>;
 
     using Scalar = typename Traits::PrimaryVariables::value_type;

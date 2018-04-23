@@ -180,9 +180,9 @@
      */
     /*!
      * \ingroup FreeflowModels
-     * \defgroup NavierStokesNCModel Navier-Stokes nc
-     * \brief Single-phase multi-component Navier-Stokes flow
-     * \copydetails ./freeflow/navierstokesnc/model.hh
+     * \defgroup FreeflowNCModel Compositional
+     * \brief Single-phase multi-component free-flow flow
+     * \copydetails ./freeflow/compositional/navierstokesncmodel.hh
      */
     /*!
      * \ingroup FreeflowModels

@@ -16,37 +16,36 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- * \ingroup NavierStokesNCModel
- * \copydoc Dumux::NavierStokesNCIndices
- */
-#ifndef DUMUX_STAGGERED_NAVIERSTOKES_NC_INDICES_HH
-#define DUMUX_STAGGERED_NAVIERSTOKES_NC_INDICES_HH
+ /*!
+  * \file
+  * \ingroup FreeflowNCModel
+  * \copydoc Dumux::FreeflowNCFluxVariables
+  */
+#ifndef DUMUX_FREELOW_NC_FLUXVARIABLES_HH
+#define DUMUX_FREELOW_NC_FLUXVARIABLES_HH
 
-#include <dumux/freeflow/navierstokes/indices.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/freeflow/compositional/staggered/fluxvariables.hh>
 
-namespace Dumux {
-
-/*!
- * \ingroup NavierStokesNCModel
- * \brief The common indices for the isothermal multi-component Navier-Stokes model.
- */
-template <int dimension, int numEquations,
-          int phaseIdx, int theReplaceCompEqIdx>
-struct NavierStokesNCIndices : public NavierStokesIndices<dimension>
+namespace Dumux
 {
-public:
-    //! The index of the fluid phase in the fluid system
-    static constexpr int fluidSystemPhaseIdx = phaseIdx;
 
-    //! The index of the main component
-    static constexpr int mainCompIdx = fluidSystemPhaseIdx;
 
-    //! The index of the component whose mass balance will be replaced by the total one
-    static constexpr int replaceCompEqIdx = theReplaceCompEqIdx;
-};
+// forward declaration
+template<class TypeTag, DiscretizationMethod discMethod>
+class FreeflowNCFluxVariablesImpl;
 
-} // end namespace Dumux
+/*!
+ * \ingroup FreeflowNCModel
+ * \brief The flux variables class for the multi-component free-flow model.
+          This is a convenience alias for that actual,
+          discretization-specific flux variables.
+ * \note  Not all specializations are currently implemented
+ */
+template<class TypeTag>
+using FreeflowNCFluxVariables = FreeflowNCFluxVariablesImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+
+
+} // end namespace
 
 #endif

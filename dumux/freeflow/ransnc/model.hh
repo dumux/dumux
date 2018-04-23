@@ -53,7 +53,9 @@
 #define DUMUX_RANS_NC_MODEL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/freeflow/navierstokesnc/model.hh>
+#include <dumux/freeflow/compositional/navierstokesncmodel.hh>
+#include <dumux/freeflow/nonisothermal/ransvtkoutputfields.hh>
+#include <dumux/freeflow/rans/zeroeq/volumevariables.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -88,8 +90,8 @@ private:
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
-    using NSVolVars = NavierStokesNCVolumeVariables<Traits>;
-    using RANSVolVars = ZeroEqVolumeVariables<Traits, NSVolVars>;
+    using CompositionalVolVars = FreeflowNCVolumeVariables<Traits>;
+    using RANSVolVars = ZeroEqVolumeVariables<Traits, CompositionalVolVars>;
 public:
     using type = RANSNCVolumeVariables<Traits, RANSVolVars>;
 };
@@ -124,7 +126,7 @@ private:
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
-    using NSVolVars = NavierStokesNCVolumeVariables<Traits>;
+    using NSVolVars = FreeflowNCVolumeVariables<Traits>;
     using RANSVolVars = ZeroEqVolumeVariables<Traits, NSVolVars>;
 public:
     using type = RANSNCVolumeVariables<Traits, RANSVolVars>;

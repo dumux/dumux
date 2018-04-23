@@ -25,7 +25,7 @@
 #define DUMUX_RANS_NC_VTK_OUTPUT_FIELDS_HH
 
 #include <dumux/freeflow/rans/vtkoutputfields.hh>
-#include <dumux/freeflow/navierstokesnc/vtkoutputfields.hh>
+#include <dumux/freeflow/compositional/vtkoutputfields.hh>
 
 namespace Dumux
 {
@@ -34,7 +34,7 @@ namespace Dumux
  * \ingroup RANSNCModel
  * \brief Adds vtk output fields specific to the RANSNC model
  */
-template<class FVGridGeometry, class FluidSystem, int phaseIdx, class SinglePhaseVtkOutputFields>
+template<class FVGridGeometry, class FluidSystem, int phaseIdx, class MomentumVtkOutputFields>
 class RANSNCVtkOutputFields
 {
     enum { dim = FVGridGeometry::GridView::dimension };
@@ -44,8 +44,8 @@ public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        NavierStokesNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>::init(vtk);
-        SinglePhaseVtkOutputFields::add(vtk);
+        FreeflowNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>::init(vtk);
+        MomentumVtkOutputFields::add(vtk);
         vtk.addVolumeVariable([](const auto& v){ return v.eddyDiffusivity(); }, "D_t");
     }
 };

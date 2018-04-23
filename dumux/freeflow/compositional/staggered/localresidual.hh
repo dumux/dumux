@@ -18,11 +18,11 @@
  *****************************************************************************/
  /*!
   * \file
-  * \ingroup NavierStokesNCModel
-  * \copydoc Dumux::NavierStokesNCResidualImpl
+  * \ingroup FreeflowNCModel
+  * \copydoc Dumux::FreeflowNCResidualImpl
   */
-#ifndef DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
-#define DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_FREEFLOW_NC_STAGGERED_LOCAL_RESIDUAL_HH
+#define DUMUX_FREEFLOW_NC_STAGGERED_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
@@ -32,14 +32,14 @@ namespace Dumux {
 
 // forward declaration
 template<class TypeTag,  DiscretizationMethod discMethod>
-class NavierStokesNCResidualImpl;
+class FreeflowNCResidualImpl;
 
 /*!
- * \ingroup NavierStokesNCModel
- * \brief Element-wise calculation of the multi-component Navier-Stokes residual for models using the staggered discretization
+ * \ingroup FreeflowNCModel
+ * \brief Element-wise calculation of the multi-component free-flow residual for models using the staggered discretization
  */
 template<class TypeTag>
-class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
+class FreeflowNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
 : public NavierStokesResidual<TypeTag>
 {
     using ParentType = NavierStokesResidual<TypeTag>;
@@ -129,4 +129,4 @@ protected:
 };
 }
 
-#endif   // DUMUX_CC_LOCAL_RESIDUAL_HH
+#endif
