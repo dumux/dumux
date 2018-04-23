@@ -100,11 +100,13 @@ public:
     //! Constructor for a ghost face outside of the domain. Only needed to retrieve the center and scvIndices
     FreeFlowStaggeredSubControlVolumeFace(const GlobalPosition& dofPosition,
                                           const std::vector<GridIndexType>& scvIndices,
-                                          const int dofIdx = -1)
+                                          const int dofIdx = -1,
+                                          const int scvfIndex = -1)
     : center_(dofPosition),
-      scvfIndex_(-1),
+      scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
       dofIdx_(dofIdx),
+      selfToOppositeDistance_(0.0),
       isGhostFace_(true)
     {}
 

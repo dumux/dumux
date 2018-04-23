@@ -233,8 +233,8 @@ protected:
                     {
                         if(bcTypes.isNeumann(eqIdx + cellCenterOffset))
                         {
-                            const auto extrusionFactor = 1.0; //TODO: get correct extrusion factor
-                            boundaryFlux[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, scvf)[eqIdx + cellCenterOffset]
+                            const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+                            boundaryFlux[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx + cellCenterOffset]
                                                   * extrusionFactor * scvf.area();
                         }
                     }
@@ -293,11 +293,23 @@ protected:
                 residual = velocity - dirichletValue;
             }
 
+            // handle Neumann boundary conditions
+            if(bcTypes.isNeumann(Indices::velocity(scvf.directionIndex())))
+            {
+                // set the given Neumann flux for the face on the boundary itself
+                const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+                residual = problem.neumann(element, fvGeometry, elemVolVars, elementFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
+                                           * extrusionFactor * scvf.area();
+
+                // treat the remaining (normal) faces of the staggered control volume
+                FluxVariables fluxVars;
+                residual += fluxVars.computeNormalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars);
+            }
+
             // For symmetry boundary conditions, there is no flow accross the boundary and
             // we therefore treat it like a Dirichlet boundary conditions with zero velocity
             if(bcTypes.isSymmetry())
             {
-                // const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
                 const Scalar velocity = elementFaceVars[scvf].velocitySelf();
                 const Scalar fixedValue = 0.0;
                 residual = velocity - fixedValue;
