@@ -109,7 +109,7 @@ public:
         return 1.0;
     }
 
-private:
+protected:
     const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
     std::array<GlobalPosition, maxPoints> p; // the points needed for construction of the geometries
@@ -337,7 +337,7 @@ public:
         return (p[1]-p[0]).two_norm();
     }
 
-private:
+protected:
     const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
     std::array<GlobalPosition, maxPoints> p; // the points needed for construction of the geometries
@@ -624,7 +624,7 @@ public:
         return 0.5*Dumux::crossProduct(p[3]-p[0], p[2]-p[1]).two_norm();
     }
 
-private:
+protected:
     const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
     std::array<GlobalPosition, maxPoints> p; // the points needed for construction of the scv/scvf geometries
