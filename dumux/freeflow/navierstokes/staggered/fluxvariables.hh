@@ -113,7 +113,7 @@ public:
                             (1.0 - upWindWeight) * upwindTerm(downstreamVolVars))
                             * velocity * scvf.area() * scvf.directionSign();
 
-        return flux;
+        return flux * extrusionFactor_(elemVolVars, scvf);
     }
 
     /*!
@@ -193,7 +193,7 @@ public:
                                                     const ElementVolumeVariables& elemVolVars,
                                                     const ElementFaceVariables& elemFaceVars)
     {
-        FacePrimaryVariables normalFlux(0.0);
+        FacePrimaryVariables frontalFlux(0.0);
 
         // The velocities of the dof at interest and the one of the opposite scvf.
         const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
@@ -226,7 +226,7 @@ public:
 
             // Account for the orientation of the staggered face's normal outer normal vector
             // (pointing in opposite direction of the scvf's one).
-            normalFlux += transportingVelocity * momentum * -1.0 * scvf.directionSign();
+            frontalFlux += transportingVelocity * momentum * -1.0 * scvf.directionSign();
         }
 
         // Diffusive flux.
@@ -236,8 +236,8 @@ public:
 
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
-        Scalar factor = enableUnsymmetrizedVelocityGradient ? 1.0 : 2.0;
-        normalFlux -= factor * insideVolVars.effectiveViscosity() * gradV;
+        const Scalar factor = enableUnsymmetrizedVelocityGradient ? 1.0 : 2.0;
+        frontalFlux -= factor * insideVolVars.effectiveViscosity() * gradV;
 
         // The pressure term.
         // If specified, the pressure can be normalized using the initial value on the scfv of interest.
@@ -248,7 +248,7 @@ public:
 
         // Account for the orientation of the staggered face's normal outer normal vector
         // (pointing in opposite direction of the scvf's one).
-        normalFlux += pressure * -1.0 * scvf.directionSign();
+        frontalFlux += pressure * -1.0 * scvf.directionSign();
 
         // Treat outflow conditions.
         if(scvf.boundary())
@@ -257,13 +257,13 @@ public:
             {
                 // Treat the staggered half-volume adjacent to the boundary as if it was on the opposite side of the boundary.
                 // The respective face's outer normal vector will point in the same direction as the scvf's one.
-                normalFlux += outflowBoundaryFlux_(problem, element, scvf, elemVolVars, elemFaceVars);
+                frontalFlux += outflowBoundaryFlux_(problem, element, scvf, elemVolVars, elemFaceVars);
             }
         }
 
         // Account for the staggered face's area. For rectangular elements, this equals the area of the scvf
         // our velocity dof of interest lives on.
-        return normalFlux *  scvf.area();
+        return frontalFlux * scvf.area() * insideVolVars.extrusionFactor();
    }
 
     /*!
@@ -415,7 +415,7 @@ private:
 
         // Account for the orientation of the staggered normal face's outer normal vector
         // and its area (0.5 of the coinciding scfv).
-        return transportingVelocity * momentum * normalFace.directionSign() * normalFace.area() * 0.5;
+        return transportingVelocity * momentum * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);
     }
 
     /*!
@@ -519,7 +519,7 @@ private:
         normalDiffusiveFlux -= muAvg * parallelGradient;
 
         // Account for the area of the staggered normal face (0.5 of the coinciding scfv).
-        return normalDiffusiveFlux * normalFace.area() * 0.5;
+        return normalDiffusiveFlux * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);
     }
 
     /*!
@@ -588,6 +588,14 @@ private:
     {
         return makeGhostFace_(ownScvf, ownScvf.pairData(localSubFaceIdx).virtualOuterParallelFaceDofPos);
     };
+
+    //! helper function to get the averaged extrusion factor for a face
+    static Scalar extrusionFactor_(const ElementVolumeVariables& elemVolVars, const SubControlVolumeFace& scvf)
+    {
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+        return harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
+    }
 
 };
 
