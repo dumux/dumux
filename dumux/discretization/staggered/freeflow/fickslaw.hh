@@ -160,7 +160,7 @@ public:
 
         const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
         const Scalar insideD = insideVolVars.effectiveDiffusivity(compIdx);
-        const Scalar ti = calculateOmega_(insideDistance, insideD, 1.0);
+        const Scalar ti = calculateOmega_(insideDistance, insideD, insideVolVars.extrusionFactor());
 
         if(scvf.boundary())
             tij = scvf.area() * ti;
@@ -170,7 +170,7 @@ public:
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
             const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
             const Scalar outsideD = outsideVolVars.effectiveDiffusivity(compIdx);
-            const Scalar tj = calculateOmega_(outsideDistance, outsideD, 1.0);
+            const Scalar tj = calculateOmega_(outsideDistance, outsideD, outsideVolVars.extrusionFactor());
 
             tij = scvf.area()*(ti * tj)/(ti + tj);
         }
