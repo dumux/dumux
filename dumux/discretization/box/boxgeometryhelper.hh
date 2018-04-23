@@ -553,13 +553,13 @@ public:
         case 3: // triangle
         {
             //! Only build the maps the first time we encounter a triangle
-            static const std::uint8_t vo = 1; //!< vertex offset in point vector p
-            static const std::uint8_t fo = 4; //!< face offset in point vector p
+            static const std::uint8_t vo = 1; //!< vertex offset in point vector pi
+            static const std::uint8_t eo = 4; //!< edge offset in point vector pi
             static const std::uint8_t map[3][4] =
             {
-                {vo+0, fo+0, fo+1, 0},
-                {vo+1, fo+2, fo+0, 0},
-                {vo+2, fo+1, fo+2, 0}
+                {vo+0, eo+0, eo+1, 0},
+                {vo+1, eo+2, eo+0, 0},
+                {vo+2, eo+1, eo+2, 0}
             };
 
             return ScvfCornerStorage{ {pi[map[indexInIntersection][0]],
@@ -570,14 +570,14 @@ public:
         case 4: // quadrilateral
         {
             //! Only build the maps the first time we encounter a quadrilateral
-            static const std::uint8_t vo = 1; //!< vertex offset in point vector p
-            static const std::uint8_t fo = 5; //!< face offset in point vector p
+            static const std::uint8_t vo = 1; //!< vertex offset in point vector pi
+            static const std::uint8_t eo = 5; //!< edge offset in point vector pi
             static const std::uint8_t map[4][4] =
             {
-                {vo+0, fo+2, fo+0, 0},
-                {vo+1, fo+1, fo+2, 0},
-                {vo+2, fo+0, fo+3, 0},
-                {vo+3, fo+3, fo+1, 0}
+                {vo+0, eo+2, eo+0, 0},
+                {vo+1, eo+1, eo+2, 0},
+                {vo+2, eo+0, eo+3, 0},
+                {vo+3, eo+3, eo+1, 0}
             };
 
             return ScvfCornerStorage{ {pi[map[indexInIntersection][0]],
