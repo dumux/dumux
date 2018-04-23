@@ -20,8 +20,8 @@
  * \ingroup TwoPTests
  * \brief The spatial params for the incompressible 2p test
  */
-#ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
-#define DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
+#ifndef DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
+#define DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
 
 #include <dumux/discretization/methods.hh>
 
