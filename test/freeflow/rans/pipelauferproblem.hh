@@ -22,15 +22,15 @@
  * \brief Pipe flow test for the staggered grid RANS model
  *
  * This test simulates is based on pipe flow experiments by
- * John Laufers experiments in 1954 \cite Laufer1954a.
+ * John Laufer's experiments in 1954 \cite Laufer1954a.
  */
 #ifndef DUMUX_PIPE_LAUFER_PROBLEM_HH
 #define DUMUX_PIPE_LAUFER_PROBLEM_HH
 
+#include <dumux/freeflow/turbulenceproperties.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/components/air.hh>
 
-#include <dumux/freeflow/turbulenceproperties.hh>
 #if LOWREKEPSILON
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/model.hh>
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/problem.hh>

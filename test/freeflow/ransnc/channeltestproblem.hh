@@ -24,9 +24,8 @@
 #ifndef DUMUX_RANS_NC_TEST_PROBLEM_HH
 #define DUMUX_RANS_NC_TEST_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/h2oair.hh>
-
 #include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
 #include <dumux/freeflow/ransnc/model.hh>

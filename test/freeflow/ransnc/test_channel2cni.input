@@ -11,13 +11,14 @@ Cells1 = 20
 Grading1 = 1.4
 
 [Problem]
-Name = test_channel_zeroeq2c # name passed to the output routines
+Name = test_channel2cni # name passed to the output routines
 InletVelocity = 0.1 # [m/s]
 EnableGravity = false
 
 [RANS]
 EddyViscosityModel = 3
 TurbulentSchmidtNumber = 0.7
+TurbulentPrandtlNumber = 0.85
 
 [Assembly]
 NumericDifferenceMethod = 0
