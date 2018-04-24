@@ -180,18 +180,6 @@
      */
     /*!
      * \ingroup FreeflowModels
-     * \defgroup FreeflowNCModel Compositional
-     * \brief Single-phase multi-component free-flow flow
-     * \copydetails ./freeflow/compositional/navierstokesncmodel.hh
-     */
-    /*!
-     * \ingroup FreeflowModels
-     * \defgroup NavierStokesNIModel nonisothermal
-     * \brief An energy equation adaptor for isothermal Navier-Stokes models
-     * \copydetails ./freeflow/nonisothermal/model.hh
-     */
-    /*!
-     * \ingroup FreeflowModels
      * \defgroup RANSModel Reynolds-Averaged Navier-Stokes
      * \brief Single-phase Reynolds-Averaged Navier-Stokes flow
      * \copydetails ./freeflow/rans/model.hh
@@ -216,10 +204,37 @@
          */
     /*!
      * \ingroup FreeflowModels
-     * \defgroup RANSNCModel Reynolds-Averaged Navier-Stokes nc
-     * \brief Single-phase multi-component Reynolds-Averaged Navier-Stokes flow
-     * \copydetails ./freeflow/ransnc/model.hh
+     * \defgroup FreeflowNCModel Compositional
+     * \brief Single-phase multi-component free-flow flow models
      */
+      /*!
+       * \ingroup FreeflowNCModel
+       * \defgroup NavierStokesNCModel Compositional Navier-Stokes
+       * \brief Single-phase multi-component Navier-Stokes flow
+       * \copydetails ./freeflow/compositional/navierstokesncmodel.hh
+       */
+      /*!
+       * \ingroup FreeflowNCModel
+       * \defgroup RANSNCModel Compositional Reynolds-Averaged Navier-Stokes
+       * \brief Single-phase multi-component Reynolds-Averaged Navier-Stokes flow
+       * \copydetails ./freeflow/ransnc/model.hh
+       */
+    /*!
+     * \ingroup FreeflowModels
+     * \defgroup FreeflowNIModel Nonisothermal
+     * \brief An energy equation adaptor for isothermal free-flow models
+     * \copydetails ./freeflow/nonisothermal/model.hh
+     */
+      /*!
+       * \ingroup FreeflowNIModel
+       * \defgroup NavierStokesNIModel Nonisothermal Navier-Stokes
+       * \brief An energy equation adaptor for isothermal Navier-Stokes models
+       */
+      /*!
+       * \ingroup FreeflowNIModel
+       * \defgroup RANSNIModel Nonisothermal Reynolds-Averaged Navier-Stokes
+       * \brief An energy equation adaptor for isothermal Reynolds-Averaged Navier-Stokes models
+       */
 
 /* ***************** Benchmarks and Tests ******************/
 /*!

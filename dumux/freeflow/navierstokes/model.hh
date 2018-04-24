@@ -52,7 +52,7 @@
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/nonisothermal/model.hh>
 #include <dumux/freeflow/nonisothermal/indices.hh>
-#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/freeflow/nonisothermal/navierstokesnivtkoutputfields.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
@@ -215,7 +215,7 @@ private:
     static constexpr int dim = GridView::dimension;
     using IsothermalTraits = NavierStokesModelTraits<dim>;
 public:
-    using type = NavierStokesNIModelTraits<IsothermalTraits>;
+    using type = FreeflowNIModelTraits<IsothermalTraits>;
 };
 
 //! The specific non-isothermal vtk output fields

@@ -54,7 +54,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
-#include <dumux/freeflow/nonisothermal/ransvtkoutputfields.hh>
+#include <dumux/freeflow/nonisothermal/ransnivtkoutputfields.hh>
 #include <dumux/freeflow/rans/zeroeq/volumevariables.hh>
 
 #include "indices.hh"

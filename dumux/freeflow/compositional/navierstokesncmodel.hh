@@ -52,7 +52,7 @@
 #include <dumux/freeflow/navierstokes/model.hh>
 #include <dumux/freeflow/nonisothermal/model.hh>
 #include <dumux/freeflow/nonisothermal/indices.hh>
-#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/freeflow/nonisothermal/navierstokesnivtkoutputfields.hh>
 #include <dumux/discretization/fickslaw.hh>
 #include <dumux/discretization/fourierslaw.hh>
 
@@ -217,7 +217,7 @@ private:
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     using IsothermalModelTraits = NavierStokesNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
 public:
-    using type = NavierStokesNIModelTraits<IsothermalModelTraits>;
+    using type = FreeflowNIModelTraits<IsothermalModelTraits>;
 };
 
 //! The non-isothermal vtk output fields

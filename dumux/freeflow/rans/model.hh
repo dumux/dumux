@@ -39,7 +39,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
-#include <dumux/freeflow/nonisothermal/ransvtkoutputfields.hh>
+#include <dumux/freeflow/nonisothermal/ransnivtkoutputfields.hh>
 
 #include "vtkoutputfields.hh"
 
@@ -91,7 +91,7 @@ private:
 
     using IsothermalTraits = NavierStokesModelTraits<dim>;
 public:
-    using type = NavierStokesNIModelTraits<IsothermalTraits>;
+    using type = FreeflowNIModelTraits<IsothermalTraits>;
 };
 
 //! The specific non-isothermal vtk output fields
