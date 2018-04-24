@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FV_GRID_GEOMETRY_TRAITS
 #define DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FV_GRID_GEOMETRY_TRAITS
 
+#include <dumux/common/defaultmappertraits.hh>
+#include <dumux/common/intersectionmapper.hh>
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
 #include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>

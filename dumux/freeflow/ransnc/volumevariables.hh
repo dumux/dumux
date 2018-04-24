@@ -25,6 +25,8 @@
 #ifndef DUMUX_RANS_NC_VOLUMEVARIABLES_HH
 #define DUMUX_RANS_NC_VOLUMEVARIABLES_HH
 
+#include <dumux/common/parameters.hh>
+
 namespace Dumux {
 
 /*!
