@@ -145,10 +145,10 @@ public:
     FacePrimaryVariables computeStorageForFace(const Problem& problem,
                                                const SubControlVolumeFace& scvf,
                                                const VolumeVariables& volVars,
-                                               const ElementFaceVariables& elementFaceVars) const
+                                               const ElementFaceVariables& elemFaceVars) const
     {
         FacePrimaryVariables storage(0.0);
-        const Scalar velocity = elementFaceVars[scvf].velocitySelf();
+        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
         storage[0] = volVars.density() * velocity;
         return storage;
     }
@@ -159,13 +159,12 @@ public:
                                               const FVElementGeometry& fvGeometry,
                                               const SubControlVolumeFace& scvf,
                                               const ElementVolumeVariables& elemVolVars,
-                                              const ElementFaceVariables& elementFaceVars) const
+                                              const ElementFaceVariables& elemFaceVars) const
     {
         FacePrimaryVariables source(0.0);
-        const auto insideScvIdx = scvf.insideScvIdx();
-        const auto& insideVolVars = elemVolVars[insideScvIdx];
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         source += problem.gravity()[scvf.directionIndex()] * insideVolVars.density();
-        source += problem.source(element, fvGeometry, elemVolVars, elementFaceVars, scvf)[Indices::velocity(scvf.directionIndex())];
+        source += problem.source(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())];
 
         return source;
     }
@@ -176,11 +175,11 @@ public:
                                             const SubControlVolumeFace& scvf,
                                             const FVElementGeometry& fvGeometry,
                                             const ElementVolumeVariables& elemVolVars,
-                                            const ElementFaceVariables& elementFaceVars,
+                                            const ElementFaceVariables& elemFaceVars,
                                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        return fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars);
+        return fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
     }
 
 protected:
@@ -277,7 +276,7 @@ protected:
                               const FVElementGeometry& fvGeometry,
                               const SubControlVolumeFace& scvf,
                               const ElementVolumeVariables& elemVolVars,
-                              const ElementFaceVariables& elementFaceVars,
+                              const ElementFaceVariables& elemFaceVars,
                               const ElementBoundaryTypes& elemBcTypes,
                               const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
@@ -289,7 +288,7 @@ protected:
             // set a fixed value for the velocity for Dirichlet boundary conditions
             if(bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
             {
-                const Scalar velocity = elementFaceVars[scvf].velocitySelf();
+                const Scalar velocity = elemFaceVars[scvf].velocitySelf();
                 const Scalar dirichletValue = problem.dirichlet(element, scvf)[Indices::velocity(scvf.directionIndex())];
                 residual = velocity - dirichletValue;
             }
@@ -299,19 +298,19 @@ protected:
             {
                 // set the given Neumann flux for the face on the boundary itself
                 const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
-                residual = problem.neumann(element, fvGeometry, elemVolVars, elementFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
+                residual = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
                                            * extrusionFactor * scvf.area();
 
                 // treat the remaining (normal) faces of the staggered control volume
                 FluxVariables fluxVars;
-                residual += fluxVars.computeNormalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars);
+                residual += fluxVars.computeNormalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
             }
 
             // For symmetry boundary conditions, there is no flow accross the boundary and
             // we therefore treat it like a Dirichlet boundary conditions with zero velocity
             if(bcTypes.isSymmetry())
             {
-                const Scalar velocity = elementFaceVars[scvf].velocitySelf();
+                const Scalar velocity = elemFaceVars[scvf].velocitySelf();
                 const Scalar fixedValue = 0.0;
                 residual = velocity - fixedValue;
             }
@@ -320,7 +319,7 @@ protected:
             if(bcTypes.isOutflow(Indices::velocity(scvf.directionIndex())))
             {
                 if(bcTypes.isDirichlet(Indices::conti0EqIdx))
-                    residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars, elemFluxVarsCache);
+                    residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
                 else
                     DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");
             }
