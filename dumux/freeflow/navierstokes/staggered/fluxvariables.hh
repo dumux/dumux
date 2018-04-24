@@ -272,7 +272,7 @@ public:
     *                scvf
     *              ---------#######                 || and # staggered half-control-volume
     *              |      ||      | current scvf
-    *              |      ||      |                 # normal staggered faces over wich fluxes are calculated
+    *              |      ||      |                 # normal staggered sub faces over wich fluxes are calculated
     *              |      ||      x~~~~> vel.Self
     *              |      ||      |                 x dof position
     *        scvf  |      ||      |
@@ -291,22 +291,43 @@ public:
         auto& faceVars = elemFaceVars[scvf];
         const int numSubFaces = scvf.pairData().size();
 
-        // Account for all sub-faces.
+        // Account for all sub faces.
         for(int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
         {
             const auto eIdx = scvf.insideScvIdx();
+            // Get the face normal to the face the dof lives on. The staggered sub face conincides with half of this normal face.
             const auto& normalFace = fvGeometry.scvf(eIdx, scvf.pairData()[localSubFaceIdx].localNormalFaceIdx);
 
-            // Check if we have a symmetry boundary condition. If yes, the tangental part of the momentum flux can be neglected.
+            // Check if there is face/element parallel to our face of interest where the dof lives on. If there is no parallel neighbor,
+            // we are on a boundary where we have to check for boundary conditions.
             if(!scvf.hasParallelNeighbor(localSubFaceIdx))
             {
-                // Use the ghost face to check if there is a symmetry boundary condition and skip any further steps if yes.
-                const auto bcTypes = problem.boundaryTypes(element, makeParallelGhostFace_(scvf, localSubFaceIdx));
+                // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
+                // the sub faces's center.
+                auto localSubFaceCenter = scvf.pairData(localSubFaceIdx).virtualOuterParallelFaceDofPos - normalFace.center();
+                localSubFaceCenter *= 0.5;
+                localSubFaceCenter += normalFace.center();
+                const auto localSubFace = makeGhostFace_(normalFace, localSubFaceCenter);
+
+                // Retrieve the boundary types that correspond to the sub face.
+                const auto bcTypes = problem.boundaryTypes(element, localSubFace);
+
+                // Check if we have a symmetry boundary condition. If yes, the tangental part of the momentum flux can be neglected
+                // and we may skip any further calculations for the given sub face.
                 if(bcTypes.isSymmetry())
                     continue;
+
+                // Handle Neumann boundary conditions. No further calculations are then required for the given sub face.
+                if(bcTypes.isNeumann(Indices::velocity(scvf.directionIndex())))
+                {
+                    const auto extrusionFactor = elemVolVars[normalFace.insideScvIdx()].extrusionFactor();
+                    normalFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, localSubFace)[Indices::velocity(scvf.directionIndex())]
+                                                  * extrusionFactor * normalFace.area() * 0.5;
+                    continue;
+                }
             }
 
-            // If there is no symmetry boundary condition, proceed to calculate the tangential momentum flux.
+            // If there is no symmetry or Neumann boundary condition for the given sub face, proceed to calculate the tangential momentum flux.
             if(enableInertiaTerms)
                 normalFlux += computeAdvectivePartOfNormalMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx);
 
@@ -541,19 +562,19 @@ private:
 
 private:
 
-    //! helper functiuob to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
+    //! helper function to conveniently create a ghost face used to retrieve boundary values from the problem
     SubControlVolumeFace makeGhostFace_(const SubControlVolumeFace& ownScvf, const GlobalPosition& pos) const
     {
-        return SubControlVolumeFace(pos, std::vector<unsigned int>{ownScvf.insideScvIdx(), ownScvf.outsideScvIdx()}, ownScvf.dofIndex());
+        return SubControlVolumeFace(pos, std::vector<unsigned int>{ownScvf.insideScvIdx(), ownScvf.outsideScvIdx()}, ownScvf.dofIndex(), ownScvf.index());
     };
 
-    //! helper functiuob to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
+    //! helper function to conveniently create a ghost face which is outside the domain, normal to the scvf of interest
     SubControlVolumeFace makeNormalGhostFace_(const SubControlVolumeFace& ownScvf, const int localSubFaceIdx) const
     {
         return makeGhostFace_(ownScvf, ownScvf.pairData(localSubFaceIdx).virtualOuterNormalFaceDofPos);
     };
 
-    //! helper functiuob to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
+    //! helper function to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
     SubControlVolumeFace makeParallelGhostFace_(const SubControlVolumeFace& ownScvf, const int localSubFaceIdx) const
     {
         return makeGhostFace_(ownScvf, ownScvf.pairData(localSubFaceIdx).virtualOuterParallelFaceDofPos);
