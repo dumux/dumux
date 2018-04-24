@@ -34,7 +34,7 @@ namespace Dumux
  * \ingroup FreeflowNCModel
  * \brief Adds vtk output fields specific to the FreeflowNC model
  */
-template<class FVGridGeometry, class FluidSystem, int phaseIdx>
+template<class BaseVtkOutputFields, class ModelTraits, class FVGridGeometry, class FluidSystem, int phaseIdx>
 class FreeflowNCVtkOutputFields
 {
 
@@ -43,8 +43,14 @@ public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        NavierStokesVtkOutputFields<FVGridGeometry>::init(vtk);
+        BaseVtkOutputFields::init(vtk);
+        add(vtk);
+    }
 
+    //! Add the FreeflowNC specific vtk output fields.
+    template <class VtkOutputModule>
+    static void add(VtkOutputModule& vtk)
+    {
         for (int j = 0; j < FluidSystem::numComponents; ++j)
         {
             vtk.addVolumeVariable([j](const auto& v){ return v.massFraction(j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
@@ -54,6 +60,9 @@ public:
                 vtk.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
             }
         }
+        if (ModelTraits::usesTurbulenceModel())
+            // the eddy diffusivity is recalculated for an arbitrary component which is not the phase component
+            vtk.addVolumeVariable([](const auto& v){ return v.effectiveDiffusivity(1-phaseIdx) - v.diffusionCoefficient(1-phaseIdx); }, "D_t");
     }
 };
 

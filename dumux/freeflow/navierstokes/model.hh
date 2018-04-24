@@ -52,7 +52,7 @@
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/nonisothermal/model.hh>
 #include <dumux/freeflow/nonisothermal/indices.hh>
-#include <dumux/freeflow/nonisothermal/navierstokesnivtkoutputfields.hh>
+#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
@@ -95,6 +95,9 @@ struct NavierStokesModelTraits
 
     //! The model is isothermal
     static constexpr bool enableEnergyBalance() { return false; }
+
+    //! The model does not include a turbulence model
+    static constexpr bool usesTurbulenceModel() { return false; }
 
     //! the indices
     using Indices = NavierStokesIndices<dim()>;
@@ -222,10 +225,11 @@ public:
 SET_PROP(NavierStokesNI, VtkOutputFields)
 {
 private:
+     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
      using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
      using IsothermalFields = NavierStokesVtkOutputFields<FVGridGeometry>;
 public:
-     using type = NavierStokesNonIsothermalVtkOutputFields<IsothermalFields>;
+     using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
 };
 
 //! Use Fourier's Law as default heat conduction type

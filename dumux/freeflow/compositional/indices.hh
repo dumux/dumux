@@ -33,8 +33,9 @@ namespace Dumux {
  * \brief The common indices for the isothermal multi-component free-flow model.
  */
 template <int dimension, int numEquations,
-          int phaseIdx, int theReplaceCompEqIdx>
-struct FreeflowNCIndices : public NavierStokesIndices<dimension>
+          int phaseIdx, int theReplaceCompEqIdx,
+          class FreeflowIndices>
+struct FreeflowNCIndices : public FreeflowIndices
 {
 public:
     //! The index of the fluid phase in the fluid system

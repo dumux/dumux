@@ -18,39 +18,45 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup RANSNCModel
- * \copydoc Dumux::RANSNCIndices
+ * \ingroup FreeflowNIModel
+ * \copydoc Dumux::FreeflowNonIsothermalVtkOutputFields
  */
-#ifndef DUMUX_RANS_NC_INDICES_HH
-#define DUMUX_RANS_NC_INDICES_HH
+#ifndef DUMUX_FREEFLOW_NI_OUTPUT_FIELDS_HH
+#define DUMUX_FREEFLOW_NI_OUTPUT_FIELDS_HH
 
-#include <dumux/freeflow/compositional/indices.hh>
+#include <dumux/common/properties.hh>
 
-namespace Dumux {
+namespace Dumux
+{
 
 /*!
- * \ingroup RANSNCModel
- * \brief Dummy indices for the ZeroEqNC model
+ * \ingroup FreeflowNIModel
+ * \brief Adds vtk output fields specific to non-isothermal free-flow models
  */
-class DummyIndices
-{ };
+template<class IsothermalVtkOutputFields, class ModelTraits>
+class FreeflowNonIsothermalVtkOutputFields
+{
 
-// \{
-/*!
- * \ingroup RANSNCModel
- * \brief The common indices for the isothermal multi-component Reynolds-averaged Navier-Stokes model.
- *
- * \tparam PVOffset The first index in a primary variable vector.
- */
-template <int dimension, int numEquations,
-          int thePhaseIdx, int theReplaceCompEqIdx,
-          class MomentumIndices = DummyIndices>
-struct RANSNCIndices
-    : public FreeflowNCIndices<dimension, numEquations, thePhaseIdx, theReplaceCompEqIdx>,
-      public MomentumIndices
-{ };
+public:
+    //! Initialize the non-isothermal specific vtk output fields.
+    template <class VtkOutputModule>
+    static void init(VtkOutputModule& vtk)
+    {
+        IsothermalVtkOutputFields::init(vtk);
+        add(vtk);
+    }
 
-// \}
+    //! Add the non-isothermal specific vtk output fields.
+    template <class VtkOutputModule>
+    static void add(VtkOutputModule& vtk)
+    {
+        vtk.addVolumeVariable([](const auto& v){ return v.temperature(); }, "temperature");
+//         vtk.addVolumeVariable([](const auto& v){ return v.thermalConductivity(); }, "lambda");
+        if (ModelTraits::usesTurbulenceModel())
+            vtk.addVolumeVariable([](const auto& v){ return v.effectiveThermalConductivity() - v.thermalConductivity(); }, "lambda_t");
+    }
+};
+
 } // end namespace Dumux
 
 #endif

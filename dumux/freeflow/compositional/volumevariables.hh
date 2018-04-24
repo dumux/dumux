@@ -188,25 +188,25 @@ public:
     Scalar viscosity() const
     { return fluidState_.viscosity(fluidSystemPhaseIdx); }
 
-     /*!
-      * \brief Returns the mass fraction of a component in the phase \f$\mathrm{[-]}\f$
-      *
-      * \param compIdx the index of the component
-      */
-     Scalar massFraction(int compIdx) const
-     {
-         return fluidState_.massFraction(fluidSystemPhaseIdx, compIdx);
-     }
+    /*!
+     * \brief Returns the mass fraction of a component in the phase \f$\mathrm{[-]}\f$
+     *
+     * \param compIdx the index of the component
+     */
+    Scalar massFraction(int compIdx) const
+    {
+        return fluidState_.massFraction(fluidSystemPhaseIdx, compIdx);
+    }
 
-     /*!
-      * \brief Returns the mole fraction of a component in the phase \f$\mathrm{[-]}\f$
-      *
-      * \param compIdx the index of the component
-      */
-     Scalar moleFraction(int compIdx) const
-     {
-         return fluidState_.moleFraction(fluidSystemPhaseIdx, compIdx);
-     }
+    /*!
+     * \brief Returns the mole fraction of a component in the phase \f$\mathrm{[-]}\f$
+     *
+     * \param compIdx the index of the component
+     */
+    Scalar moleFraction(int compIdx) const
+    {
+        return fluidState_.moleFraction(fluidSystemPhaseIdx, compIdx);
+    }
 
     /*!
      * \brief Returns the mass density of a given phase \f$\mathrm{[kg/m^3]}\f$

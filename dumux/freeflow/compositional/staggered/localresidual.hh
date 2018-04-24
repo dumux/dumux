@@ -31,20 +31,18 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag,  DiscretizationMethod discMethod>
+template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
 class FreeflowNCResidualImpl;
 
 /*!
  * \ingroup FreeflowNCModel
  * \brief Element-wise calculation of the multi-component free-flow residual for models using the staggered discretization
  */
-template<class TypeTag>
-class FreeflowNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
-: public NavierStokesResidual<TypeTag>
+template<class TypeTag, class BaseLocalResidual>
+class FreeflowNCResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
+: public BaseLocalResidual
 {
-    using ParentType = NavierStokesResidual<TypeTag>;
-    friend class StaggeredLocalResidual<TypeTag>;
-    friend ParentType;
+    using ParentType = BaseLocalResidual;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -70,7 +68,7 @@ public:
                                                            const SubControlVolume& scv,
                                                            const VolumeVariables& volVars) const
     {
-        CellCenterPrimaryVariables storage(0.0);
+        CellCenterPrimaryVariables storage = ParentType::computeStorageForCellCenter(problem, scv, volVars);
 
         const Scalar density = useMoles ? volVars.molarDensity() : volVars.density();
 
@@ -96,20 +94,19 @@ public:
         return storage;
     }
 
-protected:
 
     /*!
      * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
      *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
      */
     template<class ElementVolumeVariables, class BoundaryTypes>
-    void setFixedCell_(CellCenterResidual& residual,
-                       const Problem& problem,
-                       const SubControlVolume& insideScv,
-                       const ElementVolumeVariables& elemVolVars,
-                       const BoundaryTypes& bcTypes) const
+    void setFixedCell(CellCenterResidual& residual,
+                      const Problem& problem,
+                      const SubControlVolume& insideScv,
+                      const ElementVolumeVariables& elemVolVars,
+                      const BoundaryTypes& bcTypes) const
     {
-        ParentType::setFixedCell_(residual, problem, insideScv, elemVolVars, bcTypes);
+        ParentType::setFixedCell(residual, problem, insideScv, elemVolVars, bcTypes);
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {

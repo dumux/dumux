@@ -183,6 +183,25 @@ public:
         return fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars);
     }
 
+    /*!
+     * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
+     *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
+     */
+    template<class BoundaryTypes>
+    void setFixedCell(CellCenterResidual& residual,
+                      const Problem& problem,
+                      const SubControlVolume& insideScv,
+                      const ElementVolumeVariables& elemVolVars,
+                      const BoundaryTypes& bcTypes) const
+    {
+        // set a fixed pressure for cells adjacent to a wall
+        if(bcTypes.isDirichletCell(Indices::conti0EqIdx))
+        {
+            const auto& insideVolVars = elemVolVars[insideScv];
+            residual[Indices::conti0EqIdx - cellCenterOffset] = insideVolVars.pressure() - problem.dirichletAtPos(insideScv.center())[Indices::pressureIdx];
+        }
+    }
+
 protected:
 
     //  /*!
@@ -243,27 +262,8 @@ protected:
 
                 residual += boundaryFlux;
 
-                asImp_().setFixedCell_(residual, problem, scv, elemVolVars, bcTypes);
+                asImp_().setFixedCell(residual, problem, scv, elemVolVars, bcTypes);
             }
-        }
-    }
-
-    /*!
-     * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
-     *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
-     */
-    template<class BoundaryTypes>
-    void setFixedCell_(CellCenterResidual& residual,
-                       const Problem& problem,
-                       const SubControlVolume& insideScv,
-                       const ElementVolumeVariables& elemVolVars,
-                       const BoundaryTypes& bcTypes) const
-    {
-        // set a fixed pressure for cells adjacent to a wall
-        if(bcTypes.isDirichletCell(Indices::conti0EqIdx))
-        {
-            const auto& insideVolVars = elemVolVars[insideScv];
-            residual[Indices::conti0EqIdx - cellCenterOffset] = insideVolVars.pressure() - problem.dirichletAtPos(insideScv.center())[Indices::pressureIdx];
         }
     }
 

@@ -44,8 +44,6 @@ class LowReKEpsilonResidualImpl<TypeTag, DiscretizationMethod::staggered>
 : public NavierStokesResidual<TypeTag>
 {
     using ParentType = NavierStokesResidual<TypeTag>;
-    friend class StaggeredLocalResidual<TypeTag>;
-    friend ParentType;
 
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 

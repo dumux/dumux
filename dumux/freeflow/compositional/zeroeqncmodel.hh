@@ -18,53 +18,29 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup RANSModel
+ * \ingroup FreeflowNCModel
  *
- * \brief A single-phase, multi-component isothermal Navier-Stokes model
+ * \brief A single-phase, multi-component Reynolds-Averaged Navier-Stokes 0-Eq. model
  *
- * \copydoc Dumux::RANSModel
- *
- * The system is closed by a <B> component mass/mole balance equation </B> for each component \f$\kappa\f$:
- * \f[
- *    \frac{\partial \left(\varrho X^\kappa\right)}{\partial t}
- *    + \nabla \cdot \left( \varrho {\boldsymbol{v}} X^\kappa
- *    - (D^\kappa + D_\text{t}) \varrho \frac{M^\kappa}{M} \textbf{grad}\, x^\kappa \right)
- *    - q^\kappa = 0
- * \f]
- *
- * Alternatively, one component balance equation can be replace by a <B> total mass/mole balance equation </B>:
- * \f[
- *    \frac{\partial \varrho_g}{\partial t}
- *    + \nabla \cdot \left(
- *        \varrho {\boldsymbol{v}}
- *        - \sum_\kappa (D^\kappa + D_\text{t}) \varrho \frac{M^\kappa}{M} \textbf{grad}\, x^\kappa
- *      \right)
- *    - q = 0
- * \f]
- *
- * The eddy diffusivity \f$ D_\text{t} \f$ is related to the eddy viscosity \f$ \nu_\text{t} \f$
- * by the turbulent Schmidt number:
- * \f[ D_\text{t} = \frac{\nu_\text{t}}{\mathrm{Sc}_\text{t}} \f]
- *
- * So far, only the staggered grid spatial discretization (for structured grids) is available.
+ * \copydoc Dumux::FreeflowNCModel
  */
 
-#ifndef DUMUX_RANS_NC_MODEL_HH
-#define DUMUX_RANS_NC_MODEL_HH
+#ifndef DUMUX_ZEROEQ_NC_MODEL_HH
+#define DUMUX_ZEROEQ_NC_MODEL_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
-#include <dumux/freeflow/nonisothermal/ransnivtkoutputfields.hh>
-#include <dumux/freeflow/rans/zeroeq/volumevariables.hh>
+#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/freeflow/rans/zeroeq/model.hh>
 
-#include "indices.hh"
-#include "volumevariables.hh"
 #include "vtkoutputfields.hh"
+
+#include <dumux/freeflow/ransnc/volumevariables.hh>
 
 namespace Dumux {
 
 ///////////////////////////////////////////////////////////////////////////
-// properties for the single-phase, multi-component RANS model
+// properties for the single-phase, multi-component ZeroEq model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 
@@ -72,13 +48,38 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tags for the single-phase, multi-component isothermal RANS model
-NEW_TYPE_TAG(RANSNC, INHERITS_FROM(NavierStokesNC));
-NEW_TYPE_TAG(ZeroEqNC, INHERITS_FROM(RANSNC));
+//! The type tags for the single-phase, multi-component isothermal ZeroEq model
+NEW_TYPE_TAG(ZeroEqNC, INHERITS_FROM(NavierStokesNC));
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values
 ///////////////////////////////////////////////////////////////////////////
+
+/*!
+ * \ingroup ZeroEqModel
+ * \brief Traits for the Reynolds-averaged Navier-Stokes 0-Eq. model
+ */
+template<int dimension, int nComp, int phaseIdx, int replaceCompEqIdx, bool useM>
+struct ZeroEqNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, phaseIdx, replaceCompEqIdx, useM>
+{
+    //! The model does include a turbulence model
+    static constexpr bool usesTurbulenceModel() { return true; }
+};
+
+//! The model traits of the isothermal model
+SET_PROP(ZeroEqNC, ModelTraits)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    static constexpr int dim = GridView::dimension;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int numComponents = FluidSystem::numComponents;
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+public:
+    using type = ZeroEqNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
+};
 
 //! Set the volume variables property
 SET_PROP(ZeroEqNC, VolumeVariables)
@@ -100,21 +101,37 @@ public:
 SET_PROP(ZeroEqNC, VtkOutputFields)
 {
 private:
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    using SinglePhaseVtkOutputFields = RANSVtkOutputFields<FVGridGeometry>;
+    using BaseVtkOutputFields = RANSVtkOutputFields<FVGridGeometry>;
 public:
-    using type = RANSNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx, SinglePhaseVtkOutputFields>;
+     using type = FreeflowNCVtkOutputFields<BaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem, phaseIdx>;
 };
 
 //////////////////////////////////////////////////////////////////////////
-// Property values for non-isothermal multi-component RANS model
+// Property values for non-isothermal multi-component ZeroEq model
 //////////////////////////////////////////////////////////////////////////
 
-//! The type tags for the single-phase, multi-component non-isothermal RANS models
-NEW_TYPE_TAG(RANSNCNI, INHERITS_FROM(NavierStokesNCNI));
-NEW_TYPE_TAG(ZeroEqNCNI, INHERITS_FROM(RANSNCNI));
+//! The type tags for the single-phase, multi-component non-isothermal ZeroEq models
+NEW_TYPE_TAG(ZeroEqNCNI, INHERITS_FROM(NavierStokesNCNI));
+
+//! The model traits of the non-isothermal model
+SET_PROP(ZeroEqNCNI, ModelTraits)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    static constexpr int dim = GridView::dimension;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static constexpr int numComponents = FluidSystem::numComponents;
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    using IsothermalModelTraits = ZeroEqNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
+public:
+    using type = FreeflowNIModelTraits<IsothermalModelTraits>;
+};
 
 //! Set the volume variables property
 SET_PROP(ZeroEqNCNI, VolumeVariables)
@@ -126,8 +143,8 @@ private:
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
-    using NSVolVars = FreeflowNCVolumeVariables<Traits>;
-    using RANSVolVars = ZeroEqVolumeVariables<Traits, NSVolVars>;
+    using NCVolVars = FreeflowNCVolumeVariables<Traits>;
+    using RANSVolVars = ZeroEqVolumeVariables<Traits, NCVolVars>;
 public:
     using type = RANSNCVolumeVariables<Traits, RANSVolVars>;
 };
@@ -136,14 +153,14 @@ public:
 SET_PROP(ZeroEqNCNI, VtkOutputFields)
 {
 private:
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    using NavierStokesFields = NavierStokesVtkOutputFields<FVGridGeometry>;
-    using RANSFields = RANSVtkOutputFields<FVGridGeometry>;
-    using SinglePhaseVtkOutputFields = RANSNonIsothermalVtkOutputFields<NavierStokesFields, RANSFields>;
+    using BaseVtkOutputFields = RANSVtkOutputFields<FVGridGeometry>;
+    using NonIsothermalFields = FreeflowNonIsothermalVtkOutputFields<BaseVtkOutputFields, ModelTraits>;
 public:
-    using type = RANSNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx, SinglePhaseVtkOutputFields>;
+    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem, phaseIdx>;
 };
 
 // \}

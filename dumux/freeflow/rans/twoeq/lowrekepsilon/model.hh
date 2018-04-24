@@ -99,7 +99,7 @@ namespace Properties {
  * \brief Traits for the low-Reynolds k-epsilon model
  */
 template<int dimension>
-struct LowReKEpsilonModelTraits
+struct LowReKEpsilonModelTraits : RANSModelTraits<dimension>
 {
     //! The dimension of the model
     static constexpr int dim() { return dimension; }
@@ -108,23 +108,11 @@ struct LowReKEpsilonModelTraits
     //! one mass balance equation and two turbulent transport equations
     static constexpr int numEq() { return dim()+1+2; }
 
-    //! The number of phases is always 1
-    static constexpr int numPhases() { return 1; }
-
     //! The number of components
     static constexpr int numComponents() { return 1; }
 
-    //! Enable advection
-    static constexpr bool enableAdvection() { return true; }
-
-    //! The one-phase model has no molecular diffusion
-    static constexpr bool enableMolecularDiffusion() { return true; }
-
-    //! The model is isothermal
-    static constexpr bool enableEnergyBalance() { return false; }
-
     //! the indices
-    using Indices = LowReKEpsilonIndices<dim()>;
+    using Indices = LowReKEpsilonIndices<dim(), numComponents()>;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -181,6 +169,17 @@ public:
 //! The type tag for the single-phase, isothermal low-Reynolds k-epsilon model
 NEW_TYPE_TAG(LowReKEpsilonNI, INHERITS_FROM(RANSNI));
 
+//! The model traits of the non-isothermal model
+SET_PROP(LowReKEpsilonNI, ModelTraits)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    static constexpr int dim = GridView::dimension;
+    using IsothermalTraits = LowReKEpsilonModelTraits<dim>;
+public:
+    using type = FreeflowNIModelTraits<IsothermalTraits>;
+};
+
 //! Set the volume variables property
 SET_PROP(LowReKEpsilonNI, VolumeVariables)
 {
@@ -194,6 +193,17 @@ private:
     using NSVolVars = NavierStokesVolumeVariables<Traits>;
 public:
     using type = LowReKEpsilonVolumeVariables<Traits, NSVolVars>;
+};
+
+//! The specific non-isothermal vtk output fields
+SET_PROP(LowReKEpsilonNI, VtkOutputFields)
+{
+private:
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using IsothermalFields = LowReKEpsilonVtkOutputFields<FVGridGeometry>;
+public:
+    using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
 };
 
 // \}
