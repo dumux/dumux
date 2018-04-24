@@ -24,8 +24,10 @@
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_VOLUMEVARIABLES_HH
 
-#include <utility>
+#include <algorithm>
 #include <type_traits>
+#include <utility>
+#include <vector>
 
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 

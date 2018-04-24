@@ -50,8 +50,6 @@ class ZeroEqVolumeVariables
 
     static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
 
-
-
 public:
     //! export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
@@ -74,18 +72,41 @@ public:
                 const SubControlVolume& scv)
     {
         NavierStokesParentType::update(elemSol, problem, element, scv);
-        RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
+        updateRANSProperties(elemSol, problem, element, scv);
     }
+
+    /*!
+     * \brief Update all turbulent quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
+    void updateRANSProperties(const ElementSolution &elemSol,
+                              const Problem &problem,
+                              const Element &element,
+                              const SubControlVolume& scv)
+    {
+        RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
+        additionalRoughnessLength_ = problem.additionalRoughnessLength_[RANSParentType::elementID()];
+        yPlusRough_ = wallDistanceRough() * RANSParentType::uStar() / RANSParentType::kinematicViscosity();
+        dynamicEddyViscosity_ = calculateEddyViscosity(elemSol, problem, element, scv);
+    }
+
+    /*!
+     * \brief Return the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow
+     */
+    Scalar dynamicEddyViscosity() const
+    { return dynamicEddyViscosity_; }
 
     /*!
      * \brief Return the effective dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
      */
     Scalar effectiveViscosity() const
-    {
-        return NavierStokesParentType::viscosity()
-               + RANSParentType::dynamicEddyViscosity();
-    }
+    { return NavierStokesParentType::viscosity() + dynamicEddyViscosity(); }
 
     /*!
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
@@ -112,9 +133,6 @@ public:
                                   const Element &element,
                                   const SubControlVolume& scv)
     {
-        additionalRoughnessLength_ = problem.additionalRoughnessLength_[RANSParentType::elementID()];
-        yPlusRough_ = wallDistanceRough() * RANSParentType::uStar() / RANSParentType::kinematicViscosity();
-
         using std::abs;
         using std::exp;
         using std::sqrt;
@@ -171,7 +189,7 @@ public:
     { return NavierStokesParentType::fluidState_; }
 
 protected:
-
+    Scalar dynamicEddyViscosity_;
     Scalar additionalRoughnessLength_;
     Scalar yPlusRough_;
 };

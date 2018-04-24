@@ -25,7 +25,9 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_FLUXVARSCACHE_HH
 
 #include <algorithm>
+#include <cassert>
 #include <iterator>
+#include <vector>
 
 namespace Dumux {
 

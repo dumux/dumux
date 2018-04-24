@@ -24,6 +24,8 @@
 #ifndef DUMUX_3P3C_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_3P3C_PRIMARY_VARIABLE_SWITCH_HH
 
+#include <iostream>
+
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 
 namespace Dumux {

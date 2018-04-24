@@ -25,6 +25,7 @@
 #define DUMUX_NAVIERSTOKES_STAGGERED_FLUXVARIABLES_HH
 
 #include <dumux/common/math.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 
 #include <dumux/discretization/fluxvariablesbase.hh>
@@ -147,10 +148,8 @@ public:
                                : false;
 
         // Call the generic flux function.
-        const Scalar flux = advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
-
         CellCenterPrimaryVariables result(0.0);
-        result[Indices::conti0EqIdx - ModelTraits::dim()] = flux;
+        result[Indices::conti0EqIdx - ModelTraits::dim()] = advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
 
         return result;
     }
@@ -234,7 +233,11 @@ public:
         // The velocity gradient already accounts for the orientation
         // of the staggered face's outer normal vector.
         const Scalar gradV = (velocityOpposite - velocitySelf) / scvf.selfToOppositeDistance();
-        normalFlux -= insideVolVars.effectiveViscosity() * 2.0 * gradV;
+
+        static const bool enableUnsymmetrizedVelocityGradient
+            = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+        Scalar factor = enableUnsymmetrizedVelocityGradient ? 1.0 : 2.0;
+        normalFlux -= factor * insideVolVars.effectiveViscosity() * gradV;
 
         // The pressure term.
         // If specified, the pressure can be normalized using the initial value on the scfv of interest.
@@ -447,6 +450,9 @@ private:
     {
         FacePrimaryVariables normalDiffusiveFlux(0.0);
 
+        static const bool enableUnsymmetrizedVelocityGradient
+            = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+
         // Get the volume variables of the own and the neighboring element. The neighboring
         // element is adjacent to the staggered face normal to the current scvf
         // where the dof of interest is located.
@@ -458,33 +464,36 @@ private:
                              ? insideVolVars.effectiveViscosity()
                              : (insideVolVars.effectiveViscosity() + outsideVolVars.effectiveViscosity()) * 0.5;
 
-        // For the normal gradient, get the velocities perpendicular to the velocity at the current scvf.
-        // The inner one is located at staggered face within the own element,
-        // the outer one at the respective staggered face of the element on the other side of the
-        // current scvf.
-        const Scalar innerNormalVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
-
-        // Lambda to conveniently get the outer normal velocity for faces that are on the boundary
-        // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
-        auto getNormalVelocityFromBoundary = [&]()
+        if (!enableUnsymmetrizedVelocityGradient)
         {
-            const auto ghostFace = makeNormalGhostFace_(scvf, localSubFaceIdx);
-            return problem.dirichlet(element, ghostFace)[Indices::velocity(normalFace.directionIndex())];
-        };
+            // For the normal gradient, get the velocities perpendicular to the velocity at the current scvf.
+            // The inner one is located at staggered face within the own element,
+            // the outer one at the respective staggered face of the element on the other side of the
+            // current scvf.
+            const Scalar innerNormalVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
 
-        const Scalar outerNormalVelocity = scvf.hasFrontalNeighbor(localSubFaceIdx)
-                                           ? faceVars.velocityNormalOutside(localSubFaceIdx)
-                                           : getNormalVelocityFromBoundary();
+            // Lambda to conveniently get the outer normal velocity for faces that are on the boundary
+            // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
+            auto getNormalVelocityFromBoundary = [&]()
+            {
+                const auto ghostFace = makeNormalGhostFace_(scvf, localSubFaceIdx);
+                return problem.dirichlet(element, ghostFace)[Indices::velocity(normalFace.directionIndex())];
+            };
 
-        // Calculate the velocity gradient in positive coordinate direction.
-        const Scalar normalDeltaV = scvf.normalInPosCoordDir()
-                                    ? (outerNormalVelocity - innerNormalVelocity)
-                                    : (innerNormalVelocity - outerNormalVelocity);
+            const Scalar outerNormalVelocity = scvf.hasFrontalNeighbor(localSubFaceIdx)
+                                              ? faceVars.velocityNormalOutside(localSubFaceIdx)
+                                              : getNormalVelocityFromBoundary();
 
-        const Scalar normalGradient = normalDeltaV / scvf.pairData(localSubFaceIdx).normalDistance;
+            // Calculate the velocity gradient in positive coordinate direction.
+            const Scalar normalDeltaV = scvf.normalInPosCoordDir()
+                                        ? (outerNormalVelocity - innerNormalVelocity)
+                                        : (innerNormalVelocity - outerNormalVelocity);
 
-        // Account for the orientation of the staggered normal face's outer normal vector.
-        normalDiffusiveFlux -= muAvg * normalGradient * normalFace.directionSign();
+            const Scalar normalGradient = normalDeltaV / scvf.pairData(localSubFaceIdx).normalDistance;
+
+            // Account for the orientation of the staggered normal face's outer normal vector.
+            normalDiffusiveFlux -= muAvg * normalGradient * normalFace.directionSign();
+        }
 
         // For the parallel derivative, get the velocities at the current (own) scvf
         // and at the parallel one at the neighboring scvf.

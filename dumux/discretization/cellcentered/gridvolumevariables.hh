@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_GRID_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_CC_GRID_VOLUMEVARIABLES_HH
 
+#include <vector>
 #include <type_traits>
 
 //! make the local view function available whenever we use this class

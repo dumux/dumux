@@ -18,41 +18,37 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TracerModel
- * \brief Adds vtk output fields specific to the tracer model
+ * \ingroup LowReKEpsilonModel
+ * \copydoc Dumux::LowReKEpsilonIndices
  */
-#ifndef DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_LOWREKEPSILON_INDICES_HH
+#define DUMUX_LOWREKEPSILON_INDICES_HH
 
-#include <string>
+#include <dumux/freeflow/navierstokes/indices.hh>
 
 namespace Dumux {
 
+// \{
 /*!
- * \ingroup TracerModel
- * \brief Adds vtk output fields specific to the tracer model
+ * \ingroup LowReKEpsilonModel
+ * \brief The common indices for the isothermal low-Reynolds k-epsilon model.
+ *
+ * \tparam dimension The dimension of the problem
  */
-class TracerVtkOutputFields
+template <int dimension>
+struct LowReKEpsilonIndices : public NavierStokesIndices<dimension>
 {
-public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
-    {
-        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
-        using FluidSystem = typename VolumeVariables::FluidSystem;
+private:
+    using ParentType = NavierStokesIndices<dimension>;
 
-        // register standardized vtk output fields
-        for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
-        {
-            vtk.addVolumeVariable( [compIdx](const auto& v){  return v.moleFraction(0, compIdx); },
-                                   "x_" + std::string(FluidSystem::componentName(compIdx)));
-            vtk.addVolumeVariable( [compIdx](const auto& v){  return v.massFraction(0, compIdx); },
-                                   "X_" + std::string(FluidSystem::componentName(compIdx)));
-        }
-        vtk.addVolumeVariable( [](const auto& v){ return v.density(); }, "rho");
-    }
+public:
+    static constexpr auto turbulentKineticEnergyEqIdx = ParentType::conti0EqIdx + 1;
+    static constexpr auto turbulentKineticEnergyIdx = turbulentKineticEnergyEqIdx;
+    static constexpr auto dissipationEqIdx = turbulentKineticEnergyEqIdx + 1;
+    static constexpr auto dissipationIdx = dissipationEqIdx;
 };
 
-} // end namespace Dumux
+// \}
+} // end namespace
 
 #endif

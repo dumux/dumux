@@ -24,6 +24,8 @@
 #ifndef DUMUX_2P2C_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_2P2C_PRIMARY_VARIABLE_SWITCH_HH
 
+#include <iostream>
+
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 

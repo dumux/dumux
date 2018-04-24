@@ -25,6 +25,8 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_ELEMENTFACEVARIABLES_HH
 
 #include <algorithm>
+#include <cassert>
+#include <vector>
 
 namespace Dumux {
 

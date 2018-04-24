@@ -24,16 +24,16 @@
  * This test simulates is based on pipe flow experiments by
  * John Laufers experiments in 1954 \cite Laufer1954a.
  */
- #include <config.h>
+#include <config.h>
 
- #include <ctime>
- #include <iostream>
+#include <ctime>
+#include <iostream>
 
- #include <dune/common/parallel/mpihelper.hh>
- #include <dune/common/timer.hh>
- #include <dune/grid/io/file/dgfparser/dgfexception.hh>
- #include <dune/grid/io/file/vtk.hh>
- #include <dune/istl/io.hh>
+#include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/timer.hh>
+#include <dune/grid/io/file/dgfparser/dgfexception.hh>
+#include <dune/grid/io/file/vtk.hh>
+#include <dune/istl/io.hh>
 
 #include "pipelauferproblem.hh"
 
@@ -164,6 +164,9 @@ int main(int argc, char** argv) try
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
     NewtonSolver nonLinearSolver(assembler, linearSolver);
 
+    Dumux::GnuplotInterface<Scalar> gnuplot_lawOfTheWall;
+    Dumux::GnuplotInterface<Scalar> gnuplot_velocityProfile;
+
     // time loop
     timeLoop->start(); do
     {
@@ -201,8 +204,8 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
 
 #if HAVE_PVPYTHON
-    bool plotLawOfTheWall = getParam<bool>("Output.PlotLawOfTheWall", false);
-    bool plotVelocityProfile = getParam<bool>("Output.PlotVelocityProfile", false);
+    static const bool plotLawOfTheWall = getParam<bool>("Output.PlotLawOfTheWall", false);
+    static const bool plotVelocityProfile = getParam<bool>("Output.PlotVelocityProfile", false);
     if (plotLawOfTheWall || plotVelocityProfile)
     {
         char fileName[255];
@@ -216,7 +219,7 @@ int main(int argc, char** argv) try
         // execute the pvpython script
         std::string command = std::string(PVPYTHON_EXECUTABLE) + " " + script
                               + " -f " + vtuFileName
-                              + " -v 2"
+                              + " -v 0"
                               + " -r 10000";
         syscom =  command + " -p1 8.0 0.0 0.0"
                           + " -p2 8.0 0.2469 0.0"

@@ -25,6 +25,8 @@
 #define DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_FLUXVARSCACHE_HH
 
 #include <algorithm>
+#include <cassert>
+#include <vector>
 #include <dune/common/exceptions.hh>
 
 namespace Dumux {

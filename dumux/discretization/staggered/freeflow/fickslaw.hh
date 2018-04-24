@@ -89,8 +89,7 @@ public:
     {
         CellCenterPrimaryVariables flux(0.0);
 
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         const Scalar insideMolarDensity = insideVolVars.molarDensity();
@@ -157,7 +156,7 @@ public:
     {
         Scalar tij = 0.0;
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
         const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
         const Scalar insideD = insideVolVars.effectiveDiffusivity(compIdx);

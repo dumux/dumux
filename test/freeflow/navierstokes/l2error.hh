@@ -24,6 +24,9 @@
 #ifndef DUMUX_TEST_L2_ERROR_HH
 #define DUMUX_TEST_L2_ERROR_HH
 
+#include <vector>
+#include <cmath>
+
 namespace Dumux
 {
 

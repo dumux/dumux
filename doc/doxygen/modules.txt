@@ -202,6 +202,18 @@
        * \brief Zero-equation or algebraic turbulence models
        * \copydetails ./freeflow/rans/model.hh
        */
+      /*!
+       * \ingroup RANSModel
+       * \defgroup TwoEqModel 2-Eq. Models
+       * \brief Two-equation turbulence models
+       * \copydetails ./freeflow/rans/model.hh
+       */
+        /*!
+         * \ingroup TwoEqModel
+         * \defgroup LowReKEpsilonModel Low-Re k-epsilon model
+         * \brief Low-Re k-epsilon model
+         * \copydetails ./freeflow/rans/twoeq/lowrekepsilon/model.hh
+         */
     /*!
      * \ingroup FreeflowModels
      * \defgroup RANSNCModel Reynolds-Averaged Navier-Stokes nc

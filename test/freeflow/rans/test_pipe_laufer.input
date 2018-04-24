@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 1e-1 # [s]
+DtInitial = 1e-3 # [s]
 TEnd = 100 # [s]
 
 [Grid]
@@ -15,20 +15,21 @@ PlotLawOfTheWall = true
 PlotVelocityProfile = true
 
 [Problem]
-Name = pipe_laufer_zeroeq
+Name = pipe_laufer
 InletVelocity = 2.5 # [m/s]
 EnableGravity = false
 SandGrainRoughness = 0.0 # [m] # not implemented for EddyViscosityModel = 3
 
 [RANS]
 EddyViscosityModel = 3
+UseStoredEddyViscosity = false
 
 [Assembly]
 NumericDifferenceMethod = 0
 NumericDifference.BaseEpsilon = 1e-8
 
 [Newton]
-MaxSteps = 10
+TargetSteps = 6
 MaxRelativeShift = 1e-5
 
 [Vtk]

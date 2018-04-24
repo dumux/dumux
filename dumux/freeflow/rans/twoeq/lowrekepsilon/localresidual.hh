@@ -16,43 +16,36 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- * \ingroup TracerModel
- * \brief Adds vtk output fields specific to the tracer model
- */
-#ifndef DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
+ /*!
+  * \file
+  * \ingroup LowReKEpsilonModel
+  * \copydoc Dumux::LowReKEpsilonResidual
+  */
+#ifndef DUMUX_LOWREKEPSILON_LOCAL_RESIDUAL_HH
+#define DUMUX_LOWREKEPSILON_LOCAL_RESIDUAL_HH
 
-#include <string>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
+#include <dumux/freeflow/navierstokes/localresidual.hh>
+#include <dumux/freeflow/rans/twoeq/lowrekepsilon/staggered/localresidual.hh>
 
-namespace Dumux {
-
-/*!
- * \ingroup TracerModel
- * \brief Adds vtk output fields specific to the tracer model
- */
-class TracerVtkOutputFields
+namespace Dumux
 {
-public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
-    {
-        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
-        using FluidSystem = typename VolumeVariables::FluidSystem;
 
-        // register standardized vtk output fields
-        for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
-        {
-            vtk.addVolumeVariable( [compIdx](const auto& v){  return v.moleFraction(0, compIdx); },
-                                   "x_" + std::string(FluidSystem::componentName(compIdx)));
-            vtk.addVolumeVariable( [compIdx](const auto& v){  return v.massFraction(0, compIdx); },
-                                   "X_" + std::string(FluidSystem::componentName(compIdx)));
-        }
-        vtk.addVolumeVariable( [](const auto& v){ return v.density(); }, "rho");
-    }
-};
+// forward declaration
+template<class TypeTag, DiscretizationMethod discMethod>
+class LowReKEpsilonResidualImpl;
 
-} // end namespace Dumux
+/*!
+ * \ingroup LowReKEpsilonModel
+ * \brief The local residual class for the low-Reynolds k-epsilon model.
+          This is a convenience alias for the actual,
+          discretization-specific local residual.
+ * \note  Not all specializations are currently implemented
+ */
+template<class TypeTag>
+using LowReKEpsilonResidual = LowReKEpsilonResidualImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+
+}
 
 #endif
