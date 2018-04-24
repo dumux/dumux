@@ -52,12 +52,14 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using ParentType = FVProblem<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     using CoordScalar = typename GridView::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, GridView::dimensionworld>;
@@ -74,6 +76,35 @@ public:
     StaggeredFVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     { }
+
+    /*!
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume (-face).
+     *
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param elementFaceVars All face variables for the element
+     * \param e The geometrical entity on which the source shall be applied (scv or scvf)
+     *
+     * For this method, the return parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     */
+    template<class ElementVolumeVariables, class ElementFaceVariables, class Entity>
+    NumEqVector source(const Element &element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const ElementFaceVariables& elementFaceVars,
+                       const Entity &e) const
+    {
+        // forward to solution independent, fully-implicit specific interface
+        return asImp_().sourceAtPos(e.center());
+    }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
