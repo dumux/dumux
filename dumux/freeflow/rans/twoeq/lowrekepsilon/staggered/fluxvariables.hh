@@ -109,8 +109,6 @@ public:
             = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermK, isOutflowK);
         flux[dissipationEqIdx - ModelTraits::dim()]
             = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermEpsilon, isOutflowEpsilon);
-        Dune::dverb << " k_adv " << ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermK, isOutflowK);
-        Dune::dverb << " e_adv " << ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermEpsilon, isOutflowEpsilon);
 
         // calculate diffusive flux
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
@@ -157,9 +155,6 @@ public:
                 += coeff_k / distance
                    * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
                    * scvf.area();
-            Dune::dverb << " k_diff " << coeff_k / distance
-                                                 * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
-                                                 * scvf.area();
         }
         if (!isOutflowEpsilon)
         {
@@ -167,9 +162,6 @@ public:
                 += coeff_e / distance
                    * (insideVolVars.dissipationTilde() - outsideVolVars.dissipationTilde())
                    * scvf.area();
-            Dune::dverb << " e_diff " << coeff_e / distance
-                                      * (insideVolVars.dissipationTilde() - outsideVolVars.dissipationTilde())
-                                      * scvf.area();
         }
         return flux;
     }
