@@ -35,8 +35,6 @@
 
 #include "vtkoutputfields.hh"
 
-#include <dumux/freeflow/ransnc/volumevariables.hh>
-
 namespace Dumux {
 
 ///////////////////////////////////////////////////////////////////////////
@@ -99,9 +97,8 @@ private:
 
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
     using NCVolVars = FreeflowNCVolumeVariables<Traits>;
-    using RANSVolVars = LowReKEpsilonVolumeVariables<Traits, NCVolVars>;
 public:
-    using type = RANSNCVolumeVariables<Traits, RANSVolVars>;
+    using type = LowReKEpsilonVolumeVariables<Traits, NCVolVars>;
 };
 
 //! The local residual
@@ -169,9 +166,8 @@ private:
 
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
     using NCVolVars = FreeflowNCVolumeVariables<Traits>;
-    using RANSVolVars = LowReKEpsilonVolumeVariables<Traits, NCVolVars>;
 public:
-    using type = RANSNCVolumeVariables<Traits, RANSVolVars>;
+    using type = LowReKEpsilonVolumeVariables<Traits, NCVolVars>;
 };
 
 //! The local residual

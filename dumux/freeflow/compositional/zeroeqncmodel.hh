@@ -35,8 +35,6 @@
 
 #include "vtkoutputfields.hh"
 
-#include <dumux/freeflow/ransnc/volumevariables.hh>
-
 namespace Dumux {
 
 ///////////////////////////////////////////////////////////////////////////
@@ -92,9 +90,8 @@ private:
 
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
     using CompositionalVolVars = FreeflowNCVolumeVariables<Traits>;
-    using RANSVolVars = ZeroEqVolumeVariables<Traits, CompositionalVolVars>;
 public:
-    using type = RANSNCVolumeVariables<Traits, RANSVolVars>;
+    using type = ZeroEqVolumeVariables<Traits, CompositionalVolVars>;
 };
 
 //! The specific vtk output fields
@@ -144,9 +141,8 @@ private:
 
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
     using NCVolVars = FreeflowNCVolumeVariables<Traits>;
-    using RANSVolVars = ZeroEqVolumeVariables<Traits, NCVolVars>;
 public:
-    using type = RANSNCVolumeVariables<Traits, RANSVolVars>;
+    using type = ZeroEqVolumeVariables<Traits, NCVolVars>;
 };
 
 //! The specific vtk output fields
