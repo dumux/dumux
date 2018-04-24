@@ -362,6 +362,9 @@ protected:
         auto prevFaceStorage = asImp_().computeStorageForFace(problem, scvf, prevVolVars, prevFaceVars);
         auto curFaceStorage = asImp_().computeStorageForFace(problem, scvf, curVolVars, curFaceVars);
 
+        prevFaceStorage *= prevVolVars.extrusionFactor();
+        curFaceStorage *= curVolVars.extrusionFactor();
+
         // the storage term
         residual = std::move(curFaceStorage);
         residual -= std::move(prevFaceStorage);

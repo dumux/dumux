@@ -221,6 +221,7 @@ protected:
             if (scvf.boundary())
             {
                 auto boundaryFlux = computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
 
                 // handle the actual boundary conditions:
                 const auto bcTypes = problem.boundaryTypes(element, scvf);
@@ -242,7 +243,7 @@ protected:
 
                 residual += boundaryFlux;
 
-                asImp_().setFixedCell_(residual, problem, fvGeometry.scv(scvf.insideScvIdx()), elemVolVars, bcTypes);
+                asImp_().setFixedCell_(residual, problem, scv, elemVolVars, bcTypes);
             }
         }
     }
