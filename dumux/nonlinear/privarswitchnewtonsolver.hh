@@ -54,7 +54,7 @@ public:
      * \brief Returns true if the error of the solution is below the
      *        tolerance.
      */
-    bool newtonConverged() const final
+    bool newtonConverged() const override
     {
         if (switchedInLastIteration_)
             return false;
@@ -69,7 +69,7 @@ public:
      *
      * \param u The initial solution
      */
-    void newtonBegin(const SolutionVector &u) final
+    void newtonBegin(const SolutionVector &u) override
     {
         ParentType::newtonBegin(u);
         priVarSwitch_ = std::make_unique<PrimaryVariableSwitch>(u.size());
@@ -83,7 +83,7 @@ public:
      * \param uLastIter The solution at the beginning of the current Newton iteration
      */
     void newtonEndStep(SolutionVector &uCurrentIter,
-                       const SolutionVector &uLastIter) final
+                       const SolutionVector &uLastIter) override
     {
         ParentType::newtonEndStep(uCurrentIter, uLastIter);
 
@@ -120,7 +120,7 @@ public:
      * \brief Called if the Newton method ended
      *        (not known yet if we failed or succeeded)
      */
-    void newtonEnd() final
+    void newtonEnd() override
     {
         ParentType::newtonEnd();
 
