@@ -27,6 +27,7 @@
 #include <string>
 
 #include <dune/grid/common/mcmgmapper.hh>
+#include <dune/grid/io/file/vtk/common.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 
 namespace Dumux {
@@ -48,13 +49,13 @@ struct VectorP0VTKFunction : Dune::VTKFunction<GridView>
 public:
 
     //! return number of components
-    virtual int ncomps () const { return nComps_; }
+    virtual int ncomps() const { return nComps_; }
 
     //! get name
-    virtual std::string name () const { return name_; }
+    virtual std::string name() const { return name_; }
 
     //! evaluate
-    virtual double evaluate (int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>&) const
+    virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>&) const
     { return accessChooser_(mycomp, mapper_.index(e), Dune::is_indexable<decltype(field_[0])>()); }
 
     //! Constructor
@@ -66,11 +67,23 @@ public:
     }
 
 private:
-    double accessChooser_(int mycomp, int i, std::true_type) const
-    { return field_[i][mycomp]; }
 
-    double accessChooser_(int mycomp, int i, std::false_type) const
-    { return field_[i]; }
+    //! access for vectorial fields
+    double accessChooser_(int mycomp, int i, std::true_type) const
+    {
+        static constexpr auto isIndexable = Dune::is_indexable<decltype(field_[0][0])>();
+        return vectorFieldAccess_<isIndexable>(mycomp, i); }
+
+    //! access for scalar fields
+    double accessChooser_(int mycomp, int i, std::false_type) const { return field_[i]; }
+
+    //! access to permissive vectorial fields
+    template<bool is, std::enable_if_t<!is, int> = 0>
+    double vectorFieldAccess_(int mycomp, int i) const { return field_[i][mycomp]; }
+
+    //! if the field is indexable more than two times, throw error
+    template<bool is, std::enable_if_t<is, int> = 0>
+    double vectorFieldAccess_(int mycomp, int i) const { DUNE_THROW(Dune::InvalidStateException, "Invalid field type"); }
 
     const F& field_;
     const std::string name_;
@@ -94,13 +107,13 @@ struct VectorP1VTKFunction : Dune::VTKFunction<GridView>
 public:
 
     //! return number of components
-    virtual int ncomps () const { return nComps_; }
+    virtual int ncomps() const { return nComps_; }
 
     //! get name
-    virtual std::string name () const { return name_; }
+    virtual std::string name() const { return name_; }
 
     //! evaluate
-    virtual double evaluate (int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const
+    virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const
     {
         const unsigned int dim = Element::mydimension;
         const unsigned int nVertices = e.subEntities(dim);
@@ -122,11 +135,86 @@ public:
             DUNE_THROW(Dune::IOError, "VectorP1VTKFunction: size mismatch");
     }
 private:
-    double accessChooser_(int mycomp, int i, std::true_type) const
-    { return field_[i][mycomp]; }
 
-    double accessChooser_(int mycomp, int i, std::false_type) const
-    { return field_[i]; }
+    //! access for vectorial fields
+    double accessChooser_(int mycomp, int i, std::true_type) const
+    { return vectorFieldAccess_(mycomp, i, Dune::is_indexable<decltype(field_[0][0])>()); }
+
+    //! access for scalar fields
+    double accessChooser_(int mycomp, int i, std::false_type) const { return field_[i]; }
+
+    //! access to permissive vectorial fields
+    double vectorFieldAccess_(int mycomp, int i, std::false_type) const { return field_[i][mycomp]; }
+
+    //! if the field is indexable more than two times, throw error
+    double vectorFieldAccess_(int mycomp, int i, std::true_type) const { DUNE_THROW(Dune::InvalidStateException, "Invalid field type"); }
+
+    const F& field_;
+    const std::string name_;
+    int nComps_;
+    const Mapper& mapper_;
+};
+
+/*! \brief a VTK function that supports both scalar and vector values for each vertex
+ *
+ *  \tparam GridView The Dune grid view type
+ *  \tparam F The field type (either vector of scalars or vectors)
+ */
+template <typename GridView, typename F>
+struct VectorP1NonConformingVTKFunction : Dune::VTKFunction<GridView>
+{
+    enum { dim = GridView::dimension };
+    using ctype = typename GridView::ctype;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+public:
+
+    //! return number of components
+    virtual int ncomps() const { return nComps_; }
+
+    //! get name
+    virtual std::string name() const { return name_; }
+
+    //! evaluate
+    virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>& xi) const
+    {
+        const unsigned int dim = Element::mydimension;
+        const unsigned int nVertices = e.subEntities(dim);
+
+        std::vector<Dune::FieldVector<ctype, 1>> cornerValues(nVertices);
+        for (unsigned i = 0; i < nVertices; ++i)
+            cornerValues[i] = accessChooser_(mycomp, mapper_.index(e), i, Dune::is_indexable<decltype(field_[0])>());
+
+        // (Ab)use the MultiLinearGeometry class to do multi-linear interpolation between scalars
+        const Dune::MultiLinearGeometry<ctype, dim, 1> interpolation(e.type(), std::move(cornerValues));
+        return interpolation.global(xi);
+    }
+
+    //! Constructor
+    VectorP1NonConformingVTKFunction(const GridView& gridView, const Mapper& mapper, const F& field, const std::string& name, int nComps)
+    : field_(field), name_(name), nComps_(nComps), mapper_(mapper)
+    {
+        if (field.size()!=(unsigned int)( gridView.size(/*codim*/0)) )
+            DUNE_THROW(Dune::IOError, "VectorP1NonConformingVTKFunction: size mismatch");
+    }
+private:
+
+    //! access to the field
+    double accessChooser_(int mycomp, int eIdx, int cornerIdx, std::true_type) const
+    { return fieldAccess_(mycomp, eIdx, cornerIdx, Dune::is_indexable<decltype(field_[0][0])>()); }
+
+    //! fields have to be indexable at least twice
+    double accessChooser_(int mycomp, int eIdx, int cornerIdx, std::false_type) const
+    { DUNE_THROW(Dune::InvalidStateException, "Invalid field type"); }
+
+    //! scalar field access
+    double fieldAccess_(int mycomp, int eIdx, int cornerIdx, std::false_type) const
+    { return field_[eIdx][cornerIdx]; }
+
+    //! vectorial field access
+    double fieldAccess_(int mycomp, int eIdx, int cornerIdx, std::true_type) const
+    { return field_[eIdx][cornerIdx][mycomp]; }
 
     const F& field_;
     const std::string name_;
@@ -149,31 +237,39 @@ public:
     // template constructor selects the right VTKFunction implementation
     template <typename F, class Mapper>
     Field(const GridView& gridView, const Mapper& mapper, F const& f,
-          const std::string& name, int numComp = 1, int codim = 0)
+          const std::string& name, int numComp = 1, int codim = 0,
+          Dune::VTK::DataMode dm = Dune::VTK::conforming)
     : codim_(codim)
     {
         if (codim == GridView::dimension)
-            field_ = std::make_shared< VectorP1VTKFunction<GridView, F> >(gridView, mapper, f, name, numComp);
+        {
+            if (dm == Dune::VTK::conforming)
+                field_ = std::make_shared< VectorP1VTKFunction<GridView, F> >(gridView, mapper, f, name, numComp);
+            else
+                field_ = std::make_shared< VectorP1NonConformingVTKFunction<GridView, F> >(gridView, mapper, f, name, numComp);
+        }
         else if (codim == 0)
             field_ = std::make_shared< VectorP0VTKFunction<GridView, F> >(gridView, mapper, f, name, numComp);
         else
             DUNE_THROW(Dune::NotImplemented, "Only element or vertex quantities allowed.");
     }
 
-    virtual std::string name () const
-    { return field_->name(); }
+    //! return the name of this field
+    virtual std::string name () const { return field_->name(); }
 
-    virtual int ncomps() const
-    { return field_->ncomps(); }
+    //! return the number of components of this field
+    virtual int ncomps() const { return field_->ncomps(); }
 
+    //! codimension of the entities on which the field values live
+    int codim() const { return codim_; }
+
+    //! element-local evaluation of the field
     virtual double evaluate(int mycomp,
                             const Element &element,
                             const Dune::FieldVector< ctype, dim > &xi) const
     { return field_->evaluate(mycomp, element, xi); }
 
-    int codim() const
-    { return codim_; }
-
+    //! returns the underlying vtk function
     const std::shared_ptr<Dune::VTKFunction<GridView>>& get() const
     { return field_; }
 
