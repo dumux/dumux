@@ -150,7 +150,6 @@ class ShallowWaterAdvectiveFlux
         Scalar mobility[3] = {1.0};
         letmobility(cellStatesLeft[0],cellStatesRight[0],ks_av,mobility);
 
-
         //-------------------------------------------------------------
         //
         // Outer boundary -- change the variables of the outsideVolVars
@@ -158,15 +157,15 @@ class ShallowWaterAdvectiveFlux
         //-------------------------------------------------------------
         if (scvf.boundary())
         {
+
             //no flow boundary
-            cellStatesRight[0] =  cellStatesLeft[0];
-            cellStatesRight[1] = -cellStatesLeft[1];
-            cellStatesRight[2] = -cellStatesLeft[2];
-            cellStatesRight[3] =  cellStatesLeft[3];
+            //cellStatesRight[0] =  cellStatesLeft[0];
+            //cellStatesRight[1] = -cellStatesLeft[1];
+            //cellStatesRight[2] = -cellStatesLeft[2];
+            //cellStatesRight[3] =  cellStatesLeft[3];
             hllc_hr = hllc_hl;
             thetar = thetal;
         }
-
         //-------------------------------------------------------------
         //
         // Inner boundary

@@ -30,7 +30,8 @@
 #include <dumux/shallowwater/swe/problem.hh>
 #include <dumux/shallowwater/swe/model.hh>
 #include "swetestspatialparams.hh"
-
+#include <dumux/shallowwater/numericalfluxes/exactriemannsolver.hh>
+#include <dumux/shallowwater/numericalfluxes/fluxrotation.hh>
 
 namespace Dumux
 {
@@ -149,6 +150,7 @@ public:
         BoundaryTypes bcTypes;
 
         bcTypes.setAllNeumann();
+        //bcTypes.setAllDirichlet();
 
         return bcTypes;
     }
@@ -161,7 +163,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    /*
+
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         // use initial values as boundary conditions
@@ -179,7 +181,25 @@ public:
         return values;
 
     }
-    */
+
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    {
+        // use initial values as boundary conditions
+
+        //TODO here we should return the new boundary conditions, depending
+        //on the bc_type which can be no flow, discharge q or water depth h
+        //we need to use the Riemann invariants to generate the correct values
+        //for the cell state of the ghost cell
+        PrimaryVariables values(0.0);
+
+        values[massBalanceIdx] = 0.0;
+        values[velocityXIdx] = 0.0;
+        values[velocityYIdx] = 0.0;
+
+        return values;
+
+    }
+
 
     PrimaryVariables neumann(const Element& element,
                              const FVElementGeometry& fvGeometry,
@@ -191,9 +211,50 @@ public:
         //we need the Riemann invariants to compute the values depending of the boundary type
         //since we use a weak imposition we do not have a dirichlet value. We impose fluxes
         //based on q,h, etc. computed with the Riemann invariants
-        values[massBalanceIdx] = 0.0;
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
+
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& nxy = scvf.unitOuterNormal();
+
+        Scalar cellStatesLeft[4] = {0.0};
+        Scalar cellStatesRight[4] = {0.0};
+
+        cellStatesLeft[0]  = insideVolVars.getH();
+        cellStatesLeft[1]  = insideVolVars.getU();
+        cellStatesLeft[2]  = insideVolVars.getV();
+        cellStatesLeft[3]  = insideVolVars.getBottom();
+
+
+        //first case reflecting wall boundary
+        cellStatesRight[0] = cellStatesLeft[0];
+        cellStatesRight[1] = -cellStatesLeft[1];
+        cellStatesRight[2] = -cellStatesLeft[2];
+        cellStatesRight[3] = cellStatesLeft[3];
+
+
+        //second case q boundary
+
+
+        //third case h boundary
+
+
+
+        stateRotation(nxy,cellStatesLeft);
+        stateRotation(nxy,cellStatesRight);
+
+        Scalar riemannFlux[3] = {0.0};
+        computeExactRiemann(riemannFlux,cellStatesLeft[0],cellStatesRight[0],
+                            cellStatesLeft[1],cellStatesRight[1],
+                            cellStatesLeft[2],cellStatesRight[2],insideVolVars.getGravity());
+
+
+        rotateFluxBack(nxy,riemannFlux);
+
+        values[massBalanceIdx] = riemannFlux[0];
+        values[velocityXIdx]   = riemannFlux[1];
+        values[velocityYIdx]   = riemannFlux[2];
+
+
 
         return values;
     }
