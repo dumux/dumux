@@ -87,6 +87,9 @@ class SweTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 
     enum {
@@ -145,7 +148,7 @@ public:
     {
         BoundaryTypes bcTypes;
 
-        bcTypes.setAllDirichlet();
+        bcTypes.setAllNeumann();
 
         return bcTypes;
     }
@@ -158,6 +161,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
+    /*
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         // use initial values as boundary conditions
@@ -175,9 +179,27 @@ public:
         return values;
 
     }
+    */
+
+    PrimaryVariables neumann(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace& scvf) const
+    {
+        PrimaryVariables values(0.0);
+
+        //we need the Riemann invariants to compute the values depending of the boundary type
+        //since we use a weak imposition we do not have a dirichlet value. We impose fluxes
+        //based on q,h, etc. computed with the Riemann invariants
+        values[massBalanceIdx] = 0.0;
+        values[velocityXIdx] = 0.0;
+        values[velocityYIdx] = 0.0;
+
+        return values;
+    }
 
     //! set neumann condition for phases (flux, [kg/(m^2 s)])
-
+    /*
     PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
@@ -191,6 +213,7 @@ public:
 
         return values;
     }
+    */
 
     //! do some preprocessing
     void preTimeStep(const SolutionVector& curSol,

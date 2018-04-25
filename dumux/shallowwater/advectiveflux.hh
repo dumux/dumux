@@ -158,8 +158,6 @@ class ShallowWaterAdvectiveFlux
         //-------------------------------------------------------------
         if (scvf.boundary())
         {
-            const auto flag = scvf.boundaryFlag();
-            std::cout << "Debug flag " << flag << std::endl;
             //no flow boundary
             cellStatesRight[0] =  cellStatesLeft[0];
             cellStatesRight[1] = -cellStatesLeft[1];
@@ -215,6 +213,7 @@ class ShallowWaterAdvectiveFlux
         flux[0] = riemannFlux[0] * scvf.area() * mobility[0];
         flux[1] = (riemannFlux[1]  - hdxzl) * scvf.area() * mobility[1];
         flux[2] = (riemannFlux[2]  - hdyzl) * scvf.area() * mobility[2];
+
 
         return flux;
     }
