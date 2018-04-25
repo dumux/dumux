@@ -30,10 +30,9 @@
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/philtophoblaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup TwoPNCTests
  * \brief Definition of the spatial parameters for the fuel cell
@@ -43,8 +42,7 @@ namespace Dumux
 template<class TypeTag>
 class FuelCellSpatialParams;
 
-namespace Properties
-{
+namespace Properties {
 // The spatial parameters TypeTag
 NEW_TYPE_TAG(FuelCellSpatialParams);
 
@@ -54,22 +52,21 @@ SET_TYPE_PROP(FuelCellSpatialParams, SpatialParams, FuelCellSpatialParams<TypeTa
 // Set the material Law
 SET_PROP(FuelCellSpatialParams, MaterialLaw)
 {
- private:
+private:
     // define the material law which is parameterized by effective
     // saturations
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using EffMaterialLaw = RegularizedVanGenuchten<Scalar>;
 
- public:
+public:
     // define the material law parameterized by absolute saturations
-    using type = PhilToPhobLaw<EffMaterialLaw>;
+    using type = EffToAbsLaw<EffMaterialLaw>;
 };
 
 } // end namespace Properties
 
 /*!
  * \ingroup TwoPNCMinModel
- * \ingroup BoxTestProblems
  * \brief Definition of the spatial parameters for the FuelCell
  *        problem which uses the isothermal 2p2c box model
  */
@@ -110,8 +107,8 @@ public:
         porosity_ = 0.2;
 
         // residual saturations
-        materialParams_.setSwr(0.12); //here water, see philtophoblaw
-        materialParams_.setSnr(0.0);
+        materialParams_.setSwr(0.12); // air is wetting phase
+        materialParams_.setSnr(0.0); // water is non-wetting
 
         //parameters for the vanGenuchten law
         materialParams_.setVgAlpha(6.66e-5); // alpha = 1/pcb
@@ -152,10 +149,11 @@ public:
      *
      * \return the wetting phase index
      * \param globalPos The position of the center of the element
+     * \note we set a hydrophobic material
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
-    { return FluidSystem::H2OIdx; }
+    { return FluidSystem::gasPhaseIdx; }
 
 private:
     DimWorldMatrix K_;
@@ -164,6 +162,6 @@ private:
     MaterialLawParams materialParams_;
 };
 
-}//end namespace
+} // end namespace Dumux
 
 #endif
