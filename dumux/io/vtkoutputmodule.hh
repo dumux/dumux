@@ -110,8 +110,8 @@ public:
                     const SolutionVector& sol,
                     const std::string& name,
                     const std::string& paramGroup = "",
-                    bool verbose = true,
-                    Dune::VTK::DataMode dm = Dune::VTK::conforming)
+                    Dune::VTK::DataMode dm = Dune::VTK::conforming,
+                    bool verbose = true)
     : problem_(problem)
     , gridGeom_(fvGridGeometry)
     , gridVariables_(gridVariables)
@@ -119,6 +119,7 @@ public:
     , name_(name)
     , paramGroup_(paramGroup)
     , verbose_(fvGridGeometry.gridView().comm().rank() == 0 && verbose)
+    , dm_(dm)
     , writer_(std::make_shared<Dune::VTKWriter<GridView>>(fvGridGeometry.gridView(), dm))
     , sequenceWriter_(writer_, name)
     {}
@@ -219,8 +220,29 @@ public:
     {
         Dune::Timer timer;
 
+        // write to file depending on data mode
+        if (dm_ == Dune::VTK::conforming)
+            writeConforming_(time, type);
+        else if (dm_ == Dune::VTK::nonconforming)
+            writeNonConforming_(time, type);
+        else
+            DUNE_THROW(Dune::NotImplemented, "Output for provided vtk data mode");
+
+        //! output
+        timer.stop();
+        if (verbose_)
+        {
+            std::cout << "Writing output for problem \"" << name_ << "\". Took " << timer.elapsed() << " seconds." << std::endl;
+        }
+    }
+
+private:
+
+    //! Assembles the fields and adds them to the writer (conforming output)
+    void writeConforming_(double time, Dune::VTK::OutputType type)
+    {
         //////////////////////////////////////////////////////////////
-        //! (1) Assemble all variable fields with registered info
+        //! (1) Assemble all variable fields and add to writer
         //////////////////////////////////////////////////////////////
 
         // instatiate the velocity output
@@ -319,13 +341,21 @@ public:
             //////////////////////////////////////////////////////////////
 
             // volume variables if any
-            for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                addDofDataForWriter_(sequenceWriter_, volVarScalarData[i], volVarScalarDataInfo_[i].name);
-            for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+            if (isBox)
             {
-
-                sequenceWriter_.addCellData(Field(gridGeom_.gridView(), gridGeom_.elementMapper(), volVarVectorData[i],
-                                                  volVarVectorDataInfo_[i].name, dimWorld, 0).get());
+                for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
+                    sequenceWriter_.addVertexData( volVarScalarData[i], volVarScalarDataInfo_[i].name );
+                for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+                    sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), volVarVectorData[i],
+                                                         volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0).get() );
+            }
+            else
+            {
+                for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
+                    sequenceWriter_.addCellData( volVarScalarData[i], volVarScalarDataInfo_[i].name );
+                for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+                    sequenceWriter_.addCellData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), volVarVectorData[i],
+                                                       volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0).get() );
             }
 
             // the velocity field
@@ -334,21 +364,17 @@ public:
                 if (isBox && dim > 1)
                 {
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                    {
-                        sequenceWriter_.addVertexData(Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), velocity[phaseIdx],
-                                                            "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
-                                                            dimWorld, dim).get());
-                    }
+                        sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), velocity[phaseIdx],
+                                                             "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                             /*numComp*/dimWorld, /*codim*/dim).get() );
                 }
                 // cell-centered models
                 else
                 {
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                    {
-                        sequenceWriter_.addCellData(Field(gridGeom_.gridView(), gridGeom_.elementMapper(), velocity[phaseIdx],
-                                                            "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
-                                                            dimWorld, 0).get());
-                    }
+                        sequenceWriter_.addCellData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), velocity[phaseIdx],
+                                                           "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                           /*numComp*/dimWorld, /*codim*/0).get() );
                 }
             }
 
@@ -369,49 +395,192 @@ public:
         }
 
         //////////////////////////////////////////////////////////////
-        //! (3) The writer writes the output for us
+        //! (2) The writer writes the output for us
         //////////////////////////////////////////////////////////////
         sequenceWriter_.write(time, type);
 
         //////////////////////////////////////////////////////////////
-        //! (4) Clear the writer
+        //! (3) Clear the writer
         //////////////////////////////////////////////////////////////
         writer_->clear();
-
-        //! output
-        timer.stop();
-        if (verbose_)
-        {
-            std::cout << "Writing output for problem \"" << name_ << "\". Took " << timer.elapsed() << " seconds." << std::endl;
-        }
     }
 
-private:
+    //! Assembles the fields and adds them to the writer (conforming output)
+    void writeNonConforming_(double time, Dune::VTK::OutputType type)
+    {
+        if(!isBox)
+            DUNE_THROW(Dune::InvalidStateException, "Non-conforming output makes no sense for cell-centered schemes!");
+
+        //////////////////////////////////////////////////////////////
+        //! (1) Assemble all variable fields and add to writer
+        //////////////////////////////////////////////////////////////
+
+        // instatiate the velocity output
+        VelocityOutput velocityOutput(problem_, gridGeom_, gridVariables_, sol_);
+        std::array<std::vector<GlobalPosition>, numPhases> velocity;
+
+        // process rank
+        static bool addProcessRank = getParamFromGroup<bool>(paramGroup_, "Vtk.AddProcessRank");
+        std::vector<double> rank;
+
+        // volume variable data (indexing: volvardata/element/localcorner)
+        using ScalarDataContainer = std::vector< std::vector<Scalar> >;
+        using VectorDataContainer = std::vector< std::vector<GlobalPosition> >;
+        std::vector< ScalarDataContainer > volVarScalarData;
+        std::vector< VectorDataContainer > volVarVectorData;
+
+        //! Abort if no data was registered
+        if (!volVarScalarDataInfo_.empty()
+            || !volVarVectorDataInfo_.empty()
+            || !fields_.empty()
+            || velocityOutput.enableOutput()
+            || addProcessRank)
+        {
+            const auto numCells = gridGeom_.gridView().size(0);
+            const auto numDofs = numDofs_();
+
+            // get fields for all volume variables
+            if (!volVarScalarDataInfo_.empty())
+                volVarScalarData.resize(volVarScalarDataInfo_.size(), ScalarDataContainer(numCells));
+            if (!volVarVectorDataInfo_.empty())
+                volVarVectorData.resize(volVarVectorDataInfo_.size(), VectorDataContainer(numCells));
+
+            if (velocityOutput.enableOutput())
+            {
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                {
+                    if(isBox && dim == 1)
+                        velocity[phaseIdx].resize(numCells);
+                    else
+                        velocity[phaseIdx].resize(numDofs);
+                }
+            }
+
+            // maybe allocate space for the process rank
+            if (addProcessRank) rank.resize(numCells);
+
+            for (const auto& element : elements(gridGeom_.gridView(), Dune::Partitions::interior))
+            {
+                const auto eIdxGlobal = gridGeom_.elementMapper().index(element);
+                const auto numCorners = element.subEntities(dim);
+
+                auto fvGeometry = localView(gridGeom_);
+                auto elemVolVars = localView(gridVariables_.curGridVolVars());
+
+                // resize element-local data containers
+                for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
+                    volVarScalarData[i][eIdxGlobal].resize(numCorners);
+                for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+                    volVarVectorData[i][eIdxGlobal].resize(numCorners);
+
+                // If velocity output is enabled we need to bind to the whole stencil
+                // otherwise element-local data is sufficient
+                if (velocityOutput.enableOutput())
+                {
+                    fvGeometry.bind(element);
+                    elemVolVars.bind(element, fvGeometry, sol_);
+                }
+                else
+                {
+                    fvGeometry.bindElement(element);
+                    elemVolVars.bindElement(element, fvGeometry, sol_);
+                }
+
+                if (!volVarScalarDataInfo_.empty()
+                    || !volVarVectorDataInfo_.empty())
+                {
+                    for (auto&& scv : scvs(fvGeometry))
+                    {
+                        const auto& volVars = elemVolVars[scv];
+
+                        // get the scalar-valued data
+                        for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
+                            volVarScalarData[i][scv.elementIndex()][scv.localDofIndex()] = volVarScalarDataInfo_[i].get(volVars);
+
+                        // get the vector-valued data
+                        for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+                            volVarVectorData[i][scv.elementIndex()][scv.localDofIndex()] = volVarVectorDataInfo_[i].get(volVars);
+                    }
+                }
+
+                // velocity output
+                if (velocityOutput.enableOutput())
+                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                        velocityOutput.calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
+
+                //! the rank
+                if (addProcessRank)
+                    rank[eIdxGlobal] = static_cast<double>(gridGeom_.gridView().comm().rank());
+            }
+
+            //////////////////////////////////////////////////////////////
+            //! Register data fields with the vtk writer
+            //////////////////////////////////////////////////////////////
+
+            // volume variables if any
+            for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
+                sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), volVarScalarData[i],
+                                                     volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim, /*nonconforming*/dm_).get() );
+
+            for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
+                sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), volVarVectorData[i],
+                                                     volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim, /*nonconforming*/dm_).get() );
+
+            // the velocity field
+            if (velocityOutput.enableOutput())
+            {
+                // node-wise velocities
+                if (dim > 1)
+                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                        sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), velocity[phaseIdx],
+                                                             "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                             /*numComp*/dimWorld, /*codim*/dim).get() );
+
+                // cell-wise velocities
+                else
+                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                        sequenceWriter_.addCellData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), velocity[phaseIdx],
+                                                           "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                           /*numComp*/dimWorld, /*codim*/0).get() );
+            }
+
+            // the process rank
+            if (addProcessRank)
+                sequenceWriter_.addCellData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), rank, "process rank", 1, 0).get() );
+
+            // also register additional (non-standardized) user fields if any
+            for (auto&& field : fields_)
+            {
+                if (field.codim() == 0)
+                    sequenceWriter_.addCellData(field.get());
+                else if (field.codim() == dim)
+                    sequenceWriter_.addVertexData(field.get());
+                else
+                    DUNE_THROW(Dune::RangeError, "Cannot add wrongly sized vtk scalar field!");
+            }
+        }
+
+        //////////////////////////////////////////////////////////////
+        //! (2) The writer writes the output for us
+        //////////////////////////////////////////////////////////////
+        sequenceWriter_.write(time, type);
+
+        //////////////////////////////////////////////////////////////
+        //! (3) Clear the writer
+        //////////////////////////////////////////////////////////////
+        writer_->clear();
+    }
+
     //! Deduces the number of components of the value type of a vector of values
     template<class Vector, typename std::enable_if_t<Dune::is_indexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
-    std::size_t getNumberOfComponents_(const Vector& v)
-    { return v[0].size(); }
+    std::size_t getNumberOfComponents_(const Vector& v) { return v[0].size(); }
 
     //! Deduces the number of components of the value type of a vector of values
     template<class Vector, typename std::enable_if_t<!Dune::is_indexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
-    std::size_t getNumberOfComponents_(const Vector& v)
-    { return 1; }
-
-    template<typename Writer, typename... Args>
-    void addDofDataForWriter_(Writer& writer,
-                              Args&&... args)
-    {
-        if (isBox)
-            writer.addVertexData(std::forward<Args>(args)...);
-        else
-            writer.addCellData(std::forward<Args>(args)...);
-    }
+    std::size_t getNumberOfComponents_(const Vector& v) { return 1; }
 
     //! return the number of dofs
-    std::size_t numDofs_() const
-    {
-        return gridGeom_.gridView().size(dofCodim);
-    }
+    std::size_t numDofs_() const { return gridGeom_.gridView().size(dofCodim); }
 
      /*!
      * \brief Helper function to retrieve privar data from the solution vector
@@ -433,6 +602,7 @@ private:
     std::string name_;
     std::string paramGroup_;
     bool verbose_;
+    Dune::VTK::DataMode dm_;
 
     std::shared_ptr<Dune::VTKWriter<GridView>> writer_;
     Dune::VTKSequenceWriter<GridView> sequenceWriter_;
