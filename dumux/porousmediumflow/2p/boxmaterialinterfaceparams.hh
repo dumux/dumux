@@ -64,7 +64,7 @@ public:
         using ElemSol = decltype( elementSolution(Elem(), x, fvGridGeometry) );
         using Scv = typename FVGridGeometry::SubControlVolume;
         using ReturnType = decltype(spatialParams.materialLawParams(Elem(), Scv(), ElemSol()));
-        static_assert(std::is_same<ReturnType, const MaterialLawParams&>::value,
+        static_assert(std::is_lvalue_reference<ReturnType>::value,
                       "In order to use the box-interface solver please provide access "
                       "to the material law parameters via returning (const) references");
 
