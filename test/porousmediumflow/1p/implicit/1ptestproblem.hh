@@ -109,7 +109,7 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

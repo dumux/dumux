@@ -140,7 +140,8 @@ class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
+
 public:
     /*!
      * \brief The constructor.

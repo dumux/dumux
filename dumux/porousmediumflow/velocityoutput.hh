@@ -67,7 +67,7 @@ class PorousMediumFlowVelocityOutput
     using IndexType = typename GridView::IndexSet::IndexType;
     using CoordScalar = typename GridView::ctype;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using ReferenceElements = Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
@@ -140,6 +140,8 @@ public:
                            const Element& element,
                            int phaseIdx)
     {
+        using Velocity = typename VelocityVector::value_type;
+
         if (!velocityOutput_) return;
 
         const auto geometry = element.geometry();
@@ -154,7 +156,7 @@ public:
 
         if(isBox && dim == 1)
         {
-            GlobalPosition tmpVelocity(0.0);
+            Velocity tmpVelocity(0.0);
             tmpVelocity = (geometry.corner(1) - geometry.corner(0));
             tmpVelocity /= tmpVelocity.two_norm();
 
@@ -189,7 +191,7 @@ public:
 
         if(isBox)
         {
-            using ScvVelocities = Dune::BlockVector<Dune::FieldVector<Scalar, dimWorld> >;
+            using ScvVelocities = Dune::BlockVector<Velocity>;
             ScvVelocities scvVelocities(fvGeometry.numScv());
             scvVelocities = 0;
 
@@ -219,7 +221,7 @@ public:
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
 
                 // transform the volume flux into a velocity vector
-                GlobalPosition tmpVelocity = localNormal;
+                Velocity tmpVelocity = localNormal;
                 tmpVelocity *= flux;
 
                 scvVelocities[scvf.insideScvIdx()] += tmpVelocity;
@@ -232,7 +234,7 @@ public:
                 int vIdxGlobal = scv.dofIndex();
 
                 // calculate the subcontrolvolume velocity by the Piola transformation
-                Dune::FieldVector<CoordScalar, dimWorld> scvVelocity(0);
+                Velocity scvVelocity(0);
 
                 jacobianT2.mtv(scvVelocities[scv.indexInElement()], scvVelocity);
                 scvVelocity /= geometry.integrationElement(localPos)*cellNum_[vIdxGlobal];
@@ -332,7 +334,7 @@ public:
                 localScvfIdx++;
             }
 
-            Dune::FieldVector <Scalar, dim> refVelocity;
+            Velocity refVelocity;
             // cubes: On the reference element simply average over opposite fluxes
             // note that this is equal to a corner velocity interpolation method
             if (dim == 1 || geomType.isCube())
@@ -354,7 +356,7 @@ public:
             else
                 DUNE_THROW(Dune::NotImplemented, "velocity output for cell-centered and prism/pyramid");
 
-            Dune::FieldVector<Scalar, dimWorld> scvVelocity(0);
+            Velocity scvVelocity(0);
             jacobianT2.mtv(refVelocity, scvVelocity);
 
             scvVelocity /= geometry.integrationElement(localPos);

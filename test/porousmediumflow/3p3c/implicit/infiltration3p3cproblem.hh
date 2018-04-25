@@ -125,7 +125,8 @@ class InfiltrationThreePThreeCProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     /*!

@@ -67,7 +67,7 @@ class FluxOverSurface
         dimWorld = GridView::dimensionworld
     };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     static constexpr auto surfaceDim = dimWorld - 1;
     using SurfaceGeometryType = Dune::MultiLinearGeometry< Scalar, surfaceDim, dimWorld >;

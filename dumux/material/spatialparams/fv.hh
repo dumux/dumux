@@ -60,8 +60,7 @@ class FVSpatialParams : public FVSpatialParamsOneP<FVGridGeometry, Scalar, Imple
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     FVSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

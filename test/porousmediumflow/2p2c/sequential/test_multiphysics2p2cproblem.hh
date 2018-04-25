@@ -114,7 +114,7 @@ using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
 using Element = typename GridView::Traits::template Codim<0>::Entity;
 using Intersection = typename GridView::Intersection;
-using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
 TestMultTwoPTwoCProblem(TimeManager &timeManager, Grid &grid, const GlobalPosition& upperRight = 0) :

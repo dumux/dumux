@@ -65,7 +65,8 @@ class FVSpatialParamsOneP
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     FVSpatialParamsOneP(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

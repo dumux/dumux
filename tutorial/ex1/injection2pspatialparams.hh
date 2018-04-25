@@ -66,7 +66,8 @@ class InjectionSpatialParams
 
     // get the dimensions of the simulation domain from GridView
     static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     // export permeability type

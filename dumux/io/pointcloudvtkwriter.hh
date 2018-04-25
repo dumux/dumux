@@ -42,10 +42,10 @@ namespace Dumux {
  * initialization and/or be turned on/off using the designated properties. Additionally
  * non-standardized scalar and vector fields can be added to the writer manually.
  */
-template<class Scalar, int dim>
+template<class Scalar, class GlobalPosition>
 class PointCloudVtkWriter
 {
-    using GlobalPosition = Dune::FieldVector<Scalar, dim>;
+    using DimVector = Dune::FieldVector<Scalar, GlobalPosition::size()>;
 
     static constexpr unsigned int precision = 6;
     static constexpr unsigned int numBeforeLineBreak = 15;
@@ -117,7 +117,7 @@ class PointCloudVtkWriter
 
 public:
     using ScalarFunction = VTKFunction<std::vector<Scalar>>;
-    using VectorFunction = VTKFunction<std::vector<GlobalPosition>>;
+    using VectorFunction = VTKFunction<std::vector<DimVector>>;
 
 
     PointCloudVtkWriter(const std::vector<GlobalPosition>& coordinates) : coordinates_(coordinates)
@@ -190,7 +190,7 @@ public:
      * \param name The name of the data set
      * \param ncomps The number of components of the data set
      */
-    void addPointData(const std::vector<GlobalPosition>& v, const std::string &name)
+    void addPointData(const std::vector<DimVector>& v, const std::string &name)
     {
         assert(v.size() == coordinates_.size());
         vectorPointData_.push_back(VectorFunction(v, name, 3));
@@ -385,7 +385,7 @@ private:
      *
      * \param g The vector
      */
-    void writeToFile_(std::ostream& file, const GlobalPosition& g)
+    void writeToFile_(std::ostream& file, const DimVector& g)
     {
         assert(g.size() > 1 && g.size() < 4);
         if(g.size() < 3)

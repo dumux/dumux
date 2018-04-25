@@ -93,8 +93,6 @@ class CCTpfaFVGridGeometry<GV, true, Traits>
 
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
-    using CoordScalar = typename GV::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
     //! export the type of the fv element geometry (the local view type)
@@ -363,9 +361,6 @@ class CCTpfaFVGridGeometry<GV, false, Traits>
 
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
-
-    using CoordScalar = typename GV::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
     using ScvfGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::GridIndexStorage;
     using NeighborVolVarIndices = typename std::conditional_t< (dim<dimWorld),

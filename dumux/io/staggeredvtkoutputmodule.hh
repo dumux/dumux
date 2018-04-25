@@ -32,7 +32,7 @@
 
 namespace Dumux {
 
-template<class Scalar, int dim>
+template<class Scalar, class GlobalPosition>
 class PointCloudVtkWriter;
 
 /*!
@@ -60,12 +60,14 @@ class StaggeredVtkOutputModule : public VtkOutputModule<TypeTag, phaseIdxOffset>
 
 
     enum { dim = GridView::dimension };
-    enum { dimWorld = GridView::dimensionworld };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
 
     struct FaceVarScalarDataInfo { std::function<Scalar(const FaceVariables&)> get; std::string name; };
-    struct FaceVarVectorDataInfo { std::function<GlobalPosition(const SubControlVolumeFace& scvf, const FaceVariables&)> get; std::string name; };
+    struct FaceVarVectorDataInfo { std::function<DimVector(const SubControlVolumeFace& scvf, const FaceVariables&)> get; std::string name; };
 
     struct FaceFieldScalarDataInfo
     {
@@ -76,8 +78,8 @@ class StaggeredVtkOutputModule : public VtkOutputModule<TypeTag, phaseIdxOffset>
 
     struct FaceFieldVectorDataInfo
     {
-        FaceFieldVectorDataInfo(const std::vector<GlobalPosition>& f, const std::string& n) : data(f), name(n) {}
-        const std::vector<GlobalPosition>& data;
+        FaceFieldVectorDataInfo(const std::vector<DimVector>& f, const std::string& n) : data(f), name(n) {}
+        const std::vector<DimVector>& data;
         const std::string name;
     };
 
@@ -96,7 +98,7 @@ public:
     , gridGeom_(fvGridGeometry)
     , gridVariables_(gridVariables)
     , sol_(sol)
-    , faceWriter_(std::make_shared<PointCloudVtkWriter<Scalar, dim>>(coordinates_))
+    , faceWriter_(std::make_shared<PointCloudVtkWriter<Scalar, GlobalPosition>>(coordinates_))
     , sequenceWriter_(faceWriter_, problem.name() + "-face", "","",
                       fvGridGeometry.gridView().comm().rank(),
                       fvGridGeometry.gridView().comm().size() )
@@ -125,7 +127,7 @@ public:
     //! Add a vector valued field
     //! \param v The field to be added
     //! \param name The name of the vtk field
-    void addFaceField(const std::vector<GlobalPosition>& v, const std::string& name)
+    void addFaceField(const std::vector<DimVector>& v, const std::string& name)
     {
         if (v.size() == this->gridGeom_.gridView().size(1))
                 faceFieldVectorDataInfo_.emplace_back(v, name);
@@ -144,7 +146,7 @@ public:
     //! Add a vector-valued faceVarible
     //! \param f A function taking a SubControlVolumeFace and FaceVariables object and returning the desired vector
     //! \param name The name of the vtk field
-    void addFaceVariable(std::function<GlobalPosition(const SubControlVolumeFace& scvf, const FaceVariables&)>&& f, const std::string& name)
+    void addFaceVariable(std::function<DimVector(const SubControlVolumeFace& scvf, const FaceVariables&)>&& f, const std::string& name)
     {
         faceVarVectorDataInfo_.push_back(FaceVarVectorDataInfo{f, name});
     }
@@ -189,13 +191,13 @@ private:
 
         // prepare some containers to store the relevant data
         std::vector<std::vector<Scalar>> faceVarScalarData;
-        std::vector<std::vector<GlobalPosition>> faceVarVectorData;
+        std::vector<std::vector<DimVector>> faceVarVectorData;
 
         if(!faceVarScalarDataInfo_.empty())
             faceVarScalarData.resize(faceVarScalarDataInfo_.size(), std::vector<Scalar>(numPoints));
 
         if(!faceVarVectorDataInfo_.empty())
-            faceVarVectorData.resize(faceVarVectorDataInfo_.size(), std::vector<GlobalPosition>(numPoints));
+            faceVarVectorData.resize(faceVarVectorDataInfo_.size(), std::vector<DimVector>(numPoints));
 
         for (const auto& element : elements(gridGeom_.gridView(), Dune::Partitions::interior))
         {
@@ -259,9 +261,9 @@ private:
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;
 
-    std::shared_ptr<PointCloudVtkWriter<Scalar, dim>> faceWriter_;
+    std::shared_ptr<PointCloudVtkWriter<Scalar, GlobalPosition>> faceWriter_;
 
-    VTKSequenceWriter<PointCloudVtkWriter<Scalar, dim>> sequenceWriter_;
+    VTKSequenceWriter<PointCloudVtkWriter<Scalar, GlobalPosition>> sequenceWriter_;
 
     bool writeFaceVars_;
 

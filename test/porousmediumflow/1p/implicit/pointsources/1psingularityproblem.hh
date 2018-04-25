@@ -95,7 +95,8 @@ class OnePSingularityProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     OnePSingularityProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

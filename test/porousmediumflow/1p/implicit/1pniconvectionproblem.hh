@@ -127,7 +127,7 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:

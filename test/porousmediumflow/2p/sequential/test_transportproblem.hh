@@ -112,8 +112,9 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 public:
     TestTransportProblem(TimeManager& timeManager, Grid& grid) :
         ParentType(timeManager, grid)
@@ -125,7 +126,7 @@ public:
     {
         ParentType::init();
 
-        GlobalPosition vel(0);
+        VelocityVector vel(0);
         vel[0] = 1e-5;
 
         // compute update vector

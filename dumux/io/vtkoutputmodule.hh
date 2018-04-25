@@ -83,13 +83,14 @@ class VtkOutputModule
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using VolVarsVector = Dune::FieldVector<Scalar, dimWorld>;
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
     static constexpr int dofCodim = isBox ? dim : 0;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; };
-    struct VolVarVectorDataInfo { std::function<GlobalPosition(const VV&)> get; std::string name; };
+    struct VolVarVectorDataInfo { std::function<VolVarsVector(const VV&)> get; std::string name; };
     using Field = Vtk::template Field<GridView>;
 
 public:
@@ -152,8 +153,8 @@ public:
     //! \param f A function taking a VolumeVariables object and returning the desired vector
     //! \param name The name of the vtk field
     //! \note This method is only available for dimWorld > 1. For 1-D problems, the overload for volVar methods returning a Scalar will be used.
-    template<class G = GlobalPosition, typename std::enable_if_t<(G::dimension > 1), int> = 0>
-    void addVolumeVariable(std::function<GlobalPosition(const VolumeVariables&)>&& f, const std::string& name)
+    template<class VVV = VolVarsVector, typename std::enable_if_t<(VVV::dimension > 1), int> = 0>
+    void addVolumeVariable(std::function<VolVarsVector(const VolumeVariables&)>&& f, const std::string& name)
     {
         volVarVectorDataInfo_.push_back(VolVarVectorDataInfo{f, name});
     }
@@ -263,7 +264,7 @@ private:
 
         // instatiate the velocity output
         VelocityOutput velocityOutput(problem_, gridGeom_, gridVariables_, sol_);
-        std::array<std::vector<GlobalPosition>, numPhases> velocity;
+        std::array<std::vector<VelocityVector>, numPhases> velocity;
 
         // process rank
         static bool addProcessRank = getParamFromGroup<bool>(paramGroup_, "Vtk.AddProcessRank");
@@ -271,7 +272,7 @@ private:
 
         // volume variable data
         std::vector<std::vector<Scalar>> volVarScalarData;
-        std::vector<std::vector<GlobalPosition>> volVarVectorData;
+        std::vector<std::vector<VolVarsVector>> volVarVectorData;
 
         //! Abort if no data was registered
         if (!volVarScalarDataInfo_.empty()
@@ -287,7 +288,7 @@ private:
             if (!volVarScalarDataInfo_.empty())
                 volVarScalarData.resize(volVarScalarDataInfo_.size(), std::vector<Scalar>(numDofs));
             if (!volVarVectorDataInfo_.empty())
-                volVarVectorData.resize(volVarVectorDataInfo_.size(), std::vector<GlobalPosition>(numDofs));
+                volVarVectorData.resize(volVarVectorDataInfo_.size(), std::vector<VolVarsVector>(numDofs));
 
             if (velocityOutput.enableOutput())
             {
@@ -432,7 +433,7 @@ private:
 
         // instatiate the velocity output
         VelocityOutput velocityOutput(problem_, gridGeom_, gridVariables_, sol_);
-        std::array<std::vector<GlobalPosition>, numPhases> velocity;
+        std::array<std::vector<VelocityVector>, numPhases> velocity;
 
         // process rank
         static bool addProcessRank = getParamFromGroup<bool>(paramGroup_, "Vtk.AddProcessRank");
@@ -440,7 +441,7 @@ private:
 
         // volume variable data (indexing: volvardata/element/localcorner)
         using ScalarDataContainer = std::vector< std::vector<Scalar> >;
-        using VectorDataContainer = std::vector< std::vector<GlobalPosition> >;
+        using VectorDataContainer = std::vector< std::vector<VolVarsVector> >;
         std::vector< ScalarDataContainer > volVarScalarData;
         std::vector< VectorDataContainer > volVarVectorData;
 

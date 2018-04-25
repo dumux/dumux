@@ -76,7 +76,10 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
@@ -139,7 +142,7 @@ public:
 
 private:
     Problem& problem_;
-    const GlobalPosition& gravity_; //!< vector including the gravity constant
+    const GravityVector& gravity_; //!< vector including the gravity constant
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
 

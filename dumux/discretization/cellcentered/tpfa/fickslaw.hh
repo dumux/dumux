@@ -68,7 +68,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::cctpfa>
     static const int numComponents = ModelTraits::numComponents();
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
     //! Class that fills the cache corresponding to tpfa Fick's Law

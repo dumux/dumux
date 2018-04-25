@@ -178,7 +178,6 @@ class CCMpfaFVElementGeometry<GG, false>
     static const int dimWorld = GridView::dimensionworld;
     using CoordScalar = typename GridView::ctype;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
     //! export type of subcontrol volume

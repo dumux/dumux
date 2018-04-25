@@ -66,11 +66,12 @@ class KuevetteSpatialParams
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+
     using Element = typename GridView::template Codim<0>::Entity;
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, KuevetteSpatialParams<TypeTag>>;
 
-    enum { dimWorld = GridView::dimensionworld };
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
 

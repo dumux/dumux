@@ -70,7 +70,7 @@ class CombustionSpatialParams
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, CombustionSpatialParams<TypeTag>>;
 
     enum {dimWorld = GridView::dimensionworld};
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using EffectiveLaw = HeatPipeLaw<Scalar>;
 

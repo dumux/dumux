@@ -33,12 +33,12 @@
 namespace Dumux {
 
 //! Checks if four points lie within the same plane.
-template<class Scalar>
-bool pointsAreCoplanar(const std::vector<Dune::FieldVector<Scalar, 3>>& points, Scalar eps = 1e-20)
+template<class CoordScalar>
+bool pointsAreCoplanar(const std::vector<Dune::FieldVector<CoordScalar, 3>>& points, CoordScalar eps = 1e-20)
 {
     assert(points.size() == 4);
     // (see "Real-Time Collision Detection" by Christer Ericson)
-    Dune::FieldMatrix<Scalar, 4, 4> M;
+    Dune::FieldMatrix<CoordScalar, 4, 4> M;
     for(int i = 0; i < 3; ++i )
         M[i] = {points[0][i], points[1][i], points[2][i], points[3][i]};
     M[3] = {1.0, 1.0, 1.0, 1.0};
@@ -53,8 +53,8 @@ bool pointsAreCoplanar(const std::vector<Dune::FieldVector<Scalar, 3>>& points, 
  *
  * \param points The user-specified vector of points (potentially in wrong order).
  */
-template<class Scalar>
-std::vector<Dune::FieldVector<Scalar, 3>> getReorderedPoints(const std::vector<Dune::FieldVector<Scalar, 3>>& points)
+template<class CoordScalar>
+std::vector<Dune::FieldVector<CoordScalar, 3>> getReorderedPoints(const std::vector<Dune::FieldVector<CoordScalar, 3>>& points)
 {
     std::array<int, 4> tmp;
     return getReorderedPoints(points, tmp);
@@ -66,8 +66,8 @@ std::vector<Dune::FieldVector<Scalar, 3>> getReorderedPoints(const std::vector<D
  * \param points The user-specified vector of points (potentially in wrong order).
  * \param orientations An array of orientations that can be useful for further processing.
  */
-template<class Scalar>
-std::vector<Dune::FieldVector<Scalar, 3>> getReorderedPoints(const std::vector<Dune::FieldVector<Scalar, 3>>& points,
+template<class CoordScalar>
+std::vector<Dune::FieldVector<CoordScalar, 3>> getReorderedPoints(const std::vector<Dune::FieldVector<CoordScalar, 3>>& points,
                                                              std::array<int, 4>& orientations)
 {
     if(points.size() == 4)
@@ -94,7 +94,7 @@ std::vector<Dune::FieldVector<Scalar, 3>> getReorderedPoints(const std::vector<D
             return points;
 
         // the points do not conform with the dune ordering, re-order
-        using GlobalPosition = Dune::FieldVector<Scalar, 3>;
+        using GlobalPosition = Dune::FieldVector<CoordScalar, 3>;
         if(!diagonalsIntersect && orientations[0] == 1)
             return std::vector<GlobalPosition>{p1, p0, p2, p3};
         else if(!diagonalsIntersect && orientations[0] == -1)
@@ -109,19 +109,19 @@ std::vector<Dune::FieldVector<Scalar, 3>> getReorderedPoints(const std::vector<D
 /*!
  * \brief Creates a dune quadrilateral geometry given 4 corner points.
  *
- * \tparam Scalar The Scalar type.
+ * \tparam CoordScalar The CoordScalar type.
  * \tparam enableSanityCheck Turn on/off sanity check and reordering of points
  * \param points The user-specified vector of points (potentially in wrong order).
  */
-template<class Scalar, bool enableSanityCheck = true>
-auto makeDuneQuadrilaterial(const std::vector<Dune::FieldVector<Scalar, 3>>& points)
+template<class CoordScalar, bool enableSanityCheck = true>
+auto makeDuneQuadrilaterial(const std::vector<Dune::FieldVector<CoordScalar, 3>>& points)
 {
     assert(points.size() == 4 && "A quadrilateral needs 4 corner points!");
 
-    using GlobalPosition = Dune::FieldVector<Scalar, 3>;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, 3>;
     static constexpr auto coordDim = GlobalPosition::dimension;
     static constexpr auto dim = coordDim-1;
-    using GeometryType = Dune::MultiLinearGeometry<Scalar, dim, coordDim>;
+    using GeometryType = Dune::MultiLinearGeometry<CoordScalar, dim, coordDim>;
 
     // if no sanity check if desired, use the given points directly to construct the geometry
     if(!enableSanityCheck)

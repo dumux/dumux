@@ -58,6 +58,7 @@ class ThreePNISpatialParams
                          ThreePNISpatialParams<TypeTag>>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
@@ -65,10 +66,9 @@ class ThreePNISpatialParams
     using Element = typename GridView::template Codim<0>::Entity;
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThreePNISpatialParams<TypeTag>>;
 
-    enum { dimWorld = GridView::dimensionworld };
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
-
     using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     // export permeability type

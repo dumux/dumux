@@ -49,13 +49,8 @@ class StaggeredFreeFlowVelocityOutput
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     /*!

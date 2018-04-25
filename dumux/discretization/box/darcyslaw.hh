@@ -69,7 +69,6 @@ class BoxDarcysLaw
     enum { dimWorld = GridView::dimensionworld};
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 
@@ -101,7 +100,7 @@ public:
         const auto& shapeValues = fluxVarCache.shapeValues();
 
         // evaluate gradP - rho*g at integration point
-        GlobalPosition gradP(0.0);
+        Dune::FieldVector<Scalar, dimWorld> gradP(0.0);
         Scalar rho(0.0);
         for (auto&& scv : scvs(fvGeometry))
         {

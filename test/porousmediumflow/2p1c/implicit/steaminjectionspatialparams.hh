@@ -64,7 +64,8 @@ class InjectionProblemSpatialParams
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
     using EffectiveLaw = RegularizedVanGenuchten<Scalar>;

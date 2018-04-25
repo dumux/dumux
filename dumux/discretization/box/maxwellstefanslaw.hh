@@ -59,6 +59,7 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box >
     using IndexType = typename GridView::IndexSet::IndexType;
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     enum { dim = GridView::dimension} ;
     enum { dimWorld = GridView::dimensionworld} ;
@@ -68,7 +69,6 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::box >
         numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents()
     };
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;
@@ -118,7 +118,7 @@ public:
 
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
-            GlobalPosition gradX(0.0);
+            Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];

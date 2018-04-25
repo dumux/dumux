@@ -39,9 +39,6 @@ namespace Dumux
 template<class FVGridGeometry>
 class NavierStokesVtkOutputFields
 {
-    using ctype = typename FVGridGeometry::GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<ctype, FVGridGeometry::GridView::dimensionworld>;
-
     // Helper type used for tag dispatching (to add discretization-specific fields).
     template<DiscretizationMethod discMethod>
     using discMethodTag = std::integral_constant<DiscretizationMethod, discMethod>;
@@ -75,7 +72,10 @@ private:
         {
             auto faceVelocityVector = [](const typename FVGridGeometry::SubControlVolumeFace& scvf, const auto& faceVars)
                                       {
-                                          GlobalPosition velocity(0.0);
+                                          using Scalar = typename VtkOutputModule::VolumeVariables::PrimaryVariables::value_type;
+                                          using VelocityVector = Dune::FieldVector<Scalar, FVGridGeometry::GridView::dimensionworld>;
+
+                                          VelocityVector velocity(0.0);
                                           velocity[scvf.directionIndex()] = faceVars.velocitySelf();
                                           return velocity;
                                       };

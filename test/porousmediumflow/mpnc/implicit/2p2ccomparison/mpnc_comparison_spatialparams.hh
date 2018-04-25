@@ -69,9 +69,11 @@ class MPNCComparisonSpatialParams
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+
     using Element = typename GridView::template Codim<0>::Entity;
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, MPNCComparisonSpatialParams<TypeTag>>;
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
+
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};

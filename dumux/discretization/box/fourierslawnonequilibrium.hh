@@ -68,7 +68,6 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box
     enum {sPhaseIdx = FluidSystem::sPhaseIdx};
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     static Scalar flux(const Problem& problem,
@@ -117,7 +116,7 @@ public:
         // evaluate gradTemp at integration point
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
-        GlobalPosition gradTemp(0.0);
+        Dune::FieldVector<Scalar, dimWorld> gradTemp(0.0);
         for (auto&& scv : scvs(fvGeometry))
         {
             // compute the temperature gradient with the shape functions

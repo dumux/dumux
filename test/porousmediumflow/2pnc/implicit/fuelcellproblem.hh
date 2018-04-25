@@ -101,7 +101,7 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     enum { dofCodim = isBox ? dim : 0 };
 public:

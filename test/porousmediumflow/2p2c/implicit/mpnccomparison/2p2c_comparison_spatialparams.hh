@@ -67,9 +67,11 @@ class TwoPTwoCComparisonSpatialParams
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+
     using Element = typename GridView::template Codim<0>::Entity;
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, TwoPTwoCComparisonSpatialParams<TypeTag>>;
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     enum {dimWorld=GridView::dimensionworld};
 

@@ -82,7 +82,9 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     KovasznayTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -305,8 +307,8 @@ private:
     Scalar lambda_;
     bool printL2Error_;
     std::vector<Scalar> analyticalPressure_;
-    std::vector<GlobalPosition> analyticalVelocity_;
-    std::vector<GlobalPosition> analyticalVelocityOnFace_;
+    std::vector<VelocityVector> analyticalVelocity_;
+    std::vector<VelocityVector> analyticalVelocityOnFace_;
 };
 } //end namespace
 

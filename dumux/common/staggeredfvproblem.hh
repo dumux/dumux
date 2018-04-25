@@ -64,7 +64,7 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     using CoordScalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, GridView::dimensionworld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
     static constexpr auto faceIdx = FVGridGeometry::faceIdx();

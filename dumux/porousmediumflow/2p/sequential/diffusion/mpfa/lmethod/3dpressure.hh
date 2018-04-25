@@ -140,8 +140,8 @@ class FvMpfaL3dPressure2p: public FVPressure<TypeTag>
     using Geometry = typename Element::Geometry;
     using IntersectionIterator = typename GridView::IntersectionIterator;
 
-    using LocalPosition = Dune::FieldVector<Scalar, dim>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Geometry::GlobalCoordinate;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
     using DimVector = Dune::FieldVector<Scalar, dim>;
@@ -518,7 +518,7 @@ private:
     const Implementation &asImp_() const
     {   return *static_cast<const Implementation *>(this);}
 
-    const GlobalPosition& gravity_; //!< vector including the gravity constant
+    const GravityVector& gravity_; //!< vector including the gravity constant
 
     Scalar maxError_;
     Scalar timeStep_;

@@ -67,6 +67,7 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::vector<IndexType>;
     using TransmissibilityVector = std::vector<IndexType>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using CoordScalar = typename GridView::ctype;
     static const int dim = GridView::dimension;
@@ -77,7 +78,6 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
     using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
     using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 

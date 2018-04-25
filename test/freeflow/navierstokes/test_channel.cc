@@ -174,7 +174,9 @@ int main(int argc, char** argv) try
     // set up two surfaces over which fluxes are calculated
     FluxOverSurface<TypeTag> flux(*assembler, x);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     const Scalar xMin = fvGridGeometry->bBoxMin()[0];
     const Scalar xMax = fvGridGeometry->bBoxMax()[0];

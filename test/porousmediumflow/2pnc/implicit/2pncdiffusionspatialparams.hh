@@ -66,7 +66,9 @@ class TwoPNCDiffusionSpatialParams
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
     using EffectiveLaw = RegularizedBrooksCorey<Scalar>;

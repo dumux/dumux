@@ -76,7 +76,7 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     static constexpr bool enableInertiaTerms = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
     static constexpr bool normalizePressure = GET_PROP_VALUE(TypeTag, NormalizePressure);
 
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
     static constexpr auto faceIdx = FVGridGeometry::faceIdx();

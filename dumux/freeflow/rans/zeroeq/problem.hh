@@ -65,7 +65,6 @@ class ZeroEqProblem : public RANSProblem<TypeTag>
     enum {
         dim = Grid::dimension,
       };
-    using GlobalPosition = Dune::FieldVector<Scalar, dim>;
     using DimVector = Dune::FieldVector<Scalar, dim>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 

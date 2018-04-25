@@ -124,7 +124,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
     /*!

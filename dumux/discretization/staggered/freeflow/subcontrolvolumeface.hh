@@ -55,11 +55,11 @@ class FreeFlowStaggeredSubControlVolumeFace
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
 
-    using GlobalPosition = typename T::GlobalPosition;
-
     static constexpr int numPairs = (dimworld == 2) ? 2 : 4;
 
 public:
+    using GlobalPosition = typename T::GlobalPosition;
+
     //! State the traits public and thus export all types
     using Traits = T;
 

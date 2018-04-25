@@ -67,7 +67,6 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::cctpfa >
     static const int numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
     using ReducedComponentVector = Dune::FieldVector<Scalar, numComponents-1>;
     using ReducedComponentMatrix = Dune::FieldMatrix<Scalar, numComponents-1, numComponents-1>;

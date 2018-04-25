@@ -51,7 +51,7 @@ class SequentialFVSpatialParams: public SequentialFVSpatialParamsOneP<TypeTag>
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     /// @cond false
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
     /// @endcond

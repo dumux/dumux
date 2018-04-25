@@ -112,7 +112,7 @@ class MPNCComparisonProblem
     enum {p0Idx = Indices::p0Idx};
 
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
     static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 

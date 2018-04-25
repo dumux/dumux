@@ -73,7 +73,7 @@ class TestIMPESSpatialParams: public SequentialFVSpatialParams<TypeTag>
         {dimWorld=Grid::dimensionworld};
     using Element = typename Grid::Traits::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);

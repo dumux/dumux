@@ -76,7 +76,7 @@ class HeterogeneousSpatialParams
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, HeterogeneousSpatialParams<TypeTag>>;
 
     enum { dimWorld = GridView::dimensionworld };
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
 

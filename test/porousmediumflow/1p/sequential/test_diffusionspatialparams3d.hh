@@ -72,7 +72,7 @@ class TestDiffusionSpatialParams3d: public SequentialFVSpatialParams<TypeTag>
         {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1};
     using Element = typename Grid::Traits::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:

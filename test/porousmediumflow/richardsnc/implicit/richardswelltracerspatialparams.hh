@@ -69,8 +69,8 @@ class RichardsWellTracerSpatialParams
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, RichardsWellTracerSpatialParams<TypeTag>>;
 
     enum { dimWorld=GridView::dimensionworld };
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using EffectiveLaw = VanGenuchten<Scalar>;
 

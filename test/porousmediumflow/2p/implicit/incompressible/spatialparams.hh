@@ -70,7 +70,7 @@ class TwoPTestSpatialParams
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
 

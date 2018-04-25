@@ -64,9 +64,10 @@ class RichardsNISpatialParams
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, RichardsNISpatialParams<TypeTag>>;
 
     enum { dimWorld=GridView::dimensionworld };
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 
     using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     // export permeability type

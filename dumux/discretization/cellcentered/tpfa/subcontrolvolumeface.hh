@@ -91,13 +91,14 @@ class CCTpfaSubControlVolumeFace
     using ParentType = SubControlVolumeFaceBase<ThisType, T>;
     using GridIndexType = typename T::GridIndexType;
     using Scalar = typename T::Scalar;
-    using GlobalPosition = typename T::GlobalPosition;
     using CornerStorage = typename T::CornerStorage;
     using GridIndexStorage = typename T::GridIndexStorage;
     using Geometry = typename T::Geometry;
     using BoundaryFlag = typename T::BoundaryFlag;
 
 public:
+    using GlobalPosition = typename T::GlobalPosition;
+
     //! state the traits public and thus export all types
     using Traits = T;
 

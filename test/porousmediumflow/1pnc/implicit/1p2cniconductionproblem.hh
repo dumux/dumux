@@ -126,7 +126,7 @@ class OnePTwoCNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     OnePTwoCNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

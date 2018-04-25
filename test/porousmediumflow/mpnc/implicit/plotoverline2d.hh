@@ -79,8 +79,9 @@ class PlotOverLine2D
         dim         = GridView::dimension,
         dimWorld    = GridView::dimensionworld,
     };
+    using Element = typename GridView::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     /*!

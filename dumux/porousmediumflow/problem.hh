@@ -44,9 +44,13 @@ class PorousMediumFlowProblem : public FVProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    using CoordScalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
+
+
 public:
     //! export spatial parameter type
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
@@ -117,7 +121,7 @@ public:
      * This is discretization independent interface. By default it
      * just calls gravity().
      */
-    const GlobalPosition &gravityAtPos(const GlobalPosition &pos) const
+    const GravityVector &gravityAtPos(const GlobalPosition &pos) const
     { return this->asImp_().gravity(); }
 
     /*!
@@ -129,7 +133,7 @@ public:
      * property is true, \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$ holds,
      * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
      */
-    const GlobalPosition &gravity() const
+    const GravityVector &gravity() const
     { return gravity_; }
 
     /*!
@@ -148,7 +152,7 @@ public:
 
 protected:
     //! The gravity acceleration vector
-    GlobalPosition gravity_;
+    GravityVector gravity_;
 
     // material properties of the porous medium
     std::shared_ptr<SpatialParams> spatialParams_;
