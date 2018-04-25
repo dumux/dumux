@@ -109,30 +109,13 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-  FractureProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-  : ParentType(fvGridGeometry) {}
+    FractureProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry) {}
 
     /*!
      * \name Problem parameters
      */
     // \{
-
-    /*!
-     * \brief User defined output after the time integration
-     *
-     * Will be called diretly after the time integration.
-     */
-    void postTimeStep()
-    {
-        // // Calculate storage terms
-        // PrimaryVariables storage;
-        // this->model().globalStorage(storage);
-        //
-        // // Write mass balance information for rank 0
-        // if (this->gridView().comm().rank() == 0) {
-        //     std::cout<<"Storage: " << storage << std::endl;
-        // }
-    }
 
     /*!
      * \brief Returns the temperature \f$ K \f$
@@ -141,18 +124,6 @@ public:
      */
     Scalar temperature() const
     { return 273.15 + 20; }
-
-    /*!
-     * \brief Returns the source term
-     *
-     * \param values Stores the source values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
-     * \param globalPos The global position
-     */
-    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return NumEqVector(0.0);
-    }
 
     // \}
 
