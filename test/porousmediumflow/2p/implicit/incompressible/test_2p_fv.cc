@@ -148,7 +148,14 @@ int main(int argc, char** argv) try
 
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+
+    // use non-conforming output for the test with interface solver
+#if ENABLEINTERFACESOLVER
+    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name(), "", Dune::VTK::nonconforming);
+#else
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+#endif
+
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 
