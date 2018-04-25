@@ -1,7 +1,7 @@
 add_input_file_links()
 dune_symlink_to_source_files(FILES laufer_re50000.csv laufer_re50000_u+y+.csv
                                    pdelab-kepsilon_twolayers.csv pdelab-kepsilon_wallfunction.csv
-                                   pdelab-lowrekepsilon.csv pdelab-zeroeq.csv)
+                                   pdelab-komega.csv pdelab-lowrekepsilon.csv pdelab-zeroeq.csv)
 
 dune_add_test(NAME test_pipe_laufer_zeroeq
               SOURCES test_pipe_laufer.cc
@@ -31,6 +31,9 @@ dune_add_test(NAME test_pipe_laufer_lowrekepsilon
                                 ${CMAKE_CURRENT_BINARY_DIR}/pipe_laufer_reference-00064.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_pipe_laufer_lowrekepsilon test_pipe_laufer_reference.input")
 target_compile_definitions(test_pipe_laufer_lowrekepsilon PUBLIC "LOWREKEPSILON=1")
+
+add_executable(test_pipe_laufer_komega EXCLUDE_FROM_ALL test_pipe_laufer.cc)
+target_compile_definitions(test_pipe_laufer_komega PUBLIC "KOMEGA=1")
 
 dune_add_test(NAME test_pipe_zeroeqni
               SOURCES test_pipe_laufer.cc

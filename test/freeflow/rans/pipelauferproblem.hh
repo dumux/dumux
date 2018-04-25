@@ -38,6 +38,9 @@
 #elif KEPSILON
 #include <dumux/freeflow/rans/twoeq/kepsilon/model.hh>
 #include <dumux/freeflow/rans/twoeq/kepsilon/problem.hh>
+#elif KOMEGA
+#include <dumux/freeflow/rans/twoeq/komega/model.hh>
+#include <dumux/freeflow/rans/twoeq/komega/problem.hh>
 #else
 #include <dumux/freeflow/rans/zeroeq/model.hh>
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
@@ -57,6 +60,8 @@ NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNI))
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilon));
 #elif KEPSILON
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilon));
+#elif KOMEGA
+NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, KOmega));
 #else
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEq));
 #endif
@@ -98,6 +103,10 @@ class PipeLauferProblem : public LowReKEpsilonProblem<TypeTag>
 class PipeLauferProblem : public KEpsilonProblem<TypeTag>
 {
     using ParentType = KEpsilonProblem<TypeTag>;
+#elif KOMEGA
+class PipeLauferProblem : public KOmegaProblem<TypeTag>
+{
+    using ParentType = KOmegaProblem<TypeTag>;
 #else
 class PipeLauferProblem : public ZeroEqProblem<TypeTag>
 {
@@ -116,10 +125,13 @@ class PipeLauferProblem : public ZeroEqProblem<TypeTag>
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
     static const unsigned int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+    static constexpr auto dimWorld = FVGridGeometry::GridView::dimensionworld;
 
 public:
     PipeLauferProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -206,7 +218,7 @@ public:
             values.setOutflow(Indices::energyBalanceIdx);
 #endif
 
-#if LOWREKEPSILON || KEPSILON
+#if LOWREKEPSILON || KEPSILON || KOMEGA
             values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
             values.setOutflow(Indices::dissipationEqIdx);
 #endif
@@ -220,7 +232,7 @@ public:
             values.setDirichlet(Indices::temperatureIdx);
 #endif
 
-#if LOWREKEPSILON || KEPSILON
+#if LOWREKEPSILON || KEPSILON || KOMEGA
             values.setDirichlet(Indices::turbulentKineticEnergyIdx);
             values.setDirichlet(Indices::dissipationIdx);
 #endif
@@ -228,15 +240,23 @@ public:
         return values;
     }
 
-   /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param globalPos The center of the finite volume which ought to be set.
-     */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+     /*!
+      * \brief Evaluate the boundary conditions for a dirichlet
+      *        control volume face.
+      *
+      * \param element The finite element
+      * \param scvf the sub control volume face
+      * \note used for cell-centered discretization schemes
+      */
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
+        const auto globalPos = scvf.ipGlobal();
         PrimaryVariables values(initialAtPos(globalPos));
+#if KOMEGA
+        unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+        const auto wallDistance = ParentType::wallDistance_[elementID];
+        values[Indices::dissipationEqIdx] =  6.0 * ParentType::kinematicViscosity_[elementID] / (ParentType::betaOmega() * std::pow(wallDistance, 2));
+#endif
 #if NONISOTHERMAL
         if (time() > 10.0)
         {
@@ -250,12 +270,25 @@ public:
         return values;
     }
 
-    // \}
-
-   /*!
-     * \name Volume terms
-     */
-    // \{
+     /*!
+      * \brief Evaluate the boundary conditions for a dirichlet
+      *        control volume center.
+      *
+      * \param element The finite element
+      * \param scv the sub control volume
+      * \note used for cell-centered discretization schemes
+      */
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
+    {
+        const auto globalPos = scv.center();
+        PrimaryVariables values(initialAtPos(globalPos));
+#if KOMEGA
+//         unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+//         const auto wallDistance = ParentType::wallDistance_[elementID];
+//         values[Indices::dissipationEqIdx] =  6.0 * ParentType::kinematicViscosity_[elementID] / (ParentType::betaOmega() * std::pow(wallDistance, 2));
+#endif
+        return values;
+    }
 
    /*!
      * \brief Evaluate the initial value for a control volume.
@@ -289,12 +322,24 @@ public:
             values[Indices::turbulentKineticEnergyEqIdx] = 0.0;
             values[Indices::dissipationEqIdx] = 0.0;
         }
+#elif KOMEGA
+        if (time() < eps_ && startWithZeroVelocity_)
+        {
+            values[Indices::velocityXIdx] = 0.0;
+        }
+        values[Indices::turbulentKineticEnergyEqIdx] = turbulentKineticEnergy_;
+        values[Indices::dissipationEqIdx] = dissipation_;
+        if (isOnWall(globalPos))
+        {
+            values[Indices::turbulentKineticEnergyEqIdx] = 0.0;
+        }
 #endif
 
         return values;
     }
 
     // \}
+
     void setTimeLoop(TimeLoopPtr timeLoop)
     {
         timeLoop_ = timeLoop;
