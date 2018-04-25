@@ -30,30 +30,39 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
 class DarcysLawImplementation;
+
+// forward declaration
+template<class Scalar, class FVGridGeometry>
+class BoxDarcysLaw;
 
 /*!
  * \ingroup DarcysLaw
  * \brief Specialization of Darcy's Law for the box method.
  */
-template <class TypeTag>
+template<class TypeTag>
 class DarcysLawImplementation<TypeTag, DiscretizationMethod::box>
+: public BoxDarcysLaw<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, FVGridGeometry)>
+{ };
+
+/*!
+ * \ingroup BoxDiscretization
+ * \brief Darcy's law for box schemes
+ * \tparam Scalar the scalar type for scalar physical quantities
+ * \tparam FVGridGeometry the grid geometry
+ */
+template<class Scalar, class FVGridGeometry>
+class BoxDarcysLaw
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElemFluxVarCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache)::LocalView;
-    using FluxVarCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
     using CoordScalar = typename GridView::ctype;
 
     enum { dim = GridView::dimension};
@@ -64,13 +73,14 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::box>
 
 public:
 
+    template<class Problem, class ElementVolumeVariables, class ElementFluxVarsCache>
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace& scvf,
-                       const IndexType phaseIdx,
-                       const ElemFluxVarCache& elemFluxVarCache)
+                       const int phaseIdx,
+                       const ElementFluxVarsCache& elemFluxVarCache)
     {
         const auto& fluxVarCache = elemFluxVarCache[scvf];
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
@@ -86,7 +96,7 @@ public:
         outsideK *= outsideVolVars.extrusionFactor();
 
         const auto K = problem.spatialParams().harmonicMean(insideK, outsideK, scvf.unitOuterNormal());
-        static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
 
         const auto& shapeValues = fluxVarCache.shapeValues();
 
@@ -112,6 +122,7 @@ public:
     }
 
     // compute transmissibilities ti for analytical jacobians
+    template<class Problem, class ElementVolumeVariables, class FluxVarCache>
     static std::vector<Scalar> calculateTransmissibilities(const Problem& problem,
                                                            const Element& element,
                                                            const FVElementGeometry& fvGeometry,
