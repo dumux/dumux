@@ -28,10 +28,25 @@
 #include <dune/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/typetraits/isvalid.hh>
 
 #include <dune/common/fmatrix.hh>
 
 namespace Dumux {
+
+#ifndef DOXYGEN
+namespace Detail {
+// helper struct detecting if the user-defined spatial params class has a permeabilityAtPos function
+// for g++ > 5.3, this can be replaced by a lambda
+template<class GlobalPosition>
+struct hasPermeabilityAtPos
+{
+    auto operator()(auto&& a)
+    -> decltype(a.permeabilityAtPos(std::declval<GlobalPosition>()))
+    {};
+};
+} // end namespace Detail
+#endif
 
 /*!
  * \ingroup SpatialParameters
@@ -127,24 +142,19 @@ public:
      */
     template<class ElementSolution>
     decltype(auto) permeability(const Element& element,
-                   const SubControlVolume& scv,
-                   const ElementSolution& elemSol) const
+                                const SubControlVolume& scv,
+                                const ElementSolution& elemSol) const
     {
-        return asImp_().permeabilityAtPos(scv.center());
-    }
+        static_assert(decltype(isValid(Detail::hasPermeabilityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
+        "   Your spatial params class has to either implement\n\n"
+        "         const PermeabilityType& permeabilityAtPos(const GlobalPosition& globalPos) const\n\n"
+        "   or overload this function\n\n"
+        "         template<class ElementSolution>\n"
+        "         const PermeabilityType& permeability(const Element& element,\n"
+        "                                              const SubControlVolume& scv,\n"
+        "                                              const ElementSolution& elemSol) const\n\n");
 
-    /*!
-     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$
-     * \note  It is possibly solution dependent.
-     *
-     * \return permeability
-     * \param globalPos The position of the center of the scv
-     */
-    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a permeability() or permeabilityAtPos() method.");
+        return asImp_().permeabilityAtPos(scv.center());
     }
 
     /*!
