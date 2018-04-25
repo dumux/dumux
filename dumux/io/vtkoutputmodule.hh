@@ -297,16 +297,15 @@ private:
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
                 if (velocityOutput.enableOutput())
+                {
                     fvGeometry.bind(element);
-                else
-                    fvGeometry.bindElement(element);
-
-                // If velocity output is enabled we need to bind to the whole stencil
-                // otherwise element-local data is sufficient
-                if (velocityOutput.enableOutput())
                     elemVolVars.bind(element, fvGeometry, sol_);
-                else if (!volVarScalarDataInfo_.empty())
+                }
+                else
+                {
+                    fvGeometry.bindElement(element);
                     elemVolVars.bindElement(element, fvGeometry, sol_);
+                }
 
                 if (!volVarScalarDataInfo_.empty()
                     || !volVarVectorDataInfo_.empty())
