@@ -242,7 +242,8 @@ private:
             sumTi += outsideTi;
             sumXTi += outsideTi*outsideVolVars.moleFraction(phaseIdx, compIdx);
         }
-        return sumXTi/sumTi;
+
+        return sumTi > 0 ? sumXTi/sumTi : 0;
     }
 
     //! compute the density at branching facets for network grids as arithmetic mean
