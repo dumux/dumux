@@ -104,7 +104,7 @@ public:
         porosity_ = 0.2;
 
         // residual saturations
-        materialParams_.setSwr(0.02); //here water, see philtophoblaw
+        materialParams_.setSwr(0.02);
         materialParams_.setSnr(0.0);
 
         //parameters for the vanGenuchten law
