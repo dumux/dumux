@@ -151,56 +151,8 @@ public:
         BoundaryTypes bcTypes;
 
         bcTypes.setAllNeumann();
-        //bcTypes.setAllDirichlet();
-
         return bcTypes;
     }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
-     *
-     * \param globalPos The position for which the Dirichlet value is set
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
-    {
-        // use initial values as boundary conditions
-
-        //TODO here we should return the new boundary conditions, depending
-        //on the bc_type which can be no flow, discharge q or water depth h
-        //we need to use the Riemann invariants to generate the correct values
-        //for the cell state of the ghost cell
-        PrimaryVariables values(0.0);
-
-        values[massBalanceIdx] = 0.0;
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
-
-        return values;
-
-    }
-
-    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
-    {
-        // use initial values as boundary conditions
-
-        //TODO here we should return the new boundary conditions, depending
-        //on the bc_type which can be no flow, discharge q or water depth h
-        //we need to use the Riemann invariants to generate the correct values
-        //for the cell state of the ghost cell
-        PrimaryVariables values(0.0);
-
-        values[massBalanceIdx] = 0.0;
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
-
-        return values;
-
-    }
-
 
     PrimaryVariables neumann(const Element& element,
                              const FVElementGeometry& fvGeometry,

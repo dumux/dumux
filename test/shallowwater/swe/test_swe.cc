@@ -41,7 +41,9 @@
 #include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/linear/amgbackend.hh>
-#include <dumux/nonlinear/newtonsolver.hh>
+//#include <dumux/nonlinear/newtonsolver.hh>
+#include <dumux/nonlinear/newtonmethod.hh>
+#include <dumux/nonlinear/newtoncontroller.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
@@ -155,8 +157,14 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver,timeLoop);
+    //using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
+    //NewtonSolver nonLinearSolver(assembler, linearSolver,timeLoop);
+    //
+    using NewtonController = Dumux::NewtonController<Scalar>;
+    using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
+    auto newtonController = std::make_shared<NewtonController>(timeLoop);
+    NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
+
 
     // time loop
     timeLoop->start(); do
@@ -203,7 +211,7 @@ int main(int argc, char** argv) try
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by newton controller
-        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+        timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());
