@@ -467,7 +467,7 @@ public:
             static const std::uint8_t map[6][4] =
             {
                 {eo+0, fo+0, fo+1,    0},
-                {fo+1, eo+1,    0, fo+2},
+                {fo+0, eo+1,    0, fo+2},
                 {eo+2, fo+0, fo+3,    0},
                 {fo+2, eo+3,    0, fo+1},
                 {fo+3,    0, eo+4, fo+1},
