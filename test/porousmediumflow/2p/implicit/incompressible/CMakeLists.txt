@@ -31,7 +31,20 @@ dune_add_test(NAME test_2p_incompressible_box_ifsolver
                                ${CMAKE_CURRENT_BINARY_DIR}/2p_box_ifsolver-00018.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_box_ifsolver test_2p.input
                                                                                                   -Problem.Name 2p_box_ifsolver
-                                                                                                  -Box.UseInterfaceSolver true")
+                                                                                                  -Problem.UseNonConformingOutput true")
+
+# using tpfa with an oil-wet lens
+dune_add_test(NAME test_2p_incompressible_tpfa_oilwet
+              SOURCES test_2p_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleTpfa
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/lenscc_oilwet-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/2p_tpfa_oilwet-00009.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa_oilwet test_2p.input
+                                                                                                 -Problem.Name 2p_tpfa_oilwet
+                                                                                                 -Problem.EnableGravity false
+                                                                                                 -SpatialParams.LensIsOilWet true")
 
 # using mpfa
 dune_add_test(NAME test_2p_incompressible_mpfa
