@@ -152,22 +152,6 @@ class ShallowWaterAdvectiveFlux
 
         //-------------------------------------------------------------
         //
-        // Outer boundary -- change the variables of the outsideVolVars
-        //
-        //-------------------------------------------------------------
-        if (scvf.boundary())
-        {
-
-            //no flow boundary
-            //cellStatesRight[0] =  cellStatesLeft[0];
-            //cellStatesRight[1] = -cellStatesLeft[1];
-            //cellStatesRight[2] = -cellStatesLeft[2];
-            //cellStatesRight[3] =  cellStatesLeft[3];
-            hllc_hr = hllc_hl;
-            thetar = thetal;
-        }
-        //-------------------------------------------------------------
-        //
         // Inner boundary
         //
         //-------------------------------------------------------------
@@ -212,7 +196,6 @@ class ShallowWaterAdvectiveFlux
         flux[0] = riemannFlux[0] * scvf.area() * mobility[0];
         flux[1] = (riemannFlux[1]  - hdxzl) * scvf.area() * mobility[1];
         flux[2] = (riemannFlux[2]  - hdyzl) * scvf.area() * mobility[2];
-
 
         return flux;
     }

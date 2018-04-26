@@ -70,6 +70,7 @@ public:
         return asImp_().getH();
     }
 
+
     Scalar getU(const Element& element)
     {
         return asImp_().getU();

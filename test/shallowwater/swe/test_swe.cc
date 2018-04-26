@@ -156,7 +156,7 @@ int main(int argc, char** argv) try
 
     // the non-linear solver
     using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+    NewtonSolver nonLinearSolver(assembler, linearSolver,timeLoop);
 
     // time loop
     timeLoop->start(); do

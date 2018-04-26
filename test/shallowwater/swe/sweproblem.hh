@@ -32,6 +32,7 @@
 #include "swetestspatialparams.hh"
 #include <dumux/shallowwater/numericalfluxes/exactriemannsolver.hh>
 #include <dumux/shallowwater/numericalfluxes/fluxrotation.hh>
+#include <dumux/shallowwater/numericalfluxes/boundaryFluxes.hh>
 
 namespace Dumux
 {
@@ -231,12 +232,12 @@ public:
         cellStatesRight[2] = -cellStatesLeft[2];
         cellStatesRight[3] = cellStatesLeft[3];
 
+        int bdType = 0; //0 = Neumann, 1 = definded q, 2 = defined h
+        double bdValue = 0.0;
 
-        //second case q boundary
-
-
-        //third case h boundary
-
+        //call boundaryfluxes for computing the Riemann invariants
+        boundaryFluxes(nxy,scvf.area(),minHBoundary_,
+                       cellStatesLeft,cellStatesRight,bdType,bdValue);
 
 
         stateRotation(nxy,cellStatesLeft);
@@ -364,6 +365,7 @@ private:
 
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
+    static constexpr Scalar minHBoundary_ = 1.0E-6;
 };
 
 } //end namespace Dumux
