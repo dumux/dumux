@@ -30,7 +30,6 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/freeflow/navierstokes/fluxvariables.hh>
 #include <dumux/freeflow/rans/twoeq/komega/fluxvariables.hh>
-#include <dumux/freeflow/rans/twoeq/komega/models.hh>
 
 namespace Dumux
 {

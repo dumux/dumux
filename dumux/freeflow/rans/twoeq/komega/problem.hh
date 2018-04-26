@@ -32,7 +32,6 @@
 #include <dumux/freeflow/rans/problem.hh>
 
 #include "model.hh"
-#include "models.hh"
 
 namespace Dumux
 {
@@ -73,12 +72,6 @@ class KOmegaProblem : public RANSProblem<TypeTag>
 public:
     KOmegaProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
-        kOmegaModel_ = getParamFromGroup<int>(this->paramGroup(), "KOmega.Model", 0);
-        if (kOmegaModel_ != KOmegaModels::wilcox08
-            && kOmegaModel_ != KOmegaModels::wilcox88)
-        {
-            DUNE_THROW(Dune::NotImplemented, "This k-omega model is not implemented: " << kOmegaModel_);
-        }
         useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", true);
     }
 
@@ -91,10 +84,8 @@ public:
 
         // update size and initial values of the global vectors
         storedDissipation_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedDissipationGradient_.resize(this->fvGridGeometry().elementMapper().size(), DimMatrix(0.0));
         storedDynamicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
         storedTurbulentKineticEnergy_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedTurbulentKineticEnergyGradient_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
     }
 
     /*!
@@ -132,27 +123,13 @@ public:
     //! \brief Returns the \$f \beta_{\omega} \$f constant
     const Scalar betaOmega() const
     {
-        if(kOmegaModel_ == KOmegaModels::wilcox88)
-            return 0.0750;
-        else if (kOmegaModel_ == KOmegaModels::wilcox08)
-            return 0.0708;
-        else
-            DUNE_THROW(Dune::NotImplemented, "This Model is not implemented.");
+        return 0.0708;
     }
-
-    /*!
-     * \brief Returns the index of the k-omega model applied
-     */
-    const int kOmegaModel() const
-    { return kOmegaModel_; }
 
 public:
     std::vector<Scalar> storedDissipation_;
     std::vector<Scalar> storedDynamicEddyViscosity_;
     std::vector<Scalar> storedTurbulentKineticEnergy_;
-    std::vector<DimMatrix> storedDissipationGradient_;
-    std::vector<DimMatrix> storedTurbulentKineticEnergyGradient_;
-    int kOmegaModel_;
     bool useStoredEddyViscosity_;
 
 private:

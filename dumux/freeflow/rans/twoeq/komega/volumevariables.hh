@@ -30,8 +30,6 @@
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/freeflow/rans/volumevariables.hh>
 
-#include "models.hh"
-
 namespace Dumux
 {
 
@@ -94,7 +92,6 @@ public:
                               const SubControlVolume& scv)
     {
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
-        kOmegaModel_ = problem.kOmegaModel();
         betaOmega_ = problem.betaOmega();
         turbulentKineticEnergy_ = elemSol[0][Indices::turbulentKineticEnergyIdx];
         dissipation_ = elemSol[0][Indices::dissipationIdx];
@@ -110,20 +107,18 @@ public:
     }
 
     /*!
-     * \brief Calculate and set the dynamic eddy viscosity.
+     * \brief Returns the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$.
      */
     Scalar calculateEddyViscosity()
     {
         using std::sqrt;
         using std::max;
-        if(kOmegaModel_ == KOmegaModels::wilcox88)
-            return turbulentKineticEnergy() / dissipation() * NavierStokesParentType::density();
-        else // KOmegaModels::wilcox08
-        {
-            Scalar limitiedDissipation = (7.0 / 8.0) * sqrt( 2.0 * stressTensorScalarProduct() * stressTensorScalarProduct() / betaK() );
-            Scalar Wbar = max(dissipation(), limitiedDissipation);
-            return turbulentKineticEnergy() / Wbar * NavierStokesParentType::density();
-        }
+
+        //! Use the Dissipation limiter proposed in wilcox08
+        Scalar limitiedDissipation = (7.0 / 8.0) * sqrt( 2.0 * stressTensorScalarProduct()
+                                     * stressTensorScalarProduct() / betaK() );
+        Scalar Wbar = max(dissipation(), limitiedDissipation);
+        return turbulentKineticEnergy() / Wbar * NavierStokesParentType::density();
     }
 
     /*!
@@ -210,45 +205,25 @@ public:
     //! \brief Returns the \$f \alpha \$f value
     const Scalar alpha() const
     {
-        if(kOmegaModel_ == KOmegaModels::wilcox88)
-            return 0.55555555556;
-        else if (kOmegaModel_ == KOmegaModels::wilcox08)
-            return 0.520;
-        else
-            DUNE_THROW(Dune::NotImplemented, "This Model is not implemented.");
+        return 0.520;
     }
 
     //! \brief Returns the \$f \sigma_k \$f constant
     const Scalar sigmaK() const
     {
-        if(kOmegaModel_ == KOmegaModels::wilcox88)
-            return 0.50;
-        else if (kOmegaModel_ == KOmegaModels::wilcox08)
-            return 0.60;
-        else
-            DUNE_THROW(Dune::NotImplemented, "This Model is not implemented.");
+        return 0.60;
     }
 
     //! \brief Returns the \$f \sigma_{\omega} \$f constant
     const Scalar sigmaOmega() const
     {
-        if(kOmegaModel_ == KOmegaModels::wilcox88)
-            return 0.50;
-        else if (kOmegaModel_ == KOmegaModels::wilcox08)
-            return 0.50;
-        else
-            DUNE_THROW(Dune::NotImplemented, "This Model is not implemented.");
+        return 0.50;
     }
 
     //! \brief Returns the \$f \beta_k \$f constant
     const Scalar betaK() const
     {
-        if(kOmegaModel_ == KOmegaModels::wilcox88)
-            return 0.09;
-        else if (kOmegaModel_ == KOmegaModels::wilcox08)
-            return 0.09;
-        else
-            DUNE_THROW(Dune::NotImplemented, "This Model is not implemented.");
+        return 0.09;
     }
 
     //! \brief Returns the \$f \beta_\omega \$f constant
@@ -274,7 +249,6 @@ public:
 
 protected:
     Dune::FieldVector<Scalar,2> dofPosition_;
-    int kOmegaModel_;
     Scalar betaOmega_;
     Scalar dynamicEddyViscosity_;
     Scalar eddyDiffusivity_;
