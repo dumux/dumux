@@ -28,8 +28,10 @@
 #include <dumux/common/properties.hh>
 #include "sequentialfv1p.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+namespace Properties
+{ NEW_PROP_TAG( MaterialLaw ); }
+
 /*!
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of a multi-phase problem using the
