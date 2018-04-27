@@ -208,7 +208,7 @@ public:
      * \brief The absolute temperature\f$T_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[K]}\f$
      */
     Scalar temperature(int phaseIdx) const
-    { return temperature_; }
+    { return temperature_[phaseIdx]; }
 
     /*!
      * \brief The pressure \f$p_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[Pa]}\f$
@@ -257,7 +257,7 @@ public:
      * \brief The temperature within the domain \f$\mathrm{[K]}\f$
      */
     Scalar temperature() const
-    { return temperature_; }
+    { return temperature_[0]; }
 
     /*!
      * \brief The fugacity of a component  \f$\mathrm{[Pa]}\f$
@@ -288,6 +288,7 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             averageMolarMass_[phaseIdx] = 0;
             sumMoleFractions_[phaseIdx] = 0;
+            temperature_[phaseIdx] = fs.temperature();
             for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
                 moleFraction_[phaseIdx][compIdx] = fs.moleFraction(phaseIdx, compIdx);
                 fugacityCoefficient_[phaseIdx][compIdx] = fs.fugacityCoefficient(phaseIdx, compIdx);
@@ -300,7 +301,6 @@ public:
             enthalpy_[phaseIdx] = fs.enthalpy(phaseIdx);
             viscosity_[phaseIdx] = fs.viscosity(phaseIdx);
         }
-        temperature_ = fs.temperature(0);
         wPhaseIdx_ = fs.wettingPhase();
     }
 
@@ -308,7 +308,10 @@ public:
      * \brief Set the temperature \f$\mathrm{[K]}\f$ of all phases.
      */
     void setTemperature(Scalar value)
-    { temperature_ = value; }
+    {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            temperature_[phaseIdx] = value;
+    }
 
     /*!
      * \brief Set the temperature \f$\mathrm{[K]}\f$ of a specific phase.
@@ -316,7 +319,7 @@ public:
      */
     void setTemperature(const int phaseIdx, const Scalar value)
     {
-        DUNE_THROW(Dune::NotImplemented, "This is a fluidstate for equilibrium, temperature in all phases is assumed to be equal.");
+       temperature_[phaseIdx] = value;
     }
 
     /*!
@@ -481,7 +484,7 @@ protected:
     Scalar density_[numPhases];
     Scalar enthalpy_[numPhases];
     Scalar viscosity_[numPhases];
-    Scalar temperature_;
+    Scalar temperature_[numPhases];
 
     // For porous medium flow models, here we ... the index of the wetting
     // phase (needed for vapor pressure evaluation if kelvin equation is used)

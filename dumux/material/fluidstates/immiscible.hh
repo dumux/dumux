@@ -211,7 +211,7 @@ public:
      * \brief The absolute temperature\f$T_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[K]}\f$
      */
     Scalar temperature(int phaseIdx) const
-    { return temperature_; }
+    { return temperature_[phaseIdx]; }
 
     /*!
      * \brief The pressure \f$p_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[Pa]}\f$
@@ -250,7 +250,7 @@ public:
      * \brief The temperature within the domain \f$\mathrm{[K]}\f$
      */
     Scalar temperature() const
-    { return temperature_; }
+    { return temperature_[0]; }
 
     /*!
      * \brief The fugacity of a component  \f$\mathrm{[Pa]}\f$
@@ -285,15 +285,25 @@ public:
             density_[phaseIdx] = fs.density(phaseIdx);
             enthalpy_[phaseIdx] = fs.enthalpy(phaseIdx);
             viscosity_[phaseIdx] = fs.viscosity(phaseIdx);
+            temperature_[phaseIdx] = fs.temperature(0);
         }
-        temperature_ = fs.temperature(0);
+
     }
 
     /*!
      * \brief Set the temperature \f$\mathrm{[K]}\f$ of a fluid phase
      */
+    void setTemperature(int phaseIdx, Scalar value)
+    { temperature_[phaseIdx] = value; }
+
+    /*!
+     * \brief Set the temperature \f$\mathrm{[K]}\f$ of a fluid phase
+     */
     void setTemperature(Scalar value)
-    { temperature_ = value; }
+    {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            temperature_[phaseIdx] = value;
+    }
 
     /*!
      * \brief Set the fluid pressure of a phase \f$\mathrm{[Pa]}\f$
@@ -357,7 +367,7 @@ protected:
     Scalar density_[numPhases];
     Scalar enthalpy_[numPhases];
     Scalar viscosity_[numPhases];
-    Scalar temperature_;
+    Scalar temperature_[numPhases];
 };
 
 } // end namespace Dumux
