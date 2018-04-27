@@ -106,7 +106,7 @@ public:
             flux[Indices::replaceCompEqIdx] = std::accumulate(flux.begin(), flux.end(), 0.0);
         }
 
-        flux += MolecularDiffusionType::diffusiveFluxForCellCenter(problem, fvGeometry, elemVolVars, scvf);
+        flux += MolecularDiffusionType::flux(problem, fvGeometry, elemVolVars, scvf);
         return flux;
     }
 };
