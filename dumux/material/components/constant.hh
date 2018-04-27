@@ -29,6 +29,7 @@
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
+#include <dumux/material/components/solid.hh>
 
 namespace Dumux {
 namespace Components {
@@ -53,6 +54,7 @@ class Constant
 : public Components::Base<Scalar, Constant<id, Scalar> >
 , public Components::Liquid<Scalar, Constant<id, Scalar> >
 , public Components::Gas<Scalar, Constant<id, Scalar> >
+, public Components::Solid<Scalar, Constant<id, Scalar> >
 {
 
 public:
@@ -156,6 +158,41 @@ public:
     {
         static const Scalar kinematicViscosity = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasKinematicViscosity", 1.0);
         return kinematicViscosity * gasDensity(temperature, pressure);
+    }
+
+        /*!
+     * \brief The density in \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure in
+     *          \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar solidDensity(Scalar temperature)
+    {
+        static const Scalar density = getParamFromGroup<Scalar>(std::to_string(id), "Component.SolidDensity", 1.0);
+        return density;
+    }
+
+    /*!
+     * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a solid.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar solidThermalConductivity(Scalar temperature)
+    {
+        static const Scalar solidThermalConductivity = getParamFromGroup<Scalar>(std::to_string(id), "Component.SolidThermalConductivity", 1.0);
+        return solidThermalConductivity;
+    }
+
+    /*!
+     * \brief Specific isobaric heat capacity of the component \f$\mathrm{[J/(kg*K)]}\f$ as a solid.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar solidHeatCapacity(Scalar temperature)
+    {
+        static const Scalar solidHeatCapacity = getParamFromGroup<Scalar>(std::to_string(id), "Component.SolidHeatCapacity", 1.0);
+        return solidHeatCapacity;
     }
 };
 
