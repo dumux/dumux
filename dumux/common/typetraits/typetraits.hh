@@ -26,6 +26,8 @@
 
 #include <type_traits>
 
+#include <dune/common/version.hh>
+
 namespace Dumux
 {
     /*!
@@ -34,5 +36,17 @@ namespace Dumux
      */
     template<typename T>
     struct AlwaysFalse : public std::false_type {};
+
+    /*! \brief We define our own is_indexable type in order
+     *         to avoid several version checks throughout dumux.
+     *         This should be deleted when the deprecation phase is over.
+     */
+    template<typename T, typename I = std::size_t>
+    using IsIndexable =
+    #if DUNE_VERSION_NEWER(DUNE_COMMON,2,7)
+        typename Dune::IsIndexable<T, I>;
+    #else
+        typename Dune::is_indexable<T, I>;
+    #endif
 }
 #endif
