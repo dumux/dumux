@@ -62,26 +62,16 @@ template<class GridView, Dune::VTK::OutputType OutputValue = Dune::VTK::ascii >
 class DUNE_DEPRECATED_MSG("Use VtkOutputModule instead!") VtkMultiWriter
 {
     enum { dim = GridView::dimension };
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-#else
-    using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout>;
-    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
-#endif
 public:
     using VtkWriter = Dune::VTKWriter<GridView>;
     VtkMultiWriter(const GridView &gridView,
                    const std::string &simName = "",
                    std::string multiFileName = "")
         : gridView_(gridView)
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         , elementMapper_(gridView, Dune::mcmgElementLayout())
         , vertexMapper_(gridView, Dune::mcmgVertexLayout())
-#else
-        , elementMapper_(gridView)
-        , vertexMapper_(gridView)
-#endif
     {
         simName_ = (simName.empty())?"sim":simName;
         multiFileName_ = multiFileName;

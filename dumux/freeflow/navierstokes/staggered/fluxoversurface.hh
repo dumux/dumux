@@ -211,14 +211,7 @@ public:
      */
     static SurfaceGeometryType makeSurface(const std::vector<Dune::FieldVector<Scalar, 2>>& corners)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
             return SurfaceGeometryType(Dune::GeometryTypes::line, corners);
-#else
-        {
-            static Dune::GeometryType gt2d(Dune::GeometryType::simplex, dim-1);
-            return SurfaceGeometryType(gt2d, corners);
-        }
-#endif
     }
 
     /*!

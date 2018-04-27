@@ -18,11 +18,7 @@ template<int dimworld = 3>
 Dune::MultiLinearGeometry<double, 1, dimworld>
 makeLine(std::initializer_list<Dune::FieldVector<double, dimworld>>&& c)
 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     return {Dune::GeometryTypes::line, c};
-#else
-    return {Dune::GeometryType(1), c};
-#endif
 }
 
 template<int dimworld = 3>
@@ -59,16 +55,8 @@ int main (int argc, char *argv[]) try
         {0.0, 0.0, 1.0}, {1.0, 0.0, 1.0}, {0.0, 1.0, 1.0}, {1.0, 1.0, 1.0}
     });
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     Dune::MultiLinearGeometry<double, dim, dimworld>
         cube(Dune::GeometryTypes::cube(dimworld), cubeCorners);
-#else
-    Dune::GeometryType geomType;
-    geomType.makeCube(3);
-    Dune::MultiLinearGeometry<double, dim, dimworld>
-        cube(geomType, cubeCorners);
-#endif
-
 
     // collect returns to determine exit code
     std::vector<bool> returns;

@@ -12,11 +12,7 @@
 
 #include <dune/foamgrid/foamgrid.hh>
 #include <dune/common/version.hh>
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
 #include <dune/foamgrid/dgffoam.hh>
-#else
-#include <dune/foamgrid/dgffoam.cc>
-#endif
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/geometry/boundingboxtree.hh>

@@ -210,11 +210,7 @@ public:
     //! The geometry of the sub control volume face
     Geometry geometry() const
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_);
-#else
-        return Geometry(Dune::GeometryType(Dune::GeometryType::cube, Geometry::mydimension), corners_);
-#endif
     }
 
     //! Return the boundary flag

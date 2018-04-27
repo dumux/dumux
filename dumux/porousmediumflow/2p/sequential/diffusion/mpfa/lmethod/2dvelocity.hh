@@ -754,11 +754,7 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                     const auto referenceElement = ReferenceElements::general(element.geometry().type());
-#else
-                    const auto& referenceElement = ReferenceElements::general(element.geometry().type());
-#endif
 
                     const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 
@@ -867,11 +863,7 @@ void FvMpfaL2dVelocity2p<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                     const auto referenceElement = ReferenceElements::general(element.geometry().type());
-#else
-                    const auto& referenceElement = ReferenceElements::general(element.geometry().type());
-#endif
 
                     const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 

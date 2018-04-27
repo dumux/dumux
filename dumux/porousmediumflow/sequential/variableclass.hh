@@ -80,13 +80,8 @@ public:
      */
     VariableClass(const GridView& gridView) :
         gridView_(gridView),
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         elementMapper_(gridView, Dune::mcmgElementLayout()),
         vertexMapper_(gridView, Dune::mcmgVertexLayout())
-#else
-        elementMapper_(gridView),
-        vertexMapper_(gridView)
-#endif
     {}
 
     //! Initializes the variable class

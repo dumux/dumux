@@ -294,11 +294,7 @@ private:
 
     void setPairInfo_(const int isIdx, const Element& element, const bool isParallel)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(element_.geometry().type());
-#else
-        const auto& referenceElement = ReferenceElements::general(element_.geometry().type());
-#endif
 
         // iterate over facets sub-entities
         for(int i = 0; i < numFacetSubEntities; ++i)

@@ -275,11 +275,8 @@ public:
         std::vector<Scalar> dA = polarCoordinates[1];
 
         GridFactory gridFactory;
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         constexpr auto type = Dune::GeometryTypes::cube(dim);
-#else
-        Dune::GeometryType type; type.makeCube(dim);
-#endif
+
         // create nodes
         if (dim == 3)
         {

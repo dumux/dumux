@@ -188,20 +188,12 @@ class IntersectionMapper
     enum {dim=Grid::dimension};
     using Element = typename Grid::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-#else
-    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
-#endif
 
 public:
     IntersectionMapper(const GridView& gridview)
     : gridView_(gridview)
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     , elementMapper_(gridView_, Dune::mcmgElementLayout())
-#else
-    , elementMapper_(gridView_)
-#endif
     , size_(gridView_.size(1))
     , intersectionMapGlobal_(gridView_.size(0))
     , intersectionMapLocal_(gridView_.size(0))

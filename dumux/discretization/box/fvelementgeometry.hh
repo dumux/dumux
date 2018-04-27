@@ -272,11 +272,7 @@ private:
 
         // get the element geometry
         auto elementGeometry = element.geometry();
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(elementGeometry.type());
-#else
-        const auto& referenceElement = ReferenceElements::general(elementGeometry.type());
-#endif
 
         // get the sub control volume geometries of this element
         GeometryHelper geometryHelper(elementGeometry);

@@ -138,11 +138,7 @@ public:
     // e.g. for integration
     Geometry geometry() const
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return Geometry(Dune::GeometryTypes::cube(dim), corners_);
-#else
-        return Geometry(Dune::GeometryType(Dune::GeometryType::cube, dim), corners_);
-#endif
     }
 
     //! The element-local index of the dof this scv is embedded in

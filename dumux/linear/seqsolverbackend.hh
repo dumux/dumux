@@ -172,11 +172,7 @@ public:
     template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
-#else
-        using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, precondBlockLevel>;
-#endif
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
         return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
@@ -364,11 +360,7 @@ public:
     template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
-#else
-        using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, precondBlockLevel>;
-#endif
         using Solver = Dune::CGSolver<Vector>;
 
         return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
@@ -590,11 +582,7 @@ public:
     template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
-#else
-        using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, precondBlockLevel>;
-#endif
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
         return IterativePreconditionedSolverImpl::template solveWithILU0Prec<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
@@ -630,11 +618,7 @@ public:
     template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
-#else
-        using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, precondBlockLevel>;
-#endif
         using Solver = Dune::CGSolver<Vector>;
 
         return IterativePreconditionedSolverImpl::template solveWithILU0Prec<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
@@ -671,11 +655,7 @@ public:
     template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
-#else
-        using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, precondBlockLevel>;
-#endif
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
         return IterativePreconditionedSolverImpl::template solveWithILU0PrecGMRes<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
@@ -713,11 +693,7 @@ public:
     template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-#if DUNE_VERSION_NEWER(DUNE_ISTL,2,6)
         using Preconditioner = Dune::SeqILU<Matrix, Vector, Vector, precondBlockLevel>;
-#else
-        using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, precondBlockLevel>;
-#endif
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
         return IterativePreconditionedSolverImpl::template solveWithGMRes<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());

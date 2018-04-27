@@ -25,11 +25,7 @@
 #define DUMUX_STAGGERD_FV_PROBLEM_HH
 
 #include <dune/common/version.hh>
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
 #include <dune/common/rangeutilities.hh>
-#else
-#include <dumux/common/intrange.hh>
-#endif
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/fvproblem.hh>
@@ -227,11 +223,7 @@ protected:
     static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::CellCenterIdx)
     {
         constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return Dune::range(0, numEqCellCenter);
-#else
-        return IntRange(0, numEqCellCenter);
-#endif
     }
 
     //! Helper function that returns an iterable range of primary variable indices.
@@ -239,11 +231,7 @@ protected:
     static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::FaceIdx)
     {
         constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return Dune::range(0, numEqFace);
-#else
-        return IntRange(0, numEqFace);
-#endif
     }
 
 };

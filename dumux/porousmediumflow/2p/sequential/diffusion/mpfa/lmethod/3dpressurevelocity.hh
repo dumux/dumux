@@ -305,11 +305,7 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
 
     CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     const auto referenceElement = ReferenceElements::general(elementI.geometry().type());
-#else
-    const auto& referenceElement = ReferenceElements::general(elementI.geometry().type());
-#endif
 
     int indexInInside = intersection.indexInInside();
     int indexInOutside = intersection.indexInOutside();

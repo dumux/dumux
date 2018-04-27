@@ -368,11 +368,7 @@ private:
             const auto& e = useNeighbor ? is.outside() : element;
             const auto indexInElement = useNeighbor ? is.indexInOutside() : is.indexInInside();
             const auto eg = e.geometry();
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
             const auto refElement = ReferenceElements::general(eg.type());
-#else
-            const auto& refElement = ReferenceElements::general(eg.type());
-#endif
 
             // Set up a container with all relevant positions for scvf corner computation
             const auto numCorners = is.geometry().corners();
@@ -452,11 +448,7 @@ private:
             const auto& e = useNeighbor ? is.outside() : element;
             const auto indexInElement = useNeighbor ? is.indexInOutside() : is.indexInInside();
             const auto eg = e.geometry();
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
             const auto refElement = ReferenceElements::general(eg.type());
-#else
-            const auto& refElement = ReferenceElements::general(eg.type());
-#endif
 
             // Set up a container with all relevant positions for scvf corner computation
             const auto numCorners = is.geometry().corners();

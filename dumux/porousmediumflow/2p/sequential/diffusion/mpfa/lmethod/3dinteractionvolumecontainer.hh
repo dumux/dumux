@@ -375,11 +375,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
 
     const ElementGeometry& geometry = element.geometry();
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     const auto referenceElement = ReferenceElements::general(geometry.type());
-#else
-    const auto& referenceElement = ReferenceElements::general(geometry.type());
-#endif
 
     int levelI = element.level();
 
@@ -1355,11 +1351,7 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(I
         const ElementGeometry& geometry1 = element1.geometry();
         const ElementGeometry& geometry8 = element8.geometry();
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(geometry1.type());
-#else
-        const auto& referenceElement = ReferenceElements::general(geometry1.type());
-#endif
 
         DimVector edgeCoord(geometry1.global(referenceElement.position(9, dim - 1)));
         interactionVolume.setEdgePosition(edgeCoord, 2);

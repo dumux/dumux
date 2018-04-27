@@ -40,21 +40,12 @@ namespace Dumux {
 template <class GridView, int codim = 0>
 class GridViewGeometricEntitySet
 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-#else
-    // Only works for codim == 0, fixed in dune version 2.6
-    using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
-#endif
     using Entity = typename GridView::template Codim<codim>::Entity;
 public:
     GridViewGeometricEntitySet(const GridView& gridView)
     : gridView_(gridView)
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     , mapper_(gridView, Dune::mcmgLayout(Dune::Codim<codim>()))
-#else
-    , mapper_(gridView)
-#endif
     , entityMap_(std::make_shared<EntityMap<GridView, codim>>(gridView.grid(), mapper_))
     {}
 

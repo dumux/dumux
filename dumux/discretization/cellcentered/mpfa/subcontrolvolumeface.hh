@@ -202,11 +202,7 @@ public:
     const GlobalPosition& unitOuterNormal() const { return unitOuterNormal_; }
 
     //! The geometry of the sub control volume face
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     Geometry geometry() const { return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_); }
-#else
-    Geometry geometry() const { return Geometry(Dune::GeometryType(Dune::GeometryType::cube, Geometry::mydimension), corners_); }
-#endif
 
 private:
     bool boundary_;
