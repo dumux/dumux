@@ -1,0 +1,47 @@
+[TimeLoop]
+TEnd =  1e3
+DtInitial =  5
+MaxTimeStepSize = 50
+
+[Darcy.Grid]
+UpperRight = 0.1 0.1
+Cells = 20 20
+
+[Stokes.Grid]
+LowerLeft = 0.0 0.1
+UpperRight = 0.1 0.2
+Cells = 20 20
+
+[Stokes.Problem]
+Name = stokes
+Velocity = -1e-3
+Pressure = 1.0e5
+Temperature = 293.15
+
+[Darcy.Problem]
+Name = darcy
+Pressure = 1.0e5
+Saturation = 0.5
+Temperature = 298.15
+
+[SpatialParams]
+Porosity = 0.41
+Permeability = 2.65e-10
+AlphaBJ = 1.0
+Swr = 0.005
+Snr = 0.01
+VgAlpha = 6.371e-4
+VgN = 8.0
+
+[Problem]
+Name = test_stokes1pdarcy2pvertical
+EnableGravity = false
+
+[Vtk]
+AddVelocity = 1
+
+[Assembly.NumericDifference]
+BaseEpsilon = 1e-6
+
+[Newton]
+MaxRelativeShift = 1e-11
