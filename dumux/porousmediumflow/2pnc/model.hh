@@ -177,7 +177,6 @@ public:
 };
 
 SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);         //!< The primary variable switch for the 2pnc model
-SET_TYPE_PROP(TwoPNC, SpatialParams, FVSpatialParams<TypeTag>);                             //!< Use the FVSpatialParams by default
 
 //! Set the volume variables property
 SET_PROP(TwoPNC, VolumeVariables)

@@ -48,43 +48,37 @@ NEW_TYPE_TAG(ThreePNISpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(ThreePNISpatialParams, SpatialParams, ThreePNISpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(ThreePNISpatialParams, MaterialLaw)
-{
- private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
- public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<EffectiveLaw>;
-};
 }
 
 
 template<class TypeTag>
-class ThreePNISpatialParams : public FVSpatialParams<TypeTag>
+class ThreePNISpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         ThreePNISpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    enum { dimWorld=GridView::dimensionworld };
-    using CoordScalar = typename Grid::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThreePNISpatialParams<TypeTag>>;
+
+    enum { dimWorld = GridView::dimensionworld };
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+
+    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
 
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    ThreePNISpatialParams(const Problem& problem)
-    : ParentType(problem)
+    ThreePNISpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;

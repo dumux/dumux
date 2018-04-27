@@ -48,19 +48,6 @@ NEW_TYPE_TAG(TwoPTwoCComparisonSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(TwoPTwoCComparisonSpatialParams, SpatialParams, TwoPTwoCComparisonSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(TwoPTwoCComparisonSpatialParams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<EffectiveLaw>;
-};
 }
 
 /**
@@ -70,28 +57,33 @@ public:
  *
  */
 template<class TypeTag>
-class TwoPTwoCComparisonSpatialParams : public FVSpatialParams<TypeTag>
+class TwoPTwoCComparisonSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         TwoPTwoCComparisonSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, TwoPTwoCComparisonSpatialParams<TypeTag>>;
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
     enum {dimWorld=GridView::dimensionworld};
+
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
 
 public:
     //! export permeability type
     using PermeabilityType = Scalar;
     //! export the type used for the material law
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
 
-    TwoPTwoCComparisonSpatialParams(const Problem &problem) : ParentType(problem)
+    TwoPTwoCComparisonSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;

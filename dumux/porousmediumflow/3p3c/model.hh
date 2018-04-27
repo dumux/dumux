@@ -213,10 +213,6 @@ public:
     using type = ThreePThreeCVolumeVariables<Traits>;
 };
 
-//! The spatial parameters to be employed.
-//! Use FVSpatialParams by default.
-SET_TYPE_PROP(ThreePThreeC, SpatialParams, FVSpatialParams<TypeTag>);
-
 //! The model after Millington (1961) is used for the effective diffusivity
 SET_TYPE_PROP(ThreePThreeC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 

@@ -45,11 +45,6 @@ NEW_TYPE_TAG(InjectionSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(InjectionSpatialParams, SpatialParams, InjectionSpatialParams<TypeTag>);
-
-// Set the material law parameterized by absolute saturations
-SET_TYPE_PROP(InjectionSpatialParams,
-              MaterialLaw,
-              EffToAbsLaw<RegularizedBrooksCorey<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 }
 
 /*!
@@ -59,24 +54,30 @@ SET_TYPE_PROP(InjectionSpatialParams,
  *        fully implicit model.
  */
 template<class TypeTag>
-class InjectionSpatialParams : public FVSpatialParams<TypeTag>
+class InjectionSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         InjectionSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, InjectionSpatialParams<TypeTag>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using CoordScalar = typename Grid::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
 
 public:
     //! export the type used for the permeability
     using PermeabilityType = Scalar;
     //! export the material law type used
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     /*!
@@ -84,7 +85,7 @@ public:
      *
      * \param gridView The grid view
      */
-    InjectionSpatialParams(const Problem& problem) : ParentType(problem)
+    InjectionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
         layerBottom_ = 22.5;
 

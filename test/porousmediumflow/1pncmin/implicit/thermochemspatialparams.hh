@@ -54,13 +54,19 @@ SET_TYPE_PROP(ThermoChemSpatialParams, SpatialParams, Dumux::ThermoChemSpatialPa
  *        problem which uses the isothermal 2p2c box model
  */
 template<class TypeTag>
-class ThermoChemSpatialParams : public FVSpatialParamsOneP<TypeTag>
+class ThermoChemSpatialParams
+: public FVSpatialParamsOneP<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                             typename GET_PROP_TYPE(TypeTag, Scalar),
+                             ThermoChemSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CoordScalar = typename GridView::ctype;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThermoChemSpatialParams<TypeTag>>;
+
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
@@ -73,10 +79,6 @@ class ThermoChemSpatialParams : public FVSpatialParamsOneP<TypeTag>
         hPhaseIdx = FluidSystem::hPhaseIdx
     };
 
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Element = typename GridView::template Codim<0>::Entity;
-
     using EffectiveSolidRho = EffectiveSolidDensity<TypeTag>;
     using EffectiveSolidCp = EffectiveSolidHeatCapacity<TypeTag>;
 
@@ -86,10 +88,10 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param problem The Problem
+     * \param fvGridGeometry The finite volume grid geometry
      */
-    ThermoChemSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    ThermoChemSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         //thermal conductivity of CaO
         lambdaSolid_ = 0.4; //[W/(m*K)] Nagel et al [2013b]

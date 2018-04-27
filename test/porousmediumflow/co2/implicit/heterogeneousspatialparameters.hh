@@ -52,18 +52,6 @@ NEW_TYPE_TAG(HeterogeneousSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(HeterogeneousSpatialParams, SpatialParams, HeterogeneousSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(HeterogeneousSpatialParams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
-};
 }
 
 /*!
@@ -74,23 +62,26 @@ public:
  *        fully implicit model.
  */
 template<class TypeTag>
-class HeterogeneousSpatialParams : public FVSpatialParams<TypeTag>
+class HeterogeneousSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         HeterogeneousSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, HeterogeneousSpatialParams<TypeTag>>;
+
     enum { dimWorld = GridView::dimensionworld };
     using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
@@ -99,8 +90,8 @@ public:
      *
      * \param gridView The grid view
      */
-    HeterogeneousSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    HeterogeneousSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         // heat conductivity of granite
         lambdaSolid_ = 2.8;
@@ -128,12 +119,13 @@ public:
      */
     void getParamsFromGrid()
     {
-        const auto& gridView = this->problem().fvGridGeometry().gridView();
+        const auto& gridView = this->fvGridGeometry().gridView();
         paramIdx_.resize(gridView.size(0));
 
+        using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
         for (const auto& element : elements(gridView))
         {
-            const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);
+            const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
             paramIdx_[eIdx] = GridCreator::parameters(element)[0];
         }
     }
@@ -153,7 +145,7 @@ public:
                                   const ElementSolution& elemSol) const
     {
         // Get the global index of the element
-        const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
         return permeability(eIdx);
     }
 
@@ -187,7 +179,7 @@ public:
                     const ElementSolution& elemSol) const
     {
         // Get the global index of the element
-        const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
         return porosity(eIdx);
     }
 

@@ -150,9 +150,6 @@ public:
 //! We use darcy's law as the default for the advective fluxes
 SET_TYPE_PROP(Tracer, AdvectionType, StationaryVelocityField<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
-//! Use FVSpatialParamsOneP by default.
-SET_TYPE_PROP(Tracer, SpatialParams, FVSpatialParamsOneP<TypeTag>);
-
 //! Use simple model with constant tortuosity as pm diffusivity model
 SET_TYPE_PROP(Tracer, EffectiveDiffusivityModel, DiffusivityConstantTortuosity<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 } // end namespace Properties

@@ -224,28 +224,9 @@ class CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ false>
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        // check if we evaluate the permeability in the volume (for discontinuous fields, default)
-        // or at the scvf center for analytical permeability fields (e.g. convergence studies)
-        using SpatialParams = typename Problem::SpatialParams;
-        using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
-        auto getPermeability = [&problem](const VolumeVariables& volVars,
-                                          const GlobalPosition& scvfIpGlobal) -> typename SpatialParams::PermeabilityType
-                               {
-                                    if (SpatialParams::evaluatePermeabilityAtScvfIP())
-                                    {
-                                        // If the permeability at pos method is not overloaded it might have a different return type
-                                        // We do an implicit cast to permeability type in case EvaluatePermeabilityAtScvfIP is not true so that it compiles
-                                        // If it is true make sure that no cast is necessary and the correct return type is specified in the spatial params
-                                        static_assert(!SpatialParams::evaluatePermeabilityAtScvfIP()
-                                                || std::is_same<std::decay_t<typename SpatialParams::PermeabilityType>, std::decay_t<decltype(problem.spatialParams().permeabilityAtPos(scvfIpGlobal))>>::value,
-                                                "permeabilityAtPos doesn't return PermeabilityType stated in the spatial params!");
-                                        return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
-                                    }
-                                    else
-                                        return volVars.permeability();
-                               };
 
-        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, getPermeability(insideVolVars, scvf.ipGlobal()),
+        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv,
+                                                      getPermeability_(problem, insideVolVars, scvf.ipGlobal()),
                                                       insideVolVars.extrusionFactor());
 
         // on the boundary (dirichlet) we only need ti
@@ -260,7 +241,8 @@ class CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ false>
             // refers to the scv of our element, so we use the scv method
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const Scalar tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv, getPermeability(outsideVolVars, scvf.ipGlobal()),
+            const Scalar tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv,
+                                                               getPermeability_(problem, outsideVolVars, scvf.ipGlobal()),
                                                                outsideVolVars.extrusionFactor());
 
             // harmonic mean (check for division by zero!)
@@ -273,6 +255,21 @@ class CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ false>
 
         return tij;
     }
+
+private:
+    template<class Problem, class VolumeVariables,
+             std::enable_if_t<!Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
+    static decltype(auto) getPermeability_(const Problem& problem,
+                                           const VolumeVariables& volVars,
+                                           const GlobalPosition& scvfIpGlobal)
+    { return volVars.permeability(); }
+
+    template<class Problem, class VolumeVariables,
+             std::enable_if_t<Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
+    static decltype(auto) getPermeability_(const Problem& problem,
+                                           const VolumeVariables& volVars,
+                                           const GlobalPosition& scvfIpGlobal)
+    { return problem.spatialParams().permeabilityAtPos(scvfIpGlobal); }
 };
 
 /*!
@@ -458,28 +455,9 @@ public:
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        // check if we evaluate the permeability in the volume (for discontinuous fields, default)
-        // or at the scvf center for analytical permeability fields (e.g. convergence studies)
-        using SpatialParams = typename Problem::SpatialParams;
-        using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
-        auto getPermeability = [&problem](const VolumeVariables& volVars,
-                                          const GlobalPosition& scvfIpGlobal) -> typename SpatialParams::PermeabilityType
-                               {
-                                    if (SpatialParams::evaluatePermeabilityAtScvfIP())
-                                    {
-                                        // If the permeability at pos method is not overloaded it might have a different return type
-                                        // We do an implicit cast to permeability type in case evaluatePermeabilityAtScvfIP is not true so that it compiles
-                                        // If it is true make sure that no cast is necessary and the correct return type is specified in the spatial params
-                                        static_assert(!SpatialParams::evaluatePermeabilityAtScvfIP()
-                                                || std::is_same<std::decay_t<typename SpatialParams::PermeabilityType>, std::decay_t<decltype(problem.spatialParams().permeabilityAtPos(scvfIpGlobal))>>::value,
-                                                "permeabilityAtPos doesn't return PermeabilityType stated in the spatial params!");
-                                        return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
-                                    }
-                                    else
-                                        return volVars.permeability();
-                               };
 
-        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, getPermeability(insideVolVars, scvf.ipGlobal()),
+        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv,
+                                                      getPermeability_(problem, insideVolVars, scvf.ipGlobal()),
                                                       insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
@@ -494,7 +472,8 @@ public:
             // refers to the scv of our element, so we use the scv method
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const Scalar tj = computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, getPermeability(outsideVolVars, scvf.ipGlobal()),
+            const Scalar tj = computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv,
+                                                          getPermeability_(problem, outsideVolVars, scvf.ipGlobal()),
                                                           outsideVolVars.extrusionFactor());
 
             // harmonic mean (check for division by zero!)
@@ -507,6 +486,21 @@ public:
 
         return tij;
     }
+
+private:
+    template<class Problem, class VolumeVariables,
+             std::enable_if_t<!Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
+    static decltype(auto) getPermeability_(const Problem& problem,
+                                           const VolumeVariables& volVars,
+                                           const GlobalPosition& scvfIpGlobal)
+    { return volVars.permeability(); }
+
+    template<class Problem, class VolumeVariables,
+             std::enable_if_t<Problem::SpatialParams::evaluatePermeabilityAtScvfIP(), int> = 0>
+    static decltype(auto) getPermeability_(const Problem& problem,
+                                           const VolumeVariables& volVars,
+                                           const GlobalPosition& scvfIpGlobal)
+    { return problem.spatialParams().permeabilityAtPos(scvfIpGlobal); }
 };
 
 } // end namespace Dumux

@@ -26,35 +26,47 @@
 #define DUMUX_FV_SPATIAL_PARAMS_HH
 
 #include <dune/common/exceptions.hh>
-#include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/isvalid.hh>
 #include "fv1p.hh"
 
 namespace Dumux {
+
+#ifndef DOXYGEN
+namespace Detail {
+// helper struct detecting if the user-defined spatial params class has a materialLawParamsAtPos function
+// for g++ > 5.3, this can be replaced by a lambda
+template<class GlobalPosition>
+struct hasMaterialLawParamsAtPos
+{
+    auto operator()(auto&& a)
+    -> decltype(a.materialLawParamsAtPos(std::declval<GlobalPosition>()))
+    {};
+};
+} // end namespace Detail
+#endif
+
 
 /*!
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of multi-phase problems
  * using a fully implicit discretization method.
  */
-template<class TypeTag>
-class FVSpatialParams: public FVSpatialParamsOneP<TypeTag>
+template<class FVGridGeometry, class Scalar, class Implementation>
+class FVSpatialParams : public FVSpatialParamsOneP<FVGridGeometry, Scalar, Implementation>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, Implementation>;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 
 public:
-    //! export the type used for the material law
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-
-    //! The constructor
-    FVSpatialParams(const Problem& problem) : FVSpatialParamsOneP<TypeTag>(problem) {}
+    FVSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
+    {}
 
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
@@ -65,24 +77,20 @@ public:
      * \return the material parameters object
      */
     template<class ElementSolution>
-    const MaterialLawParams& materialLawParams(const Element& element,
-                                               const SubControlVolume& scv,
-                                               const ElementSolution& elemSol) const
+    decltype(auto) materialLawParams(const Element& element,
+                                     const SubControlVolume& scv,
+                                     const ElementSolution& elemSol) const
     {
-        return this->asImp_().materialLawParamsAtPos(scv.center());
-    }
+        static_assert(decltype(isValid(Detail::hasMaterialLawParamsAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
+        "   Your spatial params class has to either implement\n\n"
+        "         const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const\n\n"
+        "   or overload this function\n\n"
+        "         template<class ElementSolution>\n"
+        "         const MaterialLawParams& materialLawParams(const Element& element,\n"
+        "                                                    const SubControlVolume& scv,\n"
+        "                                                    const ElementSolution& elemSol) const\n\n");
 
-    /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
-     *
-     * \return the material parameters object
-     * \param globalPos The position of the center of the element
-     */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a materialLawParamsAtPos() method.");
+        return this->asImp_().materialLawParamsAtPos(scv.center());
     }
 
     /*!

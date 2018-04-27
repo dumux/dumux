@@ -46,20 +46,6 @@ NEW_TYPE_TAG(TwoPNCDiffusionSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(TwoPNCDiffusionSpatialParams, SpatialParams, TwoPNCDiffusionSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(TwoPNCDiffusionSpatialParams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<EffectiveLaw>;
-};
-
 } // end namespace Properties
 
 /*!
@@ -68,24 +54,27 @@ public:
  *        problem which uses the isothermal 2p2c box model
  */
 template<class TypeTag>
-class TwoPNCDiffusionSpatialParams : public FVSpatialParams<TypeTag>
+class TwoPNCDiffusionSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         TwoPNCDiffusionSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using CoordScalar = typename GridView::ctype;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, TwoPNCDiffusionSpatialParams<TypeTag>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
 
 public:
     using PermeabilityType = DimWorldMatrix;
 
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     /*!
@@ -93,8 +82,8 @@ public:
      *
      * \param gridView The grid view
      */
-    TwoPNCDiffusionSpatialParams(const Problem& problem)
-    : ParentType(problem), K_(0)
+    TwoPNCDiffusionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry), K_(0)
     {
         // intrinsic permeabilities
         K_[0][0] = 5e-11;

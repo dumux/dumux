@@ -51,18 +51,6 @@ NEW_TYPE_TAG(InfiltrationThreePThreeCSpatialParamsTypeTag);
 
 // Set the spatial parameters
 SET_TYPE_PROP(InfiltrationThreePThreeCSpatialParamsTypeTag, SpatialParams, InfiltrationThreePThreeCSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(InfiltrationThreePThreeCSpatialParamsTypeTag, MaterialLaw)
-{
- private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
- public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<RegularizedParkerVanGen3P<Scalar>>;
-};
 } // end namespace Properties
 
 /*!
@@ -71,21 +59,26 @@ SET_PROP(InfiltrationThreePThreeCSpatialParamsTypeTag, MaterialLaw)
  * \brief Definition of the spatial parameters for the infiltration problem
  */
 template<class TypeTag>
-class InfiltrationThreePThreeCSpatialParams : public FVSpatialParams<TypeTag>
+class InfiltrationThreePThreeCSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         InfiltrationThreePThreeCSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    enum { dimWorld=GridView::dimensionworld };
-
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, InfiltrationThreePThreeCSpatialParams<TypeTag>>;
+
+    enum { dimWorld = GridView::dimensionworld };
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+
+    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
 
 public:
-   using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+   using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
    using MaterialLawParams = typename MaterialLaw::Params;
    using PermeabilityType = Scalar;
 
@@ -94,8 +87,8 @@ public:
      *
      * \param gridView The grid view
      */
-    InfiltrationThreePThreeCSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    InfiltrationThreePThreeCSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         // intrinsic permeabilities
         fineK_ = 1.e-11;

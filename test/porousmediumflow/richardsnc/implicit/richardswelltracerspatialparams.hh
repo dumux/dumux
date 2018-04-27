@@ -50,14 +50,6 @@ NEW_TYPE_TAG(RichardsWellTracerSpatialParams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(RichardsWellTracerSpatialParams, SpatialParams, RichardsWellTracerSpatialParams<TypeTag>);
-
-// Set the material law
-SET_PROP(RichardsWellTracerSpatialParams, MaterialLaw)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    // define the material law parameterized by effective saturations
-    using type = EffToAbsLaw<VanGenuchten<Scalar>>;
-};
 }
 
 /*!
@@ -66,31 +58,30 @@ SET_PROP(RichardsWellTracerSpatialParams, MaterialLaw)
  * \brief The spatial parameters for the RichardsWellTracerProblem
  */
 template<class TypeTag>
-class RichardsWellTracerSpatialParams : public FVSpatialParams<TypeTag>
+class RichardsWellTracerSpatialParams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         RichardsWellTracerSpatialParams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, RichardsWellTracerSpatialParams<TypeTag>>;
 
     enum { dimWorld=GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
+    using EffectiveLaw = VanGenuchten<Scalar>;
+
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     // export permeability type
     using PermeabilityType = Scalar;
 
-    /*!
-     * \brief Constructor
-     *
-     * \param gridView The DUNE GridView representing the spatial
-     *                 domain of the problem.
-     */
-    RichardsWellTracerSpatialParams(const Problem& problem)
-        : ParentType(problem)
+    RichardsWellTracerSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry)
     {
 
         lensLowerLeft_ = getParam<GlobalPosition>("Problem.LensLowerLeft");

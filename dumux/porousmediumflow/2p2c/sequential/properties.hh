@@ -66,6 +66,7 @@ NEW_TYPE_TAG(SequentialTwoPTwoC, INHERITS_FROM(Pressure, Transport, IMPET));
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG( Indices );
 NEW_PROP_TAG( SpatialParams ); //!< The type of the soil properties object
+NEW_PROP_TAG( MaterialLaw ); //!< The type of the material law
 NEW_PROP_TAG( PressureFormulation); //!< The formulation of the model
 NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the model
 NEW_PROP_TAG( VelocityFormulation); //!< The formulation of the model

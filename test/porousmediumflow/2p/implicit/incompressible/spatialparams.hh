@@ -34,58 +34,53 @@
 namespace Dumux {
 
 //forward declaration
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class TwoPTestSpatialParams;
 
-namespace Properties
-{
+namespace Properties {
+
 // The spatial parameters TypeTag
 NEW_TYPE_TAG(SpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(SpatialParams, SpatialParams, TwoPTestSpatialParams<TypeTag>);
-
-// Set the material Law
-SET_PROP(SpatialParams, MaterialLaw)
+SET_PROP(SpatialParams, SpatialParams)
 {
 private:
-    // define the material law which is parameterized by effective
-    // saturations
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
 public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<EffectiveLaw>;
+    using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
 };
-}
+
+} // end namespace Properties
 
 /*!
  * \ingroup TwoPTests
  * \brief The spatial params for the incompressible 2p test
  */
-template<class TypeTag>
-class TwoPTestSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class TwoPTestSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,  TwoPTestSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ThisType = TwoPTestSpatialParams<TypeTag>;
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using ThisType = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
+    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
-    TwoPTestSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    TwoPTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
@@ -168,7 +163,7 @@ public:
     void updateMaterialInterfaceParams(const SolutionVector& x)
     {
         if (FVGridGeometry::discMethod == DiscretizationMethod::box)
-            materialInterfaceParams_.update(this->problem().fvGridGeometry(), *this, x);
+            materialInterfaceParams_.update(this->fvGridGeometry(), *this, x);
     }
 
     //! Returns the material parameters associated with a nodal dof

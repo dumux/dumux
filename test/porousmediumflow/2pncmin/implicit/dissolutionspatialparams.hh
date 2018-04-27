@@ -45,18 +45,6 @@ NEW_TYPE_TAG(DissolutionSpatialparams);
 
 // Set the spatial parameters
 SET_TYPE_PROP(DissolutionSpatialparams, SpatialParams, DissolutionSpatialparams<TypeTag>);
-
-// Set the material Law
-SET_PROP(DissolutionSpatialparams, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
-};
-
 } // end namespace Properties
 
 /*!
@@ -65,30 +53,34 @@ public:
  * where water is injected in a for flushing precipitated salt clogging a gas reservoir.
  */
 template<class TypeTag>
-class DissolutionSpatialparams : public FVSpatialParams<TypeTag>
+class DissolutionSpatialparams
+: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                         typename GET_PROP_TYPE(TypeTag, Scalar),
+                         DissolutionSpatialparams<TypeTag>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using CoordScalar = typename GridView::ctype;
-    enum { dimWorld=GridView::dimensionworld };
-
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
-    using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, DissolutionSpatialparams<TypeTag>>;
+
+    enum { dimWorld = GridView::dimensionworld };
+
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
 
 public:
     // type used for the permeability (i.e. tensor or scalar)
     using PermeabilityType = Scalar;
+    //! export the material law type used
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLawParams = typename MaterialLaw::Params;
 
-    DissolutionSpatialparams(const Problem& problem)
-    : ParentType(problem)
+    DissolutionSpatialparams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
         referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);

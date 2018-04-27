@@ -99,7 +99,6 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
@@ -135,6 +134,7 @@ public:
 
         // for initial conditions
         const Scalar sw = 0.4; // start with 80% saturation on top
+        using MaterialLaw = typename ParentType::SpatialParams::MaterialLaw;
         pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(this->fvGridGeometry().bBoxMax()), sw);
 
         // for post time step mass balance

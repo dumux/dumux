@@ -34,41 +34,35 @@
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/plotmateriallaw.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
-//forward declaration
-template<class TypeTag>
+// forward declaration
+template<class FVGridGeometry, class Scalar>
 class InjectionSpatialParams;
 
-namespace Properties
-{
+namespace Properties {
 // The spatial parameters TypeTag
 NEW_TYPE_TAG(InjectionSpatialParamsTypeTag);
 
 // Set the spatial parameters
-SET_TYPE_PROP(InjectionSpatialParamsTypeTag, SpatialParams, InjectionSpatialParams<TypeTag>);
-
-// Set the material law parameterized by absolute saturations
-SET_TYPE_PROP(InjectionSpatialParamsTypeTag,
-              MaterialLaw,
-              EffToAbsLaw<RegularizedBrooksCorey<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
-}
+SET_TYPE_PROP(InjectionSpatialParamsTypeTag, SpatialParams,
+              InjectionSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                     typename GET_PROP_TYPE(TypeTag, Scalar)>);
+} // end namespace Properties
 
 /*!
  * \ingroup TwoPTwoCModel
- * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the injection problem
  *        which uses the isothermal two-phase two-component
  *        fully implicit model.
  */
-template<class TypeTag>
-class InjectionSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class InjectionSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar, InjectionSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ThisType = InjectionSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
+    using GridView = typename FVGridGeometry::GridView;
 
     // get the dimensions of the simulation domain from GridView
     static const int dimWorld = GridView::dimensionworld;
@@ -78,16 +72,16 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
     /*!
      * \brief The constructor
      *
-     * \param problem The problem
+     * \param fvGridGeometry The finite volume grid geometry
      */
-    InjectionSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    InjectionSpatialParams(std::shared_ptr<const FVGridGeometry>& fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         aquiferHeightFromBottom_ = 30.0;
 
@@ -110,7 +104,6 @@ public:
         aquiferMaterialParams_.setPe(getParam<Scalar>("SpatialParams.EntryPressureAquifer"));
         aquitardMaterialParams_.setLambda(2.0);
         aquiferMaterialParams_.setLambda(2.0);
-
     }
 
     /*!

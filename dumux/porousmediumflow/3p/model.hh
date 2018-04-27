@@ -154,10 +154,6 @@ public:
     using type = ThreePVolumeVariables<Traits>;
 };
 
-//! The spatial parameters to be employed.
-//! Use FVSpatialParams by default.
-SET_TYPE_PROP(ThreeP, SpatialParams, FVSpatialParams<TypeTag>);
-
 /*!
  * \brief The fluid state which is used by the volume variables to
  *        store the thermodynamic state.

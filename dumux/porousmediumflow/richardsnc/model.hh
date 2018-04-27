@@ -200,10 +200,6 @@ SET_PROP(RichardsNC, FluidState)
 //! Set the vtk output fields specific to this model
 SET_TYPE_PROP(RichardsNC, VtkOutputFields, RichardsNCVtkOutputFields);
 
-//! The spatial parameters to be employed.
-//! Use FVSpatialParamsOneP by default.
-SET_TYPE_PROP(RichardsNC, SpatialParams, FVSpatialParamsOneP<TypeTag>);
-
 //! The model after Millington (1961) is used for the effective diffusivity
 SET_TYPE_PROP(RichardsNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 

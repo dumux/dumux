@@ -170,7 +170,7 @@ public:
         static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
                       "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p1-s0 formulation!");
 
-        using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
@@ -288,7 +288,7 @@ public:
         static_assert(ModelTraits::priVarFormulation() == TwoPFormulation::p0s1,
                       "2p/incompressiblelocalresidual.hh: Analytic differentiation has to be checked for p0-s1 formulation!");
 
-        using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
@@ -433,7 +433,7 @@ public:
                                        const ElementFluxVariablesCache& elemFluxVarsCache,
                                        const SubControlVolumeFace& scvf) const
     {
-        using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights

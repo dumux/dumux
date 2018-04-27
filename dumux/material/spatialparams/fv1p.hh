@@ -26,29 +26,40 @@
 #define DUMUX_FV_SPATIAL_PARAMS_ONE_P_HH
 
 #include <dune/common/exceptions.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/typetraits/isvalid.hh>
 
 #include <dune/common/fmatrix.hh>
 
 namespace Dumux {
+
+#ifndef DOXYGEN
+namespace Detail {
+// helper struct detecting if the user-defined spatial params class has a permeabilityAtPos function
+// for g++ > 5.3, this can be replaced by a lambda
+template<class GlobalPosition>
+struct hasPermeabilityAtPos
+{
+    auto operator()(auto&& a)
+    -> decltype(a.permeabilityAtPos(std::declval<GlobalPosition>()))
+    {};
+};
+} // end namespace Detail
+#endif
 
 /*!
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of one-phase problems
  * using a fully implicit discretization method.
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar, class Implementation>
 class FVSpatialParamsOneP
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension };
@@ -57,9 +68,17 @@ class FVSpatialParamsOneP
     using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 
 public:
-    FVSpatialParamsOneP(const Problem& problem)
-    : problemPtr_(&problem)
-    {}
+    FVSpatialParamsOneP(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : fvGridGeometry_(fvGridGeometry)
+    {
+        /* \brief default forchheimer coefficient
+         * Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90 \cite ward1964 .
+         *        Actually the Forchheimer coefficient is also a function of the dimensions of the
+         *        porous medium. Taking it as a constant is only a first approximation
+         *        (Nield, Bejan, Convection in porous media, 2006, p. 10 \cite nield2006 )
+         */
+        forchCoeffDefault_ = getParam<Scalar>("SpatialParams.ForchCoeff", 0.55);
+    }
 
     /*!
      * \brief Harmonic average of a discontinuous scalar field at discontinuity interface
@@ -126,21 +145,16 @@ public:
                                 const SubControlVolume& scv,
                                 const ElementSolution& elemSol) const
     {
-        return asImp_().permeabilityAtPos(scv.center());
-    }
+        static_assert(decltype(isValid(Detail::hasPermeabilityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
+        "   Your spatial params class has to either implement\n\n"
+        "         const PermeabilityType& permeabilityAtPos(const GlobalPosition& globalPos) const\n\n"
+        "   or overload this function\n\n"
+        "         template<class ElementSolution>\n"
+        "         const PermeabilityType& permeability(const Element& element,\n"
+        "                                              const SubControlVolume& scv,\n"
+        "                                              const ElementSolution& elemSol) const\n\n");
 
-    /*!
-     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$
-     * \note  It is possibly solution dependent.
-     *
-     * \return permeability
-     * \param globalPos The position of the center of the scv
-     */
-    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a permeability() or permeabilityAtPos() method.");
+        return asImp_().permeabilityAtPos(scv.center());
     }
 
     /*!
@@ -286,25 +300,18 @@ public:
     /*!
      * \brief Apply the Forchheimer coefficient for inertial forces
      *        calculation.
-     *
-     *        Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90 \cite ward1964 .
-     *        Actually the Forchheimer coefficient is also a function of the dimensions of the
-     *        porous medium. Taking it as a constant is only a first approximation
-     *        (Nield, Bejan, Convection in porous media, 2006, p. 10 \cite nield2006 )
-     *
      * \param scv The sub-control volume face where the
      *           intrinsic velocity ought to be calculated.
      */
     Scalar forchCoeff(const SubControlVolumeFace &scvf) const
     {
-        static Scalar forchCoeff = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "SpatialParams.ForchCoeff", 0.55);
-        return forchCoeff;
+        return forchCoeffDefault_;
     }
 
-    //! The problem we are associated with
-    const Problem& problem() const
+    //! The finite volume grid geometry
+    const FVGridGeometry& fvGridGeometry() const
     {
-        return *problemPtr_;
+        return *fvGridGeometry_;
     }
 
 protected:
@@ -315,7 +322,8 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
 private:
-    const Problem *problemPtr_;
+    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
+    Scalar forchCoeffDefault_;
 };
 
 } // namespace Dumux

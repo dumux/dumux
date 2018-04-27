@@ -236,9 +236,6 @@ public:
     using type = TwoPTwoCVolumeVariables<Traits>;
 };
 
-//! Use the FVSpatialParams by default
-SET_TYPE_PROP(TwoPTwoC, SpatialParams, FVSpatialParams<TypeTag>);
-
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(TwoPTwoC, EffectiveDiffusivityModel,
              DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
