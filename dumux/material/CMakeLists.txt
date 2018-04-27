@@ -7,6 +7,8 @@ add_subdirectory("fluidmatrixinteractions")
 add_subdirectory("fluidstates")
 add_subdirectory("fluidsystems")
 add_subdirectory("spatialparams")
+add_subdirectory("solidsystems")
+add_subdirectory("solidstates")
 
 #install headers
 install(FILES
