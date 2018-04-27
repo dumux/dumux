@@ -52,7 +52,7 @@ public:
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
 
     /*!
-     * \brief Constructor
+     * \brief Constructor, passing the spatial parameters
      *
      * \param fvGridGeometry The finite volume grid geometry
      * \param spatialParams The spatial parameter class
@@ -71,17 +71,21 @@ public:
     }
 
     /*!
-     * \brief (Delegating) constructor, constructing the spatial parameters
+     * \brief Constructor, constructing the spatial parameters
      *
      * \param fvGridGeometry The finite volume grid geometry
      * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      */
     PorousMediumFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                             const std::string& paramGroup = "")
-    : PorousMediumFlowProblem(fvGridGeometry,
-                              std::make_shared<SpatialParams>(this->asImp_()),
-                              paramGroup)
-    {}
+    : ParentType(fvGridGeometry, paramGroup)
+    , gravity_(0.0)
+    , spatialParams_(std::make_shared<SpatialParams>(this->asImp_()))
+    {
+        const bool enableGravity = getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity");
+        if (enableGravity)
+            gravity_[dimWorld-1]  = -9.81;
+    }
 
     /*!
      * \name Physical parameters for porous media problems
