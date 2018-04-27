@@ -344,8 +344,8 @@ private:
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
                     sequenceWriter_.addVertexData( volVarScalarData[i], volVarScalarDataInfo_[i].name );
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
-                    sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), volVarVectorData[i],
-                                                         volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0).get() );
+                    sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), volVarVectorData[i],
+                                                         volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim).get() );
             }
             else
             {
