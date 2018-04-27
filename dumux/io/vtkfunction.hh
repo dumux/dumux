@@ -30,6 +30,8 @@
 #include <dune/grid/io/file/vtk/common.hh>
 #include <dune/grid/io/file/vtk/function.hh>
 
+#include <dumux/common/typetraits/typetraits.hh>
+
 namespace Dumux {
 namespace Vtk {
 
@@ -56,7 +58,7 @@ public:
 
     //! evaluate
     virtual double evaluate(int mycomp, const Element& e, const Dune::FieldVector<ctype, dim>&) const
-    { return accessChooser_(mycomp, mapper_.index(e), Dune::is_indexable<decltype(field_[0])>()); }
+    { return accessChooser_(mycomp, mapper_.index(e), IsIndexable<decltype(field_[0])>()); }
 
     //! Constructor
     VectorP0VTKFunction(const GridView& gridView, const Mapper& mapper, const F& field, const std::string& name, int nComps)
@@ -70,20 +72,16 @@ private:
 
     //! access for vectorial fields
     double accessChooser_(int mycomp, int i, std::true_type) const
-    {
-        static constexpr auto isIndexable = Dune::is_indexable<decltype(field_[0][0])>();
-        return vectorFieldAccess_<isIndexable>(mycomp, i); }
+    { return vectorFieldAccess_(mycomp, i, IsIndexable<decltype(field_[0][0])>()); }
 
     //! access for scalar fields
     double accessChooser_(int mycomp, int i, std::false_type) const { return field_[i]; }
 
     //! access to permissive vectorial fields
-    template<bool is, std::enable_if_t<!is, int> = 0>
-    double vectorFieldAccess_(int mycomp, int i) const { return field_[i][mycomp]; }
+    double vectorFieldAccess_(int mycomp, int i, std::false_type) const { return field_[i][mycomp]; }
 
     //! if the field is indexable more than two times, throw error
-    template<bool is, std::enable_if_t<is, int> = 0>
-    double vectorFieldAccess_(int mycomp, int i) const { DUNE_THROW(Dune::InvalidStateException, "Invalid field type"); }
+    double vectorFieldAccess_(int mycomp, int i, std::true_type) const { DUNE_THROW(Dune::InvalidStateException, "Invalid field type"); }
 
     const F& field_;
     const std::string name_;
@@ -120,7 +118,7 @@ public:
 
         std::vector<Dune::FieldVector<ctype, 1>> cornerValues(nVertices);
         for (unsigned i = 0; i < nVertices; ++i)
-            cornerValues[i] = accessChooser_(mycomp, mapper_.subIndex(e, i, dim), Dune::is_indexable<decltype(field_[0])>());
+            cornerValues[i] = accessChooser_(mycomp, mapper_.subIndex(e, i, dim), IsIndexable<decltype(field_[0])>());
 
         // (Ab)use the MultiLinearGeometry class to do multi-linear interpolation between scalars
         const Dune::MultiLinearGeometry<ctype, dim, 1> interpolation(e.type(), std::move(cornerValues));
@@ -138,7 +136,7 @@ private:
 
     //! access for vectorial fields
     double accessChooser_(int mycomp, int i, std::true_type) const
-    { return vectorFieldAccess_(mycomp, i, Dune::is_indexable<decltype(field_[0][0])>()); }
+    { return vectorFieldAccess_(mycomp, i, IsIndexable<decltype(field_[0][0])>()); }
 
     //! access for scalar fields
     double accessChooser_(int mycomp, int i, std::false_type) const { return field_[i]; }
@@ -184,7 +182,7 @@ public:
 
         std::vector<Dune::FieldVector<ctype, 1>> cornerValues(nVertices);
         for (unsigned i = 0; i < nVertices; ++i)
-            cornerValues[i] = accessChooser_(mycomp, mapper_.index(e), i, Dune::is_indexable<decltype(field_[0])>());
+            cornerValues[i] = accessChooser_(mycomp, mapper_.index(e), i, IsIndexable<decltype(field_[0])>());
 
         // (Ab)use the MultiLinearGeometry class to do multi-linear interpolation between scalars
         const Dune::MultiLinearGeometry<ctype, dim, 1> interpolation(e.type(), std::move(cornerValues));
@@ -202,7 +200,7 @@ private:
 
     //! access to the field
     double accessChooser_(int mycomp, int eIdx, int cornerIdx, std::true_type) const
-    { return fieldAccess_(mycomp, eIdx, cornerIdx, Dune::is_indexable<decltype(field_[0][0])>()); }
+    { return fieldAccess_(mycomp, eIdx, cornerIdx, IsIndexable<decltype(field_[0][0])>()); }
 
     //! fields have to be indexable at least twice
     double accessChooser_(int mycomp, int eIdx, int cornerIdx, std::false_type) const

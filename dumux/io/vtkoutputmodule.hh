@@ -42,6 +42,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/discretization/methods.hh>
 
 #include "vtkfunction.hh"
@@ -571,11 +572,11 @@ private:
     }
 
     //! Deduces the number of components of the value type of a vector of values
-    template<class Vector, typename std::enable_if_t<Dune::is_indexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
+    template<class Vector, typename std::enable_if_t<IsIndexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
     std::size_t getNumberOfComponents_(const Vector& v) { return v[0].size(); }
 
     //! Deduces the number of components of the value type of a vector of values
-    template<class Vector, typename std::enable_if_t<!Dune::is_indexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
+    template<class Vector, typename std::enable_if_t<!IsIndexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
     std::size_t getNumberOfComponents_(const Vector& v) { return 1; }
 
     //! return the number of dofs
