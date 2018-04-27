@@ -175,6 +175,11 @@ public:
         NumEqVector values(0.0);
         if (onInlet_(globalPos))
             values[contiDNAPLEqIdx] = -0.04; // kg / (m * s)
+
+        // in the test with the oil wet lens, use higher injection rate
+        if (this->spatialParams().lensIsOilWet())
+            values[contiDNAPLEqIdx] *= 10;
+
         return values;
     }
 

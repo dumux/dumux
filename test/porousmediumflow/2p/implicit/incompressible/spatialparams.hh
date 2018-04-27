@@ -82,6 +82,8 @@ public:
     TwoPTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
+        lensIsOilWet_ = getParam<bool>("SpatialParams.LensIsOilWet", false);
+
         lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
         lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
 
@@ -116,7 +118,9 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
-        if (isInLens_(element.geometry().center()))
+
+        // do not use a less permeable lens in the test with inverted wettability
+        if (isInLens_(element.geometry().center()) && !lensIsOilWet_)
             return lensK_;
         return outerK_;
     }
@@ -143,7 +147,8 @@ public:
                                                const SubControlVolume& scv,
                                                const ElementSolution& elemSol) const
     {
-        if (isInLens_(element.geometry().center()))
+        // do not use different parameters in the test with inverted wettability
+        if (isInLens_(element.geometry().center()) && !lensIsOilWet_)
             return lensMaterialParams_;
         return outerMaterialParams_;
     }
@@ -156,7 +161,11 @@ public:
      */
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
-    { return FluidSystem::phase0Idx; }
+    {
+        if (isInLens_(globalPos) && lensIsOilWet_)
+            return FluidSystem::phase1Idx;
+        return FluidSystem::phase0Idx;
+    }
 
     //! Updates the map of which material parameters are associated with a nodal dof.
     template<class SolutionVector>
@@ -170,6 +179,9 @@ public:
     const BoxMaterialInterfaceParams<ThisType>& materialInterfaceParams() const
     { return materialInterfaceParams_; }
 
+    //! Returns whether or not the lens is oil wet
+    bool lensIsOilWet() const { return lensIsOilWet_; }
+
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
     {
@@ -180,6 +192,7 @@ private:
         return true;
     }
 
+    bool lensIsOilWet_;
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
 
