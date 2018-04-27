@@ -109,6 +109,8 @@ NEW_PROP_TAG(PhaseIdx);                            //!< A phase index to allow u
 NEW_PROP_TAG(SpatialParams);                       //!< The type of the spatial parameters object
 NEW_PROP_TAG(FluidSystem);                         //!< The type of the fluid system to use
 NEW_PROP_TAG(FluidState);                          //!< The type of the fluid state to use
+NEW_PROP_TAG(SolidSystem);                         //!< The type of the solid system to use
+NEW_PROP_TAG(SolidState);                           //!< The type of the solid state to use
 NEW_PROP_TAG(PrimaryVariableSwitch);               //!< The primary variable switch needed for compositional models
 NEW_PROP_TAG(EffectiveDiffusivityModel);           //!< The employed model for the computation of the effective diffusivity
 NEW_PROP_TAG(ThermalConductivityModel);            //!< Model to be used for the calculation of the effective conductivity
