@@ -84,6 +84,8 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
 
 public:
 
+    using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
+
     /*!
     * \brief Returns the advective flux over a sub control volume face.
     * \param elemVolVars All volume variables for the element

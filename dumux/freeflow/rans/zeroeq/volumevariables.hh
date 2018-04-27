@@ -46,16 +46,17 @@ class ZeroEqVolumeVariables
     using NavierStokesParentType = NSVolumeVariables;
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
-    using Indices = typename Traits::ModelTraits::Indices;
 
     static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
-    static constexpr int fluidSystemPhaseIdx = Indices::fluidSystemPhaseIdx;
+    static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
 
 public:
     //! export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
     //! export the fluid state type
     using FluidState = typename Traits::FluidState;
+    //! export the indices type
+    using Indices = typename Traits::ModelTraits::Indices;
 
     /*!
      * \brief Update all quantities for a given control volume

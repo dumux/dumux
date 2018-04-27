@@ -232,9 +232,6 @@ public:
      using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
 };
 
-//! Use Fourier's Law as default heat conduction type
-SET_TYPE_PROP(NavierStokesNI, HeatConductionType, FouriersLaw<TypeTag>);
-
  // \}
 }
 

@@ -28,6 +28,7 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/assembly/staggeredlocalresidual.hh>
 #include <dune/common/hybridutilities.hh>
+#include <dumux/freeflow/nonisothermal/localresidual.hh>
 
 namespace Dumux
 {
@@ -79,6 +80,7 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
 public:
+    using EnergyLocalResidual = FreeFlowEnergyLocalResidual<FVGridGeometry, FluxVariables, ModelTraits::enableEnergyBalance()>;
 
     // account for the offset of the cell center privars within the PrimaryVariables container
     static constexpr auto cellCenterOffset = ModelTraits::numEq() - CellCenterPrimaryVariables::dimension;
@@ -100,8 +102,7 @@ public:
         CellCenterPrimaryVariables flux = fluxVars.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars,
                                                  elemFaceVars, scvf, elemFluxVarsCache[scvf]);
 
-        computeFluxForCellCenterNonIsothermal_(std::integral_constant<bool, ModelTraits::enableEnergyBalance()>(),
-                                               problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache, flux);
+        EnergyLocalResidual::heatFlux(flux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
 
         return flux;
     }
@@ -135,8 +136,7 @@ public:
         CellCenterPrimaryVariables storage;
         storage[Indices::conti0EqIdx - ModelTraits::dim()] = volVars.density();
 
-        computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, ModelTraits::enableEnergyBalance() >(),
-                                                  problem, scv, volVars, storage);
+        EnergyLocalResidual::fluidPhaseStorage(storage, volVars);
 
         return storage;
     }
@@ -204,24 +204,6 @@ public:
 
 protected:
 
-    //  /*!
-    //  * \brief Evaluate boundary conditions
-    //  */
-    // template<class ElementBoundaryTypes>
-    // void evalBoundary_(const Element& element,
-    //                    const FVElementGeometry& fvGeometry,
-    //                    const ElementVolumeVariables& elemVolVars,
-    //                    const ElementFaceVariables& elemFaceVars,
-    //                    const ElementBoundaryTypes& elemBcTypes,
-    //                    const ElementFluxVariablesCache& elemFluxVarsCache)
-    // {
-    //     evalBoundaryForCellCenter_(element, fvGeometry, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
-    //     for (auto&& scvf : scvfs(fvGeometry))
-    //     {
-    //         evalBoundaryForFace_(element, fvGeometry, scvf, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
-    //     }
-    // }
-
      /*!
      * \brief Evaluate boundary conditions for a cell center dof
      */
@@ -245,6 +227,7 @@ protected:
                 // handle the actual boundary conditions:
                 const auto bcTypes = problem.boundaryTypes(element, scvf);
 
+                EnergyLocalResidual::heatFlux(boundaryFlux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
                 if(bcTypes.hasNeumann())
                 {
                     static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
@@ -326,52 +309,6 @@ protected:
             }
         }
     }
-
-    //! Evaluate energy fluxes entering or leaving the cell center control volume for non isothermal models
-    void computeFluxForCellCenterNonIsothermal_(std::true_type,
-                                                const Problem& problem,
-                                                const Element &element,
-                                                const FVElementGeometry& fvGeometry,
-                                                const ElementVolumeVariables& elemVolVars,
-                                                const ElementFaceVariables& elemFaceVars,
-                                                const SubControlVolumeFace &scvf,
-                                                const ElementFluxVariablesCache& elemFluxVarsCache,
-                                                CellCenterPrimaryVariables& flux) const
-    {
-        // if we are on an inflow/outflow boundary, use the volVars of the element itself
-        // TODO: catch neumann and outflow in localResidual's evalBoundary_()
-        bool isOutflow = false;
-        if(scvf.boundary())
-        {
-            const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-                if(bcTypes.isOutflow(Indices::energyBalanceIdx))
-                    isOutflow = true;
-        }
-
-        auto upwindTerm = [](const auto& volVars) { return volVars.density() * volVars.enthalpy(); };
-        using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
-
-        flux[Indices::energyBalanceIdx - cellCenterOffset] = FluxVariables::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
-        flux[Indices::energyBalanceIdx - cellCenterOffset] += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
-    }
-
-    //! Evaluate energy fluxes entering or leaving the cell center control volume for non isothermal models
-    template <typename... Args>
-    void computeFluxForCellCenterNonIsothermal_(std::false_type, Args&&... args) const {}
-
-    //! Evaluate energy storage for non isothermal models
-    void computeStorageForCellCenterNonIsothermal_(std::true_type,
-                                                   const Problem& problem,
-                                                   const SubControlVolume& scv,
-                                                   const VolumeVariables& volVars,
-                                                   CellCenterPrimaryVariables& storage) const
-    {
-        storage[Indices::energyBalanceIdx - cellCenterOffset] = volVars.density() * volVars.internalEnergy();
-    }
-
-    //! Evaluate energy storage for isothermal models
-    template <typename... Args>
-    void computeStorageForCellCenterNonIsothermal_(std::false_type, Args&&... args) const {}
 
 private:
 

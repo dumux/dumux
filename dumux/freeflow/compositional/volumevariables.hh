@@ -42,9 +42,8 @@ class FreeflowNCVolumeVariables : public FreeFlowVolumeVariables< Traits, Freefl
     using ParentType = FreeFlowVolumeVariables<Traits, ThisType>;
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
-    using Indices = typename Traits::ModelTraits::Indices;
 
-    static constexpr int fluidSystemPhaseIdx = Indices::fluidSystemPhaseIdx;
+    static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
     static constexpr int numComponents = Traits::ModelTraits::numComponents();
 
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
@@ -54,6 +53,8 @@ public:
     using FluidSystem = typename Traits::FluidSystem;
     //! export the fluid state type
     using FluidState = typename Traits::FluidState;
+    //! export the indices type
+    using Indices = typename Traits::ModelTraits::Indices;
 
     /*!
      * \brief Update all quantities for a given control volume

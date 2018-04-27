@@ -59,6 +59,8 @@ class FreeflowNCResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::s
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static constexpr auto cellCenterOffset = ParentType::cellCenterOffset;
 
+    using EnergyLocalResidual = typename ParentType::EnergyLocalResidual;
+
 public:
     using ParentType::ParentType;
 
@@ -88,8 +90,7 @@ public:
         if(Indices::replaceCompEqIdx < numComponents)
             storage[Indices::replaceCompEqIdx] = density;
 
-        this->computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, ModelTraits::enableEnergyBalance() >(),
-                                                        problem, scv, volVars, storage);
+        EnergyLocalResidual::fluidPhaseStorage(storage, volVars);
 
         return storage;
     }
