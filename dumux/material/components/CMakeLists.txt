@@ -12,6 +12,7 @@ co2.hh
 co2tablereader.hh
 co2tables.inc
 constant.hh
+granite.hh
 h2.hh
 h2o.hh
 heavyoil.hh
