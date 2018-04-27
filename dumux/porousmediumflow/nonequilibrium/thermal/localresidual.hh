@@ -66,7 +66,6 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
     enum { numComponents    = ModelTraits::numComponents() };
     enum { phase0Idx        = FluidSystem::phase0Idx};
     enum { phase1Idx        = FluidSystem::phase1Idx};
-    enum { sPhaseIdx        = FluidSystem::sPhaseIdx};
 
 public:
     //! The energy storage in the fluid phase with index phaseIdx
@@ -147,9 +146,11 @@ public:
     {
         //in case we have one energy equation for more than one fluid phase we use an effective law in the nonequilibrium fourierslaw
          flux[energyEq0Idx] += fluxVars.heatConductionFlux(0);
-
-       //heat conduction for solid phase
-        flux[energyEqSolidIdx] += fluxVars.heatConductionFlux(sPhaseIdx);
+         //heat conduction for the fluid phases
+       for(int sPhaseIdx=0; sPhaseIdx<numEnergyEqSolid; ++sPhaseIdx)
+       {
+            flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(sPhaseIdx);
+       }
     }
 
     /*!
@@ -318,6 +319,7 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2 /*numEnergyEqFluid*/>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
@@ -336,7 +338,7 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2 /*numEnergyEqFluid*/>
     enum { numComponents    = ModelTraits::numComponents() };
     enum { phase0Idx        = FluidSystem::phase0Idx};
     enum { phase1Idx        = FluidSystem::phase1Idx};
-    enum { sPhaseIdx        = FluidSystem::sPhaseIdx};
+    enum { sPhaseIdx        = numPhases};
 
     static constexpr bool enableChemicalNonEquilibrium = ModelTraits::enableChemicalNonEquilibrium();
 
@@ -399,8 +401,10 @@ public:
         {
             flux[energyEq0Idx+phaseIdx] += fluxVars.heatConductionFlux(phaseIdx);
         }
-       //heat conduction for solid phase
-       flux[energyEqSolidIdx] += fluxVars.heatConductionFlux(sPhaseIdx);
+       for(int sPhaseIdx=0; sPhaseIdx<numEnergyEqSolid; ++sPhaseIdx)
+       {
+            flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(sPhaseIdx);
+       }
     }
     /*!
      * \brief Calculate the source term of the equation

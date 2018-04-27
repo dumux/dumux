@@ -95,6 +95,8 @@
 #include <dumux/porousmediumflow/2pnc/model.hh>
 #include <dumux/porousmediumflow/2pnc/volumevariables.hh>
 
+#include <dumux/material/solidstates/compositionalsolidstate.hh>
+
 #include <dumux/porousmediumflow/mineralization/model.hh>
 #include <dumux/porousmediumflow/mineralization/localresidual.hh>
 #include <dumux/porousmediumflow/mineralization/volumevariables.hh>
@@ -125,10 +127,12 @@ private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
     using NonMinVolVars = TwoPNCVolumeVariables<Traits>;
 public:
     using type = MineralizationVolumeVariables<Traits, NonMinVolVars>;
@@ -144,12 +148,23 @@ private:
     //! we use the number of components specified by the fluid system here
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(SolidSystem));
     using NonMineralizationTraits = TwoPNCModelTraits<FluidSystem::numComponents,
                                                       GET_PROP_VALUE(TypeTag, UseMoles),
                                                       GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
                                                       GET_PROP_VALUE(TypeTag, Formulation)>;
 public:
-    using type = MineralizationModelTraits<NonMineralizationTraits, FluidSystem::numSPhases>;
+    using type = MineralizationModelTraits<NonMineralizationTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
+};
+
+//! The two-phase model uses the immiscible fluid state
+SET_PROP(TwoPNCMin, SolidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+public:
+    using type = CompositionalSolidState<Scalar, SolidSystem>;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -163,11 +178,12 @@ private:
     //! we use the number of components specified by the fluid system here
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(SolidSystem));
     using TwoPNCTraits = TwoPNCModelTraits<FluidSystem::numComponents,
                                            GET_PROP_VALUE(TypeTag, UseMoles),
                                            GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
                                            GET_PROP_VALUE(TypeTag, Formulation)>;
-    using IsothermalTraits = MineralizationModelTraits<TwoPNCTraits, FluidSystem::numSPhases>;
+    using IsothermalTraits = MineralizationModelTraits<TwoPNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:
     // the mineralization traits, based on 2pnc traits, are the isothermal traits
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;

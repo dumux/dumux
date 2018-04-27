@@ -61,6 +61,9 @@
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
+#include <dumux/material/solidstates/inertsolidstate.hh>
+#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
@@ -101,12 +104,14 @@ struct ThreePModelTraits
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
  */
-template<class PV, class FSY, class FST, class PT, class MT>
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
 struct ThreePVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
     using FluidSystem = FSY;
     using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
 };
@@ -146,10 +151,12 @@ private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-    using Traits = ThreePVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+    using Traits = ThreePVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
     using type = ThreePVolumeVariables<Traits>;
 };
@@ -168,6 +175,24 @@ private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
     using type = ImmiscibleFluidState<Scalar, FluidSystem>;
+};
+
+//! The two-phase model uses the immiscible fluid state
+SET_PROP(ThreeP, SolidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+public:
+    using type = InertSolidState<Scalar, SolidSystem>;
+};
+
+// Set the fluid system
+SET_PROP(ThreeP, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Constant<1,Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
 };
 
 //! Set the vtk output fields specific to this model

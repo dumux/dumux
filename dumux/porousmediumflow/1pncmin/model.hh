@@ -71,6 +71,8 @@ v = - \frac{k_{r}}{\mu} \mbox{\bf K}
 #include <dumux/porousmediumflow/1pnc/indices.hh>
 #include <dumux/porousmediumflow/1pnc/volumevariables.hh>
 
+#include <dumux/material/solidstates/compositionalsolidstate.hh>
+
 #include <dumux/porousmediumflow/mineralization/model.hh>
 #include <dumux/porousmediumflow/mineralization/localresidual.hh>
 #include <dumux/porousmediumflow/mineralization/volumevariables.hh>
@@ -101,10 +103,12 @@ private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-    using Traits = OnePNCVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+    using Traits = OnePNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
     using NonMinVolVars = OnePNCVolumeVariables<Traits>;
 public:
     using type = MineralizationVolumeVariables<Traits, NonMinVolVars>;
@@ -118,9 +122,20 @@ SET_PROP(OnePNCMin, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(SolidSystem));
     using NonMinTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx)>;
 public:
-    using type = MineralizationModelTraits<NonMinTraits, FluidSystem::numSPhases>;
+    using type = MineralizationModelTraits<NonMinTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
+};
+
+//! The two-phase model uses the immiscible fluid state
+SET_PROP(OnePNCMin, SolidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+public:
+    using type = CompositionalSolidState<Scalar, SolidSystem>;
 };
 
 //! Use the mineralization vtk output fields
@@ -131,6 +146,7 @@ SET_TYPE_PROP(OnePNCMin, VtkOutputFields, MineralizationVtkOutputFields<OnePNCVt
 //////////////////////////////////////////////////////////////////
 
 //! non-isothermal vtk output
+//! non-isothermal vtk output
 SET_TYPE_PROP(OnePNCMinNI, VtkOutputFields, EnergyVtkOutputFields<MineralizationVtkOutputFields<OnePNCVtkOutputFields>>);
 
 //! The non-isothermal model traits
@@ -138,8 +154,9 @@ SET_PROP(OnePNCMinNI, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(SolidSystem));
     using OnePNCTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx)>;
-    using IsothermalTraits = MineralizationModelTraits<OnePNCTraits, FluidSystem::numSPhases>;
+    using IsothermalTraits = MineralizationModelTraits<OnePNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };

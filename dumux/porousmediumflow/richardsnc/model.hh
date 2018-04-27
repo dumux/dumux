@@ -78,6 +78,9 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/liquidphase2c.hh>
 #include <dumux/material/fluidstates/compositional.hh>
+#include <dumux/material/solidstates/inertsolidstate.hh>
+#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
@@ -160,11 +163,13 @@ SET_PROP(RichardsNC, VolumeVariables)
 private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-    using Traits = RichardsVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+    using Traits = RichardsVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
     using type = RichardsNCVolumeVariables<Traits>;
 };
@@ -182,6 +187,24 @@ SET_PROP(RichardsNC, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::LiquidPhaseTwoC<Scalar, Components::SimpleH2O<Scalar>, Components::Constant<1, Scalar>>;
+};
+
+//! The two-phase model uses the immiscible fluid state
+SET_PROP(RichardsNC, SolidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+public:
+    using type = InertSolidState<Scalar, SolidSystem>;
+};
+
+// Set the fluid system
+SET_PROP(RichardsNC, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Constant<1,Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
 };
 
 /*!

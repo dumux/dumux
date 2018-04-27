@@ -101,9 +101,6 @@ public:
         finePorosity_ = 0.3;
         coarsePorosity_ = 0.3;
 
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
-
         // residual saturations
         fineMaterialParams_.setSwr(0.2);
         fineMaterialParams_.setSnr(0.0);
@@ -146,13 +143,6 @@ public:
         plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, coarsePorosity_, 0.0, 1.0, "coarse");
         gnuplot.plot("deff");
 
-        gnuplot.resetAll();
-        using ThermCondModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
-        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-        PlotThermalConductivityModel<Scalar, ThermCondModel, FluidSystem> plotThermalConductivityModel;
-        plotThermalConductivityModel.addlambdaeffcurve(gnuplot, finePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "fine");
-        plotThermalConductivityModel.addlambdaeffcurve(gnuplot, coarsePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "coarse");
-        gnuplot.plot("lambdaeff");
     }
 
     /*!
@@ -196,34 +186,6 @@ public:
     }
 
     /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global positio
-     */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    { return 790; /*specific heat capacity of granite [J / (kg K)]*/ }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    { return 2700; /*density of granite [kg/m^3]*/ }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-    { return lambdaSolid_; }
-
-    /*!
      * \brief Function for defining which phase is to be considered as the wetting phase.
      *
      * \return the wetting phase index
@@ -243,9 +205,6 @@ private:
 
     Scalar finePorosity_;
     Scalar coarsePorosity_;
-
-    // heat conductivity of the solid material only
-    Scalar lambdaSolid_;
 
     MaterialLawParams fineMaterialParams_;
     MaterialLawParams coarseMaterialParams_;

@@ -173,13 +173,10 @@ public:
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
      * \return the porosity
      */
-    template<class ElementSolution>
     Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolution& elemSol) const
+                    const SubControlVolume& scv) const
     {
         return asImp_().porosityAtPos(scv.center());
     }
@@ -193,97 +190,56 @@ public:
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a porosityAtPos() method.");
+                   "The spatial parameters do not provide a porosityAtPos() method.");
     }
 
     /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     * \brief Function for defining the porosity.
      *
-     * This is only required for non-isothermal models.
+     * \return porosity
+     * \param globalPos The position of the center of the scv
+     */
+    Scalar minimalPorosity(const Element& element,
+                           const SubControlVolume& scv) const
+    {  return 0.0; }
+
+    /*!
+     * \brief Function for defining the porosity.
+     *        That is possibly solution dependent.
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
+     * \return the porosity
      */
-    template<class ElementSolution>
-    Scalar solidHeatCapacity(const Element &element,
-                             const SubControlVolume& scv,
-                             const ElementSolution& elemSol) const
+    template<class SolidState>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               SolidState& solidState,
+                               int compIdx) const
     {
-        return asImp_().solidHeatCapacityAtPos(scv.center());
+        return asImp_().inertVolumeFractionAtPos(scv.center(), solidState, compIdx);
     }
 
     /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     * \brief Function for defining the porosity.
      *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The position of the center of the element
+     * \return porosity
+     * \param globalPos The position of the center of the scv
      */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
+    template<class SolidState>
+    Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos,
+                                    SolidState& solidState,
+                                    int compIdx) const
     {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a solidHeatCapacityAtPos() method.");
-    }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     */
-    template<class ElementSolution>
-    Scalar solidDensity(const Element &element,
-                        const SubControlVolume& scv,
-                        const ElementSolution& elemSol) const
-    {
-        return asImp_().solidDensityAtPos(scv.center());
-    }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The position of the center of the element
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a solidDensityAtPos() method.");
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     */
-    template<class ElementSolution>
-    Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume& scv,
-                                    const ElementSolution& elemSol) const
-    {
-        return asImp_().solidThermalConductivityAtPos(scv.center());
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param globalPos The position of the center of the element
-     */
-    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide "
-                   "a solidThermalConductivityAtPos() method.");
+        if (solidState.isInert() && solidState.numInertComponents == 1)
+        {
+            return 1-asImp_().porosityAtPos(globalPos);
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException,
+                       "The spatial parameters do not provide "
+                       "a inertVolumeFractionAtPos() method.");
     }
 
     /*!

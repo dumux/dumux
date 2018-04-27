@@ -152,10 +152,6 @@ public:
         porosityFF_                 = getParam<Scalar>("SpatialParams.FreeFlow.porosity");
         intrinsicPermeabilityFF_    = getParam<Scalar>("SpatialParams.FreeFlow.permeability");
 
-        solidDensity_               = getParam<Scalar>("SpatialParams.soil.density");
-        solidThermalConductivity_    = getParam<Scalar>("SpatialParams.soil.thermalConductivity");
-        solidHeatCapacity_               = getParam<Scalar>("SpatialParams.soil.heatCapacity");
-
         aWettingNonWettingA1_ = getParam<Scalar>("SpatialParams.soil.aWettingNonWettingA1");
         aWettingNonWettingA2_ = getParam<Scalar>("SpatialParams.soil.aWettingNonWettingA2");
         aWettingNonWettingA3_ = getParam<Scalar>("SpatialParams.soil.aWettingNonWettingA3");
@@ -256,10 +252,8 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume  */
-    template<class ElementSolution>
     Scalar porosity(const Element &element,
-                    const SubControlVolume &scv,
-                    const ElementSolution &elemSol) const
+                    const SubControlVolume &scv) const
     {
         const auto& globalPos =  scv.dofPosition();
 
@@ -269,6 +263,16 @@ public:
             return porosityPM_ ;
         else
             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
+    }
+
+    template<class SolidState>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               SolidState& solidState,
+                               int compIdx) const
+    {
+        return 1-porosity(element, scv);
+
     }
 
     template<class ElementSolution>
@@ -420,37 +424,6 @@ public:
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
-
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    {  return solidHeatCapacity_ ;}  // specific heat capacity of solid  [J / (kg K)]
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    {return solidDensity_ ;} // density of solid [kg/m^3]
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-    { return solidThermalConductivity_ ;} // conductivity of solid  [W / (m K ) ]
-
     /*!\brief Give back whether the tested position (input) is a specific region (porous medium part) in the domain
      *
      * This setting ensures, that the boundary between the two domains has porous medium properties.
@@ -507,11 +480,6 @@ private:
     Scalar intrinsicPermeabilityFF_ ;
     Scalar characteristicLengthFF_ ;
     MaterialLawParams materialParamsFF_ ;
-
-    // solid parameters
-    Scalar solidDensity_ ;
-    Scalar solidThermalConductivity_ ;
-    Scalar solidHeatCapacity_ ;
 
     // interfacial area parameters
     Scalar aWettingNonWettingA1_ ;

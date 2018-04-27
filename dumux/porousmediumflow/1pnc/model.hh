@@ -61,6 +61,9 @@
 
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 #include <dumux/material/fluidstates/compositional.hh>
+#include <dumux/material/solidstates/inertsolidstate.hh>
+#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
@@ -108,12 +111,14 @@ struct OnePNCModelTraits
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
  */
-template<class PV, class FSY, class FST, class PT, class MT>
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
 struct OnePNCVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
     using FluidSystem = FSY;
     using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
 };
@@ -159,6 +164,25 @@ public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
+//! The two-phase model uses the immiscible fluid state
+SET_PROP(OnePNC, SolidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+public:
+    using type = InertSolidState<Scalar, SolidSystem>;
+};
+
+// Set the fluid system
+SET_PROP(OnePNC, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Constant<1, Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
+};
+
+
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(OnePNC, EffectiveDiffusivityModel,
               DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
@@ -173,12 +197,14 @@ private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
     static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
 
-    using Traits = OnePNCVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+    using Traits = OnePNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
     using type = OnePNCVolumeVariables<Traits>;
 };

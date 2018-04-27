@@ -127,10 +127,7 @@ public:
      * \param scvIdx      The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    template<class ElementSolution>
-    Scalar porosity(const Element &element,
-                    const SubControlVolume &scv,
-                    const ElementSolution &elemSol) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
         return porosity_;
     }

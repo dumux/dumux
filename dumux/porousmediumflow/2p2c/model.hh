@@ -90,6 +90,9 @@
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
+#include <dumux/material/solidstates/inertsolidstate.hh>
+#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
@@ -136,12 +139,14 @@ struct TwoPTwoCModelTraits
  * \tparam MT The model traits
  * \tparam useCS boolean to indicate if a constraint solver is to be used
  */
-template<class PV, class FSY, class FST, class PT, class MT, bool useCS>
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, bool useCS>
 struct TwoPTwoCVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
     using FluidSystem = FSY;
     using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
 
@@ -197,6 +202,24 @@ public:
 SET_PROP(TwoPTwoC, Formulation)
 { static constexpr TwoPFormulation value = TwoPFormulation::p0s1; };
 
+//! The two-phase model uses the inert solid state
+SET_PROP(TwoPTwoC, SolidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+public:
+    using type = InertSolidState<Scalar, SolidSystem>;
+};
+
+// Set the solid system
+SET_PROP(TwoPTwoC, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Constant<1,Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
+};
+
 //! Set as default that no component mass balance is replaced by the total mass balance
 SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());
 
@@ -223,12 +246,14 @@ private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
     static constexpr bool useCS = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
 
-    using Traits = TwoPTwoCVolumeVariablesTraits<PV, FSY, FST, PT, MT, useCS>;
+    using Traits = TwoPTwoCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, useCS>;
 public:
     using type = TwoPTwoCVolumeVariables<Traits>;
 };

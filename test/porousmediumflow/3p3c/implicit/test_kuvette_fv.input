@@ -16,3 +16,9 @@ NumericDifferenceMethod = 0 # use central differences (backward -1, forward +1)
 
 [Newton]
 MaxRelativeShift = 1e-6
+
+[Component]
+SolidDensity = 2650
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 850
+

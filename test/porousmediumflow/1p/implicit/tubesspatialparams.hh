@@ -48,6 +48,8 @@ class TubesTestSpatialParams
     using Element = typename GridView::template Codim<0>::Entity;
     using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, TubesTestSpatialParams<TypeTag>>;
 
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
 public:
     // export permeability type
     using PermeabilityType = Scalar;
@@ -93,18 +95,12 @@ public:
     }
 
     /*!
-     * \brief Returns the porosity \f$[-]\f$
+     * \brief Define the porosity \f$\mathrm{[-]}\f$.
      *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     * \return the porosity
+     * \param globalPos The global position
      */
-    template<class ElementSolution>
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolution& elemSol) const
-    { return 1.0; }
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return 1; }
 
 private:
     Scalar radius_, radiusMain_;

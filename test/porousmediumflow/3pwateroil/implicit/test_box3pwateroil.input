@@ -11,3 +11,8 @@ Name = sagd # name passed to the output routines
 
 [Newton]
 MaxSteps = 8
+
+[Component]
+SolidDensity = 2650
+solidThermalConductivity = 2.8
+solidHeatCapacity = 850

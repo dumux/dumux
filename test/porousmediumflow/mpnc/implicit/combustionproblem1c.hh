@@ -36,6 +36,7 @@
 
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
+#include <dumux/material/components/constant.hh>
 
 #include "combustionspatialparams.hh"
 #include "combustionfluidsystem.hh"
@@ -109,7 +110,13 @@ SET_INT_PROP(CombustionOneComponentTypeTag, NumEnergyEqSolid, 1);
 // by default chemical non equilibrium is enabled in the nonequil model, switch that off here
 SET_BOOL_PROP(CombustionOneComponentTypeTag, EnableChemicalNonEquilibrium, false);
 //#################
-
+// Set the fluid system
+SET_PROP(CombustionOneComponentTypeTag, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Constant<1, Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
+};
 }
 /*!
  * \ingroup MPNCTests

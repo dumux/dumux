@@ -100,6 +100,25 @@ public:
     }
 
     /*!
+     * \brief Function for defining the solid volume fraction.
+     *        That is possibly solution dependent.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the porosity
+     */
+    template<class ElementSolution, class SolidState>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
+                               const SolidState& solidState,
+                               int compIdx) const
+    {
+            return 1-porosity(element, scv, elemSol);
+    }
+
+    /*!
      * \brief Returns the porosity \f$[-]\f$
      *
      * \param globalPos The global position
@@ -114,6 +133,8 @@ public:
         else
             return 0.15;
     }
+
+
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law.

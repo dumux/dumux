@@ -8,3 +8,8 @@ Cells = 20 40
 
 [Problem]
 Name = test_ccsteaminjection # name passed to the output routines
+
+[Component]
+SolidDensity = 2650
+solidThermalConductivity = 2.8
+solidHeatCapacity = 850.0

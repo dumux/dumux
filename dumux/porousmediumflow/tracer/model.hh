@@ -55,6 +55,9 @@
 #include <dumux/discretization/stationaryvelocityfield.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 #include <dumux/porousmediumflow/properties.hh>
+#include <dumux/material/solidstates/inertsolidstate.hh>
+#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/components/constant.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -94,11 +97,13 @@ struct TracerModelTraits
  * \tparam FSY The fluid system type
  * \tparam MT The model traits
  */
-template<class PV, class FSY, class MT>
+template<class PV, class FSY, class SSY, class SST, class MT>
 struct TracerVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
     using FluidSystem = FSY;
+    using SolidSystem = SSY;
+    using SolidState = SST;
     using ModelTraits = MT;
 };
 
@@ -128,6 +133,24 @@ public:
     using type = TracerModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles)>;
 };
 
+//! The two-phase model uses the immiscible fluid state
+SET_PROP(Tracer, SolidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+public:
+    using type = InertSolidState<Scalar, SolidSystem>;
+};
+
+// Set the fluid system
+SET_PROP(Tracer, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Constant<1,Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
+};
+
 //! Use the tracer local residual function for the tracer model
 SET_TYPE_PROP(Tracer, LocalResidual, TracerLocalResidual<TypeTag>);
 
@@ -140,9 +163,11 @@ SET_PROP(Tracer, VolumeVariables)
 private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
-    using Traits = TracerVolumeVariablesTraits<PV, FSY, MT>;
+    using Traits = TracerVolumeVariablesTraits<PV, FSY, SSY, SST, MT>;
 public:
     using type = TracerVolumeVariables<Traits>;
 };

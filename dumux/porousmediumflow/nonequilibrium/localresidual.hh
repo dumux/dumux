@@ -187,7 +187,6 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, true>: public GET
     enum { comp0Idx = FluidSystem::comp0Idx } ;
     enum { phase0Idx = FluidSystem::phase0Idx} ;
     enum { phase1Idx = FluidSystem::phase1Idx} ;
-    enum { sPhaseIdx = FluidSystem::sPhaseIdx} ;
 
 public:
      using ParentType::ParentType;

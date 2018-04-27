@@ -34,6 +34,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
+#include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/compositional.hh>
@@ -49,14 +50,16 @@ namespace Dumux {
  */
 template <class Traits>
 class ThreePWaterOilVolumeVariables
-: public PorousMediumFlowVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits>>
+: public PorousMediumFlowVolumeVariables<Traits>
+ ,public EnergyVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits> >
 {
-    using ParentType = PorousMediumFlowVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits>>;
-
+    using ParentType = PorousMediumFlowVolumeVariables<Traits>;
+    using EnergyVolVars = EnergyVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits> >;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using ModelTraits = typename Traits::ModelTraits;
     using Indices = typename ModelTraits::Indices;
     using FS = typename Traits::FluidSystem;
+    static constexpr int numComp = ParentType::numComponents();
 
     enum {
         numPs = ParentType::numPhases(),
@@ -89,6 +92,10 @@ public:
     using FluidState = typename Traits::FluidState;
     //! The type of the fluid system
     using FluidSystem = typename Traits::FluidSystem;
+    //! export type of solid state
+    using SolidState = typename Traits::SolidState;
+    //! export type of solid system
+    using SolidSystem = typename Traits::SolidSystem;
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
@@ -202,7 +209,11 @@ public:
             {
                  // temp from inverse pwsat and pnsat which have to sum up to pg
                  Scalar temp = FluidSystem::inverseVaporPressureCurve(fluidState_, gPhaseIdx, wCompIdx); // initial guess
-                 fluidState_.setTemperature(temp);
+                 for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                 {
+                    fluidState_.setTemperature(phaseIdx, temp);
+                 }
+                 solidState_.setTemperature(temp);
                  Scalar defect = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                      - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
@@ -210,17 +221,29 @@ public:
                  while(abs(defect) > 0.01) // simply a small number chosen ...
                  {
                      Scalar deltaT = 1.e-8 * temp;
-                     fluidState_.setTemperature(temp+deltaT);
+                 for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                 {
+                    fluidState_.setTemperature(phaseIdx, temp+deltaT);
+                 }
+                 solidState_.setTemperature(temp+deltaT);
                      Scalar fUp = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                       - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
-                     fluidState_.setTemperature(temp-deltaT);
+                  for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                  {
+                     fluidState_.setTemperature(phaseIdx, temp-deltaT);
+                  }
+                  solidState_.setTemperature(temp-deltaT);
                      Scalar fDown = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                       - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
                      temp = temp - defect * 2. * deltaT / (fUp - fDown);
 
-                     fluidState_.setTemperature(temp);
+                     for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                     {
+                         fluidState_.setTemperature(phaseIdx, temp);
+                     }
+                     solidState_.setTemperature(temp);
                      defect = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                   - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
                  }
@@ -239,7 +262,11 @@ public:
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
             Valgrind::CheckDefined(temp_);
 
-            fluidState_.setTemperature(temp_);
+            for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+            {
+                fluidState_.setTemperature(phaseIdx, temp_);
+            }
+            solidState_.setTemperature(temp_);
 
             // now comes the tricky part: calculate phase composition
             if (phasePresence == threePhases) {
@@ -515,7 +542,11 @@ public:
                      // temp from inverse pwsat and pnsat which have to sum up to pg
                      Scalar tempOnlyNAPL = FluidSystem::inverseVaporPressureCurve(fluidState_, gPhaseIdx, nCompIdx);
                      Scalar tempOnlyWater = FluidSystem::inverseVaporPressureCurve(fluidState_, gPhaseIdx, wCompIdx);
-                     fluidState_.setTemperature(tempOnlyWater);
+                     for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                     {
+                        fluidState_.setTemperature(phaseIdx, tempOnlyWater);
+                     }
+                     solidState_.setTemperature(tempOnlyWater);
                      Scalar defect = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                          - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
@@ -525,17 +556,29 @@ public:
                      while(abs(defect) > 0.01) // simply a small number chosen ...
                      {
                          Scalar deltaT = 1.e-6; // fixed number, but T should always be in the order of a few hundred Kelvin
-                         fluidState_.setTemperature(temp+deltaT);
+                         for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                         {
+                            fluidState_.setTemperature(phaseIdx, temp+deltaT);
+                         }
+                         solidState_.setTemperature(temp+deltaT);
                          Scalar fUp = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                           - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
-                         fluidState_.setTemperature(temp-deltaT);
+                        for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                        {
+                            fluidState_.setTemperature(phaseIdx, temp-deltaT);
+                        }
+                        solidState_.setTemperature(temp-deltaT);
                          Scalar fDown = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                           - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
 
                          temp = temp - defect * 2. * deltaT / (fUp - fDown);
 
-                         fluidState_.setTemperature(temp);
+                         for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+                         {
+                              fluidState_.setTemperature(phaseIdx, temp);
+                         }
+                         solidState_.setTemperature(temp);
                          defect = pg_ - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, wCompIdx)
                                       - FluidSystem::partialPressureGas(fluidState_, gPhaseIdx, nCompIdx);
                          counter +=1;
@@ -551,7 +594,11 @@ public:
             else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
             Valgrind::CheckDefined(temp_);
 
-            fluidState_.setTemperature(temp_);
+            for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+            {
+                    fluidState_.setTemperature(phaseIdx, temp_);
+            }
+            solidState_.setTemperature(temp_);
 
             // now comes the tricky part: calculate phase composition
             if (phasePresence == threePhases) {
@@ -657,8 +704,8 @@ public:
 
 
         // porosity
-        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
-        Valgrind::CheckDefined(porosity_);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComp);
+        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
 
         // permeability
         permeability_ =  problem.spatialParams().permeability(element, scv, elemSol);
@@ -678,6 +725,13 @@ public:
      */
     const FluidState &fluidState() const
     { return fluidState_; }
+
+    /*!
+     * \brief Returns the phase state for the control volume.
+     */
+    const SolidState &solidState() const
+    { return solidState_; }
+    /*!
 
     /*!
      * \brief Returns the effective saturation of a given phase within
@@ -767,7 +821,7 @@ public:
      * \brief Returns the average porosity within the control volume.
      */
     Scalar porosity() const
-    { return porosity_; }
+    { return solidState_.porosity(); }
 
     /*!
      * \brief Returns the permeability within the control volume.
@@ -818,6 +872,7 @@ public:
 
 protected:
     FluidState fluidState_;
+    SolidState solidState_;
 
 private:
     Scalar sw_, sg_, sn_, pg_, pw_, pn_, temp_;
@@ -825,7 +880,6 @@ private:
     Scalar moleFrac_[numPs][numComps];
     Scalar massFrac_[numPs][numComps];
 
-    Scalar porosity_;        //!< Effective porosity within the control volume
     Scalar permeability_;        //!< Effective porosity within the control volume
     Scalar mobility_[numPs];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL

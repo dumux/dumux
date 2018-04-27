@@ -101,13 +101,6 @@ public:
         finePorosity_ = 0.10;
         coarsePorosity_ = 0.1;
 
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
-
-        // specific heat capacities
-        fineHeatCap_ = 850.0;
-        coarseHeatCap_ = 850.0;
-
         // residual saturations
         fineMaterialParams_.setSwr(0.1);
         fineMaterialParams_.setSwrx(0.12);  //Total liquid Residual Saturation
@@ -198,50 +191,6 @@ public:
             return coarseMaterialParams_;
     }
 
-     /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
-     */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    {
-        if (isFineMaterial_(globalPos))
-            return fineHeatCap_ ;
-        else
-            return coarseHeatCap_;
-    }
-
-     /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    {
-        return 2650; // density of sand [kg/m^3]
-    }
-
-     /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
-     */
-    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-    {
-        return lambdaSolid_;
-    }
-
 
 private:
     bool isFineMaterial_(const GlobalPosition &pos) const
@@ -257,9 +206,6 @@ private:
 
     Scalar finePorosity_;
     Scalar coarsePorosity_;
-
-    Scalar fineHeatCap_;
-    Scalar coarseHeatCap_;
 
     MaterialLawParams fineMaterialParams_;
     MaterialLawParams coarseMaterialParams_;

@@ -62,6 +62,7 @@ SET_TYPE_PROP(Injection2PNITypeTag, Problem, InjectionProblem2PNI<TypeTag>);
 
 // Use the same fluid system as the 2p2c injection problem
 SET_TYPE_PROP(Injection2PNITypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+
 } // namespace Properties
 
 /*!
@@ -252,7 +253,8 @@ public:
             const auto initialValues = initialAtPos(globalPos);
             fs.setPressure(wPhaseIdx, initialValues[pressureIdx]);
             fs.setPressure(nPhaseIdx, initialValues[pressureIdx]); // assume pressure equality here
-            fs.setTemperature(initialValues[temperatureIdx]);
+            fs.setTemperature(wPhaseIdx,initialValues[temperatureIdx]);
+            fs.setTemperature(nPhaseIdx,initialValues[temperatureIdx]);
 
             // energy flux is mass flux times specific enthalpy
             values[energyEqIdx] = values[contiN2EqIdx]*FluidSystem::enthalpy(fs, nPhaseIdx);

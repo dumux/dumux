@@ -29,6 +29,7 @@
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
+#include <dumux/material/components/constant.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/3p3c/model.hh>
@@ -65,6 +66,14 @@ SET_TYPE_PROP(KuevetteTypeTag, Problem, KuevetteProblem<TypeTag>);
 SET_TYPE_PROP(KuevetteTypeTag,
               FluidSystem,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
+// Set the fluid system
+SET_PROP(KuevetteTypeTag, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Constant<1, Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
+};
 }
 
 

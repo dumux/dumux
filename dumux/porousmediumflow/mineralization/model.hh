@@ -39,17 +39,19 @@ namespace Dumux {
  *
  * \ţparam NonMinTraits traits class of the underlying model
  *                      not considering mineralization.
- * \tparam numPS number of precipitating solid phases to be considered.
+ * \tparam numPS number of solid phases to be considered.
+ * \tparam numInertSP number of inert solid phases to be considered.
  */
-template<class NonMinTraits, int numPS>
+template<class NonMinTraits, int numSC, int numInertSC>
 struct MineralizationModelTraits : public NonMinTraits
 {
-    //! the number of precipitating mineral phases
-    static constexpr int numSPhases() { return numPS; }
+    //! the number of mineral phases
+    static constexpr int numSolidComps() { return numSC; }
+     //! the number of inert mineral phases
+    static constexpr int numInertSolidComps() { return numInertSC; }
     //! we additionally solve one equation per precipitating mineral phase
-    static constexpr int numEq() { return NonMinTraits::numEq() + numPS; }
+    static constexpr int numEq() { return NonMinTraits::numEq() + numSC - numInertSC; }
 };
-
 } // end namespace Dumux
 
 #endif

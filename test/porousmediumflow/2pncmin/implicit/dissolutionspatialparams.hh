@@ -105,8 +105,21 @@ public:
      *  \param element The finite element
      *  \param scv The sub-control volume
      */
-    Scalar minPorosity(const Element& element, const SubControlVolume &scv) const
+    Scalar minimalPorosity(const Element& element, const SubControlVolume &scv) const
     { return 1e-5; }
+
+    /*!
+     *  \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
+     *
+     *  \param element The finite element
+     *  \param scv The sub-control volume
+     *  \param elemSol The element solution
+     */
+    template<class SolidState>
+    Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos,
+                                    SolidState& solidState,
+                                    int compIdx) const
+    { return 1-referencePorosity_; }
 
     /*!
      *  \brief Define the reference porosity \f$[-]\f$ distribution.
@@ -118,19 +131,6 @@ public:
      */
     Scalar referencePorosity(const Element& element, const SubControlVolume &scv) const
     { return referencePorosity_; }
-
-    /*!
-     *  \brief Return the actual recent porosity \f$[-]\f$ accounting for
-     *  clogging caused by mineralization
-     *
-     *  \param element The finite element
-     *  \param scv The sub-control volume
-     */
-    template<class ElementSolution>
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolution& elemSol) const
-    { return poroLaw_.evaluatePorosity(element, scv, elemSol, referencePorosity_, 1e-5); }
 
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
      *  on the position in the domain
@@ -145,12 +145,18 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
-        const auto poro = porosity(element, scv, elemSol);
-        return permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, poro);
+        auto priVars = evalSolution(element, element.geometry(), elemSol, scv.center());
+
+        Scalar sumPrecipitates = 0.0;
+        sumPrecipitates += priVars[3 /*numComp*/];
+
+         using std::max;
+         const auto poro =  max(/*minPoro*/1e-5, referencePorosity_ - sumPrecipitates);
+         return permLaw_.evaluatePermeability(referencePermeability_, referencePorosity_, poro);
     }
 
-    Scalar solidity(const SubControlVolume &scv) const
-    { return 1.0 - porosityAtPos(scv.center()); }
+//     Scalar solidity(const SubControlVolume &scv) const
+//     { return 1.0 - porosityAtPos(scv.center()); }
 
     Scalar solubilityLimit() const
     { return solubilityLimit_; }
@@ -171,9 +177,6 @@ private:
 
     MaterialLawParams materialParams_;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using PorosityLaw = PorosityPrecipitation<Scalar, ModelTraits::numComponents(), ModelTraits::numSPhases()>;
-    PorosityLaw poroLaw_;
     PermeabilityKozenyCarman<PermeabilityType> permLaw_;
 
     Scalar solubilityLimit_;

@@ -28,6 +28,7 @@
 
 #include <dumux/common/valgrind.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
+#include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 
 namespace Dumux {
 
@@ -37,13 +38,16 @@ namespace Dumux {
  */
 template <class Traits>
 class TwoPOneCVolumeVariables
-: public PorousMediumFlowVolumeVariables<Traits, TwoPOneCVolumeVariables<Traits>>
+: public PorousMediumFlowVolumeVariables<Traits>
+ ,public EnergyVolumeVariables<Traits, TwoPOneCVolumeVariables<Traits> >
 {
-    using ParentType = PorousMediumFlowVolumeVariables<Traits, TwoPOneCVolumeVariables<Traits>>;
+    using ParentType = PorousMediumFlowVolumeVariables<Traits>;
+    using EnergyVolVars = EnergyVolumeVariables<Traits, TwoPOneCVolumeVariables<Traits> >;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
     using FS = typename Traits::FluidSystem;
     using Idx = typename Traits::ModelTraits::Indices;
+    static constexpr int numComp = ParentType::numComponents();
 
     enum {
         numPhases = Traits::ModelTraits::numPhases(),
@@ -65,6 +69,10 @@ public:
     using FluidSystem = typename Traits::FluidSystem;
     //! The type of the indices
     using Indices = typename Traits::ModelTraits::Indices;
+    //! export type of solid state
+    using SolidState = typename Traits::SolidState;
+    //! export type of solid system
+    using SolidSystem = typename Traits::SolidSystem;
 
     // set liquid phase as wetting phase: TODO make this more flexible
     static constexpr int wPhaseIdx = FluidSystem::liquidPhaseIdx;
@@ -88,7 +96,7 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(elemSol, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
         /////////////
         // calculate the remaining quantities
@@ -115,7 +123,9 @@ public:
         }
 
         // porosity & permeability
-        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        // porosity calculation over inert volumefraction
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComp);
+        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
 
@@ -125,7 +135,8 @@ public:
                                    const Problem& problem,
                                    const Element& element,
                                    const Scv& scv,
-                                   FluidState& fluidState)
+                                   FluidState& fluidState,
+                                   SolidState& solidState)
     {
 
         // capillary pressure parameters
@@ -183,7 +194,11 @@ public:
 
         Valgrind::CheckDefined(temperature);
 
-        fluidState.setTemperature(temperature);
+        for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+        {
+            fluidState.setTemperature(phaseIdx, temperature);
+        }
+        solidState.setTemperature(temperature);
 
         // set the densities
         const Scalar rhoW = FluidSystem::density(fluidState, wPhaseIdx);
@@ -215,6 +230,13 @@ public:
      */
     const FluidState &fluidState() const
     { return fluidState_; }
+
+    /*!
+     * \brief Returns the phase state for the control volume.
+     */
+    const SolidState &solidState() const
+    { return solidState_; }
+
 
     /*!
      * \brief Returns the effective saturation of a given phase within
@@ -284,7 +306,7 @@ public:
      * \brief Returns the average porosity within the control volume.
      */
     Scalar porosity() const
-    { return porosity_; }
+    { return solidState_.porosity(); }
 
     /*!
      * \brief Returns the average permeability within the control volume in \f$[m^2]\f$.
@@ -300,9 +322,9 @@ public:
 
 protected:
     FluidState fluidState_;
+    SolidState solidState_;
 
 private:
-    Scalar porosity_;               //!< Effective porosity within the control volume
     PermeabilityType permeability_; //!> Effective permeability within the control volume
     std::array<Scalar, numPhases> relativePermeability_;
 };

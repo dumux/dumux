@@ -28,7 +28,11 @@
 
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/3pwateroil/model.hh>
+
 #include <dumux/material/fluidsystems/h2oheavyoil.hh>
+#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/components/constant.hh>
+
 #include "3pwateroilsagdspatialparams.hh"
 
 namespace Dumux
@@ -60,6 +64,15 @@ SET_TYPE_PROP(SagdTypeTag,
 SET_BOOL_PROP(SagdTypeTag, OnlyGasPhaseCanDisappear, true);
 
 SET_BOOL_PROP(SagdTypeTag, UseMoles, true);
+
+// Set the fluid system
+SET_PROP(SagdTypeTag, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Constant<1, Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
+};
+
 }
 
 

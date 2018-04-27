@@ -48,9 +48,9 @@
 #include <dumux/material/fluidsystems/h2on2kinetic.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include "plotoverline2d.hh"
+#include <dumux/material/components/constant.hh>
 
 #include "evaporationatmospherespatialparams.hh"
-
 
 namespace Dumux
 {
@@ -90,6 +90,14 @@ public:
 
 // Set the type used for scalar values
 SET_TYPE_PROP(EvaporationAtmosphereTypeTag, Scalar, double);
+
+// Set the fluid system
+SET_PROP(EvaporationAtmosphereTypeTag, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Constant<1, Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
+};
 }
 
 /*!

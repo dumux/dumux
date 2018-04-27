@@ -27,6 +27,8 @@
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
+#include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
+
 
 namespace Dumux {
 
@@ -36,14 +38,17 @@ namespace Dumux {
  */
 template <class Traits>
 class ThreePVolumeVariables
-: public PorousMediumFlowVolumeVariables<Traits, ThreePVolumeVariables<Traits>>
+: public PorousMediumFlowVolumeVariables<Traits>
+ ,public EnergyVolumeVariables<Traits, ThreePVolumeVariables<Traits> >
 {
-    using ParentType = PorousMediumFlowVolumeVariables<Traits, ThreePVolumeVariables<Traits>>;
+    using ParentType = PorousMediumFlowVolumeVariables<Traits>;
+    using EnergyVolVars = EnergyVolumeVariables<Traits, ThreePVolumeVariables<Traits> >;
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
     using Indices = typename Traits::ModelTraits::Indices;
     using FS = typename Traits::FluidSystem;
+    static constexpr int numComp = ParentType::numComponents();
 
     enum {
         numPhases = Traits::ModelTraits::numPhases(),
@@ -62,6 +67,10 @@ public:
     using FluidState = typename Traits::FluidState;
     //! export fluid system type
     using FluidSystem = typename Traits::FluidSystem;
+    //! export type of solid state
+    using SolidState = typename Traits::SolidState;
+    //! export type of solid system
+    using SolidSystem = typename Traits::SolidSystem;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -84,7 +93,7 @@ public:
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
-        completeFluidState(elemSol, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
          // mobilities
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -98,10 +107,10 @@ public:
         }
 
         // porosity
-        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComp);
+        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
-        Valgrind::CheckDefined(porosity_);
         Valgrind::CheckDefined(permeability_);
     }
 
@@ -117,14 +126,14 @@ public:
      * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
      */
     template<class ElemSol, class Problem, class Element, class Scv>
-    static void completeFluidState(const ElemSol& elemSol,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const Scv& scv,
-                                   FluidState& fluidState)
+    void completeFluidState(const ElemSol& elemSol,
+                            const Problem& problem,
+                            const Element& element,
+                            const Scv& scv,
+                            FluidState& fluidState,
+                            SolidState& solidState)
     {
-        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
-        fluidState.setTemperature(t);
+        EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
@@ -172,7 +181,7 @@ public:
             fluidState.setDensity(phaseIdx, rho);
 
             // compute and set the enthalpy
-            const Scalar h = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
+            const Scalar h = EnergyVolVars::enthalpy(fluidState, paramCache, phaseIdx);
             fluidState.setEnthalpy(phaseIdx, h);
         }
     }
@@ -182,6 +191,12 @@ public:
      */
     const FluidState &fluidState() const
     { return fluidState_; }
+
+    /*!
+     * \brief Returns the phase state for the control volume.
+     */
+    const SolidState &solidState() const
+    { return solidState_; }
 
     /*!
      * \brief Returns the effective saturation of a given phase within
@@ -241,7 +256,7 @@ public:
      * \brief Returns the average porosity within the control volume.
      */
     Scalar porosity() const
-    { return porosity_; }
+    { return solidState_.porosity(); }
 
     /*!
      * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
@@ -251,9 +266,10 @@ public:
 
 protected:
     FluidState fluidState_;
+    SolidState solidState_;
+
 
 private:
-    Scalar porosity_;
     PermeabilityType permeability_;
     Scalar mobility_[numPhases];
 };

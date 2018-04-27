@@ -29,6 +29,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/porousmediumflow/volumevariables.hh>
+#include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/constants.hh>
 
@@ -43,19 +44,25 @@ namespace Dumux {
  */
 template <class Traits>
 class RichardsVolumeVariables
-: public PorousMediumFlowVolumeVariables<Traits, RichardsVolumeVariables<Traits>>
+: public PorousMediumFlowVolumeVariables<Traits>
+ ,public EnergyVolumeVariables<Traits, RichardsVolumeVariables<Traits> >
 {
-    using ParentType = PorousMediumFlowVolumeVariables<Traits, RichardsVolumeVariables<Traits>>;
+    using ParentType = PorousMediumFlowVolumeVariables<Traits>;
+    using EnergyVolVars = EnergyVolumeVariables<Traits, RichardsVolumeVariables<Traits> >;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
     using ModelTraits = typename Traits::ModelTraits;
-
+    static constexpr int numComp = ParentType::numComponents();
 public:
     //! export type of the fluid system
     using FluidSystem = typename Traits::FluidSystem;
     //! export type of the fluid state
     using FluidState = typename Traits::FluidState;
     //! export type of the fluid state
+    //! export type of solid state
+    using SolidState = typename Traits::SolidState;
+    //! export type of solid system
+    using SolidSystem = typename Traits::SolidSystem;
     using Indices = typename Traits::ModelTraits::Indices;
     //! if water diffusion in air is enabled
     static constexpr bool enableWaterDiffusionInAir() { return ModelTraits::enableMolecularDiffusion(); };
@@ -93,8 +100,7 @@ public:
             fluidState_.setSaturation(FluidSystem::liquidPhaseIdx, 0.0);
             fluidState_.setSaturation(FluidSystem::gasPhaseIdx, 1.0);
 
-            Scalar t = ParentType::temperature(elemSol, problem, element, scv);
-            fluidState_.setTemperature(t);
+            EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState_, solidState_);
 
             // get pc for sw = 0.0
             const Scalar pc = MaterialLaw::pc(materialParams, 0.0);
@@ -115,12 +121,12 @@ public:
             fluidState_.setViscosity(FluidSystem::liquidPhaseIdx, FluidSystem::viscosity(fluidState_, paramCache, FluidSystem::liquidPhaseIdx));
 
             // compute and set the enthalpy
-            fluidState_.setEnthalpy(FluidSystem::liquidPhaseIdx, ParentType::enthalpy(fluidState_, paramCache, FluidSystem::liquidPhaseIdx));
-            fluidState_.setEnthalpy(FluidSystem::gasPhaseIdx, ParentType::enthalpy(fluidState_, paramCache, FluidSystem::gasPhaseIdx));
+            fluidState_.setEnthalpy(FluidSystem::liquidPhaseIdx, EnergyVolVars::enthalpy(fluidState_, paramCache, FluidSystem::liquidPhaseIdx));
+            fluidState_.setEnthalpy(FluidSystem::gasPhaseIdx, EnergyVolVars::enthalpy(fluidState_, paramCache, FluidSystem::gasPhaseIdx));
         }
         else if (phasePresence == Indices::bothPhases)
         {
-            completeFluidState(elemSol, problem, element, scv, fluidState_);
+            completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
             // if we want to account for diffusion in the air phase
             // use Raoult to compute the water mole fraction in air
@@ -140,14 +146,15 @@ public:
         }
         else if (phasePresence == Indices::liquidPhaseOnly)
         {
-            completeFluidState(elemSol, problem, element, scv, fluidState_);
+            completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
         }
 
         //////////
         // specify the other parameters
         //////////
         relativePermeabilityWetting_ = MaterialLaw::krw(materialParams, fluidState_.saturation(FluidSystem::liquidPhaseIdx));
-        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComp);
+        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
 
@@ -165,14 +172,14 @@ public:
      * \param fluidState The fluid state to fill.
      */
     template<class ElemSol, class Problem, class Element, class Scv>
-    static void completeFluidState(const ElemSol& elemSol,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const Scv& scv,
-                                   FluidState& fluidState)
+    void completeFluidState(const ElemSol& elemSol,
+                            const Problem& problem,
+                            const Element& element,
+                            const Scv& scv,
+                            FluidState& fluidState,
+                            SolidState& solidState)
     {
-        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
-        fluidState.setTemperature(t);
+        EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
@@ -202,8 +209,8 @@ public:
         fluidState.setViscosity(FluidSystem::liquidPhaseIdx, FluidSystem::viscosity(fluidState, paramCache, FluidSystem::liquidPhaseIdx));
 
         // compute and set the enthalpy
-        fluidState.setEnthalpy(FluidSystem::liquidPhaseIdx, ParentType::enthalpy(fluidState, paramCache, FluidSystem::liquidPhaseIdx));
-        fluidState.setEnthalpy(FluidSystem::gasPhaseIdx, ParentType::enthalpy(fluidState, paramCache, FluidSystem::gasPhaseIdx));
+        fluidState.setEnthalpy(FluidSystem::liquidPhaseIdx, EnergyVolVars::enthalpy(fluidState, paramCache, FluidSystem::liquidPhaseIdx));
+        fluidState.setEnthalpy(FluidSystem::gasPhaseIdx, EnergyVolVars::enthalpy(fluidState, paramCache, FluidSystem::gasPhaseIdx));
     }
 
     /*!
@@ -212,6 +219,12 @@ public:
      */
     const FluidState &fluidState() const
     { return fluidState_; }
+
+    /*!
+     * \brief Returns the phase state for the control volume.
+     */
+    const SolidState &solidState() const
+    { return solidState_; }
 
     /*!
      * \brief Return the temperature
@@ -226,7 +239,7 @@ public:
      * total volume, i.e. \f[ \Phi := \frac{V_{pore}}{V_{pore} + V_{rock}} \f]
      */
     Scalar porosity() const
-    { return porosity_; }
+    { return solidState_.porosity(); }
 
     /*!
      * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
@@ -349,7 +362,7 @@ public:
      *       manually do a conversion.
      */
     Scalar waterContent(const int phaseIdx = FluidSystem::liquidPhaseIdx) const
-    { return saturation(phaseIdx) * porosity_; }
+    { return saturation(phaseIdx) * solidState_.porosity(); }
 
     /*!
      * \brief Returns the mole fraction of a given component in a
@@ -392,8 +405,8 @@ public:
 
 protected:
     FluidState fluidState_; //!< the fluid state
+    SolidState solidState_;
     Scalar relativePermeabilityWetting_; //!< the relative permeability of the wetting phase
-    Scalar porosity_; //!< the porosity
     PermeabilityType permeability_; //!< the instrinsic permeability
     Scalar minPc_; //!< the minimum capillary pressure (entry pressure)
     Scalar moleFraction_[ParentType::numPhases()]; //!< The water mole fractions in water and air

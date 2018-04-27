@@ -58,17 +58,6 @@ public:
     //! The type of parameter cache objects
     using ParameterCache = NullParameterCache;
 
-    //! Index of the solid phase
-    static constexpr int sPhaseIdx = 2;
-
-    static std::string phaseName(int phaseIdx)
-    {
-        if (phaseIdx == sPhaseIdx)
-            return "s";
-
-        return ParentType::phaseName(phaseIdx);
-    }
-
     /*!
      * \brief Return the enthalpy of a component in a phase.
      * \param fluidState A container with the current (physical) state of the fluid

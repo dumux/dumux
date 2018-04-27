@@ -89,6 +89,10 @@
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
+#include <dumux/material/solidstates/inertsolidstate.hh>
+#include <dumux/material/solidsystems/inertsolidphase.hh>
+#include <dumux/material/components/granite.hh>
+
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
@@ -132,12 +136,14 @@ struct ThreePThreeCModelTraits
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
  */
-template<class PV, class FSY, class FST, class PT, class MT>
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
 struct ThreePThreeCVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
     using FluidSystem = FSY;
     using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
 };
@@ -182,6 +188,24 @@ SET_PROP(ThreePThreeC, FluidState){
         using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
+//! The two-phase model uses the immiscible fluid state
+SET_PROP(ThreePThreeC, SolidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+public:
+    using type = InertSolidState<Scalar, SolidSystem>;
+};
+
+// Set the fluid system
+SET_PROP(ThreePThreeC, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Granite<Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
+};
+
 //! The local residual function of the conservation equations
 SET_TYPE_PROP(ThreePThreeC, LocalResidual, ThreePThreeCLocalResidual<TypeTag>);
 
@@ -205,10 +229,12 @@ private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-    using Traits = ThreePThreeCVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+    using Traits = ThreePThreeCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
     using type = ThreePThreeCVolumeVariables<Traits>;
 };

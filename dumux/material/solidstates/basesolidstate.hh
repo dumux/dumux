@@ -43,7 +43,7 @@ void updateSolidVolumeFractions(const ElemSol &elemSol,
 {
     for(int sCompIdx = solidState.numComponents- solidState.numInertComponents; sCompIdx < solidState.numComponents; ++sCompIdx)
     {
-        solidState.setVolumeFraction(sCompIdx, problem.spatialParams().inertVolumeFraction(element, scv, sCompIdx));
+        solidState.setVolumeFraction(sCompIdx, problem.spatialParams().inertVolumeFraction(element, scv, solidState, sCompIdx));
     }
     if (!(solidState.isInert()))
     {

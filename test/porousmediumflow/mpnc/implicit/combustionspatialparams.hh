@@ -90,10 +90,6 @@ public:
         porosity_ = getParam<Scalar>("SpatialParams.PorousMedium.porosity");
         intrinsicPermeabilityOutFlow_ = getParam<Scalar>("SpatialParams.Outflow.permeabilityOutFlow");
         porosityOutFlow_                = getParam<Scalar>("SpatialParams.Outflow.porosityOutFlow");
-        solidThermalConductivityOutflow_ =getParam<Scalar>("SpatialParams.Outflow.soilThermalConductivityOutFlow");
-        solidDensity_   = getParam<Scalar>("SpatialParams.soil.density");
-        solidThermalConductivity_ = getParam<Scalar>("SpatialParams.soil.thermalConductivity");
-        solidHeatCapacity_   = getParam<Scalar>("SpatialParams.soil.heatCapacity");
         interfacialTension_  = getParam<Scalar>("Constants.interfacialTension");
 
         Swr_ = getParam<Scalar>("SpatialParams.soil.Swr");
@@ -137,15 +133,23 @@ public:
      * \param scvIdx      The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    template<class ElementSolution>
     Scalar porosity(const Element &element,
-                    const SubControlVolume &scv,
-                    const ElementSolution &elemSol) const
+                    const SubControlVolume &scv) const
     {
         if ( inOutFlow(scv.dofPosition()) )
             return porosityOutFlow_ ;
         else
             return porosity_ ;
+    }
+
+    template<class SolidState>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               SolidState& solidState,
+                               int compIdx) const
+    {
+        return 1-porosity(element, scv);
+
     }
 
     /*!
@@ -213,44 +217,6 @@ public:
     { return factorMassTransfer_; }
 
 
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    { return solidHeatCapacity_; }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    { return solidDensity_; }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    template<class ElementSolution>
-    Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume &scv,
-                                    const ElementSolution &elemSol) const
-    {
-        if ( inOutFlow(scv.dofPosition()) )
-            return solidThermalConductivityOutflow_ ;
-        else
-            return solidThermalConductivity_ ;
-    }
-
     //! Return if the tested position (input) is a specific region (right end of porous medium) in the domain
     bool inOutFlow(const GlobalPosition & globalPos) const { return globalPos[0] > (lengthPM_ - eps_) ;    }
     //! Return the length of the porous medium domain
@@ -274,10 +240,6 @@ private:
     Scalar porosityOutFlow_ ;
 
     // solid parameters
-    Scalar solidDensity_ ;
-    Scalar solidThermalConductivity_ ;
-    Scalar solidThermalConductivityOutflow_ ;
-    Scalar solidHeatCapacity_ ;
     Scalar interfacialTension_ ;
 
 

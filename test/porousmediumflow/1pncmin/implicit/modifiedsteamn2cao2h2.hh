@@ -33,8 +33,6 @@
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/components/n2.hh>
-#include <dumux/material/components/h2o.hh>
-#include <dumux/material/components/cao2h2.hh>
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
@@ -73,33 +71,25 @@ public:
     using H2O_N2 = Dumux::BinaryCoeff::H2O_N2;
     using N2 = Dumux::Components::N2<Scalar>;
 
-    using CaO = Dumux::ModifiedCaO<Scalar>;
-    using CaO2H2 =  Dumux::Components::CaO2H2<Scalar>;
-
     // the type of parameter cache objects. this fluid system does not
     using ParameterCache = Dumux::NullParameterCache;
+
+    /****************************************
+     * Fluid phase related static parameters
+     ****************************************/
 
     //! Number of phases in the fluid system
     static constexpr int numPhases = 1; //gas phase: N2 and steam
     static constexpr int numComponents = 2; // H2O, Air
-    static constexpr int numSPhases = 2;//  solid phases CaO and CaO2H2 TODO: Remove
-    static constexpr int numSComponents = 2;// CaO2H2, CaO TODO: Remove
 
-    static constexpr int gasPhaseIdx = 0;  //!< index of the gas phase
+    static constexpr int gasPhaseIdx = 0;
     static constexpr int phase0Idx = gasPhaseIdx; //!< index of the only phase
-    static constexpr int cPhaseIdx = 1; // CaO-phaseIdx TODO: Remove
-    static constexpr int hPhaseIdx = 2; // CaO2H2-phaseIdx TODO: Remove
 
     static constexpr int N2Idx = 0;
     static constexpr int H2OIdx = 1;
     static constexpr int comp0Idx = N2Idx;
     static constexpr int comp1Idx = H2OIdx;
-    static constexpr int CaOIdx  = 2; // CaO-phaseIdx TODO: Remove
-    static constexpr int CaO2H2Idx  = 3; // CaO-phaseIdx TODO: Remove
 
-    /****************************************
-     * Fluid phase related static parameters
-     ****************************************/
 
     /*!
      * \brief Return the human readable name of a fluid phase
@@ -110,8 +100,6 @@ public:
     {
         switch (phaseIdx) {
         case gasPhaseIdx: return "gas";
-        case cPhaseIdx : return "CaO";
-        case hPhaseIdx : return "CaOH2";
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -193,9 +181,6 @@ public:
         {
         case H2OIdx: return "H2O";
         case N2Idx: return "N2";
-        case CaOIdx:return "CaO";
-        case CaO2H2Idx:return "CaO2H2";
-
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
@@ -211,59 +196,9 @@ public:
         {
         case H2OIdx: return H2O::molarMass();
         case N2Idx: return N2::molarMass();
-        case CaOIdx: return CaO::molarMass();
-        case CaO2H2Idx: return CaO2H2::molarMass();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
-
-    /*!
-     * \brief Return the mass density of the solid \f$\mathrm{[kg/m^3]}\f$.
-     *
-     * \param phaseIdx The index of the solid phase to consider
-     */
-    static Scalar precipitateDensity(int phaseIdx)
-    {
-      if(phaseIdx==cPhaseIdx)
-            return CaO::density();
-      if(phaseIdx==hPhaseIdx)
-            return CaO2H2::density();
-      else
-        DUNE_THROW(Dune::InvalidStateException, "Invalid solid index " << phaseIdx);
-        return 1;
-    }
-
-     /*!
-      * \brief Return the salt specific heat capacity \f$\mathrm{[J/molK]}\f$.
-      *
-      * \param phaseIdx The index of the solid phase to consider
-      */
-     static Scalar precipitateHeatCapacity(int phaseIdx)
-     {
-      if(phaseIdx==cPhaseIdx)
-            return CaO::heatCapacity();
-      if(phaseIdx==hPhaseIdx)
-            return CaO2H2::heatCapacity();
-      else
-      DUNE_THROW(Dune::InvalidStateException, "Invalid solid index " << phaseIdx);
-     return 1;
-    }
-
-    /*!
-     * \brief Return the molar density of the solid \f$\mathrm{[mol/m^3]}\f$.
-     *
-     * \param phaseIdx The index of the solid phase to consider
-     */
-    static Scalar precipitateMolarDensity(int phaseIdx)
-     {
-     if(phaseIdx==1){
-         return precipitateDensity(phaseIdx)/ molarMass(CaOIdx);
-     }
-      if(phaseIdx==2){
-            return precipitateDensity(phaseIdx)/molarMass(CaO2H2Idx);  }
-      else
-         DUNE_THROW(Dune::InvalidStateException, "Invalid solid phase index " << phaseIdx);
-     }
 
     /****************************************
      * thermodynamic relations

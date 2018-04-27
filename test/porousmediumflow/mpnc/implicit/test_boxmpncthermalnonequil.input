@@ -51,3 +51,8 @@ nRestart = 10000 # after so many timesteps a restart file should be written
 
 [Vtk]
 AddVelocity = 1 # enable velocity output
+
+[Component]
+SolidDensity = 2600
+SolidThermalConductivity = 30
+SolidHeatCapacity = 466

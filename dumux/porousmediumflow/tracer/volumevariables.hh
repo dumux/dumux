@@ -35,16 +35,16 @@ namespace Dumux {
  */
 template <class Traits>
 class TracerVolumeVariables
-: public PorousMediumFlowVolumeVariables<Traits, TracerVolumeVariables<Traits>>
+: public PorousMediumFlowVolumeVariables<Traits>
 {
-    using ParentType = PorousMediumFlowVolumeVariables<Traits, TracerVolumeVariables<Traits>>;
-
+    using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
 
 public:
     //! export fluid system type
     using FluidSystem = typename Traits::FluidSystem;
+    using SolidState = typename Traits::SolidState;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -64,7 +64,7 @@ public:
         // update parent type sets primary variables
         ParentType::update(elemSol, problem, element, scv);
 
-        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, ParentType::numComponents());
         // dispersivity_ = problem.spatialParams().dispersivity(element, scv, elemSol);
 
         // the spatial params special to the tracer model
@@ -87,6 +87,12 @@ public:
      */
     Scalar density(int pIdx = 0) const
     { return fluidDensity_; }
+
+    /*!
+     * \brief Returns the phase state for the control volume.
+     */
+    const SolidState &solidState() const
+    { return solidState_; }
 
     /*!
      * \brief Return the saturation
@@ -165,10 +171,10 @@ public:
      * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
      */
     Scalar porosity() const
-    { return porosity_; }
+    { return solidState_.porosity(); }
 
 protected:
-    Scalar porosity_;    // Effective porosity within the control volume
+    SolidState solidState_;
     Scalar fluidDensity_, fluidMolarMass_;
     // DispersivityType dispersivity_;
     std::array<Scalar, ParentType::numComponents()> diffCoeff_;
