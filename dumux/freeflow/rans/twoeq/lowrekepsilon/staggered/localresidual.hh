@@ -32,20 +32,18 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag,  DiscretizationMethod discMethod>
+template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
 class LowReKEpsilonResidualImpl;
 
 /*!
  * \ingroup LowReKepsilonModel
  * \brief Element-wise calculation of the residual for low-Reynolds k-epsilon models using the staggered discretization
  */
-template<class TypeTag>
-class LowReKEpsilonResidualImpl<TypeTag, DiscretizationMethod::staggered>
-: public NavierStokesResidual<TypeTag>
+template<class TypeTag, class BaseLocalResidual>
+class LowReKEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
+: public BaseLocalResidual
 {
-    using ParentType = NavierStokesResidual<TypeTag>;
-    friend class StaggeredLocalResidual<TypeTag>;
-    friend ParentType;
+    using ParentType = BaseLocalResidual;
 
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 

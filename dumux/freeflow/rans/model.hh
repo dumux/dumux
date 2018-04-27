@@ -39,7 +39,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
-#include <dumux/freeflow/nonisothermal/ransvtkoutputfields.hh>
 
 #include "vtkoutputfields.hh"
 
@@ -63,6 +62,27 @@ NEW_TYPE_TAG(RANS, INHERITS_FROM(NavierStokes));
 ///////////////////////////////////////////////////////////////////////////
 SET_BOOL_PROP(RANS, EnableInertiaTerms, true); //!< Explicitly force the consideration of inertia terms by default
 
+/*!
+ * \ingroup RANSModel
+ * \brief Traits for the Reynolds-averaged Navier-Stokes model
+ */
+template<int dimension>
+struct RANSModelTraits : NavierStokesModelTraits<dimension>
+{
+    //! The model does include a turbulence model
+    static constexpr bool usesTurbulenceModel() { return true; }
+};
+
+//! The model traits of the isothermal model
+SET_PROP(RANS, ModelTraits)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    static constexpr int dim = GridView::dimension;
+public:
+    using type = RANSModelTraits<dim>;
+};
+
 //! The specific vtk output fields
 SET_PROP(RANS, VtkOutputFields)
 {
@@ -85,24 +105,20 @@ SET_PROP(RANSNI, ModelTraits)
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr int dim = GridView::dimension;
-    static constexpr bool enableInertiaTerms = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
-
-    static_assert(enableInertiaTerms, "The RANS model only works with intertia terms enabled!");
-
-    using IsothermalTraits = NavierStokesModelTraits<dim>;
+    using IsothermalTraits = RANSModelTraits<dim>;
 public:
-    using type = NavierStokesNIModelTraits<IsothermalTraits>;
+    using type = FreeflowNIModelTraits<IsothermalTraits>;
 };
 
 //! The specific non-isothermal vtk output fields
 SET_PROP(RANSNI, VtkOutputFields)
 {
 private:
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using NavierStokesFields = NavierStokesVtkOutputFields<FVGridGeometry>;
-    using RANSFields = RANSVtkOutputFields<FVGridGeometry>;
+    using IsothermalFields = RANSVtkOutputFields<FVGridGeometry>;
 public:
-    using type = RANSNonIsothermalVtkOutputFields<NavierStokesFields, RANSFields>;
+    using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
 };
 
 //! Use Fourier's Law as default heat conduction type

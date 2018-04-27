@@ -18,34 +18,34 @@
  *****************************************************************************/
  /*!
   * \file
-  * \ingroup NavierStokesNCModel
-  * \copydoc Dumux::NavierStokesNCResidual
+  * \ingroup FreeflowNCModel
+  * \copydoc Dumux::FreeflowNCFluxVariables
   */
-#ifndef DUMUX_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
-#define DUMUX_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_FREELOW_NC_FLUXVARIABLES_HH
+#define DUMUX_FREELOW_NC_FLUXVARIABLES_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
-#include <dumux/freeflow/navierstokes/localresidual.hh>
-#include <dumux/freeflow/navierstokesnc/staggered/localresidual.hh>
+#include <dumux/freeflow/compositional/staggered/fluxvariables.hh>
 
 namespace Dumux
 {
 
+
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
-class NavierStokesNCResidualImpl;
+class FreeflowNCFluxVariablesImpl;
 
 /*!
- * \ingroup NavierStokesNCModel
- * \brief The local residual class for the Navier-Stokes multi-component model (balance equations).
-          This is a convenience alias for the actual,
-          discretization-specific local residual.
+ * \ingroup FreeflowNCModel
+ * \brief The flux variables class for the multi-component free-flow model.
+          This is a convenience alias for that actual,
+          discretization-specific flux variables.
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>
-using NavierStokesNCResidual = NavierStokesNCResidualImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+using FreeflowNCFluxVariables = FreeflowNCFluxVariablesImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
-}
 
-#endif   // DUMUX_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
+} // end namespace
+
+#endif

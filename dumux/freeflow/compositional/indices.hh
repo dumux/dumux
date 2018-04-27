@@ -18,43 +18,34 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesNCModel
- * \copydoc Dumux::NavierStokesNCVtkOutputFields
+ * \ingroup FreeflowNCModel
+ * \copydoc Dumux::FreeflowNCIndices
  */
-#ifndef DUMUX_NAVIER_STOKES_NC_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_NAVIER_STOKES_NC_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_FREEFLOW_NC_INDICES_HH
+#define DUMUX_FREEFLOW_NC_INDICES_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/freeflow/navierstokes/vtkoutputfields.hh>
+#include <dumux/freeflow/navierstokes/indices.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup NavierStokesNCModel
- * \brief Adds vtk output fields specific to the NavierStokesNC model
+ * \ingroup FreeflowNCModel
+ * \brief The common indices for the isothermal multi-component free-flow model.
  */
-template<class FVGridGeometry, class FluidSystem, int phaseIdx>
-class NavierStokesNCVtkOutputFields
+template <int dimension, int numEquations,
+          int phaseIdx, int theReplaceCompEqIdx,
+          class FreeflowIndices>
+struct FreeflowNCIndices : public FreeflowIndices
 {
-
 public:
-    //! Initialize the Navier-StokesNC specific vtk output fields.
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
-    {
-        NavierStokesVtkOutputFields<FVGridGeometry>::init(vtk);
+    //! The index of the fluid phase in the fluid system
+    static constexpr int fluidSystemPhaseIdx = phaseIdx;
 
-        for (int j = 0; j < FluidSystem::numComponents; ++j)
-        {
-            vtk.addVolumeVariable([j](const auto& v){ return v.massFraction(j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            vtk.addVolumeVariable([j](const auto& v){ return v.moleFraction(j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            if (j != phaseIdx)
-            {
-                vtk.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            }
-        }
-    }
+    //! The index of the main component
+    static constexpr int mainCompIdx = fluidSystemPhaseIdx;
+
+    //! The index of the component whose mass balance will be replaced by the total one
+    static constexpr int replaceCompEqIdx = theReplaceCompEqIdx;
 };
 
 } // end namespace Dumux

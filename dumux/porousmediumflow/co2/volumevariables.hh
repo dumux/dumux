@@ -25,7 +25,10 @@
 #ifndef DUMUX_CO2_VOLUME_VARIABLES_HH
 #define DUMUX_CO2_VOLUME_VARIABLES_HH
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/properties.hh>
+#include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 
 namespace Dumux {

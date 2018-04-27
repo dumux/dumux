@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesNIModel
+ * \ingroup FreeflowNIModel
  *
- * \brief A single-phase, non-isothermal Navier-Stokes model
+ * \brief A single-phase, non-isothermal free-flow model
  *
  * In addition to the momentum and mass/mole balance equations, this model also solves the <B> energy balance equation </B>:
  * \f[
@@ -40,28 +40,28 @@
  * \f[ \lambda_\text{t} = \frac{\nu_\text{t} \varrho c_\text{p}}{\mathrm{Pr}_\text{t}} \f]
  */
 
-#ifndef DUMUX_STAGGERED_NI_MODEL_HH
-#define DUMUX_STAGGERED_NI_MODEL_HH
+#ifndef DUMUX_FREEFLOW_NI_MODEL_HH
+#define DUMUX_FREEFLOW_NI_MODEL_HH
 
 #include "indices.hh"
 
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesNIModel
- * \brief Specifies a number properties of non-isothermal free flow
+ * \ingroup FreeflowNIModel
+ * \brief Specifies a number properties of non-isothermal free-flow
  *        flow models based on the specifics of a given isothermal model.
  * \tparam IsothermalTraits Model traits of the isothermal model
  */
 template<class IsothermalTraits>
-struct NavierStokesNIModelTraits : public IsothermalTraits
+struct FreeflowNIModelTraits : public IsothermalTraits
 {
     //! We solve for one more equation, i.e. the energy balance
     static constexpr int numEq() { return IsothermalTraits::numEq()+1; }
     //! We additionally solve for the equation balance
     static constexpr bool enableEnergyBalance() { return true; }
     //! the indices
-    using Indices = NavierStokesNonIsothermalIndices<typename IsothermalTraits::Indices, numEq()>;
+    using Indices = FreeflowNonIsothermalIndices<typename IsothermalTraits::Indices, numEq()>;
 };
 
 } // end  namespace Dumux

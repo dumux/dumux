@@ -96,6 +96,9 @@ struct NavierStokesModelTraits
     //! The model is isothermal
     static constexpr bool enableEnergyBalance() { return false; }
 
+    //! The model does not include a turbulence model
+    static constexpr bool usesTurbulenceModel() { return false; }
+
     //! the indices
     using Indices = NavierStokesIndices<dim()>;
 };
@@ -215,21 +218,19 @@ private:
     static constexpr int dim = GridView::dimension;
     using IsothermalTraits = NavierStokesModelTraits<dim>;
 public:
-    using type = NavierStokesNIModelTraits<IsothermalTraits>;
+    using type = FreeflowNIModelTraits<IsothermalTraits>;
 };
 
 //! The specific non-isothermal vtk output fields
 SET_PROP(NavierStokesNI, VtkOutputFields)
 {
 private:
+     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
      using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
      using IsothermalFields = NavierStokesVtkOutputFields<FVGridGeometry>;
 public:
-     using type = NavierStokesNonIsothermalVtkOutputFields<IsothermalFields>;
+     using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
 };
-
-//! Use Fourier's Law as default heat conduction type
-SET_TYPE_PROP(NavierStokesNI, HeatConductionType, FouriersLaw<TypeTag>);
 
  // \}
 }

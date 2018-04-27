@@ -5,7 +5,9 @@ install(FILES
 fluxvariables.hh
 indices.hh
 localresidual.hh
-model.hh
+navierstokesncmodel.hh
+lowrekepsilonncmodel.hh
 volumevariables.hh
 vtkoutputfields.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/navierstokesnc)
+zeroeqncmodel.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/compositional)

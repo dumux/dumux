@@ -130,6 +130,8 @@ public:
     }
 
 protected:
+    const Impl &asImp_() const { return *static_cast<const Impl*>(this); }
+    Impl &asImp_() { return *static_cast<Impl*>(this); }
     PrimaryVariables priVars_;
     Scalar extrusionFactor_;
 };
@@ -181,7 +183,7 @@ public:
      * \param fluidSystemPhaseIdx The phase index
      */
     Scalar internalEnergy() const
-    { return asImp_().fluidState().internalEnergy(fluidSystemPhaseIdx); }
+    { return ParentType::asImp_().fluidState().internalEnergy(fluidSystemPhaseIdx); }
 
     /*!
      * \brief Returns the total enthalpy of a phase in the sub-control
@@ -190,14 +192,14 @@ public:
      * \param fluidSystemPhaseIdx The phase index
      */
     Scalar enthalpy() const
-    { return asImp_().fluidState().enthalpy(fluidSystemPhaseIdx); }
+    { return ParentType::asImp_().fluidState().enthalpy(fluidSystemPhaseIdx); }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
      *        of the fluid phase in the sub-control volume.
      */
     Scalar thermalConductivity() const
-    { return FluidSystem::thermalConductivity(asImp_().fluidState(), fluidSystemPhaseIdx); }
+    { return FluidSystem::thermalConductivity(ParentType::asImp_().fluidState(), fluidSystemPhaseIdx); }
 
     /*!
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
@@ -213,7 +215,7 @@ public:
      *        in the sub-control volume.
      */
     Scalar heatCapacity() const
-    { return FluidSystem::heatCapacity(asImp_().fluidState(), fluidSystemPhaseIdx); }
+    { return FluidSystem::heatCapacity(ParentType::asImp_().fluidState(), fluidSystemPhaseIdx); }
 
     //! The temperature is a primary variable for non-isothermal models
     template<class ElemSol, class Problem, class Element, class Scv>
@@ -233,11 +235,6 @@ public:
     {
         return FluidSystem::enthalpy(fluidState, paramCache, fluidSystemPhaseIdx);
     }
-
-protected:
-    const Impl &asImp_() const { return *static_cast<const Impl*>(this); }
-    Impl &asImp_() { return *static_cast<Impl*>(this); }
-
 };
 }
 

@@ -34,15 +34,13 @@ namespace Dumux {
  * \brief The common indices for the isothermal low-Reynolds k-epsilon model.
  *
  * \tparam dimension The dimension of the problem
+ * \tparam numComponents The number of considered transported components
  */
-template <int dimension>
+template<int dimension, int numComponents>
 struct LowReKEpsilonIndices : public NavierStokesIndices<dimension>
 {
-private:
-    using ParentType = NavierStokesIndices<dimension>;
-
 public:
-    static constexpr auto turbulentKineticEnergyEqIdx = ParentType::conti0EqIdx + 1;
+    static constexpr auto turbulentKineticEnergyEqIdx = dimension + numComponents;
     static constexpr auto turbulentKineticEnergyIdx = turbulentKineticEnergyEqIdx;
     static constexpr auto dissipationEqIdx = turbulentKineticEnergyEqIdx + 1;
     static constexpr auto dissipationIdx = dissipationEqIdx;

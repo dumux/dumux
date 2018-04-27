@@ -18,11 +18,11 @@
  *****************************************************************************/
  /*!
   * \file
-  * \ingroup NavierStokesNCModel
-  * \copydoc Dumux::NavierStokesNCFluxVariablesImpl
+  * \ingroup FreeflowNCModel
+  * \copydoc Dumux::FreeflowNCFluxVariablesImpl
   */
-#ifndef DUMUX_NAVIERSTOKES_NC_STAGGERED_FLUXVARIABLES_HH
-#define DUMUX_NAVIERSTOKES_NC_STAGGERED_FLUXVARIABLES_HH
+#ifndef DUMUX_FREEFLOW_NC_STAGGERED_FLUXVARIABLES_HH
+#define DUMUX_FREEFLOW_NC_STAGGERED_FLUXVARIABLES_HH
 
 #include <numeric>
 #include <dumux/common/properties.hh>
@@ -35,14 +35,14 @@ namespace Dumux
 
 // forward declaration
 template<class TypeTag, DiscretizationMethod discMethod>
-class NavierStokesNCFluxVariablesImpl;
+class FreeflowNCFluxVariablesImpl;
 
 /*!
- * \ingroup NavierStokesNCModel
- * \brief The flux variables class for the multi-component Navier-Stokes model using the staggered grid discretization.
+ * \ingroup FreeflowNCModel
+ * \brief The flux variables class for the multi-component free-flow model using the staggered grid discretization.
  */
 template<class TypeTag>
-class NavierStokesNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
+class FreeflowNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
 : public NavierStokesFluxVariables<TypeTag>
 {
     using ParentType = NavierStokesFluxVariables<TypeTag>;
@@ -67,13 +67,13 @@ public:
     * \brief Computes the flux for the cell center residual.
     */
     template<class ElementVolumeVariables, class ElementFaceVariables, class FluxVariablesCache>
-    CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
-                                                        const Element &element,
-                                                        const FVElementGeometry& fvGeometry,
-                                                        const ElementVolumeVariables& elemVolVars,
-                                                        const ElementFaceVariables& elemFaceVars,
-                                                        const SubControlVolumeFace &scvf,
-                                                        const FluxVariablesCache& fluxVarsCache)
+    CellCenterPrimaryVariables computeMassFlux(const Problem& problem,
+                                               const Element &element,
+                                               const FVElementGeometry& fvGeometry,
+                                               const ElementVolumeVariables& elemVolVars,
+                                               const ElementFaceVariables& elemFaceVars,
+                                               const SubControlVolumeFace &scvf,
+                                               const FluxVariablesCache& fluxVarsCache)
     {
         CellCenterPrimaryVariables flux(0.0);
 
@@ -106,11 +106,11 @@ public:
             flux[Indices::replaceCompEqIdx] = std::accumulate(flux.begin(), flux.end(), 0.0);
         }
 
-        flux += MolecularDiffusionType::diffusiveFluxForCellCenter(problem, fvGeometry, elemVolVars, scvf);
+        flux += MolecularDiffusionType::flux(problem, fvGeometry, elemVolVars, scvf);
         return flux;
     }
 };
 
 } // end namespace
 
-#endif // DUMUX_NAVIERSTOKES_NC_STAGGERED_FLUXVARIABLES_HH
+#endif

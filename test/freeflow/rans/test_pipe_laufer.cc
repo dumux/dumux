@@ -26,6 +26,8 @@
  */
 #include <config.h>
 
+#define IS_TURBULENT 1
+
 #include <ctime>
 #include <iostream>
 

@@ -18,12 +18,12 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesNCModel
+ * \ingroup FreeflowNCModel
  *
- * \copydoc Dumux::NavierStokesNCVolumeVariables
+ * \copydoc Dumux::FreeflowNCVolumeVariables
  */
-#ifndef DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
-#define DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
+#ifndef DUMUX_FREEFLOW_NC_VOLUMEVARIABLES_HH
+#define DUMUX_FREEFLOW_NC_VOLUMEVARIABLES_HH
 
 #include <dune/common/exceptions.hh>
 
@@ -32,19 +32,18 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesNCModel
- * \brief Volume variables for the single-phase, multi-component Navier-Stokes model.
+ * \ingroup FreeflowNCModel
+ * \brief Volume variables for the single-phase, multi-component free-flow model.
  */
 template <class Traits>
-class NavierStokesNCVolumeVariables : public FreeFlowVolumeVariables< Traits, NavierStokesNCVolumeVariables<Traits> >
+class FreeflowNCVolumeVariables : public FreeFlowVolumeVariables< Traits, FreeflowNCVolumeVariables<Traits> >
 {
-    using ThisType = NavierStokesNCVolumeVariables<Traits>;
+    using ThisType = FreeflowNCVolumeVariables<Traits>;
     using ParentType = FreeFlowVolumeVariables<Traits, ThisType>;
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
-    using Indices = typename Traits::ModelTraits::Indices;
 
-    static constexpr int fluidSystemPhaseIdx = Indices::fluidSystemPhaseIdx;
+    static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
     static constexpr int numComponents = Traits::ModelTraits::numComponents();
 
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
@@ -54,6 +53,8 @@ public:
     using FluidSystem = typename Traits::FluidSystem;
     //! export the fluid state type
     using FluidState = typename Traits::FluidState;
+    //! export the indices type
+    using Indices = typename Traits::ModelTraits::Indices;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -188,25 +189,25 @@ public:
     Scalar viscosity() const
     { return fluidState_.viscosity(fluidSystemPhaseIdx); }
 
-     /*!
-      * \brief Returns the mass fraction of a component in the phase \f$\mathrm{[-]}\f$
-      *
-      * \param compIdx the index of the component
-      */
-     Scalar massFraction(int compIdx) const
-     {
-         return fluidState_.massFraction(fluidSystemPhaseIdx, compIdx);
-     }
+    /*!
+     * \brief Returns the mass fraction of a component in the phase \f$\mathrm{[-]}\f$
+     *
+     * \param compIdx the index of the component
+     */
+    Scalar massFraction(int compIdx) const
+    {
+        return fluidState_.massFraction(fluidSystemPhaseIdx, compIdx);
+    }
 
-     /*!
-      * \brief Returns the mole fraction of a component in the phase \f$\mathrm{[-]}\f$
-      *
-      * \param compIdx the index of the component
-      */
-     Scalar moleFraction(int compIdx) const
-     {
-         return fluidState_.moleFraction(fluidSystemPhaseIdx, compIdx);
-     }
+    /*!
+     * \brief Returns the mole fraction of a component in the phase \f$\mathrm{[-]}\f$
+     *
+     * \param compIdx the index of the component
+     */
+    Scalar moleFraction(int compIdx) const
+    {
+        return fluidState_.moleFraction(fluidSystemPhaseIdx, compIdx);
+    }
 
     /*!
      * \brief Returns the mass density of a given phase \f$\mathrm{[kg/m^3]}\f$

@@ -18,11 +18,11 @@
  *****************************************************************************/
  /*!
   * \file
-  * \ingroup NavierStokesNCModel
-  * \copydoc Dumux::NavierStokesNCResidualImpl
+  * \ingroup FreeflowNCModel
+  * \copydoc Dumux::FreeflowNCResidualImpl
   */
-#ifndef DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
-#define DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_FREEFLOW_NC_STAGGERED_LOCAL_RESIDUAL_HH
+#define DUMUX_FREEFLOW_NC_STAGGERED_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
@@ -31,20 +31,18 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag,  DiscretizationMethod discMethod>
-class NavierStokesNCResidualImpl;
+template<class TypeTag, DiscretizationMethod discMethod>
+class FreeflowNCResidualImpl;
 
 /*!
- * \ingroup NavierStokesNCModel
- * \brief Element-wise calculation of the multi-component Navier-Stokes residual for models using the staggered discretization
+ * \ingroup FreeflowNCModel
+ * \brief Element-wise calculation of the multi-component free-flow residual for models using the staggered discretization
  */
 template<class TypeTag>
-class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
+class FreeflowNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
 : public NavierStokesResidual<TypeTag>
 {
     using ParentType = NavierStokesResidual<TypeTag>;
-    friend class StaggeredLocalResidual<TypeTag>;
-    friend ParentType;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -60,6 +58,8 @@ class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
     static constexpr int numComponents =ModelTraits::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static constexpr auto cellCenterOffset = ParentType::cellCenterOffset;
+
+    using EnergyLocalResidual = typename ParentType::EnergyLocalResidual;
 
 public:
     using ParentType::ParentType;
@@ -90,26 +90,24 @@ public:
         if(Indices::replaceCompEqIdx < numComponents)
             storage[Indices::replaceCompEqIdx] = density;
 
-        this->computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, ModelTraits::enableEnergyBalance() >(),
-                                                        problem, scv, volVars, storage);
+        EnergyLocalResidual::fluidPhaseStorage(storage, volVars);
 
         return storage;
     }
 
-protected:
 
     /*!
      * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
      *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
      */
     template<class ElementVolumeVariables, class BoundaryTypes>
-    void setFixedCell_(CellCenterResidual& residual,
-                       const Problem& problem,
-                       const SubControlVolume& insideScv,
-                       const ElementVolumeVariables& elemVolVars,
-                       const BoundaryTypes& bcTypes) const
+    void setFixedCell(CellCenterResidual& residual,
+                      const Problem& problem,
+                      const SubControlVolume& insideScv,
+                      const ElementVolumeVariables& elemVolVars,
+                      const BoundaryTypes& bcTypes) const
     {
-        ParentType::setFixedCell_(residual, problem, insideScv, elemVolVars, bcTypes);
+        ParentType::setFixedCell(residual, problem, insideScv, elemVolVars, bcTypes);
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
@@ -129,4 +127,4 @@ protected:
 };
 }
 
-#endif   // DUMUX_CC_LOCAL_RESIDUAL_HH
+#endif

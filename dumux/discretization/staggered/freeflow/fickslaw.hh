@@ -82,10 +82,10 @@ public:
     //! We don't cache anything for this law
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
 
-    static CellCenterPrimaryVariables diffusiveFluxForCellCenter(const Problem& problem,
-                                                           const FVElementGeometry& fvGeometry,
-                                                           const ElementVolumeVariables& elemVolVars,
-                                                           const SubControlVolumeFace &scvf)
+    static CellCenterPrimaryVariables flux(const Problem& problem,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVolumeVariables& elemVolVars,
+                                           const SubControlVolumeFace &scvf)
     {
         CellCenterPrimaryVariables flux(0.0);
 
@@ -109,7 +109,7 @@ public:
                     return flux;
             }
 
-            const Scalar tij = transmissibility_(problem, fvGeometry, elemVolVars, scvf, compIdx);
+            const Scalar tij = transmissibility_(fvGeometry, elemVolVars, scvf, compIdx);
             const Scalar insideMoleFraction = insideVolVars.moleFraction(compIdx);
 
             const Scalar outsideMolarDensity = scvf.boundary() ? insideVolVars.molarDensity() : outsideVolVars.molarDensity();
@@ -148,8 +148,7 @@ public:
         return flux;
     }
 
-    static Scalar transmissibility_(const Problem& problem,
-                                    const FVElementGeometry& fvGeometry,
+    static Scalar transmissibility_(const FVElementGeometry& fvGeometry,
                                     const ElementVolumeVariables& elemVolVars,
                                     const SubControlVolumeFace& scvf,
                                     const int compIdx)

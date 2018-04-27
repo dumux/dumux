@@ -28,6 +28,7 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/assembly/staggeredlocalresidual.hh>
 #include <dune/common/hybridutilities.hh>
+#include <dumux/freeflow/nonisothermal/localresidual.hh>
 
 namespace Dumux
 {
@@ -79,6 +80,7 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
 public:
+    using EnergyLocalResidual = FreeFlowEnergyLocalResidual<FVGridGeometry, FluxVariables, ModelTraits::enableEnergyBalance()>;
 
     // account for the offset of the cell center privars within the PrimaryVariables container
     static constexpr auto cellCenterOffset = ModelTraits::numEq() - CellCenterPrimaryVariables::dimension;
@@ -97,11 +99,10 @@ public:
                                                         const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        CellCenterPrimaryVariables flux = fluxVars.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars,
-                                                 elemFaceVars, scvf, elemFluxVarsCache[scvf]);
+        CellCenterPrimaryVariables flux = fluxVars.computeMassFlux(problem, element, fvGeometry, elemVolVars,
+                                                                   elemFaceVars, scvf, elemFluxVarsCache[scvf]);
 
-        computeFluxForCellCenterNonIsothermal_(std::integral_constant<bool, ModelTraits::enableEnergyBalance()>(),
-                                               problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache, flux);
+        EnergyLocalResidual::heatFlux(flux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
 
         return flux;
     }
@@ -135,8 +136,7 @@ public:
         CellCenterPrimaryVariables storage;
         storage[Indices::conti0EqIdx - ModelTraits::dim()] = volVars.density();
 
-        computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, ModelTraits::enableEnergyBalance() >(),
-                                                  problem, scv, volVars, storage);
+        EnergyLocalResidual::fluidPhaseStorage(storage, volVars);
 
         return storage;
     }
@@ -183,25 +183,26 @@ public:
         return fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars);
     }
 
-protected:
+    /*!
+     * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
+     *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
+     */
+    template<class BoundaryTypes>
+    void setFixedCell(CellCenterResidual& residual,
+                      const Problem& problem,
+                      const SubControlVolume& insideScv,
+                      const ElementVolumeVariables& elemVolVars,
+                      const BoundaryTypes& bcTypes) const
+    {
+        // set a fixed pressure for cells adjacent to a wall
+        if(bcTypes.isDirichletCell(Indices::conti0EqIdx))
+        {
+            const auto& insideVolVars = elemVolVars[insideScv];
+            residual[Indices::conti0EqIdx - cellCenterOffset] = insideVolVars.pressure() - problem.dirichletAtPos(insideScv.center())[Indices::pressureIdx];
+        }
+    }
 
-    //  /*!
-    //  * \brief Evaluate boundary conditions
-    //  */
-    // template<class ElementBoundaryTypes>
-    // void evalBoundary_(const Element& element,
-    //                    const FVElementGeometry& fvGeometry,
-    //                    const ElementVolumeVariables& elemVolVars,
-    //                    const ElementFaceVariables& elemFaceVars,
-    //                    const ElementBoundaryTypes& elemBcTypes,
-    //                    const ElementFluxVariablesCache& elemFluxVarsCache)
-    // {
-    //     evalBoundaryForCellCenter_(element, fvGeometry, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
-    //     for (auto&& scvf : scvfs(fvGeometry))
-    //     {
-    //         evalBoundaryForFace_(element, fvGeometry, scvf, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
-    //     }
-    // }
+protected:
 
      /*!
      * \brief Evaluate boundary conditions for a cell center dof
@@ -220,16 +221,19 @@ protected:
         {
             if (scvf.boundary())
             {
-                auto boundaryFlux = computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
-                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-
-                // handle the actual boundary conditions:
                 const auto bcTypes = problem.boundaryTypes(element, scvf);
 
+                // treat Dirichlet and outflow BCs
+                FluxVariables fluxVars;
+                auto boundaryFlux = fluxVars.computeMassFlux(problem, element, fvGeometry, elemVolVars,
+                                                             elemFaceVars, scvf, elemFluxVarsCache[scvf]);
+
+                EnergyLocalResidual::heatFlux(boundaryFlux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
+
+                // treat Neumann BCs, i.e. overwrite certain fluxes by user-specified values
                 if(bcTypes.hasNeumann())
                 {
                     static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
-                    // handle Neumann BCs, i.e. overwrite certain fluxes by user-specified values
                     for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                     {
                         if(bcTypes.isNeumann(eqIdx + cellCenterOffset))
@@ -243,27 +247,10 @@ protected:
 
                 residual += boundaryFlux;
 
-                asImp_().setFixedCell_(residual, problem, scv, elemVolVars, bcTypes);
+                // if specified, set a fixed value at the center of a cell at the boundary
+                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+                asImp_().setFixedCell(residual, problem, scv, elemVolVars, bcTypes);
             }
-        }
-    }
-
-    /*!
-     * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
-     *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
-     */
-    template<class BoundaryTypes>
-    void setFixedCell_(CellCenterResidual& residual,
-                       const Problem& problem,
-                       const SubControlVolume& insideScv,
-                       const ElementVolumeVariables& elemVolVars,
-                       const BoundaryTypes& bcTypes) const
-    {
-        // set a fixed pressure for cells adjacent to a wall
-        if(bcTypes.isDirichletCell(Indices::conti0EqIdx))
-        {
-            const auto& insideVolVars = elemVolVars[insideScv];
-            residual[Indices::conti0EqIdx - cellCenterOffset] = insideVolVars.pressure() - problem.dirichletAtPos(insideScv.center())[Indices::pressureIdx];
         }
     }
 
@@ -326,52 +313,6 @@ protected:
             }
         }
     }
-
-    //! Evaluate energy fluxes entering or leaving the cell center control volume for non isothermal models
-    void computeFluxForCellCenterNonIsothermal_(std::true_type,
-                                                const Problem& problem,
-                                                const Element &element,
-                                                const FVElementGeometry& fvGeometry,
-                                                const ElementVolumeVariables& elemVolVars,
-                                                const ElementFaceVariables& elemFaceVars,
-                                                const SubControlVolumeFace &scvf,
-                                                const ElementFluxVariablesCache& elemFluxVarsCache,
-                                                CellCenterPrimaryVariables& flux) const
-    {
-        // if we are on an inflow/outflow boundary, use the volVars of the element itself
-        // TODO: catch neumann and outflow in localResidual's evalBoundary_()
-        bool isOutflow = false;
-        if(scvf.boundary())
-        {
-            const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-                if(bcTypes.isOutflow(Indices::energyBalanceIdx))
-                    isOutflow = true;
-        }
-
-        auto upwindTerm = [](const auto& volVars) { return volVars.density() * volVars.enthalpy(); };
-        using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
-
-        flux[Indices::energyBalanceIdx - cellCenterOffset] = FluxVariables::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
-        flux[Indices::energyBalanceIdx - cellCenterOffset] += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
-    }
-
-    //! Evaluate energy fluxes entering or leaving the cell center control volume for non isothermal models
-    template <typename... Args>
-    void computeFluxForCellCenterNonIsothermal_(std::false_type, Args&&... args) const {}
-
-    //! Evaluate energy storage for non isothermal models
-    void computeStorageForCellCenterNonIsothermal_(std::true_type,
-                                                   const Problem& problem,
-                                                   const SubControlVolume& scv,
-                                                   const VolumeVariables& volVars,
-                                                   CellCenterPrimaryVariables& storage) const
-    {
-        storage[Indices::energyBalanceIdx - cellCenterOffset] = volVars.density() * volVars.internalEnergy();
-    }
-
-    //! Evaluate energy storage for isothermal models
-    template <typename... Args>
-    void computeStorageForCellCenterNonIsothermal_(std::false_type, Args&&... args) const {}
 
 private:
 

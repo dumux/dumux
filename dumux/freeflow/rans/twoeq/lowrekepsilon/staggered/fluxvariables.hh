@@ -35,18 +35,18 @@ namespace Dumux
 {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
 class LowReKEpsilonFluxVariablesImpl;
 
 /*!
  * \ingroup LowReKEpsilonModel
  * \brief The flux variables class for the low-Reynolds k-epsilon model using the staggered grid discretization.
  */
-template<class TypeTag>
-class LowReKEpsilonFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
-: public NavierStokesFluxVariables<TypeTag>
+template<class TypeTag, class BaseFluxVariables>
+class LowReKEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
+: public BaseFluxVariables
 {
-    using ParentType = NavierStokesFluxVariables<TypeTag>;
+    using ParentType = BaseFluxVariables;
 
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
@@ -81,7 +81,7 @@ public:
     /*!
     * \brief Computes the flux for the cell center residual.
     */
-    CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
+    CellCenterPrimaryVariables computeMassFlux(const Problem& problem,
                                                         const Element &element,
                                                         const FVElementGeometry& fvGeometry,
                                                         const ElementVolumeVariables& elemVolVars,
@@ -89,8 +89,8 @@ public:
                                                         const SubControlVolumeFace &scvf,
                                                         const FluxVariablesCache& fluxVarsCache)
     {
-        CellCenterPrimaryVariables flux = ParentType::computeFluxForCellCenter(problem, element, fvGeometry,
-                                                                               elemVolVars, elemFaceVars, scvf, fluxVarsCache);
+        CellCenterPrimaryVariables flux = ParentType::computeMassFlux(problem, element, fvGeometry,
+                                                                      elemVolVars, elemFaceVars, scvf, fluxVarsCache);
 
         // calculate advective flux
         const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
@@ -109,8 +109,6 @@ public:
             = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermK, isOutflowK);
         flux[dissipationEqIdx - ModelTraits::dim()]
             = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermEpsilon, isOutflowEpsilon);
-        Dune::dverb << " k_adv " << ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermK, isOutflowK);
-        Dune::dverb << " e_adv " << ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermEpsilon, isOutflowEpsilon);
 
         // calculate diffusive flux
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
@@ -157,9 +155,6 @@ public:
                 += coeff_k / distance
                    * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
                    * scvf.area();
-            Dune::dverb << " k_diff " << coeff_k / distance
-                                                 * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
-                                                 * scvf.area();
         }
         if (!isOutflowEpsilon)
         {
@@ -167,9 +162,6 @@ public:
                 += coeff_e / distance
                    * (insideVolVars.dissipationTilde() - outsideVolVars.dissipationTilde())
                    * scvf.area();
-            Dune::dverb << " e_diff " << coeff_e / distance
-                                      * (insideVolVars.dissipationTilde() - outsideVolVars.dissipationTilde())
-                                      * scvf.area();
         }
         return flux;
     }

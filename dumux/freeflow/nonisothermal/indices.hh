@@ -18,23 +18,23 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesNIModel
- * \copydoc Dumux::NavierStokesNonIsothermalIndices
+ * \ingroup FreeflowNIModel
+ * \copydoc Dumux::FreeflowNonIsothermalIndices
  */
-#ifndef DUMUX_NAVIERSTOKES_NI_INDICES_HH
-#define DUMUX_NAVIERSTOKES_NI_INDICES_HH
+#ifndef DUMUX_FREEFLOW_NI_INDICES_HH
+#define DUMUX_FREEFLOW_NI_INDICES_HH
 
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesNIModel
+ * \ingroup FreeflowNIModel
  * \brief Indices for the non-isothermal Navier-Stokes model.
  *
  * \tparam IsothermalIndices The isothermal indices class
  * \tparam numEq the number of equations of the non-isothermal model
  */
 template <class IsothermalIndices, int numEq>
-class NavierStokesNonIsothermalIndices : public IsothermalIndices
+class FreeflowNonIsothermalIndices : public IsothermalIndices
 {
 public:
     static constexpr int energyBalanceIdx = numEq - 1;

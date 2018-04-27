@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup NavierStokesNCModel
+ * \ingroup FreeflowNCModel
  *
  * \copydoc Dumux::NavierStokesModel
  *
@@ -26,26 +26,29 @@
  * \f[
  *    \frac{\partial \left(\varrho X^\kappa\right)}{\partial t}
  *    + \nabla \cdot \left( \varrho {\boldsymbol{v}} X^\kappa
- *    - D^\kappa \varrho \frac{M^\kappa}{M} \textbf{grad}\, x^\kappa \right)
+ *    - (D^\kappa + D_\text{t}) \varrho \frac{M^\kappa}{M} \textbf{grad}\, x^\kappa \right)
  *    - q^\kappa = 0
  * \f]
  *
  * Alternatively, one component balance equation can be replace by a <B> total mass/mole balance equation </B>:
- *
  * \f[
  *    \frac{\partial \varrho_g}{\partial t}
  *    + \nabla \cdot \left(
  *        \varrho {\boldsymbol{v}}
- *        - \sum_\kappa D^\kappa \varrho \frac{M^\kappa}{M} \textbf{grad}\, x^\kappa
+ *        - \sum_\kappa (D^\kappa + D_\text{t}) \varrho \frac{M^\kappa}{M} \textbf{grad}\, x^\kappa
  *      \right)
  *    - q = 0
  * \f]
  *
+ * The eddy diffusivity \f$ D_\text{t} \f$ is related to the eddy viscosity \f$ \nu_\text{t} \f$
+ * by the turbulent Schmidt number, for Navier-Stokes models \f$ D_\text{t} = 0 \f$.
+ * \f[ D_\text{t} = \frac{\nu_\text{t}}{\mathrm{Sc}_\text{t}} \f]
+ *
  * So far, only the staggered grid spatial discretization (for structured grids) is available.
  */
 
-#ifndef DUMUX_NAVIERSTOKES_NC_MODEL_HH
-#define DUMUX_NAVIERSTOKES_NC_MODEL_HH
+#ifndef DUMUX_FREEFLOW_NC_MODEL_HH
+#define DUMUX_FREEFLOW_NC_MODEL_HH
 
 #include <dumux/common/properties.hh>
 
@@ -71,21 +74,15 @@
 namespace Dumux {
 
 /*!
- * \ingroup NavierStokesModel
- * \brief Traits for the Navier-Stokes multi-component model
+ * \ingroup FreeflowNCModel
+ * \brief Traits for the multi-component free-flow model
  */
 template<int dimension, int nComp, int phaseIdx, int replaceCompEqIdx, bool useM>
-struct NavierStokesNCModelTraits
+struct NavierStokesNCModelTraits : NavierStokesModelTraits<dimension>
 {
-    //! The dimension of the model
-    static constexpr int dim() { return dimension; }
-
     //! There are as many momentum balance equations as dimensions
     //! and as many balance equations as components.
     static constexpr int numEq() { return dimension+nComp; }
-
-    //! The number of phases is always 1
-    static constexpr int numPhases() { return 1; }
 
     //! The number of components
     static constexpr int numComponents() { return nComp; }
@@ -93,21 +90,15 @@ struct NavierStokesNCModelTraits
     //! Use moles or not
     static constexpr bool useMoles() { return useM; }
 
-    //! Enable advection
-    static constexpr bool enableAdvection() { return true; }
-
     //! The one-phase model has no molecular diffusion
     static constexpr bool enableMolecularDiffusion() { return true; }
 
-    //! The model is isothermal
-    static constexpr bool enableEnergyBalance() { return false; }
-
     //! the indices
-    using Indices = NavierStokesNCIndices<dim(), numEq(), phaseIdx, replaceCompEqIdx>;
+    using Indices = FreeflowNCIndices<dimension, numEq(), phaseIdx, replaceCompEqIdx, NavierStokesIndices<dimension>>;
 };
 
 ///////////////////////////////////////////////////////////////////////////
-// properties for the single-phase, multi-component Navier-Stokes model
+// properties for the single-phase, multi-component free-flow model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 
@@ -115,17 +106,17 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the single-phase, multi-component isothermal Navier-Stokes model
+//! The type tag for the single-phase, multi-component isothermal free-flow model
 NEW_TYPE_TAG(NavierStokesNC, INHERITS_FROM(FreeFlow));
 
-//! The type tag for the single-phase, multi-component non-isothermal Navier-Stokes model
+//! The type tag for the single-phase, multi-component non-isothermal free-flow model
 NEW_TYPE_TAG(NavierStokesNCNI, INHERITS_FROM(NavierStokesNC));
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values
 ///////////////////////////////////////////////////////////////////////////
 
-//!< states some specifics of the Navier-Stokes model
+//!< states some specifics of the free-flow model
 SET_PROP(NavierStokesNC, ModelTraits)
 {
 private:
@@ -146,9 +137,8 @@ SET_INT_PROP(NavierStokesNC, ReplaceCompEqIdx, 0); //<! Set the ReplaceCompEqIdx
 SET_BOOL_PROP(NavierStokesNC, EnableInertiaTerms, true); //!< Consider inertia terms by default
 SET_BOOL_PROP(NavierStokesNC, NormalizePressure, true); //!< Normalize the pressure term in the momentum balance by default
 
-
 //! The local residual
-SET_TYPE_PROP(NavierStokesNC, LocalResidual, NavierStokesNCResidual<TypeTag>);
+SET_TYPE_PROP(NavierStokesNC, LocalResidual, FreeflowNCResidual<TypeTag>);
 
 //! Set the volume variables property
 SET_PROP(NavierStokesNC, VolumeVariables)
@@ -161,12 +151,11 @@ private:
 
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
 public:
-    using type = NavierStokesNCVolumeVariables<Traits>;
+    using type = FreeflowNCVolumeVariables<Traits>;
 };
 
-
 //! The flux variables
-SET_TYPE_PROP(NavierStokesNC, FluxVariables, NavierStokesNCFluxVariables<TypeTag>);
+SET_TYPE_PROP(NavierStokesNC, FluxVariables, FreeflowNCFluxVariables<TypeTag>);
 
 //! The flux variables cache class, by default the one for free flow
 SET_TYPE_PROP(NavierStokesNC, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
@@ -175,11 +164,13 @@ SET_TYPE_PROP(NavierStokesNC, FluxVariablesCache, FreeFlowFluxVariablesCache<Typ
 SET_PROP(NavierStokesNC, VtkOutputFields)
 {
 private:
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    using BaseVtkOutputFields = NavierStokesVtkOutputFields<FVGridGeometry>;
 public:
-     using type = NavierStokesNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>;
+    using type = FreeflowNCVtkOutputFields<BaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem, phaseIdx>;
 };
 
 /*!
@@ -201,7 +192,7 @@ public:
 SET_TYPE_PROP(NavierStokesNC, MolecularDiffusionType, FicksLaw<TypeTag>);
 
 //////////////////////////////////////////////////////////////////////////
-// Property values for non-isothermal multi-component Navier-Stokes model
+// Property values for non-isothermal multi-component free-flow model
 //////////////////////////////////////////////////////////////////////////
 
 //! The model traits of the non-isothermal model
@@ -217,19 +208,21 @@ private:
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     using IsothermalModelTraits = NavierStokesNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
 public:
-    using type = NavierStokesNIModelTraits<IsothermalModelTraits>;
+    using type = FreeflowNIModelTraits<IsothermalModelTraits>;
 };
 
 //! The non-isothermal vtk output fields
 SET_PROP(NavierStokesNCNI, VtkOutputFields)
 {
 private:
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    using IsothermalFields = NavierStokesNCVtkOutputFields<FVGridGeometry, FluidSystem, phaseIdx>;
+    using BaseVtkOutputFields = NavierStokesVtkOutputFields<FVGridGeometry>;
+    using NonIsothermalFields = FreeflowNonIsothermalVtkOutputFields<BaseVtkOutputFields, ModelTraits>;
 public:
-     using type = NavierStokesNonIsothermalVtkOutputFields<IsothermalFields>;
+    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem, phaseIdx>;
 };
 
 //! Use Fourier's Law as default heat conduction type

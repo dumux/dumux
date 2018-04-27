@@ -21,16 +21,18 @@
  *
  * \brief Test for the staggered grid multi-component (Navier-)Stokes model
  */
- #include <config.h>
+#include <config.h>
 
- #include <ctime>
- #include <iostream>
+#define IS_TURBULENT 1
 
- #include <dune/common/parallel/mpihelper.hh>
- #include <dune/common/timer.hh>
- #include <dune/grid/io/file/dgfparser/dgfexception.hh>
- #include <dune/grid/io/file/vtk.hh>
- #include <dune/istl/io.hh>
+#include <ctime>
+#include <iostream>
+
+#include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/timer.hh>
+#include <dune/grid/io/file/dgfparser/dgfexception.hh>
+#include <dune/grid/io/file/vtk.hh>
+#include <dune/istl/io.hh>
 
 #include "channeltestproblem.hh"
 

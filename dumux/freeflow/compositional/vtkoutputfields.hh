@@ -18,41 +18,51 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup RANSNIModel
- * \copydoc Dumux::RANSNonIsothermalVtkOutputFields
+ * \ingroup FreeflowNCModel
+ * \copydoc Dumux::FreeflowNCVtkOutputFields
  */
-#ifndef DUMUX_RANS_NI_OUTPUT_FIELDS_HH
-#define DUMUX_RANS_NI_OUTPUT_FIELDS_HH
+#ifndef DUMUX_FREEFLOW_NC_VTK_OUTPUT_FIELDS_HH
+#define DUMUX_FREEFLOW_NC_VTK_OUTPUT_FIELDS_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/freeflow/navierstokes/vtkoutputfields.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup RANSNIModel
- * \brief Adds vtk output fields specific to non-isothermal RANS models
+ * \ingroup FreeflowNCModel
+ * \brief Adds vtk output fields specific to the FreeflowNC model
  */
-template<class NavierStokesVtkOutputFields, class RANSVtkOutputFields>
-class RANSNonIsothermalVtkOutputFields
+template<class BaseVtkOutputFields, class ModelTraits, class FVGridGeometry, class FluidSystem, int phaseIdx>
+class FreeflowNCVtkOutputFields
 {
 
 public:
-    //! Initialize the non-isothermal specific vtk output fields.
+    //! Initialize the FreeflowNC specific vtk output fields.
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        NavierStokesVtkOutputFields::init(vtk);
+        BaseVtkOutputFields::init(vtk);
         add(vtk);
     }
 
-    //! Add the RANS specific vtk output fields.
+    //! Add the FreeflowNC specific vtk output fields.
     template <class VtkOutputModule>
     static void add(VtkOutputModule& vtk)
     {
-        RANSVtkOutputFields::add(vtk);
-        vtk.addVolumeVariable( [](const auto& v){ return v.temperature(); }, "temperature");
-        vtk.addVolumeVariable( [](const auto& v){ return v.eddyThermalConductivity(); }, "lambda_t");
+        for (int j = 0; j < FluidSystem::numComponents; ++j)
+        {
+            vtk.addVolumeVariable([j](const auto& v){ return v.massFraction(j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+            vtk.addVolumeVariable([j](const auto& v){ return v.moleFraction(j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+            if (j != phaseIdx)
+            {
+                vtk.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+            }
+        }
+        if (ModelTraits::usesTurbulenceModel())
+            // the eddy diffusivity is recalculated for an arbitrary component which is not the phase component
+            vtk.addVolumeVariable([](const auto& v){ return v.effectiveDiffusivity(1-phaseIdx) - v.diffusionCoefficient(1-phaseIdx); }, "D_t");
     }
 };
 

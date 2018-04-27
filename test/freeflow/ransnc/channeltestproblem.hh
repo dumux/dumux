@@ -24,12 +24,17 @@
 #ifndef DUMUX_RANS_NC_TEST_PROBLEM_HH
 #define DUMUX_RANS_NC_TEST_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/h2oair.hh>
-
 #include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
+#include <dumux/freeflow/turbulenceproperties.hh>
 
+#if LOWREKEPSILON
+#include <dumux/freeflow/compositional/lowrekepsilonncmodel.hh>
+#include <dumux/freeflow/rans/twoeq/lowrekepsilon/problem.hh>
+#else
+#include <dumux/freeflow/compositional/zeroeqncmodel.hh>
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
-#include <dumux/freeflow/ransnc/model.hh>
+#endif
 
 namespace Dumux
 {
@@ -40,9 +45,17 @@ namespace Properties
 {
 
 #if NONISOTHERMAL
-NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI));
+  #if LOWREKEPSILON
+  NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNCNI));
+  #else
+  NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI));
+  #endif
 #else
-NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC));
+  #if LOWREKEPSILON
+  NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNC));
+  #else
+  NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC));
+  #endif
 #endif
 
 NEW_PROP_TAG(FluidSystem);
@@ -82,12 +95,19 @@ SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, true);
  * which is \f$ \unit[30]{K} \f$ higher than the initial and inlet temperature.
  */
 template <class TypeTag>
+#if LOWREKEPSILON
+class ChannelNCTestProblem : public LowReKEpsilonProblem<TypeTag>
+{
+    using ParentType = LowReKEpsilonProblem<TypeTag>;
+#else
 class ChannelNCTestProblem : public ZeroEqProblem<TypeTag>
 {
     using ParentType = ZeroEqProblem<TypeTag>;
+#endif
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
@@ -99,12 +119,34 @@ class ChannelNCTestProblem : public ZeroEqProblem<TypeTag>
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
+    static const unsigned int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+
 public:
     ChannelNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
+
         FluidSystem::init();
+        Dumux::TurbulenceProperties<Scalar, dimWorld, true> turbulenceProperties;
+        FluidState fluidState;
+        fluidState.setPressure(phaseIdx, 1e5);
+        fluidState.setTemperature(temperature());
+        fluidState.setMassFraction(phaseIdx, phaseIdx, 1.0);
+        Scalar density = FluidSystem::density(fluidState, phaseIdx);
+        Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, phaseIdx) / density;
+        Scalar diameter = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
+        turbulentKineticEnergy_ = turbulenceProperties.turbulentKineticEnergy(inletVelocity_, diameter, kinematicViscosity);
+        dissipation_ = turbulenceProperties.dissipation(inletVelocity_, diameter, kinematicViscosity);
+#if LOWREKEPSILON
+        std::cout << Indices::momentumXBalanceIdx
+                  << Indices::momentumYBalanceIdx
+                  << Indices::conti0EqIdx
+                  << Indices::conti0EqIdx + 1
+                  << Indices::turbulentKineticEnergyEqIdx
+                  << Indices::dissipationEqIdx
+                  << std::endl;
+#endif
     }
 
    /*!
@@ -159,6 +201,10 @@ public:
 #if NONISOTHERMAL
         values.setOutflow(Indices::energyBalanceIdx);
 #endif
+#if LOWREKEPSILON
+        values.setDirichlet(Indices::turbulentKineticEnergyIdx);
+        values.setDirichlet(Indices::dissipationIdx);
+#endif
 
         if(isInlet_(globalPos))
         {
@@ -176,6 +222,10 @@ public:
             values.setOutflow(transportEqIdx);
 #if NONISOTHERMAL
             values.setOutflow(Indices::energyBalanceIdx);
+#endif
+#if LOWREKEPSILON
+            values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
+            values.setOutflow(Indices::dissipationEqIdx);
 #endif
         }
         else if (isOnWall(globalPos))
@@ -245,6 +295,16 @@ public:
             values[Indices::velocityXIdx] =  inletVelocity_;
         values[Indices::velocityYIdx] = 0.0;
 
+#if LOWREKEPSILON
+        values[Indices::turbulentKineticEnergyEqIdx] = turbulentKineticEnergy_;
+        values[Indices::dissipationEqIdx] = dissipation_;
+        if (isOnWall(globalPos))
+        {
+            values[Indices::turbulentKineticEnergyEqIdx] = 0.0;
+            values[Indices::dissipationEqIdx] = 0.0;
+        }
+#endif
+
         return values;
     }
 
@@ -280,6 +340,8 @@ private:
 
     const Scalar eps_;
     Scalar inletVelocity_;
+    Scalar turbulentKineticEnergy_;
+    Scalar dissipation_;
     TimeLoopPtr timeLoop_;
 };
 } //end namespace

@@ -85,10 +85,10 @@ public:
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
     using CacheFiller = FluxVariablesCaching::EmptyCacheFiller;
 
-    static CellCenterPrimaryVariables diffusiveFluxForCellCenter(const Problem& problem,
-                                                                 const FVElementGeometry& fvGeometry,
-                                                                 const ElementVolumeVariables& elemVolVars,
-                                                                 const SubControlVolumeFace& scvf)
+    static CellCenterPrimaryVariables flux(const Problem& problem,
+                                           const FVElementGeometry& fvGeometry,
+                                           const ElementVolumeVariables& elemVolVars,
+                                           const SubControlVolumeFace& scvf)
     {
         //this is to calculate the maxwellStefan diffusion in a multicomponent system.
         //see: Multicomponent Mass Transfer. R. Taylor u. R. Krishna. J. Wiley & Sons, New York 1993

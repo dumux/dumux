@@ -46,15 +46,17 @@ class ZeroEqVolumeVariables
     using NavierStokesParentType = NSVolumeVariables;
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
-    using Indices = typename Traits::ModelTraits::Indices;
 
     static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
+    static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
 
 public:
     //! export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
     //! export the fluid state type
     using FluidState = typename Traits::FluidState;
+    //! export the indices type
+    using Indices = typename Traits::ModelTraits::Indices;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -93,6 +95,7 @@ public:
         additionalRoughnessLength_ = problem.additionalRoughnessLength_[RANSParentType::elementID()];
         yPlusRough_ = wallDistanceRough() * RANSParentType::uStar() / RANSParentType::kinematicViscosity();
         dynamicEddyViscosity_ = calculateEddyViscosity(elemSol, problem, element, scv);
+        calculateEddyDiffusivity(problem);
     }
 
     /*!
@@ -171,6 +174,19 @@ public:
     }
 
     /*!
+     * \brief Calculates the eddy diffusivity \f$\mathrm{[m^2/s]}\f$ based
+     *        on the kinematic eddy viscosity and the turbulent schmidt number
+     */
+    template<class Problem>
+    void calculateEddyDiffusivity(const Problem& problem)
+    {
+        static const auto turbulentSchmidtNumber
+            = getParamFromGroup<Scalar>(problem.paramGroup(),
+                                        "RANS.TurbulentSchmidtNumber", 1.0);
+        eddyDiffusivity_ = RANSParentType::kinematicEddyViscosity() / turbulentSchmidtNumber;
+    }
+
+    /*!
      * \brief Return the wall distance \f$\mathrm{[m]}\f$ including an additional roughness length
      */
     Scalar wallDistanceRough() const
@@ -183,6 +199,23 @@ public:
     { return yPlusRough_; }
 
     /*!
+     * \brief Returns the eddy diffusivity \f$\mathrm{[m^2/s]}\f$
+     */
+    Scalar eddyDiffusivity() const
+    { return eddyDiffusivity_; }
+
+     /*!
+     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+     *
+     * \param compIIdx the index of the component which diffusive
+     * \param compJIdx the index of the component with respect to which compIIdx diffuses
+     */
+    Scalar effectiveDiffusivity(int compIIdx, int compJIdx = fluidSystemPhaseIdx) const
+    {
+        return NavierStokesParentType::diffusionCoefficient(compIIdx, compJIdx) + eddyDiffusivity();
+    }
+
+    /*!
      * \brief Return the fluid state of the control volume.
      */
     const FluidState& fluidState() const
@@ -190,6 +223,7 @@ public:
 
 protected:
     Scalar dynamicEddyViscosity_;
+    Scalar eddyDiffusivity_;
     Scalar additionalRoughnessLength_;
     Scalar yPlusRough_;
 };

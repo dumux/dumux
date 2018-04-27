@@ -180,18 +180,6 @@
      */
     /*!
      * \ingroup FreeflowModels
-     * \defgroup NavierStokesNCModel Navier-Stokes nc
-     * \brief Single-phase multi-component Navier-Stokes flow
-     * \copydetails ./freeflow/navierstokesnc/model.hh
-     */
-    /*!
-     * \ingroup FreeflowModels
-     * \defgroup NavierStokesNIModel nonisothermal
-     * \brief An energy equation adaptor for isothermal Navier-Stokes models
-     * \copydetails ./freeflow/nonisothermal/model.hh
-     */
-    /*!
-     * \ingroup FreeflowModels
      * \defgroup RANSModel Reynolds-Averaged Navier-Stokes
      * \brief Single-phase Reynolds-Averaged Navier-Stokes flow
      * \copydetails ./freeflow/rans/model.hh
@@ -216,9 +204,15 @@
          */
     /*!
      * \ingroup FreeflowModels
-     * \defgroup RANSNCModel Reynolds-Averaged Navier-Stokes nc
-     * \brief Single-phase multi-component Reynolds-Averaged Navier-Stokes flow
-     * \copydetails ./freeflow/ransnc/model.hh
+     * \defgroup FreeflowNCModel Compositional
+     * \brief Single-phase multi-component free-flow flow models
+     * \copydetails ./freeflow/compositional/navierstokesncmodel.hh
+     */
+    /*!
+     * \ingroup FreeflowModels
+     * \defgroup FreeflowNIModel Nonisothermal
+     * \brief An energy equation adaptor for isothermal free-flow models
+     * \copydetails ./freeflow/nonisothermal/model.hh
      */
 
 /* ***************** Benchmarks and Tests ******************/
