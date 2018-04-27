@@ -235,6 +235,24 @@ public:
         }
     }
 
+protected:
+    // some return functions for differing implementations to use
+    const Problem& problem() const { return problem_; }
+    const FVGridGeometry& fvGridGeometry() const { return gridGeom_; }
+    const GridVariables& gridVariables() const { return gridVariables_; }
+    const SolutionVector& sol() const { return sol_; }
+
+    const bool verbose() const { return verbose_; }
+    const std::string& name() const { return name_; }
+    const Dune::VTK::DataMode dataMode() const { return dm_; }
+
+    Dune::VTKWriter<GridView>& writer() { return *writer_; }
+    Dune::VTKSequenceWriter<GridView>& sequenceWriter() { return sequenceWriter_; }
+
+    const std::vector<VolVarScalarDataInfo>& volVarScalarDataInfo() const { return volVarScalarDataInfo_; }
+    const std::vector<VolVarVectorDataInfo>& volVarVectorDataInfo() const { return volVarVectorDataInfo_; }
+    const std::vector<Field>& fields() const { return fields_; }
+
 private:
 
     //! Assembles the fields and adds them to the writer (conforming output)
