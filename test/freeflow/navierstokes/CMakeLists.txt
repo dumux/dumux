@@ -97,3 +97,25 @@ dune_add_test(NAME test_navierstokes_angeli
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_angeli-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_angeli-00045.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_navierstokes_angeli")
+
+dune_add_test(NAME test_stokes_channel_3d
+              SOURCES test_stokes_channel_3d.cc
+              COMPILE_DEFINITIONS DIM_3D=1
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/stokes_channel_3d-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_stokes_channel_3d-00001.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes_channel_3d"
+                             --zeroThreshold {"velocity_component \(m/s\)":1e-12})
+
+dune_add_test(NAME test_stokes_channel_pseudo3d
+              SOURCES test_stokes_channel_3d.cc
+              COMPILE_DEFINITIONS DIM_3D=0
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/stokes_channel_pseudo3d-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_stokes_channel_pseudo3d-00001.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes_channel_pseudo3d"
+                             --zeroThreshold {"velocity_component \(m/s\)":1e-12})

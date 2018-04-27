@@ -116,18 +116,56 @@ public:
      * If the <tt>Problem.EnableGravity</tt> parameter is true, this means
      * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
      */
-    const GlobalPosition &gravity() const
+    const GlobalPosition& gravity() const
     { return gravity_; }
 
     //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
     template <class G = FVGridGeometry>
     typename std::enable_if<G::discMethod == DiscretizationMethod::staggered, void>::type
     applyInitialFaceSolution(SolutionVector& sol,
-                              const SubControlVolumeFace& scvf,
-                              const PrimaryVariables& initSol) const
+                             const SubControlVolumeFace& scvf,
+                             const PrimaryVariables& initSol) const
     {
         sol[FVGridGeometry::faceIdx()][scvf.dofIndex()][0] = initSol[Indices::velocity(scvf.directionIndex())];
     }
+
+
+    /*!
+     * \brief An additional drag term can be included as source term for the momentum balance
+     *        to mimic 3D flow behavior in 2D:
+     *  \f[
+     *        f_{drag} = -(8 \mu / h^2)v
+     *  \f]
+     *  Here, \f$h\f$ corresponds to the extruded height that is
+     *  bounded by the imaginary walls. See Flekkoy et al. (1995) \cite flekkoy1995a<BR>
+     *  A value of 8.0 is used as a default factor, corresponding
+     *  to the velocity profile at  the center plane
+     *  of the virtual height (maximum velocity). Setting this value to 12.0 corresponds
+     *  to an depth-averaged velocity (Venturoli and Boek, 2006) \cite venturoli2006a.
+     */
+    Scalar pseudo3DWallFriction(const Scalar velocity,
+                                const Scalar viscosity,
+                                const Scalar height,
+                                const Scalar factor = 8.0) const
+    {
+        static_assert(dim == 2, "Pseudo 3D wall friction may only be used in 2D");
+        return -factor * velocity * viscosity / (height*height);
+    }
+
+    //! Convenience function for staggered grid implementation.
+    template <class ElementVolumeVariables, class ElementFaceVariables, class G = FVGridGeometry>
+    typename std::enable_if<G::discMethod == DiscretizationMethod::staggered, Scalar>::type
+    pseudo3DWallFriction(const SubControlVolumeFace& scvf,
+                         const ElementVolumeVariables& elemVolVars,
+                         const ElementFaceVariables& elemFaceVars,
+                         const Scalar height,
+                         const Scalar factor = 8.0) const
+    {
+        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
+        const Scalar viscosity = elemVolVars[scvf.insideScvIdx()].effectiveViscosity();
+        return pseudo3DWallFriction(velocity, viscosity, height, factor);
+    }
+
 
 private:
 
