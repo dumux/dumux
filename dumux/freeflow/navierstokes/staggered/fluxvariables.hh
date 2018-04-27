@@ -37,7 +37,6 @@ namespace Dumux {
 template<class TypeTag, DiscretizationMethod discMethod>
 class NavierStokesFluxVariablesImpl;
 
-
 /*!
  * \ingroup NavierStokesModel
  * \brief The flux variables class for the Navier-Stokes model using the staggered grid discretization.
@@ -133,13 +132,13 @@ public:
     *                   scvf
     * \endverbatim
     */
-    CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
-                                                        const Element& element,
-                                                        const FVElementGeometry& fvGeometry,
-                                                        const ElementVolumeVariables& elemVolVars,
-                                                        const ElementFaceVariables& elemFaceVars,
-                                                        const SubControlVolumeFace& scvf,
-                                                        const FluxVariablesCache& fluxVarsCache)
+    CellCenterPrimaryVariables computeMassFlux(const Problem& problem,
+                                               const Element& element,
+                                               const FVElementGeometry& fvGeometry,
+                                               const ElementVolumeVariables& elemVolVars,
+                                               const ElementFaceVariables& elemFaceVars,
+                                               const SubControlVolumeFace& scvf,
+                                               const FluxVariablesCache& fluxVarsCache)
     {
         // The advectively transported quantity (i.e density for a single-phase system).
         auto upwindTerm = [](const auto& volVars) { return volVars.density(); };

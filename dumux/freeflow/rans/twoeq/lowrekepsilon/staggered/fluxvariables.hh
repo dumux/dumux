@@ -81,7 +81,7 @@ public:
     /*!
     * \brief Computes the flux for the cell center residual.
     */
-    CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
+    CellCenterPrimaryVariables computeMassFlux(const Problem& problem,
                                                         const Element &element,
                                                         const FVElementGeometry& fvGeometry,
                                                         const ElementVolumeVariables& elemVolVars,
@@ -89,8 +89,8 @@ public:
                                                         const SubControlVolumeFace &scvf,
                                                         const FluxVariablesCache& fluxVarsCache)
     {
-        CellCenterPrimaryVariables flux = ParentType::computeFluxForCellCenter(problem, element, fvGeometry,
-                                                                               elemVolVars, elemFaceVars, scvf, fluxVarsCache);
+        CellCenterPrimaryVariables flux = ParentType::computeMassFlux(problem, element, fvGeometry,
+                                                                      elemVolVars, elemFaceVars, scvf, fluxVarsCache);
 
         // calculate advective flux
         const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());

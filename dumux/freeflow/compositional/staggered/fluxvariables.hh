@@ -67,15 +67,15 @@ public:
     * \brief Computes the flux for the cell center residual.
     */
     template<class ElementVolumeVariables, class ElementFaceVariables, class FluxVariablesCache>
-    CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
-                                                        const Element &element,
-                                                        const FVElementGeometry& fvGeometry,
-                                                        const ElementVolumeVariables& elemVolVars,
-                                                        const ElementFaceVariables& elemFaceVars,
-                                                        const SubControlVolumeFace &scvf,
-                                                        const FluxVariablesCache& fluxVarsCache)
+    CellCenterPrimaryVariables computeMassFlux(const Problem& problem,
+                                               const Element &element,
+                                               const FVElementGeometry& fvGeometry,
+                                               const ElementVolumeVariables& elemVolVars,
+                                               const ElementFaceVariables& elemFaceVars,
+                                               const SubControlVolumeFace &scvf,
+                                               const FluxVariablesCache& fluxVarsCache)
     {
-        CellCenterPrimaryVariables flux = ParentType::computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, fluxVarsCache);
+        CellCenterPrimaryVariables flux(0.0);
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {

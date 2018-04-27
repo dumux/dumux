@@ -99,8 +99,8 @@ public:
                                                         const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        CellCenterPrimaryVariables flux = fluxVars.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars,
-                                                 elemFaceVars, scvf, elemFluxVarsCache[scvf]);
+        CellCenterPrimaryVariables flux = fluxVars.computeMassFlux(problem, element, fvGeometry, elemVolVars,
+                                                                   elemFaceVars, scvf, elemFluxVarsCache[scvf]);
 
         EnergyLocalResidual::heatFlux(flux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
 
@@ -221,17 +221,19 @@ protected:
         {
             if (scvf.boundary())
             {
-                auto boundaryFlux = computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
-                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-
-                // handle the actual boundary conditions:
                 const auto bcTypes = problem.boundaryTypes(element, scvf);
 
+                // treat Dirichlet and outflow BCs
+                FluxVariables fluxVars;
+                auto boundaryFlux = fluxVars.computeMassFlux(problem, element, fvGeometry, elemVolVars,
+                                                             elemFaceVars, scvf, elemFluxVarsCache[scvf]);
+
                 EnergyLocalResidual::heatFlux(boundaryFlux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
+
+                // treat Neumann BCs, i.e. overwrite certain fluxes by user-specified values
                 if(bcTypes.hasNeumann())
                 {
                     static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
-                    // handle Neumann BCs, i.e. overwrite certain fluxes by user-specified values
                     for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                     {
                         if(bcTypes.isNeumann(eqIdx + cellCenterOffset))
@@ -245,6 +247,8 @@ protected:
 
                 residual += boundaryFlux;
 
+                // if specified, set a fixed value at the center of a cell at the boundary
+                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
                 asImp_().setFixedCell(residual, problem, scv, elemVolVars, bcTypes);
             }
         }
