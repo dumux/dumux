@@ -76,8 +76,6 @@ class VtkOutputModule
     using Scalar = typename GridVariables::Scalar;
 
     using GridView = typename FVGridGeometry::GridView;
-    using ElementMapper = typename FVGridGeometry::ElementMapper;
-    using VertexMapper = typename FVGridGeometry::VertexMapper;
 
     enum {
         dim = GridView::dimension,
@@ -580,18 +578,6 @@ private:
 
     //! return the number of dofs
     std::size_t numDofs_() const { return gridGeom_.gridView().size(dofCodim); }
-
-     /*!
-     * \brief Helper function to retrieve privar data from the solution vector
-     *        May be specialized.
-     *
-     * \param dofIdxGlobal The global dof index
-     * \param pvIdx The index of the primary variable
-     */
-    auto getPriVarData_(const std::size_t dofIdxGlobal, const std::size_t pvIdx)
-    {
-        return sol_[dofIdxGlobal][pvIdx];
-    }
 
     const Problem& problem_;
     const FVGridGeometry& gridGeom_;
