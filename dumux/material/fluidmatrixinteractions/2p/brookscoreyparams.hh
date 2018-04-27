@@ -26,6 +26,8 @@
 #ifndef DUMUX_BROOKS_COREY_PARAMS_HH
 #define DUMUX_BROOKS_COREY_PARAMS_HH
 
+#include <dune/common/float_cmp.hh>
+
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux
@@ -53,6 +55,16 @@ public:
     BrooksCoreyParams(Scalar pe, Scalar lambda)
         : pe_(pe), lambda_(lambda)
     {
+    }
+
+    /*!
+     * \brief Equality comparison with another set of params
+     */
+    template<class OtherParams>
+    bool operator== (const OtherParams& otherParams) const
+    {
+        return Dune::FloatCmp::eq(pe_, otherParams.pe(), /*eps*/1e-6*pe_)
+               && Dune::FloatCmp::eq(lambda_, otherParams.lambda(), /*eps*/1e-6*lambda_);
     }
 
     /*!
