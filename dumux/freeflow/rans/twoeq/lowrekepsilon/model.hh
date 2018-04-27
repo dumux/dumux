@@ -133,10 +133,22 @@ public:
 };
 
 //! The flux variables
-SET_TYPE_PROP(LowReKEpsilon, FluxVariables, LowReKEpsilonFluxVariables<TypeTag>);
+SET_PROP(LowReKEpsilon, FluxVariables)
+{
+private:
+    using BaseFluxVariables = NavierStokesFluxVariables<TypeTag>;
+public:
+    using type = LowReKEpsilonFluxVariables<TypeTag, BaseFluxVariables>;
+};
 
 //! The local residual
-SET_TYPE_PROP(LowReKEpsilon, LocalResidual, LowReKEpsilonResidual<TypeTag>);
+SET_PROP(LowReKEpsilon, LocalResidual)
+{
+private:
+    using BaseLocalResidual = NavierStokesResidual<TypeTag>;
+public:
+    using type = LowReKEpsilonResidual<TypeTag, BaseLocalResidual>;
+};
 
 //! Set the volume variables property
 SET_PROP(LowReKEpsilon, VolumeVariables)

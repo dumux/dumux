@@ -32,7 +32,7 @@ namespace Dumux
 
 
 // forward declaration
-template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FreeflowNCFluxVariablesImpl;
 
 /*!
@@ -42,8 +42,8 @@ class FreeflowNCFluxVariablesImpl;
           discretization-specific flux variables.
  * \note  Not all specializations are currently implemented
  */
-template<class TypeTag, class BaseFluxVariables>
-using FreeflowNCFluxVariables = FreeflowNCFluxVariablesImpl<TypeTag, BaseFluxVariables, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+template<class TypeTag>
+using FreeflowNCFluxVariables = FreeflowNCFluxVariablesImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 
 } // end namespace

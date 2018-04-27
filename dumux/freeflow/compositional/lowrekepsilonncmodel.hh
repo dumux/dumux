@@ -105,18 +105,18 @@ public:
 SET_PROP(LowReKEpsilonNC, LocalResidual)
 {
 private:
-    using BaseLocalResidual = LowReKEpsilonResidual<TypeTag>;
+    using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
 public:
-    using type = FreeflowNCResidual<TypeTag, BaseLocalResidual>;
+    using type = LowReKEpsilonResidual<TypeTag, BaseLocalResidual>;
 };
 
 //! The flux variables
 SET_PROP(LowReKEpsilonNC, FluxVariables)
 {
 private:
-    using BaseFluxVariables = LowReKEpsilonFluxVariables<TypeTag>;
+    using BaseFluxVariables = FreeflowNCFluxVariables<TypeTag>;
 public:
-    using type = FreeflowNCFluxVariables<TypeTag, BaseFluxVariables>;
+    using type = LowReKEpsilonFluxVariables<TypeTag, BaseFluxVariables>;
 };
 
 //! The specific vtk output fields
@@ -174,18 +174,18 @@ public:
 SET_PROP(LowReKEpsilonNCNI, LocalResidual)
 {
 private:
-    using BaseLocalResidual = LowReKEpsilonResidual<TypeTag>;
+    using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
 public:
-    using type = FreeflowNCResidual<TypeTag, BaseLocalResidual>;
+    using type = LowReKEpsilonResidual<TypeTag, BaseLocalResidual>;
 };
 
 //! The flux variables
 SET_PROP(LowReKEpsilonNCNI, FluxVariables)
 {
 private:
-    using BaseFluxVariables = LowReKEpsilonFluxVariables<TypeTag>;
+    using BaseFluxVariables = FreeflowNCFluxVariables<TypeTag>;
 public:
-    using type = FreeflowNCFluxVariables<TypeTag, BaseFluxVariables>;
+    using type = LowReKEpsilonFluxVariables<TypeTag, BaseFluxVariables>;
 };
 
 //! The specific vtk output fields

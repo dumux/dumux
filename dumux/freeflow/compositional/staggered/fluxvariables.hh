@@ -34,18 +34,18 @@ namespace Dumux
 {
 
 // forward declaration
-template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FreeflowNCFluxVariablesImpl;
 
 /*!
  * \ingroup FreeflowNCModel
  * \brief The flux variables class for the multi-component free-flow model using the staggered grid discretization.
  */
-template<class TypeTag, class BaseFluxVariables>
-class FreeflowNCFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
-: public BaseFluxVariables
+template<class TypeTag>
+class FreeflowNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
+: public NavierStokesFluxVariables<TypeTag>
 {
-    using ParentType = BaseFluxVariables;
+    using ParentType = NavierStokesFluxVariables<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;

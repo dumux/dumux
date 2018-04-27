@@ -33,7 +33,7 @@ namespace Dumux
 {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
 class LowReKEpsilonResidualImpl;
 
 /*!
@@ -43,8 +43,8 @@ class LowReKEpsilonResidualImpl;
           discretization-specific local residual.
  * \note  Not all specializations are currently implemented
  */
-template<class TypeTag>
-using LowReKEpsilonResidual = LowReKEpsilonResidualImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+template<class TypeTag, class BaseLocalResidual>
+using LowReKEpsilonResidual = LowReKEpsilonResidualImpl<TypeTag, BaseLocalResidual, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 }
 

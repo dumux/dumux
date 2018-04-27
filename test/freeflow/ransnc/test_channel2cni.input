@@ -16,13 +16,11 @@ InletVelocity = 0.1 # [m/s]
 EnableGravity = false
 
 [RANS]
-EddyViscosityModel = 3
 TurbulentSchmidtNumber = 0.7
 TurbulentPrandtlNumber = 0.85
 
 [Assembly]
 NumericDifferenceMethod = 0
-NumericEpsilon.BaseEpsilon = 1e-8
 
 [Newton]
 MaxSteps = 10

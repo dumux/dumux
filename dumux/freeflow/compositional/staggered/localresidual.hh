@@ -31,18 +31,18 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FreeflowNCResidualImpl;
 
 /*!
  * \ingroup FreeflowNCModel
  * \brief Element-wise calculation of the multi-component free-flow residual for models using the staggered discretization
  */
-template<class TypeTag, class BaseLocalResidual>
-class FreeflowNCResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
-: public BaseLocalResidual
+template<class TypeTag>
+class FreeflowNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
+: public NavierStokesResidual<TypeTag>
 {
-    using ParentType = BaseLocalResidual;
+    using ParentType = NavierStokesResidual<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -70,7 +70,7 @@ public:
                                                            const SubControlVolume& scv,
                                                            const VolumeVariables& volVars) const
     {
-        CellCenterPrimaryVariables storage = ParentType::computeStorageForCellCenter(problem, scv, volVars);
+        CellCenterPrimaryVariables storage(0.0);
 
         const Scalar density = useMoles ? volVars.molarDensity() : volVars.density();
 

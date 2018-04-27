@@ -33,7 +33,7 @@ namespace Dumux
 {
 
 // forward declaration
-template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
+template<class TypeTag, DiscretizationMethod discMethod>
 class FreeflowNCResidualImpl;
 
 /*!
@@ -43,8 +43,8 @@ class FreeflowNCResidualImpl;
           discretization-specific local residual.
  * \note  Not all specializations are currently implemented
  */
-template<class TypeTag, class BaseLocalResidual>
-using FreeflowNCResidual = FreeflowNCResidualImpl<TypeTag, BaseLocalResidual, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+template<class TypeTag>
+using FreeflowNCResidual = FreeflowNCResidualImpl<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
 }
 

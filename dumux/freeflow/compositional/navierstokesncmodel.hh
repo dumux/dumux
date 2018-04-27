@@ -138,13 +138,7 @@ SET_BOOL_PROP(NavierStokesNC, EnableInertiaTerms, true); //!< Consider inertia t
 SET_BOOL_PROP(NavierStokesNC, NormalizePressure, true); //!< Normalize the pressure term in the momentum balance by default
 
 //! The local residual
-SET_PROP(NavierStokesNC, LocalResidual)
-{
-private:
-    using BaseLocalResidual = NavierStokesResidual<TypeTag>;
-public:
-    using type = FreeflowNCResidual<TypeTag, BaseLocalResidual>;
-};
+SET_TYPE_PROP(NavierStokesNC, LocalResidual, FreeflowNCResidual<TypeTag>);
 
 //! Set the volume variables property
 SET_PROP(NavierStokesNC, VolumeVariables)
@@ -161,13 +155,7 @@ public:
 };
 
 //! The flux variables
-SET_PROP(NavierStokesNC, FluxVariables)
-{
-private:
-    using BaseFluxVariables = NavierStokesFluxVariables<TypeTag>;
-public:
-    using type = FreeflowNCFluxVariables<TypeTag, BaseFluxVariables>;
-};
+SET_TYPE_PROP(NavierStokesNC, FluxVariables, FreeflowNCFluxVariables<TypeTag>);
 
 //! The flux variables cache class, by default the one for free flow
 SET_TYPE_PROP(NavierStokesNC, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
