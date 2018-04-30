@@ -219,26 +219,17 @@ private:
                         const auto dofIdxGlobal = scv.dofIndex();
                         const auto& volVars = elemVolVars[scv];
 
-                        // get the scalar-valued data
                         if (!scv.isOnFracture())
                         {
                             for (std::size_t i = 0; i < volVarScalarDataInfo.size(); ++i)
                                 volVarScalarData[i][dofIdxGlobal] = volVarScalarDataInfo[i].get(volVars);
-                        }
-                        else
-                        {
-                            for (std::size_t i = 0; i < volVarScalarDataInfo.size(); ++i)
-                                volVarScalarDataFracture[i][vertexToFractureVertexIdx_[dofIdxGlobal]] = volVarScalarDataInfo[i].get(volVars);
-                        }
-
-                        // get the vector-valued data
-                        if (!scv.isOnFracture())
-                        {
                             for (std::size_t i = 0; i < volVarVectorDataInfo.size(); ++i)
                                 volVarVectorData[i][dofIdxGlobal] = volVarVectorDataInfo[i].get(volVars);
                         }
                         else
                         {
+                            for (std::size_t i = 0; i < volVarScalarDataInfo.size(); ++i)
+                                volVarScalarDataFracture[i][vertexToFractureVertexIdx_[dofIdxGlobal]] = volVarScalarDataInfo[i].get(volVars);
                             for (std::size_t i = 0; i < volVarVectorDataInfo.size(); ++i)
                                 volVarVectorDataFracture[i][vertexToFractureVertexIdx_[dofIdxGlobal]] = volVarVectorDataInfo[i].get(volVars);
                         }
