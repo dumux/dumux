@@ -88,6 +88,17 @@ public:
     {
         return 50.50;
     }
+
+    /*!
+     * \brief Thermal conductivity of the component \f$\mathrm{[W/(m*K)]}\f$ as a solid.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     */
+    static Scalar solidThermalConductivity(Scalar temperature)
+    {
+        return 6.49;
+    }
+
+
 };
 
 } // end namespace Components
