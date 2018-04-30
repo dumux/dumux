@@ -27,6 +27,7 @@
 #include <type_traits>
 
 #include <dune/common/version.hh>
+#include <dune/common/typetraits.hh>
 
 namespace Dumux
 {
