@@ -68,10 +68,8 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered >
     static_assert(ModelTraits::numPhases() == 1, "Only one phase allowed supported!");
 
     enum {
-        pressureIdx = Indices::pressureIdx,
         conti0EqIdx = Indices::conti0EqIdx,
         mainCompIdx = Indices::mainCompIdx,
-        replaceCompEqIdx = Indices::replaceCompEqIdx,
     };
 
 public:
@@ -118,14 +116,8 @@ public:
             flux[compIdx] = avgDensity * tij * (insideMoleFraction - outsideMoleFraction);
         }
 
-        if(!(useMoles && replaceCompEqIdx == mainCompIdx))
-        {
-            const Scalar cumulativeFlux = std::accumulate(flux.begin(), flux.end(), 0.0);
-            flux[mainCompIdx] = - cumulativeFlux;
-        }
-
-        if(useMoles && replaceCompEqIdx <= numComponents)
-            flux[replaceCompEqIdx] = 0.0;
+        const Scalar cumulativeFlux = std::accumulate(flux.begin(), flux.end(), 0.0);
+        flux[mainCompIdx] = - cumulativeFlux;
 
         // Fick's law (for binary systems) states that the net flux of moles within the bulk phase has to be zero:
         // If a given amount of molecules A travel into one direction, the same amount of molecules B have to
@@ -136,13 +128,6 @@ public:
             //convert everything to a mass flux
             for(int compIdx = 0; compIdx < numComponents; ++compIdx)
                 flux[compIdx] *= FluidSystem::molarMass(compIdx);
-
-
-            if(replaceCompEqIdx < numComponents)
-            {
-                for(int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    flux[replaceCompEqIdx] += (compIdx != replaceCompEqIdx) ? flux[compIdx] : 0.0;
-            }
         }
 
         return flux;
