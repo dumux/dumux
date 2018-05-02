@@ -133,7 +133,6 @@ private:
     MaterialLawParams materialParams_;
     Scalar permeability_;
     Scalar porosity_;
-    Scalar lambdaSolid_;
 };
 
 } // end namespace Dumux

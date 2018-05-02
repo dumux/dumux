@@ -199,7 +199,6 @@ private:
     };
 
     Scalar layerBottom_;
-    Scalar lambdaSolid_;
 
     Scalar fineK_;
     Scalar coarseK_;

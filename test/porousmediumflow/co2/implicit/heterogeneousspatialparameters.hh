@@ -93,8 +93,6 @@ public:
     HeterogeneousSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
 
         //Set the permeability for the layers
         barrierTopK_ = 1e-17; //sqm
@@ -233,7 +231,6 @@ private:
     Scalar barrierTopK_;
     Scalar barrierMiddleK_;
     Scalar reservoirK_;
-    Scalar lambdaSolid_;
 
     MaterialLawParams materialParams_;
     std::vector<int> paramIdx_;
