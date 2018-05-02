@@ -26,7 +26,6 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_BOX_FV_ELEMENT_GEOMETRY_HH
 
-#include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 

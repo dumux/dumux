@@ -22,7 +22,6 @@
 #ifndef DUMUX_FVMPFAO2DPRESSURE2P_HH
 #define DUMUX_FVMPFAO2DPRESSURE2P_HH
 
-#include <dune/common/version.hh>
 
 // dumux environment
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>

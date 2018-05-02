@@ -29,7 +29,6 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
-#include <dune/common/version.hh>
 
 namespace Dumux {
 

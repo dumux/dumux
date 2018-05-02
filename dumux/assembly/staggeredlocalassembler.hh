@@ -25,7 +25,6 @@
 #ifndef DUMUX_STAGGERED_LOCAL_ASSEMBLER_HH
 #define DUMUX_STAGGERED_LOCAL_ASSEMBLER_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/rangeutilities.hh>
 

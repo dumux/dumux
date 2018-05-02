@@ -32,7 +32,6 @@
 #include<sstream>
 
 #include<dune/common/exceptions.hh>
-#include<dune/common/version.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/geometry/type.hh>
 #include<dune/geometry/quadraturerules.hh>

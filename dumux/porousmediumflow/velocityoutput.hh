@@ -24,7 +24,6 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 #define DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/geometry/referenceelements.hh>

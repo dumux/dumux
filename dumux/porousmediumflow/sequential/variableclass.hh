@@ -21,7 +21,6 @@
 
 #include "properties.hh"
 
-#include <dune/common/version.hh>
 
 // for  parallelization
 //#include <dumux/parallel/elementhandles.hh>

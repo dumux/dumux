@@ -24,7 +24,6 @@
 #ifndef DUMUX_GRID_PROPERTIES_HH
 #define DUMUX_GRID_PROPERTIES_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
 
 #include <dumux/common/properties.hh>

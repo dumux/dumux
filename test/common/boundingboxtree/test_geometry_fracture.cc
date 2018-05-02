@@ -11,7 +11,6 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dune/foamgrid/foamgrid.hh>
-#include <dune/common/version.hh>
 #include <dune/foamgrid/dgffoam.hh>
 
 #include <dumux/common/exceptions.hh>

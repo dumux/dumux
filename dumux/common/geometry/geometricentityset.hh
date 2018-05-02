@@ -25,7 +25,6 @@
 #define DUMUX_GRIDVIEW_GEOMETRIC_ENTITY_SET_HH
 
 #include <memory>
-#include <dune/common/version.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dumux/common/entitymap.hh>
 

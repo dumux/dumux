@@ -24,7 +24,6 @@
 #ifndef DUMUX_FVVELOCITY2P_HH
 #define DUMUX_FVVELOCITY2P_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/common/gridenums.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>

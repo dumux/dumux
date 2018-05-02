@@ -26,7 +26,6 @@
 #include <utility>
 
 #include <dune/geometry/type.hh>
-#include <dune/common/version.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/boundaryflag.hh>

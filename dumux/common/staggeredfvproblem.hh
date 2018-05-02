@@ -24,7 +24,6 @@
 #ifndef DUMUX_STAGGERD_FV_PROBLEM_HH
 #define DUMUX_STAGGERD_FV_PROBLEM_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/rangeutilities.hh>
 
 #include <dumux/common/properties.hh>

@@ -22,7 +22,6 @@
 #ifndef DUMUX_MPFAL2DPRESSUREVELOCITY2P_HH
 #define DUMUX_MPFAL2DPRESSUREVELOCITY2P_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/float_cmp.hh>
 
 #include "2dpressure.hh"

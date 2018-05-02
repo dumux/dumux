@@ -24,7 +24,6 @@
 #ifndef DUMUX_FVMPFAL2PFABOUND3DVELOCITIES2P_HH
 #define DUMUX_FVMPFAL2PFABOUND3DVELOCITIES2P_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/float_cmp.hh>
 #include "3dpressure.hh"
 #include "3dvelocity.hh"

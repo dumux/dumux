@@ -22,7 +22,6 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/grid/common/mcmgmapper.hh>

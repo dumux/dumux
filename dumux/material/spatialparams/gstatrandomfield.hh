@@ -29,7 +29,6 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-#include <dune/common/version.hh>
 
 namespace Dumux
 {

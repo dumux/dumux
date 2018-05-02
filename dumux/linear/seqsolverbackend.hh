@@ -30,7 +30,6 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/superlu.hh>
 #include <dune/istl/umfpack.hh>
-#include <dune/common/version.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>

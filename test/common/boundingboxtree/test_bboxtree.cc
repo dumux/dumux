@@ -11,7 +11,6 @@
 
 #if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
-#include <dune/common/version.hh>
 #include <dune/foamgrid/dgffoam.hh>
 #endif
 

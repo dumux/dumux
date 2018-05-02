@@ -23,7 +23,6 @@
 #ifndef DUMUX_GEOMETRY_INTERSECTION_HH
 #define DUMUX_GEOMETRY_INTERSECTION_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/geometry/referenceelements.hh>

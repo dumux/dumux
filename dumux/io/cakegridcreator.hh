@@ -30,7 +30,6 @@
 #include <cmath>
 #include <algorithm>
 
-#include <dune/common/version.hh>
 #include <dune/common/dynvector.hh>
 #include <dune/grid/common/gridfactory.hh>
 #include <dumux/common/properties.hh>

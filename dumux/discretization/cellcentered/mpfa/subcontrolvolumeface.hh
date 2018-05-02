@@ -26,7 +26,6 @@
 
 #include <vector>
 #include <array>
-#include <dune/common/version.hh>
 #include <dune/common/reservedvector.hh>
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>

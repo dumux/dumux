@@ -19,7 +19,6 @@
 #ifndef DUMUX_FVVELOCITY1P_HH
 #define DUMUX_FVVELOCITY1P_HH
 
-#include <dune/common/version.hh>
 #include <dumux/porousmediumflow/1p/sequential/properties.hh>
 
 /*!

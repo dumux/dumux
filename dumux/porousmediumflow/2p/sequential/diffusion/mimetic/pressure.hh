@@ -24,7 +24,6 @@
 #ifndef DUMUX_MIMETICPRESSURE2P_HH
 #define DUMUX_MIMETICPRESSURE2P_HH
 
-#include <dune/common/version.hh>
 
 // dumux environment
 #include <dumux/porousmediumflow/sequential/mimetic/properties.hh>

@@ -24,7 +24,6 @@
 #ifndef DUMUX_DEFAULT_MAPPER_TRAITS_HH
 #define DUMUX_DEFAULT_MAPPER_TRAITS_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
 namespace Dumux {

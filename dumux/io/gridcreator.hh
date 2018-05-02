@@ -32,7 +32,6 @@
 #include <memory>
 #include <sstream>
 
-#include <dune/common/version.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/classname.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
@@ -65,7 +64,6 @@
 // FoamGrid specific includes
 #if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
-#include <dune/common/version.hh>
 #include <dune/foamgrid/dgffoam.hh>
 #endif
 

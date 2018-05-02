@@ -26,7 +26,6 @@
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_FV_ELEMENT_GEOMETRY_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/iteratorrange.hh>
 #include <dune/geometry/referenceelements.hh>

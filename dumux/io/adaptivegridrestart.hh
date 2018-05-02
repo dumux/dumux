@@ -24,7 +24,6 @@
 #ifndef DUMUX_ADAPTIVEGRIDRESTART_HH
 #define DUMUX_ADAPTIVEGRIDRESTART_HH
 
-#include <dune/common/version.hh>
 
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>

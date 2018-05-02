@@ -26,7 +26,6 @@
 #include <dumux/porousmediumflow/sequential/gridadaptproperties.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptinitializationindicatordefault.hh>
 
-#include <dune/common/version.hh>
 
 /*!
  * \ingroup Sequential

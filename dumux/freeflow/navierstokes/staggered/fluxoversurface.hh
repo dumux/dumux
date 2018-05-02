@@ -29,7 +29,6 @@
 #include <type_traits>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/geometry/type.hh>

@@ -41,7 +41,6 @@
 
 #include <dumux/common/valgrind.hh>
 
-#include <dune/common/version.hh>
 #include <dune/common/deprecated.hh>
 
 #if HAVE_MPI

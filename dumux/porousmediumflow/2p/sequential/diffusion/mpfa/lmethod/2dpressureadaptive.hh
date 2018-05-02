@@ -22,7 +22,6 @@
 #ifndef DUMUX_FVMPFAL2DPRESSURE2P_ADAPTIVE_HH
 #define DUMUX_FVMPFAL2DPRESSURE2P_ADAPTIVE_HH
 
-#include <dune/common/version.hh>
 
 // dumux environment
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>

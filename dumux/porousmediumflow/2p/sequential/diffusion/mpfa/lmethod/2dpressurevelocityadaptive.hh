@@ -22,7 +22,6 @@
 #ifndef DUMUX_MPFAL2DPRESSUREVELOCITIES2P_ADAPTIVE_HH
 #define DUMUX_MPFAL2DPRESSUREVELOCITIES2P_ADAPTIVE_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/float_cmp.hh>
 
 #include "2dpressureadaptive.hh"

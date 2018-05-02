@@ -25,7 +25,6 @@
 #define DUMUX_DISCRETIZATION_BOX_GEOMETRY_HELPER_HH
 
 #include <array>
-#include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/math.hh>
