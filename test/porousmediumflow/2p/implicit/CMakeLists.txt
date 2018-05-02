@@ -1,4 +1,5 @@
 add_subdirectory(adaptive)
+add_subdirectory(boxdfm)
 add_subdirectory(fracture)
 add_subdirectory(incompressible)
 add_subdirectory(nonisothermal)
