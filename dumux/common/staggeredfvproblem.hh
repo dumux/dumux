@@ -131,20 +131,6 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
-     *
-     * \param globalPos The global position
-     */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    {
-        // Throw an exception (there is no reasonable default value
-        // for initial values)
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The problem does not provide "
-                   "an initial() or an initialAtPos() method.");
-    }
-
-    /*!
      * \brief Evaluate the initial value for an element (for cell-centered primary variables)
      * or face (for velocities)
      *

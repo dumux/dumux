@@ -72,6 +72,7 @@ class FVProblem
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     static constexpr bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
+    static constexpr bool isStaggered = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::staggered;
 
     using PointSourceMap = std::map<std::pair<std::size_t, std::size_t>,
                                     std::vector<PointSource> >;
@@ -206,9 +207,9 @@ public:
     PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
     {
         // forward it to the method which only takes the global coordinate
-        if (!isBox)
+        if (!isBox && !isStaggered)
         {
-            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for cell-centered method.");
+            DUNE_THROW(Dune::InvalidStateException, "dirichlet(scv) called for other than box or staggered method.");
         }
         else
             return asImp_().dirichletAtPos(scv.dofPosition());

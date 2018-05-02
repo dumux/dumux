@@ -93,7 +93,7 @@ public:
                                                                       elemVolVars, elemFaceVars, scvf, fluxVarsCache);
 
         // calculate advective flux
-        const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
+        const auto bcTypes = problem.boundaryTypes(element, scvf);
         const bool isOutflowK = scvf.boundary() && bcTypes.isOutflow(turbulentKineticEnergyEqIdx);
         const bool isOutflowEpsilon = scvf.boundary() && bcTypes.isOutflow(dissipationEqIdx);
         auto upwindTermK = [](const auto& volVars)

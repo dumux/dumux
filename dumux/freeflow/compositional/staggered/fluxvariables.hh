@@ -85,7 +85,7 @@ public:
             bool isOutflow = false;
             if(scvf.boundary())
             {
-                const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
+                const auto bcTypes = problem.boundaryTypes(element, scvf);
                     if(bcTypes.isOutflow(eqIdx))
                         isOutflow = true;
             }
