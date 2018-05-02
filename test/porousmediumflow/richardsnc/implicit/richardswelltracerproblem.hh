@@ -111,8 +111,7 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     enum {
         pressureIdx = Indices::pressureIdx,
         compIdx = Indices::compMainIdx + 1,
-        liquidPhaseIdx = FluidSystem::phase0Idx,
-
+        liquidPhaseIdx = FluidSystem::liquidPhaseIdx,
         dimWorld = GridView::dimensionworld
     };
     using Element = typename GridView::template Codim<0>::Entity;

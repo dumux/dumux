@@ -48,7 +48,7 @@ SET_TYPE_PROP(DensityDrivenFlowTypeTag, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false*/>);
 
 SET_INT_PROP(DensityDrivenFlowTypeTag, PhaseIdx,
-             GET_PROP_TYPE(TypeTag, FluidSystem)::phase0Idx);
+             GET_PROP_TYPE(TypeTag, FluidSystem)::liquidPhaseIdx);
 
 SET_INT_PROP(DensityDrivenFlowTypeTag, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, PhaseIdx));
 
