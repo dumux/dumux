@@ -97,6 +97,9 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
+    static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
+    static constexpr auto transportEqIdx = Indices::conti0EqIdx + 1;
+
 public:
     ChannelNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
@@ -148,24 +151,20 @@ public:
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-        static constexpr auto transportEqIdx = Indices::conti0EqIdx + 1;
         BoundaryTypes values;
 
         if(isInlet(globalPos))
         {
-            values.setDirichlet(Indices::momentumXBalanceIdx);
-            values.setDirichlet(Indices::momentumYBalanceIdx);
-            values.setOutflow(Indices::conti0EqIdx);
-            values.setDirichlet(transportEqIdx);
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+            values.setDirichlet(transportCompIdx);
 #if NONISOTHERMAL
-            values.setDirichlet(Indices::energyBalanceIdx);
+            values.setDirichlet(Indices::temperatureIdx);
 #endif
         }
         else if(isOutlet(globalPos))
         {
-            values.setOutflow(Indices::momentumXBalanceIdx);
-            values.setOutflow(Indices::momentumYBalanceIdx);
-            values.setDirichlet(Indices::conti0EqIdx);
+            values.setDirichlet(Indices::pressureIdx);
             values.setOutflow(transportEqIdx);
 #if NONISOTHERMAL
             values.setOutflow(Indices::energyBalanceIdx);
@@ -174,12 +173,12 @@ public:
         else
         {
             // set Dirichlet values for the velocity everywhere
-            values.setDirichlet(Indices::momentumXBalanceIdx);
-            values.setDirichlet(Indices::momentumYBalanceIdx);
-            values.setOutflow(Indices::conti0EqIdx);
-            values.setOutflow(transportEqIdx);
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+            values.setNeumann(Indices::conti0EqIdx);
+            values.setNeumann(transportEqIdx);
 #if NONISOTHERMAL
-            values.setOutflow(Indices::energyBalanceIdx);
+            values.setNeumann(Indices::energyBalanceIdx);
 #endif
         }
 
@@ -226,7 +225,6 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
         PrimaryVariables values;
         values[Indices::pressureIdx] = 1.1e+5;
         values[transportCompIdx] = 0.0;

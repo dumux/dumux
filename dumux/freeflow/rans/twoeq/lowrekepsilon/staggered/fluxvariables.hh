@@ -106,9 +106,9 @@ public:
         };
 
         flux[turbulentKineticEnergyEqIdx - ModelTraits::dim()]
-            = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermK, isOutflowK);
+            = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermK);
         flux[dissipationEqIdx - ModelTraits::dim()]
-            = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermEpsilon, isOutflowEpsilon);
+            = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermEpsilon);
 
         // calculate diffusive flux
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());

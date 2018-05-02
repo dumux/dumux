@@ -177,23 +177,16 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(Indices::momentumXBalanceIdx);
-        values.setDirichlet(Indices::momentumYBalanceIdx);
-        if(dim == 3)
-            values.setDirichlet(Indices::momentumZBalanceIdx);
-
-        // set a fixed pressure in one cell
+        // set a fixed pressure at the inlet and outlet
         if (isOutlet_(globalPos) || isInlet_(globalPos))
-        {
-            values.setDirichlet(Indices::conti0EqIdx);
-            values.setOutflow(Indices::momentumXBalanceIdx);
-            values.setOutflow(Indices::momentumYBalanceIdx);
-            if(dim == 3)
-                values.setOutflow(Indices::momentumZBalanceIdx);
-        }
+            values.setDirichlet(Indices::pressureIdx);
         else
-            values.setOutflow(Indices::conti0EqIdx);
+        {
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+            if(dim == 3)
+                values.setDirichlet(Indices::velocityZIdx);
+        }
 
         return values;
     }

@@ -189,35 +189,33 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity and outflow for total mass everywhere
-        values.setOutflow(Indices::conti0EqIdx);
-        values.setDirichlet(Indices::momentumXBalanceIdx);
-        values.setDirichlet(Indices::momentumYBalanceIdx);
-        if (isOutlet(globalPos))
+        if(isOutlet(globalPos))
         {
-            values.setDirichlet(Indices::conti0EqIdx);
-            values.setOutflow(Indices::momentumXBalanceIdx);
-            values.setOutflow(Indices::momentumYBalanceIdx);
-        }
+            values.setDirichlet(Indices::pressureIdx);
 
 #if NONISOTHERMAL
-        values.setDirichlet(Indices::energyBalanceIdx);
-        if (isOutlet(globalPos))
-        {
             values.setOutflow(Indices::energyBalanceIdx);
-        }
 #endif
 
 #if LOWREKEPSILON
-        values.setDirichlet(Indices::turbulentKineticEnergyIdx);
-        values.setDirichlet(Indices::dissipationIdx);
-        if (isOutlet(globalPos))
-        {
             values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
             values.setOutflow(Indices::dissipationEqIdx);
+#endif
         }
+        else // walls and inflow
+        {
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+
+#if NONISOTHERMAL
+            values.setDirichlet(Indices::temperatureIdx);
 #endif
 
+#if LOWREKEPSILON
+            values.setDirichlet(Indices::turbulentKineticEnergyIdx);
+            values.setDirichlet(Indices::dissipationIdx);
+#endif
+        }
         return values;
     }
 

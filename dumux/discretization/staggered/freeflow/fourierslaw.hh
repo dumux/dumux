@@ -44,6 +44,7 @@ template <class TypeTag>
 class FouriersLawImplementation<TypeTag, DiscretizationMethod::staggered >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
@@ -63,12 +64,16 @@ public:
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
 
     //! calculate the diffusive energy fluxes
-    static Scalar flux(const Element& element,
+    static Scalar flux(const Problem& problem,
+                       const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
                        const SubControlVolumeFace &scvf)
     {
         Scalar flux(0.0);
+
+        if(scvf.boundary() && problem.boundaryTypes(element, scvf).isOutflow(Indices::energyBalanceIdx))
+            return flux;
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());

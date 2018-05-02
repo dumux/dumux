@@ -47,10 +47,12 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
@@ -85,6 +87,7 @@ public:
     using CacheFiller = FluxVariablesCaching::EmptyCacheFiller;
 
     static CellCenterPrimaryVariables flux(const Problem& problem,
+                                           const Element& element,
                                            const FVElementGeometry& fvGeometry,
                                            const ElementVolumeVariables& elemVolVars,
                                            const SubControlVolumeFace& scvf)
@@ -119,7 +122,7 @@ public:
 
             if(scvf.boundary())
             {
-               const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
+               const auto bcTypes = problem.boundaryTypes(element, scvf);
                  if(bcTypes.isOutflow(eqIdx) && eqIdx != pressureIdx)
                     return componentFlux;
             }
@@ -183,7 +186,7 @@ public:
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
             componentFlux[compIdx] = reducedFlux[compIdx];
-            componentFlux[numComponents-1] -=reducedFlux[compIdx];
+            componentFlux[numComponents-1] -= reducedFlux[compIdx];
         }
 
         return componentFlux ;

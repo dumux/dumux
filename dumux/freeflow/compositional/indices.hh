@@ -44,6 +44,9 @@ public:
     //! The index of the main component
     static constexpr int mainCompIdx = fluidSystemPhaseIdx;
 
+    //! Index of the pressure has to equal the one of the main component
+    static constexpr int pressureIdx = FreeflowIndices::conti0EqIdx + mainCompIdx;
+
     //! The index of the component whose mass balance will be replaced by the total one
     static constexpr int replaceCompEqIdx = theReplaceCompEqIdx;
 };

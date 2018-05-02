@@ -28,6 +28,6 @@ dune_add_test(NAME test_flatplate_lowrekepsilon2cni
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_lowrekepsilon2cni.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00041.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00033.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_lowrekepsilon2cni test_flatplate2cni.input")
 target_compile_definitions(test_flatplate_lowrekepsilon2cni PUBLIC "LOWREKEPSILON=1" "NONISOTHERMAL=1")

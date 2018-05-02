@@ -195,10 +195,10 @@ public:
                       const BoundaryTypes& bcTypes) const
     {
         // set a fixed pressure for cells adjacent to a wall
-        if(bcTypes.isDirichletCell(Indices::conti0EqIdx))
+        if(bcTypes.isDirichletCell(Indices::pressureIdx))
         {
             const auto& insideVolVars = elemVolVars[insideScv];
-            residual[Indices::conti0EqIdx - cellCenterOffset] = insideVolVars.pressure() - problem.dirichlet(element, insideScv)[Indices::pressureIdx];
+            residual[Indices::pressureIdx - cellCenterOffset] = insideVolVars.pressure() - problem.dirichlet(element, insideScv)[Indices::pressureIdx];
         }
     }
 
@@ -273,18 +273,16 @@ protected:
             // handle the actual boundary conditions:
             const auto bcTypes = problem.boundaryTypes(element, scvf);
 
-            // set a fixed value for the velocity for Dirichlet boundary conditions
             if(bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
             {
+                // set a fixed value for the velocity for Dirichlet boundary conditions
                 const Scalar velocity = elemFaceVars[scvf].velocitySelf();
                 const Scalar dirichletValue = problem.dirichlet(element, scvf)[Indices::velocity(scvf.directionIndex())];
                 residual = velocity - dirichletValue;
             }
-
-            // handle Neumann boundary conditions
-            if(bcTypes.isNeumann(Indices::velocity(scvf.directionIndex())))
+            else if(bcTypes.isNeumann(Indices::velocity(scvf.directionIndex())))
             {
-                // set the given Neumann flux for the face on the boundary itself
+                // set a given Neumann flux for the face on the boundary itself
                 const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
                 residual = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
                                            * extrusionFactor * scvf.area();
@@ -293,24 +291,21 @@ protected:
                 FluxVariables fluxVars;
                 residual += fluxVars.computeNormalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
             }
-
-            // For symmetry boundary conditions, there is no flow accross the boundary and
-            // we therefore treat it like a Dirichlet boundary conditions with zero velocity
-            if(bcTypes.isSymmetry())
+            else if(bcTypes.isSymmetry())
             {
+                // For symmetry boundary conditions, there is no flow accross the boundary and
+                // we therefore treat it like a Dirichlet boundary conditions with zero velocity
                 const Scalar velocity = elemFaceVars[scvf].velocitySelf();
                 const Scalar fixedValue = 0.0;
                 residual = velocity - fixedValue;
             }
-
-            // outflow condition for the momentum balance equation
-            if(bcTypes.isOutflow(Indices::velocity(scvf.directionIndex())))
+            else if(bcTypes.isDirichlet(Indices::pressureIdx))
             {
-                if(bcTypes.isDirichlet(Indices::conti0EqIdx))
-                    residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
-                else
-                    DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");
+                // If none of the above conditions apply, we are at an "fixed pressure" boundary for which the velocity needs to be assembled
+                residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
             }
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions for the momentum equations.");
         }
     }
 

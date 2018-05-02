@@ -64,28 +64,17 @@ public:
     */
     template<class ElementVolumeVariables, class ElementFaceVariables, class FluxVariablesCache>
     CellCenterPrimaryVariables computeMassFlux(const Problem& problem,
-                                               const Element &element,
+                                               const Element& element,
                                                const FVElementGeometry& fvGeometry,
                                                const ElementVolumeVariables& elemVolVars,
                                                const ElementFaceVariables& elemFaceVars,
-                                               const SubControlVolumeFace &scvf,
+                                               const SubControlVolumeFace& scvf,
                                                const FluxVariablesCache& fluxVarsCache)
     {
         CellCenterPrimaryVariables flux(0.0);
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            // get equation index
-            const auto eqIdx = Indices::conti0EqIdx + compIdx;
-
-            bool isOutflow = false;
-            if(scvf.boundary())
-            {
-                const auto bcTypes = problem.boundaryTypes(element, scvf);
-                    if(bcTypes.isOutflow(eqIdx))
-                        isOutflow = true;
-            }
-
             auto upwindTerm = [compIdx](const auto& volVars)
             {
                 const auto density = useMoles ? volVars.molarDensity() : volVars.density();
@@ -93,10 +82,10 @@ public:
                 return density * fraction;
             };
 
-            flux[compIdx] = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
+            flux[compIdx] = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm);
         }
 
-        flux += MolecularDiffusionType::flux(problem, fvGeometry, elemVolVars, scvf);
+        flux += MolecularDiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
 
         // in case one balance is substituted by the total mass balance
         if (Indices::replaceCompEqIdx < numComponents)

@@ -341,11 +341,10 @@ public:
     {
         BoundaryTypes values;
         // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(Indices::momentumXBalanceIdx);
-        values.setDirichlet(Indices::momentumYBalanceIdx);
+        values.setDirichlet(Indices::velocityXIdx);
+        values.setDirichlet(Indices::velocityYIdx);
         values.setOutflow(compTwoIdx);
         values.setOutflow(compThreeIdx);
-        values.setOutflow(Indices::conti0EqIdx);
         return values;
     }
 
