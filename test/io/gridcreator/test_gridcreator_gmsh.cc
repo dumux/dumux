@@ -22,7 +22,6 @@
 #include <config.h>
 #include <iostream>
 
-#include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/grid/common/mcmgmapper.hh>
@@ -57,22 +56,15 @@ class GridCreatorGmshTest
     static const int dim = Grid::dimension;
     using GridCreator = typename Dumux::GridCreator<TypeTag>;
     using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using VertexMapper = typename Dune::MultipleCodimMultipleGeomTypeMapper<typename Grid::LeafGridView>;
-#else
-    using VertexMapper = typename Dune::MultipleCodimMultipleGeomTypeMapper<typename Grid::LeafGridView, Dune::MCMGVertexLayout>;
-#endif
 
 public:
 
     static void getBoundaryDomainMarkers(std::vector<int>& boundaryMarker)
     {
         const auto& gridView = GridCreator::grid().leafGridView();
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         VertexMapper vertexMapper(gridView, Dune::mcmgVertexLayout());
-#else
-        VertexMapper vertexMapper(gridView);
-#endif
+
         boundaryMarker.clear();
         boundaryMarker.resize(gridView.size(dim));
         for(auto eIt = gridView.template begin<0>(); eIt != gridView.template end<0>(); ++eIt)
@@ -81,11 +73,9 @@ public:
             {
                 if(!isIt->boundary())
                     continue;
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+
                 const auto refElement = ReferenceElements::general(eIt->geometry().type());
-#else
-                const auto& refElement = ReferenceElements::general(eIt->geometry().type());
-#endif
+
                 // loop over vertices of the intersection facet
                 for(int vIdx = 0; vIdx < refElement.size(isIt->indexInInside(), 1, dim); vIdx++)
                 {

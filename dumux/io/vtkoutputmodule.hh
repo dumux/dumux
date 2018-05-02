@@ -26,7 +26,6 @@
 
 #include <functional>
 
-#include <dune/common/version.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/typetraits.hh>

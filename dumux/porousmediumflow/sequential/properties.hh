@@ -26,7 +26,6 @@
 #include <dumux/porousmediumflow/sequential/gridadaptproperties.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptinitializationindicatordefault.hh>
 
-#include <dune/common/version.hh>
 
 /*!
  * \ingroup Sequential
@@ -192,20 +191,12 @@ public:
     /*!
      * \brief Mapper for the grid view's vertices.
      */
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-#else
-    using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout>;
-#endif
 
     /*!
      * \brief Mapper for the grid view's elements.
      */
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-#else
-    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
-#endif
 
     /*!
      * \brief The type of a solution at a fixed time.

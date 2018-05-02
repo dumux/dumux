@@ -29,7 +29,6 @@
 #include <type_traits>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/geometry/type.hh>
@@ -211,14 +210,7 @@ public:
      */
     static SurfaceGeometryType makeSurface(const std::vector<Dune::FieldVector<Scalar, 2>>& corners)
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
             return SurfaceGeometryType(Dune::GeometryTypes::line, corners);
-#else
-        {
-            static Dune::GeometryType gt2d(Dune::GeometryType::simplex, dim-1);
-            return SurfaceGeometryType(gt2d, corners);
-        }
-#endif
     }
 
     /*!

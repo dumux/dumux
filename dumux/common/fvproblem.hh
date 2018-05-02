@@ -27,7 +27,6 @@
 #include <memory>
 #include <map>
 
-#include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/gridenums.hh>
 

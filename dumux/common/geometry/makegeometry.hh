@@ -26,7 +26,6 @@
 #include <array>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/version.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/geometry/grahamconvexhull.hh>
@@ -126,14 +125,7 @@ auto makeDuneQuadrilaterial(const std::vector<Dune::FieldVector<Scalar, 3>>& poi
 
     // if no sanity check if desired, use the given points directly to construct the geometry
     if(!enableSanityCheck)
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return GeometryType(Dune::GeometryTypes::quadrilateral, points);
-#else
-    {
-        static Dune::GeometryType gt(Dune::GeometryType::cube, dim);
-        return GeometryType(gt, points);
-    }
-#endif
 
     // otherwise, perform a number of checks and corrections
     if(!pointsAreCoplanar(points))
@@ -146,12 +138,7 @@ auto makeDuneQuadrilaterial(const std::vector<Dune::FieldVector<Scalar, 3>>& poi
     if(std::any_of(orientations.begin(), orientations.end(), [](auto i){ return i == 0; }))
         DUNE_THROW(Dune::InvalidStateException, "More than two points lie on the same line.");
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     const auto quadrilateral = GeometryType(Dune::GeometryTypes::quadrilateral, corners);
-#else
-    static Dune::GeometryType gt(Dune::GeometryType::cube, dim);
-    const auto quadrilateral = GeometryType(gt, corners);
-#endif
 
     const auto eps = 1e-20;
     if(quadrilateral.volume() < eps)

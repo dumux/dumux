@@ -22,7 +22,6 @@
 #ifndef DUMUX_MPFAO2DPRESSUREVELOCITIES2P_HH
 #define DUMUX_MPFAO2DPRESSUREVELOCITIES2P_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/float_cmp.hh>
 #include "2dpressure.hh"
 #include "2dvelocity.hh"
@@ -303,11 +302,7 @@ void FvMpfaO2dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
 
     CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     const auto referenceElement = ReferenceElements::general(elementI.geometry().type());
-#else
-    const auto& referenceElement = ReferenceElements::general(elementI.geometry().type());
-#endif
 
     int indexInInside = intersection.indexInInside();
     int indexInOutside = intersection.indexInOutside();

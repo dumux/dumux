@@ -22,7 +22,6 @@
 #ifndef DUMUX_FVMPFAL2DPRESSURE2P_ADAPTIVE_HH
 #define DUMUX_FVMPFAL2DPRESSURE2P_ADAPTIVE_HH
 
-#include <dune/common/version.hh>
 
 // dumux environment
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
@@ -778,11 +777,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
         // get index
         int eIdxGlobal1 = problem_.variables().index(element);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(element.geometry().type());
-#else
-        const auto& referenceElement = ReferenceElements::general(element.geometry().type());
-#endif
 
         const auto isEndIt12 = problem_.gridView().iend(element);
         for (auto isIt12 = problem_.gridView().ibegin(element); isIt12 != isEndIt12; ++isIt12)
@@ -2356,11 +2351,7 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
                         {
                             int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                             const auto referenceElement = ReferenceElements::general(element.geometry().type());
-#else
-                            const auto& referenceElement = ReferenceElements::general(element.geometry().type());
-#endif
 
                             const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 

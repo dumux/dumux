@@ -22,7 +22,6 @@
 #ifndef DUMUX_FVMPFAO2DPRESSURE2P_HH
 #define DUMUX_FVMPFAO2DPRESSURE2P_HH
 
-#include <dune/common/version.hh>
 
 // dumux environment
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
@@ -731,11 +730,7 @@ void FvMpfaO2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
             // get the intersection node /bar^{x_3} between 'isIt12' and 'isIt14', denoted as 'corner1234'
             // initialization of corner1234
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
             const auto referenceElement = ReferenceElements::general(element.geometry().type());
-#else
-            const auto& referenceElement = ReferenceElements::general(element.geometry().type());
-#endif
 
             GlobalPosition corner1234(0);
 
@@ -1736,11 +1731,7 @@ void FvMpfaO2dPressure2p<TypeTag>::assemble()
                         {
                             int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                             const auto referenceElement = ReferenceElements::general(element.geometry().type());
-#else
-                            const auto& referenceElement = ReferenceElements::general(element.geometry().type());
-#endif
 
                             const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 

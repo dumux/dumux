@@ -89,18 +89,9 @@ int main(int argc, char* argv[]) try
         {-0.1, -0.1, 0.3}, {1.1, -0.1, 0.3}, {0.5, 2.0, 0.8}
     });
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-        Geometry3D cube(Dune::GeometryTypes::cube(dimworld), cubeCorners);
-        Geometry2D quad(Dune::GeometryTypes::cube(dimworld-1), quadCorners);
-        Geometry2D tri(Dune::GeometryTypes::simplex(dimworld-1), triCorners);
-#else
-        Dune::GeometryType geomType; geomType.makeCube(dimworld);
-        Dune::GeometryType geomType2; geomType2.makeCube(dimworld-1);
-        Dune::GeometryType geomType3; geomType3.makeSimplex(dimworld-1);
-        Geometry3D cube(geomType, cubeCorners);
-        Geometry2D quad(geomType2, quadCorners);
-        Geometry2D tri(geomType3, triCorners);
-#endif
+    Geometry3D cube(Dune::GeometryTypes::cube(dimworld), cubeCorners);
+    Geometry2D quad(Dune::GeometryTypes::cube(dimworld-1), quadCorners);
+    Geometry2D tri(Dune::GeometryTypes::simplex(dimworld-1), triCorners);
 
     if (Test::intersection(cube, quad, intersections))
     {

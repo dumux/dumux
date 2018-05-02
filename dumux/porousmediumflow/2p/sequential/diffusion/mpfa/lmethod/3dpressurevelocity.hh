@@ -24,7 +24,6 @@
 #ifndef DUMUX_FVMPFAL2PFABOUND3DVELOCITIES2P_HH
 #define DUMUX_FVMPFAL2PFABOUND3DVELOCITIES2P_HH
 
-#include <dune/common/version.hh>
 #include <dune/common/float_cmp.hh>
 #include "3dpressure.hh"
 #include "3dvelocity.hh"
@@ -305,11 +304,7 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
 
     CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     const auto referenceElement = ReferenceElements::general(elementI.geometry().type());
-#else
-    const auto& referenceElement = ReferenceElements::general(elementI.geometry().type());
-#endif
 
     int indexInInside = intersection.indexInInside();
     int indexInOutside = intersection.indexInOutside();

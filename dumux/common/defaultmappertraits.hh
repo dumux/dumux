@@ -24,7 +24,6 @@
 #ifndef DUMUX_DEFAULT_MAPPER_TRAITS_HH
 #define DUMUX_DEFAULT_MAPPER_TRAITS_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
 namespace Dumux {
@@ -32,13 +31,8 @@ namespace Dumux {
 template <class GridView>
 struct DefaultMapperTraits
 {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
     using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-#else
-    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
-    using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout>;
-#endif
 };
 
 } // namespace Dumux

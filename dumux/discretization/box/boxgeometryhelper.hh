@@ -25,7 +25,6 @@
 #define DUMUX_DISCRETIZATION_BOX_GEOMETRY_HELPER_HH
 
 #include <array>
-#include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/math.hh>
@@ -141,11 +140,7 @@ public:
     : elementGeometry_(geometry)
     , corners_(geometry.corners())
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(geometry.type());
-#else
-        const auto& referenceElement = ReferenceElements::general(geometry.type());
-#endif
 
         // the element center
         p[0] = geometry.center();
@@ -255,11 +250,7 @@ public:
                                              const typename Intersection::Geometry& isGeom,
                                              unsigned int indexInIntersection) const
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(elementGeometry_.type());
-#else
-        const auto& referenceElement = ReferenceElements::general(elementGeometry_.type());
-#endif
 
         const auto vIdxLocal = referenceElement.subEntity(is.indexInInside(), 1, indexInIntersection, dim);
         if (indexInIntersection == 0)
@@ -368,11 +359,7 @@ public:
     : elementGeometry_(geometry)
     , corners_(geometry.corners())
     {
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(geometry.type());
-#else
-        const auto& referenceElement = ReferenceElements::general(geometry.type());
-#endif
 
         // the element center
         p[0] = geometry.center();
@@ -517,14 +504,8 @@ public:
                                              const typename Intersection::Geometry& geometry,
                                              unsigned int indexInIntersection) const
     {
-
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         const auto referenceElement = ReferenceElements::general(elementGeometry_.type());
         const auto faceRefElem = FaceReferenceElements::general(geometry.type());
-#else
-        const auto& referenceElement = ReferenceElements::general(elementGeometry_.type());
-        const auto& faceRefElem = FaceReferenceElements::general(geometry.type());
-#endif
 
         GlobalPosition pi[9];
         auto corners = geometry.corners();

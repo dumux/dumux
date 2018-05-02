@@ -34,7 +34,6 @@
 #include<dune/common/fvector.hh>
 #include<dune/common/fmatrix.hh>
 #include<dune/common/exceptions.hh>
-#include<dune/common/version.hh>
 #include<dune/geometry/type.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/mcmgmapper.hh>
@@ -83,11 +82,7 @@ class CROperatorAssemblerTwoP
     using coliterator = typename MatrixType::ColIterator;
     using BCBlockType = std::array<BoundaryConditions::Flags, 1>;     // componentwise boundary conditions
     using SatType = Dune::BlockVector< Dune::FieldVector<double, 1> >;
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using FaceMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-#else
-    using FaceMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, FaceLayout>;
-#endif
 
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum
@@ -106,11 +101,7 @@ public:
 
     CROperatorAssemblerTwoP (const GridView& gridview)
     : gridView_(gridview)
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     , faceMapper_(gridView_, Dune::mcmgLayout(Dune::Codim<1>()))
-#else
-    , faceMapper_(gridView_)
-#endif
     , size_(faceMapper_.size())
     , A_(size_, size_, nnz()
     , RepresentationType::random)

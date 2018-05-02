@@ -24,7 +24,6 @@
 #ifndef DUMUX_DISCRETIZATION_BASE_FV_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_BASE_FV_GRID_GEOMETRY_HH
 
-#include <dune/common/version.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/common/properties.hh>
@@ -67,13 +66,8 @@ public:
     //! Constructor computes the bouding box of the entire domain, for e.g. setting boundary conditions
     BaseFVGridGeometry(const GridView& gridView)
     : gridView_(gridView)
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     , elementMapper_(gridView, Dune::mcmgElementLayout())
     , vertexMapper_(gridView, Dune::mcmgVertexLayout())
-#else
-    , elementMapper_(gridView)
-    , vertexMapper_(gridView)
-#endif
     , bBoxMin_(std::numeric_limits<double>::max())
     , bBoxMax_(-std::numeric_limits<double>::max())
     {

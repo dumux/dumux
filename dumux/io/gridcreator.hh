@@ -32,7 +32,6 @@
 #include <memory>
 #include <sstream>
 
-#include <dune/common/version.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/classname.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
@@ -65,12 +64,7 @@
 // FoamGrid specific includes
 #if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
-#include <dune/common/version.hh>
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
 #include <dune/foamgrid/dgffoam.hh>
-#else
-#include <dune/foamgrid/dgffoam.cc>
-#endif
 #endif
 
 #include <dumux/common/properties.hh>
@@ -1231,11 +1225,7 @@ public:
         // make the grid (structured interval grid in dimworld space)
         Dune::GridFactory<Grid> factory;
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         constexpr auto geomType = Dune::GeometryTypes::line;
-#else
-        auto geomType = Dune::GeometryType(1);
-#endif
 
         // create a step vector
         GlobalPosition step = upperRight;

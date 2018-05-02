@@ -19,7 +19,6 @@
 #ifndef DUMUX_FVVELOCITY1P_HH
 #define DUMUX_FVVELOCITY1P_HH
 
-#include <dune/common/version.hh>
 #include <dumux/porousmediumflow/1p/sequential/properties.hh>
 
 /*!
@@ -122,15 +121,12 @@ public:
             CellData& cellData = problem_.variables().cellData(eIdxGlobal);
 
             const typename Element::Geometry& geometry = element.geometry();
+
             // get corresponding reference element
             using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
             const auto refElement = ReferenceElements::general(geometry.type());
-#else
-            const auto& refElement = ReferenceElements::general(geometry.type());
-#endif
-            const int numberOfFaces = refElement.size(1);
 
+            const int numberOfFaces = refElement.size(1);
             std::vector<Scalar> flux(numberOfFaces,0);
 
             // run through all intersections with neighbors and boundary
