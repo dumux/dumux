@@ -217,6 +217,16 @@ public:
         return fluidState_.molarDensity(fluidSystemPhaseIdx);
     }
 
+    /*!
+     * \brief Returns the molar mass of a given component.
+     *
+     * \param compIdx the index of the component
+     */
+    Scalar molarMass(int compIdx) const
+    {
+        return FluidSystem::molarMass(compIdx);
+    }
+
      /*!
      * \brief Returns the diffusion coefficient \f$\mathrm{[m^2/s]}\f$
      *
