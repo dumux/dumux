@@ -1,0 +1,14 @@
+[TimeLoop]
+DtInitial = 200 # [s]
+TEnd = 2000 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 20 20
+
+[SpatialParams]
+FractureAperture = 1e-3
+
+[Problem]
+Name = 2pboxdfm_quads_yasp
