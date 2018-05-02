@@ -21,7 +21,7 @@ dune_add_test(NAME test_2pboxdfm_quads_alu
               COMPILE_DEFINITIONS FRACTUREGRIDTYPE=Dune::FoamGrid<1,2>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
-                       --files ${CMAKE_SOURCE_DIR}/test/references/2pboxdfm_2d_quads_alu-reference.vtu
+                       --files ${CMAKE_SOURCE_DIR}/test/references/2pboxdfm_2d_quads-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/2pboxdfm_quads_alu-00011.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pboxdfm_quads_alu test_2p.input -Problem.Name 2pboxdfm_quads_alu")
 
@@ -47,7 +47,7 @@ dune_add_test(NAME test_2pboxdfm_trias_alu
              COMPILE_DEFINITIONS FRACTUREGRIDTYPE=Dune::FoamGrid<1,2>
              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
              CMD_ARGS --script fuzzy
-                      --files ${CMAKE_SOURCE_DIR}/test/references/2pboxdfm_2d_trias_alu-reference.vtu
+                      --files ${CMAKE_SOURCE_DIR}/test/references/2pboxdfm_2d_trias-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/2pboxdfm_trias_alu-00007.vtu
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pboxdfm_trias_alu test_2p.input -Problem.Name 2pboxdfm_trias_alu -Grid.File grids/2d_trias.msh")
 
@@ -60,7 +60,7 @@ dune_add_test(NAME test_2pboxdfm_trias_ug
              COMPILE_DEFINITIONS FRACTUREGRIDTYPE=Dune::FoamGrid<1,2>
              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
              CMD_ARGS --script fuzzy
-                      --files ${CMAKE_SOURCE_DIR}/test/references/2pboxdfm_2d_trias_ug-reference.vtu
+                      --files ${CMAKE_SOURCE_DIR}/test/references/2pboxdfm_2d_trias-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/2pboxdfm_trias_ug-00007.vtu
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pboxdfm_trias_ug test_2p.input -Problem.Name 2pboxdfm_trias_ug -Grid.File grids/2d_trias.msh")
 
@@ -73,7 +73,7 @@ dune_add_test(NAME test_2pboxdfm_tets_alu
               COMPILE_DEFINITIONS FRACTUREGRIDTYPE=Dune::FoamGrid<2,3>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
-                       --files ${CMAKE_SOURCE_DIR}/test/references/2pboxdfm_2d_tets_alu-reference.vtu
+                       --files ${CMAKE_SOURCE_DIR}/test/references/2pboxdfm_3d_tets-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/2pboxdfm_tets_alu-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pboxdfm_tets_alu test_2p.input -Problem.Name 2pboxdfm_tets_alu -Grid.File grids/3d_simplex.msh")
 
@@ -86,7 +86,7 @@ dune_add_test(NAME test_2pboxdfm_tets_ug
               COMPILE_DEFINITIONS FRACTUREGRIDTYPE=Dune::FoamGrid<2,3>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
-                       --files ${CMAKE_SOURCE_DIR}/test/references/2pboxdfm_2d_tets_ug-reference.vtu
+                       --files ${CMAKE_SOURCE_DIR}/test/references/2pboxdfm_3d_tets-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/2pboxdfm_tets_ug-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pboxdfm_tets_ug test_2p.input -Problem.Name 2pboxdfm_tets_ug -Grid.File grids/3d_simplex.msh")
 
