@@ -23,8 +23,8 @@ dune_add_test(SOURCES test_2pni_fv.cc
 
 dune_add_test(SOURCES test_2pni_fv.cc
               NAME test_2pni_tpfa_simplex
-              CMAKE_GUARD dune-uggrid_FOUND
-              COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
+              CMAKE_GUARD dune-alugrid_FOUND
+              COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>
               COMPILE_DEFINITIONS TYPETAG=InjectionCC2PNITypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
