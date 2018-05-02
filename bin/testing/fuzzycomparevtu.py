@@ -280,15 +280,6 @@ def sort_vtk_by_coordinates(root1, root2, verbose):
             for i in range(len(coords) // dim):
                 vertexArray.append([float(c) for c in coords[i * dim: i * dim + dim]])
 
-            # obtain a vertex index map
-            vMap = []
-            for idx, coords in enumerate(vertexArray):
-                vMap.append((idx, coords))
-            sortedVMap = sorted(vMap, key=itemgetter(1))
-            vertexIndexMap = {}
-            for idxNew, idxOld in enumerate(sortedVMap):
-                vertexIndexMap[idxOld[0]] = idxNew
-
             # group the cells into vertex index tuples
             cellArray = []
             offsets = dataArrays["offsets"].split()
@@ -300,10 +291,39 @@ def sort_vtk_by_coordinates(root1, root2, verbose):
                     cellArray[cellIdx].append(int(connectivity[v]))
                     vertex += 1
 
+            # for non-conforming output vertices can have the same coordinates and also
+            # different indices / sorting so we need another criterium to sort.
+            # we use the largest cell midpoint coordinate vector the vertex is connected to
+            largestCellMidPointForVertex = [[0, 0, 0]]*len(vertexArray)
+            for cellIdx, cell in enumerate(cellArray):
+                # compute cell midpoint
+                coords = [vertexArray[i] for i in cell]
+                midpoint = [i/float(len(coords)) for i in [sum(coord) for coord in zip(*coords)]]
+                for vertexIndex in cell:
+                    largestCellMidPointForVertex[vertexIndex] = max(largestCellMidPointForVertex[vertexIndex], midpoint)
+
+            # obtain a vertex index map
+            vMap = []
+            for idx, coords in enumerate(vertexArray):
+                vMap.append((idx, coords))
+
+            vertexIndexMap = [0]*len(vMap)
+            vertexIndexMapInverse = [0]*len(vMap)
+            # first sort by coordinates, if the same by largestCellMidPointForVertex
+            for idxNew, idxOld in enumerate(sorted(vMap, key=lambda x: (x[1], largestCellMidPointForVertex[x[0]]))):
+                vertexIndexMap[idxOld[0]] = idxNew
+                vertexIndexMapInverse[idxNew] = idxOld[0]
+
             # replace all vertex indices in the cellArray by the new indices
-            for cell in cellArray:
-                for idx, vertexIndex in enumerate(cell):
-                    cell[idx] = vertexIndexMap[vertexIndex]
+            for i, cell in enumerate(cellArray):
+                for j, vertexIndex in enumerate(cell):
+                    cellArray[i][j] = vertexIndexMap[vertexIndex]
+
+            # sort the indices of all cells in case the two grids have different orientation of the elements
+            # this doesn't necessarily have to be a valid vtk order, it's just temporary for a sorted literal comparison
+            # of the files
+            for i, cell in enumerate(cellArray):
+                cellArray[i] = sorted(cell)
 
             # sort all data arrays
             for name, text in list(dataArrays.items()):
@@ -317,7 +337,7 @@ def sort_vtk_by_coordinates(root1, root2, verbose):
                 items = newitems
                 # sort the items: we have either vertex or cell data
                 if name in pointDataArrays:
-                    sortedItems = [j for (i, j) in sorted(zip(vertexArray, items), key=itemgetter(0))]
+                    sortedItems = [items[i] for i in vertexIndexMapInverse]
                 elif name in cellDataArrays or name == "types":
                     sortedItems = [j for (i, j) in sorted(zip(cellArray, items), key=itemgetter(0))]
                 elif name == "offsets":
@@ -327,7 +347,7 @@ def sort_vtk_by_coordinates(root1, root2, verbose):
                         counter += len(cell)
                         sortedItems.append([str(counter)])
                 elif name == "Coordinates":
-                    sortedItems = sorted(vertexArray)
+                    sortedItems = [vertexArray[i] for i in vertexIndexMapInverse]
                 elif name == "connectivity":
                     sortedItems = sorted(cellArray)
 
