@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Test for the staggered grid multi-component (Navier-)Stokes model
+ * \brief Test for the staggered grid multi-component RANS model
  */
 #include <config.h>
 
@@ -34,7 +34,7 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include "channeltestproblem.hh"
+#include "flatplatetestproblem.hh"
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -78,7 +78,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(ChannelNCTestTypeTag);
+    using TypeTag = TTAG(FlatPlateNCTestTypeTag);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
