@@ -194,7 +194,7 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(oldSol);
 
-        // try solving the non-linear system
+        // solve the non-linear system with time step control
         nonLinearSolver.solve(sol, *timeLoop);
 
         // make the new solution the old solution
