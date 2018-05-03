@@ -44,10 +44,9 @@ class SubControlVolumeFaceBase
     using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
     using Scalar = typename ScvfGeometryTraits::Scalar;
 
-
 public:
+    //! export the type used for global coordinates
     using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
-
     //! state the traits public and thus export all types
     using Traits = ScvfGeometryTraits;
 

@@ -98,6 +98,7 @@ class CCMpfaSubControlVolumeFace
     using Geometry = typename T::Geometry;
 
 public:
+    //! export the type used for global coordinates
     using GlobalPosition = typename T::GlobalPosition;
     //! state the traits public and thus export all types
     using Traits = T;

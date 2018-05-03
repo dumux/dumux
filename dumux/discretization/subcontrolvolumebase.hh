@@ -42,8 +42,8 @@ class SubControlVolumeBase
     using Scalar = typename ScvGeometryTraits::Scalar;
 
 public:
+    //! export the type used for global coordinates
     using GlobalPosition = typename ScvGeometryTraits::GlobalPosition;
-
     //! state the traits public and thus export all types
     using Traits = ScvGeometryTraits;
 
