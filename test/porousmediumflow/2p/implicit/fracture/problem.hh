@@ -105,8 +105,8 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
         // world dimension
         dimWorld = GridView::dimensionworld
     };
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     FractureProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

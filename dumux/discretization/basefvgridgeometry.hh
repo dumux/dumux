@@ -52,8 +52,9 @@ class BaseFVGridGeometry
 
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
-    using CoordScalar = typename GV::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+
+    using Element = typename GV::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     //! export the grid view type

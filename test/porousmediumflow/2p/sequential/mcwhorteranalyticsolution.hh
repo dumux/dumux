@@ -70,7 +70,8 @@ class McWhorterAnalytic
     };
 
     using BlockVector = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 private:
 

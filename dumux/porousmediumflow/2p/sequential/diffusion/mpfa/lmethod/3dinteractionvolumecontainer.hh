@@ -70,7 +70,7 @@ class FvMpfaL3dInteractionVolumeContainer
     using Intersection = typename GridView::Intersection;
     using IntersectionGeometry = typename Intersection::Geometry;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename ElementGeometry::GlobalCoordinate;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
     using DimVector = Dune::FieldVector<Scalar, dim>;

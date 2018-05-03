@@ -60,7 +60,8 @@ class IMPESProblem2P : public IMPETProblem<TypeTag>
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     //Copy constructor
     IMPESProblem2P(const IMPESProblem2P &)
@@ -161,7 +162,7 @@ public:
      * If the <tt>EnableGravity</tt> property is true, this means
      * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
      */
-    const GlobalPosition &gravity() const
+    const GravityVector &gravity() const
     { return gravity_; }
 
     /*!
@@ -187,7 +188,7 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
-    GlobalPosition gravity_;
+    GravityVector gravity_;
 
     // fluids and material properties
     std::shared_ptr<SpatialParams> spatialParams_;

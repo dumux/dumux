@@ -120,7 +120,7 @@ class RichardsNIConductionProblem :public PorousMediumFlowProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     RichardsNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

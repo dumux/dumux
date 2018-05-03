@@ -59,18 +59,18 @@ class DissolutionSpatialparams
                          DissolutionSpatialparams<TypeTag>>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
+
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, DissolutionSpatialparams<TypeTag>>;
 
-    enum { dimWorld = GridView::dimensionworld };
-
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
-
     using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
 public:
     // type used for the permeability (i.e. tensor or scalar)

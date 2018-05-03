@@ -107,7 +107,8 @@ class ExerciseThreeProblemTwoP : public PorousMediumFlowProblem<TypeTag>
     enum { dim = GridView::dimension,
            dimWorld = GridView::dimensionworld
     };
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     // Dumux specific types
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;

@@ -48,7 +48,7 @@ class TestOnePSpatialParams: public SequentialFVSpatialParamsOneP<TypeTag>
         {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
     using Element = typename Grid::Traits::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:

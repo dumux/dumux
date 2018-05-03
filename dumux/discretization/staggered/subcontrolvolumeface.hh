@@ -123,9 +123,9 @@ class StaggeredSubControlVolumeFace
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
 
+public:
     using GlobalPosition = typename T::GlobalPosition;
 
-public:
     //! state the traits public and thus export all types
     using Traits = T;
 

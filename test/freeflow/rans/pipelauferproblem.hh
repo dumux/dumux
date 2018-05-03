@@ -104,12 +104,13 @@ class PipeLauferProblem : public ZeroEqProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
     static const unsigned int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
 
 public:
     PipeLauferProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

@@ -75,7 +75,8 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
         dimWorld = GridView::dimensionworld
       };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     /*!
@@ -116,7 +117,7 @@ public:
      * If the <tt>Problem.EnableGravity</tt> parameter is true, this means
      * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
      */
-    const GlobalPosition& gravity() const
+    const GravityVector& gravity() const
     { return gravity_; }
 
     //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
@@ -177,7 +178,7 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
-    GlobalPosition gravity_;
+    GravityVector gravity_;
 };
 
 } // end namespace Dumux

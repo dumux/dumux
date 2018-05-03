@@ -91,7 +91,7 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
 
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 

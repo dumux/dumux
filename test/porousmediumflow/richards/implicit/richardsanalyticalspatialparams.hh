@@ -69,8 +69,9 @@ class RichardsAnalyticalSpatialParams
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, RichardsAnalyticalSpatialParams<TypeTag>>;
 
     enum { dimWorld=GridView::dimensionworld };
+    using Element = typename GridView::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using EffectiveLaw = LinearMaterial<Scalar>;
 

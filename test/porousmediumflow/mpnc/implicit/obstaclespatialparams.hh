@@ -72,7 +72,7 @@ class ObstacleSpatialParams
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ObstacleSpatialParams<TypeTag>>;
 
     enum {dimWorld=GridView::dimensionworld};
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};

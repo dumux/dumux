@@ -79,7 +79,10 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
 
     using Intersection = typename GridView::Intersection;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 protected:
@@ -232,7 +235,7 @@ public:
 private:
     Problem& problem_;
     FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity)> velocity_;
-    const GlobalPosition& gravity_; //!< vector including the gravity constant
+    const GravityVector& gravity_; //!< vector including the gravity constant
 
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];

@@ -129,7 +129,7 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
     RichardsNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

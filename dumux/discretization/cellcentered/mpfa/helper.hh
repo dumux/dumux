@@ -51,7 +51,9 @@ class MpfaDimensionHelper<FVGridGeometry, /*dim*/2, /*dimWorld*/2>
 {
     using GridView = typename FVGridGeometry::GridView;
     using CoordScalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, GridView::dimensionworld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
@@ -274,8 +276,9 @@ class MpfaDimensionHelper<FVGridGeometry, /*dim*/3, /*dimWorld*/3>
 
     // Be picky about the dimensions
     using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, /*dimworld*/3>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     // container to store the positions of intersections required for
     // scvf corner computation. Maximum number of points needed is 9
@@ -526,10 +529,10 @@ class CCMpfaHelper : public MpfaDimensionHelper<FVGridGeometry,
 
     using GridView = typename FVGridGeometry::GridView;
     static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
 
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using CoordScalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:

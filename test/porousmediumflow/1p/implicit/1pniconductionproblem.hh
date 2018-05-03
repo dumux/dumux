@@ -118,7 +118,8 @@ class OnePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
         temperatureIdx = Indices::temperatureIdx
     };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:

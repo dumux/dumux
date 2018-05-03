@@ -90,7 +90,9 @@ template<class TypeTag> class FvMpfaO2dPressureVelocity2p: public FvMpfaO2dPress
             numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
         };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:

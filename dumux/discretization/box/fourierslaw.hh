@@ -63,7 +63,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethod::box>
     enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()} ;
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     static Scalar flux(const Problem& problem,
@@ -94,7 +93,7 @@ public:
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
         // compute the temperature gradient with the shape functions
-        GlobalPosition gradTemp(0.0);
+        Dune::FieldVector<Scalar, dimWorld> gradTemp(0.0);
         for (auto&& scv : scvs(fvGeometry))
             gradTemp.axpy(elemVolVars[scv].temperature(), fluxVarsCache.gradN(scv.indexInElement()));
 

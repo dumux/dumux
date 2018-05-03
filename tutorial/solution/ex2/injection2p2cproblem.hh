@@ -102,7 +102,8 @@ class Injection2p2cProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
 
     enum { dimWorld = GridView::dimensionworld };
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     Injection2p2cProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

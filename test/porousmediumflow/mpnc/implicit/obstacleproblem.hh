@@ -137,7 +137,7 @@ class ObstacleProblem
     enum { s0Idx = Indices::s0Idx };
     enum { p0Idx = Indices::p0Idx };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
 
 public:

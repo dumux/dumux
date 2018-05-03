@@ -134,7 +134,7 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     enum { dimWorld = GridView::dimensionworld };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
     ThreePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

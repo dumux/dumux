@@ -104,7 +104,8 @@ class RichardsAnalyticalProblem :  public PorousMediumFlowProblem<TypeTag>
     // Grid and world dimension
     static const int dimWorld = GridView::dimensionworld;
     static const int dim = GridView::dimension;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using Geometry = typename GridView::template Codim<0>::Entity::Geometry;
 
 public:

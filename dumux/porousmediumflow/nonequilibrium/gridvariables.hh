@@ -54,7 +54,6 @@ class NonEquilibriumGridVariables
     enum { dim = GridView::dimension }; // Grid and world dimension
     enum { dimWorld = GridView::dimensionworld };
 
-    using GlobalPosition = Dune::FieldVector<typename GridView::Grid::ctype, dimWorld>;
     static constexpr int numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases();
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
 
@@ -78,7 +77,11 @@ public:
         // instatiate the velocity output
         using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
         VelocityOutput velocityOutput(*problem_, *this->fvGridGeometry_, *this, curSol);
-        std::array<std::vector<GlobalPosition>, numPhases> velocity;
+
+        using Scalar = typename SolutionVector::field_type;
+        using VelocityVector = typename Dune::FieldVector<Scalar, dimWorld>;
+
+        std::array<std::vector<VelocityVector>, numPhases> velocity;
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {

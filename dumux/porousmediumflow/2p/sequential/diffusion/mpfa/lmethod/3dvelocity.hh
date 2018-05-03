@@ -127,8 +127,7 @@ template<class TypeTag> class FvMpfaL3dVelocity2p
         innerEdgeFace = 2, innerSideFace = 1
     };
 
-    using LocalPosition = Dune::FieldVector<Scalar, dim>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Geometry::GlobalCoordinate;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
     using DimVector = Dune::FieldVector<Scalar, dim>;
 
@@ -256,7 +255,7 @@ public:
 
 private:
     Problem& problem_;
-    const GlobalPosition& gravity_; //!< vector including the gravity constant
+    const Dune::FieldVector<Scalar, dimWorld>& gravity_; //!< vector including the gravity constant
 
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];

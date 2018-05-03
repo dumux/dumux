@@ -66,9 +66,7 @@ class FractureSpatialParams
     using Element = typename GridView::template Codim<0>::Entity;
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, FractureSpatialParams<TypeTag>>;
 
-    enum { dimWorld=GridView::dimensionworld };
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
 

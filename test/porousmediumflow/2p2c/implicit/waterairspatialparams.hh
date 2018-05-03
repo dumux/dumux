@@ -72,9 +72,10 @@ class WaterAirSpatialParams
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, WaterAirSpatialParams<TypeTag>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 
     using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     //! export the type used for the permeability

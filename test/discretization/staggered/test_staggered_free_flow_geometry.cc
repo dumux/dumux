@@ -88,14 +88,13 @@ int main (int argc, char *argv[]) try
     using Grid = Dune::YaspGrid<2>;
 
     constexpr int dim = Grid::dimension;
-    constexpr int dimworld = Grid::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<typename Grid::ctype, dimworld>;
     using FVGridGeometry = StaggeredFVGridGeometry<typename Grid::LeafGridView, /*enable caching=*/ true,
                                                    TestFVGGTraits<typename Grid::LeafGridView> >;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     // make a grid
     GlobalPosition lower(0.0);

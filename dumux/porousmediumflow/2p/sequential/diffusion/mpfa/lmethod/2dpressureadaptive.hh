@@ -139,7 +139,7 @@ class FvMpfaL2dPressure2pAdaptive: public FVPressure<TypeTag>
     using Grid = typename GridView::Grid;
 
     using LocalPosition = Dune::FieldVector<Scalar, dim>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
     using DimVector = Dune::FieldVector<Scalar, dim>;
@@ -494,7 +494,7 @@ protected:
     InnerBoundaryVolumeFaces innerBoundaryVolumeFaces_;//!< Vector marking faces which intersect the boundary
 
 private:
-    const GlobalPosition& gravity_; //!< vector including the gravity constant
+    const Dune::FieldVector<Scalar, dimWorld>& gravity_; //!< vector including the gravity constant
 
     Scalar maxError_;
     Scalar timeStep_;

@@ -67,7 +67,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::box>
         numComponents = ModelTraits::numComponents()
     };
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
 public:
@@ -117,7 +116,7 @@ public:
             const auto D = problem.spatialParams().harmonicMean(insideD, outsideD, scvf.unitOuterNormal());
 
             // the mole/mass fraction gradient
-            GlobalPosition gradX(0.0);
+            Dune::FieldVector<Scalar, dimWorld> gradX(0.0);
             for (auto&& scv : scvs(fvGeometry))
                 gradX.axpy(elemVolVars[scv].moleFraction(phaseIdx, compIdx), fluxVarsCache.gradN(scv.indexInElement()));
 

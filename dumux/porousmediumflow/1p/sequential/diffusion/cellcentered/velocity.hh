@@ -73,7 +73,9 @@ class FVVelocity1P
         pressEqIdx = Indices::pressureEqIdx // only one equation!
     };
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
+    using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
@@ -183,7 +185,7 @@ public:
     }
 private:
     Problem &problem_;
-    const GlobalPosition& gravity_; //!< vector including the gravity constant
+    const GravityVector& gravity_; //!< vector including the gravity constant
     Scalar density_;
     Scalar viscosity_;
 };
@@ -243,10 +245,10 @@ void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     cellDataJ.fluxData().setPotential(isIndexJ, -potential);
 
     //calculate the gravity term
-    GlobalPosition velocity(permeability);
+    VelocityVector velocity(permeability);
     velocity *= (cellData.pressure() - cellDataJ.pressure()) / dist;
 
-    GlobalPosition gravityTerm(unitOuterNormal);
+    GravityVector gravityTerm(unitOuterNormal);
     gravityTerm *= (gravity_ * permeability) * density_;
 
     velocity += gravityTerm;
@@ -321,10 +323,10 @@ void FVVelocity1P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         cellData.fluxData().setPotential(isIndex, potential);
 
         //calculate the gravity term
-        GlobalPosition velocity(permeability);
+        VelocityVector velocity(permeability);
         velocity *= (cellData.pressure() - pressBound) / dist;
 
-        GlobalPosition gravityTerm(unitOuterNormal);
+        GravityVector gravityTerm(unitOuterNormal);
         gravityTerm *= (gravity_ * permeability) * density_;
 
         velocity += gravityTerm;
@@ -338,7 +340,7 @@ void FVVelocity1P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
     else
     {
         problem_.neumann(boundValues, intersection);
-        GlobalPosition velocity(unitOuterNormal);
+        VelocityVector velocity(unitOuterNormal);
 
         velocity *= boundValues[pressEqIdx] / density_;
 

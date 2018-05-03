@@ -130,7 +130,7 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     static const bool isBox = GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod == DiscretizationMethod::box;
 
     static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
     OnePTwoCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

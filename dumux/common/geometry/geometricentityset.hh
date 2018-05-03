@@ -40,8 +40,10 @@ template <class GridView, int codim = 0>
 class GridViewGeometricEntitySet
 {
     using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-    using Entity = typename GridView::template Codim<codim>::Entity;
+
 public:
+    using Entity = typename GridView::template Codim<codim>::Entity;
+
     GridViewGeometricEntitySet(const GridView& gridView)
     : gridView_(gridView)
     , mapper_(gridView, Dune::mcmgLayout(Dune::Codim<codim>()))

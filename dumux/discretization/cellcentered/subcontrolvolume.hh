@@ -43,7 +43,8 @@ struct CCDefaultScvGeometryTraits
     using GridIndexType = typename GridView::IndexSet::IndexType;
     using LocalIndexType = unsigned int;
     using Scalar = typename GridView::ctype;
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 };
 
 /*!
@@ -63,9 +64,10 @@ class CCSubControlVolume
     using GridIndexType = typename T::GridIndexType;
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
-    using GlobalPosition = typename T::GlobalPosition;
 
 public:
+    //! export the type used for global coordinates
+    using GlobalPosition = typename T::GlobalPosition;
     //! state the traits public and thus export all types
     using Traits = T;
 

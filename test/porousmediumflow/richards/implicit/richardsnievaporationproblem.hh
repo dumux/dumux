@@ -115,7 +115,7 @@ class RichardsNIEvaporationProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
+    using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
 
 public:
     RichardsNIEvaporationProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

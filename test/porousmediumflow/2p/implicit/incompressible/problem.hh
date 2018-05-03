@@ -96,7 +96,7 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum {
