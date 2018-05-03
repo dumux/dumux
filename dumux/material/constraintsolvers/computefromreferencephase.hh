@@ -136,9 +136,9 @@ public:
                                                    paramCache,
                                                    refPhaseIdx));
         fluidState.setMolarDensity(refPhaseIdx,
-                              FluidSystem::molarDensity(fluidState,
-                                                   paramCache,
-                                                   refPhaseIdx));
+                                   FluidSystem::molarDensity(fluidState,
+                                                             paramCache,
+                                                             refPhaseIdx));
 
         if (setEnthalpy)
             fluidState.setEnthalpy(refPhaseIdx,

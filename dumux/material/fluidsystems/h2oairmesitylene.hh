@@ -263,11 +263,10 @@ public:
             // See: Eq. (7) in Class et al. (2002a)
             // this assumes each dissolved molecule displaces exactly one
             // water molecule in the liquid
-            return
-                    H2O::liquidMolarDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx))
-                    * (H2O::molarMass()*fluidState.moleFraction(wPhaseIdx, H2OIdx)
-                    + Air::molarMass()*fluidState.moleFraction(wPhaseIdx, AirIdx)
-                    + NAPL::molarMass()*fluidState.moleFraction(wPhaseIdx, NAPLIdx));
+            return H2O::liquidMolarDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx))
+                   * (H2O::molarMass()*fluidState.moleFraction(wPhaseIdx, H2OIdx)
+                      + Air::molarMass()*fluidState.moleFraction(wPhaseIdx, AirIdx)
+                      + NAPL::molarMass()*fluidState.moleFraction(wPhaseIdx, NAPLIdx));
         }
         else if (phaseIdx == nPhaseIdx) {
             // assume pure NAPL for the NAPL phase
@@ -285,10 +284,9 @@ public:
         Scalar pNAPL =
             fluidState.moleFraction(gPhaseIdx, NAPLIdx)  *
             fluidState.pressure(gPhaseIdx);
-        return
-            H2O::gasDensity(fluidState.temperature(phaseIdx), pH2O) +
-            Air::gasDensity(fluidState.temperature(phaseIdx), pAir) +
-            NAPL::gasDensity(fluidState.temperature(phaseIdx), pNAPL);
+        return H2O::gasDensity(fluidState.temperature(phaseIdx), pH2O)
+               + Air::gasDensity(fluidState.temperature(phaseIdx), pAir)
+               + NAPL::gasDensity(fluidState.temperature(phaseIdx), pNAPL);
     }
 
     using Base::molarDensity;
@@ -319,8 +317,8 @@ public:
         else
         {
             return H2O::gasMolarDensity(temperature, fluidState.partialPressure(gPhaseIdx, H2OIdx))
-            + NAPL::gasMolarDensity(temperature, fluidState.partialPressure(gPhaseIdx, NAPLIdx))
-            + Air::gasMolarDensity(temperature, fluidState.partialPressure(gPhaseIdx, AirIdx));
+                   + NAPL::gasMolarDensity(temperature, fluidState.partialPressure(gPhaseIdx, NAPLIdx))
+                   + Air::gasMolarDensity(temperature, fluidState.partialPressure(gPhaseIdx, AirIdx));
         }
     }
 

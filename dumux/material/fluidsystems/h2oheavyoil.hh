@@ -245,10 +245,9 @@ public:
             // This assumes each gas molecule displaces exactly one
             // molecule in the liquid.
 
-            return
-                H2O::liquidMolarDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx))
-                * (H2O::molarMass()*fluidState.moleFraction(wPhaseIdx, H2OIdx)
-                + HeavyOil::molarMass()*fluidState.moleFraction(wPhaseIdx, NAPLIdx));
+            return H2O::liquidMolarDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx))
+                   * (H2O::molarMass()*fluidState.moleFraction(wPhaseIdx, H2OIdx)
+                      + HeavyOil::molarMass()*fluidState.moleFraction(wPhaseIdx, NAPLIdx));
         }
         else if (phaseIdx == nPhaseIdx) {
             // assume pure NAPL for the NAPL phase
@@ -263,9 +262,8 @@ public:
         Scalar pNAPL =
             fluidState.moleFraction(gPhaseIdx, NAPLIdx)  *
             fluidState.pressure(gPhaseIdx);
-        return
-            H2O::gasDensity(fluidState.temperature(phaseIdx), pH2O) +
-            HeavyOil::gasDensity(fluidState.temperature(phaseIdx), pNAPL);
+        return H2O::gasDensity(fluidState.temperature(phaseIdx), pH2O)
+               + HeavyOil::gasDensity(fluidState.temperature(phaseIdx), pNAPL);
     }
 
     using Base::molarDensity;
@@ -295,7 +293,7 @@ public:
         else
         {
             return H2O::gasMolarDensity(temperature, fluidState.partialPressure(gPhaseIdx, H2OIdx))
-            + HeavyOil::gasMolarDensity(temperature, fluidState.partialPressure(gPhaseIdx, NAPLIdx));
+                   + HeavyOil::gasMolarDensity(temperature, fluidState.partialPressure(gPhaseIdx, NAPLIdx));
         }
     }
 
@@ -337,7 +335,7 @@ public:
         };
 
         return mu[H2OIdx]*fluidState.moleFraction(gPhaseIdx, H2OIdx)
-                + mu[NAPLIdx]*fluidState.moleFraction(gPhaseIdx, NAPLIdx);
+               + mu[NAPLIdx]*fluidState.moleFraction(gPhaseIdx, NAPLIdx);
     }
 
 

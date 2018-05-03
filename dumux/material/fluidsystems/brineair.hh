@@ -290,7 +290,7 @@ public:
     }
 
     using Base::density;
-     /*!
+    /*!
      * \brief Given a phase's composition, temperature, pressure, and
      *        the partial pressures of all components, return its
      *        density \f$\mathrm{[kg/m^3]}\f$.
@@ -321,23 +321,23 @@ public:
             else
             {
                 return Brine::liquidMolarDensity(temperature,
-                        pressure,
-                        fluidState.massFraction(phase0Idx, NaClIdx))
-                        *(Brine::molarMass()*fluidState.moleFraction(liquidPhaseIdx, H2OIdx)
-                        + Brine::molarMass()*fluidState.moleFraction(liquidPhaseIdx, NaClIdx)
-                        + Air::molarMass()*fluidState.moleFraction(liquidPhaseIdx, AirIdx));
+                                                 pressure,
+                                                 fluidState.massFraction(phase0Idx, NaClIdx))
+                       * (Brine::molarMass()*fluidState.moleFraction(liquidPhaseIdx, H2OIdx)
+                       + Brine::molarMass()*fluidState.moleFraction(liquidPhaseIdx, NaClIdx)
+                       + Air::molarMass()*fluidState.moleFraction(liquidPhaseIdx, AirIdx));
             }
         }
         else if (phaseIdx == phase1Idx){
             if (!useComplexRelations)
-                // for the gas phase assume an ideal gas
-                {
+            // for the gas phase assume an ideal gas
+            {
                 const Scalar averageMolarMass = fluidState.averageMolarMass(phase1Idx);
                 return IdealGas::density(averageMolarMass, temperature, pressure);
-                }
-            return
-                    Brine::gasDensity(temperature, fluidState.partialPressure(phase1Idx, H2OIdx)) +
-                    Air::gasDensity(temperature, fluidState.partialPressure(phase1Idx, AirIdx));
+            }
+
+            return  Brine::gasDensity(temperature, fluidState.partialPressure(phase1Idx, H2OIdx))
+                    + Air::gasDensity(temperature, fluidState.partialPressure(phase1Idx, AirIdx));
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
@@ -368,11 +368,11 @@ public:
         else if (phaseIdx == phase1Idx)
         {
             if (!useComplexRelations)
-                // for the gas phase assume an ideal gas
-                { return IdealGas::molarDensity(temperature, pressure); }
-            return
-                    Brine::gasMolarDensity(temperature, fluidState.partialPressure(phase1Idx, H2OIdx)) +
-                    Air::gasMolarDensity(temperature, fluidState.partialPressure(phase1Idx, AirIdx));
+            // for the gas phase assume an ideal gas
+            { return IdealGas::molarDensity(temperature, pressure); }
+
+            return Brine::gasMolarDensity(temperature, fluidState.partialPressure(phase1Idx, H2OIdx))
+                   + Air::gasMolarDensity(temperature, fluidState.partialPressure(phase1Idx, AirIdx));
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
@@ -461,8 +461,9 @@ public:
 
             else if (compIdx == AirIdx)
                 return BinaryCoeff::H2O_Air::henry(T)/p;
-        else
-            return 1/p;
+
+            else
+                return 1/p;
         }
         else
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
@@ -570,8 +571,8 @@ public:
         {
             Scalar XlNaCl = fluidState.massFraction(phaseIdx, NaClIdx);
             Scalar result = Brine::liquidEnthalpy(T, p, XlNaCl);
-                Valgrind::CheckDefined(result);
-                return result;
+            Valgrind::CheckDefined(result);
+            return result;
         }
         else
         {
