@@ -21,3 +21,9 @@ PermeabilityAquitard = 1e-15 # m^2
 EntryPressureAquitard = 4.5e4 # Pa
 PermeabilityAquifer = 1e-12 # m^2
 EntryPressureAquifer = 1e4 # Pa
+
+# these parameters are only used in the nonisothermal model. Uncomment them for that
+#[Component]
+#SolidDensity = 2700 # solid density of granite
+#SolidThermalConductivity = 2.8 # solid thermal conducitivity of granite
+#SolidHeatCapacity = 790 # solid heat capacity of granite

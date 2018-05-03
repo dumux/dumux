@@ -157,44 +157,6 @@ public:
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     { return FluidSystem::H2OIdx; }
 
-    /*!
-     *  These parameters are only needed for nonisothermal models. Comment them in if you want to implement the 2pni model.
-     */
-
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-//     Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-//     {
-//         return 790; // specific heat capacity of granite [J / (kg K)]
-//     }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-//     Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-//     {
-//         return 2700; // density of granite [kg/m^3]
-//     }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param globalPos The global position
-     */
-//     Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-//     {
-//         return 2.8;
-//     }
-
 private:
 
     static constexpr Scalar eps_ = 1e-6;
