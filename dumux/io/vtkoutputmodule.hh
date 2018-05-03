@@ -241,9 +241,9 @@ protected:
     const GridVariables& gridVariables() const { return gridVariables_; }
     const SolutionVector& sol() const { return sol_; }
 
-    const bool verbose() const { return verbose_; }
+    bool verbose() const { return verbose_; }
     const std::string& name() const { return name_; }
-    const Dune::VTK::DataMode dataMode() const { return dm_; }
+    Dune::VTK::DataMode dataMode() const { return dm_; }
 
     Dune::VTKWriter<GridView>& writer() { return *writer_; }
     Dune::VTKSequenceWriter<GridView>& sequenceWriter() { return sequenceWriter_; }

@@ -169,7 +169,7 @@ public:
 
 private:
 
-    const int getLocalIdx_(const int scvfIdx) const
+    int getLocalIdx_(const int scvfIdx) const
     {
         auto it = std::find(faceVarIndices_.begin(), faceVarIndices_.end(), scvfIdx);
         assert(it != faceVarIndices_.end() && "Could not find the current face variables for scvfIdx!");
