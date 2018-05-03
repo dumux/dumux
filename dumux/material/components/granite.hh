@@ -40,7 +40,7 @@ namespace Components {
  */
 template <class Scalar>
 class Granite : public Components::Base<Scalar, Granite<Scalar> >
-               ,public Components::Solid<Scalar, Granite<Scalar> >
+              , public Components::Solid<Scalar, Granite<Scalar> >
 
 {
 public:

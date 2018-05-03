@@ -132,7 +132,7 @@ public:
             using FluidSystem = typename Traits::FluidSystem;
             const auto heatCapacity        = FluidSystem::heatCapacity(fluidState, paramCache, phaseIdx);
             const auto thermalConductivity = FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
-            const auto porosity            = problem.spatialParams().porosity(element, scv);
+            const auto porosity            = this->porosity();
 
             reynoldsNumber_[phaseIdx] = DimLessNum::reynoldsNumber(darcyMagVelocity, characteristicLength_, kinematicViscosity);
             prandtlNumber_[phaseIdx]  = DimLessNum::prandtlNumber(dynamicViscosity, heatCapacity, thermalConductivity);
@@ -456,7 +456,7 @@ public:
             const auto thermalConductivity = FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
 
             // diffusion coefficient of non-wetting component in wetting phase
-            const auto porosity = problem.spatialParams().porosity(element, scv);
+            const auto porosity = this->porosity();
             const auto diffCoeff = FluidSystem::binaryDiffusionCoefficient(fluidState,
                                                                            paramCache,
                                                                            phaseIdx,

@@ -63,10 +63,6 @@
 
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/material/solidstates/inertsolidstate.hh>
-#include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/solidsystems/inertsolidphase.hh>
-#include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
@@ -147,24 +143,6 @@ private:
      using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
      using type = CompositionalFluidState<Scalar, FluidSystem>;
-};
-
-//! The two-phase model uses the inert solid state
-SET_PROP(TwoPOneCNI, SolidState)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-public:
-    using type = InertSolidState<Scalar, SolidSystem>;
-};
-
-// Set the solid system
-SET_PROP(TwoPOneCNI, SolidSystem)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using InertComponent = Components::Constant<1, Scalar>;
-    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
 };
 
 //! Do not block spurious flows by default.

@@ -30,6 +30,7 @@
 
 namespace Dumux
 {
+namespace Components {
 /*!
  * \ingroup OnePNCMinTests
  * \brief A class for the ModifiedCaO properties
@@ -53,7 +54,7 @@ public:
     }
 
 };
-
+} //end namespace components
 } // end namespace
 
 #endif

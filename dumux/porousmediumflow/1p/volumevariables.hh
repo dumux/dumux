@@ -50,7 +50,7 @@ class OnePVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using Indices = typename Traits::ModelTraits::Indices;
     using PermeabilityType = typename Traits::PermeabilityType;
-    static constexpr int numComp = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numComponents();
 public:
     //! export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
@@ -81,7 +81,7 @@ public:
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
         // porosity and permeability
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComp);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     };
@@ -188,7 +188,7 @@ public:
      * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
      */
     Scalar porosity() const
-    { return  solidState_.porosity();; }
+    { return  solidState_.porosity(); }
 
     /*!
      * \brief Returns the permeability within the control volume in \f$[m^2]\f$.

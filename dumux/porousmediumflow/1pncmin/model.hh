@@ -121,8 +121,8 @@ SET_TYPE_PROP(OnePNCMin, LocalResidual, MineralizationLocalResidual<TypeTag>);
 SET_PROP(OnePNCMin, ModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(SolidSystem));
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
     using NonMinTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx)>;
 public:
     using type = MineralizationModelTraits<NonMinTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
@@ -153,8 +153,8 @@ SET_TYPE_PROP(OnePNCMinNI, VtkOutputFields, EnergyVtkOutputFields<Mineralization
 SET_PROP(OnePNCMinNI, ModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(SolidSystem));
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
     using OnePNCTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx)>;
     using IsothermalTraits = MineralizationModelTraits<OnePNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:

@@ -245,15 +245,19 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
-    /*! \brief Return the porosity \f$[-]\f$ of the soil
+    /*!
+     * \brief Function for defining the porosity.
+     *        That is possibly solution dependent.
      *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub control volume.
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume  */
-    Scalar porosity(const Element &element,
-                    const SubControlVolume &scv) const
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the porosity
+     */
+    template<class ElementSolution>
+    Scalar porosity(const Element& element,
+                    const SubControlVolume& scv,
+                    const ElementSolution& elemSol) const
     {
         const auto& globalPos =  scv.dofPosition();
 
@@ -265,13 +269,14 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
-    template<class SolidState>
+    template<class ElementSolution, class SolidState>
     Scalar inertVolumeFraction(const Element& element,
                                const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
                                SolidState& solidState,
                                int compIdx) const
     {
-        return 1-porosity(element, scv);
+        return 1-porosity(element, scv, elemSol);
 
     }
 

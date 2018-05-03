@@ -40,7 +40,7 @@ namespace Dumux {
 template <class Traits>
 class TwoPVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>
- ,public EnergyVolumeVariables<Traits, TwoPVolumeVariables<Traits> >
+, public EnergyVolumeVariables<Traits, TwoPVolumeVariables<Traits> >
 {
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, TwoPVolumeVariables<Traits> >;
@@ -49,7 +49,7 @@ class TwoPVolumeVariables
     using Indices = typename ModelTraits::Indices;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using FS = typename Traits::FluidSystem;
-    static constexpr int numComp = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numComponents();
     enum
     {
         pressureIdx = Indices::pressureIdx,
@@ -105,12 +105,10 @@ public:
             / fluidState_.viscosity(nPhaseIdx);
 
         // porosity calculation over inert volumefraction
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComp);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
-        Scalar minPorosity = problem.spatialParams().minimalPorosity(element, scv);
-        solidState_.setMinPorosity(minPorosity);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
-   }
+    }
 
     /*!
      * \brief Complete the fluid state

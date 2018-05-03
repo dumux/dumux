@@ -173,11 +173,15 @@ public:
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
      * \return the porosity
      */
+    template<class ElementSolution>
     Scalar porosity(const Element& element,
-                    const SubControlVolume& scv) const
+                    const SubControlVolume& scv,
+                    const ElementSolution& elemSol) const
     {
+
         return asImp_().porosityAtPos(scv.center());
     }
 
@@ -194,17 +198,7 @@ public:
     }
 
     /*!
-     * \brief Function for defining the porosity.
-     *
-     * \return porosity
-     * \param globalPos The position of the center of the scv
-     */
-    Scalar minimalPorosity(const Element& element,
-                           const SubControlVolume& scv) const
-    {  return 0.0; }
-
-    /*!
-     * \brief Function for defining the porosity.
+     * \brief Function for defining the solid volume fraction.
      *        That is possibly solution dependent.
      *
      * \param element The current element
@@ -212,24 +206,25 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return the porosity
      */
-    template<class SolidState>
+    template<class ElementSolution, class SolidState>
     Scalar inertVolumeFraction(const Element& element,
                                const SubControlVolume& scv,
-                               SolidState& solidState,
+                               const ElementSolution& elemSol,
+                               const SolidState& solidState,
                                int compIdx) const
     {
         return asImp_().inertVolumeFractionAtPos(scv.center(), solidState, compIdx);
     }
 
     /*!
-     * \brief Function for defining the porosity.
+     * \brief Function for defining the solid volume fraction.
      *
-     * \return porosity
+     * \return solid volume fraction
      * \param globalPos The position of the center of the scv
      */
     template<class SolidState>
     Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos,
-                                    SolidState& solidState,
+                                    const SolidState& solidState,
                                     int compIdx) const
     {
         if (solidState.isInert() && solidState.numInertComponents == 1)

@@ -62,10 +62,7 @@
 
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
-#include <dumux/material/solidstates/inertsolidstate.hh>
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/solidsystems/inertsolidphase.hh>
-#include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
@@ -182,12 +179,6 @@ public:
     using type = TwoPVolumeVariables<Traits>;
 };
 
-//! The indices required by the isothermal 2p model
-// SET_PROP(TwoP, Indices)
-// {
-//     using type = TwoPIndices<GET_PROP_VALUE(TypeTag, Formulation)>;
-// };
-
 //! The two-phase model uses the immiscible fluid state
 SET_PROP(TwoP, FluidState)
 {
@@ -196,24 +187,6 @@ private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
     using type = ImmiscibleFluidState<Scalar, FluidSystem>;
-};
-
-//! The two-phase model uses the immiscible fluid state
-SET_PROP(TwoP, SolidState)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-public:
-    using type = InertSolidState<Scalar, SolidSystem>;
-};
-
-// Set the fluid system
-SET_PROP(TwoP, SolidSystem)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using InertComponent = Components::Constant<1,Scalar>;
-    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
 };
 
 ////////////////////////////////////////////////////////

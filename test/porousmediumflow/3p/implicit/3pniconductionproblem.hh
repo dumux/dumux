@@ -167,7 +167,7 @@ public:
         VolumeVariables volVars;
         volVars.update(someElemSol, *this, someElement, someScv);
 
-        const auto porosity = this->spatialParams().porosity(someElement, someScv);
+        const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
         const auto densityW = volVars.density(wPhaseIdx);
         const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
         const auto densityS = volVars.solidDensity();

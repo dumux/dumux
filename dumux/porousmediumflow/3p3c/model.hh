@@ -89,9 +89,6 @@
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
-#include <dumux/material/solidstates/inertsolidstate.hh>
-#include <dumux/material/solidsystems/inertsolidphase.hh>
-#include <dumux/material/components/granite.hh>
 
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
@@ -186,24 +183,6 @@ SET_PROP(ThreePThreeC, FluidState){
         using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     public:
         using type = CompositionalFluidState<Scalar, FluidSystem>;
-};
-
-//! The two-phase model uses the immiscible fluid state
-SET_PROP(ThreePThreeC, SolidState)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-public:
-    using type = InertSolidState<Scalar, SolidSystem>;
-};
-
-// Set the fluid system
-SET_PROP(ThreePThreeC, SolidSystem)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using InertComponent = Components::Granite<Scalar>;
-    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
 };
 
 //! The local residual function of the conservation equations

@@ -39,7 +39,6 @@ class MineralizationVolumeVariables : public NonMineralizationVolVars
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using ModelTraits = typename Traits::ModelTraits;
     using SolidState = typename Traits::SolidState;
-    static constexpr int numComp = ParentType::numComponents();
 
 public:
     using SolidSystem = typename Traits::SolidSystem;
@@ -58,9 +57,9 @@ public:
      *
      * \param phaseIdx the index of the fluid phase
      */
-    Scalar solidPhaseDensity(int phaseIdx) const
+    Scalar solidComponentDensity(int sCompIdx) const
     {
-        return SolidSystem::density(this->solidState_, phaseIdx);
+        return SolidSystem::density(this->solidState_, sCompIdx);
     }
 
     /*!
@@ -68,9 +67,9 @@ public:
      *
      * \param phaseIdx the index of the fluid phase
      */
-    Scalar solidPhaseMolarDensity(int phaseIdx) const
+    Scalar solidComponentMolarDensity(int sCompIdx) const
     {
-        return SolidSystem::molarDensity(this->solidState_, phaseIdx);
+        return SolidSystem::molarDensity(this->solidState_, sCompIdx);
     }
 
 };

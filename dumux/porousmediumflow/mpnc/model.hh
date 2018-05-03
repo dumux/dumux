@@ -100,12 +100,9 @@
 
 #include <dumux/material/fluidstates/nonequilibrium.hh>
 #include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/material/solidstates/inertsolidstate.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
-#include <dumux/material/components/granite.hh>
-#include <dumux/material/solidsystems/inertsolidphase.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
@@ -246,26 +243,6 @@ private:
 public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
-
-//! The two-phase model uses the immiscible fluid state
-SET_PROP(MPNC, SolidState)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-public:
-    using type = InertSolidState<Scalar, SolidSystem>;
-};
-
-// Set the fluid system
-SET_PROP(MPNC, SolidSystem)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using InertComponent = Components::Granite<Scalar>;
-    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
-};
-
-
 
 //! Set the volume variables property
 SET_PROP(MPNC, VolumeVariables)

@@ -148,7 +148,7 @@ private:
     //! we use the number of components specified by the fluid system here
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(SolidSystem));
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
     using NonMineralizationTraits = TwoPNCModelTraits<FluidSystem::numComponents,
                                                       GET_PROP_VALUE(TypeTag, UseMoles),
                                                       GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
@@ -178,7 +178,7 @@ private:
     //! we use the number of components specified by the fluid system here
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(SolidSystem));
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
     using TwoPNCTraits = TwoPNCModelTraits<FluidSystem::numComponents,
                                            GET_PROP_VALUE(TypeTag, UseMoles),
                                            GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),

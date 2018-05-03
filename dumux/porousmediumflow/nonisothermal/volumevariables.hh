@@ -25,7 +25,6 @@
 #ifndef DUMUX_ENERGY_VOLUME_VARIABLES_HH
 #define DUMUX_ENERGY_VOLUME_VARIABLES_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 
 namespace Dumux {
@@ -35,7 +34,7 @@ template <class IsothermalTraits, class Impl, bool enableEnergyBalance>
 class EnergyVolumeVariablesImplementation;
 
 /*!
- * \ingroup
+ * \ingroup NIModel
  * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities. The volume variables base class
  *        is specialized for isothermal and non-isothermal models.
@@ -44,7 +43,7 @@ template<class IsothermalTraits, class Impl>
 using EnergyVolumeVariables = EnergyVolumeVariablesImplementation<IsothermalTraits,Impl, IsothermalTraits::ModelTraits::enableEnergyBalance()>;
 
 /*!
- * \ingroup
+ * \ingroup NIModel
  * \brief The isothermal base class
  */
 template<class IsothermalTraits, class Impl>
@@ -91,11 +90,6 @@ public:
                            const int phaseIdx)
     {
         return 0;
-    }
-
-    static Scalar solidDensity(const SolidState& solidState)
-    {
-       return 0;
     }
 
 };
@@ -235,7 +229,7 @@ public:
     }
 
 protected:
-  const Impl &asImp_() const { return *static_cast<const Impl*>(this); }
+    const Impl &asImp_() const { return *static_cast<const Impl*>(this); }
     Impl &asImp_() { return *static_cast<Impl*>(this); }
 
 };

@@ -135,7 +135,7 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
         gasPhaseIdx = FluidSystem::gasPhaseIdx,
 
         // index of the solid phase
-        sPhaseIdx = SolidSystem::componentOneIdx,
+        sPhaseIdx = SolidSystem::comp0Idx,
 
 
         // Index of the primary component of G and L phase
@@ -368,8 +368,8 @@ public:
                                          * abs(moleFracNaCl_nPhase - moleFracNaCl_Max_nPhase);
 
         // make sure we don't dissolve more salt than previously precipitated
-        if (precipSalt*timeStepSize_ + volVars.solidVolumeFraction(sPhaseIdx)* volVars.solidPhaseMolarDensity(sPhaseIdx)< 0)
-            precipSalt = -volVars.solidVolumeFraction(sPhaseIdx)* volVars.solidPhaseMolarDensity(sPhaseIdx)/timeStepSize_;
+        if (precipSalt*timeStepSize_ + volVars.solidVolumeFraction(sPhaseIdx)* volVars.solidComponentMolarDensity(sPhaseIdx)< 0)
+            precipSalt = -volVars.solidVolumeFraction(sPhaseIdx)* volVars.solidComponentMolarDensity(sPhaseIdx)/timeStepSize_;
 
         if (volVars.solidVolumeFraction(sPhaseIdx) >= this->spatialParams().referencePorosity(element, scv) - saltPorosity  && precipSalt > 0)
             precipSalt = 0;

@@ -126,15 +126,18 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the soil
+     * \brief Function for defining the porosity.
+     *        That is possibly solution dependent.
      *
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the porosity
      */
-    Scalar porosity(const Element &element,
-                    const SubControlVolume &scv) const
+    template<class ElementSolution>
+    Scalar porosity(const Element& element,
+                    const SubControlVolume& scv,
+                    const ElementSolution& elemSol) const
     {
         if ( inOutFlow(scv.dofPosition()) )
             return porosityOutFlow_ ;
@@ -142,13 +145,14 @@ public:
             return porosity_ ;
     }
 
-    template<class SolidState>
+    template<class ElementSolution, class SolidState>
     Scalar inertVolumeFraction(const Element& element,
                                const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
                                SolidState& solidState,
                                int compIdx) const
     {
-        return 1-porosity(element, scv);
+        return 1-porosity(element, scv, elemSol);
 
     }
 

@@ -45,14 +45,14 @@ namespace Dumux {
 template <class Traits>
 class RichardsVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>
- ,public EnergyVolumeVariables<Traits, RichardsVolumeVariables<Traits> >
+, public EnergyVolumeVariables<Traits, RichardsVolumeVariables<Traits> >
 {
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, RichardsVolumeVariables<Traits> >;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
     using ModelTraits = typename Traits::ModelTraits;
-    static constexpr int numComp = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numComponents();
 public:
     //! export type of the fluid system
     using FluidSystem = typename Traits::FluidSystem;
@@ -153,7 +153,7 @@ public:
         // specify the other parameters
         //////////
         relativePermeabilityWetting_ = MaterialLaw::krw(materialParams, fluidState_.saturation(FluidSystem::liquidPhaseIdx));
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComp);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }

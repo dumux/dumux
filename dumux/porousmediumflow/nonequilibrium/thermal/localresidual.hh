@@ -146,7 +146,7 @@ public:
     {
         //in case we have one energy equation for more than one fluid phase we use an effective law in the nonequilibrium fourierslaw
          flux[energyEq0Idx] += fluxVars.heatConductionFlux(0);
-         //heat conduction for the fluid phases
+         //heat conduction for the solid phases
        for(int sPhaseIdx=0; sPhaseIdx<numEnergyEqSolid; ++sPhaseIdx)
        {
             flux[energyEqSolidIdx+sPhaseIdx] += fluxVars.heatConductionFlux(sPhaseIdx);

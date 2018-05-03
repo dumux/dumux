@@ -38,7 +38,7 @@ namespace Dumux {
 template <class Traits>
 class RichardsNCVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>
- ,public EnergyVolumeVariables<Traits, RichardsNCVolumeVariables<Traits> >
+, public EnergyVolumeVariables<Traits, RichardsNCVolumeVariables<Traits> >
 {
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, RichardsNCVolumeVariables<Traits> >;

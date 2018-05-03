@@ -152,7 +152,7 @@ public:
                                     SolidState& solidState,
                                     int compIdx) const
     {
-        if (compIdx == SolidSystem::componentOneIdx)
+        if (compIdx == SolidSystem::comp0Idx)
         {
             if (isFineMaterial_(globalPos))
                 return 1-finePorosity_;

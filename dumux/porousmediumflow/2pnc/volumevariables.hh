@@ -51,7 +51,7 @@ namespace Dumux {
 template <class Traits>
 class TwoPNCVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>
- ,public EnergyVolumeVariables<Traits, TwoPNCVolumeVariables<Traits> >
+, public EnergyVolumeVariables<Traits, TwoPNCVolumeVariables<Traits> >
 {
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, TwoPNCVolumeVariables<Traits> >;
@@ -59,7 +59,7 @@ class TwoPNCVolumeVariables
     using PermeabilityType = typename Traits::PermeabilityType;
     using FS = typename Traits::FluidSystem;
     using ModelTraits = typename Traits::ModelTraits;
-    static constexpr int numComp = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numComponents();
     enum
     {
         numMajorComponents = ModelTraits::numPhases(),
@@ -167,10 +167,8 @@ public:
         }
 
         // calculate the remaining quantities
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComp);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
-        Scalar minPorosity = problem.spatialParams().minimalPorosity(element, scv);
-        solidState_.setMinPorosity(minPorosity);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
 

@@ -51,7 +51,7 @@ namespace Dumux {
 template <class Traits>
 class ThreePWaterOilVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>
- ,public EnergyVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits> >
+, public EnergyVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits> >
 {
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, ThreePWaterOilVolumeVariables<Traits> >;
@@ -59,11 +59,10 @@ class ThreePWaterOilVolumeVariables
     using ModelTraits = typename Traits::ModelTraits;
     using Indices = typename ModelTraits::Indices;
     using FS = typename Traits::FluidSystem;
-    static constexpr int numComp = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numComponents();
 
     enum {
         numPs = ParentType::numPhases(),
-        numComps = ParentType::numComponents(),
 
         wCompIdx = FS::wCompIdx,
         nCompIdx = FS::nCompIdx,
@@ -704,7 +703,7 @@ public:
 
 
         // porosity
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComp);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
 
         // permeability
@@ -877,8 +876,8 @@ protected:
 private:
     Scalar sw_, sg_, sn_, pg_, pw_, pn_, temp_;
 
-    Scalar moleFrac_[numPs][numComps];
-    Scalar massFrac_[numPs][numComps];
+    Scalar moleFrac_[numPs][numFluidComps];
+    Scalar massFrac_[numPs][numFluidComps];
 
     Scalar permeability_;        //!< Effective porosity within the control volume
     Scalar mobility_[numPs];  //!< Effective mobility within the control volume
@@ -886,7 +885,7 @@ private:
     /* We need a tensor here !! */
     //!< Binary diffusion coefficients of the 3 components in the phases
     Dune::FieldVector<Scalar, numPs> diffusionCoefficient_;
-    std::array<std::array<Scalar, numComps-1>, numPs> diffCoefficient_;
+    std::array<std::array<Scalar, numFluidComps-1>, numPs> diffCoefficient_;
 
 };
 } // end namespace Dumux

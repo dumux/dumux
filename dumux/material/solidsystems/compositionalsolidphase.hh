@@ -46,32 +46,23 @@ public:
      ****************************************/
     static constexpr int numComponents = 2;
     static constexpr int numInertComponents = isInert1 ? (isInert2 ? 2 : 1) : (isInert2 ? 1 : 0);
-    static constexpr int componentOneIdx = 0;
-    static constexpr int componentTwoIdx = 1;
+    static constexpr int comp0Idx = 0;
+    static constexpr int comp1Idx = 1;
 
 
     /*!
      * \brief Return the human readable name of a solid phase
      *
-     * \param phaseIdx The index of the solid phase to consider
-     */
-    static std::string phaseName(int phaseIdx)
-    {
-        switch (phaseIdx) {
-        case componentOneIdx: return ComponentOne::name();
-        case componentTwoIdx: return ComponentTwo::name();
-        }
-        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
-    }
-
-    /*!
-     * \brief A human readable name for the component.
-     *
-     * \param compIdx The index of the component to consider
+     * \param compIdx The index of the solid phase to consider
      */
     static std::string componentName(int compIdx)
     {
-        DUNE_THROW(Dune::InvalidStateException, "ComponentName does not exist " << compIdx);
+        switch (compIdx)
+        {
+            case comp0Idx: return ComponentOne::name();
+            case comp1Idx: return ComponentTwo::name();
+        }
+        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
     /*!
@@ -83,7 +74,7 @@ public:
     /*!
      * \brief Returns whether the phase is incompressible
      */
-    static constexpr bool isCompressible(int phaseIdx)
+    static constexpr bool isCompressible(int compIdx)
     { return false; }
 
     /*!
@@ -100,13 +91,14 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the component.
      */
-    static Scalar molarMass(int phaseIdx)
+    static Scalar molarMass(int compIdx)
     {
-        switch (phaseIdx) {
-        case componentOneIdx: return ComponentOne::molarMass();
-        case componentTwoIdx: return ComponentTwo::molarMass();
+        switch (compIdx)
+        {
+            case comp0Idx: return ComponentOne::molarMass();
+            case comp1Idx: return ComponentTwo::molarMass();
         }
-        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
     /*!
@@ -117,8 +109,8 @@ public:
     {
         Scalar rho1 = ComponentOne::solidDensity(solidState.temperature());
         Scalar rho2 = ComponentTwo::solidDensity(solidState.temperature());
-        Scalar volFrac1 = solidState.volumeFraction(componentOneIdx);
-        Scalar volFrac2 = solidState.volumeFraction(componentTwoIdx);
+        Scalar volFrac1 = solidState.volumeFraction(comp0Idx);
+        Scalar volFrac2 = solidState.volumeFraction(comp1Idx);
 
         return (rho1*volFrac1+
                rho2*volFrac2)/(volFrac1+volFrac2);
@@ -128,28 +120,28 @@ public:
      * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the solid phase at a given pressure and temperature.
      */
     template <class SolidState>
-    static Scalar density(const SolidState& solidState, const int phaseIdx)
+    static Scalar density(const SolidState& solidState, const int compIdx)
     {
-        switch (phaseIdx)
+        switch (compIdx)
         {
-            case componentOneIdx: return ComponentOne::solidDensity(solidState.temperature());
-            case componentTwoIdx: return ComponentTwo::solidDensity(solidState.temperature());
+            case comp0Idx: return ComponentOne::solidDensity(solidState.temperature());
+            case comp1Idx: return ComponentTwo::solidDensity(solidState.temperature());
         }
-         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
     /*!
      * \brief The molar density of the solid phase at a given pressure and temperature.
      */
     template <class SolidState>
-    static Scalar molarDensity(const SolidState& solidState, const int phaseIdx)
+    static Scalar molarDensity(const SolidState& solidState, const int compIdx)
     {
-        switch (phaseIdx)
+        switch (compIdx)
         {
-            case componentOneIdx: return ComponentOne::solidDensity(solidState.temperature())/ComponentOne::molarMass();
-            case componentTwoIdx: return ComponentTwo::solidDensity(solidState.temperature())/ComponentTwo::molarMass();
+            case comp0Idx: return ComponentOne::solidDensity(solidState.temperature())/ComponentOne::molarMass();
+            case comp1Idx: return ComponentTwo::solidDensity(solidState.temperature())/ComponentTwo::molarMass();
         }
-         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
     /*!
@@ -160,8 +152,8 @@ public:
     {
         Scalar lambda1 = ComponentOne::solidThermalConductivity(solidState.temperature());
         Scalar lambda2 = ComponentTwo::solidThermalConductivity(solidState.temperature());
-        Scalar volFrac1 = solidState.volumeFraction(componentOneIdx);
-        Scalar volFrac2 = solidState.volumeFraction(componentTwoIdx);
+        Scalar volFrac1 = solidState.volumeFraction(comp0Idx);
+        Scalar volFrac2 = solidState.volumeFraction(comp1Idx);
 
         return (lambda1*volFrac1+
                lambda2*volFrac2)/(volFrac1+volFrac2);
@@ -175,8 +167,8 @@ public:
     {
         Scalar c1 = ComponentOne::solidHeatCapacity(solidState.temperature());
         Scalar c2 = ComponentTwo::solidHeatCapacity(solidState.temperature());
-        Scalar volFrac1 = solidState.volumeFraction(componentOneIdx);
-        Scalar volFrac2 = solidState.volumeFraction(componentTwoIdx);
+        Scalar volFrac1 = solidState.volumeFraction(comp0Idx);
+        Scalar volFrac2 = solidState.volumeFraction(comp1Idx);
 
         return (c1*volFrac1+
                c2*volFrac2)/(volFrac1+volFrac2);

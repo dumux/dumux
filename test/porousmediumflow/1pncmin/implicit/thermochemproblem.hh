@@ -36,7 +36,7 @@
 
 #include "thermochemspatialparams.hh"
 #include "thermochemreaction.hh"
-#include "modifiedsteamn2cao2h2.hh"
+#include "steamn2.hh"
 #include "modifiedcao.hh"
 
 
@@ -59,13 +59,13 @@ SET_TYPE_PROP(ThermoChemTypeTag, Problem, ThermoChemProblem<TypeTag>);
 SET_PROP(ThermoChemTypeTag, FluidSystem)
 { /*private:*/
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::ModifiedSteamN2CaO2H2<Scalar>;
+    using type = FluidSystems::SteamN2<Scalar>;
 };
 
 SET_PROP(ThermoChemTypeTag, SolidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ComponentOne = Dumux::ModifiedCaO<Scalar>;
+    using ComponentOne = Components::ModifiedCaO<Scalar>;
     using ComponentTwo = Components::CaO2H2<Scalar>;
     using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, false , ComponentTwo, false>;
 };
@@ -130,7 +130,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
         conti0EqIdx = Indices::conti0EqIdx,
 
         // Phase Indices
-        cPhaseIdx = SolidSystem::componentOneIdx,
+        cPhaseIdx = SolidSystem::comp0Idx,
 
         temperatureIdx = Indices::temperatureIdx,
         energyEqIdx = Indices::energyEqIdx
@@ -307,9 +307,9 @@ public:
 
         // make sure not more solid reacts than present
         // In this test, we only consider discharge. Therefore, we use the cPhaseIdx for CaO.
-        if (-qMole*timeStepSize_ + volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidPhaseMolarDensity(cPhaseIdx) < 0 + eps_)
+        if (-qMole*timeStepSize_ + volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidComponentMolarDensity(cPhaseIdx) < 0 + eps_)
         {
-            qMole = -volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidPhaseMolarDensity(cPhaseIdx)/timeStepSize_;
+            qMole = -volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidComponentMolarDensity(cPhaseIdx)/timeStepSize_;
         }
         source[conti0EqIdx+CaO2H2Idx] = qMole;
         source[conti0EqIdx+CaOIdx] = - qMole;

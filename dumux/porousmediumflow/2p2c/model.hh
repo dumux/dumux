@@ -90,9 +90,6 @@
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
-#include <dumux/material/solidstates/inertsolidstate.hh>
-#include <dumux/material/solidsystems/inertsolidphase.hh>
-#include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
@@ -201,24 +198,6 @@ public:
 //! Set the default formulation to pw-sn
 SET_PROP(TwoPTwoC, Formulation)
 { static constexpr TwoPFormulation value = TwoPFormulation::p0s1; };
-
-//! The two-phase model uses the inert solid state
-SET_PROP(TwoPTwoC, SolidState)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-public:
-    using type = InertSolidState<Scalar, SolidSystem>;
-};
-
-// Set the solid system
-SET_PROP(TwoPTwoC, SolidSystem)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using InertComponent = Components::Constant<1,Scalar>;
-    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
-};
 
 //! Set as default that no component mass balance is replaced by the total mass balance
 SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());

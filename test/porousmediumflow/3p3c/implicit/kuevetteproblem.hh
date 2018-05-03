@@ -66,16 +66,7 @@ SET_TYPE_PROP(KuevetteTypeTag, Problem, KuevetteProblem<TypeTag>);
 SET_TYPE_PROP(KuevetteTypeTag,
               FluidSystem,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-// Set the fluid system
-SET_PROP(KuevetteTypeTag, SolidSystem)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using InertComponent = Components::Constant<1, Scalar>;
-    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
-};
 }
-
 
 /*!
  * \ingroup ThreePThreeCModel

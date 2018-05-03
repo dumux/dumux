@@ -21,8 +21,8 @@
  *
  * \brief @copybrief Dumux::FluidSystems::SteamN2CaO2H2
  */
-#ifndef DUMUX_MODIFIED_STEAM_N2_CAO2H2_SYSTEM_HH
-#define DUMUX_MODIFIED_STEAM_N2_CAO2H2_SYSTEM_HH
+#ifndef DUMUX_STEAM_N2_SYSTEM_HH
+#define DUMUX_STEAM_N2_SYSTEM_HH
 
 #include <cassert>
 
@@ -35,10 +35,6 @@
 #include <dumux/material/components/n2.hh>
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
-
-// In order to reproduce the case presented in Shao et al. (2013),
-// we use a modified implementation of the CaO component
-#include "modifiedcao.hh"
 
 namespace Dumux {
 namespace FluidSystems {
@@ -58,10 +54,10 @@ namespace FluidSystems {
 template <class Scalar,
           class H2Otype = Dumux::Components::TabulatedComponent<Dumux::Components::H2O<Scalar>>,
           bool useComplexRelations=true>
-class ModifiedSteamN2CaO2H2
-: public BaseFluidSystem<Scalar, ModifiedSteamN2CaO2H2<Scalar, H2Otype, useComplexRelations> >
+class SteamN2
+: public BaseFluidSystem<Scalar, SteamN2<Scalar, H2Otype, useComplexRelations> >
 {
-    using ThisType = ModifiedSteamN2CaO2H2<Scalar, H2Otype, useComplexRelations>;
+    using ThisType = SteamN2<Scalar, H2Otype, useComplexRelations>;
     using Base =  BaseFluidSystem <Scalar, ThisType>;
 
     using IdealGas = Dumux::IdealGas<Scalar>;

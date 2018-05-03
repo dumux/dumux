@@ -45,16 +45,6 @@ public:
     static constexpr int numComponents = 1;
     static constexpr int numInertComponents = 1;
 
-    enum { lastInertCompIdx = numInertComponents-1 };
-
-    /*!
-     * \brief Return the human readable name of a solid phase
-     *
-     * \param phaseIdx The index of the solid phase to consider
-     */
-    static std::string phaseName(int phaseIdx = 0)
-    { return Component::name(); }
-
     /*!
      * \brief A human readable name for the component.
      *
@@ -72,7 +62,7 @@ public:
     /*!
      * \brief Returns whether the phase is incompressible
      */
-    static constexpr bool isCompressible(int phaseIdx = 0)
+    static constexpr bool isCompressible(int compIdx = 0)
     { return false; }
 
     /*!

@@ -42,7 +42,7 @@ namespace Dumux {
 template <class Traits>
 class ThreePThreeCVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>
- ,public EnergyVolumeVariables<Traits, ThreePThreeCVolumeVariables<Traits> >
+, public EnergyVolumeVariables<Traits, ThreePThreeCVolumeVariables<Traits> >
 {
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, ThreePThreeCVolumeVariables<Traits> >;
@@ -56,7 +56,7 @@ class ThreePThreeCVolumeVariables
 
     using ModelTraits = typename Traits::ModelTraits;
     using Idx = typename ModelTraits::Indices;
-    static constexpr int numComp = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numComponents();
     enum {
         wCompIdx = FS::wCompIdx,
         gCompIdx = FS::gCompIdx,
@@ -549,7 +549,7 @@ public:
         setDiffusionCoefficient_(nPhaseIdx, gCompIdx, 0.0);
 
         // porosity & permeabilty
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComp);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 

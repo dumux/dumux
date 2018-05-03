@@ -26,10 +26,7 @@
 #ifndef DUMUX_SOLID_STATE_COMPOSITIONAL_HH
 #define DUMUX_SOLID_STATE_COMPOSITIONAL_HH
 
-#include <dumux/common/valgrind.hh>
-
-#include <limits>
-#include "basesolidstate.hh"
+#include "updatesolidvolumefractions.hh"
 
 namespace Dumux
 {
@@ -67,7 +64,7 @@ public:
         for (int compIdx =0; compIdx < numComponents; ++compIdx)
             sumVolumeFraction += volumeFraction(compIdx);
         Scalar porosity = 1-sumVolumeFraction;
-        return std::max(porosity, minPorosity_);
+        return porosity;
     }
     /*!
      * \brief The mass density \f$\rho_\alpha\f$ of the fluid phase
@@ -99,8 +96,8 @@ public:
     Scalar temperature() const
     { return temperature_; }
 
-    Scalar volumeFraction(const int phaseIdx) const
-    { return volumeFraction_[phaseIdx]; }
+    Scalar volumeFraction(const int compIdx) const
+    { return volumeFraction_[compIdx]; }
 
    /*****************************************************
      * Setter methods. Note that these are not part of the
@@ -117,11 +114,15 @@ public:
      *       thermodynamic equilibrium, the result of this method is
      *       undefined.
      */
-    template <class CompositionalSolidState>
-    void assign(const CompositionalSolidState &sst)
+    template <class SolidState>
+    void assign(const SolidState &sst)
     {
         temperature_ = sst.temperature();
         density_ = sst.density();
+        thermalConducivity_ = sst.thermalConductivity();
+        heatCapacity_ = sst.heatCapacity();
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            volumeFraction_[compIdx] = sst.volumeFraction(compIdx);
     }
 
     /*!
@@ -151,14 +152,10 @@ public:
     void setVolumeFraction(const int compIdx, Scalar value)
     { volumeFraction_[compIdx] = value; }
 
-    void setMinPorosity(Scalar value)
-    { minPorosity_ = value; }
-
 protected:
     Scalar density_;
     Scalar temperature_;
     Scalar volumeFraction_[numComponents];
-    Scalar minPorosity_;
     Scalar heatCapacity_;
     Scalar thermalConducivity_;
 };

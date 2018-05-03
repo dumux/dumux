@@ -44,7 +44,7 @@ namespace Dumux {
 template <class Traits>
 class TwoPTwoCVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>
- ,public EnergyVolumeVariables<Traits, TwoPTwoCVolumeVariables<Traits> >
+, public EnergyVolumeVariables<Traits, TwoPTwoCVolumeVariables<Traits> >
 {
     using ParentType = PorousMediumFlowVolumeVariables< Traits >;
     using EnergyVolVars = EnergyVolumeVariables<Traits, TwoPTwoCVolumeVariables<Traits> >;
@@ -52,7 +52,7 @@ class TwoPTwoCVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using ModelTraits = typename Traits::ModelTraits;
 
-    static constexpr int numComp = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numComponents();
     // component indices
     enum
     {
@@ -147,7 +147,7 @@ public:
         diffCoeff_[phase1Idx] = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, phase1Idx, comp0Idx, comp1Idx);
 
         // porosity & permeabilty
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComp);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }

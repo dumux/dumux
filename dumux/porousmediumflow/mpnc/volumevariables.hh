@@ -88,7 +88,7 @@ public:
     //! return number of phases considered by the model
     static constexpr int numPhases() { return ModelTraits::numPhases(); }
     //! return number of components considered by the model
-    static constexpr int numComponents() { return ModelTraits::numComponents(); }
+     static constexpr int numFluidComps = ParentType::numComponents();
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -123,7 +123,7 @@ public:
             for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx)
             {
                 int compIIdx = phaseIdx;
-                for (unsigned int compJIdx = 0; compJIdx < numComponents(); ++compJIdx)
+                for (unsigned int compJIdx = 0; compJIdx < numFluidComps; ++compJIdx)
                 {
                     // binary diffusion coefficients
                     if(compIIdx!= compJIdx)
@@ -139,10 +139,8 @@ public:
             }
         }
         //porosity
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComponents());
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
-        Scalar minPorosity = problem.spatialParams().minimalPorosity(element, scv);
-        solidState_.setMinPorosity(minPorosity);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
 
@@ -221,14 +219,14 @@ public:
 
         ComponentVector fug;
         // retrieve component fugacities
-        for (int compIdx = 0; compIdx < numComponents(); ++compIdx)
+        for (int compIdx = 0; compIdx < numFluidComps; ++compIdx)
             fug[compIdx] = priVars[Indices::fug0Idx + compIdx];
 
             // calculate phase compositions
             for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx) {
                 // initial guess
-                for (int compIdx = 0; compIdx < numComponents(); ++compIdx) {
-                    Scalar x_ij = 1.0/numComponents();
+                for (int compIdx = 0; compIdx < numFluidComps; ++compIdx) {
+                    Scalar x_ij = 1.0/numFluidComps;
 
                     // set initial guess of the component's mole fraction
                     fluidState.setMoleFraction(phaseIdx,
@@ -478,7 +476,7 @@ public:
     {
         // difference of sum of mole fractions in the phase from 100%
         Scalar a = 1;
-        for (int compIdx = 0; compIdx < numComponents(); ++compIdx)
+        for (int compIdx = 0; compIdx < numFluidComps; ++compIdx)
             a -= fluidState.moleFraction(phaseIdx, compIdx);
         return a;
     }
@@ -495,7 +493,7 @@ protected:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
     }
 
-    std::array<std::array<Scalar, numComponents()-1>, numPhases()> diffCoefficient_;
+    std::array<std::array<Scalar, numFluidComps-1>, numPhases()> diffCoefficient_;
     Scalar porosity_; //!< Effective porosity within the control volume
     Scalar relativePermeability_[numPhases()]; //!< Effective relative permeability within the control volume
     PermeabilityType permeability_;
@@ -541,7 +539,7 @@ public:
     //! return number of phases considered by the model
     static constexpr int numPhases() { return ModelTraits::numPhases(); }
     //! return number of components considered by the model
-    static constexpr int numComponents() { return ModelTraits::numComponents(); }
+    static constexpr int numFluidComps = ParentType::numComponents();
     using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
     /*!
@@ -578,7 +576,7 @@ public:
             for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx)
             {
                 int compIIdx = phaseIdx;
-                for (unsigned int compJIdx = 0; compJIdx < numComponents(); ++compJIdx)
+                for (unsigned int compJIdx = 0; compJIdx < numFluidComps; ++compJIdx)
                 {
                     // binary diffusion coefficients
                     if(compIIdx!= compJIdx)
@@ -594,10 +592,8 @@ public:
             }
         }
 
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComponents());
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
-        Scalar minPorosity = problem.spatialParams().minimalPorosity(element, scv);
-        solidState_.setMinPorosity(minPorosity);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
     }
@@ -676,7 +672,7 @@ public:
 
         ComponentVector fug;
         // retrieve component fugacities
-        for (int compIdx = 0; compIdx < numComponents(); ++compIdx)
+        for (int compIdx = 0; compIdx < numFluidComps; ++compIdx)
             fug[compIdx] = priVars[Indices::fug0Idx + compIdx];
 
          updateMoleFraction(fluidState,
@@ -716,11 +712,11 @@ public:
         for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx)
         {
                 // set the component mole fractions
-                for (int compIdx = 0; compIdx < numComponents(); ++compIdx) {
+                for (int compIdx = 0; compIdx < numFluidComps; ++compIdx) {
                     actualFluidState.setMoleFraction(phaseIdx,
                            compIdx,
                            priVars[Indices::moleFrac00Idx +
-                                   phaseIdx*numComponents() +
+                                   phaseIdx*numFluidComps +
                                    compIdx]);
                 }
         }
@@ -728,7 +724,7 @@ public:
 //          // For using the ... other way of calculating equilibrium
 //          THIS IS ONLY FOR silencing Valgrind but is not used in this model
             for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx)
-                for (int compIdx = 0; compIdx < numComponents(); ++compIdx) {
+                for (int compIdx = 0; compIdx < numFluidComps; ++compIdx) {
                     const Scalar phi = FluidSystem::fugacityCoefficient(actualFluidState,
                                                                         paramCache,
                                                                         phaseIdx,
@@ -747,7 +743,7 @@ public:
 
             // Setting the equilibrium composition (in a kinetic model not necessarily the same as the actual mole fraction)
             for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx){
-                for (int compIdx=0; compIdx< numComponents(); ++ compIdx){
+                for (int compIdx=0; compIdx< numFluidComps; ++ compIdx){
                     xEquil_[phaseIdx][compIdx] = equilFluidState.moleFraction(phaseIdx, compIdx);
                 }
             }
@@ -997,7 +993,7 @@ public:
     {
         // difference of sum of mole fractions in the phase from 100%
         Scalar a = 1;
-        for (int compIdx = 0; compIdx < numComponents(); ++compIdx)
+        for (int compIdx = 0; compIdx < numFluidComps; ++compIdx)
             a -= fluidState.moleFraction(phaseIdx, compIdx);
         return a;
     }
@@ -1014,10 +1010,10 @@ protected:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
     }
 
-    std::array<std::array<Scalar, numComponents()-1>, numPhases()> diffCoefficient_;
+    std::array<std::array<Scalar, numFluidComps-1>, numPhases()> diffCoefficient_;
     Scalar relativePermeability_[numPhases()]; //!< Effective relative permeability within the control volume
     PermeabilityType permeability_;
-    Scalar xEquil_[numPhases()][numComponents()];
+    Scalar xEquil_[numPhases()][numFluidComps];
 
     //! Mass fractions of each component within each phase
     FluidState fluidState_;

@@ -46,7 +46,7 @@ public:
         // additional output
         for (int i = 0; i < SolidSystem::numComponents - SolidSystem::numInertComponents; ++i)
         {
-            vtk.addVolumeVariable([i](const auto& v){ return v.solidVolumeFraction(i); },"precipitateVolumeFraction_"+ SolidSystem::phaseName(i));
+            vtk.addVolumeVariable([i](const auto& v){ return v.solidVolumeFraction(i); },"precipitateVolumeFraction_"+ SolidSystem::componentName(i));
         }
     }
 };

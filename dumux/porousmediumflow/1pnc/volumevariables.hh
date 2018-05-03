@@ -44,14 +44,14 @@ namespace Dumux {
 template <class Traits>
 class OnePNCVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>
- ,public EnergyVolumeVariables<Traits, OnePNCVolumeVariables<Traits> >
+, public EnergyVolumeVariables<Traits, OnePNCVolumeVariables<Traits> >
 {
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, OnePNCVolumeVariables<Traits> >;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
     using Idx = typename Traits::ModelTraits::Indices;
-    static constexpr int numComp = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numComponents();
 
     enum
     {
@@ -95,12 +95,8 @@ public:
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
         // calculate the remaining quantities
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numComp);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
         EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
-
-        Scalar minPorosity = problem.spatialParams().minimalPorosity(element, scv);
-        solidState_.setMinPorosity(minPorosity);
-
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
         // Second instance of a parameter cache.
@@ -110,7 +106,7 @@ public:
         paramCache.updatePhase(fluidState_, fluidSystemPhaseIdx);
 
         int compIIdx = mainCompMoleOrMassFracIdx;
-        for (unsigned int compJIdx = 0; compJIdx < numComp; ++compJIdx)
+        for (unsigned int compJIdx = 0; compJIdx < numFluidComps; ++compJIdx)
         {
             diffCoeff_[compJIdx] = 0.0;
             if(compIIdx != compJIdx)
@@ -149,10 +145,10 @@ public:
         fluidState.setPressure(fluidSystemPhaseIdx, priVars[pressureIdx]);
 
         // calculate the phase composition
-        Dune::FieldVector<Scalar, numComp> moleFrac;
+        Dune::FieldVector<Scalar, numFluidComps> moleFrac;
 
         Scalar sumMoleFracNotMainComp = 0;
-        for (int compIdx = 0; compIdx < numComp; ++compIdx)
+        for (int compIdx = 0; compIdx < numFluidComps; ++compIdx)
         {
             if (compIdx != mainCompMoleOrMassFracIdx)
             {
@@ -163,7 +159,7 @@ public:
         moleFrac[mainCompMoleOrMassFracIdx] = 1- sumMoleFracNotMainComp;
 
         // Set fluid state mole fractions
-        for (int compIdx = 0; compIdx < numComp; ++compIdx)
+        for (int compIdx = 0; compIdx < numFluidComps; ++compIdx)
         {
             fluidState.setMoleFraction(fluidSystemPhaseIdx, compIdx, moleFrac[compIdx]);
         }
@@ -238,7 +234,7 @@ public:
      Scalar moleFraction(int phaseIdx, int compIdx) const
      {
          // make sure this is only called with admissible indices
-         assert(compIdx < numComp);
+         assert(compIdx < numFluidComps);
          return fluidState_.moleFraction(fluidSystemPhaseIdx, compIdx);
      }
 
@@ -254,7 +250,7 @@ public:
      Scalar massFraction(int phaseIdx, int compIdx) const
      {
          // make sure this is only called with admissible indices
-         assert(compIdx < numComp);
+         assert(compIdx < numFluidComps);
          return fluidState_.massFraction(fluidSystemPhaseIdx, compIdx);
      }
 
@@ -319,7 +315,7 @@ public:
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
-        assert(compIdx < numComp);
+        assert(compIdx < numFluidComps);
         return diffCoeff_[compIdx];
     }
 
@@ -330,7 +326,7 @@ public:
      */
     Scalar molarity(int compIdx) const // [moles/m^3]
     {
-        assert(compIdx < numComp);
+        assert(compIdx < numFluidComps);
         return fluidState_.molarity(fluidSystemPhaseIdx, compIdx);
     }
 
@@ -341,7 +337,7 @@ public:
       */
      Scalar massFraction(int compIdx) const
      {
-         assert(compIdx < numComp);
+         assert(compIdx < numFluidComps);
          return this->fluidState_.massFraction(fluidSystemPhaseIdx, compIdx);
      }
 
@@ -359,7 +355,7 @@ private:
     Scalar porosity_;        //!< Effective porosity within the control volume
     PermeabilityType permeability_;
     Scalar density_;
-    Dune::FieldVector<Scalar, numComp> diffCoeff_;
+    Dune::FieldVector<Scalar, numFluidComps> diffCoeff_;
 };
 
 } // end namespace Dumux

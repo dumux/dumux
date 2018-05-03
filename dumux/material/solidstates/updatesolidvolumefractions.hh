@@ -19,16 +19,10 @@
 /*!
  * \file
  * \ingroup SolidStates
- * \brief Represents all relevant thermodynamic quantities of a
- *        multi-phase fluid system assuming immiscibility and
- *        thermodynamic equilibrium.
+ * \brief update the solid volume fractions (inert and reacitve) and set them in the solidstate
  */
-#ifndef DUMUX_BASE_SOLID_STATE_HH
-#define DUMUX_BASE_SOLID_STATE_HH
-
-#include <dumux/common/valgrind.hh>
-
-#include <limits>
+#ifndef DUMUX_UPDATE_SOLID_VOLUME_FRACTION_HH
+#define DUMUX_UPDATE_SOLID_VOLUME_FRACTION_HH
 
 namespace Dumux
 {
@@ -39,18 +33,19 @@ void updateSolidVolumeFractions(const ElemSol &elemSol,
                                 const Element &element,
                                 const Scv &scv,
                                 SolidState& solidState,
-                                const int numFluidComponents)
+                                const int solidVolFracOffset)
 {
     for(int sCompIdx = solidState.numComponents- solidState.numInertComponents; sCompIdx < solidState.numComponents; ++sCompIdx)
     {
-        solidState.setVolumeFraction(sCompIdx, problem.spatialParams().inertVolumeFraction(element, scv, solidState, sCompIdx));
+        const auto inertVolumeFraction = problem.spatialParams().inertVolumeFraction(element, scv, elemSol, solidState, sCompIdx);
+        solidState.setVolumeFraction(sCompIdx, inertVolumeFraction);
     }
     if (!(solidState.isInert()))
     {
         auto&& priVars = elemSol[scv.localDofIndex()];
         for(int sCompIdx = 0; sCompIdx < solidState.numComponents- solidState.numInertComponents; ++sCompIdx)
         {
-           solidState.setVolumeFraction(sCompIdx, priVars[numFluidComponents + sCompIdx]);
+           solidState.setVolumeFraction(sCompIdx, priVars[solidVolFracOffset + sCompIdx]);
         }
     }
 }
