@@ -68,8 +68,6 @@ public:
                    const Intersection& is,
                    unsigned int edgeIndexInIntersection = 0) const
     {
-        assert(isGeom.corners() == 2);
-
         const auto referenceElement = ReferenceElements::general(this->elementGeometry_.type());
         const auto vIdxLocal0 = referenceElement.subEntity(is.indexInInside(), 1, 0, dim);
         const auto vIdxLocal1 = referenceElement.subEntity(is.indexInInside(), 1, 1, dim);
