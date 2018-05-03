@@ -84,6 +84,19 @@ public:
      }
 
      /*!
+      * \brief The molar density of MyCompressibleComponent in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+      *
+      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+      *
+      */
+     static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+     {
+         // TODO: replace the line below by a meaningful return statement
+         DUNE_THROW(Dune::NotImplemented, "Todo: implement liquid molar density");
+     }
+
+     /*!
       * \brief The dynamic liquid viscosity \f$\mathrm{[Pa*s]}\f$ of the pure component.
       *
       * \param temperature temperature of component in \f$\mathrm{[K]}\f$

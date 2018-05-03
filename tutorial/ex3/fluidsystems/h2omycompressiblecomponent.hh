@@ -262,7 +262,8 @@ public:
             // molecule in the liquid.
             return H2O::liquidMolarDensity(T, p);
         }
-        else{
+        else
+        {
             // assume the molar density of the fictious component to be independent of the composition
             Scalar pressure = MyCompressibleComponent::liquidIsCompressible()?fluidState.pressure(phaseIdx):1e100;
             return MyCompressibleComponent::liquidMolarDensity(fluidState.temperature(phaseIdx), pressure);
