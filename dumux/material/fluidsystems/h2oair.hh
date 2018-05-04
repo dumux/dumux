@@ -686,7 +686,8 @@ public:
 
         if (phaseIdx == phase0Idx)
         {
-            DUNE_THROW(Dune::NotImplemented, "The component enthalpies in the liquid phase are not implemented.");
+            // the liquid enthalpy is constant
+            return H2O::liquidEnthalpy(T, p);
         }
         else if (phaseIdx == phase1Idx)
         {

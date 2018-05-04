@@ -73,7 +73,6 @@ class MaxwellStefansLawImplementation<TypeTag, DiscretizationMethod::staggered >
     enum {
         pressureIdx = Indices::pressureIdx,
         conti0EqIdx = Indices::conti0EqIdx,
-        replaceCompEqIdx = Indices::replaceCompEqIdx,
     };
 
 public:
@@ -186,9 +185,6 @@ public:
             componentFlux[compIdx] = reducedFlux[compIdx];
             componentFlux[numComponents-1] -=reducedFlux[compIdx];
         }
-
-        if(useMoles && replaceCompEqIdx <= numComponents)
-            componentFlux[replaceCompEqIdx] = 0.0;
 
         return componentFlux ;
     }

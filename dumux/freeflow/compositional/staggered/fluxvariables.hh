@@ -54,14 +54,10 @@ class FreeflowNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
-    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
-
-    static constexpr auto numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
-
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-
-
 public:
+    static constexpr auto numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
     /*!
     * \brief Computes the flux for the cell center residual.
@@ -97,8 +93,10 @@ public:
                 return density * fraction;
             };
 
-            flux[eqIdx - Indices::conti0EqIdx] = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
+            flux[compIdx] = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
         }
+
+        flux += MolecularDiffusionType::flux(problem, fvGeometry, elemVolVars, scvf);
 
         // in case one balance is substituted by the total mass balance
         if (Indices::replaceCompEqIdx < numComponents)
@@ -106,7 +104,6 @@ public:
             flux[Indices::replaceCompEqIdx] = std::accumulate(flux.begin(), flux.end(), 0.0);
         }
 
-        flux += MolecularDiffusionType::flux(problem, fvGeometry, elemVolVars, scvf);
         return flux;
     }
 };

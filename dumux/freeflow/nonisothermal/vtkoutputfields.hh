@@ -51,7 +51,7 @@ public:
     static void add(VtkOutputModule& vtk)
     {
         vtk.addVolumeVariable([](const auto& v){ return v.temperature(); }, "temperature");
-//         vtk.addVolumeVariable([](const auto& v){ return v.thermalConductivity(); }, "lambda");
+        vtk.addVolumeVariable([](const auto& v){ return v.thermalConductivity(); }, "lambda");
         if (ModelTraits::usesTurbulenceModel())
             vtk.addVolumeVariable([](const auto& v){ return v.effectiveThermalConductivity() - v.thermalConductivity(); }, "lambda_t");
     }

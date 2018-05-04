@@ -29,7 +29,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class FVGridGeometry, class FluxVariables, DiscretizationMethod discMethod, bool enableEneryBalance>
+template<class FVGridGeometry, class FluxVariables, DiscretizationMethod discMethod, bool enableEneryBalance, bool isCompositional>
 class FreeFlowEnergyLocalResidualImplementation;
 
 /*!
@@ -37,19 +37,19 @@ class FreeFlowEnergyLocalResidualImplementation;
  * \brief Element-wise calculation of the local residual for non-isothermal
  *        free-flow models
  */
-template<class FVGridGeometry, class FluxVariables, bool enableEneryBalance>
+template<class FVGridGeometry, class FluxVariables, bool enableEneryBalance, bool isCompositional>
 using FreeFlowEnergyLocalResidual =
       FreeFlowEnergyLocalResidualImplementation<FVGridGeometry,
                                                 FluxVariables,
                                                 FVGridGeometry::discMethod,
-                                                enableEneryBalance>;
+                                                enableEneryBalance, isCompositional>;
 
 /*!
  * \ingroup FreeflowNIModel
  * \brief Specialization for isothermal models, does nothing
  */
-template<class FVGridGeometry, class FluxVariables, DiscretizationMethod discMethod>
-class FreeFlowEnergyLocalResidualImplementation<FVGridGeometry, FluxVariables, discMethod, false>
+template<class FVGridGeometry, class FluxVariables, DiscretizationMethod discMethod, bool isCompositional>
+class FreeFlowEnergyLocalResidualImplementation<FVGridGeometry, FluxVariables, discMethod, false, isCompositional>
 {
 public:
 
@@ -60,29 +60,23 @@ public:
 
     //! do nothing for the isothermal case
     template <typename... Args>
-    static void heatConvectionFlux(Args&&... args)
-    {}
-
-    //! do nothing for the isothermal case
-    template <typename... Args>
     static void heatFlux(Args&&... args)
     {}
 };
 
 /*!
  * \ingroup FreeflowNIModel
- * \brief Specialization for staggered non-isothermal models
+ * \brief Specialization for staggered one-phase, non-isothermal models
  */
 template<class FVGridGeometry, class FluxVariables>
 class FreeFlowEnergyLocalResidualImplementation<FVGridGeometry,
                                                 FluxVariables,
                                                 DiscretizationMethod::staggered,
-                                                true>
+                                                true, false>
 {
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using HeatConductionType = typename FluxVariables::HeatConductionType;
 
 public:
 
@@ -123,10 +117,61 @@ public:
                                                                             upwindTerm,
                                                                             isOutflow);
         if(!isOutflow)
-            flux[localEnergyBalanceIdx] += HeatConductionType::flux(element,
-                                                               fvGeometry,
-                                                               elemVolVars,
-                                                               scvf);
+            flux[localEnergyBalanceIdx] += FluxVariables::HeatConductionType::flux(element,
+                                                                                   fvGeometry,
+                                                                                   elemVolVars,
+                                                                                   scvf);
+    }
+};
+
+/*!
+ * \ingroup FreeflowNIModel
+ * \brief Specialization for staggered compositional, non-isothermal models
+ */
+template<class FVGridGeometry, class FluxVariables>
+class FreeFlowEnergyLocalResidualImplementation<FVGridGeometry,
+                                                FluxVariables,
+                                                DiscretizationMethod::staggered,
+                                                true, true>
+    : public FreeFlowEnergyLocalResidualImplementation<FVGridGeometry,
+                                                       FluxVariables,
+                                                       DiscretizationMethod::staggered,
+                                                       true, false>
+{
+    using ParentType = FreeFlowEnergyLocalResidualImplementation<FVGridGeometry,
+                                                                 FluxVariables,
+                                                                 DiscretizationMethod::staggered,
+                                                                 true, false>;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+
+public:
+    //! The convective and conductive heat fluxes in the fluid phase
+    template<class NumEqVector, class Problem, class ElementVolumeVariables, class ElementFaceVariables>
+    static void heatFlux(NumEqVector& flux,
+                         const Problem& problem,
+                         const Element &element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const ElementFaceVariables& elemFaceVars,
+                         const SubControlVolumeFace& scvf)
+    {
+        ParentType::heatFlux(flux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
+
+        static constexpr auto localEnergyBalanceIdx = NumEqVector::dimension - 1;
+        NumEqVector diffusiveFlux = FluxVariables::MolecularDiffusionType::flux(problem, fvGeometry, elemVolVars, scvf);
+        for (int compIdx = 0; compIdx < FluxVariables::numComponents; ++compIdx)
+        {
+            const bool insideIsUpstream = scvf.directionSign() == sign(diffusiveFlux[compIdx]);
+            const auto& upstreamVolVars = insideIsUpstream ? elemVolVars[scvf.insideScvIdx()] : elemVolVars[scvf.outsideScvIdx()];
+
+            // always use a mass-based calculation for the energy balance
+            if (FluxVariables::useMoles)
+                diffusiveFlux[compIdx] *= elemVolVars[scvf.insideScvIdx()].molarMass(compIdx);
+
+            flux[localEnergyBalanceIdx] += diffusiveFlux[compIdx] * upstreamVolVars.componentEnthalpy(compIdx);
+        }
     }
 };
 

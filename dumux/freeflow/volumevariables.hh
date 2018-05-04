@@ -179,8 +179,6 @@ public:
     /*!
      * \brief Returns the total internal energy of a phase in the
      *        sub-control volume.
-     *
-     * \param fluidSystemPhaseIdx The phase index
      */
     Scalar internalEnergy() const
     { return ParentType::asImp_().fluidState().internalEnergy(fluidSystemPhaseIdx); }
@@ -188,11 +186,15 @@ public:
     /*!
      * \brief Returns the total enthalpy of a phase in the sub-control
      *        volume.
-     *
-     * \param fluidSystemPhaseIdx The phase index
      */
     Scalar enthalpy() const
     { return ParentType::asImp_().fluidState().enthalpy(fluidSystemPhaseIdx); }
+
+    /*!
+     * \brief Returns the component enthalpy \f$\mathrm{[J/(kg*K)]}\f$ in the sub-control volume.
+     */
+    Scalar componentEnthalpy(unsigned int compIdx) const
+    { return FluidSystem::componentEnthalpy(ParentType::asImp_().fluidState(), fluidSystemPhaseIdx, compIdx); }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
