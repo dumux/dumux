@@ -145,7 +145,7 @@ public:
 
         // Check if we are on an outflow boundary.
         const bool isOutflow = scvf.boundary()
-                               ? problem.boundaryTypesAtPos(scvf.center()).isOutflow(Indices::conti0EqIdx)
+                               ? problem.boundaryTypes(element, scvf).isOutflow(Indices::conti0EqIdx)
                                : false;
 
         // Call the generic flux function.
@@ -242,9 +242,10 @@ public:
 
         // The pressure term.
         // If specified, the pressure can be normalized using the initial value on the scfv of interest.
+        // The scvf is used to normalize by the same value from the left and right side.
         // Can potentially help to improve the condition number of the system matrix.
         const Scalar pressure = normalizePressure ?
-                                insideVolVars.pressure() - problem.initialAtPos(scvf.center())[Indices::pressureIdx]
+                                insideVolVars.pressure() - problem.initial(scvf)[Indices::pressureIdx]
                               : insideVolVars.pressure();
 
         // Account for the orientation of the staggered face's normal outer normal vector
@@ -254,7 +255,7 @@ public:
         // Treat outflow conditions.
         if(scvf.boundary())
         {
-            if(problem.boundaryTypesAtPos(scvf.center()).isOutflow(Indices::velocity(scvf.directionIndex())))
+            if(problem.boundaryTypes(element, scvf).isOutflow(Indices::velocity(scvf.directionIndex())))
             {
                 // Treat the staggered half-volume adjacent to the boundary as if it was on the opposite side of the boundary.
                 // The respective face's outer normal vector will point in the same direction as the scvf's one.
@@ -559,10 +560,10 @@ private:
             outflow += velocitySelf * velocitySelf * upVolVars.density();
         }
 
-        // Apply a pressure at the boudary.
+        // Apply a pressure at the boundary.
         const Scalar boundaryPressure = normalizePressure
                                         ? (problem.dirichlet(element, scvf)[Indices::pressureIdx] -
-                                           problem.initialAtPos(scvf.center())[Indices::pressureIdx])
+                                           problem.initial(scvf)[Indices::pressureIdx])
                                         : problem.dirichlet(element, scvf)[Indices::pressureIdx];
         outflow += boundaryPressure;
 

@@ -189,6 +189,7 @@ public:
     template<class BoundaryTypes>
     void setFixedCell(CellCenterResidual& residual,
                       const Problem& problem,
+                      const Element& element,
                       const SubControlVolume& insideScv,
                       const ElementVolumeVariables& elemVolVars,
                       const BoundaryTypes& bcTypes) const
@@ -197,7 +198,7 @@ public:
         if(bcTypes.isDirichletCell(Indices::conti0EqIdx))
         {
             const auto& insideVolVars = elemVolVars[insideScv];
-            residual[Indices::conti0EqIdx - cellCenterOffset] = insideVolVars.pressure() - problem.dirichletAtPos(insideScv.center())[Indices::pressureIdx];
+            residual[Indices::conti0EqIdx - cellCenterOffset] = insideVolVars.pressure() - problem.dirichlet(element, insideScv)[Indices::pressureIdx];
         }
     }
 
@@ -248,7 +249,7 @@ protected:
 
                 // if specified, set a fixed value at the center of a cell at the boundary
                 const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-                asImp_().setFixedCell(residual, problem, scv, elemVolVars, bcTypes);
+                asImp_().setFixedCell(residual, problem, element, scv, elemVolVars, bcTypes);
             }
         }
     }

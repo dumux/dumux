@@ -46,6 +46,9 @@ class FreeflowNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
@@ -103,11 +106,12 @@ public:
     template<class ElementVolumeVariables, class BoundaryTypes>
     void setFixedCell(CellCenterResidual& residual,
                       const Problem& problem,
+                      const Element& element,
                       const SubControlVolume& insideScv,
                       const ElementVolumeVariables& elemVolVars,
                       const BoundaryTypes& bcTypes) const
     {
-        ParentType::setFixedCell(residual, problem, insideScv, elemVolVars, bcTypes);
+        ParentType::setFixedCell(residual, problem, element, insideScv, elemVolVars, bcTypes);
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
@@ -119,7 +123,7 @@ public:
             {
                 const auto& insideVolVars = elemVolVars[insideScv];
                 const Scalar massOrMoleFraction = useMoles ? insideVolVars.moleFraction(compIdx) : insideVolVars.massFraction(compIdx);
-                residual[eqIdx - cellCenterOffset] = massOrMoleFraction - problem.dirichletAtPos(insideScv.center())[eqIdx];
+                residual[eqIdx - cellCenterOffset] = massOrMoleFraction - problem.dirichlet(element, insideScv)[eqIdx];
             }
         }
 
