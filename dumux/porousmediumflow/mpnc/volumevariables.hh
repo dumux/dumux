@@ -852,12 +852,7 @@ public:
      * identical.
      */
     Scalar temperature() const
-    {
-        return fluidState_.temperature(0/* phaseIdx*/);
-    }
-
-    Scalar temperature(const int phaseIdx) const
-    { return fluidState_.temperature(phaseIdx); }
+    { return fluidState_.temperature(0/* phaseIdx*/); }
 
     /*!
      * \brief Return enthalpy \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.

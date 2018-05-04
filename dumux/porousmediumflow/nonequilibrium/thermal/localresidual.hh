@@ -174,7 +174,7 @@ public:
         const Scalar as = 6.0 * (1.0-volVars.porosity()) / characteristicLength ;
 
         //temperature fluid is the same for both fluids
-        const Scalar TFluid     = volVars.temperature(0);
+        const Scalar TFluid     = volVars.temperatureFluid(0);
         const Scalar TSolid     = volVars.temperatureSolid();
 
         const Scalar satW       = fs.saturation(phase0Idx) ;
@@ -424,8 +424,8 @@ public:
         const Scalar aws = volVars.interfacialArea(phase0Idx, sPhaseIdx);
         const Scalar ans = volVars.interfacialArea(phase1Idx, sPhaseIdx);
 
-        const Scalar Tw = volVars.temperature(phase0Idx);
-        const Scalar Tn = volVars.temperature(phase1Idx);
+        const Scalar Tw = volVars.temperatureFluid(phase0Idx);
+        const Scalar Tn = volVars.temperatureFluid(phase1Idx);
         const Scalar Ts = volVars.temperatureSolid();
 
         const  Scalar lambdaWetting     = volVars.fluidThermalConductivity(phase0Idx);

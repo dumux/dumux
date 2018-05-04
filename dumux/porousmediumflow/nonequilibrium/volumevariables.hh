@@ -94,8 +94,8 @@ public:
         ParentType::update(elemSol, problem, element, scv);
 
         ParameterCache paramCache;
-        paramCache.updateAll(this->fluidState_);
-        updateInterfacialArea(elemSol, this->fluidState_, paramCache, problem, element, scv);
+        paramCache.updateAll(this->fluidState());
+        updateInterfacialArea(elemSol, this->fluidState(), paramCache, problem, element, scv);
     }
 
     /*!
@@ -213,8 +213,8 @@ public:
         ParentType::update(elemSol, problem, element, scv);
 
         ParameterCache paramCache;
-        paramCache.updateAll(this->fluidState_);
-        updateInterfacialArea(elemSol, this->fluidState_, paramCache, problem, element, scv);
+        paramCache.updateAll(this->fluidState());
+        updateInterfacialArea(elemSol, this->fluidState(), paramCache, problem, element, scv);
     }
 
     /*!
@@ -354,8 +354,8 @@ public:
         ParentType::update(elemSol, problem, element, scv);
 
         ParameterCache paramCache;
-        paramCache.updateAll(this->fluidState_);
-        updateInterfacialArea(elemSol, this->fluidState_, paramCache, problem, element, scv);
+        paramCache.updateAll(this->fluidState());
+        updateInterfacialArea(elemSol, this->fluidState(), paramCache, problem, element, scv);
     }
 
     /*!

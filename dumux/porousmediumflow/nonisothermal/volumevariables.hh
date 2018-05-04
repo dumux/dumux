@@ -191,6 +191,15 @@ public:
     Scalar temperatureSolid() const
     { return asImp_().solidState().temperature(); }
 
+
+    /*!
+     * \brief Returns the temperature of a fluid phase assuming thermal nonequilibrium
+     *        the sub-control volume.
+     * \param phaseIdx The local index of the phases
+     */
+    Scalar temperatureFluid(const int phaseIdx) const
+    { return asImp_().fluidState().temperature(phaseIdx); }
+
     /*!
      * \brief Returns the total heat capacity \f$\mathrm{[J/(kg K)]}\f$ of the rock matrix in
      *        the sub-control volume.
