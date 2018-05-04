@@ -9,7 +9,6 @@ Cells = 100 50
 [Problem]
 Name = test_channel_navierstokes # name passed to the output routines
 InletVelocity = 1000
-LiquidDensity = 1
 EnableGravity = false
 
 [ Newton ]

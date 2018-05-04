@@ -6,8 +6,6 @@ Cells = 40 40
 Name = test_donea # name passed to the output routines
 EnableGravity = false
 PrintL2Error = false
-LiquidKinematicViscosity = 1
-LiquidDensity = 1
 
 [ Newton ]
 MaxSteps = 10

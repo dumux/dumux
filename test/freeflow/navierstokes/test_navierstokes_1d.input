@@ -6,6 +6,8 @@ Cells = 32
 Name = test_navierstokes_1d
 EnableGravity = false
 PrintL2Error = true
+
+[Component]
 LiquidKinematicViscosity = 1.
 LiquidDensity = 1.
 

@@ -98,8 +98,8 @@ public:
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
-        density_ = getParam<Scalar>("Problem.LiquidDensity");
-        kinematicViscosity_ = getParam<Scalar>("Problem.LiquidKinematicViscosity");
+        density_ = getParam<Scalar>("Component.LiquidDensity");
+        kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity");
         createAnalyticalSolution_();
     }
 
