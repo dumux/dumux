@@ -478,6 +478,9 @@ private:
             // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
             auto getNormalVelocityFromBoundary = [&]()
             {
+                if (problem.boundaryTypesAtPos(scvf.center()).isOutflow(Indices::velocity(normalFace.directionIndex())))
+                    return faceVars.velocityNormalInside(localSubFaceIdx);
+
                 const auto ghostFace = makeNormalGhostFace_(scvf, localSubFaceIdx);
                 return problem.dirichlet(element, ghostFace)[Indices::velocity(normalFace.directionIndex())];
             };

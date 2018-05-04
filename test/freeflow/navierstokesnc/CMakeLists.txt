@@ -53,7 +53,8 @@ dune_add_test(NAME test_stokes2cni_diffusion
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes2cni-diffusion.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni_diffusion-00014.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}//test_stokes2cni test_stokes2cni_diffusion.input")
+                             --command "${CMAKE_CURRENT_BINARY_DIR}//test_stokes2cni test_stokes2cni_diffusion.input"
+                             --zeroThreshold {"velocity_liquid \(m/s\)":1e-13})
 
 dune_add_test(NAME test_msfreeflow
               SOURCES test_msfreeflow.cc
