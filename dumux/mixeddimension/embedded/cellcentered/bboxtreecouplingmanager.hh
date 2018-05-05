@@ -101,6 +101,12 @@ public:
 
         // Check if we are using the cellcentered method in both domains
         static_assert(lowDimDim == 1, "The bounding box coupling manager only works with one-dimensional low-dim grids");
+        updateGrid(bulkFvGridGeometry, lowDimFvGridGeometry);
+    }
+
+    void updateGrid(std::shared_ptr<const FVGridGeometry<bulkIdx>> bulkFvGridGeometry,
+                    std::shared_ptr<const FVGridGeometry<lowDimIdx>> lowDimFvGridGeometry)
+    {
         glue_ = std::make_shared<GlueType>();
     }
 
@@ -507,6 +513,9 @@ public:
         pointSourceData_.clear();
         bulkCouplingStencils_.clear();
         lowDimCouplingStencils_.clear();
+        bulkCircleStencils_.clear();
+        bulkCircleStencilsInverse_.clear();
+
         idCounter_ = 0;
     }
 
