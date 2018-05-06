@@ -169,18 +169,18 @@ public:
         // Deduce the number of components from the given vector type
         const auto nComp = getNumberOfComponents_(v);
 
-        const auto numElements = gridGeom_.gridView().size(0);
-        const auto numVertices = gridGeom_.gridView().size(dim);
+        const auto numElemDofs = gridGeom_.elementMapper().size();
+        const auto numVertexDofs = gridGeom_.vertexMapper().size();
 
         // Automatically deduce the field type ...
         if(fieldType == FieldType::automatic)
         {
-            if(numElements == numVertices)
+            if(numElemDofs == numVertexDofs)
                 DUNE_THROW(Dune::InvalidStateException, "Automatic deduction of FieldType failed. Please explicitly specify FieldType::element or FieldType::vertex.");
 
-            if(v.size() == numElements)
+            if(v.size() == numElemDofs)
                 fieldType = FieldType::element;
-            else if(v.size() == numVertices)
+            else if(v.size() == numVertexDofs)
                 fieldType = FieldType::vertex;
             else
                 DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
@@ -189,11 +189,11 @@ public:
         else
         {
             if(fieldType == FieldType::element)
-                if(v.size() != numElements)
+                if(v.size() != numElemDofs)
                     DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
 
             if(fieldType == FieldType::vertex)
-                if(v.size() != numVertices)
+                if(v.size() != numVertexDofs)
                     DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
         }
 
