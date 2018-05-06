@@ -114,6 +114,9 @@ public:
         using BoundarySegmentToMarkerMap = std::vector<int>;
     };
 
+    //! state the dimension of the highest-dimensional grid
+    static constexpr int bulkDim = Traits::BulkGrid::dimension;
+
     //! Returns domain marker of an element
     template<std::size_t id>
     typename Traits::ElementToDomainMarkerMap::value_type
