@@ -41,7 +41,8 @@ namespace Detail {
 template<class GlobalPosition>
 struct hasPermeabilityAtPos
 {
-    auto operator()(auto&& a)
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
     -> decltype(a.permeabilityAtPos(std::declval<GlobalPosition>()))
     {};
 };
