@@ -1,0 +1,31 @@
+[TimeManager]
+DtInitial = 1.08e+4 # [s]
+TEnd = 1.72e9 # [s]
+#MaxTimeStepSize = 1.08e+6 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 100
+Cells = 1 100
+
+[Problem]
+Name = test2_constvelff_hybrid # name passed to the output routines
+UseHybridUpwinding = false
+TotalVelocity = 0 0
+EnableGravity = true
+InitialSaturations = 0.9999999 1.0e-7
+PlotMaterialLaw = false
+PlotRange = 0.0 1.0
+LiquidDensity = 100
+LiquidKinematicViscosity = 1e-5
+EpisodeLength = 1.72e9
+
+[Newton]
+ResidualReduction = 1.0e-7
+EnableResidualCriterion = true
+EnableShiftCriterion = false
+#TargetSteps = 500
+#MaxSteps = 500
+
+[Implicit]
+MaxTimeStepDivisions = 40

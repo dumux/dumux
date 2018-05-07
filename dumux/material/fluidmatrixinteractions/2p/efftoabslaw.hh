@@ -271,6 +271,18 @@ public:
      */
     static Scalar dsw_dswe_(const Params &params)
     { return 1. - params.swr() - params.snr(); }
+
+    static Scalar D(const Params &params, Scalar sw)
+    {
+        return EffLaw::D(params, swToSwe(params, sw));
+    }
+
+    static Scalar LambdarTerm(const Params &params, Scalar sw)
+    {
+        return EffLaw::LambdarTerm(params, swToSwe(params, sw));
+    }
+
+
 };
 }
 

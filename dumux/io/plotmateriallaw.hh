@@ -72,7 +72,7 @@ public:
         for (int i = 0; i <= numIntervals_; i++)
         {
             sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
-            pc[i] = MaterialLaw::pc(params, sw[i]);
+            pc[i] = MaterialLaw::pc(params, sw[i]) / 6894.75729 ;
         }
 
         gnuplot.setXlabel("wetting phase saturation [-]");
@@ -211,8 +211,8 @@ public:
         for (int i = 0; i <= numIntervals_; i++)
         {
             swTemp = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
-            dpcdswTemp = MaterialLaw::dpc_dsw(params, swTemp);
-            if (checkValues_(swTemp, dpcdsw))
+            dpcdswTemp = MaterialLaw::dpc_dsw(params, swTemp)/6894.75729 ;
+            if (checkValues_(swTemp, dpcdswTemp))
             {
                 sw.push_back(swTemp);
                 dpcdsw.push_back(dpcdswTemp);
@@ -234,33 +234,6 @@ public:
      * \param curveName Name of the data set
      * \param curveOptions Plotting options associated with that data set
      */
-    void adddswdpccurve(GnuplotInterface<Scalar> &gnuplot,
-                        const MaterialLawParams &params,
-                        Scalar lowerpc = 0.0,
-                        Scalar upperpc = 5000.0,
-                        std::string curveName = "dswdpc",
-                        std::string curveOptions = "w l")
-    {
-        std::vector<Scalar> pc;
-        std::vector<Scalar> dswdpc;
-        Scalar pcInterval = upperpc - lowerpc;
-
-        Scalar dswdpcTemp, pcTemp = 0.0;
-        for (int i = 0; i <= numIntervals_; i++)
-        {
-            pcTemp = lowerpc + pcInterval * Scalar(i) / Scalar(numIntervals_);
-            dswdpcTemp = MaterialLaw::dsw_dpc(params, pcTemp);
-            if (checkValues_(pcTemp, dswdpcTemp))
-            {
-                pc.push_back(pcTemp);
-                dswdpc.push_back(dswdpcTemp);
-            }
-        }
-
-        gnuplot.setXlabel("capillary pressure [Pa]");
-        gnuplot.setYlabel("gradient of the Sw-pc curve [1/Pa]");
-        gnuplot.addDataSetToPlot(pc, dswdpc, curveName, curveOptions);
-    }
 
     /*!
      * \brief Add relative permeabilities data sets to the plot
@@ -346,6 +319,65 @@ public:
         gnuplot.addDataSetToPlot(sw, dkrn_dsw, curveName + "_dkrn_dsw", curveOptions);
     }
 
+    /*!
+     * \brief Add a D-saturation data set to the plot
+     *
+     * \param gnuplot The gnuplot interface
+     * \param params The material law parameters
+     * \param lowerSat Minimum x-value for data set
+     * \param upperSat Maximum x-value for data set
+     * \param curveName Name of the data set
+     * \param curveOptions Plotting options associated with that data set
+     */
+    void addDswcurve(GnuplotInterface<Scalar> &gnuplot,
+                      const MaterialLawParams &params,
+                      Scalar lowerSat = 0.0,
+                      Scalar upperSat = 1.0,
+                      std::string curveName = "D-Sw",
+                      std::string curveOptions = "w l")
+    {
+        std::vector<Scalar> sw(numIntervals_+1);
+        std::vector<Scalar> D(numIntervals_+1);
+        Scalar satInterval = upperSat - lowerSat;
+
+        for (int i = 0; i <= numIntervals_; i++)
+        {
+            sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
+            D[i] = MaterialLaw::D(params, sw[i]) ;
+        }
+
+        gnuplot.setXlabel("wetting phase saturation [-]");
+        gnuplot.setYlabel("D");
+        gnuplot.addDataSetToPlot(sw, D, curveName, curveOptions);
+
+    }
+
+    void addlamswcurve(GnuplotInterface<Scalar> &gnuplot,
+                      const MaterialLawParams &params,
+                      Scalar lowerSat = 0.0,
+                      Scalar upperSat = 1.0,
+                      std::string curveName = "Lambdarterm-Sw",
+                      std::string curveOptions = "w l")
+
+    {
+        std::vector<Scalar> sw(numIntervals_+1);
+        std::vector<Scalar> LambdarTerm(numIntervals_+1);
+        Scalar satInterval = upperSat - lowerSat;
+
+        for (int i = 0; i <= numIntervals_; i++)
+        {
+            sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
+            LambdarTerm[i] = MaterialLaw::LambdarTerm(params, sw[i]);
+        }
+
+        gnuplot.setXlabel("wetting phase saturation [-]");
+        gnuplot.setYlabel("LambdarTerm");
+        gnuplot.addDataSetToPlot(sw, LambdarTerm, curveName, curveOptions);
+
+    }
+
+
+
 private:
     /*!
      * \brief Check the values for occurrences of nan and inf
@@ -362,6 +394,10 @@ private:
     }
 
     int numIntervals_;
+
+
+
+
 };
 
 } // end namespace Dumux
