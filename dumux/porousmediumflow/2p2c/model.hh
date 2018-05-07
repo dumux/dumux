@@ -134,10 +134,9 @@ struct TwoPTwoCModelTraits
  * \tparam FST The fluid state type
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
- * \tparam useKE boolean to indicate if kelvin equation is used for vapour pressure
  * \tparam useCS boolean to indicate if a constraint solver is to be used
  */
-template<class PV, class FSY, class FST, class PT, class MT, bool useKE, bool useCS>
+template<class PV, class FSY, class FST, class PT, class MT, bool useCS>
 struct TwoPTwoCVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
@@ -146,7 +145,6 @@ struct TwoPTwoCVolumeVariablesTraits
     using PermeabilityType = PT;
     using ModelTraits = MT;
 
-    static constexpr bool useKelvinEquation = useKE;
     static constexpr bool useConstraintSolver = useCS;
 };
 
@@ -228,10 +226,9 @@ private:
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-    static constexpr bool useKE = GET_PROP_VALUE(TypeTag, UseKelvinEquation);
     static constexpr bool useCS = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
 
-    using Traits = TwoPTwoCVolumeVariablesTraits<PV, FSY, FST, PT, MT, useKE, useCS>;
+    using Traits = TwoPTwoCVolumeVariablesTraits<PV, FSY, FST, PT, MT, useCS>;
 public:
     using type = TwoPTwoCVolumeVariables<Traits>;
 };
@@ -245,9 +242,6 @@ SET_BOOL_PROP(TwoPTwoC, UseMoles, true);
 
 //! Determines whether the constraint solver is used
 SET_BOOL_PROP(TwoPTwoC, UseConstraintSolver, true);
-
-//! Determines whether the Kelvin equation is used to adapt the saturation vapor pressure
-SET_BOOL_PROP(TwoPTwoC, UseKelvinEquation, false);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPTwoCNI, ThermalConductivityModel)

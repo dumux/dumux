@@ -75,10 +75,6 @@ public:
                 const Element &element,
                 const Scv& scv)
     {
-        // TODO check this is the fluid system now
-        static_assert(!(!enableWaterDiffusionInAir() && ModelTraits::useKelvinVaporPressure()),
-          "Kevin vapor presssure only makes sense if water in air is considered!");
-
         ParentType::update(elemSol, problem, element, scv);
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
