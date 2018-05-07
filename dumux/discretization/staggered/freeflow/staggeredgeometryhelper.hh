@@ -90,7 +90,7 @@ class FreeFlowStaggeredGeometryHelper
     static constexpr int codimIntersection =  1;
     static constexpr int codimCommonEntity = 2;
     static constexpr int numFacetSubEntities = (dim == 2) ? 2 : 4;
-    static constexpr int numPairs = (dimWorld == 2) ? 2 : 4;
+    static constexpr int numPairs = 2 * (dimWorld - 1);
 
 public:
 
@@ -376,6 +376,8 @@ private:
         };
 
         Indices indices;
+        if (dim == 1)
+            return indices;
 
         switch(localFacetIdx)
         {

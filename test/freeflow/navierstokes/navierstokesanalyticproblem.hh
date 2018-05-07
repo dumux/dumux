@@ -19,89 +19,87 @@
 /*!
  * \file
  * \ingroup NavierStokesTests
- * \brief Test for the staggered grid Navier-Stokes model with analytical solution (Kovasznay 1947)
+ * \brief Test for the 1-D Navier-Stokes model with an analytical solution
+ *
+ * \copydoc NavierStokesAnalyticProblem
  */
-#ifndef DUMUX_KOVASZNAY_TEST_PROBLEM_HH
-#define DUMUX_KOVASZNAY_TEST_PROBLEM_HH
+#ifndef DUMUX_DONEA_TEST_PROBLEM_HH
+#define DUMUX_DONEA_TEST_PROBLEM_HH
 
-#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
-#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/freeflow/navierstokes/problem.hh>
 #include "l2error.hh"
+
 
 namespace Dumux
 {
 template <class TypeTag>
-class KovasznayTestProblem;
+class NavierStokesAnalyticProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(KovasznayTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+NEW_TYPE_TAG(NavierStokesAnalyticTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
 
 // the fluid system
-SET_PROP(KovasznayTestTypeTag, FluidSystem)
+SET_PROP(NavierStokesAnalyticTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
-SET_TYPE_PROP(KovasznayTestTypeTag, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(NavierStokesAnalyticTypeTag, Grid, Dune::YaspGrid<1>);
 
 // Set the problem property
-SET_TYPE_PROP(KovasznayTestTypeTag, Problem, Dumux::KovasznayTestProblem<TypeTag> );
+SET_TYPE_PROP(NavierStokesAnalyticTypeTag, Problem, Dumux::NavierStokesAnalyticProblem<TypeTag> );
 
-SET_BOOL_PROP(KovasznayTestTypeTag, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(KovasznayTestTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(KovasznayTestTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableGridVolumeVariablesCache, true);
 
-SET_BOOL_PROP(KovasznayTestTypeTag, EnableInertiaTerms, true);
+SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableInertiaTerms, true);
+SET_BOOL_PROP(NavierStokesAnalyticTypeTag, NormalizePressure, false);
 }
 
 /*!
  * \ingroup NavierStokesTests
- * \brief  Test problem for the staggered grid (Kovasznay 1947)
- * \todo doc me!
+ * \brief Test for the 1-D Navier-Stokes model with an analytical solution
+ *
+ * The 1-D analytic solution is given by
+ * \f[ p = 2 - 2 \cdot x \f]
+ * \f[ v_\text{x} = 2 \cdot x^3 \f]
  */
 template <class TypeTag>
-class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
+class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
-    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldVector<Dune::FieldVector<Scalar, dimWorld>, dimWorld>;
 
 public:
-    KovasznayTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    NavierStokesAnalyticProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
-
-        kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
-        Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
-        lambda_ = 0.5 * reynoldsNumber
-                        - std::sqrt(reynoldsNumber * reynoldsNumber * 0.25 + 4.0 * M_PI * M_PI);
-
-        using CellArray = std::array<unsigned int, dimWorld>;
-        const auto numCells = getParam<CellArray>("Grid.Cells");
-
-        cellSizeX_ = this->fvGridGeometry().bBoxMax()[0] / numCells[0];
-
+        density_ = getParam<Scalar>("Component.LiquidDensity");
+        kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity");
         createAnalyticalSolution_();
     }
 
@@ -128,7 +126,6 @@ public:
                     << std::scientific
                     << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
                     << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                    << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
                     << std::endl;
         }
     }
@@ -141,7 +138,6 @@ public:
     Scalar temperature() const
     { return 298.0; }
 
-
    /*!
      * \brief Return the sources within the domain.
      *
@@ -149,9 +145,44 @@ public:
      */
     NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return NumEqVector(0.0);
-    }
+        NumEqVector source(0.0);
 
+        // mass balance - term div(rho*v)
+        for (unsigned int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
+        {
+            source[Indices::conti0EqIdx] += dvdx(globalPos)[dimIdx][dimIdx];
+        }
+        source[Indices::conti0EqIdx] *= density_;
+
+        // momentum balance
+        for (unsigned int velIdx = 0; velIdx < dimWorld; ++velIdx)
+        {
+            for (unsigned int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
+            {
+                // inertia term
+                if (GET_PROP_VALUE(TypeTag, EnableInertiaTerms))
+                  source[Indices::velocity(velIdx)] += density_ * dv2dx(globalPos)[velIdx][dimIdx];
+
+                // viscous term (molecular)
+                source[Indices::velocity(velIdx)] -= density_ * kinematicViscosity_* dvdx2(globalPos)[velIdx][dimIdx];
+                static bool enableUnsymmetrizedVelocityGradient = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
+                                                                                          "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+                if (!enableUnsymmetrizedVelocityGradient)
+                    source[Indices::velocity(velIdx)] -= density_ * kinematicViscosity_* dvdx2(globalPos)[dimIdx][velIdx];
+            }
+            // pressure term
+            source[Indices::velocity(velIdx)] += dpdx(globalPos)[velIdx];
+
+            // gravity term
+            static bool enableGravity = getParam<bool>("Problem.EnableGravity");
+            if (enableGravity)
+            {
+                source[Indices::velocity(velIdx)] -= density_ * this->gravity()[velIdx];
+            }
+        }
+
+        return source;
+    }
     // \}
    /*!
      * \name Boundary conditions
@@ -164,19 +195,13 @@ public:
      *
      * \param globalPos The position of the center of the finite volume
      */
-    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity everywhere
+        // set Dirichlet values for the velocity and pressure everywhere
+        values.setDirichletCell(Indices::conti0EqIdx);
         values.setDirichlet(Indices::momentumXBalanceIdx);
-        values.setDirichlet(Indices::momentumYBalanceIdx);
-
-        // set a fixed pressure in one cell
-        if (isLowerLeftCell_(globalPos))
-            values.setDirichletCell(Indices::conti0EqIdx);
-        else
-            values.setOutflow(Indices::conti0EqIdx);
 
         return values;
     }
@@ -186,28 +211,74 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition & globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         // use the values of the analytical solution
         return analyticalSolution(globalPos);
     }
 
-   /*!
+    /*!
      * \brief Return the analytical solution of the problem at a given position
      *
      * \param globalPos The global position
      */
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
     {
-        Scalar x = globalPos[0];
-        Scalar y = globalPos[1];
-
         PrimaryVariables values;
-        values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
-        values[Indices::velocityXIdx] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
-        values[Indices::velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
-
+        values[Indices::pressureIdx] = p(globalPos);
+        values[Indices::velocityXIdx] = v(globalPos);
         return values;
+    }
+
+    //! \brief The velocity
+    const DimVector v(const DimVector& globalPos) const
+    {
+        DimVector v(0.0);
+        v[0] = 2.0 * globalPos[0] * globalPos[0] * globalPos[0];
+        return v;
+    }
+
+    //! \brief The velocity gradient
+    const DimMatrix dvdx(const DimVector& globalPos) const
+    {
+        DimMatrix dvdx(0.0);
+        dvdx[0][0] = 6.0 * globalPos[0] * globalPos[0];
+        return dvdx;
+    }
+
+    //! \brief The gradient of the velocity squared (using product rule -> nothing to do here)
+    const DimMatrix dv2dx(const DimVector& globalPos) const
+    {
+        DimMatrix dv2dx;
+        for (unsigned int velIdx = 0; velIdx < dimWorld; ++velIdx)
+        {
+            for (unsigned int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
+            {
+                dv2dx[velIdx][dimIdx] = dvdx(globalPos)[velIdx][dimIdx] * v(globalPos)[dimIdx]
+                                        + dvdx(globalPos)[dimIdx][dimIdx] * v(globalPos)[velIdx];
+            }
+        }
+        return dv2dx;
+    }
+
+    //! \brief The gradient of the velocity gradient
+    const DimMatrix dvdx2(const DimVector& globalPos) const
+    {
+        DimMatrix dvdx2(0.0);
+        dvdx2[0][0] = 12.0 * globalPos[0];
+        return dvdx2;
+    }
+
+    //! \brief The pressure
+    const Scalar p(const DimVector& globalPos) const
+    { return 2.0 - 2.0 * globalPos[0]; }
+
+    //! \brief The pressure gradient
+    const DimVector dpdx(const DimVector& globalPos) const
+    {
+        DimVector dpdx(0.0);
+        dpdx[0] = -2.0;
+        return dpdx;
     }
 
     // \}
@@ -222,14 +293,9 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 0.0;
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 0.0;
-
-        return values;
+        return analyticalSolution(globalPos);
     }
 
    /*!
@@ -293,22 +359,15 @@ private:
                     analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
             }
         }
-    }
-
-    bool isLowerLeftCell_(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < (this->fvGridGeometry().bBoxMin()[0] + 0.5*cellSizeX_ + eps_);
-    }
+     }
 
     Scalar eps_;
-    Scalar cellSizeX_;
-
-    Scalar kinematicViscosity_;
-    Scalar lambda_;
     bool printL2Error_;
+    Scalar density_;
+    Scalar kinematicViscosity_;
     std::vector<Scalar> analyticalPressure_;
-    std::vector<VelocityVector> analyticalVelocity_;
-    std::vector<VelocityVector> analyticalVelocityOnFace_;
+    std::vector<GlobalPosition> analyticalVelocity_;
+    std::vector<GlobalPosition> analyticalVelocityOnFace_;
 };
 } //end namespace
 
