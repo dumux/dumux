@@ -364,7 +364,11 @@ public:
      */
     void boundaryTypes(BoundaryTypes &values, const Intersection &intersection) const
     {
+#if DUNE_VERSION_NEWER(DUNE_ALUGRID, 2, 6)
+        int boundaryId = intersection.impl().boundaryId();
+#else
         int boundaryId = intersection.boundaryId();
+#endif
         if (boundaryId < 1 || boundaryId > 4)
         {
             std::cout<<"invalid boundaryId: "<<boundaryId<<std::endl;
@@ -414,8 +418,11 @@ public:
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
+#if DUNE_VERSION_NEWER(DUNE_ALUGRID, 2, 6)
+        int boundaryId = intersection.impl().boundaryId();
+#else
         int boundaryId = intersection.boundaryId();
-
+#endif
         values = 0;
         if (boundaryId == injectionBottom_)
         {
