@@ -30,6 +30,7 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
+#include <dumux/discretization/staggered/elementsolution.hh>
 
 namespace Dumux {
 

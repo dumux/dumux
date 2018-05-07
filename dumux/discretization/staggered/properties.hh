@@ -39,7 +39,6 @@
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/staggered/gridvariables.hh>
 #include <dumux/discretization/staggered/gridfluxvariablescache.hh>
-#include <dumux/discretization/staggered/gridvolumevariables.hh>
 #include <dumux/discretization/staggered/fvgridgeometry.hh>
 #include <dumux/discretization/staggered/gridfacevariables.hh>
 #include <dumux/discretization/staggered/facesolution.hh>
@@ -47,8 +46,6 @@
 
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
-
-#include <dumux/discretization/staggered/gridvariablestraits.hh>
 
 namespace Dumux {
 
@@ -73,24 +70,6 @@ public:
 
 //! Cache the face variables per default
 SET_BOOL_PROP(StaggeredModel, EnableGridFaceVariablesCache, true);
-
-//! Set the default global volume variables cache vector class
-SET_PROP(StaggeredModel, GridVolumeVariables)
-{
-private:
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices; // TODO extract indices from volumevariables
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-
-    static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
-
-    using Traits = StaggeredGridVolumeVariablesTraits<Problem, VolumeVariables, Indices>; // TODO extract indices from volumevariables
-
-public:
-    using type = StaggeredGridVolumeVariables<Traits, enableCache>;
-};
 
 //! Set the global flux variables cache vector class
 SET_PROP(StaggeredModel, GridFluxVariablesCache)

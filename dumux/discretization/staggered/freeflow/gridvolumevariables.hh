@@ -29,8 +29,19 @@
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
+#include <dumux/discretization/staggered/elementvolumevariables.hh>
 
 namespace Dumux {
+
+template<class P, class VV>
+struct StaggeredGridDefaultGridVolumeVariablesTraits
+{
+    using Problem = P;
+    using VolumeVariables = VV;
+
+    template<class GridVolumeVariables, bool cachingEnabled>
+    using LocalView = StaggeredElementVolumeVariables<GridVolumeVariables, cachingEnabled>;
+};
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -52,8 +63,8 @@ class StaggeredGridVolumeVariables<Traits, /*cachingEnabled*/true>
     using PrimaryVariables = typename Traits::VolumeVariables::PrimaryVariables;
 
 public:
-    //! export the type of the indices TODO: get them out of the volvars
-    using Indices = typename Traits::Indices;
+    //! export the type of the indices
+    using Indices = typename Traits::VolumeVariables::Indices;
 
     //! export the type of the VolumeVariables
     using VolumeVariables = typename Traits::VolumeVariables;

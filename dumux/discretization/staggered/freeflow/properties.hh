@@ -40,6 +40,7 @@
 #include "boundarytypes.hh"
 #include "velocityoutput.hh"
 #include "fvgridgeometrytraits.hh"
+#include "gridvolumevariables.hh"
 
 namespace Dumux
 {
@@ -93,6 +94,19 @@ private:
 public:
     using type = StaggeredFaceVariables<FacePrimaryVariables, GridView::dimension>;
 };
+
+//! Set the default global volume variables cache vector class
+SET_PROP(StaggeredFreeFlowModel, GridVolumeVariables)
+{
+private:
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
+    using Traits = StaggeredGridDefaultGridVolumeVariablesTraits<Problem, VolumeVariables>;
+public:
+    using type = StaggeredGridVolumeVariables<Traits, enableCache>;
+};
+
 
 //! Boundary types at a single degree of freedom
 SET_PROP(StaggeredFreeFlowModel, BoundaryTypes)
