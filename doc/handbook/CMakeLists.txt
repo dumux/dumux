@@ -39,12 +39,24 @@ set(TEX_IMAGES
   PNG/dunedesign.png
   ../logo/dumux_logo_hires_whitebg.png)
 
-dune_add_latex_document(0_dumux-handbook.tex
-  FATHER_TARGET doc
-  DEFAULT_PDF
-  BIBFILES dumux-handbook.bib
-  INPUTS ${TEX_INPUTS}
-  IMAGES ${TEX_IMAGES})
+if(DUNE_COMMON_VERSION VERSION_LESS 2.5)
+  # this only works before Dune 2.5
+  dune_add_latex_document(0_dumux-handbook.tex
+    FATHER_TARGET doc
+    DEFAULT_PDF
+    BIBFILES dumux-handbook.bib
+    INPUTS ${TEX_INPUTS}
+    IMAGES ${TEX_IMAGES})
 
-create_doc_install(${CMAKE_CURRENT_BINARY_DIR}/0_dumux-handbook.pdf
-  ${CMAKE_INSTALL_DOCDIR})
+  create_doc_install(${CMAKE_CURRENT_BINARY_DIR}/0_dumux-handbook.pdf
+    ${CMAKE_INSTALL_DOCDIR})
+else()
+  # the Dune 2.5 way of calling these macros
+  dune_add_latex_document(0_dumux-handbook.tex
+    BIBFILES dumux-handbook.bib
+    INPUTS ${TEX_INPUTS}
+    IMAGES ${TEX_IMAGES})
+
+  create_doc_install(${CMAKE_CURRENT_BINARY_DIR}/0_dumux-handbook.pdf
+    ${CMAKE_INSTALL_DOCDIR} 0_dumux-handbook)
+endif()

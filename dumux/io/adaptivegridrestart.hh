@@ -30,7 +30,7 @@
 #endif
 
 #include <dune/grid/common/backuprestore.hh>
-#if ! DUNE_VERSION_NEWER(DUNE_COMMON, 3, 0)
+#if ! DUNE_VERSION_NEWER(DUNE_COMMON, 2, 5)
 #include <dune/grid/utility/grapedataioformattypes.hh>
 #endif
 
@@ -107,7 +107,7 @@ public:
 #else
         double time = problem.timeManager().time();
         problem.grid().template writeGrid
-#if ! DUNE_VERSION_NEWER(DUNE_COMMON, 3, 0)
+#if ! DUNE_VERSION_NEWER(DUNE_COMMON, 2, 5)
         <Dune::xdr>
 #endif // Dune < 3.0
         (gridName, time);
