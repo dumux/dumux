@@ -547,8 +547,7 @@ public:
         {
              Dune::GeometryType geomType = element.geometry().type();
 
-             const typename Dune::ReferenceElementContainer<DT,dim>::value_type&
-                 refElement = Dune::ReferenceElements<DT,dim>::general(geomType);
+             const auto& refElement = Dune::ReferenceElements<DT,dim>::general(geomType);
 
               // Loop over element faces
               for (int i = 0; i < refElement.size(1); i++)
