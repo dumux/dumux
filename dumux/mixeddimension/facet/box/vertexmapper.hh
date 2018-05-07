@@ -249,6 +249,7 @@ class EnrichmentHelper< BulkGridView, FacetGridView, 1 >
     static constexpr int bulkDim = BulkGridView::dimension;
     static constexpr int facetDim = FacetGridView::dimension;
     static_assert(facetDim == 1, "Grid dimension mismatch");
+    static_assert(bulkDim == BulkGridView::dimensionworld, "Enrichment helper still appears to be buggy for surface grids!");
 
     using BulkIntersection = typename BulkGridView::Intersection;
     using BulkReferenceElements = typename Dune::ReferenceElements<typename BulkGridView::ctype, bulkDim>;
