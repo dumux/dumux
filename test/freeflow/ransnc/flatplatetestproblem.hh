@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup RANSNCTests
- * \brief Channel flow test for the multi-component staggered grid Reynolds-averaged Navier-Stokes model
+ * \brief Flat plate test for the multi-component staggered grid Reynolds-averaged Navier-Stokes model
  */
 #ifndef DUMUX_RANS_NC_TEST_PROBLEM_HH
 #define DUMUX_RANS_NC_TEST_PROBLEM_HH
@@ -39,68 +39,68 @@
 namespace Dumux
 {
 template <class TypeTag>
-class ChannelNCTestProblem;
+class FlatPlateNCTestProblem;
 
 namespace Properties
 {
 
 #if NONISOTHERMAL
   #if LOWREKEPSILON
-  NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNCNI));
+  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNCNI));
   #else
-  NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI));
+  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI));
   #endif
 #else
   #if LOWREKEPSILON
-  NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNC));
+  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNC));
   #else
-  NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC));
+  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC));
   #endif
 #endif
 
 NEW_PROP_TAG(FluidSystem);
 
 // Select the fluid system
-SET_TYPE_PROP(ChannelNCTestTypeTag, FluidSystem,
+SET_TYPE_PROP(FlatPlateNCTestTypeTag, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
-SET_INT_PROP(ChannelNCTestTypeTag, PhaseIdx,
+SET_INT_PROP(FlatPlateNCTestTypeTag, PhaseIdx,
              GET_PROP_TYPE(TypeTag, FluidSystem)::phase1Idx);
 
-SET_INT_PROP(ChannelNCTestTypeTag, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, PhaseIdx));
+SET_INT_PROP(FlatPlateNCTestTypeTag, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, PhaseIdx));
 
 // Set the grid type
-SET_TYPE_PROP(ChannelNCTestTypeTag, Grid,
+SET_TYPE_PROP(FlatPlateNCTestTypeTag, Grid,
               Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
-SET_TYPE_PROP(ChannelNCTestTypeTag, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
+SET_TYPE_PROP(FlatPlateNCTestTypeTag, Problem, Dumux::FlatPlateNCTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(FlatPlateNCTestTypeTag, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(FlatPlateNCTestTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(FlatPlateNCTestTypeTag, EnableGridVolumeVariablesCache, true);
 
 // Enable gravity
-SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, true);
+SET_BOOL_PROP(FlatPlateNCTestTypeTag, UseMoles, true);
 } // end namespace Properties
 
 /*!
  * \ingroup RANSNCTests
  * \brief  Test problem for the one-phase model.
  *
- * Dry air is entering the channel, in 2-D a flat plate, from the left side.
+ * Dry air is entering from the left side and flows above a 1-D a flat plate.
  * In the middle of the inlet, water vapor is injected, which spreads by turbulent diffusion.
  * For the nonisothermal model the bottom has a constant temperature
  * which is \f$ \unit[30]{K} \f$ higher than the initial and inlet temperature.
  */
 template <class TypeTag>
 #if LOWREKEPSILON
-class ChannelNCTestProblem : public LowReKEpsilonProblem<TypeTag>
+class FlatPlateNCTestProblem : public LowReKEpsilonProblem<TypeTag>
 {
     using ParentType = LowReKEpsilonProblem<TypeTag>;
 #else
-class ChannelNCTestProblem : public ZeroEqProblem<TypeTag>
+class FlatPlateNCTestProblem : public ZeroEqProblem<TypeTag>
 {
     using ParentType = ZeroEqProblem<TypeTag>;
 #endif
@@ -123,7 +123,7 @@ class ChannelNCTestProblem : public ZeroEqProblem<TypeTag>
     static const unsigned int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
 public:
-    ChannelNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    FlatPlateNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
