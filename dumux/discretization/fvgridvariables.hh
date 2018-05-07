@@ -69,13 +69,26 @@ public:
 
     //! update all variables
     template<class SolutionVector>
-    void update(const SolutionVector& curSol)
+    void update(const SolutionVector& curSol, bool forceFluxCacheUpdate = false)
     {
         // resize and update the volVars with the initial solution
         curGridVolVars_.update(*fvGridGeometry_, curSol);
 
         // update the flux variables caches
-        gridFluxVarsCache_.update(*fvGridGeometry_, curGridVolVars_, curSol);
+        gridFluxVarsCache_.update(*fvGridGeometry_, curGridVolVars_, curSol, forceFluxCacheUpdate);
+    }
+
+    //! update all variables after grid adaption
+    template<class SolutionVector>
+    void updateAfterGridAdaption(const SolutionVector& curSol)
+    {
+        // update (always force flux cache update as the grid changed)
+        update(curSol, true);
+
+        // for instationary problems also update the variables
+        // for the previous time step to the new grid
+        if (!problemIsStationary_)
+            prevGridVolVars_ = curGridVolVars_;
     }
 
     //! initialize all variables (stationary case)
@@ -85,7 +98,7 @@ public:
         // resize and update the volVars with the initial solution
         curGridVolVars_.update(*fvGridGeometry_, curSol);
 
-        // update the flux variables caches
+        // update the flux variables caches (always force flux cache update on initialization)
         gridFluxVarsCache_.update(*fvGridGeometry_, curGridVolVars_, curSol, true);
     }
 
@@ -93,11 +106,11 @@ public:
     template<class SolutionVector>
     void init(const SolutionVector& curSol, const SolutionVector& initSol)
     {
-        // resize and update the volVars with the initial solution
-        curGridVolVars_.update(*fvGridGeometry_, curSol);
+        // remember that we have a stationary problem
+        problemIsStationary_ = false;
 
-        // update the flux variables caches
-        gridFluxVarsCache_.update(*fvGridGeometry_, curGridVolVars_, curSol, true);
+        // initialize current volvars and the flux var cache
+        init(curSol);
 
         // update the old time step vol vars with the initial solution
         prevGridVolVars_.update(*fvGridGeometry_, initSol);
@@ -109,6 +122,7 @@ public:
      */
     void advanceTimeStep()
     {
+        assert(!problemIsStationary_);
         prevGridVolVars_ = curGridVolVars_;
     }
 
@@ -116,6 +130,8 @@ public:
     template<class SolutionVector>
     void resetTimeStep(const SolutionVector& solution)
     {
+        assert(!problemIsStationary_);
+
         // set the new time step vol vars to old vol vars
         curGridVolVars_ = prevGridVolVars_;
 
@@ -141,11 +157,17 @@ public:
 
     //! return the volume variables of the previous time step (for instationary problems)
     const GridVolumeVariables& prevGridVolVars() const
-    { return prevGridVolVars_; }
+    {
+        assert(!problemIsStationary_);
+        return prevGridVolVars_;
+    }
 
     //! return the volume variables of the previous time step (for instationary problems)
     GridVolumeVariables& prevGridVolVars()
-    { return prevGridVolVars_; }
+    {
+        assert(!problemIsStationary_);
+        return prevGridVolVars_;
+    }
 
 protected:
 
@@ -156,6 +178,8 @@ private:
     GridVolumeVariables prevGridVolVars_; //!< the previous time step's volume variables (primary and secondary variables)
 
     GridFluxVariablesCache gridFluxVarsCache_; //!< the flux variables cache
+
+    bool problemIsStationary_ = true;
 };
 
 } // end namespace Dumux
