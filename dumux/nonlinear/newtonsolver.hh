@@ -531,6 +531,32 @@ public:
     virtual void newtonSucceed()  {}
 
     /*!
+     * \brief output statistics / report
+     */
+    void report(std::ostream& sout = std::cout) const
+    {
+        if (verbose_)
+            sout << '\n'
+                 << "Newton statistics\n"
+                 << "----------------------------------------------\n"
+                 << "-- Total Newton iterations:           " << totalWastedIter_ + totalSucceededIter_ << '\n'
+                 << "-- Total wasted Newton iterations:    " << totalWastedIter_ << '\n'
+                 << "-- Total succeeded Newton iterations: " << totalSucceededIter_ << '\n'
+                 << "-- Average iterations per solve:      " << std::setprecision(3) << double(totalSucceededIter_) / double(numConverged_) << '\n'
+                 << std::endl;
+    }
+
+    /*!
+     * \brief reset the statistics
+     */
+    void resetReport()
+    {
+        totalWastedIter_ = 0;
+        totalSucceededIter_ = 0;
+        numConverged_ = 0;
+    }
+
+    /*!
      * \brief Suggest a new time-step size based on the old time-step
      *        size.
      *
@@ -726,9 +752,13 @@ private:
             // reset state if newton failed
             if (!newtonConverged())
             {
+                totalWastedIter_ += numSteps_;
                 newtonFail(uCurrentIter);
                 return false;
             }
+
+            totalSucceededIter_ += numSteps_;
+            numConverged_++;
 
             // tell solver we converged successfully
             newtonSucceed();
@@ -748,6 +778,8 @@ private:
         {
             if (verbose_)
                 std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
+
+            totalWastedIter_ += numSteps_;
             newtonFail(uCurrentIter);
             return false;
         }
@@ -1108,6 +1140,11 @@ private:
     Scalar reassemblyMinThreshold_;
     Scalar reassemblyMaxThreshold_;
     Scalar reassemblyShiftWeight_;
+
+    // statistics for the optional report
+    std::size_t totalWastedIter_ = 0; //! newton steps in solves that didn't converge
+    std::size_t totalSucceededIter_ = 0; //! newton steps in solves that converged
+    std::size_t numConverged_ = 0; //! total number of converged solves
 };
 
 } // end namespace Dumux
