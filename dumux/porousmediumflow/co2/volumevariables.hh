@@ -27,9 +27,9 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
+#include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
 namespace Dumux {
 

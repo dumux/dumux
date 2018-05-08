@@ -32,6 +32,7 @@
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/constants.hh>
+#include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
 namespace Dumux {
 

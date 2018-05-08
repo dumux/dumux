@@ -25,8 +25,6 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 #define DUMUX_POROUSMEDIUMFLOW_VOLUME_VARIABLES_HH
 
-#include <dumux/common/properties.hh>
-
 namespace Dumux {
 
 /*!

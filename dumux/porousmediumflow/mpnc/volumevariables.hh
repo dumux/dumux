@@ -25,21 +25,16 @@
 #ifndef DUMUX_MPNC_VOLUME_VARIABLES_HH
 #define DUMUX_MPNC_VOLUME_VARIABLES_HH
 
-#include "indices.hh"
-
-#include <dumux/common/properties.hh>
-
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 
 #include <dumux/material/constraintsolvers/ncpflash.hh>
 #include <dumux/material/constraintsolvers/compositionfromfugacities.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
-
+#include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 #include "pressureformulation.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template <class Traits, bool enableChemicalNonEquilibrium>
@@ -55,8 +50,8 @@ using MPNCVolumeVariables =  MPNCVolumeVariablesImplementation<Traits, Traits::M
 
 template <class Traits>
 class MPNCVolumeVariablesImplementation<Traits, false>
-    : public PorousMediumFlowVolumeVariables<Traits>
-    , public EnergyVolumeVariables<Traits, MPNCVolumeVariables<Traits> >
+: public PorousMediumFlowVolumeVariables<Traits>
+, public EnergyVolumeVariables<Traits, MPNCVolumeVariables<Traits> >
 {
     using ParentType = PorousMediumFlowVolumeVariables<Traits>;
     using EnergyVolVars = EnergyVolumeVariables<Traits, MPNCVolumeVariables<Traits> >;
@@ -222,22 +217,23 @@ public:
         for (int compIdx = 0; compIdx < numFluidComps; ++compIdx)
             fug[compIdx] = priVars[Indices::fug0Idx + compIdx];
 
-            // calculate phase compositions
-            for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx) {
-                // initial guess
-                for (int compIdx = 0; compIdx < numFluidComps; ++compIdx) {
-                    Scalar x_ij = 1.0/numFluidComps;
+        // calculate phase compositions
+        for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx) {
+            // initial guess
+            for (int compIdx = 0; compIdx < numFluidComps; ++compIdx) {
+                Scalar x_ij = 1.0/numFluidComps;
 
-                    // set initial guess of the component's mole fraction
-                    fluidState.setMoleFraction(phaseIdx,
-                                            compIdx,
-                                            x_ij);
-                }
-                // calculate the phase composition from the component
-                // fugacities
-                CompositionFromFugacities::guessInitial(fluidState, paramCache, phaseIdx, fug);
-                CompositionFromFugacities::solve(fluidState, paramCache, phaseIdx, fug);
+                // set initial guess of the component's mole fraction
+                fluidState.setMoleFraction(phaseIdx,
+                                        compIdx,
+                                        x_ij);
             }
+            // calculate the phase composition from the component
+            // fugacities
+            CompositionFromFugacities::guessInitial(fluidState, paramCache, phaseIdx, fug);
+            CompositionFromFugacities::solve(fluidState, paramCache, phaseIdx, fug);
+        }
+
         // dynamic viscosities
         for (int phaseIdx = 0; phaseIdx < numPhases(); ++phaseIdx) {
             // viscosities

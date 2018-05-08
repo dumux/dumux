@@ -28,11 +28,7 @@
 #include <vector>
 #include <iostream>
 
-#include <dune/common/deprecated.hh>
-
 #include <dumux/common/math.hh>
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 
@@ -40,6 +36,7 @@
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
+#include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
 namespace Dumux {
 
@@ -827,15 +824,6 @@ public:
      */
     Scalar permeability() const
     { return permeability_; }
-
-    /*!
-     * \brief Returns the diffusivity coefficient matrix
-     */
-    DUNE_DEPRECATED_MSG("diffusionCoefficient() is deprecated. Use diffusionCoefficient(int phaseIdx) instead.")
-    Dune::FieldVector<Scalar, numPs> diffusionCoefficient() const
-    {
-        return diffusionCoefficient_;
-    }
 
     /*!
      * \brief Returns the diffusion coefficient

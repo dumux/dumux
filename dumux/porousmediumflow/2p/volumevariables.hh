@@ -27,8 +27,8 @@
 
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
-
-#include "indices.hh"
+#include <dumux/material/solidstates/updatesolidvolumefractions.hh>
+#include <dumux/porousmediumflow/2p/formulation.hh>
 
 namespace Dumux {
 
