@@ -24,8 +24,8 @@
 #ifndef STAGGERED_FREEFLOW_BOUNDARY_TYPES_HH
 #define STAGGERED_FREEFLOW_BOUNDARY_TYPES_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/boundarytypes.hh>
+#include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux
 {
@@ -102,6 +102,23 @@ public:
     bool isSymmetry() const
     { return boundaryInfo_[0].isSymmetry; }
 
+    /*!
+     * \brief  Prevent setting all boundary conditions to Dirichlet.
+     */
+    template<class T = void>
+    void setAllDirichlet()
+    {
+        static_assert(AlwaysFalse<T>::value, "Setting all boundary types to Dirichlet not permitted!");
+    }
+
+    /*!
+     * \brief  Prevent setting all boundary conditions to Neumann.
+     */
+    template<class T = void>
+    void setAllNeumann()
+    {
+        static_assert(AlwaysFalse<T>::value, "Setting all boundary types to Neumann not permitted!");
+    }
 
 protected:
     struct StaggeredFreeFlowBoundaryInfo {
