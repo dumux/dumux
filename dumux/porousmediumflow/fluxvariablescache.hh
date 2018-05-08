@@ -23,11 +23,10 @@
 #ifndef DUMUX_POROUSMEDIUM_FLUXVARIABLESCACHE_HH
 #define DUMUX_POROUSMEDIUM_FLUXVARIABLESCACHE_HH
 
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
-
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fluxvariablescaching.hh>
+#include <dumux/discretization/box/fluxvariablescache.hh>
 
 namespace Dumux {
 
@@ -51,75 +50,12 @@ class PorousMediumFluxVariablesCacheImplementation;
 template<class TypeTag>
 using PorousMediumFluxVariablesCache = PorousMediumFluxVariablesCacheImplementation<TypeTag, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
-//! We only store discretization-related quantities for the box method.
-//! Thus, we need no physics-dependent specialization.
+//! We only store discretization-related quantities for the box method. Thus, we need no
+//! physics-dependent specialization and simply inherit from the physics-independent implementation.
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod::box>
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
-    using TransmissibilityVector = std::vector<IndexType>;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
-    using CoordScalar = typename GridView::ctype;
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-
-    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
-    using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
-    using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
-    using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
-    using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
-
-public:
-
-    void update(const Problem& problem,
-                const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars,
-                const SubControlVolumeFace &scvf)
-    {
-        const auto geometry = element.geometry();
-        const auto& localBasis = fvGeometry.feLocalBasis();
-
-        // evaluate shape functions and gradients at the integration point
-        const auto ipLocal = geometry.local(scvf.ipGlobal());
-        jacInvT_ = geometry.jacobianInverseTransposed(ipLocal);
-        localBasis.evaluateJacobian(ipLocal, shapeJacobian_);
-        localBasis.evaluateFunction(ipLocal, shapeValues_); // shape values for rho
-
-        // compute the gradN at for every scv/dof
-        gradN_.resize(fvGeometry.numScv());
-        for (const auto& scv: scvs(fvGeometry))
-            jacInvT_.mv(shapeJacobian_[scv.localDofIndex()][0], gradN_[scv.indexInElement()]);
-    }
-
-    const std::vector<ShapeJacobian>& shapeJacobian() const
-    { return shapeJacobian_; }
-
-    const std::vector<ShapeValue>& shapeValues() const
-    { return shapeValues_; }
-
-    const JacobianInverseTransposed& jacInvT() const
-    { return jacInvT_; }
-
-    const GlobalPosition& gradN(unsigned int scvIdxInElement) const
-    { return gradN_[scvIdxInElement]; }
-
-private:
-    std::vector<GlobalPosition> gradN_;
-    std::vector<ShapeJacobian> shapeJacobian_;
-    std::vector<ShapeValue> shapeValues_;
-    JacobianInverseTransposed jacInvT_;
-};
+: public BoxFluxVariablesCache<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, FVGridGeometry)>
+{};
 
 // the following classes choose the cache type: empty if the law disabled and the law's cache if it's enabled
 // if advections is disabled the advection type is still instatiated if we use std::conditional_t and has to be a full type
