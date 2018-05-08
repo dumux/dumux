@@ -33,10 +33,10 @@ namespace Dumux {
  * \note gets the non-inert components from the primary variables
  */
 template<class ElemSol, class Problem, class Element, class Scv, class SolidState>
-void updateSolidVolumeFractions(const ElemSol &elemSol,
-                                const Problem &problem,
-                                const Element &element,
-                                const Scv &scv,
+void updateSolidVolumeFractions(const ElemSol& elemSol,
+                                const Problem& problem,
+                                const Element& element,
+                                const Scv& scv,
                                 SolidState& solidState,
                                 const int solidVolFracOffset)
 {
