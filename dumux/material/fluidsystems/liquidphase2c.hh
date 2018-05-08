@@ -53,7 +53,8 @@ public:
     static constexpr int numPhases = 2; //!< Number of phases in the fluid system
     static constexpr int numComponents = 2; //!< Number of components in the fluid system
 
-    static constexpr int phase0Idx = 0; //!< index of the only phase
+    static constexpr int liquidPhaseIdx = 0; //!< index of the liquid phase
+    static constexpr int phase0Idx = liquidPhaseIdx; //!< index of the only phase
 
     static constexpr int comp0Idx = 0; //!< index of the frist component
     static constexpr int comp1Idx = 1; //!< index of the second component

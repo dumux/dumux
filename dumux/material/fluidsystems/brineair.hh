@@ -101,8 +101,8 @@ public:
     static std::string phaseName(int phaseIdx)
     {
         switch (phaseIdx) {
-        case phase0Idx: return "liquid";
-        case phase1Idx: return "gas";
+        case liquidPhaseIdx: return "liquid";
+        case gasPhaseIdx: return "gas";
         case solidPhaseIdx: return "NaCl";
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
@@ -123,7 +123,7 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        return phaseIdx != phase1Idx;
+        return phaseIdx != gasPhaseIdx;
     }
 
     /*!
@@ -163,7 +163,7 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         // ideal gases are always compressible
-        if (phaseIdx == phase1Idx)
+        if (phaseIdx == gasPhaseIdx)
             return true;
         // the water component decides for the liquid phase...
         return H2O::liquidIsCompressible();
@@ -180,7 +180,7 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
         // let the fluids decide
-        if (phaseIdx == phase1Idx)
+        if (phaseIdx == gasPhaseIdx)
             return H2O::gasIsIdeal() && Air::gasIsIdeal();
         return false; // not a gas
     }
@@ -567,16 +567,16 @@ public:
                                     int phaseIdx,
                                     int componentIdx)
     {
-        Scalar T = fluidState.temperature(phase1Idx);
-        Scalar p = fluidState.pressure(phase1Idx);
+        Scalar T = fluidState.temperature(gasPhaseIdx);
+        Scalar p = fluidState.pressure(gasPhaseIdx);
         Valgrind::CheckDefined(T);
         Valgrind::CheckDefined(p);
 
-        if (phaseIdx == phase0Idx)
+        if (phaseIdx == liquidPhaseIdx)
         {
             DUNE_THROW(Dune::NotImplemented, "The component enthalpies in the liquid phase are not implemented.");
         }
-        else if (phaseIdx == phase1Idx)
+        else if (phaseIdx == gasPhaseIdx)
         {
             if (componentIdx ==  H2OIdx)
             {
@@ -631,14 +631,14 @@ public:
     {
         const Scalar temperature  = fluidState.temperature(phaseIdx);
         const Scalar pressure = fluidState.pressure(phaseIdx);
-        if (phaseIdx == phase0Idx)
+        if (phaseIdx == liquidPhaseIdx)
         {
             return H2O::liquidHeatCapacity(temperature, pressure);
         }
-        else if (phaseIdx == phase1Idx)
+        else if (phaseIdx == gasPhaseIdx)
         {
-            return Air::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(phase1Idx, AirIdx)
-                   + H2O::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(phase1Idx, H2OIdx);
+            return Air::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(gasPhaseIdx, AirIdx)
+                   + H2O::gasHeatCapacity(temperature, pressure) * fluidState.moleFraction(gasPhaseIdx, H2OIdx);
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);

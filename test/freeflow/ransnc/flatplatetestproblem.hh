@@ -65,7 +65,7 @@ SET_TYPE_PROP(FlatPlateNCTestTypeTag, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 SET_INT_PROP(FlatPlateNCTestTypeTag, PhaseIdx,
-             GET_PROP_TYPE(TypeTag, FluidSystem)::phase1Idx);
+             GET_PROP_TYPE(TypeTag, FluidSystem)::gasPhaseIdx);
 
 SET_INT_PROP(FlatPlateNCTestTypeTag, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, PhaseIdx));
 

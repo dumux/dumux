@@ -69,14 +69,13 @@ public:
     static constexpr int numComponents = 2;
     static constexpr int numPhases = 2;
 
-    static constexpr int phase0Idx = 0; // index of the first phase
-    static constexpr int phase1Idx = 1; // index of the second phase
+    static constexpr int liquidPhaseIdx = 0; //!< index of the liquid phase
+    static constexpr int gasPhaseIdx = 1; //!< index of the gas phase
+    static constexpr int phase0Idx = liquidPhaseIdx; //!< index of the first phase
+    static constexpr int phase1Idx = gasPhaseIdx; //!< index of the second phase
 
     static constexpr int comp0Idx = 0;
     static constexpr int comp1Idx = 1;
-
-    static constexpr int liquidPhaseIdx = phase0Idx;
-    static constexpr int gasPhaseIdx = phase1Idx;
 
     static constexpr int BrineIdx = comp0Idx;
     static constexpr int CO2Idx = comp1Idx;
@@ -112,7 +111,7 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        return phaseIdx != phase1Idx;
+        return phaseIdx != gasPhaseIdx;
     }
 
     /*!
@@ -265,14 +264,14 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
 
-        if (phaseIdx == phase0Idx) {
+        if (phaseIdx == liquidPhaseIdx) {
             // use normalized composition for to calculate the density
             // (the relations don't seem to take non-normalized
             // compositions too well...)
             using std::min;
             using std::max;
-            Scalar xlBrine = min(1.0, max(0.0, fluidState.moleFraction(phase0Idx, BrineIdx)));
-            Scalar xlCO2 = min(1.0, max(0.0, fluidState.moleFraction(phase0Idx, CO2Idx)));
+            Scalar xlBrine = min(1.0, max(0.0, fluidState.moleFraction(liquidPhaseIdx, BrineIdx)));
+            Scalar xlCO2 = min(1.0, max(0.0, fluidState.moleFraction(liquidPhaseIdx, CO2Idx)));
             Scalar sumx = xlBrine + xlCO2;
             xlBrine /= sumx;
             xlCO2 /= sumx;
@@ -286,15 +285,15 @@ public:
             return result;
         }
         else {
-            assert(phaseIdx == phase1Idx);
+            assert(phaseIdx == gasPhaseIdx);
 
             // use normalized composition for to calculate the density
             // (the relations don't seem to take non-normalized
             // compositions too well...)
             using std::min;
             using std::max;
-            Scalar xgBrine = min(1.0, max(0.0, fluidState.moleFraction(phase1Idx, BrineIdx)));
-            Scalar xgCO2 = min(1.0, max(0.0, fluidState.moleFraction(phase1Idx, CO2Idx)));
+            Scalar xgBrine = min(1.0, max(0.0, fluidState.moleFraction(gasPhaseIdx, BrineIdx)));
+            Scalar xgCO2 = min(1.0, max(0.0, fluidState.moleFraction(gasPhaseIdx, CO2Idx)));
             Scalar sumx = xgBrine + xgCO2;
             xgBrine /= sumx;
             xgCO2 /= sumx;
@@ -329,7 +328,7 @@ public:
         Scalar pressure = fluidState.pressure(phaseIdx);
         Scalar result = 0;
 
-        if (phaseIdx == phase0Idx)
+        if (phaseIdx == liquidPhaseIdx)
             result = Brine::liquidViscosity(temperature, pressure);
         else
             result = CO2::gasViscosity(temperature, pressure);
@@ -373,7 +372,7 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         assert(0 <= compIdx && compIdx < numComponents);
 
-        if (phaseIdx == phase1Idx)
+        if (phaseIdx == gasPhaseIdx)
             // use the fugacity coefficients of an ideal gas. the
             // actual value of the fugacity is not relevant, as long
             // as the relative fluid compositions are observed,
@@ -391,7 +390,7 @@ public:
         Brine_CO2::calculateMoleFractions(temperature,
                                           pressure,
                                           BrineRawComponent::salinity,
-                                          /*knowphase1Idx=*/-1,
+                                          /*knowgasPhaseIdx=*/-1,
                                           xlCO2,
                                           xgH2O);
 
@@ -442,11 +441,11 @@ public:
         Brine_CO2::calculateMoleFractions(temperature,
                                                   pressure,
                                                   BrineRawComponent::constantSalinity,
-                                                  /*knowphase1Idx=*/-1,
+                                                  /*knowgasPhaseIdx=*/-1,
                                                   xlCO2,
                                                   xgH2O);
 
-        if(phaseIdx == phase1Idx)
+        if(phaseIdx == gasPhaseIdx)
         {
             return xgH2O;
         }
@@ -518,7 +517,7 @@ public:
 
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
-        if (phaseIdx == phase0Idx) {
+        if (phaseIdx == liquidPhaseIdx) {
             assert(compIIdx == BrineIdx);
             assert(compJIdx == CO2Idx);
 
@@ -527,7 +526,7 @@ public:
             return result;
         }
         else {
-            assert(phaseIdx == phase1Idx);
+            assert(phaseIdx == gasPhaseIdx);
             assert(compIIdx == BrineIdx);
             assert(compJIdx == CO2Idx);
 
@@ -553,7 +552,7 @@ public:
         Scalar temperature = fluidState.temperature(phaseIdx);
         Scalar pressure = fluidState.pressure(phaseIdx);
 
-        if (phaseIdx == phase0Idx) {
+        if (phaseIdx == liquidPhaseIdx) {
             Scalar XlCO2 = fluidState.massFraction(phaseIdx, CO2Idx);
 
             Scalar result = liquidEnthalpyBrineCO2_(temperature,
@@ -567,10 +566,10 @@ public:
             Scalar result = 0;
             result +=
                 Brine::gasEnthalpy(temperature, pressure) *
-                fluidState.massFraction(phase1Idx, BrineIdx);
+                fluidState.massFraction(gasPhaseIdx, BrineIdx);
             result +=
                 CO2::gasEnthalpy(temperature, pressure) *
-                fluidState.massFraction(phase1Idx, CO2Idx);
+                fluidState.massFraction(gasPhaseIdx, CO2Idx);
             Valgrind::CheckDefined(result);
             return result;
         }
@@ -590,7 +589,7 @@ public:
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
     {
-        if (phaseIdx == phase0Idx)
+        if (phaseIdx == liquidPhaseIdx)
         {
             return H2O::liquidThermalConductivity(fluidState.temperature(phaseIdx),
                                                   fluidState.pressure(phaseIdx));
@@ -615,7 +614,7 @@ public:
     static Scalar heatCapacity(const FluidState &fluidState,
                                int phaseIdx)
     {
-        if(phaseIdx == phase0Idx)
+        if(phaseIdx == liquidPhaseIdx)
             return H2O::liquidHeatCapacity(fluidState.temperature(phaseIdx),
                                            fluidState.pressure(phaseIdx));
         else
