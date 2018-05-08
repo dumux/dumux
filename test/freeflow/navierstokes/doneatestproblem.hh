@@ -30,7 +30,7 @@
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
-#include "l2error.hh"
+#include <dumux/freeflow/navierstokes/staggered/l2error.hh>
 
 
 namespace Dumux
@@ -97,6 +97,10 @@ public:
     {
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         createAnalyticalSolution_();
+
+        using CellArray = std::array<unsigned int, dimWorld>;
+        const auto numCells = getParam<CellArray>("Grid.Cells");
+        cellSizeX_ = this->fvGridGeometry().bBoxMax()[0] / numCells[0];
     }
 
    /*!
@@ -113,17 +117,8 @@ public:
     {
         if(printL2Error_)
         {
-            using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-            const auto l2error = L2Error::calculateL2Error(*this, curSol);
-            const int numCellCenterDofs = this->fvGridGeometry().numCellCenterDofs();
-            const int numFaceDofs = this->fvGridGeometry().numFaceDofs();
-            std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
-                    << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
-                    << std::scientific
-                    << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
-                    << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                    << " , L2(vy) = " << l2error.first[Indices::velocityYIdx] << " / " << l2error.second[Indices::velocityYIdx]
-                    << std::endl;
+            using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables, dimWorld>;
+            L2Error::printL2Error(*this, curSol);
         }
     }
 
@@ -174,7 +169,12 @@ public:
         // set Dirichlet values for the velocity and pressure everywhere
         values.setDirichlet(Indices::momentumXBalanceIdx);
         values.setDirichlet(Indices::momentumYBalanceIdx);
-        values.setDirichletCell(Indices::conti0EqIdx);
+
+        // set a fixed pressure in one cell
+        if (isLowerLeftCell_(globalPos))
+            values.setDirichletCell(Indices::conti0EqIdx);
+        else
+            values.setOutflow(Indices::conti0EqIdx);
 
         return values;
     }
@@ -291,9 +291,15 @@ private:
                     analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
             }
         }
-     }
+    }
+
+    bool isLowerLeftCell_(const GlobalPosition& globalPos) const
+    {
+        return globalPos[0] < (this->fvGridGeometry().bBoxMin()[0] + 0.5 * cellSizeX_ + eps_);
+    }
 
     Scalar eps_;
+    Scalar cellSizeX_;
     bool printL2Error_;
     std::vector<Scalar> analyticalPressure_;
     std::vector<VelocityVector> analyticalVelocity_;

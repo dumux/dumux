@@ -32,7 +32,7 @@
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
-#include "l2error.hh"
+#include <dumux/freeflow/navierstokes/staggered/l2error.hh>
 
 
 namespace Dumux
@@ -117,16 +117,8 @@ public:
     {
         if(printL2Error_)
         {
-            using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables>;
-            const auto l2error = L2Error::calculateL2Error(*this, curSol);
-            const int numCellCenterDofs = this->fvGridGeometry().numCellCenterDofs();
-            const int numFaceDofs = this->fvGridGeometry().numFaceDofs();
-            std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
-                    << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
-                    << std::scientific
-                    << "L2(p) = " << l2error.first[Indices::pressureIdx] << " / " << l2error.second[Indices::pressureIdx]
-                    << " , L2(vx) = " << l2error.first[Indices::velocityXIdx] << " / " << l2error.second[Indices::velocityXIdx]
-                    << std::endl;
+            using L2Error = NavierStokesTestL2Error<Scalar, ModelTraits, PrimaryVariables, dimWorld>;
+            L2Error::printL2Error(*this, curSol);
         }
     }
 

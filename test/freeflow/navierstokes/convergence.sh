@@ -28,16 +28,19 @@ done
 
 grep "L2 error (abs/rel) for" $LOGFILE | tee $L2ERRORFILE
 echo "reset; \
-set log x; \
+set xlabel 'refinement'; \
 set log y; \
-set arrow from graph 0,1 to graph 1,0 nohead lc rgb 'gray'; \
-set arrow from graph 0,1 to graph 1,0.5 nohead lc rgb 'gray'" > $1.gp
+set ylabel 'l2-error'; \
+set arrow from 5,0.04 to 5,0.08 nohead lc 8; \
+set arrow from 4,0.08 to 5,0.08 nohead lc 8; \
+set arrow from 4,0.08 to 5,0.04 nohead lc 8" > $1.gp
 
-PLOT="plot '$L2ERRORFILE' u 6:17 w lp t 'pressure', '$L2ERRORFILE' u 6:23 w lp t 'velocity'"
+USE_REL_ERROR=2 # set to "2" if the use relative error
+PLOT="plot '$L2ERRORFILE' u :`expr 17 + $USE_REL_ERROR` w lp t 'pressure', '$L2ERRORFILE' u :`expr 23 + $USE_REL_ERROR` w lp t 'velocity'"
 if [ $2 == 2 ]; then
-PLOT=$PLOT", '$L2ERRORFILE' u 6:29 w lp t 'velocity'"
+PLOT=$PLOT", '$L2ERRORFILE' u :`expr 29 + $USE_REL_ERROR` w lp t 'velocity'"
 elif [ $2 == 3 ]; then
-PLOT=$PLOT", '$L2ERRORFILE' u 6:35 w lp t 'velocity'"
+PLOT=$PLOT", '$L2ERRORFILE' u :`expr 35 + $USE_REL_ERROR` w lp t 'velocity'"
 fi
 
 echo $PLOT >> $1.gp
