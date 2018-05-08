@@ -154,6 +154,8 @@ int main(int argc, char** argv) try
 
     } while (!timeLoop->finished());
 
+    nonLinearSolver.report();
+
     timeLoop->finalize(leafGridView.comm());
 
     ////////////////////////////////////////////////////////////
