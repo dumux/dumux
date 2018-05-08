@@ -72,7 +72,6 @@ class VtkOutputModule
     static constexpr int numPhases = ModelTraits::numPhases();
 
     using VV = typename GridVariables::VolumeVariables;
-    using FluidSystem = typename VV::FluidSystem;
     using Scalar = typename GridVariables::Scalar;
 
     using GridView = typename FVGridGeometry::GridView;
@@ -381,7 +380,7 @@ private:
                 {
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                         sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), velocity[phaseIdx],
-                                                             "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                             "velocity_" + velocityOutput.phaseName(phaseIdx+phaseIdxOffset) + " (m/s)",
                                                              /*numComp*/dimWorld, /*codim*/dim).get() );
                 }
                 // cell-centered models
@@ -389,7 +388,7 @@ private:
                 {
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                         sequenceWriter_.addCellData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), velocity[phaseIdx],
-                                                           "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                           "velocity_" + velocityOutput.phaseName(phaseIdx+phaseIdxOffset) + " (m/s)",
                                                            /*numComp*/dimWorld, /*codim*/0).get() );
                 }
             }
@@ -549,14 +548,14 @@ private:
                 if (dim > 1)
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                         sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), velocity[phaseIdx],
-                                                             "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                             "velocity_" + velocityOutput.phaseName(phaseIdx+phaseIdxOffset) + " (m/s)",
                                                              /*numComp*/dimWorld, /*codim*/dim).get() );
 
                 // cell-wise velocities
                 else
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                         sequenceWriter_.addCellData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), velocity[phaseIdx],
-                                                           "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                           "velocity_" + velocityOutput.phaseName(phaseIdx+phaseIdxOffset) + " (m/s)",
                                                            /*numComp*/dimWorld, /*codim*/0).get() );
             }
 

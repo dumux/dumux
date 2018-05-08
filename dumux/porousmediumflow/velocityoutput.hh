@@ -48,6 +48,7 @@ class PorousMediumFlowVelocityOutput
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -105,6 +106,10 @@ public:
 
     bool enableOutput()
     { return velocityOutput_; }
+
+    // returns the name of the phase for a given index
+    static std::string phaseName(int phaseIdx)
+    { return FluidSystem::phaseName(phaseIdx); }
 
     // The following SFINAE enable_if usage allows compilation, even if only a
     //
