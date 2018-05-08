@@ -157,17 +157,11 @@ public:
 
     //! return the volume variables of the previous time step (for instationary problems)
     const GridVolumeVariables& prevGridVolVars() const
-    {
-        assert(!problemIsStationary_);
-        return prevGridVolVars_;
-    }
+    { return prevGridVolVars_; }
 
     //! return the volume variables of the previous time step (for instationary problems)
     GridVolumeVariables& prevGridVolVars()
-    {
-        assert(!problemIsStationary_);
-        return prevGridVolVars_;
-    }
+    { return prevGridVolVars_; }
 
 protected:
 
