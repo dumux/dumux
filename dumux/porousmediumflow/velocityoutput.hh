@@ -104,16 +104,14 @@ public:
         }
     }
 
-    bool enableOutput()
-    { return velocityOutput_; }
+    //! returns whether or not velocity output is enabled
+    bool enableOutput() { return velocityOutput_; }
 
-    // returns the name of the phase for a given index
-    static std::string phaseName(int phaseIdx)
-    { return FluidSystem::phaseName(phaseIdx); }
+    //! returns the name of the phase for a given index
+    static std::string phaseName(int phaseIdx) { return FluidSystem::phaseName(phaseIdx); }
 
-    // returns the number of phase velocities computed by this class
-    static constexpr int numPhaseVelocities()
-    { return GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(); }
+    //! returns the number of phase velocities computed by this class
+    static constexpr int numPhaseVelocities() { return GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(); }
 
     // The following SFINAE enable_if usage allows compilation, even if only a
     //
