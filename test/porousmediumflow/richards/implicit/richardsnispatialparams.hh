@@ -32,23 +32,6 @@
 
 namespace Dumux {
 
-/*!
- * \ingroup RichardsTests
- * \brief Definition of the spatial parameters for the RichardsNI problems.
- */
-
-//forward declaration
-template<class TypeTag>
-class RichardsNISpatialParams;
-
-namespace Properties {
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(RichardsNISpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(RichardsNISpatialParams, SpatialParams, RichardsNISpatialParams<TypeTag>);
-} // end namespace Properties
-
 template<class TypeTag>
 class RichardsNISpatialParams
 : public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),

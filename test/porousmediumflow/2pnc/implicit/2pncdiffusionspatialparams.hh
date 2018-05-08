@@ -32,22 +32,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-namespace Dumux
-{
-
-//forward declaration
-template<class TypeTag>
-class TwoPNCDiffusionSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(TwoPNCDiffusionSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(TwoPNCDiffusionSpatialParams, SpatialParams, TwoPNCDiffusionSpatialParams<TypeTag>);
-} // end namespace Properties
-
+namespace Dumux {
 /*!
  * \ingroup TwoPNCTest
  * \brief Definition of the spatial parameters for the TwoPNCDiffusion

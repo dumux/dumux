@@ -32,21 +32,8 @@
 
 #include <dumux/porousmediumflow/2p/model.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
-//forward declaration
-template<class TypeTag>
-class FractureSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(FractureSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(FractureSpatialParams, SpatialParams, Dumux::FractureSpatialParams<TypeTag>);
-}
 /*!
  * \ingroup TwoPTests
  * \brief The spatial parameters for the LensProblem which uses the

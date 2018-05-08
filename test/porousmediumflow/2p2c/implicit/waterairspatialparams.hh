@@ -32,25 +32,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-namespace Dumux
-{
-
-/*!
- * \ingroup TwoPTwoCTests
- * \brief Definition of the spatial parameters for the water-air problem.
- */
-//forward declaration
-template<class TypeTag>
-class WaterAirSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(WaterAirSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(WaterAirSpatialParams, SpatialParams, WaterAirSpatialParams<TypeTag>);
-}
+namespace Dumux {
 
 /*!
  * \ingroup TwoPTwoCModel

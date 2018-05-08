@@ -27,22 +27,8 @@
 
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
-//forward declaration
-template<class TypeTag>
-class FractureSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(FractureSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(FractureSpatialParams, SpatialParams, Dumux::FractureSpatialParams<TypeTag>);
-
-}
 /*!
  * \ingroup OnePTests
  * \brief The spatial parameters for the LensProblem which uses the
@@ -55,8 +41,8 @@ class FractureSpatialParams
                              FractureSpatialParams<TypeTag>>
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GridView = typename FVGridGeometry::GridView;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename FVGridGeometry::GridView;
     using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, FractureSpatialParams<TypeTag>>;
 
     using Element = typename GridView::template Codim<0>::Entity;

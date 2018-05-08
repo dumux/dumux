@@ -39,8 +39,7 @@
 
 #define ISOTHERMAL 0
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup ThreePThreeCTests
  * \brief Non-isothermal injection problem where water is injected into a
@@ -49,9 +48,8 @@ namespace Dumux
 template <class TypeTag>
 class ColumnProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(ColumnTypeTag, INHERITS_FROM(ThreePThreeCNI, ColumnSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(ColumnTypeTag, INHERITS_FROM(ThreePThreeCNI));
 NEW_TYPE_TAG(ColumnBoxTypeTag, INHERITS_FROM(BoxModel, ColumnTypeTag));
 NEW_TYPE_TAG(ColumnCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ColumnTypeTag));
 
@@ -71,7 +69,8 @@ SET_PROP(ColumnTypeTag, SolidSystem)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ComponentOne = Dumux::Components::Constant<1, Scalar>;
     using ComponentTwo = Dumux::Components::Constant<2, Scalar>;
-    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, true , ComponentTwo, true>;
+    static constexpr int numInertComponents = 2;
+    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo, numInertComponents>;
 };
 
 
@@ -84,8 +83,10 @@ private:
 public:
     using type = CompositionalSolidState<Scalar, SolidSystem>;
 };
-}
 
+// Set the spatial parameters
+SET_TYPE_PROP(ColumnTypeTag, SpatialParams, ColumnSpatialParams<TypeTag>);
+} // end namespace Properties
 
 /*!
  * \ingroup ThreePThreeCModel

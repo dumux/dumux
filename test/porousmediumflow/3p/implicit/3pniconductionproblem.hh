@@ -39,9 +39,7 @@
 
 #include "3pnispatialparams.hh"
 
-
-namespace Dumux
-{
+namespace Dumux {
 /**
  * \ingroup ThreePTests
  * \brief Definition of a 3pni problem:
@@ -50,13 +48,11 @@ namespace Dumux
 template <class TypeTag>
 class ThreePNIConductionProblem;
 
-namespace Properties
-{
-
+namespace Properties {
 NEW_TYPE_TAG(ThreePNIConductionTypeTag, INHERITS_FROM(ThreePNI));
-NEW_TYPE_TAG(ThreePNIConductionBoxTypeTag, INHERITS_FROM(BoxModel, ThreePNIConductionTypeTag, ThreePNISpatialParams));
-NEW_TYPE_TAG(ThreePNIConductionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ThreePNIConductionTypeTag, ThreePNISpatialParams));
-NEW_TYPE_TAG(ThreePNIConductionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, ThreePNIConductionTypeTag, ThreePNISpatialParams));
+NEW_TYPE_TAG(ThreePNIConductionBoxTypeTag, INHERITS_FROM(BoxModel, ThreePNIConductionTypeTag));
+NEW_TYPE_TAG(ThreePNIConductionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ThreePNIConductionTypeTag));
+NEW_TYPE_TAG(ThreePNIConductionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, ThreePNIConductionTypeTag));
 
 // Set the grid type
 SET_TYPE_PROP(ThreePNIConductionTypeTag, Grid, Dune::YaspGrid<2>);
@@ -71,10 +67,7 @@ SET_TYPE_PROP(ThreePNIConductionTypeTag,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThreePNIConductionTypeTag,
-              SpatialParams,
-              ThreePNISpatialParams<TypeTag>);
-
+SET_TYPE_PROP(ThreePNIConductionTypeTag, SpatialParams, ThreePNISpatialParams<TypeTag>);
 }// end namespace Properties
 
 

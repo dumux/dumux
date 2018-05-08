@@ -34,23 +34,6 @@
 
 namespace Dumux {
 
-/*!
- * \ingroup MPNCTests
- * \brief Spatialparameters for the combustionproblem1c. Parameters for the actual simulation domain and an outflow region are provided.
- */
-//forward declaration
-template<class TypeTag>
-class CombustionSpatialParams;
-
-namespace Properties {
-
-// The spatial params TypeTag
-NEW_TYPE_TAG(CombustionSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(CombustionSpatialParams, SpatialParams, CombustionSpatialParams<TypeTag>);
-}// end namespace properties
-
 /**
  * \brief Definition of the spatial parameters for the one component combustion problem
  *
@@ -139,21 +122,10 @@ public:
                     const SubControlVolume& scv,
                     const ElementSolution& elemSol) const
     {
-        if ( inOutFlow(scv.dofPosition()) )
-            return porosityOutFlow_ ;
+        if (inOutFlow(scv.dofPosition()))
+            return porosityOutFlow_;
         else
-            return porosity_ ;
-    }
-
-    template<class ElementSolution, class SolidState>
-    Scalar inertVolumeFraction(const Element& element,
-                               const SubControlVolume& scv,
-                               const ElementSolution& elemSol,
-                               SolidState& solidState,
-                               int compIdx) const
-    {
-        return 1-porosity(element, scv, elemSol);
-
+            return porosity_;
     }
 
     /*!

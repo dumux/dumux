@@ -38,13 +38,11 @@
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 template <class TypeTag>
 class MaxwellStefanTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 NEW_TYPE_TAG(MaxwellStefanTestTypeTag, INHERITS_FROM(Tracer));
 NEW_TYPE_TAG(MaxwellStefanTestCCTypeTag, INHERITS_FROM(CCTpfaModel, MaxwellStefanTestTypeTag));
 NEW_TYPE_TAG(MaxwellStefanTestBoxTypeTag, INHERITS_FROM(BoxModel, MaxwellStefanTestTypeTag));
@@ -66,7 +64,8 @@ SET_TYPE_PROP(MaxwellStefanTestTypeTag, MolecularDiffusionType, MaxwellStefansLa
 
 //! A simple fluid system with one MaxwellStefan component
 template<class TypeTag>
-class H2N2CO2FluidSystem: public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar), H2N2CO2FluidSystem<TypeTag>>
+class H2N2CO2FluidSystem
+: public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar), H2N2CO2FluidSystem<TypeTag>>
 
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -161,7 +160,6 @@ public:
 SET_TYPE_PROP(MaxwellStefanTestTypeTag, FluidSystem, H2N2CO2FluidSystem<TypeTag>);
 
 } // end namespace Properties
-
 
 /*!
  * \ingroup TracerTest

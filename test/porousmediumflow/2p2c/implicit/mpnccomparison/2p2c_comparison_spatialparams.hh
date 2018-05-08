@@ -33,23 +33,6 @@
 
 namespace Dumux {
 
-/*!
- * \ingroup MPNCTests
- * \brief The spatial parameters for the ObstacleProblem
- */
-//forward declaration
-template<class TypeTag>
-class TwoPTwoCComparisonSpatialParams;
-
-namespace Properties {
-
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(TwoPTwoCComparisonSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(TwoPTwoCComparisonSpatialParams, SpatialParams, TwoPTwoCComparisonSpatialParams<TypeTag>);
-}
-
 /**
  * \ingroup MPNCModel
  * \ingroup ImplicitTestProblems
@@ -173,6 +156,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
 };
 
-}
+} // end namespace Dumux
 
 #endif

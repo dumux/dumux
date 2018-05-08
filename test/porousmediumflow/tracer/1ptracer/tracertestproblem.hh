@@ -32,8 +32,7 @@
 
 #include "tracertestspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /**
  * \ingroup TracerTests
  * \brief Definition of a problem, for the tracer problem:
@@ -42,8 +41,7 @@ namespace Dumux
 template <class TypeTag>
 class TracerTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 NEW_TYPE_TAG(TracerTestTypeTag, INHERITS_FROM(Tracer));
 NEW_TYPE_TAG(TracerTestCCTypeTag, INHERITS_FROM(CCTpfaModel, TracerTestTypeTag));
 

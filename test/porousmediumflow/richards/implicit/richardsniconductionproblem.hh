@@ -37,8 +37,8 @@
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include "richardsnispatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /**
  * \ingroup RichardsTests
  * \brief Test for the RichardsModel in combination with the NI model for a conduction problem:
@@ -47,9 +47,8 @@ namespace Dumux
 template <class TypeTag>
 class RichardsNIConductionProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(RichardsNIConductionTypeTag, INHERITS_FROM(RichardsNI, RichardsNISpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(RichardsNIConductionTypeTag, INHERITS_FROM(RichardsNI));
 NEW_TYPE_TAG(RichardsNIConductionBoxTypeTag, INHERITS_FROM(BoxModel, RichardsNIConductionTypeTag));
 NEW_TYPE_TAG(RichardsNIConductionCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsNIConductionTypeTag));
 
@@ -64,10 +63,8 @@ SET_TYPE_PROP(RichardsNIConductionTypeTag, Problem,
 SET_TYPE_PROP(RichardsNIConductionTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsNIConductionTypeTag,
-              SpatialParams,
-              RichardsNISpatialParams<TypeTag>);
-}
+SET_TYPE_PROP(RichardsNIConductionTypeTag, SpatialParams, RichardsNISpatialParams<TypeTag>);
+} // end namespace Properties
 
 /*!
  * \ingroup RichardsModel

@@ -39,8 +39,7 @@
 
 #include "3pnispatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /**
  * \ingroup ThreePTests
  * \brief Definition of a 1p2cni problem:
@@ -49,9 +48,8 @@ namespace Dumux
 template <class TypeTag>
 class ThreePNIConvectionProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(ThreePNIConvectionTypeTag, INHERITS_FROM(ThreePNI, ThreePNISpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(ThreePNIConvectionTypeTag, INHERITS_FROM(ThreePNI));
 NEW_TYPE_TAG(ThreePNIConvectionBoxTypeTag, INHERITS_FROM(BoxModel, ThreePNIConvectionTypeTag));
 NEW_TYPE_TAG(ThreePNIConvectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ThreePNIConvectionTypeTag));
 NEW_TYPE_TAG(ThreePNIConvectionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, ThreePNIConvectionTypeTag));
@@ -69,11 +67,8 @@ SET_TYPE_PROP(ThreePNIConvectionTypeTag,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThreePNIConvectionTypeTag,
-              SpatialParams,
-              ThreePNISpatialParams<TypeTag>);
-}
-
+SET_TYPE_PROP(ThreePNIConvectionTypeTag, SpatialParams, ThreePNISpatialParams<TypeTag>);
+} // end namespace Properties
 
 /*!
  * \ingroup ThreePModel

@@ -42,7 +42,7 @@ class OnePTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePTestTypeTag, INHERITS_FROM(OneP, OnePTestSpatialParams));
+NEW_TYPE_TAG(OnePTestTypeTag, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(OnePTestBoxTypeTag, INHERITS_FROM(BoxModel, OnePTestTypeTag));
 NEW_TYPE_TAG(OnePTestCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePTestTypeTag));
 NEW_TYPE_TAG(OnePTestCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePTestTypeTag));

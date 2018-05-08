@@ -33,20 +33,6 @@
 
 namespace Dumux {
 
-//forward declaration
-template<class TypeTag>
-class ThermoChemSpatialParams;
-
-namespace Properties {
-
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(ThermoChemSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(ThermoChemSpatialParams, SpatialParams, Dumux::ThermoChemSpatialParams<TypeTag>);
-
-} // end namespace Properties
-
 /*!
  * \ingroup TwoPTwoCModel
  * \ingroup BoxTestProblems
@@ -84,7 +70,7 @@ public:
      */
     ThermoChemSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
-    {   }
+    {}
 
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
      *  on the position in the domain
@@ -97,22 +83,9 @@ public:
      */
     template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
-                        const SubControlVolume& scv,
-                        const ElementSolution& elemSol) const
+                                  const SubControlVolume& scv,
+                                  const ElementSolution& elemSol) const
     { return 8.53e-12; }
-
-    /*!
-     *  \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
-     *
-     *  \param element The finite element
-     *  \param scv The sub-control volume
-     *  \param elemSol The element solution
-     */
-    template<class SolidState>
-    Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos,
-                                    SolidState& solidState,
-                                    int compIdx) const
-    { return 0.0; }
 
 private:
 

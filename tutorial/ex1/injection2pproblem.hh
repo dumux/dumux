@@ -38,10 +38,9 @@ namespace Dumux {
 template <class TypeTag>
 class InjectionProblem2P;
 
-namespace Properties
-{
+namespace Properties {
 // define the TypeTag for this problem with a cell-centered two-point flux approximation spatial discretization.
-NEW_TYPE_TAG(Injection2pTypeTag, INHERITS_FROM(TwoP, InjectionSpatialParamsTypeTag));
+NEW_TYPE_TAG(Injection2pTypeTag, INHERITS_FROM(TwoP));
 NEW_TYPE_TAG(Injection2pCCTypeTag, INHERITS_FROM(CCTpfaModel, Injection2pTypeTag));
 
 // Set the grid type
@@ -49,6 +48,11 @@ SET_TYPE_PROP(Injection2pTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(Injection2pTypeTag, Problem, InjectionProblem2P<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(Injection2pTypeTag, SpatialParams,
+              InjectionSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                     typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set fluid configuration
 SET_TYPE_PROP(Injection2pTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/ false>);

@@ -46,6 +46,24 @@ struct hasPermeabilityAtPos
     -> decltype(a.permeabilityAtPos(std::declval<GlobalPosition>()))
     {};
 };
+
+template<class GlobalPosition, class SolidSystem>
+struct hasInertVolumeFractionAtPos
+{
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.template inertVolumeFractionAtPos<SolidSystem>(std::declval<GlobalPosition>(), 0))
+    {};
+};
+
+template<class GlobalPosition>
+struct hasPorosityAtPos
+{
+    template<class SpatialParams>
+    auto operator()(const SpatialParams& a)
+    -> decltype(a.porosityAtPos(std::declval<GlobalPosition>()))
+    {};
+};
 } // end namespace Detail
 #endif
 
@@ -170,7 +188,8 @@ public:
     /*!
      * \brief Function for defining the porosity.
      *        That is possibly solution dependent.
-     *
+     * \note this can only be used for solids with one inert component
+     *       (see inertVolumeFraction for the more general interface)
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
@@ -181,20 +200,16 @@ public:
                     const SubControlVolume& scv,
                     const ElementSolution& elemSol) const
     {
+        static_assert(decltype(isValid(Detail::hasPorosityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
+        "   Your spatial params class has to either implement\n\n"
+        "         Scalar porosityAtPos(const GlobalPosition& globalPos) const\n\n"
+        "   or overload this function\n\n"
+        "         template<class ElementSolution>\n"
+        "         Scalar porosity(const Element& element,\n"
+        "                         const SubControlVolume& scv,\n"
+        "                         const ElementSolution& elemSol) const\n\n");
 
         return asImp_().porosityAtPos(scv.center());
-    }
-
-    /*!
-     * \brief Function for defining the porosity.
-     *
-     * \return porosity
-     * \param globalPos The position of the center of the scv
-     */
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide a porosityAtPos() method.");
     }
 
     /*!
@@ -204,37 +219,68 @@ public:
      * \param element The current element
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
-     * \return the porosity
+     * \param compIdx The solid component index
+     * \return the volume fraction of the inert solid component with index compIdx
+     *
+     * \note this overload is enable if there is only one inert solid component and the
+     *       user didn't choose to implement a inertVolumeFractionAtPos overload.
+     *       It then forwards to the simpler porosity interface.
+     *       With more than one solid components or active solid components (i.e. dissolution)
+     *       please overload the more general inertVolumeFraction/inertVolumeFractionAtPos interface.
      */
-    template<class ElementSolution, class SolidState>
+    template<class SolidSystem, class ElementSolution,
+             typename std::enable_if_t<SolidSystem::isInert()
+                                       && SolidSystem::numInertComponents == 1
+                                       && !decltype(isValid(Detail::hasInertVolumeFractionAtPos<GlobalPosition, SolidSystem>())(std::declval<Implementation>()))::value,
+                                       int> = 0>
     Scalar inertVolumeFraction(const Element& element,
                                const SubControlVolume& scv,
                                const ElementSolution& elemSol,
-                               const SolidState& solidState,
                                int compIdx) const
     {
-        return asImp_().inertVolumeFractionAtPos(scv.center(), solidState, compIdx);
+        return 1.0 - asImp_().porosity(element, scv, elemSol);
     }
 
-    /*!
-     * \brief Function for defining the solid volume fraction.
-     *
-     * \return solid volume fraction
-     * \param globalPos The position of the center of the scv
-     */
-    template<class SolidState>
-    Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos,
-                                    const SolidState& solidState,
-                                    int compIdx) const
+    // specialization if there are no inert components at all
+    template<class SolidSystem, class ElementSolution,
+             typename std::enable_if_t<SolidSystem::numInertComponents == 0, int> = 0>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
     {
-        if (solidState.isInert() && solidState.numInertComponents == 1)
-        {
-            return 1-asImp_().porosityAtPos(globalPos);
-        }
-        else
-            DUNE_THROW(Dune::InvalidStateException,
-                       "The spatial parameters do not provide "
-                       "a inertVolumeFractionAtPos() method.");
+        return 0.0;
+    }
+
+    // the more general interface forwarding to inertVolumeFractionAtPos
+    template<class SolidSystem, class ElementSolution,
+             typename std::enable_if_t<(SolidSystem::numInertComponents > 1) ||
+                                       (
+                                            (SolidSystem::numInertComponents > 0) &&
+                                            (
+                                                !SolidSystem::isInert()
+                                                || decltype(isValid(Detail::hasInertVolumeFractionAtPos<GlobalPosition, SolidSystem>())
+                                                        (std::declval<Implementation>()))::value
+                                            )
+                                        ),
+                                        int> = 0>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
+    {
+        static_assert(decltype(isValid(Detail::hasInertVolumeFractionAtPos<GlobalPosition, SolidSystem>())(this->asImp_()))::value," \n\n"
+        "   Your spatial params class has to either implement\n\n"
+        "         template<class SolidSystem>\n"
+        "         Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos, int compIdx) const\n\n"
+        "   or overload this function\n\n"
+        "         template<class SolidSystem, class ElementSolution>\n"
+        "         Scalar inertVolumeFraction(const Element& element,\n"
+        "                                    const SubControlVolume& scv,\n"
+        "                                    const ElementSolution& elemSol,\n"
+        "                                    int compIdx) const\n\n");
+
+        return asImp_().template inertVolumeFractionAtPos<SolidSystem>(scv.center(), compIdx);
     }
 
     /*!

@@ -33,8 +33,8 @@
 
 #include "infiltration3p3cspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup ThreePThreeCTests
  * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
@@ -43,9 +43,8 @@ namespace Dumux
 template <class TypeTag>
 class InfiltrationThreePThreeCProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(InfiltrationThreePThreeCTypeTag, INHERITS_FROM(ThreePThreeC, InfiltrationThreePThreeCSpatialParamsTypeTag));
+namespace Properties {
+NEW_TYPE_TAG(InfiltrationThreePThreeCTypeTag, INHERITS_FROM(ThreePThreeC));
 NEW_TYPE_TAG(InfiltrationThreePThreeCBoxTypeTag, INHERITS_FROM(BoxModel, InfiltrationThreePThreeCTypeTag));
 NEW_TYPE_TAG(InfiltrationThreePThreeCCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InfiltrationThreePThreeCTypeTag));
 
@@ -54,6 +53,9 @@ SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag, Problem, InfiltrationThreePThreeCProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag, SpatialParams, InfiltrationThreePThreeCSpatialParams<TypeTag>);
 
 // Set the fluid system
 SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag,

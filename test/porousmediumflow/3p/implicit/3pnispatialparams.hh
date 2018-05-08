@@ -29,28 +29,12 @@
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ThreePTests
  * \brief Definition of the spatial parameters for the 3pni problems.
  */
-
-//forward declaration
-template<class TypeTag>
-class ThreePNISpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(ThreePNISpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(ThreePNISpatialParams, SpatialParams, ThreePNISpatialParams<TypeTag>);
-}
-
-
 template<class TypeTag>
 class ThreePNISpatialParams
 : public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),

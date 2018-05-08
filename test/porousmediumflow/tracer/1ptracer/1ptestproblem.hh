@@ -33,8 +33,8 @@
 
 #include "1ptestspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup TracerTests
  * \brief The properties for the incompressible test
@@ -43,8 +43,7 @@ namespace Dumux
 template<class TypeTag>
 class OnePTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 NEW_TYPE_TAG(IncompressibleTestTypeTag, INHERITS_FROM(CCTpfaModel, OneP));
 
 // Set the grid type
@@ -66,7 +65,6 @@ SET_PROP(IncompressibleTestTypeTag, FluidSystem)
 SET_BOOL_PROP(IncompressibleTestTypeTag, EnableGridVolumeVariablesCache, true);
 SET_BOOL_PROP(IncompressibleTestTypeTag, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(IncompressibleTestTypeTag, EnableFVGridGeometryCache, true);
-
 } // end namespace Properties
 
 template<class TypeTag>

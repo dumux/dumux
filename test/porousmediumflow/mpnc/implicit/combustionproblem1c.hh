@@ -41,8 +41,7 @@
 #include "combustionspatialparams.hh"
 #include "combustionfluidsystem.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template<class TypeTag>
 class CombustionProblemOneComponent;
@@ -54,9 +53,8 @@ struct CombustionModelTraits : public MPNCModelTraits<numP, numC, formulation>
     static constexpr bool enableMolecularDiffusion() { return false; }
 };
 
-namespace Properties
-{
-NEW_TYPE_TAG(CombustionOneComponentTypeTag, INHERITS_FROM(MPNCNonequil, CombustionSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(CombustionOneComponentTypeTag, INHERITS_FROM(MPNCNonequil));
 NEW_TYPE_TAG(CombustionOneComponentBoxTypeTag, INHERITS_FROM(BoxModel, CombustionOneComponentTypeTag));
 
 // Set the grid type
@@ -66,6 +64,9 @@ SET_TYPE_PROP(CombustionOneComponentTypeTag, Grid, Dune::OneDGrid);
 SET_TYPE_PROP(CombustionOneComponentTypeTag,
               Problem,
               CombustionProblemOneComponent<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(CombustionOneComponentTypeTag, SpatialParams, CombustionSpatialParams<TypeTag>);
 
 SET_TYPE_PROP(CombustionOneComponentTypeTag,
               FluidSystem,

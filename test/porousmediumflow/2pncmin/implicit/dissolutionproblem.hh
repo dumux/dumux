@@ -38,8 +38,7 @@
 
 #include "dissolutionspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup TwoPNCMinTests
  * \brief Problem where water is injected in a for flushing precipitated salt clogging a gas reservoir.
@@ -47,9 +46,8 @@ namespace Dumux
 template <class TypeTag>
 class DissolutionProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(DissolutionTypeTag, INHERITS_FROM(TwoPNCMin, DissolutionSpatialparams));
+namespace Properties {
+NEW_TYPE_TAG(DissolutionTypeTag, INHERITS_FROM(TwoPNCMin));
 NEW_TYPE_TAG(DissolutionBoxTypeTag, INHERITS_FROM(BoxModel, DissolutionTypeTag));
 NEW_TYPE_TAG(DissolutionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, DissolutionTypeTag));
 
@@ -71,9 +69,9 @@ SET_PROP(DissolutionTypeTag, SolidSystem)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ComponentOne = Components::NaCl<Scalar>;
     using ComponentTwo = Components::Granite<Scalar>;
-    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, true, ComponentTwo, false>;
+    static constexpr int numInertComponents = 1;
+    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo, numInertComponents>;
 };
-
 
 // Set the spatial parameters
 SET_TYPE_PROP(DissolutionTypeTag, SpatialParams, DissolutionSpatialparams<TypeTag>);

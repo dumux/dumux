@@ -40,15 +40,13 @@
 #include "modifiedcao.hh"
 
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class ThermoChemProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(ThermoChemTypeTag, INHERITS_FROM(OnePNCMinNI, ThermoChemSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(ThermoChemTypeTag, INHERITS_FROM(OnePNCMinNI));
 NEW_TYPE_TAG(ThermoChemBoxTypeTag, INHERITS_FROM(BoxModel, ThermoChemTypeTag));
 
 // Set the grid type
@@ -67,7 +65,7 @@ SET_PROP(ThermoChemTypeTag, SolidSystem)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ComponentOne = Components::ModifiedCaO<Scalar>;
     using ComponentTwo = Components::CaO2H2<Scalar>;
-    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, false , ComponentTwo, false>;
+    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo>;
 };
 
 // // Enable velocity output

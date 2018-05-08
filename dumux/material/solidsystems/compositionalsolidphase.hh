@@ -32,8 +32,9 @@ namespace SolidSystems {
  * \brief A solid phase consisting of a single inert solid component
  * \note a solid is considered inert if it can't dissolve in a liquid and
  *       and can't increase its mass by precipitation from a fluid phase.
+ * \note inert components have to come after all non-inert components
  */
-template <class Scalar, class Component1, bool isInert1, class Component2, bool isInert2>
+template <class Scalar, class Component1, class Component2, int numInert = 0>
 class CompositionalSolidPhase
 {
 public:
@@ -45,7 +46,7 @@ public:
      * Solid phase related static parameters
      ****************************************/
     static constexpr int numComponents = 2;
-    static constexpr int numInertComponents = isInert1 ? (isInert2 ? 2 : 1) : (isInert2 ? 1 : 0);
+    static constexpr int numInertComponents = numInert;
     static constexpr int comp0Idx = 0;
     static constexpr int comp1Idx = 1;
 
@@ -81,12 +82,7 @@ public:
      * \brief Returns whether the component is inert (doesn't react)
      */
     static constexpr bool isInert()
-    {
-        if (numComponents == numInertComponents)
-            return true;
-        else
-            return false;
-    }
+    { return (numComponents == numInertComponents); }
 
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the component.

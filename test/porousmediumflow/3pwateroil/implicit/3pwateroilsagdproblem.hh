@@ -35,8 +35,8 @@
 
 #include "3pwateroilsagdspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \file
  * \ingroup ThreePWaterOilTests
@@ -45,9 +45,8 @@ namespace Dumux
 template <class TypeTag>
 class SagdProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(SagdTypeTag, INHERITS_FROM(ThreePWaterOilNI, SagdSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(SagdTypeTag, INHERITS_FROM(ThreePWaterOilNI));
 NEW_TYPE_TAG(ThreePWaterOilSagdBoxTypeTag, INHERITS_FROM(BoxModel, SagdTypeTag));
 
 // Set the grid type
@@ -55,6 +54,9 @@ SET_TYPE_PROP(SagdTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(SagdTypeTag, Problem, Dumux::SagdProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(SagdTypeTag, SpatialParams, SagdSpatialParams<TypeTag>);
 
 // Set the fluid system
 SET_TYPE_PROP(SagdTypeTag,
@@ -72,8 +74,7 @@ SET_PROP(SagdTypeTag, SolidSystem)
     using InertComponent = Components::Constant<1, Scalar>;
     using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
 };
-
-}
+} // end namespace Properties
 
 
 /*!

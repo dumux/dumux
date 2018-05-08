@@ -39,6 +39,7 @@
 // setting it here, because it impacts volume variables and spatialparameters
 #define USE_PCMAX 1
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 
 #include <dumux/porousmediumflow/mpnc/model.hh>
@@ -52,8 +53,15 @@
 
 #include "evaporationatmospherespatialparams.hh"
 
-namespace Dumux
-{
+// material laws for interfacial area
+#include <dumux/material/fluidmatrixinteractions/2pia/efftoabslawia.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomial2ndorder.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomialedgezero2ndorder.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpfct.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepcmaxfct.hh>
+#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpswpcto3.hh>
+
+namespace Dumux {
 /*!
  * \ingroup MPNCTests
  *
@@ -62,19 +70,15 @@ namespace Dumux
 template <class TypeTag>
 class EvaporationAtmosphereProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(EvaporationAtmosphereTypeTag,
-             INHERITS_FROM(MPNCNonequil, EvaporationAtmosphereSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(EvaporationAtmosphereTypeTag, INHERITS_FROM(MPNCNonequil));
 NEW_TYPE_TAG(EvaporationAtmosphereBoxTypeTag, INHERITS_FROM(BoxModel, EvaporationAtmosphereTypeTag));
 
 // Set the grid type
 SET_TYPE_PROP(EvaporationAtmosphereTypeTag, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
-SET_TYPE_PROP(EvaporationAtmosphereTypeTag,
-              Problem,
-              EvaporationAtmosphereProblem<TypeTag>);
+SET_TYPE_PROP(EvaporationAtmosphereTypeTag, Problem, EvaporationAtmosphereProblem<TypeTag>);
 
 // Set fluid configuration
 SET_TYPE_PROP(EvaporationAtmosphereTypeTag,
@@ -98,7 +102,44 @@ SET_PROP(EvaporationAtmosphereTypeTag, SolidSystem)
     using InertComponent = Components::Constant<1, Scalar>;
     using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
 };
-}
+
+// Set the spatial parameters
+SET_TYPE_PROP(EvaporationAtmosphereTypeTag, SpatialParams, EvaporationAtmosphereSpatialParams<TypeTag>);
+
+// Set the interfacial area relation: wetting -- non-wetting
+SET_PROP(EvaporationAtmosphereTypeTag, AwnSurface)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
+    using MaterialLawParams = typename MaterialLaw::Params;
+    using EffectiveIALaw = AwnSurfacePcMaxFct<Scalar>;
+public:
+    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
+};
+
+
+// Set the interfacial area relation: wetting -- solid
+SET_PROP(EvaporationAtmosphereTypeTag, AwsSurface)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
+    using MaterialLawParams = typename MaterialLaw::Params;
+    using EffectiveIALaw = AwnSurfacePolynomial2ndOrder<Scalar>;
+public:
+    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
+};
+
+// Set the interfacial area relation: non-wetting -- solid
+SET_PROP(EvaporationAtmosphereTypeTag, AnsSurface)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
+    using MaterialLawParams = typename MaterialLaw::Params;
+    using EffectiveIALaw = AwnSurfaceExpSwPcTo3<Scalar>;
+public:
+    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
+};
+} // end namespace Properties
 
 /*!
  * \ingroup MpNcBoxproblems

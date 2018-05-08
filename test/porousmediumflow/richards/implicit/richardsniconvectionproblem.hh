@@ -38,8 +38,7 @@
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include "richardsnispatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /**
  * \ingroup RichardsTests
  * \brief Test for the RichardsModel in combination with the NI model for a convection problem:
@@ -49,9 +48,8 @@ namespace Dumux
 template <class TypeTag>
 class RichardsNIConvectionProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(RichardsNIConvectionTypeTag, INHERITS_FROM(RichardsNI, RichardsNISpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(RichardsNIConvectionTypeTag, INHERITS_FROM(RichardsNI));
 NEW_TYPE_TAG(RichardsNIConvectionBoxTypeTag, INHERITS_FROM(BoxModel, RichardsNIConvectionTypeTag));
 NEW_TYPE_TAG(RichardsNIConvectionCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsNIConvectionTypeTag));
 
@@ -59,18 +57,14 @@ NEW_TYPE_TAG(RichardsNIConvectionCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsN
 SET_TYPE_PROP(RichardsNIConvectionTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(RichardsNIConvectionTypeTag, Problem,
-              RichardsNIConvectionProblem<TypeTag>);
+SET_TYPE_PROP(RichardsNIConvectionTypeTag, Problem, RichardsNIConvectionProblem<TypeTag>);
 
 // Set the fluid system
 SET_TYPE_PROP(RichardsNIConvectionTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsNIConvectionTypeTag,
-              SpatialParams,
-              RichardsNISpatialParams<TypeTag>);
-}
-
+SET_TYPE_PROP(RichardsNIConvectionTypeTag, SpatialParams, RichardsNISpatialParams<TypeTag>);
+} // end namespace Properties
 
 /*!
  * \ingroup RichardsModel

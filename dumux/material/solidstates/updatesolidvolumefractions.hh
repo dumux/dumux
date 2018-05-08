@@ -24,9 +24,14 @@
 #ifndef DUMUX_UPDATE_SOLID_VOLUME_FRACTION_HH
 #define DUMUX_UPDATE_SOLID_VOLUME_FRACTION_HH
 
-namespace Dumux
-{
+namespace Dumux {
 
+/*!
+ * \ingroup SolidStates
+ * \brief update the solid volume fractions (inert and reacitve) and set them in the solidstate
+ * \note updates the inert components (TODO: these are assumed to come last right now in the solid system!)
+ * \note gets the non-inert components from the primary variables
+ */
 template<class ElemSol, class Problem, class Element, class Scv, class SolidState>
 void updateSolidVolumeFractions(const ElemSol &elemSol,
                                 const Problem &problem,
@@ -35,18 +40,19 @@ void updateSolidVolumeFractions(const ElemSol &elemSol,
                                 SolidState& solidState,
                                 const int solidVolFracOffset)
 {
-    for(int sCompIdx = solidState.numComponents- solidState.numInertComponents; sCompIdx < solidState.numComponents; ++sCompIdx)
+    for (int sCompIdx = solidState.numComponents-solidState.numInertComponents; sCompIdx < solidState.numComponents; ++sCompIdx)
     {
-        const auto inertVolumeFraction = problem.spatialParams().inertVolumeFraction(element, scv, elemSol, solidState, sCompIdx);
+        const auto& sp = problem.spatialParams();
+        using SolidSystem = typename SolidState::SolidSystem;
+        const auto inertVolumeFraction = sp.template inertVolumeFraction<SolidSystem>(element, scv, elemSol, sCompIdx);
         solidState.setVolumeFraction(sCompIdx, inertVolumeFraction);
     }
+
     if (!(solidState.isInert()))
     {
         auto&& priVars = elemSol[scv.localDofIndex()];
-        for(int sCompIdx = 0; sCompIdx < solidState.numComponents- solidState.numInertComponents; ++sCompIdx)
-        {
+        for (int sCompIdx = 0; sCompIdx < solidState.numComponents- solidState.numInertComponents; ++sCompIdx)
            solidState.setVolumeFraction(sCompIdx, priVars[solidVolFracOffset + sCompIdx]);
-        }
     }
 }
 

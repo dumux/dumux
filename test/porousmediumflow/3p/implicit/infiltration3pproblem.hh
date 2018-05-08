@@ -53,7 +53,7 @@ class InfiltrationThreePProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(InfiltrationThreePTypeTag, INHERITS_FROM(ThreeP, InfiltrationThreePSpatialParams));
+NEW_TYPE_TAG(InfiltrationThreePTypeTag, INHERITS_FROM(ThreeP));
 NEW_TYPE_TAG(InfiltrationThreePBoxTypeTag, INHERITS_FROM(BoxModel, InfiltrationThreePTypeTag));
 NEW_TYPE_TAG(InfiltrationThreePCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InfiltrationThreePTypeTag));
 
@@ -75,6 +75,9 @@ private:
 public:
     using type = FluidSystems::ThreePImmiscible<Scalar, WettingFluid, NonwettingFluid, Gas>;
 };
+
+// Set the spatial parameters
+SET_TYPE_PROP(InfiltrationThreePTypeTag, SpatialParams, InfiltrationThreePSpatialParams<TypeTag>);
 
 // SET_TYPE_PROP(InfiltrationThreePTypeTag,
 //               FluidSystem,

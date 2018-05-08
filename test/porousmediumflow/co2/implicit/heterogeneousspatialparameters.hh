@@ -36,25 +36,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup CO2Tests
- * \brief Definition of the spatial parameters for the heterogeneous
- *        problem which uses the non-isothermal or isothermal CO2
- *        fully implicit model.
- */
-//forward declaration
-template<class TypeTag>
-class HeterogeneousSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(HeterogeneousSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(HeterogeneousSpatialParams, SpatialParams, HeterogeneousSpatialParams<TypeTag>);
-}
-
-/*!
  * \ingroup CO2Model
  * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the heterogeneous
@@ -164,20 +145,22 @@ public:
     }
 
     /*!
-     * \brief Returns the porosity \f$[-]\f$
+     * \brief Returns the volume fraction of the inert component with index compIdx \f$[-]\f$
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
-     * \return porosity
+     * \param elemSol The element solution
+     * \param compIdx The solid component index
+     * \return solid volume fraction
      */
-    template<class SolidState>
+    template<class SolidSystem, class ElementSolution>
     Scalar inertVolumeFraction(const Element& element,
                                const SubControlVolume& scv,
-                               SolidState& solidState,
+                               const ElementSolution& elemSol,
                                int compIdx) const
     {
         // Get the global index of the element
-        const auto eIdx = this->problem().fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
         return inertVolumeFraction(eIdx);
     }
 

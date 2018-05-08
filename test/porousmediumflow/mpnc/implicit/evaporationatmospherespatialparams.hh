@@ -33,71 +33,9 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/2poftadapter.hh>
-
-// material laws for interfacial area
-#include <dumux/material/fluidmatrixinteractions/2pia/efftoabslawia.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomial2ndorder.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomialedgezero2ndorder.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpfct.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepcmaxfct.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpswpcto3.hh>
-
-#include <dune/common/parametertreeparser.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux {
-
-/*!
- * \ingroup MPNCTests
- * \brief spatialparameters for the kinetic test-case of the mpnc model. "Poor-mans" coupling of free-flow and porous medium.
- *
- */
-//forward declaration
-template<class TypeTag>
-class EvaporationAtmosphereSpatialParams;
-
-namespace Properties {
-
-// The spatial params TypeTag
-NEW_TYPE_TAG(EvaporationAtmosphereSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(EvaporationAtmosphereSpatialParams, SpatialParams, EvaporationAtmosphereSpatialParams<TypeTag>);
-
-// Set the interfacial area relation: wetting -- non-wetting
-SET_PROP(EvaporationAtmosphereSpatialParams, AwnSurface)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using EffectiveIALaw = AwnSurfacePcMaxFct<Scalar>;
-public:
-    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
-};
-
-
-// Set the interfacial area relation: wetting -- solid
-SET_PROP(EvaporationAtmosphereSpatialParams, AwsSurface)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using EffectiveIALaw = AwnSurfacePolynomial2ndOrder<Scalar>;
-public:
-    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
-};
-
-// Set the interfacial area relation: non-wetting -- solid
-SET_PROP(EvaporationAtmosphereSpatialParams, AnsSurface)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using EffectiveIALaw = AwnSurfaceExpSwPcTo3<Scalar>;
-public:
-    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
-};
-
-} // end namespace properties
 
 /**
  * \brief Definition of the spatial parameters for the evaporation atmosphere Problem (using a "poor man's coupling")
@@ -141,7 +79,8 @@ public:
     using AwsSurfaceParams = typename AwsSurface::Params;
     using AnsSurfaceParams = typename AnsSurface::Params;
 
-    EvaporationAtmosphereSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    EvaporationAtmosphereSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         heightPM_               = getParam<std::vector<Scalar>>("Grid.Positions1")[1];
         heightDomain_           = getParam<std::vector<Scalar>>("Grid.Positions1")[2];
@@ -267,17 +206,6 @@ public:
             return porosityPM_ ;
         else
             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
-    }
-
-    template<class ElementSolution, class SolidState>
-    Scalar inertVolumeFraction(const Element& element,
-                               const SubControlVolume& scv,
-                               const ElementSolution& elemSol,
-                               SolidState& solidState,
-                               int compIdx) const
-    {
-        return 1-porosity(element, scv, elemSol);
-
     }
 
     template<class ElementSolution>

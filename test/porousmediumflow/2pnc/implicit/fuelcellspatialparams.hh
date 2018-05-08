@@ -34,23 +34,6 @@
 
 namespace Dumux {
 /*!
- * \ingroup TwoPNCTests
- * \brief Definition of the spatial parameters for the fuel cell
- *        problem which uses the isothermal/non-insothermal 2pnc box model
- */
-//forward declaration
-template<class TypeTag>
-class FuelCellSpatialParams;
-
-namespace Properties {
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(FuelCellSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(FuelCellSpatialParams, SpatialParams, FuelCellSpatialParams<TypeTag>);
-} // end namespace Properties
-
-/*!
  * \ingroup TwoPNCMinModel
  * \brief Definition of the spatial parameters for the FuelCell
  *        problem which uses the isothermal 2p2c box model

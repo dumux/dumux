@@ -26,8 +26,7 @@
 
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup OnePTests
@@ -70,34 +69,6 @@ public:
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
-
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    { return 790; /*specific heat capacity of granite [J / (kg K)]*/ }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    { return 2700; /*density of granite [kg/m^3]*/ }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-    { return 2.8; }
 };
 
 } // end namespace Dumux

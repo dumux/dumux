@@ -38,8 +38,7 @@
 #define USEMOLES true
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
 /**
  * \ingroup TracerTests
  * \brief Definition of a problem, for the tracer problem:
@@ -48,8 +47,7 @@ namespace Dumux
 template <class TypeTag>
 class TracerTest;
 
-namespace Properties
-{
+namespace Properties {
 NEW_TYPE_TAG(TracerTest, INHERITS_FROM(Tracer));
 NEW_TYPE_TAG(TracerTestTpfa, INHERITS_FROM(CCTpfaModel, TracerTest));
 NEW_TYPE_TAG(TracerTestMpfa, INHERITS_FROM(CCMpfaModel, TracerTest));

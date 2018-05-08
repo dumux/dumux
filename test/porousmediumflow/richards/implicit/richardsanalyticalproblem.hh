@@ -40,8 +40,8 @@
 
 #include "richardsanalyticalspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup RichardsTests
  * \brief A one-dimensional infiltration problem with a smoth, given solution.
@@ -56,9 +56,8 @@ class RichardsAnalyticalProblem;
 //////////
 // Specify the properties for the analytical problem
 //////////
-namespace Properties
-{
-NEW_TYPE_TAG(RichardsAnalyticalTypeTag, INHERITS_FROM(Richards, RichardsAnalyticalSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(RichardsAnalyticalTypeTag, INHERITS_FROM(Richards));
 NEW_TYPE_TAG(RichardsAnalyticalBoxTypeTag, INHERITS_FROM(BoxModel, RichardsAnalyticalTypeTag));
 NEW_TYPE_TAG(RichardsAnalyticalCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsAnalyticalTypeTag));
 
@@ -67,7 +66,10 @@ SET_TYPE_PROP(RichardsAnalyticalTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
 SET_TYPE_PROP(RichardsAnalyticalTypeTag, Problem, RichardsAnalyticalProblem<TypeTag>);
-} // end namespace Dumux
+
+// Set the spatial parameters
+SET_TYPE_PROP(RichardsAnalyticalTypeTag, SpatialParams, RichardsAnalyticalSpatialParams<TypeTag>);
+} // end namespace Properties
 
 /*!
  * \ingroup RichardsModel

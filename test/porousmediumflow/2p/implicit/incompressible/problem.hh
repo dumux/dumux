@@ -42,17 +42,15 @@
 #define ENABLEINTERFACESOLVER 0
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
 // forward declarations
 template<class TypeTag> class TwoPTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 NEW_TYPE_TAG(TwoPIncompressible, INHERITS_FROM(TwoP));
-NEW_TYPE_TAG(TwoPIncompressibleTpfa, INHERITS_FROM(CCTpfaModel, TwoPIncompressible, SpatialParams));
-NEW_TYPE_TAG(TwoPIncompressibleMpfa, INHERITS_FROM(CCMpfaModel, TwoPIncompressible, SpatialParams));
-NEW_TYPE_TAG(TwoPIncompressibleBox, INHERITS_FROM(BoxModel, TwoPIncompressible, SpatialParams));
+NEW_TYPE_TAG(TwoPIncompressibleTpfa, INHERITS_FROM(CCTpfaModel, TwoPIncompressible));
+NEW_TYPE_TAG(TwoPIncompressibleMpfa, INHERITS_FROM(CCMpfaModel, TwoPIncompressible));
+NEW_TYPE_TAG(TwoPIncompressibleBox, INHERITS_FROM(BoxModel, TwoPIncompressible));
 
 // Set the grid type
 SET_TYPE_PROP(TwoPIncompressible, Grid, Dune::YaspGrid<2>);
@@ -70,6 +68,16 @@ SET_PROP(TwoPIncompressible, FluidSystem)
     using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
+};
+
+// Set the spatial parameters
+SET_PROP(TwoPIncompressible, SpatialParams)
+{
+private:
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+public:
+    using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
 // Enable caching

@@ -32,23 +32,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePThreeCTests
- * \brief Definition of the spatial parameters for the column problem.
- */
-//forward declaration
-template<class TypeTag>
-class ColumnSpatialParams;
-
-namespace Properties {
-
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(ColumnSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(ColumnSpatialParams, SpatialParams, ColumnSpatialParams<TypeTag>);
-} // end namespace Properties
-
-/*!
  * \ingroup ThreePThreeCModel
  * \brief Definition of the spatial parameters for the column problem
  */
@@ -68,7 +51,6 @@ class ColumnSpatialParams
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ColumnSpatialParams<TypeTag>>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
-    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
     using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
 
 public:
@@ -147,9 +129,8 @@ public:
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      */
-    template<class SolidState>
+    template<class SolidSystem>
     Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos,
-                                    SolidState& solidState,
                                     int compIdx) const
     {
         if (compIdx == SolidSystem::comp0Idx)

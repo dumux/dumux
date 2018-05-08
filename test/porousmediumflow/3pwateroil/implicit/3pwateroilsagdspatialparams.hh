@@ -36,23 +36,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePWaterOilTests
- * \brief Definition of the spatial parameters for the SAGD problem.
- */
-//forward declaration
-template<class TypeTag>
-class SagdSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(SagdSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(SagdSpatialParams, SpatialParams, Dumux::SagdSpatialParams<TypeTag>);
-}
-
-/*!
  * \ingroup ThreePThreeCNIModel
  *
  * \brief Definition of the spatial parameters for the SAGD problem

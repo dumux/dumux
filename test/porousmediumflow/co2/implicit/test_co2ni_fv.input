@@ -27,5 +27,5 @@ ResidualReduction = 1e-10
 
 [Component]
 SolidDensity = 2700
-solidThermalConductivity = 2.8
-solidHeatCapacity = 790
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790

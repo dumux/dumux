@@ -33,25 +33,6 @@
 #include <dumux/io/plotmateriallaw3p.hh>
 
 namespace Dumux {
-
-/*!
- * \ingroup ThreePTests
- * \brief Definition of the spatial parameters for the kuevette problem, which
- *        uses the three-phase fully implicit model.
- */
-//forward declaration
-template<class TypeTag>
-class InfiltrationThreePSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(InfiltrationThreePSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(InfiltrationThreePSpatialParams, SpatialParams, InfiltrationThreePSpatialParams<TypeTag>);
-}
-
 /*!
  * \ingroup ImplicitTestProblems
  * \ingroup ThreePModel

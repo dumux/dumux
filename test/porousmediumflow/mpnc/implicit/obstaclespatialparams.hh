@@ -34,23 +34,6 @@
 
 namespace Dumux {
 
-/*!
- * \ingroup MPNCTests
- * \brief The spatial parameters for the ObstacleProblem
- */
-//forward declaration
-template<class TypeTag>
-class ObstacleSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(ObstacleSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(ObstacleSpatialParams, SpatialParams, ObstacleSpatialParams<TypeTag>);
-} // end namespace Properties
-
 /**
  * \ingroup MPNCModel
  * \ingroup ImplicitTestProblems

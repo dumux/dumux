@@ -31,21 +31,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-namespace Dumux
-{
-
-//forward declaration
-template<class TypeTag>
-class InjectionSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(InjectionSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(InjectionSpatialParams, SpatialParams, InjectionSpatialParams<TypeTag>);
-}
+namespace Dumux {
 
 /*!
  * \ingroup TwoPTwoCTests
@@ -85,7 +71,8 @@ public:
      *
      * \param gridView The grid view
      */
-    InjectionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    InjectionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         layerBottom_ = 22.5;
 

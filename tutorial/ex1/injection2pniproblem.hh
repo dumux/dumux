@@ -53,6 +53,11 @@ SET_TYPE_PROP(Injection2pNITypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(Injection2pNITypeTag, Problem, InjectionProblem2PNI<TypeTag>);
 
+// Set the spatial parameters
+SET_TYPE_PROP(Injection2pNITypeTag, SpatialParams,
+              InjectionSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                     typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
 // Set fluid configuration
 SET_TYPE_PROP(Injection2pNITypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 } // end namespace Properties

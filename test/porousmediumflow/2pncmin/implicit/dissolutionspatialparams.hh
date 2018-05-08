@@ -34,19 +34,6 @@
 
 namespace Dumux {
 
-//forward declaration
-template<class TypeTag>
-class DissolutionSpatialparams;
-
-namespace Properties {
-
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(DissolutionSpatialparams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(DissolutionSpatialparams, SpatialParams, DissolutionSpatialparams<TypeTag>);
-} // end namespace Properties
-
 /*!
  * \ingroup TwoPNCMinTests
  * \brief Spatial parameters for the dissolution problem
@@ -109,17 +96,16 @@ public:
     { return 1e-5; }
 
     /*!
-     *  \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
+     *  \brief Define the volume fraction of the inert component
      *
      *  \param element The finite element
      *  \param scv The sub-control volume
      *  \param elemSol The element solution
      */
-    template<class SolidState>
+    template<class SolidSystem>
     Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos,
-                                    SolidState& solidState,
                                     int compIdx) const
-    { return 1-referencePorosity_; }
+    { return 1.0-referencePorosity_; }
 
     /*!
      *  \brief Define the reference porosity \f$[-]\f$ distribution.
