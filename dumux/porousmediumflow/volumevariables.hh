@@ -60,10 +60,10 @@ public:
      * \param scv The sub-control volume
      */
     template<class ElemSol, class Problem, class Element, class Scv>
-    void update(const ElemSol &elemSol,
-                const Problem &problem,
-                const Element &element,
-                const Scv &scv)
+    void update(const ElemSol& elemSol,
+                const Problem& problem,
+                const Element& element,
+                const Scv& scv)
     {
         priVars_ = extractDofPriVars(elemSol, scv);
         extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
