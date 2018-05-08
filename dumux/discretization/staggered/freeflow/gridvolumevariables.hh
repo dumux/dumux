@@ -29,7 +29,7 @@
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
-#include <dumux/discretization/staggered/elementvolumevariables.hh>
+#include <dumux/discretization/staggered/freeflow/elementvolumevariables.hh>
 
 namespace Dumux {
 
