@@ -26,25 +26,25 @@
 #ifndef DUMUX_INERT_SOLID_STATE_HH
 #define DUMUX_INERT_SOLID_STATE_HH
 
-#include "updatesolidvolumefractions.hh"
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup SolidStates
  * \brief Represents all relevant thermodynamic quantities of a inert
  *        solid system
  */
-template <class Scalar, class SolidSystem>
+template <class Scalar, class SolidSystemType>
 class InertSolidState
 {
 public:
+    using SolidSystem = SolidSystemType;
+
     enum
     {
         numComponents = SolidSystem::numComponents,
         numInertComponents = SolidSystem::numInertComponents,
     };
+
     static constexpr bool isInert()
     {
         static_assert(SolidSystem::isInert(), "Only inert solid systems are allowed with the InertSolidState");
