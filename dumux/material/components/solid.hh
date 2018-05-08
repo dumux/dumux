@@ -54,36 +54,10 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     template<class C = Component>
-    static Scalar solidDensity(Scalar temperature, Scalar pressure)
+    static Scalar solidDensity(Scalar temperature)
     {
-        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidDensity(t,p)");
-        DUNE_THROW(Dune::NotImplemented, "solidDensity(t,p)");
-    }
-
-    /*!
-     * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of the pure component in solid.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    template<class C = Component>
-    static const Scalar solidEnthalpy(Scalar temperature, Scalar pressure)
-    {
-        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidEnthalpy(t,p)");
-        DUNE_THROW(Dune::NotImplemented, "solidEnthalpy(t,p)");
-    }
-
-    /*!
-     * \brief Specific internal energy \f$\mathrm{[J/kg]}\f$ of the pure component in solid.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    template<class C = Component>
-    static const Scalar solidInternalEnergy(Scalar temperature, Scalar pressure)
-    {
-        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidInternalEnergy(t,p)");
-        DUNE_THROW(Dune::NotImplemented, "solidInternalEnergy(t,p)");
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidDensity(t)");
+        DUNE_THROW(Dune::NotImplemented, "solidDensity(t)");
     }
 
     /*!
@@ -92,10 +66,10 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     template<class C = Component>
-    static Scalar solidThermalConductivity(Scalar temperature, Scalar pressure)
+    static Scalar solidThermalConductivity(Scalar temperature)
     {
-        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidThermalConductivity(t,p)");
-        DUNE_THROW(Dune::NotImplemented, "solidThermalConductivity(t,p)");
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidThermalConductivity(t)");
+        DUNE_THROW(Dune::NotImplemented, "solidThermalConductivity(t)");
     }
 
     /*!
@@ -104,10 +78,10 @@ public:
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     template<class C = Component>
-    static Scalar solidHeatCapacity(Scalar temperature, Scalar pressure)
+    static Scalar solidHeatCapacity(Scalar temperature)
     {
-        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidHeatCapacity(t,p)");
-        DUNE_THROW(Dune::NotImplemented, "solidHeatCapacity(t,p)");
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: solidHeatCapacity(t)");
+        DUNE_THROW(Dune::NotImplemented, "solidHeatCapacity(t)");
     }
 
 };

@@ -36,8 +36,8 @@
 
 #include "richardslensspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup RichardsTests
  * \brief A water infiltration problem with a low-permeability lens
@@ -47,11 +47,9 @@ namespace Dumux
 template <class TypeTag>
 class RichardsLensProblem;
 
-
 // Specify the properties for the lens problem
-namespace Properties
-{
-NEW_TYPE_TAG(RichardsLensTypeTag, INHERITS_FROM(Richards, RichardsLensSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(RichardsLensTypeTag, INHERITS_FROM(Richards));
 NEW_TYPE_TAG(RichardsLensBoxTypeTag, INHERITS_FROM(BoxModel, RichardsLensTypeTag));
 NEW_TYPE_TAG(RichardsLensCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsLensTypeTag));
 
@@ -60,6 +58,9 @@ SET_TYPE_PROP(RichardsLensTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
 SET_TYPE_PROP(RichardsLensTypeTag, Problem, RichardsLensProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(RichardsLensTypeTag, SpatialParams, RichardsLensSpatialParams<TypeTag>);
 } // end namespace Dumux
 
 /*!

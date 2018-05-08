@@ -94,11 +94,13 @@ struct TracerModelTraits
  * \tparam FSY The fluid system type
  * \tparam MT The model traits
  */
-template<class PV, class FSY, class MT>
+template<class PV, class FSY, class SSY, class SST, class MT>
 struct TracerVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
     using FluidSystem = FSY;
+    using SolidSystem = SSY;
+    using SolidState = SST;
     using ModelTraits = MT;
 };
 
@@ -140,9 +142,11 @@ SET_PROP(Tracer, VolumeVariables)
 private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
-    using Traits = TracerVolumeVariablesTraits<PV, FSY, MT>;
+    using Traits = TracerVolumeVariablesTraits<PV, FSY, SSY, SST, MT>;
 public:
     using type = TracerVolumeVariables<Traits>;
 };

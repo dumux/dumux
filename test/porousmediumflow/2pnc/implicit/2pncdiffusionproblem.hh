@@ -37,15 +37,13 @@
 #define DIFFUSIONTYPE FicksLaw<TypeTag>
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class TwoPNCDiffusionProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(TwoPNCDiffusionTypeTag, INHERITS_FROM(TwoPNC, TwoPNCDiffusionSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(TwoPNCDiffusionTypeTag, INHERITS_FROM(TwoPNC));
 NEW_TYPE_TAG(TwoPNCDiffusionCCTypeTag, INHERITS_FROM(CCTpfaModel, TwoPNCDiffusionTypeTag));
 
 // Set the grid type
@@ -58,6 +56,9 @@ SET_TYPE_PROP(TwoPNCDiffusionTypeTag, Problem, TwoPNCDiffusionProblem<TypeTag>);
 SET_TYPE_PROP(TwoPNCDiffusionTypeTag,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false /*useComplexRelations*/>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(TwoPNCDiffusionTypeTag, SpatialParams, TwoPNCDiffusionSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(TwoPNCDiffusionTypeTag, UseMoles, true);

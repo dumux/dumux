@@ -29,28 +29,12 @@
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ThreePTests
  * \brief Definition of the spatial parameters for the 3pni problems.
  */
-
-//forward declaration
-template<class TypeTag>
-class ThreePNISpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(ThreePNISpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(ThreePNISpatialParams, SpatialParams, ThreePNISpatialParams<TypeTag>);
-}
-
-
 template<class TypeTag>
 class ThreePNISpatialParams
 : public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
@@ -82,9 +66,6 @@ public:
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;
-
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
 
         // residual saturations
         materialParams_.setSwr(0.12);
@@ -131,49 +112,11 @@ public:
         return materialParams_;
     }
 
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    {
-        return 790; // specific heat capacity of granite [J / (kg K)]
-    }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    {
-        return 2700; // density of granite [kg/m^3]
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-    {
-        return lambdaSolid_;
-    }
-
-
 private:
 
     MaterialLawParams materialParams_;
     Scalar permeability_;
     Scalar porosity_;
-    Scalar lambdaSolid_;
 };
 
 } // end namespace Dumux

@@ -36,25 +36,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup CO2Tests
- * \brief Definition of the spatial parameters for the heterogeneous
- *        problem which uses the non-isothermal or isothermal CO2
- *        fully implicit model.
- */
-//forward declaration
-template<class TypeTag>
-class HeterogeneousSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(HeterogeneousSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(HeterogeneousSpatialParams, SpatialParams, HeterogeneousSpatialParams<TypeTag>);
-}
-
-/*!
  * \ingroup CO2Model
  * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the heterogeneous
@@ -93,8 +74,6 @@ public:
     HeterogeneousSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
 
         //Set the permeability for the layers
         barrierTopK_ = 1e-17; //sqm
@@ -166,21 +145,23 @@ public:
     }
 
     /*!
-     * \brief Returns the porosity \f$[-]\f$
+     * \brief Returns the volume fraction of the inert component with index compIdx \f$[-]\f$
      *
      * \param element The current element
      * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     * \return porosity
+     * \param elemSol The element solution
+     * \param compIdx The solid component index
+     * \return solid volume fraction
      */
-    template<class ElementSolution>
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolution& elemSol) const
+    template<class SolidSystem, class ElementSolution>
+    Scalar inertVolumeFraction(const Element& element,
+                               const SubControlVolume& scv,
+                               const ElementSolution& elemSol,
+                               int compIdx) const
     {
         // Get the global index of the element
         const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
-        return porosity(eIdx);
+        return inertVolumeFraction(eIdx);
     }
 
     /*!
@@ -188,14 +169,14 @@ public:
      *
      * \param eIdx The element index
      */
-    Scalar porosity(std::size_t eIdx) const
+    Scalar inertVolumeFraction(std::size_t eIdx) const
     {
         if (paramIdx_[eIdx] == barrierTop_)
-            return barrierTopPorosity_;
+            return 1- barrierTopPorosity_;
         else if (paramIdx_[eIdx] == barrierMiddle_)
-            return barrierMiddlePorosity_;
+            return 1- barrierMiddlePorosity_;
         else
-            return reservoirPorosity_;
+            return 1- reservoirPorosity_;
 
     }
 
@@ -221,40 +202,6 @@ public:
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     { return FluidSystem::BrineIdx; }
 
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The position of the center of the element
-     */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    {
-        return 790; // specific heat capacity of granite [J / (kg K)]
-    }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The position of the center of the element
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    {
-        return 2700; // density of granite [kg/m^3]
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param globalPos The position of the center of the element
-     */
-    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-    {
-        return lambdaSolid_;
-    }
-
 private:
     int barrierTop_ = 1;
     int barrierMiddle_ = 2;
@@ -267,7 +214,6 @@ private:
     Scalar barrierTopK_;
     Scalar barrierMiddleK_;
     Scalar reservoirK_;
-    Scalar lambdaSolid_;
 
     MaterialLawParams materialParams_;
     std::vector<int> paramIdx_;

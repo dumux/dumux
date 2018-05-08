@@ -41,8 +41,7 @@
 #define ISOTHERMAL 1
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup CO2Tests
  * \brief Definition of a problem, where CO2 is injected in a reservoir.
@@ -50,19 +49,21 @@ namespace Dumux
 template <class TypeTag>
 class HeterogeneousProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(HeterogeneousTypeTag, INHERITS_FROM(TwoPTwoCCO2, HeterogeneousSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(HeterogeneousTypeTag, INHERITS_FROM(TwoPTwoCCO2));
 NEW_TYPE_TAG(HeterogeneousBoxTypeTag, INHERITS_FROM(BoxModel, HeterogeneousTypeTag));
 NEW_TYPE_TAG(HeterogeneousCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, HeterogeneousTypeTag));
 
-// Set the grid type
+//Set the grid type
 #if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(HeterogeneousTypeTag, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #endif
 
 // Set the problem property
 SET_TYPE_PROP(HeterogeneousTypeTag, Problem, HeterogeneousProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(HeterogeneousTypeTag, SpatialParams, HeterogeneousSpatialParams<TypeTag>);
 
 // Set fluid configuration
 SET_TYPE_PROP(HeterogeneousTypeTag, FluidSystem, FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
@@ -72,7 +73,7 @@ SET_TYPE_PROP(HeterogeneousTypeTag, FluidSystem, FluidSystems::BrineCO2<typename
 SET_BOOL_PROP(HeterogeneousTypeTag, UseMoles, false);
 
 #if !ISOTHERMAL
-NEW_TYPE_TAG(HeterogeneousNITypeTag, INHERITS_FROM(TwoPTwoCCO2NI, HeterogeneousSpatialParams));
+NEW_TYPE_TAG(HeterogeneousNITypeTag, INHERITS_FROM(TwoPTwoCCO2NI));
 NEW_TYPE_TAG(HeterogeneousNIBoxTypeTag, INHERITS_FROM(BoxModel, HeterogeneousNITypeTag));
 NEW_TYPE_TAG(HeterogeneousNICCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, HeterogeneousNITypeTag));
 
@@ -82,6 +83,9 @@ SET_TYPE_PROP(HeterogeneousNITypeTag, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune
 // Set the problem property
 SET_TYPE_PROP(HeterogeneousNITypeTag, Problem, HeterogeneousProblem<TypeTag>);
 
+// Set the spatial parameters
+SET_TYPE_PROP(HeterogeneousNITypeTag, SpatialParams, HeterogeneousSpatialParams<TypeTag>);
+
 // Set fluid configuration
 SET_TYPE_PROP(HeterogeneousNITypeTag, FluidSystem, FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                         HeterogeneousCO2Tables::CO2Tables>);
@@ -89,8 +93,7 @@ SET_TYPE_PROP(HeterogeneousNITypeTag, FluidSystem, FluidSystems::BrineCO2<typena
 // Use Moles
 SET_BOOL_PROP(HeterogeneousNITypeTag, UseMoles, false);
 #endif
-}
-
+} // end namespace Properties
 
 /*!
  * \ingroup CO2Model
@@ -269,7 +272,7 @@ public:
             }
 
             vtkKxx_[eIdx] = this->spatialParams().permeability(eIdx);
-            vtkPorosity_[eIdx] = this->spatialParams().porosity(eIdx);
+            vtkPorosity_[eIdx] = 1- this->spatialParams().inertVolumeFraction(eIdx);
         }
     }
 

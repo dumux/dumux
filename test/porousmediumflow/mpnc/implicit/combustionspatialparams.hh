@@ -34,23 +34,6 @@
 
 namespace Dumux {
 
-/*!
- * \ingroup MPNCTests
- * \brief Spatialparameters for the combustionproblem1c. Parameters for the actual simulation domain and an outflow region are provided.
- */
-//forward declaration
-template<class TypeTag>
-class CombustionSpatialParams;
-
-namespace Properties {
-
-// The spatial params TypeTag
-NEW_TYPE_TAG(CombustionSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(CombustionSpatialParams, SpatialParams, CombustionSpatialParams<TypeTag>);
-}// end namespace properties
-
 /**
  * \brief Definition of the spatial parameters for the one component combustion problem
  *
@@ -90,10 +73,6 @@ public:
         porosity_ = getParam<Scalar>("SpatialParams.PorousMedium.porosity");
         intrinsicPermeabilityOutFlow_ = getParam<Scalar>("SpatialParams.Outflow.permeabilityOutFlow");
         porosityOutFlow_                = getParam<Scalar>("SpatialParams.Outflow.porosityOutFlow");
-        solidThermalConductivityOutflow_ =getParam<Scalar>("SpatialParams.Outflow.soilThermalConductivityOutFlow");
-        solidDensity_   = getParam<Scalar>("SpatialParams.soil.density");
-        solidThermalConductivity_ = getParam<Scalar>("SpatialParams.soil.thermalConductivity");
-        solidHeatCapacity_   = getParam<Scalar>("SpatialParams.soil.heatCapacity");
         interfacialTension_  = getParam<Scalar>("Constants.interfacialTension");
 
         Swr_ = getParam<Scalar>("SpatialParams.soil.Swr");
@@ -130,22 +109,23 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the soil
+     * \brief Function for defining the porosity.
+     *        That is possibly solution dependent.
      *
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the porosity
      */
     template<class ElementSolution>
-    Scalar porosity(const Element &element,
-                    const SubControlVolume &scv,
-                    const ElementSolution &elemSol) const
+    Scalar porosity(const Element& element,
+                    const SubControlVolume& scv,
+                    const ElementSolution& elemSol) const
     {
-        if ( inOutFlow(scv.dofPosition()) )
-            return porosityOutFlow_ ;
+        if (inOutFlow(scv.dofPosition()))
+            return porosityOutFlow_;
         else
-            return porosity_ ;
+            return porosity_;
     }
 
     /*!
@@ -213,44 +193,6 @@ public:
     { return factorMassTransfer_; }
 
 
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    { return solidHeatCapacity_; }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    { return solidDensity_; }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    template<class ElementSolution>
-    Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume &scv,
-                                    const ElementSolution &elemSol) const
-    {
-        if ( inOutFlow(scv.dofPosition()) )
-            return solidThermalConductivityOutflow_ ;
-        else
-            return solidThermalConductivity_ ;
-    }
-
     //! Return if the tested position (input) is a specific region (right end of porous medium) in the domain
     bool inOutFlow(const GlobalPosition & globalPos) const { return globalPos[0] > (lengthPM_ - eps_) ;    }
     //! Return the length of the porous medium domain
@@ -274,10 +216,6 @@ private:
     Scalar porosityOutFlow_ ;
 
     // solid parameters
-    Scalar solidDensity_ ;
-    Scalar solidThermalConductivity_ ;
-    Scalar solidThermalConductivityOutflow_ ;
-    Scalar solidHeatCapacity_ ;
     Scalar interfacialTension_ ;
 
 

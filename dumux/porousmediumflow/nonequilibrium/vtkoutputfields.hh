@@ -41,7 +41,7 @@ public:
 
         EquilibriumVtkOutputFields::init(vtk);
         for (int i = 0; i < ModelTraits::numEnergyEqFluid(); ++i)
-            vtk.addVolumeVariable( [i](const auto& v){ return v.temperature(i); }, "T_" + FluidSystem::phaseName(i) );
+            vtk.addVolumeVariable( [i](const auto& v){ return v.temperatureFluid(i); }, "T_" + FluidSystem::phaseName(i) );
         for (int i = 0; i < ModelTraits::numEnergyEqSolid(); ++i)
             vtk.addVolumeVariable( [i](const auto& v){ return v.temperatureSolid(); }, "T_solid" );
         for (int i = 0; i < ModelTraits::numPhases(); ++i){

@@ -29,6 +29,7 @@
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
+#include <dumux/material/components/constant.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/3p3c/model.hh>
@@ -38,8 +39,8 @@
 
 #define ISOTHERMAL 0
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup ThreePThreeCTests
  * \brief Non-isothermal gas injection problem where a gas (e.g. steam/air)
@@ -49,9 +50,8 @@ namespace Dumux
 template <class TypeTag>
 class KuevetteProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(KuevetteTypeTag, INHERITS_FROM(ThreePThreeCNI, KuevetteSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(KuevetteTypeTag, INHERITS_FROM(ThreePThreeCNI));
 NEW_TYPE_TAG(KuevetteBoxTypeTag, INHERITS_FROM(BoxModel, KuevetteTypeTag));
 NEW_TYPE_TAG(KuevetteCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, KuevetteTypeTag));
 
@@ -61,12 +61,14 @@ SET_TYPE_PROP(KuevetteTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(KuevetteTypeTag, Problem, KuevetteProblem<TypeTag>);
 
+// Set the spatial parameters
+SET_TYPE_PROP(KuevetteTypeTag, SpatialParams, KuevetteSpatialParams<TypeTag>);
+
 // Set the fluid system
 SET_TYPE_PROP(KuevetteTypeTag,
               FluidSystem,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-}
-
+} // end namespace Properties
 
 /*!
  * \ingroup ThreePThreeCModel

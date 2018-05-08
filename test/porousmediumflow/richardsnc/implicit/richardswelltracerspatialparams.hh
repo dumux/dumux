@@ -36,23 +36,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup RichardsNCTests
- * \brief spatial parameters for the RichardsWellTracerProblem
- */
-// forward declaration
-template<class TypeTag>
-class RichardsWellTracerSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(RichardsWellTracerSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(RichardsWellTracerSpatialParams, SpatialParams, RichardsWellTracerSpatialParams<TypeTag>);
-}
-
-/*!
  * \ingroup RichardsModel
  * \ingroup ImplicitTestProblems
  * \brief The spatial parameters for the RichardsWellTracerProblem

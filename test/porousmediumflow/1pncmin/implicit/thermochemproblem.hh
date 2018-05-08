@@ -31,21 +31,22 @@
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
+#include <dumux/material/components/cao2h2.hh>
+#include <dumux/material/solidsystems/compositionalsolidphase.hh>
 
 #include "thermochemspatialparams.hh"
 #include "thermochemreaction.hh"
-#include "modifiedsteamn2cao2h2.hh"
+#include "steamn2.hh"
+#include "modifiedcao.hh"
 
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class ThermoChemProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(ThermoChemTypeTag, INHERITS_FROM(OnePNCMinNI, ThermoChemSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(ThermoChemTypeTag, INHERITS_FROM(OnePNCMinNI));
 NEW_TYPE_TAG(ThermoChemBoxTypeTag, INHERITS_FROM(BoxModel, ThermoChemTypeTag));
 
 // Set the grid type
@@ -56,7 +57,15 @@ SET_TYPE_PROP(ThermoChemTypeTag, Problem, ThermoChemProblem<TypeTag>);
 SET_PROP(ThermoChemTypeTag, FluidSystem)
 { /*private:*/
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::ModifiedSteamN2CaO2H2<Scalar>;
+    using type = FluidSystems::SteamN2<Scalar>;
+};
+
+SET_PROP(ThermoChemTypeTag, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ComponentOne = Components::ModifiedCaO<Scalar>;
+    using ComponentTwo = Components::CaO2H2<Scalar>;
+    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo>;
 };
 
 // // Enable velocity output
@@ -88,6 +97,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
@@ -118,7 +128,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
         conti0EqIdx = Indices::conti0EqIdx,
 
         // Phase Indices
-        cPhaseIdx = FluidSystem::cPhaseIdx,
+        cPhaseIdx = SolidSystem::comp0Idx,
 
         temperatureIdx = Indices::temperatureIdx,
         energyEqIdx = Indices::energyEqIdx
@@ -290,17 +300,15 @@ public:
         const auto& volVars = elemVolVars[scv];
 
         Scalar qMass = rrate_.thermoChemReaction(volVars);
-
         const auto elemSol = elementSolution(element, elemVolVars, fvGeometry);
-        Scalar qMole = qMass/FluidSystem::molarMass(H2OIdx)*(1-this->spatialParams().porosity(element, scv, elemSol));
+        Scalar qMole = qMass/FluidSystem::molarMass(H2OIdx)*(1-volVars.porosity());
 
         // make sure not more solid reacts than present
         // In this test, we only consider discharge. Therefore, we use the cPhaseIdx for CaO.
-        if (-qMole*timeStepSize_ + volVars.precipitateVolumeFraction(cPhaseIdx)* volVars.molarDensity(cPhaseIdx) < 0 + eps_)
+        if (-qMole*timeStepSize_ + volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidComponentMolarDensity(cPhaseIdx) < 0 + eps_)
         {
-            qMole = -volVars.precipitateVolumeFraction(cPhaseIdx)* volVars.molarDensity(cPhaseIdx)/timeStepSize_;
+            qMole = -volVars.solidVolumeFraction(cPhaseIdx)* volVars.solidComponentMolarDensity(cPhaseIdx)/timeStepSize_;
         }
-
         source[conti0EqIdx+CaO2H2Idx] = qMole;
         source[conti0EqIdx+CaOIdx] = - qMole;
         source[conti0EqIdx+H2OIdx] = - qMole;
@@ -354,7 +362,7 @@ public:
                 volVars.update(elemSol, *this, element, scv);
                 const auto dofIdxGlobal = scv.dofIndex();
                 permeability_[dofIdxGlobal] = this->spatialParams().permeability(element, scv, elemSol);
-                porosity_[dofIdxGlobal] = this->spatialParams().porosity(element, scv, elemSol);
+                porosity_[dofIdxGlobal] = volVars.porosity();
                 PrimaryVariables reactionRate;
                 reactionRate_[dofIdxGlobal] = rrate_.thermoChemReaction(volVars);
             }

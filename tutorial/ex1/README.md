@@ -148,4 +148,4 @@ make exercise1_2pni # builds new executable
 
 <img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/master/tutorial/extradoc/exercise1_nonisothermal.png" width="800">
 
-The non-isothermal model requires additional spatial parameters like the thermal conductivity. They are already implemented in `injection2pspatialparams.hh`, you just need to _uncomment_ them.
+The non-isothermal model requires additional parameters like the thermal conductivity of the solid component. They are already implemented and set in `exercise1.input`, you just need to _uncomment_ them.

@@ -46,9 +46,8 @@ class RichardsWellTracerProblem;
 
 
 // Specify the properties for the lens problem
-namespace Properties
-{
-NEW_TYPE_TAG(RichardsWellTracerTypeTag, INHERITS_FROM(RichardsNC, RichardsWellTracerSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(RichardsWellTracerTypeTag, INHERITS_FROM(RichardsNC));
 NEW_TYPE_TAG(RichardsWellTracerBoxTypeTag, INHERITS_FROM(BoxModel, RichardsWellTracerTypeTag));
 NEW_TYPE_TAG(RichardsWellTracerCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsWellTracerTypeTag));
 
@@ -58,10 +57,12 @@ SET_TYPE_PROP(RichardsWellTracerTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the physical problem to be solved
 SET_TYPE_PROP(RichardsWellTracerTypeTag, Problem, RichardsWellTracerProblem<TypeTag>);
 
+// Set the spatial parameters
+SET_TYPE_PROP(RichardsWellTracerTypeTag, SpatialParams, RichardsWellTracerSpatialParams<TypeTag>);
+
 // Set the physical problem to be solved
 SET_TYPE_PROP(RichardsWellTracerTypeTag, PointSource, SolDependentPointSource<TypeTag>);
-
-}
+} // end namespace Properties
 
 /*!
  * \ingroup RichardsNCModel

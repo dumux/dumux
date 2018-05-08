@@ -39,8 +39,8 @@
 
 #include "mpnc_comparison_spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup MPNCTests
  * \brief Problem where air is injected in a unsaturated porous medium. This test compares a mpnc problem with a 2p2c problem
@@ -48,9 +48,8 @@ namespace Dumux
 template <class TypeTag>
 class MPNCComparisonProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(MPNCComparisonTypeTag, INHERITS_FROM(MPNC, MPNCComparisonSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(MPNCComparisonTypeTag, INHERITS_FROM(MPNC));
 NEW_TYPE_TAG(MPNCComparisonBoxTypeTag, INHERITS_FROM(BoxModel, MPNCComparisonTypeTag));
 NEW_TYPE_TAG(MPNCComparisonCCTypeTag, INHERITS_FROM(CCTpfaModel, MPNCComparisonTypeTag));
 
@@ -58,9 +57,10 @@ NEW_TYPE_TAG(MPNCComparisonCCTypeTag, INHERITS_FROM(CCTpfaModel, MPNCComparisonT
 SET_TYPE_PROP(MPNCComparisonTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(MPNCComparisonTypeTag,
-              Problem,
-              MPNCComparisonProblem<TypeTag>);
+SET_TYPE_PROP(MPNCComparisonTypeTag, Problem, MPNCComparisonProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(MPNCComparisonTypeTag, SpatialParams, MPNCComparisonSpatialParams<TypeTag>);
 
 // Set fluid configuration
 SET_TYPE_PROP(MPNCComparisonTypeTag,
@@ -71,8 +71,7 @@ SET_TYPE_PROP(MPNCComparisonTypeTag,
 SET_TYPE_PROP(MPNCComparisonTypeTag, Scalar, double);
 SET_BOOL_PROP(MPNCComparisonTypeTag, UseMoles, true);
 SET_TYPE_PROP(MPNCComparisonTypeTag, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields);
-}
-
+} // end namespace Dumux
 
 /*!
  * \ingroup MPNCTests

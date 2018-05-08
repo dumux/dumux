@@ -7,7 +7,7 @@ dune_add_test(NAME test_2pncmin_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/saltflushbox2pncmin-reference.vtu
-                                    ${CMAKE_CURRENT_BINARY_DIR}/saltflushbox-00050.vtu
+                                    ${CMAKE_CURRENT_BINARY_DIR}/saltflushbox-00045.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncmin_box -ParameterFile test_2pncmin.input -Problem.Name saltflushbox")
 
 dune_add_test(NAME test_2pncmin_tpfa

@@ -35,9 +35,6 @@ porosity = 0.99 #
 meanPoreSize = 1e-2 # 4e-5  # characteristic length of the system
 
 [SpatialParams.soil]
-density = 2600. 	# kg/m^3 http://www.agriinfo.in/default.aspx?page=topic&superid=4&topicid=271
-thermalConductivity = 3 # W / (m K)
-heatCapacity= 817 # J / (kg K)
 # characteristic length, i.e. mean pore size
 # 40 micrometer i.e. 1e-5 for the micromodel
 
@@ -74,3 +71,8 @@ hammer = 1e4
 
 [Vtk]
 AddVelocity = 1 # enable velocity output
+
+[Component]
+SolidDensity = 2600
+SolidThermalConductivity = 3
+SolidHeatCapacity = 817

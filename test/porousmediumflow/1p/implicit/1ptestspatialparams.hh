@@ -30,16 +30,6 @@
 
 namespace Dumux {
 
-//forward declaration
-template<class TypeTag>
-class OnePTestSpatialParams;
-
-namespace Properties {
-
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(OnePTestSpatialParams);
-}
-
 /*!
  * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the

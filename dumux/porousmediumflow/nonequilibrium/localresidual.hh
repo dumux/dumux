@@ -187,7 +187,6 @@ class NonEquilibriumLocalResidualImplementation<TypeTag, true, true>: public GET
     enum { comp0Idx = FluidSystem::comp0Idx } ;
     enum { phase0Idx = FluidSystem::phase0Idx} ;
     enum { phase1Idx = FluidSystem::phase1Idx} ;
-    enum { sPhaseIdx = FluidSystem::sPhaseIdx} ;
 
 public:
      using ParentType::ParentType;
@@ -297,7 +296,7 @@ public:
         Valgrind::CheckDefined(mu_nPhaseWComp);
 
         const Scalar characteristicLength   = volVars.characteristicLength()  ;
-        const Scalar temperature            = volVars.temperature(phase0Idx);
+        const Scalar temperature            = volVars.temperatureFluid(phase0Idx);
         const Scalar pn                     = volVars.pressure(phase1Idx);
         const Scalar henry                  = FluidSystem::henry(temperature) ;
         const Scalar gradNinWApprox  = ( mu_wPhaseNComp - mu_nPhaseNCompEquil) / characteristicLength;    // very 2p2c // 1. / henry *

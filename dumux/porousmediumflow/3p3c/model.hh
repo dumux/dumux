@@ -89,6 +89,7 @@
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
+
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
@@ -132,12 +133,14 @@ struct ThreePThreeCModelTraits
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
  */
-template<class PV, class FSY, class FST, class PT, class MT>
+template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
 struct ThreePThreeCVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
     using FluidSystem = FSY;
     using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
 };
@@ -205,10 +208,12 @@ private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-    using Traits = ThreePThreeCVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+    using Traits = ThreePThreeCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
     using type = ThreePThreeCVolumeVariables<Traits>;
 };

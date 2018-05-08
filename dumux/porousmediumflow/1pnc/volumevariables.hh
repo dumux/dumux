@@ -28,6 +28,8 @@
 #include <dune/common/fvector.hh>
 
 #include <dumux/porousmediumflow/volumevariables.hh>
+#include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
+#include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
 namespace Dumux {
 
@@ -42,14 +44,15 @@ namespace Dumux {
  */
 template <class Traits>
 class OnePNCVolumeVariables
-: public PorousMediumFlowVolumeVariables<Traits, OnePNCVolumeVariables<Traits>>
+: public PorousMediumFlowVolumeVariables<Traits>
+, public EnergyVolumeVariables<Traits, OnePNCVolumeVariables<Traits> >
 {
-    using ParentType = PorousMediumFlowVolumeVariables<Traits, OnePNCVolumeVariables<Traits>>;
-
+    using ParentType = PorousMediumFlowVolumeVariables<Traits>;
+    using EnergyVolVars = EnergyVolumeVariables<Traits, OnePNCVolumeVariables<Traits> >;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
     using Idx = typename Traits::ModelTraits::Indices;
-    static constexpr int numComp = ParentType::numComponents();
+    static constexpr int numFluidComps = ParentType::numComponents();
 
     enum
     {
@@ -69,6 +72,9 @@ public:
     using FluidSystem = typename Traits::FluidSystem;
     //! export indices
     using Indices = typename Traits::ModelTraits::Indices;
+    //! export type of solid state
+    using SolidState = typename Traits::SolidState;
+    using SolidSystem = typename Traits::SolidSystem;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -87,9 +93,11 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(elemSol, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
-        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        // calculate the remaining quantities
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
+        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
         // Second instance of a parameter cache.
@@ -99,7 +107,7 @@ public:
         paramCache.updatePhase(fluidState_, fluidSystemPhaseIdx);
 
         int compIIdx = mainCompMoleOrMassFracIdx;
-        for (unsigned int compJIdx = 0; compJIdx < numComp; ++compJIdx)
+        for (unsigned int compJIdx = 0; compJIdx < numFluidComps; ++compJIdx)
         {
             diffCoeff_[compJIdx] = 0.0;
             if(compIIdx != compJIdx)
@@ -123,25 +131,25 @@ public:
      * \param fluidState A container with the current (physical) state of the fluid
      */
     template<class ElemSol, class Problem, class Element, class Scv>
-    static void completeFluidState(const ElemSol &elemSol,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const Scv &scv,
-                                   FluidState& fluidState)
+    void completeFluidState(const ElemSol &elemSol,
+                            const Problem& problem,
+                            const Element& element,
+                            const Scv &scv,
+                            FluidState& fluidState,
+                            SolidState& solidState)
 
     {
-        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
-        fluidState.setTemperature(t);
-        fluidState.setSaturation(fluidSystemPhaseIdx, 1.0);
+        EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
+        fluidState.setSaturation(fluidSystemPhaseIdx, 1.);
 
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
         fluidState.setPressure(fluidSystemPhaseIdx, priVars[pressureIdx]);
 
         // calculate the phase composition
-        Dune::FieldVector<Scalar, numComp> moleFrac;
+        Dune::FieldVector<Scalar, numFluidComps> moleFrac;
 
         Scalar sumMoleFracNotMainComp = 0;
-        for (int compIdx = 0; compIdx < numComp; ++compIdx)
+        for (int compIdx = 0; compIdx < numFluidComps; ++compIdx)
         {
             if (compIdx != mainCompMoleOrMassFracIdx)
             {
@@ -152,7 +160,7 @@ public:
         moleFrac[mainCompMoleOrMassFracIdx] = 1- sumMoleFracNotMainComp;
 
         // Set fluid state mole fractions
-        for (int compIdx = 0; compIdx < numComp; ++compIdx)
+        for (int compIdx = 0; compIdx < numFluidComps; ++compIdx)
         {
             fluidState.setMoleFraction(fluidSystemPhaseIdx, compIdx, moleFrac[compIdx]);
         }
@@ -167,7 +175,7 @@ public:
         fluidState.setViscosity(fluidSystemPhaseIdx, mu);
 
         // compute and set the enthalpy
-        Scalar h = ParentType::enthalpy(fluidState, paramCache, fluidSystemPhaseIdx);
+        Scalar h = EnergyVolVars::enthalpy(fluidState, paramCache, fluidSystemPhaseIdx);
         fluidState.setEnthalpy(fluidSystemPhaseIdx, h);
     }
 
@@ -177,6 +185,12 @@ public:
      */
     const FluidState &fluidState() const
     { return fluidState_; }
+
+    /*!
+     * \brief Returns the phase state for the control volume.
+     */
+    const SolidState &solidState() const
+    { return solidState_; }
 
     /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
@@ -221,7 +235,7 @@ public:
      Scalar moleFraction(int phaseIdx, int compIdx) const
      {
          // make sure this is only called with admissible indices
-         assert(compIdx < numComp);
+         assert(compIdx < numFluidComps);
          return fluidState_.moleFraction(fluidSystemPhaseIdx, compIdx);
      }
 
@@ -237,7 +251,7 @@ public:
      Scalar massFraction(int phaseIdx, int compIdx) const
      {
          // make sure this is only called with admissible indices
-         assert(compIdx < numComp);
+         assert(compIdx < numFluidComps);
          return fluidState_.massFraction(fluidSystemPhaseIdx, compIdx);
      }
 
@@ -295,14 +309,14 @@ public:
      * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
      */
     Scalar porosity() const
-    { return porosity_; }
+    { return solidState_.porosity(); }
 
     /*!
      * \brief Return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
-        assert(compIdx < numComp);
+        assert(compIdx < numFluidComps);
         return diffCoeff_[compIdx];
     }
 
@@ -313,7 +327,7 @@ public:
      */
     Scalar molarity(int compIdx) const // [moles/m^3]
     {
-        assert(compIdx < numComp);
+        assert(compIdx < numFluidComps);
         return fluidState_.molarity(fluidSystemPhaseIdx, compIdx);
     }
 
@@ -324,7 +338,7 @@ public:
       */
      Scalar massFraction(int compIdx) const
      {
-         assert(compIdx < numComp);
+         assert(compIdx < numFluidComps);
          return this->fluidState_.massFraction(fluidSystemPhaseIdx, compIdx);
      }
 
@@ -336,12 +350,13 @@ public:
 
 protected:
     FluidState fluidState_;
+    SolidState solidState_;
 
 private:
     Scalar porosity_;        //!< Effective porosity within the control volume
     PermeabilityType permeability_;
     Scalar density_;
-    Dune::FieldVector<Scalar, numComp> diffCoeff_;
+    Dune::FieldVector<Scalar, numFluidComps> diffCoeff_;
 };
 
 } // end namespace Dumux

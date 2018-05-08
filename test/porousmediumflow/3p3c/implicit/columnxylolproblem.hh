@@ -26,6 +26,10 @@
 #define DUMUX_COLUMNXYLOLPROBLEM_HH
 
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
+#include <dumux/material/solidstates/compositionalsolidstate.hh>
+#include <dumux/material/solidsystems/compositionalsolidphase.hh>
+#include <dumux/material/components/constant.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/3p3c/model.hh>
@@ -35,8 +39,7 @@
 
 #define ISOTHERMAL 0
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup ThreePThreeCTests
  * \brief Non-isothermal injection problem where water is injected into a
@@ -45,9 +48,8 @@ namespace Dumux
 template <class TypeTag>
 class ColumnProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(ColumnTypeTag, INHERITS_FROM(ThreePThreeCNI, ColumnSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(ColumnTypeTag, INHERITS_FROM(ThreePThreeCNI));
 NEW_TYPE_TAG(ColumnBoxTypeTag, INHERITS_FROM(BoxModel, ColumnTypeTag));
 NEW_TYPE_TAG(ColumnCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ColumnTypeTag));
 
@@ -61,8 +63,30 @@ SET_TYPE_PROP(ColumnTypeTag, Problem, ColumnProblem<TypeTag>);
 SET_TYPE_PROP(ColumnTypeTag,
               FluidSystem,
               FluidSystems::H2OAirXylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-}
 
+SET_PROP(ColumnTypeTag, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ComponentOne = Dumux::Components::Constant<1, Scalar>;
+    using ComponentTwo = Dumux::Components::Constant<2, Scalar>;
+    static constexpr int numInertComponents = 2;
+    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo, numInertComponents>;
+};
+
+
+//! The two-phase model uses the immiscible fluid state
+SET_PROP(ColumnTypeTag, SolidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+public:
+    using type = CompositionalSolidState<Scalar, SolidSystem>;
+};
+
+// Set the spatial parameters
+SET_TYPE_PROP(ColumnTypeTag, SpatialParams, ColumnSpatialParams<TypeTag>);
+} // end namespace Properties
 
 /*!
  * \ingroup ThreePThreeCModel

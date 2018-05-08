@@ -65,7 +65,7 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::box
     enum { dimWorld = GridView::dimensionworld} ;
     enum { numPhases = GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases()} ;
     enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
-    enum {sPhaseIdx = FluidSystem::sPhaseIdx};
+    enum {sPhaseIdx = FluidSystem::numPhases};
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
@@ -121,7 +121,7 @@ public:
         {
             // compute the temperature gradient with the shape functions
             if (phaseIdx < numEnergyEqFluid)
-                gradTemp.axpy(elemVolVars[scv].temperature(phaseIdx), fluxVarsCache.gradN(scv.indexInElement()));
+                gradTemp.axpy(elemVolVars[scv].temperatureFluid(phaseIdx), fluxVarsCache.gradN(scv.indexInElement()));
             else
                gradTemp.axpy(elemVolVars[scv].temperatureSolid(), fluxVarsCache.gradN(scv.indexInElement()));
         }

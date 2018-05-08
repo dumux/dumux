@@ -40,8 +40,8 @@
 
 #include "obstaclespatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup MPNCTests
  * \brief Problem where liquid water is injected -- by means of a
@@ -51,9 +51,8 @@ namespace Dumux
 template <class TypeTag>
 class ObstacleProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(ObstacleTypeTag, INHERITS_FROM(MPNC, ObstacleSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(ObstacleTypeTag, INHERITS_FROM(MPNC));
 NEW_TYPE_TAG(ObstacleBoxTypeTag, INHERITS_FROM(BoxModel, ObstacleTypeTag));
 NEW_TYPE_TAG(ObstacleCCTypeTag, INHERITS_FROM(CCTpfaModel, ObstacleTypeTag));
 
@@ -61,9 +60,10 @@ NEW_TYPE_TAG(ObstacleCCTypeTag, INHERITS_FROM(CCTpfaModel, ObstacleTypeTag));
 SET_TYPE_PROP(ObstacleTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ObstacleTypeTag,
-              Problem,
-              ObstacleProblem<TypeTag>);
+SET_TYPE_PROP(ObstacleTypeTag, Problem, ObstacleProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(ObstacleTypeTag, SpatialParams, ObstacleSpatialParams<TypeTag>);
 
 // Set fluid configuration
 SET_TYPE_PROP(ObstacleTypeTag,

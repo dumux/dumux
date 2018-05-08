@@ -37,7 +37,7 @@ namespace Dumux
 class TwoPNCVtkOutputFields
 {
 public:
-    template <class VtkOutputModule>
+   template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
         using VolumeVariables = typename VtkOutputModule::VolumeVariables;
@@ -59,6 +59,7 @@ public:
         vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phasePresence");
     }
 };
+
 
 } // end namespace Dumux
 

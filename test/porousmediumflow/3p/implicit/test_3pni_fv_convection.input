@@ -15,3 +15,8 @@ EnableGravity = false # disable gravity
 
 [Vtk]
 AddVelocity = true #Enable velocity output
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790

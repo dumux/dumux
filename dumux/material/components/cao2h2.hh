@@ -65,7 +65,7 @@ public:
     /*!
      * \brief The mass density \f$\mathrm{[kg/m^3]}\f$ of CaO2H2.
      */
-    static Scalar density()
+    static Scalar solidDensity(Scalar temperature)
     {
         return 2200.0; //at 293 K ; Shao et al. (2013)
     }
@@ -73,9 +73,17 @@ public:
     /*!
      * \brief The specific heat capacity \f$\mathrm{[J/kgK]}\f$ of CaO2H2.
      */
-    static Scalar heatCapacity()
+    static Scalar solidHeatCapacity(Scalar temperature)
     {
         return 1530;  //Nagel et al. (2014) : 1530 J/kgK
+    }
+
+    /*!
+     * \brief The thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
+     */
+    static Scalar solidThermalConductivity(Scalar temperature)
+    {
+        return  0.4;  //Nagel et al. (2014)
     }
 };
 

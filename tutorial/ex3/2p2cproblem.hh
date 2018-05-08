@@ -45,11 +45,16 @@ template <class TypeTag> class ExerciseThreeProblemTwoPTwoC;
 
 namespace Properties {
 // Create a new type tag for the problem
-NEW_TYPE_TAG(ExerciseThreeTwoPTwoCTypeTag, INHERITS_FROM(TwoPTwoC, ExerciseThreeSpatialParams));
+NEW_TYPE_TAG(ExerciseThreeTwoPTwoCTypeTag, INHERITS_FROM(TwoPTwoC));
 NEW_TYPE_TAG(ExerciseThreeBoxTwoPTwoCTypeTag, INHERITS_FROM(BoxModel, ExerciseThreeTwoPTwoCTypeTag));
 
 // Set the "Problem" property
 SET_TYPE_PROP(ExerciseThreeTwoPTwoCTypeTag, Problem, ExerciseThreeProblemTwoPTwoC<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(ExerciseThreeTwoPTwoCTypeTag, SpatialParams,
+              ExerciseThreeSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                         typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set grid and the grid creator to be used
 #if HAVE_DUNE_ALUGRID

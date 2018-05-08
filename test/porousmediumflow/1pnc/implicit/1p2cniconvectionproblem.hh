@@ -183,8 +183,8 @@ public:
         const auto densityW = volVars.density();
         const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
         const auto storageW =  densityW*heatCapacityW*porosity;
-        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
-        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
+        const auto densityS = volVars.solidDensity();
+        const auto heatCapacityS = volVars.solidHeatCapacity();
         const auto storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
         std::cout << "storage: " << storageTotal << '\n';
 

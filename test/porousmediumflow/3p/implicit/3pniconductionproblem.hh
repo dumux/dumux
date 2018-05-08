@@ -39,9 +39,7 @@
 
 #include "3pnispatialparams.hh"
 
-
-namespace Dumux
-{
+namespace Dumux {
 /**
  * \ingroup ThreePTests
  * \brief Definition of a 3pni problem:
@@ -50,13 +48,11 @@ namespace Dumux
 template <class TypeTag>
 class ThreePNIConductionProblem;
 
-namespace Properties
-{
-
+namespace Properties {
 NEW_TYPE_TAG(ThreePNIConductionTypeTag, INHERITS_FROM(ThreePNI));
-NEW_TYPE_TAG(ThreePNIConductionBoxTypeTag, INHERITS_FROM(BoxModel, ThreePNIConductionTypeTag, ThreePNISpatialParams));
-NEW_TYPE_TAG(ThreePNIConductionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ThreePNIConductionTypeTag, ThreePNISpatialParams));
-NEW_TYPE_TAG(ThreePNIConductionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, ThreePNIConductionTypeTag, ThreePNISpatialParams));
+NEW_TYPE_TAG(ThreePNIConductionBoxTypeTag, INHERITS_FROM(BoxModel, ThreePNIConductionTypeTag));
+NEW_TYPE_TAG(ThreePNIConductionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ThreePNIConductionTypeTag));
+NEW_TYPE_TAG(ThreePNIConductionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, ThreePNIConductionTypeTag));
 
 // Set the grid type
 SET_TYPE_PROP(ThreePNIConductionTypeTag, Grid, Dune::YaspGrid<2>);
@@ -71,10 +67,7 @@ SET_TYPE_PROP(ThreePNIConductionTypeTag,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThreePNIConductionTypeTag,
-              SpatialParams,
-              ThreePNISpatialParams<TypeTag>);
-
+SET_TYPE_PROP(ThreePNIConductionTypeTag, SpatialParams, ThreePNISpatialParams<TypeTag>);
 }// end namespace Properties
 
 
@@ -170,8 +163,8 @@ public:
         const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
         const auto densityW = volVars.density(wPhaseIdx);
         const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
-        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
-        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
+        const auto densityS = volVars.solidDensity();
+        const auto heatCapacityS = volVars.solidHeatCapacity();
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
                                                                                                          someElement, fvGeometry, someScv);

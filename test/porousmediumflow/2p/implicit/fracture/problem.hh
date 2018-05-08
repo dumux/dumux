@@ -39,15 +39,13 @@
 
 #include "spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class FractureProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(FractureTypeTag, INHERITS_FROM(TwoP, FractureSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(FractureTypeTag, INHERITS_FROM(TwoP));
 NEW_TYPE_TAG(FractureBoxTypeTag, INHERITS_FROM(BoxModel, FractureTypeTag));
 NEW_TYPE_TAG(FractureCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FractureTypeTag));
 NEW_TYPE_TAG(FractureCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, FractureTypeTag));
@@ -66,6 +64,9 @@ SET_PROP(FractureTypeTag, FluidSystem)
     using NonwettingPhase = FluidSystems::OnePLiquid<Scalar, Components::Trichloroethene<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
+
+// Set the spatial parameters
+SET_TYPE_PROP(FractureTypeTag, SpatialParams, FractureSpatialParams<TypeTag>);
 
 // Use global caching
 SET_BOOL_PROP(FractureTypeTag, EnableFVGridGeometryCache, true);

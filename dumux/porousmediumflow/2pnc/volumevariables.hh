@@ -29,11 +29,13 @@
 #include <vector>
 
 #include <dumux/common/math.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
-#include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
+#include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
+
+#include <dumux/material/fluidstates/compositional.hh>
+#include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
@@ -48,14 +50,16 @@ namespace Dumux {
  */
 template <class Traits>
 class TwoPNCVolumeVariables
-: public PorousMediumFlowVolumeVariables<Traits, TwoPNCVolumeVariables<Traits>>
+: public PorousMediumFlowVolumeVariables<Traits>
+, public EnergyVolumeVariables<Traits, TwoPNCVolumeVariables<Traits> >
 {
-    using ParentType = PorousMediumFlowVolumeVariables<Traits, TwoPNCVolumeVariables<Traits>>;
+    using ParentType = PorousMediumFlowVolumeVariables<Traits>;
+    using EnergyVolVars = EnergyVolumeVariables<Traits, TwoPNCVolumeVariables<Traits> >;
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
     using FS = typename Traits::FluidSystem;
     using ModelTraits = typename Traits::ModelTraits;
-
+    static constexpr int numFluidComps = ParentType::numComponents();
     enum
     {
         numMajorComponents = ModelTraits::numPhases(),
@@ -84,11 +88,16 @@ class TwoPNCVolumeVariables
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FS>;
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FS>;
 
+
 public:
     //! export fluid state type
     using FluidState = typename Traits::FluidState;
     //! export fluid system type
     using FluidSystem = typename Traits::FluidSystem;
+    //! export type of solid state
+    using SolidState = typename Traits::SolidState;
+    //! export type of solid system
+    using SolidSystem = typename Traits::SolidSystem;
 
     //! return whether moles or masses are balanced
     static constexpr bool useMoles() { return Traits::ModelTraits::useMoles(); }
@@ -116,7 +125,8 @@ public:
                 const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
-        completeFluidState(elemSol, problem, element, scv, fluidState_);
+
+        completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
         /////////////
         // calculate the remaining quantities
@@ -156,8 +166,9 @@ public:
                                                                                   compJIdx) );
         }
 
-        // porosity & permeability
-        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        // calculate the remaining quantities
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
+        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
 
@@ -177,10 +188,10 @@ public:
                             const Problem& problem,
                             const Element& element,
                             const Scv& scv,
-                            FluidState& fluidState)
+                            FluidState& fluidState,
+                            SolidState& solidState)
     {
-        const auto t = ParentType::temperature(elemSol, problem, element, scv);
-        fluidState.setTemperature(t);
+        EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
         const auto phasePresence = priVars.state();
@@ -244,6 +255,7 @@ public:
 
             // set the known mole fractions in the fluidState so that they
             // can be used by the MiscibleMultiPhaseComposition constraint solver
+
             const int knownPhaseIdx = setFirstPhaseMoleFractions ? phase0Idx : phase1Idx;
             for (int compIdx = numMajorComponents; compIdx < ModelTraits::numComponents(); ++compIdx)
                 fluidState.setMoleFraction(knownPhaseIdx, compIdx, priVars[compIdx]);
@@ -256,6 +268,7 @@ public:
         }
         else if (phasePresence == secondPhaseOnly)
         {
+
             Dune::FieldVector<Scalar, ModelTraits::numComponents()> moleFrac;
 
             moleFrac[comp0Idx] = priVars[switchIdx];
@@ -293,6 +306,7 @@ public:
             for (int compIdx = numMajorComponents; compIdx < ModelTraits::numComponents(); ++compIdx)
             {
                 moleFrac[compIdx] = priVars[compIdx];
+
                 sumMoleFracOtherComponents += moleFrac[compIdx];
             }
 
@@ -316,7 +330,7 @@ public:
         {
             Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
             Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
-            Scalar h = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
+            Scalar h = EnergyVolVars::enthalpy(fluidState, paramCache, phaseIdx);
 
             fluidState.setDensity(phaseIdx, rho);
             fluidState.setViscosity(phaseIdx, mu);
@@ -329,6 +343,12 @@ public:
      */
     const FluidState &fluidState() const
     { return fluidState_; }
+
+    /*!
+     * \brief Returns the phase state for the control-volume.
+     */
+    const SolidState &solidState() const
+    { return solidState_; }
 
     /*!
      * \brief Returns the saturation of a given phase within
@@ -405,7 +425,7 @@ public:
      * \brief Returns the average porosity within the control volume.
      */
     Scalar porosity() const
-    { return porosity_; }
+    { return solidState_.porosity();  }
 
     /*!
      * \brief Returns the permeability within the control volume.
@@ -456,6 +476,7 @@ public:
 
 protected:
     FluidState fluidState_;
+    SolidState solidState_;
 
 private:
     void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
@@ -473,6 +494,7 @@ private:
     PermeabilityType permeability_; //!> Effective permeability within the control volume
     Scalar mobility_[ModelTraits::numPhases()]; //!< Effective mobility within the control volume
     std::array<std::array<Scalar, ModelTraits::numComponents()-1>, ModelTraits::numPhases()> diffCoefficient_;
+
 };
 
 } // end namespace Dumux

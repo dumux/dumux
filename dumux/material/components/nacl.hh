@@ -76,7 +76,7 @@ public:
     /*!
      * \brief The mass density \f$\mathrm{[kg/m^3]}\f$ of NaCl.
      */
-    static Scalar density()
+    static Scalar solidDensity(Scalar temperature)
     {
         return 2165.0;
     }
@@ -84,7 +84,7 @@ public:
     /*!
      * \brief The specific heat capacity \f$\mathrm{[J/molK]}\f$ of NaCl.
      */
-    static Scalar heatCapacity()
+    static Scalar solidHeatCapacity(Scalar temperature)
     {
         return 50.50;
     }

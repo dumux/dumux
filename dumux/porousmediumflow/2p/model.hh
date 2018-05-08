@@ -107,17 +107,21 @@ struct TwoPModelTraits
  * \tparam PV The type used for primary variables
  * \tparam FSY The fluid system type
  * \tparam FST The fluid state type
+ * \tparam SSY The solid system type
+ * \tparam SST The solid state type
  * \tparam PT The type used for permeabilities
  * \tparam MT The model traits
  * \tparam SR The class used for reconstruction of
  *            non-wetting phase saturations in scvs
  */
-template<class PV, class FSY, class FST, class PT, class MT, class SR>
+template<class PV, class FSY, class FST,class SSY, class SST, class PT, class MT, class SR>
 struct TwoPVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
     using FluidSystem = FSY;
     using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
     using SaturationReconstruction = SR;
@@ -160,6 +164,8 @@ private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
@@ -168,7 +174,7 @@ private:
     // class used for scv-wise reconstruction of non-wetting phase saturations
     using SR = TwoPScvSaturationReconstruction<DM, enableIS>;
 
-    using Traits = TwoPVolumeVariablesTraits<PV, FSY, FST, PT, MT, SR>;
+    using Traits = TwoPVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, SR>;
 public:
     using type = TwoPVolumeVariables<Traits>;
 };

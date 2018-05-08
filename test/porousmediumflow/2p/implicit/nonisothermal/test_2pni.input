@@ -12,3 +12,8 @@ Name = injection2pni
 
 [Newton]
 WriteConvergence = 1 # write convergence behaviour to disk?
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790

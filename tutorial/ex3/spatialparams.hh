@@ -34,19 +34,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 
 namespace Dumux {
-//forward declaration
-template<class FVGridGeometry, class Scalar>
-class ExerciseThreeSpatialParams;
-
-namespace Properties {
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(ExerciseThreeSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(ExerciseThreeSpatialParams, SpatialParams,
-              ExerciseThreeSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                         typename GET_PROP_TYPE(TypeTag, Scalar)>);
-} // end namespace Properties
 
 /*!
  * \ingroup TwoPBoxModel

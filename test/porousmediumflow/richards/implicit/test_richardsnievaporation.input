@@ -15,3 +15,8 @@ UsePrimaryVariableSwitch = true
 
 [Newton]
 EnableChop = false  # chop for better convergence
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790

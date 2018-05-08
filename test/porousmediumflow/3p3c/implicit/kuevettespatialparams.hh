@@ -34,23 +34,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePThreeCTests
- * \brief Definition of the spatial parameters for the kuevette problem.
- */
-//forward declaration
-template<class TypeTag>
-class KuevetteSpatialParams;
-
-namespace Properties {
-
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(KuevetteSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(KuevetteSpatialParams, SpatialParams, KuevetteSpatialParams<TypeTag>);
-} // end namespace Dumux
-
-/*!
  * \ingroup ThreePThreeCModel
  * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the kuevette problem
@@ -95,9 +78,6 @@ public:
         // porosities
         finePorosity_ = 0.42;
         coarsePorosity_ = 0.42;
-
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
 
         // residual saturations
         fineMaterialParams_.setSwr(0.12);
@@ -150,12 +130,8 @@ public:
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      */
-    template<class ElementSolution>
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolution& elemSol) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
-        const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
             return finePorosity_;
         else
@@ -183,53 +159,6 @@ public:
             return coarseMaterialParams_;
     }
 
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
-     */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    {
-        return 850; // specific heat capacity of sand [J / (kg K)]
-    }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
-     */
-    template<class ElementSolution>
-    Scalar solidDensity(const Element &element,
-                        const SubControlVolume& scv,
-                        const ElementSolution& elemSol) const
-    {
-        return 2650; // density of sand [kg/m^3]
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
-     */
-    template<class ElementSolution>
-    Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume& scv,
-                                    const ElementSolution& elemSol) const
-    {
-        return lambdaSolid_;
-    }
-
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
     {
@@ -250,7 +179,6 @@ private:
     MaterialLawParams fineMaterialParams_;
     MaterialLawParams coarseMaterialParams_;
 
-    Scalar lambdaSolid_;
 };
 
 } // end namespace Dumux

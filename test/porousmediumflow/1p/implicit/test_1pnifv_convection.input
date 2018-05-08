@@ -19,3 +19,8 @@ AddVelocity = true # enable velocity output
 
 [MpfaTest.Vtk]
 AddVelocity = false # enable velocity output
+
+[Component]
+SolidDensity = 2700
+solidThermalConductivity = 2.8
+solidHeatCapacity = 790

@@ -33,71 +33,9 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/2poftadapter.hh>
-
-// material laws for interfacial area
-#include <dumux/material/fluidmatrixinteractions/2pia/efftoabslawia.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomial2ndorder.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomialedgezero2ndorder.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpfct.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepcmaxfct.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpswpcto3.hh>
-
-#include <dune/common/parametertreeparser.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux {
-
-/*!
- * \ingroup MPNCTests
- * \brief spatialparameters for the kinetic test-case of the mpnc model. "Poor-mans" coupling of free-flow and porous medium.
- *
- */
-//forward declaration
-template<class TypeTag>
-class EvaporationAtmosphereSpatialParams;
-
-namespace Properties {
-
-// The spatial params TypeTag
-NEW_TYPE_TAG(EvaporationAtmosphereSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(EvaporationAtmosphereSpatialParams, SpatialParams, EvaporationAtmosphereSpatialParams<TypeTag>);
-
-// Set the interfacial area relation: wetting -- non-wetting
-SET_PROP(EvaporationAtmosphereSpatialParams, AwnSurface)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using EffectiveIALaw = AwnSurfacePcMaxFct<Scalar>;
-public:
-    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
-};
-
-
-// Set the interfacial area relation: wetting -- solid
-SET_PROP(EvaporationAtmosphereSpatialParams, AwsSurface)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using EffectiveIALaw = AwnSurfacePolynomial2ndOrder<Scalar>;
-public:
-    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
-};
-
-// Set the interfacial area relation: non-wetting -- solid
-SET_PROP(EvaporationAtmosphereSpatialParams, AnsSurface)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
-    using MaterialLawParams = typename MaterialLaw::Params;
-    using EffectiveIALaw = AwnSurfaceExpSwPcTo3<Scalar>;
-public:
-    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
-};
-
-} // end namespace properties
 
 /**
  * \brief Definition of the spatial parameters for the evaporation atmosphere Problem (using a "poor man's coupling")
@@ -141,7 +79,8 @@ public:
     using AwsSurfaceParams = typename AwsSurface::Params;
     using AnsSurfaceParams = typename AnsSurface::Params;
 
-    EvaporationAtmosphereSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    EvaporationAtmosphereSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         heightPM_               = getParam<std::vector<Scalar>>("Grid.Positions1")[1];
         heightDomain_           = getParam<std::vector<Scalar>>("Grid.Positions1")[2];
@@ -151,10 +90,6 @@ public:
 
         porosityFF_                 = getParam<Scalar>("SpatialParams.FreeFlow.porosity");
         intrinsicPermeabilityFF_    = getParam<Scalar>("SpatialParams.FreeFlow.permeability");
-
-        solidDensity_               = getParam<Scalar>("SpatialParams.soil.density");
-        solidThermalConductivity_    = getParam<Scalar>("SpatialParams.soil.thermalConductivity");
-        solidHeatCapacity_               = getParam<Scalar>("SpatialParams.soil.heatCapacity");
 
         aWettingNonWettingA1_ = getParam<Scalar>("SpatialParams.soil.aWettingNonWettingA1");
         aWettingNonWettingA2_ = getParam<Scalar>("SpatialParams.soil.aWettingNonWettingA2");
@@ -249,17 +184,19 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
-    /*! \brief Return the porosity \f$[-]\f$ of the soil
+    /*!
+     * \brief Function for defining the porosity.
+     *        That is possibly solution dependent.
      *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub control volume.
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume  */
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the porosity
+     */
     template<class ElementSolution>
-    Scalar porosity(const Element &element,
-                    const SubControlVolume &scv,
-                    const ElementSolution &elemSol) const
+    Scalar porosity(const Element& element,
+                    const SubControlVolume& scv,
+                    const ElementSolution& elemSol) const
     {
         const auto& globalPos =  scv.dofPosition();
 
@@ -420,37 +357,6 @@ public:
         else DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
-
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-    {  return solidHeatCapacity_ ;}  // specific heat capacity of solid  [J / (kg K)]
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-    {return solidDensity_ ;} // density of solid [kg/m^3]
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-    { return solidThermalConductivity_ ;} // conductivity of solid  [W / (m K ) ]
-
     /*!\brief Give back whether the tested position (input) is a specific region (porous medium part) in the domain
      *
      * This setting ensures, that the boundary between the two domains has porous medium properties.
@@ -507,11 +413,6 @@ private:
     Scalar intrinsicPermeabilityFF_ ;
     Scalar characteristicLengthFF_ ;
     MaterialLawParams materialParamsFF_ ;
-
-    // solid parameters
-    Scalar solidDensity_ ;
-    Scalar solidThermalConductivity_ ;
-    Scalar solidHeatCapacity_ ;
 
     // interfacial area parameters
     Scalar aWettingNonWettingA1_ ;

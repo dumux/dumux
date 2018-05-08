@@ -43,16 +43,20 @@ namespace Dumux {
 template <class TypeTag>
 class FuelCellProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(FuelCellTypeTag, INHERITS_FROM(TwoPNC, FuelCellSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(FuelCellTypeTag, INHERITS_FROM(TwoPNC));
 NEW_TYPE_TAG(FuelCellBoxTypeTag, INHERITS_FROM(BoxModel, FuelCellTypeTag));
 NEW_TYPE_TAG(FuelCellCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FuelCellTypeTag));
 
 // Set the grid type
 SET_TYPE_PROP(FuelCellTypeTag, Grid, Dune::YaspGrid<2>);
+
 // Set the problem property
 SET_TYPE_PROP(FuelCellTypeTag, Problem, FuelCellProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(FuelCellTypeTag, SpatialParams, FuelCellSpatialParams<TypeTag>);
+
 // Set the primary variable combination for the 2pnc model
 SET_PROP(FuelCellTypeTag, Formulation)
 { static constexpr auto value = TwoPFormulation::p1s0; };

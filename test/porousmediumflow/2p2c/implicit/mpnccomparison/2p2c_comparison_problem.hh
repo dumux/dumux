@@ -38,8 +38,7 @@
 #include "2p2c_comparison_spatialparams.hh"
 #include "vtkoutputfields.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup TwoPTwoCTests
  * \briefProblem where air is injected in a unsaturated porous medium. This test compares a   mpnc problem with a 2p2c problem
@@ -47,9 +46,8 @@ namespace Dumux
 template <class TypeTag>
 class TwoPTwoCComparisonProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(TwoPTwoCComparisonTypeTag, INHERITS_FROM(TwoPTwoC, TwoPTwoCComparisonSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(TwoPTwoCComparisonTypeTag, INHERITS_FROM(TwoPTwoC));
 NEW_TYPE_TAG(TwoPTwoCComparisonBoxTypeTag, INHERITS_FROM(BoxModel, TwoPTwoCComparisonTypeTag));
 NEW_TYPE_TAG(TwoPTwoCComparisonCCTypeTag, INHERITS_FROM(CCTpfaModel, TwoPTwoCComparisonTypeTag));
 
@@ -65,6 +63,9 @@ SET_TYPE_PROP(TwoPTwoCComparisonTypeTag,
 SET_TYPE_PROP(TwoPTwoCComparisonTypeTag,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, SpatialParams, TwoPTwoCComparisonSpatialParams<TypeTag>);
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, Scalar, double);

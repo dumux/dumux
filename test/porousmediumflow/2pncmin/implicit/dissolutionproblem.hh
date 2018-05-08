@@ -32,10 +32,13 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
 
+#include <dumux/material/components/nacl.hh>
+#include <dumux/material/components/granite.hh>
+#include <dumux/material/solidsystems/compositionalsolidphase.hh>
+
 #include "dissolutionspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 /*!
  * \ingroup TwoPNCMinTests
  * \brief Problem where water is injected in a for flushing precipitated salt clogging a gas reservoir.
@@ -43,9 +46,8 @@ namespace Dumux
 template <class TypeTag>
 class DissolutionProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(DissolutionTypeTag, INHERITS_FROM(TwoPNCMin, DissolutionSpatialparams));
+namespace Properties {
+NEW_TYPE_TAG(DissolutionTypeTag, INHERITS_FROM(TwoPNCMin));
 NEW_TYPE_TAG(DissolutionBoxTypeTag, INHERITS_FROM(BoxModel, DissolutionTypeTag));
 NEW_TYPE_TAG(DissolutionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, DissolutionTypeTag));
 
@@ -60,6 +62,15 @@ SET_PROP(DissolutionTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::BrineAir<Scalar, Components::H2O<Scalar>, true/*useComplexrelations=*/>;
+};
+
+SET_PROP(DissolutionTypeTag, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ComponentOne = Components::NaCl<Scalar>;
+    using ComponentTwo = Components::Granite<Scalar>;
+    static constexpr int numInertComponents = 1;
+    using type = SolidSystems::CompositionalSolidPhase<Scalar, ComponentOne, ComponentTwo, numInertComponents>;
 };
 
 // Set the spatial parameters
@@ -99,6 +110,7 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
 
     enum
     {
@@ -120,8 +132,9 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
         liquidPhaseIdx = FluidSystem::liquidPhaseIdx,
         gasPhaseIdx = FluidSystem::gasPhaseIdx,
 
-        // TODO: this shouldn't be in the fluid system
-        sPhaseIdx = FluidSystem::solidPhaseIdx,
+        // index of the solid phase
+        sPhaseIdx = SolidSystem::comp0Idx,
+
 
         // Index of the primary component of G and L phase
         conti0EqIdx = Indices::conti0EqIdx,
@@ -265,7 +278,6 @@ public:
 
         if(globalPos[0] < rmin + eps_)
         {
-
             priVars[pressureIdx]   = innerPressure_ ; // Inner boundary pressure bar
             priVars[switchIdx]     = innerLiqSaturation_; // Saturation inner boundary
             priVars[xwNaClIdx]     = massToMoleFrac_(innerSalinity_);// mole fraction salt
@@ -338,14 +350,13 @@ public:
         Scalar massFracNaCl_Max_wPhase = this->spatialParams().solubilityLimit();
         Scalar moleFracNaCl_Max_wPhase = massToMoleFrac_(massFracNaCl_Max_wPhase);
         Scalar moleFracNaCl_Max_nPhase = moleFracNaCl_Max_wPhase / volVars.pressure(gasPhaseIdx);
-        Scalar saltPorosity = this->spatialParams().minPorosity(element, scv);
+        Scalar saltPorosity = this->spatialParams().minimalPorosity(element, scv);
 
         // liquid phase
         using std::abs;
         Scalar precipSalt = volVars.porosity() * volVars.molarDensity(liquidPhaseIdx)
                                                * volVars.saturation(liquidPhaseIdx)
                                                * abs(moleFracNaCl_wPhase - moleFracNaCl_Max_wPhase);
-
         if (moleFracNaCl_wPhase < moleFracNaCl_Max_wPhase)
             precipSalt *= -1;
 
@@ -355,16 +366,16 @@ public:
                                          * abs(moleFracNaCl_nPhase - moleFracNaCl_Max_nPhase);
 
         // make sure we don't dissolve more salt than previously precipitated
-        if (precipSalt*timeStepSize_ + volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)< 0)
-            precipSalt = -volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)/timeStepSize_;
+        if (precipSalt*timeStepSize_ + volVars.solidVolumeFraction(sPhaseIdx)* volVars.solidComponentMolarDensity(sPhaseIdx)< 0)
+            precipSalt = -volVars.solidVolumeFraction(sPhaseIdx)* volVars.solidComponentMolarDensity(sPhaseIdx)/timeStepSize_;
 
-        if (volVars.precipitateVolumeFraction(sPhaseIdx) >= this->spatialParams().referencePorosity(element, scv) - saltPorosity  && precipSalt > 0)
+        if (volVars.solidVolumeFraction(sPhaseIdx) >= this->spatialParams().referencePorosity(element, scv) - saltPorosity  && precipSalt > 0)
             precipSalt = 0;
 
         source[conti0EqIdx + NaClIdx] += -precipSalt;
         source[precipNaClEqIdx] += precipSalt;
-
         return source;
+
     }
 
     /*!
@@ -433,7 +444,6 @@ private:
     Scalar timeStepSize_ = 0.0;
     static constexpr Scalar eps_ = 1e-6;
     Scalar reservoirSaturation_;
-    Scalar Permeability_;
     std::vector<double> permeability_;
 };
 

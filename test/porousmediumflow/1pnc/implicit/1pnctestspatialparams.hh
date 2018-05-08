@@ -60,9 +60,6 @@ public:
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;
-
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
     }
 
     /*!
@@ -94,55 +91,9 @@ public:
                         const ElementSolution& elemSol) const
     { return 0; }
 
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     */
-    template<class ElementSolution>
-    Scalar solidHeatCapacity(const Element &element,
-                             const SubControlVolume& scv,
-                             const ElementSolution& elemSol) const
-    { return 790; /*specific heat capacity of granite [J / (kg K)]*/ }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     */
-    template<class ElementSolution>
-    Scalar solidDensity(const Element &element,
-                        const SubControlVolume& scv,
-                        const ElementSolution& elemSol) const
-    { return 2700; /*density of granite [kg/m^3]*/ }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     */
-    template<class ElementSolution>
-    Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume& scv,
-                                    const ElementSolution& elemSol) const
-    { return lambdaSolid_; }
-
-
-
 private:
     Scalar permeability_;
     Scalar porosity_;
-    Scalar lambdaSolid_;
 };
 
 } // end namespace Dumux

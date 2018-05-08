@@ -36,20 +36,6 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class FVGridGeometry, class Scalar>
-class InjectionSpatialParams;
-
-namespace Properties {
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(InjectionSpatialParamsTypeTag);
-
-// Set the spatial parameters
-SET_TYPE_PROP(InjectionSpatialParamsTypeTag, SpatialParams,
-              InjectionSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                     typename GET_PROP_TYPE(TypeTag, Scalar)>);
-} // end namespace Properties
-
 /*!
  * \ingroup TwoPTwoCModel
  * \brief Definition of the spatial parameters for the injection problem
@@ -156,44 +142,6 @@ public:
     template<class FluidSystem>
     int wettingPhaseAtPos(const GlobalPosition& globalPos) const
     { return FluidSystem::H2OIdx; }
-
-    /*!
-     *  These parameters are only needed for nonisothermal models. Comment them in if you want to implement the 2pni model.
-     */
-
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-//     Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
-//     {
-//         return 790; // specific heat capacity of granite [J / (kg K)]
-//     }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param globalPos The global position
-     */
-//     Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
-//     {
-//         return 2700; // density of granite [kg/m^3]
-//     }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param globalPos The global position
-     */
-//     Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
-//     {
-//         return 2.8;
-//     }
 
 private:
 

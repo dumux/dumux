@@ -44,7 +44,7 @@ template <class TypeTag>
 class InjectionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(InjectionTypeTag, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams));
+NEW_TYPE_TAG(InjectionTypeTag, INHERITS_FROM(TwoPTwoC));
 NEW_TYPE_TAG(InjectionBoxTypeTag, INHERITS_FROM(BoxModel, InjectionTypeTag));
 NEW_TYPE_TAG(InjectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InjectionTypeTag));
 NEW_TYPE_TAG(InjectionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, InjectionTypeTag));
@@ -59,6 +59,9 @@ SET_TYPE_PROP(InjectionTypeTag, Problem, InjectionProblem<TypeTag>);
 SET_TYPE_PROP(InjectionTypeTag,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false /*useComplexRelations*/>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(InjectionTypeTag, SpatialParams, InjectionSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(InjectionTypeTag, UseMoles, true);

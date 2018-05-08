@@ -35,23 +35,6 @@
 
 namespace Dumux {
 
-/*!
- * \ingroup MPNCTests
- * \brief The spatial parameters for the ObstacleProblem
- */
-//forward declaration
-template<class TypeTag>
-class MPNCComparisonSpatialParams;
-
-namespace Properties {
-
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(MPNCComparisonSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(MPNCComparisonSpatialParams, SpatialParams, MPNCComparisonSpatialParams<TypeTag>);
-} // end namespace Properties
-
 /**
  * \ingroup MPNCModel
  * \ingroup ImplicitTestProblems
@@ -127,10 +110,7 @@ public:
      * \param scvIdx      The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    template<class ElementSolution>
-    Scalar porosity(const Element &element,
-                    const SubControlVolume &scv,
-                    const ElementSolution &elemSol) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
         return porosity_;
     }

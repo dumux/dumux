@@ -33,24 +33,7 @@
 
 #include <dumux/porousmediumflow/richards/model.hh>
 
-namespace Dumux
-{
-/*!
- * \ingroup RichardsTests
- * \brief spatial parameters for the RichardsAnalyticalProblem
- */
-// forward declaration
-template<class TypeTag>
-class RichardsAnalyticalSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(RichardsAnalyticalSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(RichardsAnalyticalSpatialParams, SpatialParams, RichardsAnalyticalSpatialParams<TypeTag>);
-}
+namespace Dumux {
 
 /*!
  * \ingroup RichardsModel

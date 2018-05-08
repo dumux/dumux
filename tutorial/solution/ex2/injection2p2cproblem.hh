@@ -33,17 +33,15 @@
 
 #include "mylocalresidual.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 // foward declaration
 template <class TypeTag>
 class Injection2p2cProblem;
 
 // setup property TypeTag
-namespace Properties
-{
-NEW_TYPE_TAG(Injection2p2cTypeTag, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(Injection2p2cTypeTag, INHERITS_FROM(TwoPTwoC));
 NEW_TYPE_TAG(Injection2p2pcCCTypeTag, INHERITS_FROM(CCTpfaModel, Injection2p2cTypeTag));
 
 // Set the grid type
@@ -51,6 +49,11 @@ SET_TYPE_PROP(Injection2p2cTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(Injection2p2cTypeTag, Problem, Injection2p2cProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(Injection2p2cTypeTag, SpatialParams,
+              InjectionSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                     typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 SET_TYPE_PROP(Injection2p2cTypeTag, LocalResidual, MyCompositionalLocalResidual<TypeTag>);
 
@@ -61,7 +64,6 @@ SET_TYPE_PROP(Injection2p2cTypeTag,
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(Injection2p2cTypeTag, UseMoles, true);
-
 } // end namespace Properties
 
 /*!

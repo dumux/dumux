@@ -110,6 +110,7 @@
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 #include <dumux/porousmediumflow/nonequilibrium/model.hh>
+#include <dumux/porousmediumflow/nonequilibrium/volumevariables.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -189,6 +190,8 @@ public:
 template<class PV,
          class FSY,
          class FST,
+         class SSY,
+         class SST,
          class PT,
          class MT>
 struct MPNCVolumeVariablesTraits
@@ -196,6 +199,8 @@ struct MPNCVolumeVariablesTraits
     using PrimaryVariables = PV;
     using FluidSystem = FSY;
     using FluidState = FST;
+    using SolidSystem = SSY;
+    using SolidState = SST;
     using PermeabilityType = PT;
     using ModelTraits = MT;
 };
@@ -246,10 +251,12 @@ private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-    using Traits = MPNCVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+    using Traits = MPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
     using type = MPNCVolumeVariables<Traits>;
 };
@@ -332,6 +339,25 @@ private:
 public:
     using type = ThermalConductivitySimpleFluidLumping<Scalar, GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)>;
 };
+
+//! use the mineralization volume variables together with the 2pnc vol vars
+SET_PROP(MPNCNonequil, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    using Traits = MPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    using EquilibriumVolVars = MPNCVolumeVariables<Traits>;
+public:
+    using type = NonEquilibriumVolumeVariables<Traits, EquilibriumVolVars>;
+};
+
 
 } //end namespace Properties
 } //end namespace Dumux

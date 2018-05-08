@@ -33,23 +33,6 @@
 
 namespace Dumux {
 
-/*!
- * \ingroup MPNCTests
- * \brief The spatial parameters for the ObstacleProblem
- */
-//forward declaration
-template<class TypeTag>
-class TwoPTwoCComparisonSpatialParams;
-
-namespace Properties {
-
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(TwoPTwoCComparisonSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(TwoPTwoCComparisonSpatialParams, SpatialParams, TwoPTwoCComparisonSpatialParams<TypeTag>);
-}
-
 /**
  * \ingroup MPNCModel
  * \ingroup ImplicitTestProblems
@@ -121,15 +104,10 @@ public:
     /*!
      * \brief Define the porosity \f$[-]\f$ of the soil
      *
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     * \param pos The global position of the sub-control volume.
+     * \return the material parameters object
      */
-    template<class ElementSolution>
-    Scalar porosity(const Element &element,
-                    const SubControlVolume &scv,
-                    const ElementSolution &elemSol) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
         return porosity_;
     }
@@ -178,6 +156,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
 };
 
-}
+} // end namespace Dumux
 
 #endif

@@ -47,7 +47,7 @@ template <class TypeTag>
 class RichardsNIEvaporationProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(RichardsNIEvaporationTypeTag, INHERITS_FROM(RichardsNI, RichardsNISpatialParams));
+NEW_TYPE_TAG(RichardsNIEvaporationTypeTag, INHERITS_FROM(RichardsNI));
 NEW_TYPE_TAG(RichardsNIEvaporationBoxTypeTag, INHERITS_FROM(BoxModel, RichardsNIEvaporationTypeTag));
 NEW_TYPE_TAG(RichardsNIEvaporationCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsNIEvaporationTypeTag));
 
@@ -62,13 +62,10 @@ SET_TYPE_PROP(RichardsNIEvaporationTypeTag, Problem,
 SET_TYPE_PROP(RichardsNIEvaporationTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsNIEvaporationTypeTag,
-              SpatialParams,
-              RichardsNISpatialParams<TypeTag>);
+SET_TYPE_PROP(RichardsNIEvaporationTypeTag, SpatialParams, RichardsNISpatialParams<TypeTag>);
 
 SET_BOOL_PROP(RichardsNIEvaporationTypeTag, EnableWaterDiffusionInAir, true);
-
-} // end namespace Dumux
+} // end namespace Properties
 
 /*!
  * \ingroup RichardsTests

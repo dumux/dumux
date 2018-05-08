@@ -48,6 +48,7 @@ class OnePSingularitySpatialParams
     using Element = typename GridView::template Codim<0>::Entity;
     using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, OnePSingularitySpatialParams<TypeTag>>;
 
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 public:
     // export permeability type
     using PermeabilityType = Scalar;
@@ -75,20 +76,13 @@ public:
         return permeability_;
     }
 
-    /*! \brief Define the porosity in [-].
+    /*!
+     * \brief Define the porosity \f$\mathrm{[-]}\f$.
      *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     * \return the porosity
+     * \param globalPos The global position
      */
-    template<class ElementSolution>
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolution& elemSol) const
-    {
-        return porosity_;
-    }
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return porosity_; }
 
 private:
     Scalar permeability_, porosity_;

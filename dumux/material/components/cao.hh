@@ -64,7 +64,7 @@ public:
     /*!
      * \brief The mass density \f$\mathrm{[kg/m^3]}\f$ of CaO.
      */
-    static Scalar density()
+    static Scalar solidDensity(Scalar temperature)
     {
         return 3370;
     }
@@ -72,9 +72,17 @@ public:
     /*!
      * \brief The specific heat capacity \f$\mathrm{[J/kg K]}\f$ of CaO.
      */
-    static Scalar heatCapacity()
+    static Scalar solidHeatCapacity(Scalar temperature)
     {
         return 934;  //Nagel et al. (2014) : 934 J/kgK
+    }
+
+    /*!
+     * \brief The thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
+     */
+    static Scalar solidThermalConductivity(Scalar temperature)
+    {
+        return  0.4;  //Nagel et al. (2014)
     }
 };
 

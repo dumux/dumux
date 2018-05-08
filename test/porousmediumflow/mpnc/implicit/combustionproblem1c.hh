@@ -36,12 +36,12 @@
 
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
+#include <dumux/material/components/constant.hh>
 
 #include "combustionspatialparams.hh"
 #include "combustionfluidsystem.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template<class TypeTag>
 class CombustionProblemOneComponent;
@@ -53,9 +53,8 @@ struct CombustionModelTraits : public MPNCModelTraits<numP, numC, formulation>
     static constexpr bool enableMolecularDiffusion() { return false; }
 };
 
-namespace Properties
-{
-NEW_TYPE_TAG(CombustionOneComponentTypeTag, INHERITS_FROM(MPNCNonequil, CombustionSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(CombustionOneComponentTypeTag, INHERITS_FROM(MPNCNonequil));
 NEW_TYPE_TAG(CombustionOneComponentBoxTypeTag, INHERITS_FROM(BoxModel, CombustionOneComponentTypeTag));
 
 // Set the grid type
@@ -65,6 +64,9 @@ SET_TYPE_PROP(CombustionOneComponentTypeTag, Grid, Dune::OneDGrid);
 SET_TYPE_PROP(CombustionOneComponentTypeTag,
               Problem,
               CombustionProblemOneComponent<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(CombustionOneComponentTypeTag, SpatialParams, CombustionSpatialParams<TypeTag>);
 
 SET_TYPE_PROP(CombustionOneComponentTypeTag,
               FluidSystem,
@@ -109,7 +111,13 @@ SET_INT_PROP(CombustionOneComponentTypeTag, NumEnergyEqSolid, 1);
 // by default chemical non equilibrium is enabled in the nonequil model, switch that off here
 SET_BOOL_PROP(CombustionOneComponentTypeTag, EnableChemicalNonEquilibrium, false);
 //#################
-
+// Set the fluid system
+SET_PROP(CombustionOneComponentTypeTag, SolidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using InertComponent = Components::Constant<1, Scalar>;
+    using type = SolidSystems::InertSolidPhase<Scalar, InertComponent>;
+};
 }
 /*!
  * \ingroup MPNCTests

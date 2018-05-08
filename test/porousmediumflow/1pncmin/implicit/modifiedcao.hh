@@ -30,6 +30,7 @@
 
 namespace Dumux
 {
+namespace Components {
 /*!
  * \ingroup OnePNCMinTests
  * \brief A class for the ModifiedCaO properties
@@ -46,14 +47,14 @@ public:
     /*!
      * \brief The corrected mass density \f$\mathrm{[kg/m^3]}\f$ of CaO.
      */
-    static Scalar density()
+    static Scalar solidDensity(Scalar temperature)
     {
         return 1656;
         // This density is to be used for calculating the chemical reaction of CaO to Ca(OH)2 without considering the solid volume change. See Shao et al. (2013)
     }
 
 };
-
+} //end namespace components
 } // end namespace
 
 #endif

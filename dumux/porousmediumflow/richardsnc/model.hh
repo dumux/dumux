@@ -160,11 +160,13 @@ SET_PROP(RichardsNC, VolumeVariables)
 private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+    using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-    using Traits = RichardsVolumeVariablesTraits<PV, FSY, FST, PT, MT>;
+    using Traits = RichardsVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
     using type = RichardsNCVolumeVariables<Traits>;
 };

@@ -68,6 +68,8 @@ struct PorousMediumFlowNIModelTraits : public IsothermalTraits
 {
     //! We solve for one more equation, i.e. the energy balance
     static constexpr int numEq() { return IsothermalTraits::numEq()+1; }
+    //! only one energy equation is needed when assuming thermal equilibrium
+    static constexpr int numEnergyEq() { return 1; }
     //! We additionally solve for the equation balance
     static constexpr bool enableEnergyBalance() { return true; }
     //! The indices related to the non-isothermal model

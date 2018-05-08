@@ -75,11 +75,9 @@ public:
      ****************************************/
     static constexpr int numPhases = 2; // liquid and gas phases
     static constexpr int numComponents = 3; // H2O, Air, NaCl
-    static constexpr int numSPhases = 1;// precipitated solid phases // TODO: remove
 
     static constexpr int liquidPhaseIdx = 0; // index of the liquid phase
     static constexpr int gasPhaseIdx = 1; // index of the gas phase
-    static constexpr int solidPhaseIdx = 2; // index of the precipitated salt // TODO: remove
 
     static constexpr int phase0Idx = liquidPhaseIdx; // index of the first phase
     static constexpr int phase1Idx = gasPhaseIdx; // index of the second phase
@@ -91,7 +89,7 @@ public:
     static constexpr int AirIdx = 1;
     static constexpr int comp0Idx = H2OIdx;
     static constexpr int comp1Idx = AirIdx;
-    static constexpr int NaClIdx  = 2; // TODO: remove
+    static constexpr int NaClIdx  = 2;
 
     /*!
      * \brief Return the human readable name of a fluid phase
@@ -100,10 +98,10 @@ public:
      */
     static std::string phaseName(int phaseIdx)
     {
-        switch (phaseIdx) {
-        case liquidPhaseIdx: return "liquid";
-        case gasPhaseIdx: return "gas";
-        case solidPhaseIdx: return "NaCl";
+        switch (phaseIdx)
+        {
+            case liquidPhaseIdx: return "liquid";
+            case gasPhaseIdx: return "gas";
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -221,18 +219,6 @@ public:
     }
 
     /*!
-     * \brief Return the mass density of the precipitate \f$\mathrm{[kg/m^3]}\f$.
-     *
-     * \param phaseIdx The index of the precipitated phase to consider
-     */
-    static Scalar precipitateDensity(int phaseIdx)
-    {
-        if(phaseIdx != solidPhaseIdx)
-            DUNE_THROW(Dune::InvalidStateException, "Invalid solid phase index " << solidPhaseIdx);
-        return NaCl::density();
-    }
-
-    /*!
      * \brief Return the saturation vapor pressure of the liquid phase \f$\mathrm{[Pa]}\f$.
      *
      * \param Temperature temperature of the liquid phase
@@ -243,25 +229,6 @@ public:
        return vaporPressure_(Temperature,salinity);
      }
 
-    /*!
-     * \brief Return the salt specific heat capacity \f$\mathrm{[J/molK]}\f$.
-     *
-     * \param phaseIdx The index of the precipitated phase to consider
-     */
-    static Scalar precipitateHeatCapacity(int phaseIdx)
-    {
-        return NaCl::heatCapacity();
-    }
-
-    /*!
-     * \brief Return the molar density of the precipitate \f$\mathrm{[mol/m^3]}\f$.
-     *
-     * \param phaseIdx The index of the precipitated phase to consider
-     */
-    static Scalar precipitateMolarDensity(int phaseIdx)
-     {
-        return precipitateDensity(phaseIdx)/molarMass(phaseIdx); //TODO this only works for this specific case here with phaseIdx=compIdx!
-     }
 
     /****************************************
      * thermodynamic relations

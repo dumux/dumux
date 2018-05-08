@@ -46,7 +46,7 @@ template <class TypeTag>
 class WaterAirProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(WaterAirTypeTag, INHERITS_FROM(TwoPTwoCNI, WaterAirSpatialParams));
+NEW_TYPE_TAG(WaterAirTypeTag, INHERITS_FROM(TwoPTwoCNI));
 NEW_TYPE_TAG(WaterAirBoxTypeTag, INHERITS_FROM(BoxModel, WaterAirTypeTag));
 NEW_TYPE_TAG(WaterAirCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, WaterAirTypeTag));
 
@@ -58,6 +58,9 @@ SET_TYPE_PROP(WaterAirTypeTag, Problem, WaterAirProblem<TypeTag>);
 
 // Set the wetting phase
 SET_TYPE_PROP(WaterAirTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(WaterAirTypeTag, SpatialParams, WaterAirSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(WaterAirTypeTag, UseMoles, true);

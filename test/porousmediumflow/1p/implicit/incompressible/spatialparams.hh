@@ -82,18 +82,11 @@ public:
     }
 
     /*!
-     * \brief Function for defining the porosity.
-     *        That is possibly solution dependent.
+     * \brief Define the porosity \f$\mathrm{[-]}\f$.
      *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     * \return the porosity
+     * \param globalPos The global position
      */
-    template<class ElementSolution>
-    Scalar porosity(const Element &element,
-                        const SubControlVolume &scv,
-                        const ElementSolution &elemSol) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
 private:

@@ -23,8 +23,6 @@
 #ifndef DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_INCOMPRESSIBLE_TWOP_TEST_SPATIAL_PARAMS_HH
 
-#include <dumux/discretization/methods.hh>
-
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -33,34 +31,13 @@
 
 namespace Dumux {
 
-//forward declaration
-template<class FVGridGeometry, class Scalar>
-class TwoPTestSpatialParams;
-
-namespace Properties {
-
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(SpatialParams);
-
-// Set the spatial parameters
-SET_PROP(SpatialParams, SpatialParams)
-{
-private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = TwoPTestSpatialParams<FVGridGeometry, Scalar>;
-};
-
-} // end namespace Properties
-
 /*!
  * \ingroup TwoPTests
  * \brief The spatial params for the incompressible 2p test
  */
 template<class FVGridGeometry, class Scalar>
 class TwoPTestSpatialParams
-: public FVSpatialParams<FVGridGeometry, Scalar,  TwoPTestSpatialParams<FVGridGeometry, Scalar>>
+: public FVSpatialParams<FVGridGeometry, Scalar, TwoPTestSpatialParams<FVGridGeometry, Scalar>>
 {
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;

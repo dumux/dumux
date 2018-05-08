@@ -32,23 +32,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup ThreePThreeCTests
- * \brief Definition of the spatial parameters for the column problem.
- */
-//forward declaration
-template<class TypeTag>
-class ColumnSpatialParams;
-
-namespace Properties {
-
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(ColumnSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(ColumnSpatialParams, SpatialParams, ColumnSpatialParams<TypeTag>);
-} // end namespace Properties
-
-/*!
  * \ingroup ThreePThreeCModel
  * \brief Definition of the spatial parameters for the column problem
  */
@@ -68,7 +51,6 @@ class ColumnSpatialParams
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ColumnSpatialParams<TypeTag>>;
 
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
-
     using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
 
 public:
@@ -95,9 +77,6 @@ public:
         // specific heat capacities
         fineHeatCap_ = 850.;
         coarseHeatCap_ = 84000.;
-
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
 
         // residual saturations
         fineMaterialParams_.setSwr(0.12);
@@ -150,18 +129,25 @@ public:
      * \param scv The sub-control volume inside the element.
      * \param elemSol The solution at the dofs connected to the element.
      */
-    template<class ElementSolution>
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolution& elemSol) const
+    template<class SolidSystem>
+    Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos,
+                                    int compIdx) const
     {
-        const auto& globalPos = scv.dofPosition();
-        if (isFineMaterial_(globalPos))
-            return finePorosity_;
+        if (compIdx == SolidSystem::comp0Idx)
+        {
+            if (isFineMaterial_(globalPos))
+                return 1-finePorosity_;
+            else
+                return 0;
+        }
         else
-            return coarsePorosity_;
+        {
+            if (isFineMaterial_(globalPos))
+                  return 0;
+            else
+                return 1-coarsePorosity_;
+        }
     }
-
 
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
@@ -183,60 +169,6 @@ public:
             return coarseMaterialParams_;
     }
 
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     */
-    template<class ElementSolution>
-    Scalar solidHeatCapacity(const Element& element,
-                             const SubControlVolume& scv,
-                             const ElementSolution& elemSol) const
-    {
-        const auto& globalPos = scv.dofPosition();
-        if (isFineMaterial_(globalPos))
-            return fineHeatCap_;
-        else
-            return coarseHeatCap_;
-    }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
-     */
-    template<class ElementSolution>
-    Scalar solidDensity(const Element &element,
-                        const SubControlVolume& scv,
-                        const ElementSolution& elemSol) const
-    {
-        return 2650; // density of sand [kg/m^3]
-    }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined
-     */
-    template<class ElementSolution>
-    Scalar solidThermalConductivity(const Element &element,
-                                    const SubControlVolume& scv,
-                                    const ElementSolution& elemSol) const
-    {
-        return lambdaSolid_;
-    }
-
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
     {
@@ -254,8 +186,6 @@ private:
 
     MaterialLawParams fineMaterialParams_;
     MaterialLawParams coarseMaterialParams_;
-
-    Scalar lambdaSolid_;
 
     static constexpr Scalar eps_ = 1e-6;
 };

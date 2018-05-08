@@ -47,7 +47,8 @@ class MineralizationLocalResidual: public CompositionalLocalResidual<TypeTag>
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
     static constexpr int numPhases = ModelTraits::numPhases();
-    static constexpr int numSPhases = ModelTraits::numSPhases();
+    static constexpr int numSolidComps =  ModelTraits::numSolidComps();
+    static constexpr int numInertSolidComps =  ModelTraits::numInertSolidComps();
     static constexpr int numComponents = ModelTraits::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
@@ -77,13 +78,13 @@ public:
         auto storage = ParentType::computeStorage(problem, scv, volVars);
 
         const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
-        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
+        { return useMoles ? volVars.solidComponentMolarDensity(phaseIdx) : volVars.solidComponentDensity(phaseIdx); };
 
         // compute storage term of all components within all fluid phases
-        for (int phaseIdx = numPhases; phaseIdx < numPhases + numSPhases; ++phaseIdx)
+        for (int phaseIdx = 0; phaseIdx < numSolidComps-numInertSolidComps; ++phaseIdx)
         {
-            auto eqIdx = conti0EqIdx + numComponents-numPhases + phaseIdx;
-            storage[eqIdx] += volVars.precipitateVolumeFraction(phaseIdx)
+            auto eqIdx = conti0EqIdx + numComponents + phaseIdx;
+            storage[eqIdx] += volVars.solidVolumeFraction(phaseIdx)
                              * massOrMoleDensity(volVars, phaseIdx);
         }
 

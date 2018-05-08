@@ -24,3 +24,8 @@ InjectionTemperature = 305 # [K]
 
 [LinearSolver]
 ResidualReduction = 1e-10
+
+[Component]
+SolidDensity = 2700
+SolidThermalConductivity = 2.8
+SolidHeatCapacity = 790

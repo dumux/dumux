@@ -39,21 +39,6 @@
 
 namespace Dumux {
 
-// forward declaration
-template<class FVGridGeometry, class Scalar>
-class InjectionSpatialParams;
-
-// setup property TypeTag
-namespace Properties {
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(InjectionSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(InjectionSpatialParams, SpatialParams,
-              InjectionSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                     typename GET_PROP_TYPE(TypeTag, Scalar)>);
-} // end namespace Properties
-
 /*!
  * \ingroup TwoPTwoCModel
  * \ingroup ImplicitTestProblems

@@ -36,15 +36,13 @@
 
 #include "fracturespatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class FractureProblem;
 
-namespace Properties
-{
-NEW_TYPE_TAG(FractureTypeTag, INHERITS_FROM(OneP, FractureSpatialParams));
+namespace Properties {
+NEW_TYPE_TAG(FractureTypeTag, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(FractureBoxTypeTag, INHERITS_FROM(BoxModel, FractureTypeTag));
 NEW_TYPE_TAG(FractureCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FractureTypeTag));
 NEW_TYPE_TAG(FractureCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, FractureTypeTag));
@@ -66,6 +64,8 @@ SET_PROP(FractureTypeTag, FluidSystem)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
+// Set the spatial parameters
+SET_TYPE_PROP(FractureTypeTag, SpatialParams, FractureSpatialParams<TypeTag>);
 
 } // end namespace Properties
 

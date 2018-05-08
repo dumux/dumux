@@ -30,6 +30,8 @@
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
+#include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
+#include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
 namespace Dumux {
 
@@ -40,9 +42,11 @@ namespace Dumux {
  */
 template <class Traits>
 class ThreePThreeCVolumeVariables
-: public PorousMediumFlowVolumeVariables<Traits, ThreePThreeCVolumeVariables<Traits>>
+: public PorousMediumFlowVolumeVariables<Traits>
+, public EnergyVolumeVariables<Traits, ThreePThreeCVolumeVariables<Traits> >
 {
-    using ParentType = PorousMediumFlowVolumeVariables<Traits, ThreePThreeCVolumeVariables<Traits>>;
+    using ParentType = PorousMediumFlowVolumeVariables<Traits>;
+    using EnergyVolVars = EnergyVolumeVariables<Traits, ThreePThreeCVolumeVariables<Traits> >;
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using PermeabilityType = typename Traits::PermeabilityType;
@@ -53,6 +57,7 @@ class ThreePThreeCVolumeVariables
 
     using ModelTraits = typename Traits::ModelTraits;
     using Idx = typename ModelTraits::Indices;
+    static constexpr int numFluidComps = ParentType::numComponents();
     enum {
         wCompIdx = FS::wCompIdx,
         gCompIdx = FS::gCompIdx,
@@ -84,6 +89,10 @@ public:
     using FluidSystem = typename Traits::FluidSystem;
     //! export the indices
     using Indices = typename ModelTraits::Indices;
+    //! export type of solid state
+    using SolidState = typename Traits::SolidState;
+    //! export type of solid system
+    using SolidSystem = typename Traits::SolidSystem;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -111,8 +120,7 @@ public:
             problem.spatialParams().materialLawParams(element, scv, elemSol);
 
 
-        Scalar temp = ParentType::temperature(elemSol, problem, element, scv);
-        fluidState_.setTemperature(temp);
+        EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState_, solidState_);
 
         /* first the saturations */
         if (phasePresence == threePhases)
@@ -542,13 +550,14 @@ public:
         setDiffusionCoefficient_(nPhaseIdx, gCompIdx, 0.0);
 
         // porosity & permeabilty
-        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
+        EnergyVolVars::updateSolidEnergyParams(elemSol, problem, element, scv, solidState_);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
         // compute and set the enthalpy
         for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
         {
-            Scalar h = ParentType::enthalpy(fluidState_, paramCache, phaseIdx);
+            Scalar h = EnergyVolVars::enthalpy(fluidState_, paramCache, phaseIdx);
             fluidState_.setEnthalpy(phaseIdx, h);
         }
     }
@@ -559,6 +568,11 @@ public:
     const FluidState &fluidState() const
     { return fluidState_; }
 
+    /*!
+     * \brief Returns the phase state for the control volume.
+     */
+    const SolidState &solidState() const
+    { return solidState_; }
     /*!
      * \brief Returns the effective saturation of a given phase within
      *        the control volume.
@@ -646,7 +660,7 @@ public:
      * \brief Returns the average porosity within the control volume.
      */
     Scalar porosity() const
-    { return porosity_; }
+    { return solidState_.porosity(); }
 
     /*!
      * \brief Returns the adsorption information.
@@ -675,6 +689,8 @@ public:
 
 protected:
     FluidState fluidState_;
+    SolidState solidState_;
+
 
 private:
     Scalar sw_, sg_, sn_, pg_, pw_, pn_;
@@ -682,7 +698,6 @@ private:
     Scalar moleFrac_[ModelTraits::numPhases()][ModelTraits::numComponents()];
     Scalar massFrac_[ModelTraits::numPhases()][ModelTraits::numComponents()];
 
-    Scalar porosity_;        //!< Effective porosity within the control volume
     PermeabilityType permeability_; //!< Effective permeability within the control volume
     Scalar mobility_[ModelTraits::numPhases()];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
