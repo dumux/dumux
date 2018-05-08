@@ -111,6 +111,10 @@ public:
     static std::string phaseName(int phaseIdx)
     { return FluidSystem::phaseName(phaseIdx); }
 
+    // returns the number of phase velocities computed by this class
+    static constexpr int numPhaseVelocities()
+    { return GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(); }
+
     // The following SFINAE enable_if usage allows compilation, even if only a
     //
     // boundaryTypes(const Element&, const scv&)
