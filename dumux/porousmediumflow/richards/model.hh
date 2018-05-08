@@ -122,9 +122,8 @@ namespace Dumux {
  * \brief Specifies a number properties of the Richards model.
  *
  * \tparam enableDiff specifies if diffusion of water in air is to be considered.
- * \tparam useKelvin whether kelvin equation is used for the vapor pressure
  */
-template<bool enableDiff, bool useKelvin>
+template<bool enableDiff>
 struct RichardsModelTraits
 {
     using Indices = RichardsIndices;
@@ -136,8 +135,6 @@ struct RichardsModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return enableDiff; }
     static constexpr bool enableEnergyBalance() { return false; }
-
-    static constexpr bool useKelvinVaporPressure() { return useKelvin; }
 };
 
 /*!
@@ -193,8 +190,7 @@ public:
 };
 
 //! The model traits
-SET_TYPE_PROP(Richards, ModelTraits, RichardsModelTraits<GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir),
-                                                         GET_PROP_VALUE(TypeTag, UseKelvinEquation)>);
+SET_TYPE_PROP(Richards, ModelTraits, RichardsModelTraits<GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir)>);
 
 //! Set the volume variables property
 SET_PROP(Richards, VolumeVariables)
@@ -218,9 +214,6 @@ SET_BOOL_PROP(Richards, EnableWaterDiffusionInAir, false);
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(Richards, EffectiveDiffusivityModel,
               DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-//! The default is not to use the kelvin equation for the water vapor pressure (dependency on pc)
-SET_BOOL_PROP(Richards, UseKelvinEquation, false);
 
 //! The primary variables vector for the richards model
 SET_PROP(Richards, PrimaryVariables)
@@ -281,8 +274,7 @@ public:
 SET_PROP(RichardsNI, ModelTraits)
 {
 private:
-    using IsothermalTraits = RichardsModelTraits<GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir),
-                                                 GET_PROP_VALUE(TypeTag, UseKelvinEquation)>;
+    using IsothermalTraits = RichardsModelTraits<GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir)>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };

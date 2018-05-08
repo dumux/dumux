@@ -116,7 +116,6 @@ NEW_PROP_TAG(VelocityOutput);                      //!< specifies the velocity c
 NEW_PROP_TAG(Formulation);                         //!< The formulation of the model
 // TODO: is this useful? -> everything is a constraint solver just a different type
 NEW_PROP_TAG(UseConstraintSolver);                 //!< Whether to use a contraint solver for computing the secondary variables
-NEW_PROP_TAG(UseKelvinEquation);                   //!< If we use Kelvin equation to lower the vapor pressure as a function of capillary pressure, temperature
 
 // When using the box method in a multi-phase context, an interface solver might be necessary
 NEW_PROP_TAG(EnableBoxInterfaceSolver);
