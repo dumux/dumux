@@ -200,6 +200,9 @@ int main(int argc, char** argv) try
 
     } while (!timeLoop->finished());
 
+    // output some Newton statistics
+    nonLinearSolver.report();
+
     timeLoop->finalize(leafGridView.comm());
 
     ////////////////////////////////////////////////////////////
