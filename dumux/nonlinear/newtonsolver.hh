@@ -168,8 +168,8 @@ public:
     { maxSteps_ = maxSteps; }
 
     /*!
-     * \brief Run the newton method to solve a non-linear system.
-     *        Does time step control when the newton fails to converge
+     * \brief Run the Newton method to solve a non-linear system.
+     *        Does time step control when the Newton fails to converge
      */
     template<class TimeLoop>
     void solve(SolutionVector& uCurrentIter, TimeLoop& timeLoop,
@@ -214,7 +214,7 @@ public:
     }
 
     /*!
-     * \brief Run the newton method to solve a non-linear system.
+     * \brief Run the Newton method to solve a non-linear system.
      *        The solver is responsible for all the strategic decisions.
      */
     void solve(SolutionVector& uCurrentIter, const std::unique_ptr<ConvergenceWriter>& convWriter = nullptr)
@@ -429,7 +429,7 @@ public:
             else
             {
                 // If we get here, the convergence criterion does not require
-                // additional residual evalutions. Thus, the grid variables have
+                // additional residual evaluations. Thus, the grid variables have
                 // not yet been updated to the new uCurrentIter.
                 assembler_->updateGridVariables(uCurrentIter);
             }
@@ -472,7 +472,7 @@ public:
         endIterMsgStream_.str("");
 
         // When the Newton iterations are done: ask the model to check whether it makes sense
-        // TODO: how do we realize this? -> do this here in the newton solver
+        // TODO: how do we realize this? -> do this here in the Newton solver
         // model_().checkPlausibility();
     }
 
@@ -525,7 +525,7 @@ public:
     virtual void newtonFail(SolutionVector& u) {}
 
     /*!
-     * \brief Called if the Newton method ended succcessfully
+     * \brief Called if the Newton method ended successfully
      * This method is called _after_ newtonEnd()
      */
     virtual void newtonSucceed()  {}
@@ -646,7 +646,7 @@ protected:
 private:
 
     /*!
-     * \brief Run the newton method to solve a non-linear system.
+     * \brief Run the Newton method to solve a non-linear system.
      *        The solver is responsible for all the strategic decisions.
      */
     bool solve_(SolutionVector& uCurrentIter, const std::unique_ptr<ConvergenceWriter>& convWriter = nullptr)
@@ -749,7 +749,7 @@ private:
             // tell solver we are done
             newtonEnd();
 
-            // reset state if newton failed
+            // reset state if Newton failed
             if (!newtonConverged())
             {
                 totalWastedIter_ += numSteps_;
@@ -1142,8 +1142,8 @@ private:
     Scalar reassemblyShiftWeight_;
 
     // statistics for the optional report
-    std::size_t totalWastedIter_ = 0; //! newton steps in solves that didn't converge
-    std::size_t totalSucceededIter_ = 0; //! newton steps in solves that converged
+    std::size_t totalWastedIter_ = 0; //! Newton steps in solves that didn't converge
+    std::size_t totalSucceededIter_ = 0; //! Newton steps in solves that converged
     std::size_t numConverged_ = 0; //! total number of converged solves
 };
 
