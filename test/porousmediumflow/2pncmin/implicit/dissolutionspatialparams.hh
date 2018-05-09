@@ -98,13 +98,11 @@ public:
     /*!
      *  \brief Define the volume fraction of the inert component
      *
-     *  \param element The finite element
-     *  \param scv The sub-control volume
-     *  \param elemSol The element solution
+     *  \param globalPos The global position in the domain
+     *  \param compIdx The index of the inert solid component
      */
     template<class SolidSystem>
-    Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos,
-                                    int compIdx) const
+    Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos, int compIdx) const
     { return 1.0-referencePorosity_; }
 
     /*!

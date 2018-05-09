@@ -58,12 +58,12 @@ public:
 
     //! The temperature is obtained from the problem as a constant for isothermal models
     template<class ElemSol, class Problem, class Element, class Scv>
-    void updateTemperature(const ElemSol &elemSol,
+    void updateTemperature(const ElemSol& elemSol,
                            const Problem& problem,
-                           const Element &element,
-                           const Scv &scv,
+                           const Element& element,
+                           const Scv& scv,
                            FluidState& fluidState,
-                           SolidState & solidState)
+                           SolidState& solidState)
     {
         // retrieve temperature from solution vector, all phases have the same temperature
         Scalar T = problem.temperatureAtPos(scv.dofPosition());
@@ -115,12 +115,12 @@ public:
 
     //! The temperature is obtained from the problem as a constant for isothermal models
     template<class ElemSol, class Problem, class Element, class Scv>
-    void updateTemperature(const ElemSol &elemSol,
+    void updateTemperature(const ElemSol& elemSol,
                            const Problem& problem,
-                           const Element &element,
-                           const Scv &scv,
+                           const Element& element,
+                           const Scv& scv,
                            FluidState& fluidState,
-                           SolidState & solidState)
+                           SolidState& solidState)
     {
         if (numEnergyEq == 1)
         {
@@ -128,7 +128,7 @@ public:
             const Scalar T = ParentType::extractDofPriVars(elemSol, scv)[temperatureIdx];
             for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
             {
-            fluidState.setTemperature(phaseIdx, T);
+                fluidState.setTemperature(phaseIdx, T);
             }
             solidState.setTemperature(T);
         }

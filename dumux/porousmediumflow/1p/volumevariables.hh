@@ -58,6 +58,7 @@ public:
     using FluidState = typename Traits::FluidState;
     //! export type of solid state
     using SolidState = typename Traits::SolidState;
+    //! export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
 
     /*!
@@ -70,9 +71,9 @@ public:
      * \param scv The sub-control volume
      */
     template<class ElemSol, class Problem, class Element, class Scv>
-    void update(const ElemSol &elemSol,
-                const Problem &problem,
-                const Element &element,
+    void update(const ElemSol& elemSol,
+                const Problem& problem,
+                const Element& element,
                 const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
@@ -97,7 +98,7 @@ public:
      * \param fluidState A container with the current (physical) state of the fluid
      */
     template<class ElemSol, class Problem, class Element, class Scv>
-    void completeFluidState(const ElemSol &elemSol,
+    void completeFluidState(const ElemSol& elemSol,
                             const Problem& problem,
                             const Element& element,
                             const Scv& scv,
@@ -188,7 +189,7 @@ public:
      * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
      */
     Scalar porosity() const
-    { return  solidState_.porosity(); }
+    { return solidState_.porosity(); }
 
     /*!
      * \brief Returns the permeability within the control volume in \f$[m^2]\f$.

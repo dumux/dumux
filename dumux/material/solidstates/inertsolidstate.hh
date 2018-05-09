@@ -45,6 +45,10 @@ public:
         numInertComponents = SolidSystem::numInertComponents,
     };
 
+    /*!
+     * \brief Allows compile-time evaluation of if the solid system
+     *        is inert or takes part in any kind of reactions.
+     */
     static constexpr bool isInert()
     {
         static_assert(SolidSystem::isInert(), "Only inert solid systems are allowed with the InertSolidState");
@@ -72,19 +76,20 @@ public:
         return porosity;
     }
 
-    /*!
-     * \brief The mass density \f$\rho_\alpha\f$ of the fluid phase
-     *  \f$\alpha\f$ in \f$\mathrm{[kg/m^3]}\f$
-     */
-    Scalar density() const
-    { return density_; }
+    //! The mass density of the solid phase in \f$\mathrm{[kg/m^3]}\f$
+    Scalar density() const { return density_; }
 
-    Scalar heatCapacity() const
-    { return heatCapacity_; }
+    //! The heat capacity of the solid phase in \f$\mathrm{[J/(kg*K)}\f$
+    Scalar heatCapacity() const { return heatCapacity_; }
 
-    Scalar thermalConductivity() const
-    { return thermalConducivity_; }
+    //! The thermal conductivity of the solid phase in \f$\mathrm{[[W/(m*K)]}\f$
+    Scalar thermalConductivity() const { return thermalConducivity_; }
 
+    //! The temperature of the solid phase in \f$\mathrm{[K]}\f$
+    Scalar temperature() const { return temperature_; }
+
+    //! The volume fraction of a solid component within the solid phase
+    Scalar volumeFraction(const int compIdx) const { return volumeFraction_[compIdx]; }
 
     /*!
      * \brief The molar density \f$\rho_{mol,\alpha}\f$
@@ -96,15 +101,6 @@ public:
      */
     Scalar molarDensity() const
     { return density_/averageMolarMass(); }
-
-    /*!
-     * \brief The temperature within the domain \f$\mathrm{[K]}\f$
-     */
-    Scalar temperature() const
-    { return temperature_; }
-
-    Scalar volumeFraction(const int compIdx) const
-    { return volumeFraction_[compIdx]; }
 
    /*****************************************************
      * Setter methods. Note that these are not part of the
@@ -156,6 +152,9 @@ public:
     void setHeatCapacity(Scalar value)
     { heatCapacity_ = value; }
 
+    /*!
+     * \brief Set the volume fraction of a solid component
+     */
     void setVolumeFraction(const int compIdx, Scalar value)
     { volumeFraction_[compIdx] = value; }
 
