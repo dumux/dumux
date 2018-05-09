@@ -78,6 +78,14 @@ public:
     bool enableOutput()
     { return velocityOutput_; }
 
+    // returns the name of the phase for a given index
+    static std::string phaseName(int phaseIdx)
+    { return GET_PROP_TYPE(TypeTag, FluidSystem)::phaseName(phaseIdx); }
+
+    // returns the number of phase velocities computed by this class
+    static constexpr int numPhaseVelocities()
+    { return GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(); }
+
     //! Return the problem boundary types
     auto problemBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     { return problem_.boundaryTypes(element, scvf); }

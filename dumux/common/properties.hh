@@ -139,6 +139,11 @@ NEW_PROP_TAG(EnableWaterDiffusionInAir); //!< Property for turning Richards into
 NEW_PROP_TAG(OnlyGasPhaseCanDisappear); //!< reduces the phasestates to threePhases and wnPhaseOnly
 
 /////////////////////////////////////////////////////////////
+// Properties used by geomechanical models:
+/////////////////////////////////////////////////////////////
+NEW_PROP_TAG(StressType);       //!< The type used for the evaluation of stress tensors and forces
+
+/////////////////////////////////////////////////////////////
 // Properties used by the staggered-grid discretization method
 /////////////////////////////////////////////////////////////
 

@@ -68,11 +68,9 @@ class VtkOutputModule
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    static constexpr int numPhases = ModelTraits::numPhases();
+    static constexpr int numPhaseVelocities = VelocityOutput::numPhaseVelocities();
 
     using VV = typename GridVariables::VolumeVariables;
-    using FluidSystem = typename VV::FluidSystem;
     using Scalar = typename GridVariables::Scalar;
 
     using GridView = typename FVGridGeometry::GridView;
@@ -264,7 +262,7 @@ private:
 
         // instatiate the velocity output
         VelocityOutput velocityOutput(problem_, gridGeom_, gridVariables_, sol_);
-        std::array<std::vector<VelocityVector>, numPhases> velocity;
+        std::array<std::vector<VelocityVector>, numPhaseVelocities> velocity;
 
         // process rank
         static bool addProcessRank = getParamFromGroup<bool>(paramGroup_, "Vtk.AddProcessRank");
@@ -292,7 +290,7 @@ private:
 
             if (velocityOutput.enableOutput())
             {
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                for (int phaseIdx = 0; phaseIdx < numPhaseVelocities; ++phaseIdx)
                 {
                     if(isBox && dim == 1)
                         velocity[phaseIdx].resize(numCells);
@@ -344,7 +342,7 @@ private:
 
                 // velocity output
                 if (velocityOutput.enableOutput())
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < numPhaseVelocities; ++phaseIdx)
                         velocityOutput.calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
 
                 //! the rank
@@ -379,17 +377,17 @@ private:
             {
                 if (isBox && dim > 1)
                 {
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < numPhaseVelocities; ++phaseIdx)
                         sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), velocity[phaseIdx],
-                                                             "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                             "velocity_" + velocityOutput.phaseName(phaseIdx+phaseIdxOffset) + " (m/s)",
                                                              /*numComp*/dimWorld, /*codim*/dim).get() );
                 }
                 // cell-centered models
                 else
                 {
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < numPhaseVelocities; ++phaseIdx)
                         sequenceWriter_.addCellData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), velocity[phaseIdx],
-                                                           "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                           "velocity_" + velocityOutput.phaseName(phaseIdx+phaseIdxOffset) + " (m/s)",
                                                            /*numComp*/dimWorld, /*codim*/0).get() );
                 }
             }
@@ -433,7 +431,7 @@ private:
 
         // instatiate the velocity output
         VelocityOutput velocityOutput(problem_, gridGeom_, gridVariables_, sol_);
-        std::array<std::vector<VelocityVector>, numPhases> velocity;
+        std::array<std::vector<VelocityVector>, numPhaseVelocities> velocity;
 
         // process rank
         static bool addProcessRank = getParamFromGroup<bool>(paramGroup_, "Vtk.AddProcessRank");
@@ -463,7 +461,7 @@ private:
 
             if (velocityOutput.enableOutput())
             {
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                for (int phaseIdx = 0; phaseIdx < numPhaseVelocities; ++phaseIdx)
                 {
                     if(isBox && dim == 1)
                         velocity[phaseIdx].resize(numCells);
@@ -521,7 +519,7 @@ private:
 
                 // velocity output
                 if (velocityOutput.enableOutput())
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < numPhaseVelocities; ++phaseIdx)
                         velocityOutput.calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
 
                 //! the rank
@@ -547,16 +545,16 @@ private:
             {
                 // node-wise velocities
                 if (dim > 1)
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < numPhaseVelocities; ++phaseIdx)
                         sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), velocity[phaseIdx],
-                                                             "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                             "velocity_" + velocityOutput.phaseName(phaseIdx+phaseIdxOffset) + " (m/s)",
                                                              /*numComp*/dimWorld, /*codim*/dim).get() );
 
                 // cell-wise velocities
                 else
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    for (int phaseIdx = 0; phaseIdx < numPhaseVelocities; ++phaseIdx)
                         sequenceWriter_.addCellData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), velocity[phaseIdx],
-                                                           "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                           "velocity_" + velocityOutput.phaseName(phaseIdx+phaseIdxOffset) + " (m/s)",
                                                            /*numComp*/dimWorld, /*codim*/0).get() );
             }
 
