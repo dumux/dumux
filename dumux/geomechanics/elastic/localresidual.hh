@@ -26,7 +26,6 @@
 #ifndef DUMUX_GEOMECHANICS_ELASTIC_LOCAL_RESIDUAL_HH
 #define DUMUX_GEOMECHANICS_ELASTIC_LOCAL_RESIDUAL_HH
 
-#include <vector>
 #include <dumux/common/properties.hh>
 
 namespace Dumux {
@@ -41,7 +40,6 @@ template<class TypeTag>
 class ElasticLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -137,13 +135,6 @@ public:
 
         return source;
     }
-
-protected:
-    Implementation *asImp_()
-    { return static_cast<Implementation *> (this); }
-
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *> (this); }
 };
 
 } // end namespace Dumux
