@@ -130,7 +130,7 @@ public:
         "                                      const ElemVolVars& elemVolVars,\n"
         "                                      const FluxVarsCache& fluxVarsCache) const\n\n");
 
-        return asImp_().lameParamsAtPos(element.geometry().center());
+        return asImp_().lameParamsAtPos(fluxVarsCache.ipGlobal());
     }
 
     //! The finite volume grid geometry
