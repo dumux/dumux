@@ -24,7 +24,6 @@
 #define DUMUX_GEOMECHANICS_ELASTIC_FV_SPATIAL_PARAMS_HH
 
 #include <dumux/common/typetraits/isvalid.hh>
-#include <dumux/geomechanics/lameparams.hh>
 
 namespace Dumux {
 
