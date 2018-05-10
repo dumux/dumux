@@ -67,16 +67,14 @@ struct ElasticModelTraits
  *
  * \tparam PV The type used for primary variables
  * \tparam MT The model traits
- * \tparam LP The class used for storing the lame parameters
  * \tparam SST The solid state
  * \tparam SSY The solid system
  */
-template<class PV, class MT, class LP, class SST, class SSY>
+template<class PV, class MT, class SST, class SSY>
 struct ElasticVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
     using ModelTraits = MT;
-    using LameParams = LP;
     using SolidState = SST;
     using SolidSystem = SSY;
 };
@@ -89,7 +87,7 @@ NEW_TYPE_TAG(Elastic, INHERITS_FROM(Geomechanics));
 //! Use the local residual of the elastic model
 SET_TYPE_PROP(Elastic, LocalResidual, ElasticLocalResidual<TypeTag>);
 
-//! By default, we use hooke's law for stress evaluations
+//! The model traits of the elastic model
 SET_TYPE_PROP(Elastic, ModelTraits, ElasticModelTraits< GET_PROP_TYPE(TypeTag, GridView)::dimension,
                                                         GET_PROP_TYPE(TypeTag, SolidSystem)::numComponents >);
 
@@ -99,13 +97,16 @@ SET_PROP(Elastic, VolumeVariables)
 private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using LP = typename GET_PROP_TYPE(TypeTag, SpatialParams)::LameParams;
     using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using Traits = ElasticVolumeVariablesTraits<PV, MT, LP, SST, SSY>;
+    using Traits = ElasticVolumeVariablesTraits<PV, MT, SST, SSY>;
 public:
     using type = ElasticVolumeVariables<Traits>;
 };
+
+//! By default, we use hooke's law for stress evaluations
+SET_TYPE_PROP(Elastic, StressType, HookesLaw< typename GET_PROP_TYPE(TypeTag, Scalar),
+                                              typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
 
 } // namespace Properties
 } // namespace Dumux

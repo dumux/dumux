@@ -123,8 +123,8 @@ public:
         const auto x = ipGlobal[0];
         const auto y = ipGlobal[1];
 
-        // the lame parameters
-        const auto& lameParams = elemVolVars[scv].lameParams();
+        // the lame parameters (we know they only depend on the position here)
+        const auto& lameParams = this->spatialParams().lameParamsAtPos(scv.center());
         const auto lambda = lameParams.lambda();
         const auto mu = lameParams.mu();
 

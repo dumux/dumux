@@ -31,7 +31,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Discretization
- * \brief Evaluates the normal component of the Darcy velocity on a (sub)control volume face.
+ * \brief This computes the stress tensor and surface forces resulting from mechanical deformation.
  * \note Specializations are provided for the different discretization methods.
  * These specializations are found in the headers included below.
  */

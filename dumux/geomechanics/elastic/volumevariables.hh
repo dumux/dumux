@@ -41,7 +41,6 @@ template<class Traits>
 class ElasticVolumeVariables
 {
     using Scalar = typename Traits::PrimaryVariables::value_type;
-    using LameParams = typename Traits::LameParams;
     using ModelTraits = typename Traits::ModelTraits;
 
     //! The elastic model only makes sense with inert solid systems
@@ -73,7 +72,6 @@ public:
     {
         priVars_ = elemSol[scv.localDofIndex()];
         extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
-        lameParams_ = problem.spatialParams().lameParams(element, elemSol);
 
         //! set the volume fractions of the solid components
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, /*numFluidComps=*/0);
@@ -91,8 +89,6 @@ public:
     Scalar priVar(const int pvIdx) const { return priVars_[pvIdx]; }
     //! Return the vector of primary variables
     const PrimaryVariables& priVars() const { return priVars_; }
-    //! Return the object containing the lame params of this scv
-    const LameParams& lameParams() const { return lameParams_; }
     //! TODO We don't know yet how to interpret extrusion for mechanics
     static constexpr Scalar extrusionFactor() { return 1.0; }
 
@@ -112,7 +108,6 @@ private:
     // data members
     Scalar extrusionFactor_;
     PrimaryVariables priVars_;
-    LameParams lameParams_;
     SolidState solidState_;
 };
 

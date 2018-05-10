@@ -51,6 +51,7 @@ struct hasLameParamsAtPos
 template<class Scalar, class FVGridGeometry, class Implementation>
 class FVSpatialParamsElastic
 {
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -102,18 +103,22 @@ public:
 
     /*!
      * \brief Define the Lame parameters
-     * \note  It is possibly solution dependent.
+     * \note  These are possibly solution dependent and are evaluated
+     *        for an integration point inside the element. Therefore,
+     *        a flux variables cache object is passed to this function
+     *        containing data on shape functions at the integration point.
      *
      * \param element The current element
-     * \param elemSol The solution at the dofs connected to the element.
+     * \param fvGeometry The local finite volume geometry
+     * \param elemVolVars Primary/Secondary variables inside the element
+     * \param FluxVarsCache Contains data on shape functions at the integration point
      * \return lame parameters
-     * \todo TODO Could the lame parameters also be heterogeneous inside element
-     *            (i.e. pass scv as additional argument to this function)?
-     *            This would need appropriate adjustments in Hooke's law.
      */
-    template<class ElementSolution>
+    template<class ElemVolVars, class FluxVarsCache>
     decltype(auto) lameParams(const Element& element,
-                              const ElementSolution& elemSol) const
+                              const FVElementGeometry& fvGeometry,
+                              const ElemVolVars& elemVolVars,
+                              const FluxVarsCache& fluxVarsCache) const
     {
         static_assert(decltype(isValid(Detail::hasLameParamsAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
         "   Your spatial params class has to either implement\n\n"
@@ -121,7 +126,9 @@ public:
         "   or overload this function\n\n"
         "         template<class ElementSolution>\n"
         "         const LameParams& lameParams(const Element& element,\n"
-        "                                      const ElementSolution& elemSol) const\n\n");
+        "                                      const FVElementGeometry& fvGeometry,\n"
+        "                                      const ElemVolVars& elemVolVars,\n"
+        "                                      const FluxVarsCache& fluxVarsCache) const\n\n");
 
         return asImp_().lameParamsAtPos(element.geometry().center());
     }

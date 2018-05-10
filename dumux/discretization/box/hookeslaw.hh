@@ -35,11 +35,11 @@ namespace Dumux {
 /*!
  * \ingroup BoxDiscretization
  * \brief Hooke's law for box scheme
- * \tparam Scalar the scalar type for scalar physical quantities
+ * \tparam ScalarType the scalar type for scalar physical quantities
  * \tparam FVGridGeometry the grid geometry
  */
-template<class Scalar, class FVGridGeometry>
-class HookesLaw<Scalar, FVGridGeometry, DiscretizationMethod::box>
+template<class ScalarType, class FVGridGeometry>
+class HookesLaw<ScalarType, FVGridGeometry, DiscretizationMethod::box>
 {
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -47,17 +47,20 @@ class HookesLaw<Scalar, FVGridGeometry, DiscretizationMethod::box>
 
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using CoordScalar = typename GridView::ctype;
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     static_assert(dim == dimWorld, "Hookes Law not implemented for network/surface grids");
 
 public:
+    //! export the type used for scalar values
+    using Scalar = ScalarType;
     //! export the type used for the stress tensor
     using StressTensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
     //! export the type used for force vectors
     using ForceVector = typename StressTensor::row_type;
+    //! state the discretization method this implementation belongs to
+    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::box;
 
     //! computes the force acting on a sub-control volume face
     template<class Problem, class ElementVolumeVariables, class ElementFluxVarsCache>
@@ -68,7 +71,7 @@ public:
                              const SubControlVolumeFace& scvf,
                              const ElementFluxVarsCache& elemFluxVarCache)
     {
-        const auto sigma = stressTensor(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarCache);
+        const auto sigma = stressTensor(problem, element, fvGeometry, elemVolVars, elemFluxVarCache[scvf]);
 
         ForceVector scvfForce(0.0);
         sigma.mv(scvf.unitOuterNormal(), scvfForce);
@@ -77,23 +80,15 @@ public:
         return scvfForce;
     }
 
-    //! assembles the stress tensor at the integration point of an scvf
-    template<class Problem, class ElementVolumeVariables, class ElementFluxVarsCache>
+    //! assembles the stress tensor at a given integration point
+    template<class Problem, class ElementVolumeVariables, class FluxVarsCache>
     static StressTensor stressTensor(const Problem& problem,
                                      const Element& element,
                                      const FVElementGeometry& fvGeometry,
                                      const ElementVolumeVariables& elemVolVars,
-                                     const SubControlVolumeFace& scvf,
-                                     const ElementFluxVarsCache& elemFluxVarCache)
+                                     const FluxVarsCache& fluxVarCache)
     {
-        const auto& fluxVarCache = elemFluxVarCache[scvf];
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
-
-        // TODO What to do with extrusion factor??
-        // TODO this only works for element-wise constant lame params
-        //      How could this be done for heterogeneous params within the element?
-        const auto& lameParams = insideVolVars.lameParams();
+        const auto& lameParams = problem.spatialParams().lameParams(element, fvGeometry, elemVolVars, fluxVarCache);
 
         // evaluate displacement gradient
         StressTensor gradU(0.0);
