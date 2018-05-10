@@ -46,10 +46,6 @@ NEW_TYPE_TAG(Geomechanics, INHERITS_FROM(ModelProperties));
 SET_TYPE_PROP(Geomechanics, FluxVariablesCache, StressVariablesCache< typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                       typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
 
-//! By default, we use hooke's law for stress evaluations
-SET_TYPE_PROP(Geomechanics, StressType, HookesLaw< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                   typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
-
 //! The (currently empty) velocity output
 SET_TYPE_PROP(Geomechanics, VelocityOutput, GeomechanicsVelocityOutput);
 
