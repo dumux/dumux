@@ -53,24 +53,36 @@ template<std::size_t id, class TypeTag, class Assembler, class Implementation, b
 class SubDomainStaggeredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler,Implementation, isImplicit>
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, isImplicit>;
+
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using SolutionVector = typename Assembler::SolutionVector;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SubSolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+    using Scalar = typename GridVariables::Scalar;
+
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables)::LocalView;
+    using CellCenterResidualValue = typename LocalResidual::CellCenterResidualValue;
+    using FaceResidualValue = typename LocalResidual::FaceResidualValue;
+
+    using FVGridGeometry = typename GridVariables::GridGeometry;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using CellCenterResidualValue = typename LocalResidual::CellCenterResidualValue;
-    using FaceResidualValue = typename LocalResidual::FaceResidualValue;
+
     using CouplingManager = typename Assembler::CouplingManager;
 
-    static constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr auto numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
 
 public:
     static constexpr auto domainId = typename Dune::index_constant<id>();
@@ -423,15 +435,15 @@ class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numer
     using CellCenterResidualValue = typename LocalResidual::CellCenterResidualValue;
     using FaceResidualValue = typename LocalResidual::FaceResidualValue;
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
     using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
-    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables)::LocalView;
+    using FaceVariables = typename ElementFaceVariables::FaceVariables;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
     enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
@@ -505,13 +517,11 @@ public:
            auto& curVolVars =  this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
            const auto origVolVars(curVolVars);
 
-           using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-           const ElementSolutionVector origElemSol{curSol[globalJ]};
-
+           const auto origElemSol = elementSolution<FVElementGeometry>(curSol[globalJ]);
 
            for(auto pvIdx : priVarIndices_(cellCenterId))
            {
-               ElementSolutionVector elemSol = origElemSol;
+               auto elemSol = origElemSol;
                partialDeriv = 0.0;
 
                auto evalResidual = [&](Scalar priVar)
@@ -787,8 +797,7 @@ public:
                     {
                         // update the volume variables and compute element residual
                         priVars[pvIdx] = priVar;
-                        using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-                        ElementSolutionVector elemSol{priVars};
+                        auto elemSol = elementSolution<FVElementGeometry>(priVars);
                         curVolVars.update(elemSol, problem, elementJ, scvJ);
                         return this->evalLocalResidualForFace(scvf);
                     };
@@ -905,7 +914,7 @@ public:
 private:
     //! Helper function that returns an iterable range of primary variable indices.
     //! Specialization for cell center dofs.
-    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::CellCenterIdx)
+    static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::CellCenterIdx)
     {
         constexpr auto numEqCellCenter =  GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
@@ -918,7 +927,7 @@ private:
 
     //! Helper function that returns an iterable range of primary variable indices.
     //! Specialization for face dofs.
-    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx)
+    static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::FaceIdx)
     {
         constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
         constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
