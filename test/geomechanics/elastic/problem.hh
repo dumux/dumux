@@ -25,8 +25,8 @@
 
 #include <dune/common/fmatrix.hh>
 
-#include <dumux/geomechanics/elastic/model.hh>
 #include <dumux/discretization/box/properties.hh>
+#include <dumux/geomechanics/elastic/model.hh>
 #include <dumux/geomechanics/fvproblem.hh>
 
 #include "spatialparams.hh"
@@ -82,8 +82,6 @@ public:
     ElasticProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry) {}
 
-    //! The problem name.
-    const std::string name() const { return "elastic";}
     //! The temperature in the domain
     static constexpr Scalar temperature() { return 273.15; }
     //! Evaluate the initial value for a control volume.

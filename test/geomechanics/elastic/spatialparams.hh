@@ -63,11 +63,6 @@ public:
     const LameParams& lameParamsAtPos(const GlobalPosition& globalPos) const
     { return lameParams_; }
 
-    //! The solid phase consists of only one component here, thus, we return 1.0
-    template<class SolidSystem>
-    Scalar inertVolumeFractionAtPos(const GlobalPosition& globalPos, int compIdx) const
-    { return 1.0; }
-
 private:
     LameParams lameParams_;
 };

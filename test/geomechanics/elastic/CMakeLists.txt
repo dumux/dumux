@@ -1,9 +1,8 @@
 dune_symlink_to_source_files(FILES "elastic.input")
 
-# using box and numeric differentiation
+# using box
 dune_add_test(NAME test_elastic_box
               SOURCES test_elastic.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox NUMDIFFMETHOD=DiffMethod::numeric
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/elasticbox-reference.vtu
