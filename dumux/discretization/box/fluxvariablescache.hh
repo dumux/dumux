@@ -58,18 +58,30 @@ class BoxFluxVariablesCache
 
 public:
 
+    //! update the cache for an scvf
     template< class Problem, class ElementVolumeVariables >
     void update(const Problem& problem,
                 const Element& element,
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars,
-                const SubControlVolumeFace &scvf)
+                const SubControlVolumeFace& scvf)
+    {
+        update(problem, element, fvGeometry, elemVolVars, scvf.ipGlobal());
+    }
+
+    //! update the cache for a given global position
+    template< class Problem, class ElementVolumeVariables >
+    void update(const Problem& problem,
+                const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars,
+                const GlobalPosition& globalPos)
     {
         const auto geometry = element.geometry();
         const auto& localBasis = fvGeometry.feLocalBasis();
 
         // evaluate shape functions and gradients at the integration point
-        const auto ipLocal = geometry.local(scvf.ipGlobal());
+        const auto ipLocal = geometry.local(globalPos);
         jacInvT_ = geometry.jacobianInverseTransposed(ipLocal);
         localBasis.evaluateJacobian(ipLocal, shapeJacobian_);
         localBasis.evaluateFunction(ipLocal, shapeValues_); // shape values for rho
@@ -80,13 +92,13 @@ public:
             jacInvT_.mv(shapeJacobian_[scv.localDofIndex()][0], gradN_[scv.indexInElement()]);
     }
 
-    //! returns the shape function gradients in local coordinates at the scvf integration point
+    //! returns the shape function gradients in local coordinates at the integration point
     const std::vector<ShapeJacobian>& shapeJacobian() const { return shapeJacobian_; }
-    //! returns the shape function values at the scvf integration point
+    //! returns the shape function values at the integration point
     const std::vector<ShapeValue>& shapeValues() const { return shapeValues_; }
-    //! returns inverse transposed jacobian at the scvf integration point
+    //! returns inverse transposed jacobian at the integration point
     const JacobianInverseTransposed& jacInvT() const { return jacInvT_; }
-    //! returns the shape function gradients in global coordinates at the scvf integration point
+    //! returns the shape function gradients in global coordinates at the integration point
     const GlobalPosition& gradN(unsigned int scvIdxInElement) const { return gradN_[scvIdxInElement]; }
 
 private:
