@@ -27,7 +27,6 @@
 #include <dune/common/fmatrix.hh>
 
 #include <dumux/common/math.hh>
-#include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux {
