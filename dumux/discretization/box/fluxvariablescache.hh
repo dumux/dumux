@@ -81,7 +81,8 @@ public:
         const auto& localBasis = fvGeometry.feLocalBasis();
 
         // evaluate shape functions and gradients at the integration point
-        const auto ipLocal = geometry.local(globalPos);
+        ipGlobal_ = globalPos;
+        const auto ipLocal = geometry.local(ipGlobal_);
         jacInvT_ = geometry.jacobianInverseTransposed(ipLocal);
         localBasis.evaluateJacobian(ipLocal, shapeJacobian_);
         localBasis.evaluateFunction(ipLocal, shapeValues_); // shape values for rho
@@ -92,6 +93,8 @@ public:
             jacInvT_.mv(shapeJacobian_[scv.localDofIndex()][0], gradN_[scv.indexInElement()]);
     }
 
+    //! returns the global position for which this cache has been updated
+    const GlobalPosition& ipGlobal() const { return ipGlobal_; }
     //! returns the shape function gradients in local coordinates at the integration point
     const std::vector<ShapeJacobian>& shapeJacobian() const { return shapeJacobian_; }
     //! returns the shape function values at the integration point
@@ -102,6 +105,7 @@ public:
     const GlobalPosition& gradN(unsigned int scvIdxInElement) const { return gradN_[scvIdxInElement]; }
 
 private:
+    GlobalPosition ipGlobal_;
     std::vector<GlobalPosition> gradN_;
     std::vector<ShapeJacobian> shapeJacobian_;
     std::vector<ShapeValue> shapeValues_;
