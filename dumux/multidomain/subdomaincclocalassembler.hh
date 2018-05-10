@@ -54,32 +54,37 @@ template<std::size_t id, class TypeTag, class Assembler, class Implementation>
 class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler,Implementation, true>
 {
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, true>;
+
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using SubSolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using SolutionVector = typename Assembler::SolutionVector;
+    using SubSolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
+    using Scalar = typename GridVariables::Scalar;
+
+    using FVGridGeometry = typename GridVariables::GridGeometry;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+
     using CouplingManager = typename Assembler::CouplingManager;
 
 public:
+    //! export the domain id of this sub-domain
     static constexpr auto domainId = typename Dune::index_constant<id>();
-
+    //! pull up constructor of parent class
     using ParentType::ParentType;
 
+    //! the constructor
     explicit SubDomainCCLocalAssemblerBase(const Assembler& assembler,
                                            const Element& element,
                                            const SolutionVector& curSol,
@@ -172,7 +177,6 @@ public:
     { return couplingManager_; }
 
 private:
-
     CouplingManager& couplingManager_; //!< the coupling manager
 };
 
@@ -187,15 +191,20 @@ template<std::size_t id, class TypeTag, class Assembler, class Implementation>
 class SubDomainCCLocalAssemblerImplicitBase : public SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, Implementation>
 {
     using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, Implementation>;
+
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    static constexpr auto domainId = Dune::index_constant<id>();
+
 public:
+    //! export the domain id of this sub-domain
+    static constexpr auto domainId = Dune::index_constant<id>();
+    //! pull up constructor of parent class
     using ParentType::ParentType;
 
+    //! prepares all necessary local views
     void bindLocalViews()
     {
         // get some references for convenience
@@ -250,12 +259,17 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*i
 {
     using ThisType = SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
     using ParentType = SubDomainCCLocalAssemblerImplicitBase<id, TypeTag, Assembler, ThisType>;
+
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-    enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
+    enum { dim = GridView::dimension };
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
     static constexpr int maxNeighbors = 4*(2*dim);
@@ -328,8 +342,7 @@ public:
         const auto origVolVars = curVolVars;
 
         // element solution container to be deflected
-        using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-        ElementSolutionVector elemSol(origPriVars);
+        auto elemSol = elementSolution<FVElementGeometry>(origPriVars);
 
         // derivatives in the neighbors with repect to the current elements
         // in index 0 we save the derivative of the element residual with respect to it's own dofs
@@ -457,8 +470,7 @@ public:
             const auto origVolVarsJ = curVolVarsJ;
 
             // element solution container to be deflected
-            using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-            ElementSolutionVector elemSolJ(origPriVarsJ);
+            auto elemSolJ = elementSolution<FVElementGeometry>(origPriVarsJ);
 
             // derivatives with repect to the additional DOF we depend on
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -562,8 +574,9 @@ public:
 
             // element solution container to be deflected
             using CoupledDomainTypeTag = typename Assembler::Traits::template SubDomainTypeTag<domainJ>;
-            using ElementSolutionVector = typename GET_PROP_TYPE(CoupledDomainTypeTag, ElementSolutionVector);
-            ElementSolutionVector elemSolJ(origPriVarsJ);
+            using CoupledFVGridGeometry = typename GET_PROP_TYPE(CoupledDomainTypeTag, FVGridGeometry);
+            using CoupledFVElementGeometry = typename CoupledFVGridGeometry::LocalView;
+            auto elemSolJ = elementSolution<CoupledFVElementGeometry>(origPriVarsJ);
 
             const auto origResidual = this->couplingManager().evalCouplingResidual(domainI, element, fvGeometry, curElemVolVars, this->elemBcTypes(), elemFluxVarsCache,
                                                                                    domainJ, elementJ);
@@ -657,8 +670,7 @@ public:
             const auto origVolVarsJ = curVolVarsJ;
 
             // element solution container to be deflected
-            using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-            ElementSolutionVector elemSolJ(origPriVarsJ);
+            auto elemSolJ = elementSolution<FVElementGeometry>(origPriVarsJ);
 
             // derivatives with repect to the additional DOF we depend on
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -715,10 +727,11 @@ class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*
     using ParentType = SubDomainCCLocalAssemblerImplicitBase<id, TypeTag, Assembler, ThisType>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-    enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
+    enum { dim = GridView::dimension };
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
     static constexpr int maxNeighbors = 4*(2*dim);
