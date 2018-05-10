@@ -133,7 +133,7 @@ public:
     void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacRow& jacRow,
                                   const LocalResidualValues& res, GridVariables& gridVariables)
     {
-        this->asImp_().assembleJacobianCoupling(domainJ, jacRow[domainJ], res, *std::get<otherId>(gridVariables));
+        this->asImp_().assembleJacobianCoupling(domainJ, jacRow[domainJ], res, *std::get<domainId>(gridVariables));
     }
 
     /*!
@@ -579,6 +579,7 @@ public:
                     elemSolJ[0][pvIdx] = priVar;
                     this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ[0], this->assembler());
 
+                    // update ourself after the context has been modified
                     if (enableGridFluxVarsCache)
                         this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, gridVariables.gridFluxVarsCache());
                     else
@@ -607,6 +608,12 @@ public:
 
                 // restore the undeflected state of the coupling context
                 this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ[0], this->assembler());
+
+                // TODO do we have to restore here again???
+                // if (enableGridFluxVarsCache)
+                //     this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, gridVariables.gridFluxVarsCache());
+                // else
+                //     this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, elemFluxVarsCache);
             }
         }
 
