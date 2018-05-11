@@ -533,11 +533,11 @@ public:
     { return emptyStencil_; }
 
     //! Return a map containing additional dof dependencies
-    const CouplingStencils& additionalDofDependicies(Dune::index_constant<0> bulkDomain)
+    const CouplingStencils& additionalDofDependencies(Dune::index_constant<0> bulkDomain)
     { return bulkCircleStencils_; }
 
     //! Return a map containing additional dof dependencies
-    CouplingStencils additionalDofDependicies(Dune::index_constant<1> lowDimDomain)
+    CouplingStencils additionalDofDependencies(Dune::index_constant<1> lowDimDomain)
     { return CouplingStencils(); }
 
     //! Return reference to point source data vector member
