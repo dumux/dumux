@@ -448,8 +448,8 @@ private:
     Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainI,
                                              Dune::index_constant<j> domainJ) const
     {
-        const auto& additionalDofDependicies = this->couplingManager_->additionalDofDependicies(domainI);
-        return getJacobianPattern<isImplicit>(fvGridGeometry(domainI), additionalDofDependicies);
+        const auto& additionalDofDependencies = this->couplingManager_->additionalDofDependencies(domainI);
+        return getJacobianPattern<isImplicit>(fvGridGeometry(domainI), additionalDofDependencies);
     }
 
     // get coupling block pattern
