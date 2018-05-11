@@ -20,93 +20,97 @@
  * \file
  * \ingroup Properties
  * \ingroup Geomechanics
- * \ingroup Elastic
- * \brief Defines a type tag and some properties for the elastic geomechanical model
+ * \ingroup PoroElastic
+ * \brief Defines a type tag and some properties for the poroelastic geomechanical model
  */
-#ifndef DUMUX_GEOMECHANICS_ELASTIC_MODEL_HH
-#define DUMUX_GEOMECHANICS_ELASTIC_MODEL_HH
+#ifndef DUMUX_GEOMECHANICS_POROELASTIC_MODEL_HH
+#define DUMUX_GEOMECHANICS_POROELASTIC_MODEL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/common/properties/model.hh>
+#include <dumux/geomechanics/elastic/indices.hh>
+#include <dumux/geomechanics/elastic/model.hh>
 
-#include <dumux/geomechanics/properties.hh>
 #include <dumux/discretization/hookeslaw.hh>
+#include <dumux/discretization/effectivestresslaw.hh>
 
-#include "indices.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
+#include "vtkoutputfields.hh"
 
 namespace Dumux {
 
 /*!
  * \ingroup Geomechanics
- * \ingroup Elastic
- * \brief Specifies a number properties of the elastic model
+ * \ingroup PoroElastic
+ * \brief Specifies a number properties of the poroelastic model
  */
-template< int dim, int numSolidComp >
-struct ElasticModelTraits
+template< int dim, int numSC, int numFP, int numFC >
+struct PoroElasticModelTraits
 {
     //! export the type encapsulating indices
     using Indices = ElasticIndices;
     //! the number of equations is equal to grid dimension
     static constexpr int numEq() { return dim; }
     //! This model does not consider fluid phases
-    static constexpr int numFluidPhases() { return 0; }
+    static constexpr int numFluidPhases() { return numFP; }
     //! This model does not consider fluid phases
-    static constexpr int numFluidComponents() { return 0; }
+    static constexpr int numFluidComponents() { return numFC; }
     //! We have one solid phase here
-    static constexpr int numSolidComponents() { return numSolidComp; }
+    static constexpr int numSolidComponents() { return numSC; }
 
     //! Energy balance not yet implemented
     static constexpr bool enableEnergyBalance() { return false; }
 };
 
-/*!
- * \ingroup Elastic
- * \brief Traits class for the volume variables of the elastic model.
- *
- * \tparam PV The type used for primary variables
- * \tparam MT The model traits
- * \tparam SST The solid state
- * \tparam SSY The solid system
- */
-template<class PV, class MT, class SST, class SSY>
-struct ElasticVolumeVariablesTraits
-{
-    using PrimaryVariables = PV;
-    using ModelTraits = MT;
-    using SolidState = SST;
-    using SolidSystem = SSY;
-};
-
 namespace Properties {
 
-//! Type tag for the elastic geomechanical model
-NEW_TYPE_TAG(Elastic, INHERITS_FROM(Geomechanics));
+//! Type tag for the poro-elastic geomechanical model
+NEW_TYPE_TAG(PoroElastic, INHERITS_FROM(Elastic));
 
-//! Use the local residual of the elastic model
-SET_TYPE_PROP(Elastic, LocalResidual, ElasticLocalResidual<TypeTag>);
+//! Use the local residual of the poro-elastic model
+SET_TYPE_PROP(PoroElastic, LocalResidual, PoroElasticLocalResidual<TypeTag>);
 
-//! The model traits of the elastic model
-SET_TYPE_PROP(Elastic, ModelTraits, ElasticModelTraits< GET_PROP_TYPE(TypeTag, GridView)::dimension,
-                                                        GET_PROP_TYPE(TypeTag, SolidSystem)::numComponents >);
+//! default vtk output fields specific to this model
+SET_TYPE_PROP(PoroElastic, VtkOutputFields, PoroElasticVtkOutputFields);
+
+//! The deault model traits of the poro-elastic model
+SET_PROP(PoroElastic, ModelTraits)
+{
+private:
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
+    static constexpr int numSC = GET_PROP_TYPE(TypeTag, SolidSystem)::numComponents;
+    static constexpr int numFP = GET_PROP_TYPE(TypeTag, FluidSystem)::numPhases;
+    static constexpr int numFC = GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents;
+
+public:
+    using type = PoroElasticModelTraits<dim, numSC, numFP, numFC>;
+};
 
 //! Set the volume variables property
-SET_PROP(Elastic, VolumeVariables)
+SET_PROP(PoroElastic, VolumeVariables)
 {
 private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
+
+    // we reuse the elastic volume variable traits here
     using Traits = ElasticVolumeVariablesTraits<PV, MT, SST, SSY>;
 public:
-    using type = ElasticVolumeVariables<Traits>;
+    using type = PoroElasticVolumeVariables<Traits>;
 };
 
-//! By default, we use hooke's law for stress evaluations
-SET_TYPE_PROP(Elastic, StressType, HookesLaw< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                              typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
+//! Per default, we use effective stresses on the basis of Hooke's Law
+SET_PROP(PoroElastic, StressType)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using ElasticStressType = HookesLaw< Scalar, FVGridGeometry >;
+public:
+    using type = EffectiveStressLaw< ElasticStressType, FVGridGeometry >;
+};
 
 } // namespace Properties
 } // namespace Dumux

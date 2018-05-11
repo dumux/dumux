@@ -19,32 +19,30 @@
 /*!
  * \file
  * \ingroup Geomechanics
- * \ingroup Elastic
- * \brief Quantities required by the elastic model defined on a sub-control volume.
+ * \ingroup PoroElastic
+ * \brief Quantities required by the poroelastic model defined on a sub-control volume.
  */
-#ifndef DUMUX_ELASTIC_VOLUME_VARIABLES_HH
-#define DUMUX_ELASTIC_VOLUME_VARIABLES_HH
+#ifndef DUMUX_POROELASTIC_VOLUME_VARIABLES_HH
+#define DUMUX_POROELASTIC_VOLUME_VARIABLES_HH
 
-#include <dumux/material/solidstates/updatesolidvolumefractions.hh>
+#include <dumux/discretization/evalgradients.hh>
 
 namespace Dumux {
 
 /*!
 * \ingroup Geomechanics
-* \ingroup Elastic
+* \ingroup PoroElastic
  * \brief Contains the quantities which are constant within a
- *        finite volume in the elastic model.
+ *        finite volume in the poroelastic model.
  *
  * \tparam Traits Class encapsulating types to be used by the vol vars
  */
 template<class Traits>
-class ElasticVolumeVariables
+class PoroElasticVolumeVariables
 {
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using ModelTraits = typename Traits::ModelTraits;
 
-    //! The elastic model only makes sense with inert solid systems
-    static_assert(Traits::SolidSystem::isInert(), "Elastic model can only be used with inert solid systems");
 public:
     //! export the type used for the primary variables
     using PrimaryVariables = typename Traits::PrimaryVariables;
@@ -72,18 +70,31 @@ public:
     {
         priVars_ = elemSol[scv.localDofIndex()];
         extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
+        effectiveFluidDensity_ = problem.effectiveFluidDensity(element, scv, elemSol);
 
         //! set the volume fractions of the solid components
-        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, /*numFluidComps=*/0);
+        updateSolidVolumeFractions_(elemSol, problem, element, scv);
         // set the temperature of the solid phase
         setSolidTemperature_(problem, elemSol);
         // update the density of the solid phase
         solidState_.setDensity(SolidSystem::density(solidState_));
+
+        // compute divergence of diplacement for this scv
+        divU_ = 0.0;
+        const auto gradU = evalGradients(element, element.geometry(), problem.fvGridGeometry(), elemSol, scv.center());
+        for (int dir = 0; dir < Element::Geometry::mydimension; ++dir)
+            divU_ += gradU[Indices::u(dir)][dir];
     };
 
-    //! Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
+    //! Return the average porosity \f$\mathrm{[-]}\f$ within the scv.
     Scalar solidDensity() const { return solidState_.density(); }
-    //! Returns the permeability within the control volume in \f$[m^2]\f$.
+    //! Returns the effective fluid density within the scv in \f$\mathrm{[kg/m^3]}\f$
+    Scalar effectiveFluidDensity() const { return effectiveFluidDensity_; }
+    //! Return the average porosity \f$\mathrm{[-]}\f$ within the scv
+    Scalar porosity() const { return solidState_.porosity()*divU_; }
+    //! Returns the divergence of u within this scv
+    Scalar divU() const { return divU_; }
+    //! Returns the permeability within the scv in \f$[m^2]\f$.
     Scalar displacement(unsigned int dir) const { return priVars_[ Indices::momentum(dir) ]; }
     //! Return a component of primary variable vector for a given index
     Scalar priVar(const int pvIdx) const { return priVars_[pvIdx]; }
@@ -93,6 +104,29 @@ public:
     static constexpr Scalar extrusionFactor() { return 1.0; }
 
 private:
+    //! updates the volume fractions of the solid components
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateSolidVolumeFractions_(const ElemSol& elemSol,
+                                     const Problem& problem,
+                                     const Element& element,
+                                     const Scv& scv)
+    {
+        static constexpr int numSolidComp = SolidState::numComponents;
+        static constexpr int numInertComp = SolidState::numInertComponents;
+
+        // first, set inert volume fractions from the spatial params
+        const auto& sp = problem.spatialParams();
+        for (int sCompIdx = numSolidComp-numInertComp; sCompIdx < numSolidComp; ++sCompIdx)
+            solidState_.setVolumeFraction(sCompIdx,
+                                          sp.template inertVolumeFraction<SolidSystem>(element, scv, elemSol, sCompIdx));
+
+        // second, set the volume fractions of the (possibly) reacting components
+        if (!(SolidState::isInert()))
+            for (int sCompIdx = 0; sCompIdx < numSolidComp-numInertComp; ++sCompIdx)
+                solidState_.setVolumeFraction(sCompIdx,
+                                              sp.template reactiveVolumeFraction<SolidSystem>(element, scv, elemSol, sCompIdx));
+    }
+
     //! sets the temperature in the solid state for non-isothermal models
     template< class Problem, class ElemSol,
               bool EB = ModelTraits::enableEnergyBalance(), std::enable_if_t<EB, int> = 0 >
@@ -106,11 +140,12 @@ private:
     { solidState_.setTemperature(problem.temperature()); }
 
     // data members
+    Scalar divU_;
     Scalar extrusionFactor_;
+    Scalar effectiveFluidDensity_;
     PrimaryVariables priVars_;
     SolidState solidState_;
 };
-
-}
+} // end namespace Dumux
 
 #endif

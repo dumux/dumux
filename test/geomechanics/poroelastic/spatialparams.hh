@@ -18,29 +18,28 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Definition of the spatial parameters for the linear elasticity problem
+ * \brief Definition of the spatial parameters for the poro-elastic problem
  */
-#ifndef DUMUX_ELASTIC_SPATIAL_PARAMS_HH
-#define DUMUX_ELASTIC_SPATIAL_PARAMS_HH
+#ifndef DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
+#define DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
 
 #include <dumux/geomechanics/lameparams.hh>
-#include <dumux/material/spatialparams/fvelastic.hh>
+#include <dumux/material/spatialparams/fvporoelastic.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Geomechanics
- * \ingroup Elastic
- * \brief Definition of the spatial parameters for the linear elasticity problem
+ * \ingroup PoroElastic
+ * \brief Definition of the spatial parameters for the poro-elastic problem
  */
 template<class Scalar, class FVGridGeometry>
-class ElasticSpatialParams : public FVSpatialParamsElastic< Scalar,
-                                                            FVGridGeometry,
-                                                            ElasticSpatialParams<Scalar, FVGridGeometry> >
+class PoroElasticSpatialParams : public FVSpatialParamsPoroElastic< Scalar,
+                                                                    FVGridGeometry,
+                                                                    PoroElasticSpatialParams<Scalar, FVGridGeometry> >
 {
-    using ThisType = ElasticSpatialParams<Scalar, FVGridGeometry>;
-    using ParentType = FVSpatialParamsElastic<Scalar, FVGridGeometry, ThisType>;
+    using ThisType = PoroElasticSpatialParams<Scalar, FVGridGeometry>;
+    using ParentType = FVSpatialParamsPoroElastic<Scalar, FVGridGeometry, ThisType>;
 
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;
@@ -52,19 +51,22 @@ public:
     using LameParams = Dumux::LameParams<Scalar>;
 
     //! The constructor
-    ElasticSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    PoroElasticSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        lameParams_.setLambda(3e9);
-        lameParams_.setMu(3e9);
+        lameParams_.setLambda(2);
+        lameParams_.setMu(2);
     }
 
     //! Define the Lame parameters
-    const LameParams& lameParamsAtPos(const GlobalPosition& globalPos) const
-    { return lameParams_; }
+    const LameParams& lameParamsAtPos(const GlobalPosition& globalPos) const { return lameParams_; }
+    //! Return the porosity of the porous medium
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const { return 0.3; }
+    //! Return the biot coefficient of the porous medium
+    Scalar biotCoefficientAtPos(const GlobalPosition& globalPos) const { return 1.0; }
 
 private:
     LameParams lameParams_;
 };
-}
+} // end namespace Dumux
 #endif

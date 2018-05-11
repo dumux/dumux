@@ -18,27 +18,25 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Specialization of Hooke's law for the box scheme. This computes
- *        the stress tensor and surface forces resulting from mechanical deformation.
+ * \brief Specialization of the effective stress law for the box scheme. This computes the stress
+ *        tensor and surface forces resulting from mechanical deformation and the pore pressure.
  */
-#ifndef DUMUX_DISCRETIZATION_BOX_HOOKES_LAW_HH
-#define DUMUX_DISCRETIZATION_BOX_HOOKES_LAW_HH
+#ifndef DUMUX_DISCRETIZATION_BOX_EFFECTIVE_STRESS_LAW_HH
+#define DUMUX_DISCRETIZATION_BOX_EFFECTIVE_STRESS_LAW_HH
 
-#include <dune/common/fmatrix.hh>
-
-#include <dumux/common/math.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup BoxDiscretization
- * \brief Hooke's law for box scheme
- * \tparam ScalarType the scalar type for scalar physical quantities
- * \tparam FVGridGeometry the grid geometry
+ * \brief Effective stress law for box scheme
+ * \tparam StressType type used for the computation of
+ *         purely mechanical stresses (i.e. material law)
+ * \tparam FVGridGeometry the finite volume grid geometry
  */
-template<class ScalarType, class FVGridGeometry>
-class HookesLaw<ScalarType, FVGridGeometry, DiscretizationMethod::box>
+template<class StressType, class FVGridGeometry>
+class EffectiveStressLaw<StressType, FVGridGeometry, DiscretizationMethod::box>
 {
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -49,15 +47,16 @@ class HookesLaw<ScalarType, FVGridGeometry, DiscretizationMethod::box>
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static_assert(dim == dimWorld, "Hookes Law not implemented for network/surface grids");
+    static_assert(dim == dimWorld, "EffectiveStressLaw not implemented for network/surface grids");
+    static_assert(StressType::discMethod == DiscretizationMethod::box, "The provided stress type must be specialized for the box scheme");
 
 public:
     //! export the type used for scalar values
-    using Scalar = ScalarType;
+    using Scalar = typename StressType::Scalar;
     //! export the type used for the stress tensor
-    using StressTensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
+    using StressTensor = typename StressType::StressTensor;
     //! export the type used for force vectors
-    using ForceVector = typename StressTensor::row_type;
+    using ForceVector = typename StressType::ForceVector;
     //! state the discretization method this implementation belongs to
     static constexpr DiscretizationMethod discMethod = DiscretizationMethod::box;
 
@@ -79,40 +78,37 @@ public:
         return scvfForce;
     }
 
-    //! assembles the stress tensor at a given integration point
+    //! assembles the (total) stress tensor of the porous medium at a given integration point
     template<class Problem, class ElementVolumeVariables, class FluxVarsCache>
     static StressTensor stressTensor(const Problem& problem,
                                      const Element& element,
                                      const FVElementGeometry& fvGeometry,
                                      const ElementVolumeVariables& elemVolVars,
-                                     const FluxVarsCache& fluxVarCache)
+                                     const FluxVarsCache& fluxVarsCache)
     {
-        const auto& lameParams = problem.spatialParams().lameParams(element, fvGeometry, elemVolVars, fluxVarCache);
+        // compute the purely mechanical stress
+        auto sigma = StressType::stressTensor(problem, element, fvGeometry, elemVolVars, fluxVarsCache);
 
-        // evaluate displacement gradient
-        StressTensor gradU(0.0);
-        for (int dir = 0; dir < dim; ++dir)
-            for (const auto& scv : scvs(fvGeometry))
-                gradU[dir].axpy(elemVolVars[scv.indexInElement()].displacement(dir), fluxVarCache.gradN(scv.indexInElement()));
+        // obtain biot coefficient and effective pore pressure
+        const auto biotCoeff = problem.spatialParams().biotCoefficient(element, fvGeometry, elemVolVars, fluxVarsCache);
+        const auto effPress = problem.effectivePorePressure(element, fvGeometry, elemVolVars, fluxVarsCache);
 
-        // evaluate strain tensor
-        StressTensor epsilon;
+        // subtract pore pressure from the diagonal entries
+        const auto bcp = biotCoeff*effPress;
         for (int i = 0; i < dim; ++i)
-            for (int j = 0; j < dimWorld; ++j)
-                epsilon[i][j] = 0.5*(gradU[i][j] + gradU[j][i]);
-
-        // calculate sigma
-        StressTensor sigma(0.0);
-        const auto traceEpsilon = trace(epsilon);
-        for (int i = 0; i < dim; ++i)
-        {
-            sigma[i][i] = lameParams.lambda()*traceEpsilon;
-            for (int j = 0; j < dimWorld; ++j)
-                sigma[i][j] += 2.0*lameParams.mu()*epsilon[i][j];
-        }
+            sigma[i][i] -= bcp;
 
         return sigma;
     }
+
+    //! assembles the (effective) stress tensor of the solid skeleton at a given integration point
+    template<class Problem, class ElementVolumeVariables, class FluxVarsCache>
+    static StressTensor effectiveStressTensor(const Problem& problem,
+                                              const Element& element,
+                                              const FVElementGeometry& fvGeometry,
+                                              const ElementVolumeVariables& elemVolVars,
+                                              const FluxVarsCache& fluxVarsCache)
+    { return StressType::stressTensor(problem, element, fvGeometry, elemVolVars, fluxVarsCache); }
 };
 
 } // end namespace Dumux

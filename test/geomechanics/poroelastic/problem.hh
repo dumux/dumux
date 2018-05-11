@@ -18,43 +18,51 @@
  *****************************************************************************/
 /**
  * \file
- * \brief Definition of a test problem for the linear elastic model
+ * \brief Definition of a test problem for the poro-elastic model
  */
-#ifndef DUMUX_ELASTICPROBLEM_HH
-#define DUMUX_ELASTICPROBLEM_HH
+#ifndef DUMUX_POROELASTIC_PROBLEM_HH
+#define DUMUX_POROELASTIC_PROBLEM_HH
 
 #include <dune/common/fmatrix.hh>
 
 #include <dumux/discretization/box/properties.hh>
-#include <dumux/geomechanics/elastic/model.hh>
+#include <dumux/geomechanics/poroelastic/model.hh>
 #include <dumux/geomechanics/fvproblem.hh>
+
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/components/constant.hh>
 
 #include "spatialparams.hh"
 
 namespace Dumux {
 
 template <class TypeTag>
-class ElasticProblem;
+class PoroElasticProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(ElasticTypeTag, INHERITS_FROM(BoxModel, Elastic));
+NEW_TYPE_TAG(PoroElasticTypeTag, INHERITS_FROM(BoxModel, PoroElastic));
 // Set the grid type
-SET_TYPE_PROP(ElasticTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(PoroElasticTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
-SET_TYPE_PROP(ElasticTypeTag, Problem, Dumux::ElasticProblem<TypeTag>);
+SET_TYPE_PROP(PoroElasticTypeTag, Problem, Dumux::PoroElasticProblem<TypeTag>);
+// The fluid phase consists of one constant component
+SET_TYPE_PROP(PoroElasticTypeTag,
+              FluidSystem,
+              Dumux::FluidSystems::OnePLiquid< typename GET_PROP_TYPE(TypeTag, Scalar),
+                                               Dumux::Components::Constant<0, typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 // The spatial parameters property
-SET_TYPE_PROP(ElasticTypeTag, SpatialParams, ElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                   typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
+SET_TYPE_PROP(PoroElasticTypeTag, SpatialParams, PoroElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                                           typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
 }
 
 /*!
  * \ingroup Geomechanics
- * \ingroup Elastic
+ * \ingroup PoroElastic
  *
- * \brief Problem definition for the deformation of an elastic body
+ * \brief Problem definition for the deformation of a poro-elastic body
  */
 template<class TypeTag>
-class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
+class PoroElasticProblem : public GeomechanicsFVProblem<TypeTag>
 {
     using ParentType = GeomechanicsFVProblem<TypeTag>;
 
@@ -79,7 +87,7 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
 
 public:
     //! The constructor
-    ElasticProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    PoroElasticProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry) {}
 
     //! The temperature in the domain
@@ -92,9 +100,30 @@ public:
     PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(0.0); }
 
     /*!
+     * \brief Returns the effective fluid density
+     * \param globalPos The global position
+     */
+    Scalar effectiveFluidDensityAtPos(const GlobalPosition& globalPos) const
+    {
+        // This test uses the constant component, obtain density only once
+        using FS = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+        static const Scalar rho = FS::density( effectivePorePressureAtPos(globalPos), temperature() );
+        return rho;
+    }
+
+    /*!
+     * \brief Returns the effective pore pressure
+     * \note We use the x-displacement as pressure solution. The shift to
+     *       higher values is done to see a mor pronounced effect in stresses.
+     *
+     * \param globalPos The global position
+     */
+    Scalar effectivePorePressureAtPos(const GlobalPosition& globalPos) const
+    { return exactSolution(globalPos)[0] + 10; }
+
+    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
-     *
      * \param globalPos The global position
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
@@ -121,7 +150,7 @@ public:
         const auto x = ipGlobal[0];
         const auto y = ipGlobal[1];
 
-        // the lame parameters (we know they only depend on the position here)
+        // the lame parameters (we know they only depend on position here)
         const auto& lameParams = this->spatialParams().lameParamsAtPos(scv.center());
         const auto lambda = lameParams.lambda();
         const auto mu = lameParams.mu();

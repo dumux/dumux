@@ -19,27 +19,28 @@
 /*!
  * \file
  * \ingroup Geomechanics
- * \ingroup Elastic
- * \brief Element-wise calculation of the local residual for problems
- *        using the elastic model considering linear elasticity.
+ * \ingroup PoroElastic
+ * \brief Element-wise calculation of the local residual
+ *        for problems using the poroelastic model.
  */
-#ifndef DUMUX_GEOMECHANICS_ELASTIC_LOCAL_RESIDUAL_HH
-#define DUMUX_GEOMECHANICS_ELASTIC_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_PRORELASTIC_LOCAL_RESIDUAL_HH
+#define DUMUX_PRORELASTIC_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/geomechanics/elastic/localresidual.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup Geomechanics
- * \ingroup Elastic
- * \brief Element-wise calculation of the local residual for problems
- *        using the elastic model considering linear elasticity.
+ * \ingroup PoroElastic
+ * \brief Element-wise calculation of the local residual
+ *        for problems using the poroelastic model.
  */
 template<class TypeTag>
-class ElasticLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
+class PoroElasticLocalResidual: public ElasticLocalResidual<TypeTag>
 {
-    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
+    using ParentType = ElasticLocalResidual<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -59,43 +60,6 @@ class ElasticLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 
 public:
     using ParentType::ParentType;
-
-    /*!
-     * \brief For the elastic model the storage term is zero since
-     *        we neglect inertia forces.
-     *
-     * \param problem The problem
-     * \param scv The sub control volume
-     * \param volVars The current or previous volVars
-     */
-    NumEqVector computeStorage(const Problem& problem,
-                               const SubControlVolume& scv,
-                               const VolumeVariables& volVars) const
-    {
-        return NumEqVector(0.0);
-    }
-
-    /*!
-     * \brief Evaluates the force in all grid directions acting
-     *        on a face of a sub-control volume.
-     *
-     * \param problem The problem
-     * \param element The current element.
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars The volume variables of the current element
-     * \param scvf The sub control volume face to compute the flux on
-     * \param elemFluxVarsCache The cache related to flux compuation
-     */
-    NumEqVector computeFlux(const Problem& problem,
-                            const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolumeFace& scvf,
-                            const ElementFluxVariablesCache& elemFluxVarsCache) const
-    {
-        // obtain force on the face from stress type
-        return StressType::force(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-    }
 
     /*!
      * \brief Calculate the source term of the equation
@@ -128,9 +92,15 @@ public:
         static const bool gravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
         if (gravity)
         {
+            // compute average density
+            const auto& vv = elemVolVars[scv];
+            const auto phi = vv.porosity();
+            const auto rhoAverage = phi*vv.effectiveFluidDensity() + (1.0 - phi*vv.solidDensity());
+
+            // add body force
             const auto& g = problem.gravityAtPos(scv.center());
             for (int dir = 0; dir < GridView::dimensionworld; ++dir)
-                source[Indices::momentum(dir)] += elemVolVars[scv].solidDensity()*g[dir];
+                source[ Indices::momentum(dir) ] += rhoAverage*g[dir];
         }
 
         return source;

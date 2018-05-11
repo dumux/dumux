@@ -19,11 +19,11 @@
 /*!
  * \file
  * \ingroup Discretization
- * \brief Hooke's law specialized for different discretization schemes.
- *        This computes the stress tensor and surface forces resulting from mechanical deformation.
+ * \brief The effective stress law specialized for different discretization schemes.
+ *        This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
  */
-#ifndef DUMUX_DISCRETIZATION_HOOKES_LAW_HH
-#define DUMUX_DISCRETIZATION_HOOKES_LAW_HH
+#ifndef DUMUX_DISCRETIZATION_EFFECIVESTRESS_LAW_HH
+#define DUMUX_DISCRETIZATION_EFFECIVESTRESS_LAW_HH
 
 #include <dumux/discretization/methods.hh>
 
@@ -31,15 +31,15 @@ namespace Dumux {
 
 /*!
  * \ingroup Discretization
- * \brief This computes the stress tensor and surface forces resulting from mechanical deformation.
+ * \brief This computes the stress tensor and surface forces resulting from poro-mechanical deformation.
  * \note Specializations are provided for the different discretization methods.
  * These specializations are found in the headers included below.
  */
-template <class Scalar, class FVGridGeometry, DiscretizationMethod dm = FVGridGeometry::discMethod>
-class HookesLaw;
+template <class StressType, class FVGridGeometry, DiscretizationMethod dm = FVGridGeometry::discMethod>
+class EffectiveStressLaw;
 
 } // end namespace Dumux
 
-#include <dumux/discretization/box/hookeslaw.hh>
+#include <dumux/discretization/box/effectivestresslaw.hh>
 
 #endif

@@ -18,28 +18,29 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
- * \brief Hooke's law specialized for different discretization schemes.
- *        This computes the stress tensor and surface forces resulting from mechanical deformation.
+ * \ingroup PoroElastic
+ * \brief Adds vtk output fields specific to the poro-elastic model
  */
-#ifndef DUMUX_DISCRETIZATION_HOOKES_LAW_HH
-#define DUMUX_DISCRETIZATION_HOOKES_LAW_HH
-
-#include <dumux/discretization/methods.hh>
+#ifndef DUMUX_POROELASTIC_VTK_OUTPUT_FIELDS_HH
+#define DUMUX_POROELASTIC_VTK_OUTPUT_FIELDS_HH
 
 namespace Dumux {
 
 /*!
- * \ingroup Discretization
- * \brief This computes the stress tensor and surface forces resulting from mechanical deformation.
- * \note Specializations are provided for the different discretization methods.
- * These specializations are found in the headers included below.
+ * \ingroup PoroElastic
+ * \brief Adds vtk output fields specific to the poro-elastic model
  */
-template <class Scalar, class FVGridGeometry, DiscretizationMethod dm = FVGridGeometry::discMethod>
-class HookesLaw;
+class PoroElasticVtkOutputFields
+{
+public:
+    template <class VtkOutputModule>
+    static void init(VtkOutputModule& vtk)
+    {
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.divU(); }, "divU");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.porosity(); }, "porosity");
+    }
+};
 
 } // end namespace Dumux
-
-#include <dumux/discretization/box/hookeslaw.hh>
 
 #endif
