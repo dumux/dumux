@@ -145,7 +145,7 @@ public:
      *
      * \param bulkProblem The problem to be solved on the bulk domain
      * \param lowDimProblem The problem to be solved on the lower-dimensional domain
-     * \tparam curSol The current solution
+     * \param curSol The current solution
      * \param couplingMapper The mapper object containing the connectivity between the domains
      */
     void init(std::shared_ptr< Problem<bulkId> > bulkProblem,
