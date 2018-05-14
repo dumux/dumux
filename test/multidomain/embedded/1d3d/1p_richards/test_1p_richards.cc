@@ -64,8 +64,10 @@ SET_PROP(RootTypeTag, CouplingManager)
     using type = Dumux::CCBBoxTreeEmbeddedCouplingManager<Traits>;
 };
 
-SET_TYPE_PROP(SoilTypeTag, PointSource, IntegrationPointSource<TypeTag>);
-SET_TYPE_PROP(RootTypeTag, PointSource, IntegrationPointSource<TypeTag>);
+SET_TYPE_PROP(SoilTypeTag, PointSource, IntegrationPointSource<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GlobalCoordinate,
+                                                               typename GET_PROP_TYPE(TypeTag, NumEqVector)>);
+SET_TYPE_PROP(RootTypeTag, PointSource, IntegrationPointSource<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GlobalCoordinate,
+                                                               typename GET_PROP_TYPE(TypeTag, NumEqVector)>);
 
 SET_TYPE_PROP(SoilTypeTag, PointSourceHelper, IntegrationPointSourceHelper);
 SET_TYPE_PROP(RootTypeTag, PointSourceHelper, IntegrationPointSourceHelper);

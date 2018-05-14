@@ -24,8 +24,10 @@
 #ifndef DUMUX_SOIL_SPATIAL_PARAMS_HH
 #define DUMUX_SOIL_SPATIAL_PARAMS_HH
 
-#include <dune/common/fvector.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/material/spatialparams/fv.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 namespace Dumux {
 
@@ -33,32 +35,27 @@ namespace Dumux {
  * \ingroup OnePTests
  * \brief Definition of the spatial parameters for the tissue problem
  */
-template<class TypeTag>
-class SoilSpatialParams : public FVSpatialParams<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class SoilSpatialParams
+: public FVSpatialParams<FVGridGeometry,Scalar, SoilSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ThisType = SoilSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimworld = GridView::dimensionworld
-    };
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimworld>;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     // export permeability type
     using PermeabilityType = Scalar;
+    // export material law type
+    using MaterialLaw = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
+    // export material law params
+    using MaterialLawParams = typename MaterialLaw::Params;
 
-    SoilSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    SoilSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         // residual saturations
         materialParams_.setSwr(0.05);
@@ -81,9 +78,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol the element solution vector
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         return permeability_;
     }
@@ -95,9 +93,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol The current element solution vector
      */
+    template<class ElementSolution>
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
+                    const ElementSolution& elemSol) const
     {
         return porosity_;
     }

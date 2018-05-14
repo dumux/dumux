@@ -40,10 +40,6 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/liquidphase2c.hh>
 
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
 #include "soilspatialparams.hh"
 
 namespace Dumux {
@@ -69,7 +65,8 @@ SET_BOOL_PROP(SoilTypeTag, SolutionDependentHeatConduction, false);
 SET_TYPE_PROP(SoilTypeTag, Problem, SoilProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(SoilTypeTag, SpatialParams, SoilSpatialParams<TypeTag>);
+SET_TYPE_PROP(SoilTypeTag, SpatialParams, SoilSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                            typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the fluid system
 SET_PROP(SoilTypeTag, FluidSystem)
@@ -77,18 +74,6 @@ SET_PROP(SoilTypeTag, FluidSystem)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::LiquidPhaseTwoC<Scalar, Components::SimpleH2O<Scalar>,
                                                        Components::Constant<1, Scalar>>;
-};
-
-// Set the material law
-SET_PROP(SoilTypeTag, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
 };
 
 SET_BOOL_PROP(SoilTypeTag, UseMoles, true);
@@ -103,22 +88,19 @@ template <class TypeTag>
 class SoilProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using GridView = typename FVGridGeometry::GridView;
+    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
 
@@ -135,7 +117,7 @@ public:
         conti0EqIdx = 0,
         transportEqIdx = 1,
 
-        wPhaseIdx = FluidSystem::wPhaseIdx
+        liquidPhaseIdx = FluidSystem::liquidPhaseIdx
     };
 
     SoilProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
@@ -149,7 +131,7 @@ public:
 
         // for initial conditions
         const Scalar sw = getParam<Scalar>("Problem.InitTopSaturation", 0.3); // start with 30% saturation on top
-        using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+        using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
         pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(fvGridGeometry->bBoxMax()), sw);
     }
 
@@ -254,6 +236,7 @@ public:
      * the absolute rate mass generated or annihilate in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
+    template<class ElementVolumeVariables>
     void pointSource(PointSource& source,
                      const Element &element,
                      const FVElementGeometry& fvGeometry,
