@@ -24,7 +24,6 @@
 #ifndef DUMUX_BlOOD_FLOW_SPATIALPARAMS_HH
 #define DUMUX_BlOOD_FLOW_SPATIALPARAMS_HH
 
-#include <dune/common/fvector.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux {
@@ -33,29 +32,20 @@ namespace Dumux {
  * \ingroup OneTests
  * \brief Definition of the spatial parameters for the blood flow problem
  */
-template<class TypeTag>
-class BloodFlowSpatialParams: public FVSpatialParamsOneP<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class BloodFlowSpatialParams
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar, BloodFlowSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimworld = GridView::dimensionworld
-    };
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimworld>;
+    using ThisType = BloodFlowSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
+    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
 
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    BloodFlowSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    BloodFlowSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         radius_ = getParam<Scalar>("SpatialParams.Radius");
     }
@@ -69,6 +59,10 @@ public:
     {
         return (1 + ipGlobal[2] + 0.5*ipGlobal[2]*ipGlobal[2])/(M_PI*radius(0)*radius(0));
     }
+
+    //! we evaluate the permeability directly at the scvf since we have an analytical expression for it
+    static constexpr bool evaluatePermeabilityAtScvfIP()
+    { return true; }
 
     /*!
      * \brief Return the radius of the circular pipe for the current sub-control volume in [m].

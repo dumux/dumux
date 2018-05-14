@@ -69,8 +69,10 @@ SET_PROP(BloodFlowCCTypeTag, CouplingManager)
     using type = Dumux::CCBBoxTreeEmbeddedCouplingManager<Traits>;
 };
 
-SET_TYPE_PROP(TissueCCTypeTag, PointSource, IntegrationPointSource<TypeTag>);
-SET_TYPE_PROP(BloodFlowCCTypeTag, PointSource, IntegrationPointSource<TypeTag>);
+SET_TYPE_PROP(TissueCCTypeTag, PointSource, IntegrationPointSource<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GlobalCoordinate,
+                                                                   typename GET_PROP_TYPE(TypeTag, NumEqVector)>);
+SET_TYPE_PROP(BloodFlowCCTypeTag, PointSource, IntegrationPointSource<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GlobalCoordinate,
+                                                                      typename GET_PROP_TYPE(TypeTag, NumEqVector)>);
 
 SET_TYPE_PROP(TissueCCTypeTag, PointSourceHelper, IntegrationPointSourceHelper);
 SET_TYPE_PROP(BloodFlowCCTypeTag, PointSourceHelper, IntegrationPointSourceHelper);
