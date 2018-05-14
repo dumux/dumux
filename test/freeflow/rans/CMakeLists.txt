@@ -26,6 +26,6 @@ dune_add_test(NAME test_pipe_zeroeqni
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/pipe_zeroeqni.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/pipe_zeroeqni-00031.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/pipe_zeroeqni-00034.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_pipe_zeroeqni test_pipe_zeroeqni.input")
 target_compile_definitions(test_pipe_zeroeqni PUBLIC "NONISOTHERMAL=1")

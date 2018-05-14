@@ -30,6 +30,7 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
+#include <dumux/discretization/staggered/elementsolution.hh>
 
 namespace Dumux {
 
@@ -164,26 +165,10 @@ public:
             if (!scvf.boundary())
                 continue;
 
-            const auto bcTypes = problem.boundaryTypes(element, scvf);
-
-            CellCenterPrimaryVariables boundaryPriVars(0.0);
-
-            for(int eqIdx = 0; eqIdx < CellCenterPrimaryVariables::dimension; ++eqIdx)
-            {
-                if(bcTypes.isDirichlet(eqIdx) || bcTypes.isDirichletCell(eqIdx))
-                    boundaryPriVars[eqIdx] = problem.dirichlet(element, scvf)[cellCenterIdx][eqIdx];
-                else if(bcTypes.isNeumann(eqIdx) || bcTypes.isOutflow(eqIdx) || bcTypes.isSymmetry())
-                    boundaryPriVars[eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
-                //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary
-                // could be made more general by allowing a non-zero-gradient, provided in problem file
-                else
-                    if(eqIdx == Indices::pressureIdx)
-                        DUNE_THROW(Dune::InvalidStateException, "Face at: " << scvf.center() << " has neither Dirichlet nor Neumann BC.");
-            }
-
             volumeVariables_.resize(localIdx+1);
             volVarIndices_.resize(localIdx+1);
 
+            auto boundaryPriVars = GVV::Traits::getBoundaryPriVars(problem, sol, element, scvf);
             auto elemSol = elementSolution<FVElementGeometry>(std::move(boundaryPriVars));
             volumeVariables_[localIdx].update(elemSol,
                                               problem,

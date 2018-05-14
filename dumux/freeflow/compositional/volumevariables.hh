@@ -120,11 +120,9 @@ public:
             if(compIdx == Indices::mainCompIdx)
                 continue;
 
-            int offset = Indices::mainCompIdx != 0 ? 1 : 0;
-
             // temporary add 1.0 to remove spurious differences in mole fractions
             // which are below the numerical accuracy
-            Scalar moleOrMassFraction = elemSol[0][Indices::conti0EqIdx+compIdx+offset] + 1.0;
+            Scalar moleOrMassFraction = elemSol[0][Indices::conti0EqIdx+compIdx] + 1.0;
             moleOrMassFraction = moleOrMassFraction - 1.0;
             if(useMoles)
                 fluidState.setMoleFraction(fluidSystemPhaseIdx, compIdx, moleOrMassFraction);

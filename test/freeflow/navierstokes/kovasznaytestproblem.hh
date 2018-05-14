@@ -169,14 +169,12 @@ public:
         BoundaryTypes values;
 
         // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(Indices::momentumXBalanceIdx);
-        values.setDirichlet(Indices::momentumYBalanceIdx);
+        values.setDirichlet(Indices::velocityXIdx);
+        values.setDirichlet(Indices::velocityYIdx);
 
         // set a fixed pressure in one cell
         if (isLowerLeftCell_(globalPos))
-            values.setDirichletCell(Indices::conti0EqIdx);
-        else
-            values.setOutflow(Indices::conti0EqIdx);
+            values.setDirichletCell(Indices::pressureIdx);
 
         return values;
     }

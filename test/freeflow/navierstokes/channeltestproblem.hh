@@ -150,26 +150,29 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(Indices::momentumXBalanceIdx);
-        values.setDirichlet(Indices::momentumYBalanceIdx);
-
-#if NONISOTHERMAL
         if(isInlet(globalPos))
-            values.setDirichlet(Indices::energyBalanceIdx);
-        else
+        {
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+#if NONISOTHERMAL
+            values.setDirichlet(Indices::temperatureIdx);
+#endif
+        }
+        else if(isOutlet(globalPos))
+        {
+            values.setDirichlet(Indices::pressureIdx);
+#if NONISOTHERMAL
             values.setOutflow(Indices::energyBalanceIdx);
 #endif
-
-        // set a fixed pressure in one cell
-        if (isOutlet(globalPos))
-        {
-            values.setDirichlet(Indices::conti0EqIdx);
-            values.setOutflow(Indices::momentumXBalanceIdx);
-            values.setOutflow(Indices::momentumYBalanceIdx);
         }
         else
-            values.setOutflow(Indices::conti0EqIdx);
+        {
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+#if NONISOTHERMAL
+            values.setNeumann(Indices::energyBalanceIdx);
+#endif
+        }
 
         return values;
     }

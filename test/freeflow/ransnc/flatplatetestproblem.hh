@@ -121,6 +121,8 @@ class FlatPlateNCTestProblem : public ZeroEqProblem<TypeTag>
 
     static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
     static const unsigned int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static constexpr auto transportEqIdx = Indices::conti0EqIdx;
+    static constexpr auto transportCompIdx = Indices::conti0EqIdx;
 
 public:
     FlatPlateNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -192,48 +194,55 @@ public:
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-        static constexpr auto transportEqIdx = Indices::conti0EqIdx+1;
         BoundaryTypes values;
-
-        values.setDirichlet(Indices::momentumXBalanceIdx);
-        values.setDirichlet(Indices::momentumYBalanceIdx);
-        values.setOutflow(Indices::conti0EqIdx);
-        values.setOutflow(transportEqIdx);
-#if NONISOTHERMAL
-        values.setOutflow(Indices::energyBalanceIdx);
-#endif
-#if LOWREKEPSILON
-        values.setDirichlet(Indices::turbulentKineticEnergyIdx);
-        values.setDirichlet(Indices::dissipationIdx);
-#endif
 
         if(isInlet_(globalPos))
         {
-            values.setDirichlet(transportEqIdx);
-            values.setDirichlet(Indices::conti0EqIdx);
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+            values.setDirichlet(transportCompIdx);
+
 #if NONISOTHERMAL
-            values.setDirichlet(Indices::energyBalanceIdx);
+            values.setDirichlet(Indices::temperatureIdx);
+#endif
+
+#if LOWREKEPSILON
+            values.setDirichlet(Indices::turbulentKineticEnergyIdx);
+            values.setDirichlet(Indices::dissipationIdx);
 #endif
         }
         else if(isOutlet_(globalPos))
         {
-            values.setOutflow(Indices::momentumXBalanceIdx);
-            values.setOutflow(Indices::momentumYBalanceIdx);
-            values.setDirichlet(Indices::conti0EqIdx);
+            values.setDirichlet(Indices::pressureIdx);
             values.setOutflow(transportEqIdx);
+
 #if NONISOTHERMAL
             values.setOutflow(Indices::energyBalanceIdx);
 #endif
+
 #if LOWREKEPSILON
             values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
             values.setOutflow(Indices::dissipationEqIdx);
 #endif
         }
-        else if (isOnWall(globalPos))
+        else if(isOnWall(globalPos))
         {
+            values.setDirichlet(Indices::velocityXIdx);
+            values.setDirichlet(Indices::velocityYIdx);
+            values.setNeumann(transportEqIdx);
+
 #if NONISOTHERMAL
-            values.setDirichlet(Indices::energyBalanceIdx);
+            values.setDirichlet(Indices::temperatureIdx);
 #endif
+
+#if LOWREKEPSILON
+            values.setDirichlet(Indices::turbulentKineticEnergyEqIdx);
+            values.setDirichlet(Indices::dissipationEqIdx);
+#endif
+        }
+        else
+        {
+            values.setAllSymmetry();
         }
 
         return values;
@@ -246,7 +255,6 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        static constexpr auto transportCompIdx = Indices::conti0EqIdx+1;
         PrimaryVariables values = initialAtPos(globalPos);
 
         if (time() > 10.0)
@@ -282,7 +290,6 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        static constexpr auto transportCompIdx = Indices::conti0EqIdx+1;
         PrimaryVariables values(0.0);
         values[Indices::pressureIdx] = 1.0e+5;
         values[transportCompIdx] = 0.0;

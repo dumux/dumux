@@ -97,6 +97,9 @@ class DensityDrivenFlowProblem : public NavierStokesProblem<TypeTag>
 
     static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
 
+    static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
+    static constexpr auto transportEqIdx = Indices::conti0EqIdx + 1;
+
 public:
     DensityDrivenFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
@@ -152,25 +155,24 @@ public:
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-        static constexpr auto transportEqIdx = Indices::conti0EqIdx + 1;
         BoundaryTypes values;
 
         // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(Indices::momentumXBalanceIdx);
-        values.setDirichlet(Indices::momentumYBalanceIdx);
-        values.setNeumann(transportEqIdx);
+        values.setDirichlet(Indices::velocityXIdx);
+        values.setDirichlet(Indices::velocityYIdx);
         values.setNeumann(Indices::conti0EqIdx);
+        values.setNeumann(transportEqIdx);
 
         if(isLowerLeftCell_(globalPos))
-            values.setDirichletCell(Indices::conti0EqIdx);
+            values.setDirichletCell(Indices::pressureIdx);
 
         if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
         {
             if(useWholeLength_)
-                values.setDirichlet(transportEqIdx);
+                values.setDirichlet(transportCompIdx);
             else
                 if(globalPos[0] > 0.4 && globalPos[0] < 0.6)
-                    values.setDirichlet(transportEqIdx);
+                    values.setDirichlet(transportCompIdx);
         }
 
         return values;
@@ -184,7 +186,6 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
         PrimaryVariables values;
 
         values[Indices::pressureIdx] = 1.1e+5;
@@ -209,7 +210,6 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
         PrimaryVariables values;
         values[Indices::pressureIdx] = 1.1e+5;
         values[transportCompIdx] = 0.0;

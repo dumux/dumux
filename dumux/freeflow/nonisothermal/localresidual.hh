@@ -100,27 +100,18 @@ public:
                          const SubControlVolumeFace& scvf)
     {
         static constexpr auto localEnergyBalanceIdx = NumEqVector::dimension - 1;
-        using Indices = typename ElementVolumeVariables::VolumeVariables::Indices;
-
-        bool isOutflow = false;
-        if(scvf.boundary())
-        {
-            const auto bcTypes = problem.boundaryTypes(element, scvf);
-            if(bcTypes.isOutflow(Indices::energyBalanceIdx))
-                isOutflow = true;
-        }
 
         auto upwindTerm = [](const auto& volVars) { return volVars.density() * volVars.enthalpy(); };
         flux[localEnergyBalanceIdx] += FluxVariables::advectiveFluxForCellCenter(elemVolVars,
-                                                                            elemFaceVars,
-                                                                            scvf,
-                                                                            upwindTerm,
-                                                                            isOutflow);
-        if(!isOutflow)
-            flux[localEnergyBalanceIdx] += FluxVariables::HeatConductionType::flux(element,
-                                                                                   fvGeometry,
-                                                                                   elemVolVars,
-                                                                                   scvf);
+                                                                                 elemFaceVars,
+                                                                                 scvf,
+                                                                                 upwindTerm);
+
+        flux[localEnergyBalanceIdx] += FluxVariables::HeatConductionType::flux(problem,
+                                                                               element,
+                                                                               fvGeometry,
+                                                                               elemVolVars,
+                                                                               scvf);
     }
 };
 
@@ -160,7 +151,7 @@ public:
         ParentType::heatFlux(flux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
 
         static constexpr auto localEnergyBalanceIdx = NumEqVector::dimension - 1;
-        NumEqVector diffusiveFlux = FluxVariables::MolecularDiffusionType::flux(problem, fvGeometry, elemVolVars, scvf);
+        NumEqVector diffusiveFlux = FluxVariables::MolecularDiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
         for (int compIdx = 0; compIdx < FluxVariables::numComponents; ++compIdx)
         {
             const bool insideIsUpstream = scvf.directionSign() == sign(diffusiveFlux[compIdx]);

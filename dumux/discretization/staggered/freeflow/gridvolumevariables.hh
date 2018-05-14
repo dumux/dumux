@@ -29,8 +29,85 @@
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
+#include <dumux/discretization/staggered/freeflow/elementvolumevariables.hh>
 
 namespace Dumux {
+
+template<class P, class VV>
+struct StaggeredGridDefaultGridVolumeVariablesTraits
+{
+    using Problem = P;
+    using VolumeVariables = VV;
+    using PrimaryVariables = typename VV::PrimaryVariables;
+
+    template<class GridVolumeVariables, bool cachingEnabled>
+    using LocalView = StaggeredElementVolumeVariables<GridVolumeVariables, cachingEnabled>;
+
+    //! Returns the primary  variales used for the boundary volVars and checks for admissable
+    //! combinations for boundary conditions.
+    template<class Problem, class SolutionVector, class Element, class SubControlVolumeFace>
+    static PrimaryVariables getBoundaryPriVars(const Problem& problem,
+                                               const SolutionVector& sol,
+                                               const Element& element,
+                                               const SubControlVolumeFace& scvf)
+    {
+        using CellCenterPrimaryVariables = typename SolutionVector::value_type;
+        using Indices = typename VolumeVariables::Indices;
+        static constexpr auto dim = PrimaryVariables::dimension - CellCenterPrimaryVariables::dimension;
+        static constexpr auto offset = dim;
+
+        const auto bcTypes = problem.boundaryTypes(element, scvf);
+        PrimaryVariables boundaryPriVars(0.0);
+
+        // make sure to not use outflow BC for momentum balance
+        for(int i = 0; i < dim; ++i)
+        {
+            if(bcTypes.isOutflow(Indices::velocity(i)))
+                DUNE_THROW(Dune::InvalidStateException, "Outflow condition cannot be used for velocity. Set only a Dirichlet value for pressure instead.");
+        }
+
+        if(bcTypes.isOutflow(Indices::pressureIdx))
+            DUNE_THROW(Dune::InvalidStateException, "Outflow condition cannot be used for pressure. Set only a Dirichlet value for velocity instead.");
+
+        // Determine the pressure value at a boundary with a Dirichlet condition for velocity.
+        // This just takes the value of the adjacent inner cell.
+        if(bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
+        {
+            if(bcTypes.isDirichlet(Indices::pressureIdx))
+                DUNE_THROW(Dune::InvalidStateException, "A Dirichlet condition for velocity must not be combined with a Dirichlet condition for pressure");
+            else
+                boundaryPriVars[Indices::pressureIdx] = sol[scvf.insideScvIdx()][Indices::pressureIdx - offset];
+                // TODO: pressure could be extrapolated to the boundary
+        }
+
+        // Determine the pressure value for a boundary with a Dirichlet condition for pressure.
+        // Takes a value specified in the problem.
+        if(bcTypes.isDirichlet(Indices::pressureIdx))
+        {
+            if(bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
+                DUNE_THROW(Dune::InvalidStateException, "A Dirichlet condition for velocity must not be combined with a Dirichlet condition for pressure");
+            else
+                boundaryPriVars[Indices::pressureIdx] = problem.dirichlet(element, scvf)[Indices::pressureIdx];
+        }
+
+        // Return for isothermal single-phase systems ...
+        if(CellCenterPrimaryVariables::dimension == 1)
+            return boundaryPriVars;
+
+        // ... or handle values for components, temperature, etc.
+        for(int eqIdx = offset; eqIdx < PrimaryVariables::dimension; ++eqIdx)
+        {
+            if(eqIdx == Indices::pressureIdx)
+                continue;
+
+            if(bcTypes.isDirichlet(eqIdx))
+                boundaryPriVars[eqIdx] = problem.dirichlet(element, scvf)[eqIdx];
+            else if(bcTypes.isOutflow(eqIdx) || bcTypes.isSymmetry() || bcTypes.isNeumann(eqIdx))
+                boundaryPriVars[eqIdx] = sol[scvf.insideScvIdx()][eqIdx - offset];
+        }
+        return boundaryPriVars;
+    }
+};
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -52,8 +129,8 @@ class StaggeredGridVolumeVariables<Traits, /*cachingEnabled*/true>
     using PrimaryVariables = typename Traits::VolumeVariables::PrimaryVariables;
 
 public:
-    //! export the type of the indices TODO: get them out of the volvars
-    using Indices = typename Traits::Indices;
+    //! export the type of the indices
+    using Indices = typename Traits::VolumeVariables::Indices;
 
     //! export the type of the VolumeVariables
     using VolumeVariables = typename Traits::VolumeVariables;
@@ -70,7 +147,6 @@ public:
     template<class FVGridGeometry, class SolutionVector>
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
-        using CellCenterPrimaryVariables = typename SolutionVector::value_type;
         auto numScv = fvGridGeometry.numScv();
         auto numBoundaryScvf = fvGridGeometry.numBoundaryScvf();
 
@@ -97,25 +173,9 @@ public:
                 if (!scvf.boundary())
                     continue;
 
-                const auto bcTypes = problem().boundaryTypes(element, scvf);
-                const auto insideScvIdx = scvf.insideScvIdx();
-                const auto& insideScv = fvGeometry.scv(insideScvIdx);
-
-                PrimaryVariables boundaryPriVars(0.0);
-                constexpr auto offset = PrimaryVariables::dimension - CellCenterPrimaryVariables::dimension;
-                for(int eqIdx = offset; eqIdx < PrimaryVariables::dimension; ++eqIdx)
-                {
-                    if(bcTypes.isDirichlet(eqIdx) || bcTypes.isDirichletCell(eqIdx))
-                        boundaryPriVars[eqIdx] = problem().dirichlet(element, scvf)[eqIdx];
-                    else if(bcTypes.isNeumann(eqIdx) || bcTypes.isOutflow(eqIdx) || bcTypes.isSymmetry())
-                        boundaryPriVars[eqIdx] = sol[scvf.insideScvIdx()][eqIdx - offset];
-                    //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary
-                    // could be made more general by allowing a non-zero-gradient, provided in problem file
-                    else
-                        if(eqIdx == Indices::pressureIdx)
-                            DUNE_THROW(Dune::InvalidStateException, "Face at: " << scvf.center() << " has neither Dirichlet nor Neumann BC.");
-                }
-                auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(boundaryPriVars));
+                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                auto boundaryPriVars = Traits::getBoundaryPriVars(problem(), sol, element, scvf);
+                const auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(boundaryPriVars));
                 volumeVariables_[scvf.outsideScvIdx()].update(elemSol, problem(), element, insideScv);
             }
         }
