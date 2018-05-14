@@ -26,6 +26,7 @@
 #include <memory>
 
 #include <dumux/common/typetraits/isvalid.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux {
 
@@ -42,17 +43,6 @@ struct hasLameParamsAtPos
     {};
 };
 
-// helper struct detecting if the user-defined spatial params class has a inertVolumeFractionAtPos function
-// for g++ > 5.3, this can be replaced by a lambda
-template<class GlobalPosition, class SolidSystem>
-struct hasInertVolumeFractionAtPos
-{
-    template<class SpatialParams>
-    auto operator()(const SpatialParams& a)
-    -> decltype(a.template inertVolumeFractionAtPos<SolidSystem>(std::declval<GlobalPosition>(), 0))
-    {};
-};
-
 // helper struct detecting if the user-defined spatial params class has a reactiveVolumeFractionAtPos function
 // for g++ > 5.3, this can be replaced by a lambda
 template<class GlobalPosition, class SolidSystem>
@@ -61,17 +51,6 @@ struct hasReactiveVolumeFractionAtPos
     template<class SpatialParams>
     auto operator()(const SpatialParams& a)
     -> decltype(a.template reactiveVolumeFractionAtPos<SolidSystem>(std::declval<GlobalPosition>(), 0))
-    {};
-};
-
-// helper struct detecting if the user-defined spatial params class has a porosityAtPos function
-// for g++ > 5.3, this can be replaced by a lambda
-template<class GlobalPosition>
-struct hasPorosityAtPos
-{
-    template<class SpatialParams>
-    auto operator()(const SpatialParams& a)
-    -> decltype(a.porosityAtPos(std::declval<GlobalPosition>()))
     {};
 };
 
