@@ -145,14 +145,6 @@ public:
     std::size_t numDofs() const
     { return this->gridView().size(0); }
 
-    //! Get an element from a sub control volume contained in it
-    Element element(const SubControlVolume& scv) const
-    { return this->elementMap()[scv.elementIndex()]; }
-
-    //! Get an element from a global element index
-    Element element(IndexType eIdx) const
-    { return this->elementMap()[eIdx]; }
-
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()
     {
@@ -417,14 +409,6 @@ public:
     //! The total number of degrees of freedom
     std::size_t numDofs() const
     { return this->gridView().size(0); }
-
-    // Get an element from a sub control volume contained in it
-    Element element(const SubControlVolume& scv) const
-    { return this->elementMap()[scv.elementIndex()]; }
-
-    // Get an element from a global element index
-    Element element(IndexType eIdx) const
-    { return this->elementMap()[eIdx]; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()
