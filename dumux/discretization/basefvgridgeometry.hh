@@ -53,6 +53,7 @@ class BaseFVGridGeometry
     static const int dimWorld = GV::dimensionworld;
 
     using Element = typename GV::template Codim<0>::Entity;
+    using SubControlVolume = typename Traits::SubControlVolume;
 
 public:
     //! export the grid view type
@@ -147,6 +148,14 @@ public:
 
         return *elementMap_;
     }
+
+    //! Get an element from a sub control volume contained in it
+    Element element(const SubControlVolume& scv) const
+    { return elementMap()[scv.elementIndex()]; }
+
+    //! Get an element from a global element index
+    Element element(IndexType eIdx) const
+    { return elementMap()[eIdx]; }
 
     /*!
      * \brief The coordinate of the corner of the GridView's bounding
