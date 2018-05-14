@@ -54,11 +54,12 @@ class BaseFVGridGeometry
     static const int dimWorld = GV::dimensionworld;
 
     using Element = typename GV::template Codim<0>::Entity;
-    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
 public:
     //! export the grid view type
     using GridView = GV;
+    //! export the global coordinate type
+    using GlobalCoordinate = typename Element::Geometry::GlobalCoordinate;
     //! export the element mapper type
     using ElementMapper = typename Traits::ElementMapper;
     //! export the vertex mapper type
@@ -152,14 +153,14 @@ public:
      * \brief The coordinate of the corner of the GridView's bounding
      *        box with the smallest values.
      */
-    const GlobalPosition &bBoxMin() const
+    const GlobalCoordinate &bBoxMin() const
     { return bBoxMin_; }
 
     /*!
      * \brief The coordinate of the corner of the GridView's bounding
      *        box with the largest values.
      */
-    const GlobalPosition &bBoxMax() const
+    const GlobalCoordinate &bBoxMax() const
     { return bBoxMax_; }
 
 private:
@@ -204,8 +205,8 @@ private:
     mutable std::shared_ptr<ElementMap> elementMap_;
 
     //! the bounding box of the whole domain
-    GlobalPosition bBoxMin_;
-    GlobalPosition bBoxMax_;
+    GlobalCoordinate bBoxMin_;
+    GlobalCoordinate bBoxMax_;
 };
 
 } // end namespace Dumux
