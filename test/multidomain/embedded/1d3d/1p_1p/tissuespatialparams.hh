@@ -24,7 +24,6 @@
 #ifndef DUMUX_TISSUE_SPATIAL_PARAMS_HH
 #define DUMUX_TISSUE_SPATIAL_PARAMS_HH
 
-#include <dune/common/fvector.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux {
@@ -33,30 +32,21 @@ namespace Dumux {
  * \ingroup OnePTests
  * \brief Definition of the spatial parameters for the tissue problem
  */
-template<class TypeTag>
-class TissueSpatialParams : public FVSpatialParamsOneP<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class TissueSpatialParams
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar, TissueSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ThisType = TissueSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimworld = GridView::dimensionworld
-    };
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimworld>;
-
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    TissueSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    TissueSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         permeability_ = getParam<Scalar>("SpatialParams.PermeabilityTissue");
         porosity_ = 1.0;
@@ -69,9 +59,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol the element solution vector
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         return permeability_;
     }
@@ -83,9 +74,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol The current element solution vector
      */
+    template<class ElementSolution>
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
+                    const ElementSolution& elemSol) const
     {
         return porosity_;
     }

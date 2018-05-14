@@ -39,7 +39,7 @@
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
 #include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "tissuespatialparams.hh"
 
@@ -73,11 +73,13 @@ SET_TYPE_PROP(TissueTypeTag, LocalResidual, OnePIncompressibleLocalResidual<Type
 SET_PROP(TissueTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(TissueTypeTag, SpatialParams, Dumux::TissueSpatialParams<TypeTag>);
+SET_TYPE_PROP(TissueTypeTag, SpatialParams,
+              TissueSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                  typename GET_PROP_TYPE(TypeTag, Scalar)>);
 } // end namespace Properties
 
 
@@ -88,28 +90,19 @@ template <class TypeTag>
 class TissueProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using GridView = typename FVGridGeometry::GridView;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-    enum {
-        // world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
-
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
 
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
 
@@ -228,6 +221,7 @@ public:
      * the absolute rate mass generated or annihilate in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
+    template<class ElementVolumeVariables>
     void pointSource(PointSource& source,
                      const Element &element,
                      const FVElementGeometry& fvGeometry,
@@ -247,7 +241,7 @@ public:
 
     //! evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
     //! we only need to evaluate the part of the residual that will be influence by the low dim DOF
-    template<class MatrixBlock>
+    template<class MatrixBlock, class VolumeVariables>
     void addSourceDerivatives(MatrixBlock& block,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
