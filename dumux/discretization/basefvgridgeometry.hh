@@ -52,6 +52,7 @@ class BaseFVGridGeometry
     static const int dim = GV::dimension;
     static const int dimWorld = GV::dimensionworld;
 
+    using IndexType = typename GV::IndexSet::IndexType;
     using Element = typename GV::template Codim<0>::Entity;
     using SubControlVolume = typename Traits::SubControlVolume;
 
