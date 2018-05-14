@@ -35,9 +35,6 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/liquidphase2c.hh>
 
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
-
 #include "rootspatialparams.hh"
 
 namespace Dumux {
@@ -70,7 +67,9 @@ SET_PROP(RootTypeTag, FluidSystem)
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(RootTypeTag, SpatialParams, RootSpatialParams<TypeTag>);
+SET_TYPE_PROP(RootTypeTag, SpatialParams, RootSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                            typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                            typename GET_PROP_TYPE(TypeTag, GridCreator)>);
 
 SET_BOOL_PROP(RootTypeTag, UseMoles, true);
 
@@ -84,24 +83,21 @@ template <class TypeTag>
 class RootProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
+    using Element = typename GridView::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
 
@@ -118,7 +114,7 @@ public:
         conti0EqIdx = 0,
         transportEqIdx = 1,
 
-        wPhaseIdx = 0
+        liquidPhaseIdx = 0
     };
 
     RootProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
@@ -138,9 +134,10 @@ public:
      * The extrusion factor here makes extrudes the 1d line to a circular tube with
      * cross-section area pi*r^2.
      */
+    template<class ElementSolution>
     Scalar extrusionFactor(const Element &element,
                            const SubControlVolume &scv,
-                           const ElementSolutionVector& elemSol) const
+                           const ElementSolution& elemSol) const
     {
         const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
         const auto radius = this->spatialParams().radius(eIdx);
@@ -205,6 +202,7 @@ public:
      * in normal direction of each component. Negative values mean
      * influx.
      */
+    template<class ElementVolumeVariables>
     NeumannFluxes neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolvars,
@@ -214,11 +212,11 @@ public:
         if (scvf.center()[2] + eps_ > this->fvGridGeometry().bBoxMax()[2])
         {
             const auto& volVars = elemVolvars[scvf.insideScvIdx()];
-            const Scalar value = transpirationRate_ * volVars.molarDensity(wPhaseIdx)/volVars.density(wPhaseIdx);
+            const Scalar value = transpirationRate_ * volVars.molarDensity(liquidPhaseIdx)/volVars.density(liquidPhaseIdx);
 
             values[conti0EqIdx] = value / volVars.extrusionFactor() / scvf.area();
             // use upwind mole fraction to get outflow condition for the tracer
-            values[transportEqIdx] = values[conti0EqIdx] * volVars.moleFraction(wPhaseIdx, transportCompIdx);
+            values[transportEqIdx] = values[conti0EqIdx] * volVars.moleFraction(liquidPhaseIdx, transportCompIdx);
         }
         return values;
 
@@ -263,6 +261,7 @@ public:
      * the absolute rate mass generated or annihilate in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
+    template<class ElementVolumeVariables>
     void pointSource(PointSource& source,
                      const Element &element,
                      const FVElementGeometry& fvGeometry,
