@@ -137,14 +137,6 @@ public:
     std::size_t numDofs() const
     { return this->gridView().size(0); }
 
-    //! Get an element from a global element index
-    Element element(GridIndexType eIdx) const
-    { return this->elementMap()[eIdx]; }
-
-    //! Get an element from a sub control volume contained in it
-    Element element(const SubControlVolume& scv) const
-    { return this->elementMap()[scv.elementIndex()]; }
-
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! This specialization is enabled if the use of secondary interaction volumes is active.
     template<bool useSecondary = MpfaHelper::considerSecondaryIVs(), std::enable_if_t<useSecondary, int> = 0>
@@ -495,14 +487,6 @@ public:
     //! Returns the total number of degrees of freedom.
     std::size_t numDofs() const
     { return this->gridView().size(0); }
-
-    //! Gets an element from a global element index.
-    Element element(GridIndexType eIdx) const
-    { return this->elementMap()[eIdx]; }
-
-    //! Gets an element from a sub control volume contained in it.
-    Element element(const SubControlVolume& scv) const
-    { return this->elementMap()[scv.elementIndex()]; }
 
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! This specialization is enabled if the use of secondary interaction volumes is active.
