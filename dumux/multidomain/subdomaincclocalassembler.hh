@@ -364,7 +364,7 @@ public:
                 partialDerivsTmp = 0.0;
                 // update the volume variables and the flux var cache
                 elemSol[0][pvIdx] = priVar;
-                this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol, this->assembler());
+                this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol, pvIdx, this->assembler());
                 curVolVars.update(elemSol, this->problem(), element, scv);
                 if (enableGridFluxVarsCache)
                     gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
@@ -416,7 +416,7 @@ public:
             elemSol[0][pvIdx] = origPriVars[pvIdx];
 
             // restore the undeflected state of the coupling context
-            this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol, this->assembler());
+            this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol, pvIdx, this->assembler());
         }
 
         // restore original state of the flux vars cache in case of global caching.
@@ -480,7 +480,7 @@ public:
                     LocalResidualValues partialDerivTmp(0.0);
                     // update the volume variables and the flux var cache
                     elemSolJ[0][pvIdx] = priVar;
-                    this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, this->assembler());
+                    this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, pvIdx, this->assembler());
                     curVolVarsJ.update(elemSolJ, this->problem(), elementJ, scvJ);
 
                     if (enableGridFluxVarsCache)
@@ -507,7 +507,7 @@ public:
                 curVolVarsJ = origVolVarsJ;
 
                 // restore the undeflected state of the coupling context
-                this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, this->assembler());
+                this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, pvIdx, this->assembler());
             }
         };
 
@@ -592,7 +592,7 @@ public:
 
                         // update the volume variables and the flux var cache
                         elemSolJ[localDofIdx][pvIdx] = priVar;
-                        this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ, this->assembler());
+                        this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ, pvIdx, this->assembler());
 
                         // update ourself after the context has been modified
                         if (enableGridFluxVarsCache)
@@ -622,7 +622,7 @@ public:
                     elemSolJ[localDofIdx][pvIdx] = origPriVarsJ[pvIdx];
 
                     // restore the undeflected state of the coupling context
-                    this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ, this->assembler());
+                    this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ, pvIdx, this->assembler());
 
                     // TODO do we have to restore here again???
                     // if (enableGridFluxVarsCache)
@@ -683,7 +683,7 @@ public:
                     LocalResidualValues partialDerivTmp(0.0);
                     // update the volume variables and the flux var cache
                     elemSolJ[0][pvIdx] = priVar;
-                    this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, this->assembler());
+                    this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, pvIdx, this->assembler());
                     curVolVarsJ.update(elemSolJ, this->problem(), elementJ, scvJ);
 
                     // calculate the residual with the deflected primary variables
@@ -709,7 +709,7 @@ public:
                 curVolVarsJ = origVolVarsJ;
 
                 // restore the undeflected state of the coupling context
-                this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, this->assembler());
+                this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, pvIdx, this->assembler());
             }
         }
     }

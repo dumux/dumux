@@ -34,13 +34,10 @@ namespace Dumux {
  * \ingroup MultiDomain
  * \brief The interface of the coupling manager for multi domain problems
  */
-template<class Traits, class Imp = void>
+template<class Traits>
 class CouplingManager
 {
 public:
-    //! export the type of the implementation
-    using Implementation = Imp;
-
     //! default type used for coupling element stencils
     template<std::size_t domainI, std::size_t domainJ>
     using CouplingStencilType = std::vector< std::size_t >;
@@ -105,7 +102,8 @@ public:
      */
     template<std::size_t i, class Element, class ElementSolution, class Assembler>
     void updateCouplingContext(Dune::index_constant<i> domainI, Dune::index_constant<i> domainJ,
-                               const Element& element, const ElementSolution& elemSol, const Assembler& assembler)
+                               const Element& element, const ElementSolution& elemSol, std::size_t pvIdx,
+                               const Assembler& assembler)
     { DUNE_THROW(Dune::NotImplemented, "Coupling manager does not implement updateCouplingContext() function"); }
 
     /*!
@@ -120,16 +118,7 @@ public:
                     const ElementVolumeVariables& elemVolVars,
                     const ElementFluxVariablesCache& elemFluxVarsCache,
                     const GridVariables& gridVariables)
-    {
-        // return asImp_().updateSelf(element, priVars);
-    }
-
-private:
-    Implementation &asImp_()
-    { return *static_cast<Imp*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Imp*>(this); }
+    {}
 };
 
 } //end namespace Dumux
