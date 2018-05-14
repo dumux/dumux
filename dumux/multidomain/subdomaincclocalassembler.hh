@@ -364,7 +364,7 @@ public:
                 partialDerivsTmp = 0.0;
                 // update the volume variables and the flux var cache
                 elemSol[0][pvIdx] = priVar;
-                this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol[0], this->assembler());
+                this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol, this->assembler());
                 curVolVars.update(elemSol, this->problem(), element, scv);
                 if (enableGridFluxVarsCache)
                     gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
@@ -416,7 +416,7 @@ public:
             elemSol[0][pvIdx] = origPriVars[pvIdx];
 
             // restore the undeflected state of the coupling context
-            this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol[0], this->assembler());
+            this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol, this->assembler());
         }
 
         // restore original state of the flux vars cache in case of global caching.
@@ -480,7 +480,7 @@ public:
                     LocalResidualValues partialDerivTmp(0.0);
                     // update the volume variables and the flux var cache
                     elemSolJ[0][pvIdx] = priVar;
-                    this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ[0], this->assembler());
+                    this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, this->assembler());
                     curVolVarsJ.update(elemSolJ, this->problem(), elementJ, scvJ);
 
                     if (enableGridFluxVarsCache)
@@ -507,7 +507,7 @@ public:
                 curVolVarsJ = origVolVarsJ;
 
                 // restore the undeflected state of the coupling context
-                this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ[0], this->assembler());
+                this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, this->assembler());
             }
         };
 
@@ -563,70 +563,73 @@ public:
 
         // get stencil informations
         const auto globalI = fvGridGeometry.elementMapper().index(element);
-        const auto& stencil = this->couplingManager().couplingStencil(element, domainI, domainJ);
+        const auto& stencil = this->couplingManager().couplingElementStencil(element, domainI, domainJ);
+        const auto& gridGeometryJ = this->assembler().fvGridGeometry(domainJ);
+        const auto& curSolJ = this->curSol()[domainJ];
 
-        for (const auto globalJ : stencil)
+        for (const auto& globalJ : stencil)
         {
-            const auto& elementJ = this->assembler().fvGridGeometry(domainJ).element(globalJ);
-
-            const auto& curSol = this->curSol()[domainJ];
-            const auto origPriVarsJ = curSol[globalJ];
-
-            // element solution container to be deflected
-            using CoupledDomainTypeTag = typename Assembler::Traits::template SubDomainTypeTag<domainJ>;
-            using CoupledFVGridGeometry = typename GET_PROP_TYPE(CoupledDomainTypeTag, FVGridGeometry);
-            using CoupledFVElementGeometry = typename CoupledFVGridGeometry::LocalView;
-            auto elemSolJ = elementSolution<CoupledFVElementGeometry>(origPriVarsJ);
-
+            const auto& elementJ = gridGeometryJ.element(globalJ);
+            auto elemSolJ = elementSolution(elementJ, curSolJ, gridGeometryJ);
             const auto origResidual = this->couplingManager().evalCouplingResidual(domainI, element, fvGeometry, curElemVolVars, this->elemBcTypes(), elemFluxVarsCache,
                                                                                    domainJ, elementJ);
 
-            for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
+            // compute derivatives w.r.t. each dof in the coupled element
+            for (const auto& dofData : this->couplingManager().coupledElementDofData(domainI, element, domainJ, globalJ))
             {
-                auto evalCouplingResidual = [&](Scalar priVar)
+                // the element-local index of the current dof
+                const auto localDofIdx = dofData.localIndex;
+
+                for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
                 {
-                    LocalResidualValues partialDerivTmp;
-                    partialDerivTmp = 0.0;
+                    // store undeflected privars for reset
+                    const auto origPriVarsJ = elemSolJ[localDofIdx];
 
-                    // update the volume variables and the flux var cache
-                    elemSolJ[0][pvIdx] = priVar;
-                    this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ[0], this->assembler());
+                    auto evalCouplingResidual = [&](Scalar priVar)
+                    {
+                        LocalResidualValues partialDerivTmp;
+                        partialDerivTmp = 0.0;
 
-                    // update ourself after the context has been modified
-                    if (enableGridFluxVarsCache)
-                        this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, gridVariables.gridFluxVarsCache());
-                    else
-                        this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, elemFluxVarsCache);
+                        // update the volume variables and the flux var cache
+                        elemSolJ[localDofIdx][pvIdx] = priVar;
+                        this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ, this->assembler());
 
-                    // calculate the residual with the deflected coupling neighbor primary variables
-                    partialDerivTmp = this->couplingManager().evalCouplingResidual(domainI, element, fvGeometry, curElemVolVars, this->elemBcTypes(), elemFluxVarsCache,
-                                                                                   domainJ, elementJ);
+                        // update ourself after the context has been modified
+                        if (enableGridFluxVarsCache)
+                            this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, gridVariables.gridFluxVarsCache());
+                        else
+                            this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, elemFluxVarsCache);
 
-                    return partialDerivTmp;
-                };
+                        // calculate the residual with the deflected coupling neighbor primary variables
+                        partialDerivTmp = this->couplingManager().evalCouplingResidual(domainI, element, fvGeometry, curElemVolVars, this->elemBcTypes(), elemFluxVarsCache,
+                                                                                       domainJ, elementJ);
 
-                // derive the residuals numerically
-                LocalResidualValues partialDeriv(0.0);
-                using CoupledDomainTypeTag = typename Assembler::Traits::template SubDomainTypeTag<domainJ>;
-                static const NumericEpsilon<Scalar, JacobianBlock::block_type::cols> epsCoupl_{GET_PROP_VALUE(CoupledDomainTypeTag, ModelParameterGroup)};
-                NumericDifferentiation::partialDerivative(evalCouplingResidual, elemSolJ[0][pvIdx], partialDeriv, origResidual,
-                                                          epsCoupl_(elemSolJ[0][pvIdx], pvIdx));
+                        return partialDerivTmp;
+                    };
 
-                // add the current partial derivatives to the global jacobian matrix
-                for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                    A[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
+                    // derive the residuals numerically
+                    LocalResidualValues partialDeriv(0.0);
+                    using CoupledDomainTypeTag = typename Assembler::Traits::template SubDomainTypeTag<domainJ>;
+                    static const NumericEpsilon<Scalar, JacobianBlock::block_type::cols> epsCoupl_{GET_PROP_VALUE(CoupledDomainTypeTag, ModelParameterGroup)};
+                    NumericDifferentiation::partialDerivative(evalCouplingResidual, elemSolJ[0][pvIdx], partialDeriv, origResidual,
+                                                              epsCoupl_(elemSolJ[0][pvIdx], pvIdx));
 
-                // restore the current element solution
-                elemSolJ[0][pvIdx] = origPriVarsJ[pvIdx];
+                    // add the current partial derivatives to the global jacobian matrix
+                    for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                        A[globalI][dofData.index][eqIdx][pvIdx] += partialDeriv[eqIdx];
 
-                // restore the undeflected state of the coupling context
-                this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ[0], this->assembler());
+                    // restore the current element solution
+                    elemSolJ[localDofIdx][pvIdx] = origPriVarsJ[pvIdx];
 
-                // TODO do we have to restore here again???
-                // if (enableGridFluxVarsCache)
-                //     this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, gridVariables.gridFluxVarsCache());
-                // else
-                //     this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, elemFluxVarsCache);
+                    // restore the undeflected state of the coupling context
+                    this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ, this->assembler());
+
+                    // TODO do we have to restore here again???
+                    // if (enableGridFluxVarsCache)
+                    //     this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, gridVariables.gridFluxVarsCache());
+                    // else
+                    //     this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, elemFluxVarsCache);
+                }
             }
         }
 
@@ -680,7 +683,7 @@ public:
                     LocalResidualValues partialDerivTmp(0.0);
                     // update the volume variables and the flux var cache
                     elemSolJ[0][pvIdx] = priVar;
-                    this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ[0], this->assembler());
+                    this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, this->assembler());
                     curVolVarsJ.update(elemSolJ, this->problem(), elementJ, scvJ);
 
                     // calculate the residual with the deflected primary variables
@@ -706,7 +709,7 @@ public:
                 curVolVarsJ = origVolVarsJ;
 
                 // restore the undeflected state of the coupling context
-                this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ[0], this->assembler());
+                this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, this->assembler());
             }
         }
     }

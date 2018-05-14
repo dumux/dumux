@@ -135,6 +135,22 @@ class CCTpfaFacetCouplingManager
 
 public:
 
+    //! Since we couple two cell-centered schemes here,
+    //! there is only one element-local dof with local index 0
+    template<std::size_t domainI, std::size_t domainJ>
+    struct DofData
+    {
+        IndexType<domainJ> index;
+        static constexpr unsigned int localIndex = 0;
+
+        //! constructor with a given grid index
+        DofData(IndexType<domainJ> dofIdx) : index(dofIdx) {}
+    };
+
+    //! Per element, there will only be one local dof
+    template<std::size_t domainI, std::size_t domainJ>
+    using CoupledElementDofData = std::array< DofData<domainI, domainJ>, 1 >;
+
     /*!
      * \brief Methods to be accessed by main
      */
@@ -185,7 +201,7 @@ public:
      * \brief The coupling stencil of the bulk domain with the lowdim domain.
      */
     const typename CouplingMapper::template Stencil<lowDimId>&
-    couplingStencil(const Element<bulkId>& element, BulkIdType, LowDimIdType) const
+    couplingElementStencil(const Element<bulkId>& element, BulkIdType, LowDimIdType) const
     {
         const auto eIdx = problem<bulkId>().fvGridGeometry().elementMapper().index(element);
 
@@ -204,7 +220,7 @@ public:
      * \brief The coupling stencil of the lower-dimensional domain with the bulk domain.
      */
     const typename CouplingMapper::template Stencil<bulkId>&
-    couplingStencil(const Element<lowDimId>& element, LowDimIdType, BulkIdType) const
+    couplingElementStencil(const Element<lowDimId>& element, LowDimIdType, BulkIdType) const
     {
         const auto eIdx = problem<lowDimId>().fvGridGeometry().elementMapper().index(element);
 
@@ -212,6 +228,20 @@ public:
         auto it = map.find(eIdx);
         if (it != map.end()) return it->second.couplingStencil;
         else return getEmptyStencil(bulkId);
+    }
+
+    /*!
+     * \brief returns data on all dofs inside an element of domain j
+     *        that is coupled to an element of domain i
+     */
+     template<class ElementI, std::size_t i, class IndexTypeJ, std::size_t j>
+     CoupledElementDofData<i, j> coupledElementDofData(Dune::index_constant<i> domainI,
+                                                       const ElementI& elementI,
+                                                       Dune::index_constant<j> domainJ,
+                                                       IndexTypeJ globalJ) const
+    {
+        // create and return instance on the fly from the given grid index
+        return CoupledElementDofData<i, j>{ {globalJ} };
     }
 
     /*!
@@ -393,11 +423,11 @@ public:
     /*!
      * \brief Update the coupling context for a derivative bulk -> lowDim
      */
-    template<class Assembler>
+    template<class Assembler, class ElementSolution>
     void updateCouplingContext(BulkIdType,
                                LowDimIdType,
                                const Element<lowDimId>& element,
-                               const PrimaryVariables<lowDimId>& priVars,
+                               const ElementSolution& elemSol,
                                const Assembler& assembler)
     {
         // do nothing if context is empty
@@ -406,8 +436,8 @@ public:
             const auto& lowDimGridGeom = problem<lowDimId>().fvGridGeometry();
             const auto lowDimElemIdx = lowDimGridGeom.elementMapper().index(element);
 
-            // update the solution
-            curSol_[lowDimId][lowDimElemIdx] = priVars;
+            // update the solution (cc->elemsol has only one entry)
+            curSol_[lowDimId][lowDimElemIdx] = elemSol[0];
 
             // update vol vars in context
             const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
@@ -425,22 +455,22 @@ public:
     /*!
      * \brief Update the coupling context for a derivative bulk -> bulk.
      */
-    template<class Assembler>
+    template<class Assembler, class ElementSolution>
     void updateCouplingContext(BulkIdType,
                                BulkIdType,
                                const Element<bulkId>& element,
-                               const PrimaryVariables<bulkId>& priVars,
+                               const ElementSolution& elemSol,
                                const Assembler& assembler)
     { /* do nothing here */ }
 
     /*!
      * \brief Update the coupling context for a derivative lowDim -> bulk
      */
-    template<class Assembler>
+    template<class Assembler, class ElementSolution>
     void updateCouplingContext(LowDimIdType,
                                BulkIdType,
                                const Element<bulkId>& element,
-                               const PrimaryVariables<bulkId>& priVars,
+                               const ElementSolution& elemSol,
                                const Assembler& assembler)
     {
         // do nothing if context is empty
@@ -449,8 +479,8 @@ public:
             const auto& bulkGridGeom = problem<bulkId>().fvGridGeometry();
             const auto bulkElemIdx = bulkGridGeom.elementMapper().index(element);
 
-            // update the solution
-            curSol_[bulkId][bulkElemIdx] = priVars;
+            // update the solution (cc->elemsol has only one entry)
+            curSol_[bulkId][bulkElemIdx] = elemSol[0];
 
             // update corresponding vol vars in context
             const auto& scv = lowDimContext_.bulkFvGeometry->scv(bulkElemIdx);
@@ -466,18 +496,18 @@ public:
     /*!
      * \brief Update the coupling context for a derivative lowDim -> lowDim
      */
-    template<class Assembler>
+    template<class Assembler, class ElementSolution>
     void updateCouplingContext(LowDimIdType,
                                LowDimIdType,
                                const Element<lowDimId>& element,
-                               const PrimaryVariables<lowDimId>& priVars,
+                               const ElementSolution& elemSol,
                                const Assembler& assembler)
     {
         // do nothing if context is empty
         if (lowDimContext_.isSet)
         {
-            // update the solution
-            curSol_[lowDimId][lowDimContext_.elementIdx] = priVars;
+            // update the solution (cc->elemsol has only one entry)
+            curSol_[lowDimId][lowDimContext_.elementIdx] = elemSol[0];
 
             // update the corresponding vol vars in the bulk context
             const auto& lowDimGridGeom = problem<lowDimId>().fvGridGeometry();
@@ -697,21 +727,27 @@ public:
         FacetEdgeManager::init(facetProblem, edgeProblem, couplingMapper, curSol);
     }
 
-    using BulkFacetManager::couplingStencil;
-    using FacetEdgeManager::couplingStencil;
+    using BulkFacetManager::couplingElementStencil;
+    using FacetEdgeManager::couplingElementStencil;
     /*!
      * \brief The coupling stencil of the bulk with the edge domain (empty stencil).
      */
     const typename CouplingMapper::template Stencil<edgeId>&
-    couplingStencil(const Element<bulkId>& element, BulkIdType, EdgeIdType) const
+    couplingElementStencil(const Element<bulkId>& element, BulkIdType, EdgeIdType) const
     { return FacetEdgeManager::getEmptyStencil(edgeId); }
 
     /*!
      * \brief The coupling stencil of the edge with the bulk domain (empty stencil).
      */
     const typename CouplingMapper::template Stencil<bulkId>&
-    couplingStencil(const Element<edgeId>& element, EdgeIdType, BulkIdType) const
+    couplingElementStencil(const Element<edgeId>& element, EdgeIdType, BulkIdType) const
     { return BulkFacetManager::getEmptyStencil(bulkId); }
+
+    //! For the coupled element dof data we simply pull up the
+    //! interface of one of the base classes since it is equal anyway
+    using BulkFacetManager::DofData;
+    using BulkFacetManager::CoupledElementDofData;
+    using BulkFacetManager::coupledElementDofData;
 
     /*!
      * \brief updates the current solution.
@@ -774,15 +810,15 @@ public:
      * \brief Interface for updating the coupling context of the facet domain. In this case
      *        we have to update both the facet -> bulk and the facet -> edge coupling context.
      */
-    template<class Assembler>
+    template<class Assembler, class ElementSolution>
     void updateCouplingContext(FacetIdType,
                                FacetIdType,
                                const Element<facetId>& element,
-                               const PrimaryVariables<facetId>& priVars,
+                               const ElementSolution& elemSol,
                                const Assembler& assembler)
     {
-        BulkFacetManager::updateCouplingContext(facetId, facetId, element, priVars, assembler);
-        FacetEdgeManager::updateCouplingContext(facetId, facetId, element, priVars, assembler);
+        BulkFacetManager::updateCouplingContext(facetId, facetId, element, elemSol, assembler);
+        FacetEdgeManager::updateCouplingContext(facetId, facetId, element, elemSol, assembler);
     }
 
     /*!
@@ -792,11 +828,12 @@ public:
     template<std::size_t i,
              std::size_t j,
              class Assembler,
+             class ElementSolution,
              std::enable_if_t<((i==bulkId && j==edgeId) || (i==edgeId && j==bulkId)), int> = 0>
     void updateCouplingContext(Dune::index_constant<i> domainI,
                                Dune::index_constant<j> domainJ,
                                const Element<j>& element,
-                               const PrimaryVariables<j>& priVars,
+                               const ElementSolution& elemSol,
                                const Assembler& assembler)
     { /*do nothing here*/ }
 
