@@ -1,0 +1,35 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 100 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 100 100
+
+[Problem]
+InjectionRate = 1e-3
+EnableGravity = false
+
+[PoroElastic.Problem]
+Name = poroelastic # name passed to the output routines
+
+[OneP.Problem]
+Name = onep # name passed to the output routines
+
+[SpatialParams]
+Permeability = 1e-12 # [m^2]
+Porosity = 0.2 # [-]
+
+[PoroElastic.Assembly.NumericDifference]
+PriVarMagnitude = 1e-5 1e-5
+
+[OneP.Assembly.NumericDifference]
+PriVarMagnitude = 1e5
+
+[LinearSolver]
+ResidualReduction = 1e-20
+MaxIterations = 2000
+
+[Component]
+SolidDensity = 2700
