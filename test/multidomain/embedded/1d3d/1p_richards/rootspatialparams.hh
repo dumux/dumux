@@ -24,7 +24,7 @@
 #ifndef DUMUX_ROOT_SPATIALPARAMS_HH
 #define DUMUX_ROOT_SPATIALPARAMS_HH
 
-#include <dune/common/fvector.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
@@ -34,24 +34,16 @@ namespace Dumux {
  * \ingroup OneTests
  * \brief Definition of the spatial parameters for the blood flow problem
  */
-template<class TypeTag>
-class RootSpatialParams : public FVSpatialParamsOneP<TypeTag>
+template<class FVGridGeometry, class Scalar, class GridCreator>
+class RootSpatialParams
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar, RootSpatialParams<FVGridGeometry, Scalar, GridCreator>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ThisType = RootSpatialParams<FVGridGeometry, Scalar, GridCreator>;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimworld = GridView::dimensionworld
-    };
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimworld>;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     //! Indices to access the parameters in the dgf file
     enum DGFParamIndices {
@@ -66,14 +58,14 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    RootSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    RootSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         porosity_ = getParam<Scalar>("Root.SpatialParams.Porosity", 0.4);
         constantKx_ = getParam<Scalar>("SpatialParams.Kx", 5.0968e-17);
         constantKr_ = getParam<Scalar>("SpatialParams.Kr", 2.04e-13);
 
-        const auto& gv = problem.fvGridGeometry().gridView();
+        const auto& gv = fvGridGeometry->gridView();
         radii_.resize(gv.size(0));
         for (const auto& element : elements(gv))
         {
@@ -94,12 +86,13 @@ public:
      * \note Kx has units [m^4/(Pa*s)] so we have to divide by the cross-section area
      *       and multiply with a characteristic viscosity
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
-        const Scalar r = radius(this->problem().fvGridGeometry().gridView().indexSet().index(element));
-        return constantKx_ / (M_PI*r*r) * SimpleH2O<Scalar>::liquidViscosity(285.15, elemSol[0][Indices::pressureIdx]);
+        const Scalar r = radius(this->fvGridGeometry().elementMapper().index(element));
+        return constantKx_ / (M_PI*r*r) * Components::SimpleH2O<Scalar>::liquidViscosity(285.15, 1e5);
     }
 
     /*!

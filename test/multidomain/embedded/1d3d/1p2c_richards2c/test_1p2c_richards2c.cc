@@ -67,8 +67,10 @@ SET_PROP(RootTypeTag, CouplingManager)
     // using type = Dumux::CCBBoxTreeEmbeddedCouplingManagerSimple<Traits>;
 };
 
-SET_TYPE_PROP(SoilTypeTag, PointSource, IntegrationPointSource<TypeTag>);
-SET_TYPE_PROP(RootTypeTag, PointSource, IntegrationPointSource<TypeTag>);
+SET_TYPE_PROP(SoilTypeTag, PointSource, IntegrationPointSource<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GlobalCoordinate,
+                                                               typename GET_PROP_TYPE(TypeTag, NumEqVector)>);
+SET_TYPE_PROP(RootTypeTag, PointSource, IntegrationPointSource<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GlobalCoordinate,
+                                                               typename GET_PROP_TYPE(TypeTag, NumEqVector)>);
 
 SET_TYPE_PROP(SoilTypeTag, PointSourceHelper, IntegrationPointSourceHelper);
 SET_TYPE_PROP(RootTypeTag, PointSourceHelper, IntegrationPointSourceHelper);
@@ -95,7 +97,7 @@ double computeSourceIntegral(const Problem& problem, const SolutionVector& sol, 
             // conversion to kg/s
             const auto& volVars = elemVolVars[scv];
             pointSources *= scv.volume()*volVars.extrusionFactor()
-                            * volVars.density(Problem::Indices::wPhaseIdx) / volVars.molarDensity(Problem::Indices::wPhaseIdx);
+                            * volVars.density(Problem::Indices::liquidPhaseIdx) / volVars.molarDensity(Problem::Indices::liquidPhaseIdx);
 
             source += pointSources;
         }
@@ -111,7 +113,7 @@ double computeSourceIntegral(const Problem& problem, const SolutionVector& sol, 
 template<class Problem, class SolutionVector, class GridVariables>
 double computeGlobalMass(const Problem& problem, const SolutionVector& sol, const GridVariables& gridVars)
 {
-    static constexpr int wPhaseIdx = Problem::Indices::wPhaseIdx;
+    static constexpr int liquidPhaseIdx = Problem::Indices::liquidPhaseIdx;
     static constexpr int transportCompIdx = Problem::Indices::transportCompIdx;
     double mass = 0.0;
 
@@ -127,8 +129,8 @@ double computeGlobalMass(const Problem& problem, const SolutionVector& sol, cons
         for (auto&& scv : scvs(fvGeometry))
         {
             const auto& volVars = elemVolVars[scv];
-            mass += volVars.massFraction(wPhaseIdx, transportCompIdx)*volVars.density(wPhaseIdx)
-                     *scv.volume() * volVars.porosity() * volVars.saturation(wPhaseIdx) * volVars.extrusionFactor();
+            mass += volVars.massFraction(liquidPhaseIdx, transportCompIdx)*volVars.density(liquidPhaseIdx)
+                     *scv.volume() * volVars.porosity() * volVars.saturation(liquidPhaseIdx) * volVars.extrusionFactor();
         }
     }
 

@@ -37,10 +37,6 @@
 #include <dumux/porousmediumflow/richards/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
 #include "soilspatialparams.hh"
 
 namespace Dumux {
@@ -66,19 +62,8 @@ SET_BOOL_PROP(SoilTypeTag, SolutionDependentHeatConduction, false);
 SET_TYPE_PROP(SoilTypeTag, Problem, SoilProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(SoilTypeTag, SpatialParams, SoilSpatialParams<TypeTag>);
-
-// Set the material law
-SET_PROP(SoilTypeTag, MaterialLaw)
-{
-private:
-    // define the material law which is parameterized by effective
-    // saturations
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    // define the material law parameterized by absolute saturations
-    using type = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
-};
+SET_TYPE_PROP(SoilTypeTag, SpatialParams, SoilSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                            typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 } // end namespace Properties
 
@@ -90,29 +75,19 @@ template <class TypeTag>
 class SoilProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using GlobalPosition = typename FVGridGeometry::GlobalCoordinate;
+    using Element = typename GridView::template Codim<0>::Entity;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-    enum {
-        // world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
-
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
 
 public:
@@ -227,6 +202,7 @@ public:
      * the absolute rate mass generated or annihilate in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
+    template<class ElementVolumeVariables>
     void pointSource(PointSource& source,
                      const Element &element,
                      const FVElementGeometry& fvGeometry,
