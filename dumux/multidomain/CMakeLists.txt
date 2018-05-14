@@ -1,3 +1,5 @@
+add_subdirectory("poromechanics")
+
 #install headers
 install(FILES
 traits.hh
