@@ -106,7 +106,7 @@ public:
             if(scvf.boundary())
             {
                 const auto bcTypes = problem.boundaryTypes(element, scvf);
-                if(bcTypes.isOutflow(eqIdx))
+                if(bcTypes.isOutflow(eqIdx) || bcTypes.isSymmetry())
                     return flux;
             }
 

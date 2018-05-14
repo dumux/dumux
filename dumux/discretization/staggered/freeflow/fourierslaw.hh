@@ -72,8 +72,12 @@ public:
     {
         Scalar flux(0.0);
 
-        if(scvf.boundary() && problem.boundaryTypes(element, scvf).isOutflow(Indices::energyBalanceIdx))
-            return flux;
+        if(scvf.boundary())
+        {
+            const auto bcTypes = problem.boundaryTypes(element, scvf);
+            if(bcTypes.isOutflow(Indices::energyBalanceIdx) || bcTypes.isSymmetry())
+                return flux;
+        }
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());

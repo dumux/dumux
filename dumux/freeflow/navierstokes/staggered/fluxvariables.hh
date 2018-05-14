@@ -304,7 +304,7 @@ public:
                 // Retrieve the boundary types that correspond to the sub face.
                 const auto bcTypes = problem.boundaryTypes(element, localSubFace);
 
-                // Check if we have a symmetry boundary condition. If yes, the tangental part of the momentum flux can be neglected
+                // Check if we have a symmetry boundary condition. If yes, the tangential part of the momentum flux can be neglected
                 // and we may skip any further calculations for the given sub face.
                 if(bcTypes.isSymmetry())
                     continue;

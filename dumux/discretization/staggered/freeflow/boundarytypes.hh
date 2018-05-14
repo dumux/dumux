@@ -86,7 +86,7 @@ public:
     /*!
      * \brief Sets a symmetry boundary condition for all equations
      */
-    void setSymmetry()
+    void setAllSymmetry()
     {
         for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
         {

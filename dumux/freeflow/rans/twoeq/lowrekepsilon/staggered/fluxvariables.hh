@@ -93,9 +93,6 @@ public:
                                                                       elemVolVars, elemFaceVars, scvf, fluxVarsCache);
 
         // calculate advective flux
-        const auto bcTypes = problem.boundaryTypes(element, scvf);
-        const bool isOutflowK = scvf.boundary() && bcTypes.isOutflow(turbulentKineticEnergyEqIdx);
-        const bool isOutflowEpsilon = scvf.boundary() && bcTypes.isOutflow(dissipationEqIdx);
         auto upwindTermK = [](const auto& volVars)
         {
             return volVars.turbulentKineticEnergy();
@@ -149,14 +146,17 @@ public:
             distance = (outsideScv.dofPosition() - insideScv.dofPosition()).two_norm();
         }
 
-        if (!isOutflowK)
+        const auto bcTypes = problem.boundaryTypes(element, scvf);
+        if (!(scvf.boundary() && (bcTypes.isOutflow(turbulentKineticEnergyEqIdx)
+                                  || bcTypes.isSymmetry())))
         {
             flux[turbulentKineticEnergyEqIdx - ModelTraits::dim()]
                 += coeff_k / distance
                    * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
                    * scvf.area();
         }
-        if (!isOutflowEpsilon)
+        if (!(scvf.boundary() && (bcTypes.isOutflow(dissipationEqIdx)
+                                  || bcTypes.isSymmetry())))
         {
             flux[dissipationEqIdx - ModelTraits::dim()]
                 += coeff_e / distance
