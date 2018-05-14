@@ -385,6 +385,7 @@ public:
                     // update the volume variables and compute element residual
                     elemSol[scv.indexInElement()][pvIdx] = priVar;
                     curVolVars.update(elemSol, this->problem(), element, scv);
+                    this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol, this->assembler());
                     return this->evalLocalResidual();
                 };
 
@@ -435,55 +436,71 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
+        const auto& curElemVolVars = this->curElemVolVars();
+        const auto& elemFluxVarsCache = this->elemFluxVarsCache();
 
-        // // get stencil informations
-        const auto& stencil = this->couplingManager().couplingStencil(element, domainI, domainJ);
+        const auto& gridGeometryJ = this->assembler().fvGridGeometry(domainJ);
+        const auto& curSolJ = this->curSol()[domainJ];
 
-        if(stencil.empty())
-            return;
-
-        const auto origResidual = this->couplingManager().evalCouplingResidual(element, *this);
+        // get element stencil informations
+        const auto& stencil = this->couplingManager().couplingElementStencil(element, domainI, domainJ);
         for (const auto globalJ : stencil)
         {
-            const auto& curSol = this->curSol()[domainJ];
-            const auto origPriVarsJ = curSol[globalJ];
+            const auto& elementJ = gridGeometryJ.element(globalJ);
+            auto elemSolJ = elementSolution(elementJ, curSolJ, gridGeometryJ);
+            const auto origResidual = this->couplingManager().evalCouplingResidual(domainI, element, fvGeometry, curElemVolVars, this->elemBcTypes(), elemFluxVarsCache,
+                                                                                   domainJ, elementJ);
 
-            for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
+            // compute derivatives w.r.t. each dof in the coupled element
+            for (const auto& dofData : this->couplingManager().coupledElementDofData(domainI, element, domainJ, globalJ))
             {
-                auto evalCouplingResidual = [&](Scalar priVar)
+                // the element-local index of the current dof
+                const auto localDofIdx = dofData.localIndex;
+
+                for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
                 {
-                    auto deflectedPriVars = origPriVarsJ;
-                    deflectedPriVars[pvIdx] = priVar;
-                    this->couplingManager().updateCouplingContext(domainI, domainJ, globalJ, deflectedPriVars, this->assembler());
-                    return this->couplingManager().evalCouplingResidual(element, *this);
-                };
+                    // store undeflected privars for reset
+                    const auto origPriVarsJ = elemSolJ[localDofIdx];
 
-                // derive the residuals numerically
-                ElementResidualVector partialDerivs(element.subEntities(dim));
-                NumericDifferentiation::partialDerivative(evalCouplingResidual, origPriVarsJ[pvIdx], partialDerivs, origResidual);
+                    auto evalCouplingResidual = [&](Scalar priVar)
+                    {
+                        elemSolJ[localDofIdx][pvIdx] = priVar;
+                        this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ, this->assembler());
+                        return this->couplingManager().evalCouplingResidual(domainI, element, fvGeometry, curElemVolVars, this->elemBcTypes(), elemFluxVarsCache,
+                                                                            domainJ, elementJ);
+                    };
 
-            // update the global stiffness matrix with the current partial derivatives
-            for (auto&& scvJ : scvs(fvGeometry))
-            {
-                for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                {
-                    // A[i][col][eqIdx][pvIdx] is the rate of change of
-                    // the residual of equation 'eqIdx' at dof 'i'
-                    // depending on the primary variable 'pvIdx' at dof
-                    // 'col'.
+                    // derive the residuals numerically
+                    ElementResidualVector partialDerivs(element.subEntities(dim));
+                    NumericDifferentiation::partialDerivative(evalCouplingResidual, origPriVarsJ[pvIdx], partialDerivs, origResidual);
 
-                    // If the dof is coupled by a Dirichlet condition,
-                    // set the derived value only once (i.e. overwrite existing values).
-                    // For other dofs, add the contribution of the partial derivative.
-                    const auto bcTypes = this->elemBcTypes()[scvJ.indexInElement()];
-                    if (bcTypes.isDirichlet(eqIdx))
-                        A[scvJ.dofIndex()][globalJ][eqIdx][pvIdx] = partialDerivs[scvJ.indexInElement()][eqIdx];
-                    else
-                        A[scvJ.dofIndex()][globalJ][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
-                  }
-            }
-                // restore the undeflected state of the coupling context
-                this->couplingManager().updateCouplingContext(domainI, domainJ, globalJ, origPriVarsJ, this->assembler());
+                    // update the global stiffness matrix with the current partial derivatives
+                    for (auto&& scv : scvs(fvGeometry))
+                    {
+                        for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                        {
+                            // A[i][col][eqIdx][pvIdx] is the rate of change of
+                            // the residual of equation 'eqIdx' at dof 'i'
+                            // depending on the primary variable 'pvIdx' at dof
+                            // 'col'.
+
+                            // If the dof is coupled by a Dirichlet condition,
+                            // set the derived value only once (i.e. overwrite existing values).
+                            // For other dofs, add the contribution of the partial derivative.
+                            const auto bcTypes = this->elemBcTypes()[scv.localDofIndex()];
+                            if (bcTypes.isDirichlet(eqIdx))
+                                A[scv.dofIndex()][dofData.index][eqIdx][pvIdx] = partialDerivs[scv.localDofIndex()][eqIdx];
+                            else
+                                A[scv.dofIndex()][dofData.index][eqIdx][pvIdx] += partialDerivs[scv.localDofIndex()][eqIdx];
+                        }
+                    }
+
+                    // restore the current element solution
+                    elemSolJ[localDofIdx][pvIdx] = origPriVarsJ[pvIdx];
+
+                    // restore the undeflected state of the coupling context
+                    this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ, this->assembler());
+                }
             }
         }
     }

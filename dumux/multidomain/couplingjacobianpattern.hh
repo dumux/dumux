@@ -97,10 +97,11 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
     {
         for (const auto& element0 : elements(gridGeometry0.gridView()))
         {
-            const auto& stencil = couplingManager.couplingStencil(element0, domainI, domainJ);
+            const auto& stencil = couplingManager.couplingElementStencil(element0, domainI, domainJ);
             const auto globalI = gridGeometry0.elementMapper().index(element0);
             for (const auto globalJ : stencil)
-                pattern.add(globalI, globalJ);
+                for (const auto& dofData : couplingManager.coupledElementDofData(domainI, element0, domainJ, globalJ))
+                    pattern.add(globalI, dofData.index);
         }
     }
 
@@ -135,12 +136,13 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
         static constexpr int dim = std::decay_t<decltype(gridGeometry0.gridView())>::dimension;
         for (const auto& element0 : elements(gridGeometry0.gridView()))
         {
-            const auto& stencil = couplingManager.couplingStencil(element0, domainI, domainJ);
+            const auto& stencil = couplingManager.couplingElementStencil(element0, domainI, domainJ);
             for (std::size_t vIdxLocal = 0; vIdxLocal < element0.subEntities(dim); ++vIdxLocal)
             {
                 const auto globalI = gridGeometry0.vertexMapper().subIndex(element0, vIdxLocal, dim);
                 for (const auto globalJ : stencil)
-                    pattern.add(globalI, globalJ);
+                    for (const auto& dofData : couplingManager.coupledElementDofData(domainI, element0, domainJ, globalJ))
+                        pattern.add(globalI, dofData.index);
             }
         }
     }
