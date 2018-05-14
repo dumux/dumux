@@ -73,13 +73,12 @@ class CCBBoxTreeEmbeddedCouplingManager
     template<std::size_t id> using PointSource = typename GET_PROP_TYPE(SubDomainTypeTag<id>, PointSource);
     template<std::size_t id> using PrimaryVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, PrimaryVariables);
     template<std::size_t id> using NumEqVector = typename GET_PROP_TYPE(SubDomainTypeTag<id>, NumEqVector);
-    template<std::size_t id> using ElementSolutionVector = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementSolutionVector);
     template<std::size_t id> using VolumeVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, VolumeVariables);
-    template<std::size_t id> using ElementVolumeVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementVolumeVariables);
+    template<std::size_t id> using ElementVolumeVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVolumeVariables)::LocalView;
     template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using ElementBoundaryTypes = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementBoundaryTypes);
-    template<std::size_t id> using ElementFluxVariablesCache = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementFluxVariablesCache);
+    template<std::size_t id> using ElementFluxVariablesCache = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridFluxVariablesCache)::LocalView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
     enum {

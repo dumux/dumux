@@ -27,30 +27,25 @@
 #ifndef DUMUX_INTEGRATION_POINTSOURCE_HH
 #define DUMUX_INTEGRATION_POINTSOURCE_HH
 
+#include <type_traits>
 #include <dumux/common/pointsource.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup EmbeddedCoupling
  * \brief An integration point source class with an identifier to attach data
  *        and a quadrature weight and integration element
  */
-template<class TypeTag, typename IdType = std::size_t>
-class IntegrationPointSource : public Dumux::IdPointSource<TypeTag, IdType>
+template<class GlobalPosition, class SourceValues, typename IdType = std::size_t>
+class IntegrationPointSource : public IdPointSource<GlobalPosition, SourceValues, IdType>
 {
-    using ParentType = Dumux::IdPointSource<TypeTag, IdType>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-
-    static const int dimworld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using ParentType = IdPointSource<GlobalPosition, SourceValues, IdType>;
+    using Scalar = std::decay_t<decltype(std::declval<SourceValues>()[0])>;
 
 public:
     //! Constructor for integration point sources
-    IntegrationPointSource(GlobalPosition pos, PrimaryVariables values, IdType id,
+    IntegrationPointSource(GlobalPosition pos, SourceValues values, IdType id,
                            Scalar qpweight, Scalar integrationElement,
                            const std::vector<std::size_t>& elementIndices)
       : ParentType(pos, values, id),
@@ -83,7 +78,7 @@ public:
     }
 
     //! Convenience = operator overload modifying only the values
-    IntegrationPointSource& operator= (const PrimaryVariables& values)
+    IntegrationPointSource& operator= (const SourceValues& values)
     {
         ParentType::operator=(values);
         return *this;
