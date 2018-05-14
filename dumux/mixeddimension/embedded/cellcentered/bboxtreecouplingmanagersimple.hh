@@ -53,8 +53,9 @@ namespace Dumux {
  */
 template<class MDTraits>
 class CCBBoxTreeEmbeddedCouplingManagerSimple
-: public CouplingManager<MDTraits, CCBBoxTreeEmbeddedCouplingManagerSimple<MDTraits>>
+: public CouplingManager<MDTraits>
 {
+    using ParentType = CouplingManager<MDTraits>;
     using Scalar = typename MDTraits::Scalar;
     static constexpr auto bulkIdx = typename MDTraits::template DomainIdx<0>();
     static constexpr auto lowDimIdx = typename MDTraits::template DomainIdx<1>();
@@ -143,9 +144,9 @@ public:
      *        the given domain I element's residual depends on.
      */
     template<std::size_t i, std::size_t j>
-    const CouplingStencil& couplingStencil(const Element<i>& element,
-                                           Dune::index_constant<i> domainI,
-                                           Dune::index_constant<j> domainJ) const
+    const CouplingStencil& couplingElementStencil(const Element<i>& element,
+                                                  Dune::index_constant<i> domainI,
+                                                  Dune::index_constant<j> domainJ) const
     {
         static_assert(i != j, "A domain cannot be coupled to itself!");
 
@@ -155,6 +156,17 @@ public:
         else
             return emptyStencil_;
     }
+
+    /*!
+     * \brief returns data on all dofs inside an element of domain j
+     *        that is coupled to an element of domain i with the given index
+     */
+    template<std::size_t i, std::size_t j, class IndexTypeJ>
+    auto coupledElementDofData(Dune::index_constant<i> domainI,
+                               const Element<i>& elementI,
+                               Dune::index_constant<j> domainJ,
+                               IndexTypeJ globalJ) const
+    { return std::array<typename ParentType::template DofData<i,j>, 1>({{globalJ, 0}}); }
 
     //! evaluate coupling residual for the derivative residual i with respect to privars of dof j
     //! we only need to evaluate the part of the residual that will be influenced by the the privars of dof j
@@ -189,15 +201,16 @@ public:
     /*!
      * \brief Update the coupling context for a derivative i->j
      */
-    template<std::size_t i, std::size_t j, class Assembler>
+    template<std::size_t i, std::size_t j, class ElemSolJ, class Assembler>
     void updateCouplingContext(Dune::index_constant<i> domainI,
                                Dune::index_constant<j> domainJ,
                                const Element<j>& element,
-                               const PrimaryVariables<j>& priVars,
+                               const ElemSolJ& elemSol,
+                               std::size_t pvIdx,
                                const Assembler& assembler)
     {
         const auto eIdx = problem(domainJ).fvGridGeometry().elementMapper().index(element);
-        curSol_[domainJ][eIdx] = priVars;
+        curSol_[domainJ][eIdx] = elemSol[pvIdx];
     }
 
     // \}
