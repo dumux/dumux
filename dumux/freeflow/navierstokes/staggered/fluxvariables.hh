@@ -93,14 +93,15 @@ public:
     * \param upwindTerm The uwind term (i.e. the advectively transported quantity)
     */
     template<class UpwindTerm>
-    static Scalar advectiveFluxForCellCenter(const ElementVolumeVariables& elemVolVars,
+    static Scalar advectiveFluxForCellCenter(const Problem& problem,
+                                             const ElementVolumeVariables& elemVolVars,
                                              const ElementFaceVariables& elemFaceVars,
                                              const SubControlVolumeFace &scvf,
                                              UpwindTerm upwindTerm)
     {
         const Scalar velocity = elemFaceVars[scvf].velocitySelf();
         const bool insideIsUpstream = scvf.directionSign() == sign(velocity);
-        static const Scalar upWindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        static const Scalar upWindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
@@ -143,7 +144,7 @@ public:
 
         // Call the generic flux function.
         CellCenterPrimaryVariables result(0.0);
-        result[Indices::conti0EqIdx - ModelTraits::dim()] = advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm);
+        result[Indices::conti0EqIdx - ModelTraits::dim()] = advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTerm);
 
         return result;
     }
@@ -206,9 +207,9 @@ public:
             const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
 
             // Lamba function to evaluate the transported momentum, regarding an user-specified upwind weight.
-            auto computeMomentum = [&insideVolVars](const Scalar upstreamVelocity, const Scalar downstreamVelocity)
+            auto computeMomentum = [&insideVolVars, &problem](const Scalar upstreamVelocity, const Scalar downstreamVelocity)
             {
-                static const Scalar upwindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+                static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
                 return (upwindWeight * upstreamVelocity + (1.0 - upwindWeight) * downstreamVelocity) * insideVolVars.density();
             };
 
@@ -228,7 +229,7 @@ public:
         const Scalar gradV = (velocityOpposite - velocitySelf) / scvf.selfToOppositeDistance();
 
         static const bool enableUnsymmetrizedVelocityGradient
-            = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+            = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
         const Scalar factor = enableUnsymmetrizedVelocityGradient ? 1.0 : 2.0;
         frontalFlux -= factor * insideVolVars.effectiveViscosity() * gradV;
 
@@ -386,12 +387,12 @@ private:
         const auto& outsideVolVars = elemVolVars[normalFace.outsideScvIdx()];
 
         // Lamba function to evaluate the transported momentum, regarding an user-specified upwind weight.
-        auto computeMomentum = [](const VolumeVariables& upstreamVolVars,
+        auto computeMomentum = [&problem](const VolumeVariables& upstreamVolVars,
                                   const VolumeVariables& downstreamVolVars,
                                   const Scalar upstreamVelocity,
                                   const Scalar downstreamVelocity)
         {
-            static const Scalar upWindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+            static const Scalar upWindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
             const Scalar density = upWindWeight * upstreamVolVars.density() + (1.0 - upWindWeight) * downstreamVolVars.density();
             const Scalar transportedVelocity =  upWindWeight * upstreamVelocity + (1.0 - upWindWeight) * downstreamVelocity;
             return transportedVelocity * density;
@@ -440,7 +441,7 @@ private:
         FacePrimaryVariables normalDiffusiveFlux(0.0);
 
         static const bool enableUnsymmetrizedVelocityGradient
-            = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+            = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
         // Get the volume variables of the own and the neighboring element. The neighboring
         // element is adjacent to the staggered face normal to the current scvf

@@ -82,7 +82,7 @@ public:
                 return density * fraction;
             };
 
-            flux[compIdx] = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm);
+            flux[compIdx] = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTerm);
         }
 
         flux += MolecularDiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);

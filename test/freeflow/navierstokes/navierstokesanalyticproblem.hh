@@ -165,8 +165,7 @@ public:
 
                 // viscous term (molecular)
                 source[Indices::velocity(velIdx)] -= density_ * kinematicViscosity_* dvdx2(globalPos)[velIdx][dimIdx];
-                static bool enableUnsymmetrizedVelocityGradient = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
-                                                                                          "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
+                static const bool enableUnsymmetrizedVelocityGradient = getParam<bool>("FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
                 if (!enableUnsymmetrizedVelocityGradient)
                     source[Indices::velocity(velIdx)] -= density_ * kinematicViscosity_* dvdx2(globalPos)[dimIdx][velIdx];
             }
@@ -174,7 +173,7 @@ public:
             source[Indices::velocity(velIdx)] += dpdx(globalPos)[velIdx];
 
             // gravity term
-            static bool enableGravity = getParam<bool>("Problem.EnableGravity");
+            static const bool enableGravity = getParam<bool>("Problem.EnableGravity");
             if (enableGravity)
             {
                 source[Indices::velocity(velIdx)] -= density_ * this->gravity()[velIdx];

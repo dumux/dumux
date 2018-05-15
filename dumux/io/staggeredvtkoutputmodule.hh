@@ -104,7 +104,7 @@ public:
                       fvGridGeometry.gridView().comm().size() )
 
     {
-        writeFaceVars_ = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.WriteFaceData", false);
+        writeFaceVars_ = getParamFromGroup<bool>(problem.paramGroup(), "Vtk.WriteFaceData", false);
         coordinatesInitialized_ = false;
     }
 

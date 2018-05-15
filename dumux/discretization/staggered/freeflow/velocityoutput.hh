@@ -62,16 +62,16 @@ public:
      * \param sol The solution vector
      */
     StaggeredFreeFlowVelocityOutput(const Problem& problem,
-                           const FVGridGeometry& fvGridGeometry,
-                           const GridVariables& gridVariables,
-                           const SolutionVector& sol)
+                                    const FVGridGeometry& fvGridGeometry,
+                                    const GridVariables& gridVariables,
+                                    const SolutionVector& sol)
     : problem_(problem)
     , fvGridGeometry_(fvGridGeometry)
     , gridVariables_(gridVariables)
     , sol_(sol)
     {
         // check if velocity vectors shall be written to the VTK file
-        velocityOutput_ = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.AddVelocity");
+        velocityOutput_ = getParamFromGroup<bool>(problem.paramGroup(), "Vtk.AddVelocity");
     }
 
     //! Returns whether to enable the velocity output or not

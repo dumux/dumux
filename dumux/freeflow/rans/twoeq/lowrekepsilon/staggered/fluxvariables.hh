@@ -82,12 +82,12 @@ public:
     * \brief Computes the flux for the cell center residual.
     */
     CellCenterPrimaryVariables computeMassFlux(const Problem& problem,
-                                                        const Element &element,
-                                                        const FVElementGeometry& fvGeometry,
-                                                        const ElementVolumeVariables& elemVolVars,
-                                                        const ElementFaceVariables& elemFaceVars,
-                                                        const SubControlVolumeFace &scvf,
-                                                        const FluxVariablesCache& fluxVarsCache)
+                                               const Element &element,
+                                               const FVElementGeometry& fvGeometry,
+                                               const ElementVolumeVariables& elemVolVars,
+                                               const ElementFaceVariables& elemFaceVars,
+                                               const SubControlVolumeFace &scvf,
+                                               const FluxVariablesCache& fluxVarsCache)
     {
         CellCenterPrimaryVariables flux = ParentType::computeMassFlux(problem, element, fvGeometry,
                                                                       elemVolVars, elemFaceVars, scvf, fluxVarsCache);
@@ -103,9 +103,9 @@ public:
         };
 
         flux[turbulentKineticEnergyEqIdx - ModelTraits::dim()]
-            = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermK);
+            = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermK);
         flux[dissipationEqIdx - ModelTraits::dim()]
-            = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermEpsilon);
+            = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermEpsilon);
 
         // calculate diffusive flux
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
