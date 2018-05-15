@@ -383,9 +383,10 @@ public:
                 auto evalResiduals = [&](Scalar priVar)
                 {
                     // update the volume variables and compute element residual
-                    elemSol[scv.indexInElement()][pvIdx] = priVar;
+                    const auto localDofIndex = scv.indexInElement();
+                    elemSol[localDofIndex][pvIdx] = priVar;
                     curVolVars.update(elemSol, this->problem(), element, scv);
-                    this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol, this->assembler());
+                    this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol, localDofIndex, pvIdx, this->assembler());
                     return this->evalLocalResidual();
                 };
 
@@ -448,7 +449,7 @@ public:
         {
             const auto& elementJ = gridGeometryJ.element(globalJ);
             auto elemSolJ = elementSolution(elementJ, curSolJ, gridGeometryJ);
-            const auto origResidual = this->couplingManager().evalCouplingResidual(domainI, element, fvGeometry, curElemVolVars, this->elemBcTypes(), elemFluxVarsCache,
+            const auto origResidual = this->couplingManager().evalCouplingResidual(domainI, element, fvGeometry, curElemVolVars, this->elemBcTypes(), elemFluxVarsCache, this->assembler().localResidual(domainI),
                                                                                    domainJ, elementJ);
 
             // compute derivatives w.r.t. each dof in the coupled element
@@ -465,9 +466,9 @@ public:
                     auto evalCouplingResidual = [&](Scalar priVar)
                     {
                         elemSolJ[localDofIdx][pvIdx] = priVar;
-                        this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ, this->assembler());
+                        this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ, localDofIdx, pvIdx, this->assembler());
                         return this->couplingManager().evalCouplingResidual(domainI, element, fvGeometry, curElemVolVars, this->elemBcTypes(), elemFluxVarsCache,
-                                                                            domainJ, elementJ);
+                                                                            this->assembler().localResidual(domainI), domainJ, elementJ);
                     };
 
                     // derive the residuals numerically
@@ -499,7 +500,7 @@ public:
                     elemSolJ[localDofIdx][pvIdx] = origPriVarsJ[pvIdx];
 
                     // restore the undeflected state of the coupling context
-                    this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ, this->assembler());
+                    this->couplingManager().updateCouplingContext(domainI, domainJ, elementJ, elemSolJ, localDofIdx, pvIdx, this->assembler());
                 }
             }
         }
@@ -544,7 +545,7 @@ public:
         //             LocalResidualValues partialDerivTmp(0.0);
         //             // update the volume variables and the flux var cache
         //             elemSolJ[0][pvIdx] = priVar;
-        //             this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ[0], this->assembler());
+        //             this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, localDofIdx, pvIdx, this->assembler());
         //             curVolVarsJ.update(elemSolJ, this->problem(), elementJ, scvJ);
         //
         //             // calculate the residual with the deflected primary variables
@@ -570,7 +571,7 @@ public:
         //         curVolVarsJ = origVolVarsJ;
         //
         //         // restore the undeflected state of the coupling context
-        //         this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ[0], this->assembler());
+        //         this->couplingManager().updateCouplingContext(domainI, domainI, elementJ, elemSolJ, localDofIdx, pvIdx, this->assembler());
         //     }
         // }
     }
