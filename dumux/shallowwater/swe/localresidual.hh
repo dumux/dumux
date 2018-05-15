@@ -118,7 +118,6 @@ public:
                                const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         ResidualVector flux(0.0);
-
         auto numFlux = AdvectionType::flux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         flux = numFlux;// + turbFlux;
 

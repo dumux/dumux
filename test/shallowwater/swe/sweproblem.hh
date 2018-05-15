@@ -99,12 +99,23 @@ class SweTestProblem : public PorousMediumFlowProblem<TypeTag>
         massBalanceIdx = Indices::massBalanceIdx,
         velocityXIdx = Indices::velocityXIdx,
         velocityYIdx = Indices::velocityYIdx,
-
         // Grid and world dimension
         dimWorld = GridView::dimensionworld
     };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+
+    struct boundaryInfo{
+        std::vector<double> time;
+        std::vector<double> value;
+        std::vector<int> boundaryType;
+    };
+
+    std::vector<std::vector<double>> boundary_boxes;
+    std::vector<int> bd_types;
+    std::vector<boundaryInfo> boundaryValuesVector;
+    std::vector<double> hA_boundarySum;
+    std::map<int,double>hA_boundaryMap;
 
 public:
     /*!
@@ -131,6 +142,48 @@ public:
      */
     const std::string& name() const
     { return name_; }
+
+    /*!
+     * \name set Boundary values
+     */
+    // \{
+
+    /*!
+     * \brief save the boundary value for a given time.
+     *
+     * \param globalPos The position for which the boundary type is set
+     */
+
+    int setBoundaryValues(std::vector<int> bd_types, int number_of_bd){
+
+        std::ifstream infile;
+        std::string line;
+        std::string splittedLine;
+        int read_bdId;
+        double read_bdTime;
+        double read_bdValue;
+        this->boundaryValuesVector.resize(number_of_bd);
+        this->hA_boundarySum.resize(number_of_bd);
+
+        //read the boundary file
+        infile.open("boundary.dat");
+        if (!infile) {
+            std::cerr << "Unable to open boundary file " << "bounday.dat" << std::endl;
+        }
+        while(std::getline(infile,line))
+        {
+            std::stringstream ssin(line);
+            while(ssin.good()){
+                while(ssin >> read_bdId >> read_bdTime >> read_bdValue){
+                    this->boundaryValuesVector[read_bdId].time.push_back(read_bdTime);
+                    this->boundaryValuesVector[read_bdId].value.push_back(read_bdValue);
+                }
+            }
+        }
+        this->number_of_bd = number_of_bd;
+        this->bd_types = bd_types;
+        return 0;
+    }
 
 
     // \}
