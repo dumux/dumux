@@ -47,7 +47,7 @@ public:
     struct DofData
     {
         std::size_t index;
-        unsigned int localIndex;
+        std::size_t localIndex;
     };
 
     //! default type for storing data of all dofs within a coupled element
@@ -102,7 +102,8 @@ public:
      */
     template<std::size_t i, class Element, class ElementSolution, class Assembler>
     void updateCouplingContext(Dune::index_constant<i> domainI, Dune::index_constant<i> domainJ,
-                               const Element& element, const ElementSolution& elemSol, std::size_t pvIdx,
+                               const Element& element, const ElementSolution& elemSol,
+                               std::size_t localDofIndex, std::size_t pvIdx,
                                const Assembler& assembler)
     { DUNE_THROW(Dune::NotImplemented, "Coupling manager does not implement updateCouplingContext() function"); }
 
