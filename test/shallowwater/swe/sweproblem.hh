@@ -33,6 +33,12 @@
 #include <dumux/shallowwater/numericalfluxes/exactriemannsolver.hh>
 #include <dumux/shallowwater/numericalfluxes/fluxrotation.hh>
 #include <dumux/shallowwater/numericalfluxes/boundaryFluxes.hh>
+#include<iostream>
+#include<fstream>
+#include<string>
+#include<sstream>
+#include<vector>
+#include<map>
 
 namespace Dumux
 {
@@ -105,17 +111,35 @@ class SweTestProblem : public PorousMediumFlowProblem<TypeTag>
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    struct boundaryInfo{
-        std::vector<double> time;
-        std::vector<double> value;
-        std::vector<int> boundaryType;
+
+    struct BoundaryBox{
+        int id;
+        double x0,x1,y0,y1;
+        std::string boundaryfilename;
     };
 
-    std::vector<std::vector<double>> boundary_boxes;
-    std::vector<int> bd_types;
-    std::vector<boundaryInfo> boundaryValuesVector;
-    std::vector<double> hA_boundarySum;
-    std::map<int,double>hA_boundaryMap;
+    struct BoundaryValues{
+        int id;
+        std::string type;
+        double bdvalue_old;
+        double relaxfactor = 0.05;
+        std::vector<double> x;
+        std::vector<double> y;
+    };
+
+    //TODO map that saves the water flux for each boundary
+    std::map<int,double> waterdischarge;
+    std::map<int,double> waterdepth;
+
+    std::vector<BoundaryBox> boundaryBoxesVec;
+    std::map<int,BoundaryValues> boundaryValuesMap;
+
+
+    int searchedId;
+    int numberOfBoundaryfiles = 0;
+    std::vector<int> boundaryfilesExistsForId;
+
+
 
 public:
     /*!
@@ -364,6 +388,143 @@ public:
     };
 
     // \}
+    void readBoundaryBoxFile(std::string filename)
+    {
+        double x0,x1,y0,y1;
+        int id;
+        std::string boundaryfilename;
+        std::ifstream infile;
+        std::string line;
+        std::string comment ("#");
+
+        infile.open(filename);
+        if (!infile) {
+            std::cerr << "Unable to open boundary file " << filename << std::endl;
+            //TODO exit the programm
+        }
+        while(std::getline(infile,line))
+        {
+            std::stringstream ssin(line);
+            while(ssin.good()){
+                //check if comment line
+                std::size_t found = line.find(comment);
+                if (found == std::string::npos){
+                    while(ssin >> x0 >> x1 >> y0 >> y1 >> id >> boundaryfilename ){
+                        BoundaryBox myBox;
+                        myBox.x0 = x0;
+                        myBox.x1 = x1;
+                        myBox.y0 = y0;
+                        myBox.y1 = y1;
+                        myBox.id = id;
+                        myBox.boundaryfilename = boundaryfilename;
+                        boundaryBoxesVec.push_back(myBox);
+                        numberOfBoundaryfiles = std::max(id,numberOfBoundaryfiles);
+                    }
+                }else{
+                    ssin.ignore(256);
+                }
+            }
+        }
+
+        //TODO read boundaryBoxesFiles
+        this->readBoundaryValuesFiles();
+
+    }
+
+    int getBoundaryId(double x, double y)
+    {
+        searchedId = 0;
+
+        //loop over all boxes
+        for(std::vector<int>::size_type i = 0; i != boundaryBoxesVec.size(); i++) {
+            auto x0 = std::min(boundaryBoxesVec[i].x0,boundaryBoxesVec[i].x1);
+            auto x1 = std::max(boundaryBoxesVec[i].x0,boundaryBoxesVec[i].x1);
+            auto y0 = std::min(boundaryBoxesVec[i].y0,boundaryBoxesVec[i].y1);
+            auto y1 = std::max(boundaryBoxesVec[i].y0,boundaryBoxesVec[i].y1);
+            int id = boundaryBoxesVec[i].id;
+
+            searchedId = 0;
+            if (((x >= x0)&&(x <= x1)) && ((y >= y0)&&(y <= y1))){
+                searchedId = id;
+                return searchedId;
+            }
+        }
+        return searchedId;
+
+    }
+
+
+    //get the boundary value for a given time and id
+    double getBoundaryValue(double m_time, int idPosition)
+    {
+        auto boundaryValues = this->boundaryValuesMap[idPosition];
+        int steps = boundaryValues.x.size();
+        double bd_value;
+
+        if  (boundaryValues.type == "hq-curve")
+        {
+            std::cerr << "This function does not work for bdtype: hq-curve " << std::endl;
+        }else{
+            for (int j=0; j< steps-1 ;++j){
+                double t1 = boundaryValues.x[j];
+                double t2 = boundaryValues.x[j+1];
+                double v1 = boundaryValues.y[j];
+                double v2 = boundaryValues.y[j+1];
+
+                if ((t1 <= m_time)&&(m_time <= t2)){
+                    if (v1 == v2){
+                        bd_value = v2;
+                    }else{
+                        bd_value = ((m_time-t1)/((t2-t1)/(v2-v1))) + v1;
+                    }
+                    break;
+                }
+            }
+        }
+
+        //some extra cases outside the time space we retrun first/last values
+        if (m_time < boundaryValues.x[0]) bd_value = boundaryValues.y[0];
+        if (m_time > boundaryValues.x.back()) bd_value = boundaryValues.y.back();
+
+        return bd_value;
+    }
+
+    //get the boundary value for a given time and id for hq we also give the oldvalue
+    double getWQBoundaryValue(double sim_q, int idPosition)
+    {
+        auto boundaryValues = this->boundaryValuesMap[idPosition];
+        int steps = boundaryValues.x.size();
+        double bd_value;
+
+        if  (boundaryValues.type == "hq-curve")
+        {
+            for (int j=0; j< steps-1 ;++j){
+                //time means here discharge,
+                double q1 = boundaryValues.x[j];
+                double q2 = boundaryValues.x[j+1];
+                double w1 = boundaryValues.y[j];
+                double w2 = boundaryValues.y[j+1];
+
+                if ((q1 <= sim_q)&&(sim_q <= q2)){
+                    bd_value = ((sim_q-q1)/((q2-q1)/(w2-w1))) + w1;
+                    double h_new = bd_value;
+                    bd_value = boundaryValues.bdvalue_old +
+                               boundaryValues.relaxfactor *
+                               (h_new - boundaryValues.bdvalue_old);
+                    break;
+                }
+            }
+        }else{
+            std::cerr << "This function only works for bdtype: hq-curve " << std::endl;               //TODO exit the programm
+        }
+
+        //some extra cases outside the time space we retrun first/last values
+        if (sim_q < boundaryValues.x[0]) bd_value = boundaryValues.y[0];
+        if (sim_q > boundaryValues.x.back()) bd_value = boundaryValues.y.back();
+
+        return bd_value;
+    }
+
 
 private:
 
@@ -371,6 +532,86 @@ private:
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
     static constexpr Scalar minHBoundary_ = 1.0E-6;
+
+    /*!
+     * \brief read boundary value files.
+     *
+     *
+     * \param
+     */
+    //Read in boundary files automatically!
+    void readBoundaryValuesFiles()
+    {
+        std::ifstream infile;
+        std::vector<BoundaryValues> boundaryValues;
+        std::string line;
+        std::string comment ("#");
+        std::string bdtypeString ("bdtype");
+        std::string bdidString ("bdid");
+        std::string initialvalueString ("initialvalue");
+
+        std::string typeDepth ("depth");
+        std::string typeDischarge ("discharge");
+        std::string typeHQcurver ("hq-curve");
+        std::string dummy;
+
+        std::vector<double> x;
+        std::vector<double> y;
+        double inx,iny;
+
+        std::string actualfile;
+
+        //open an read all files n = numberOfBoundaryfiles there might be more boxes as files!
+        for (std::vector<int>::size_type i = 0; i != boundaryBoxesVec.size(); i++){
+
+            infile.open(this->boundaryBoxesVec[i].boundaryfilename);
+            if (!infile) {
+                std::cerr << "\nError in readBoundaryValuesFiles() Unable to open boundary file "
+                          << this->boundaryBoxesVec[i].boundaryfilename << std::endl;
+                //TODO exit the programm
+            }
+            BoundaryValues myValues;
+
+            while(std::getline(infile,line))
+            {
+
+                std::stringstream ssin(line);
+                while(ssin.good()){
+                    //check if comment line
+                    std::size_t found = line.find(comment);
+                    if (found == std::string::npos){
+
+                        //check for bdtype
+                        found = line.find(bdtypeString);
+                        if (found != std::string::npos){
+                            ssin >> dummy >>  myValues.type;
+                        }
+
+                        //check for bdid
+                        found = line.find(bdidString);
+                        if (found != std::string::npos){
+                            ssin >> dummy >>  myValues.id;
+                        }
+
+                        //check for  initialvalue
+                        found = line.find(initialvalueString);
+                        if (found != std::string::npos){
+                            ssin >> dummy >>  myValues.bdvalue_old >> myValues.relaxfactor;
+                        }
+                        //else read in variables
+                        while(ssin >> inx >> iny){
+                            myValues.x.push_back(inx);
+                            myValues.y.push_back(iny);
+                        }
+                    }else{
+                        ssin.ignore(256);
+                    }
+                }
+            }
+            infile.close();
+            this->boundaryValuesMap[myValues.id] = myValues;
+        }
+    }
 };
 
 } //end namespace Dumux
