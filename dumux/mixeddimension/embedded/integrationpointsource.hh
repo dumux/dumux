@@ -28,7 +28,9 @@
 #define DUMUX_INTEGRATION_POINTSOURCE_HH
 
 #include <type_traits>
+#include <dune/common/reservedvector.hh>
 #include <dumux/common/pointsource.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux {
 
@@ -120,43 +122,43 @@ public:
             // loop over all intersected elements
             for (unsigned int eIdx : entities)
             {
-                // if(isBox)
-                // {
-                //     // check in which subcontrolvolume(s) we are
-                //     const auto element = boundingBoxTree.entitySet().entity(eIdx);
-                //     auto fvGeometry = localView(fvGridGeometry);
-                //     fvGeometry.bindElement(element);
-                //     const auto globalPos = source.position();
-                //     // loop over all sub control volumes and check if the point source is inside
-                //     std::vector<unsigned int> scvIndices;
-                //     for (auto&& scv : scvs(fvGeometry))
-                //     {
-                //         if (intersectsPointGeometry(globalPos, scv.geometry()))
-                //             scvIndices.push_back(scv.indexInElement());
-                //     }
-                //     // for all scvs that where tested positiv add the point sources
-                //     // to the element/scv to point source map
-                //     for (auto scvIdx : scvIndices)
-                //     {
-                //         const auto key = std::make_pair(eIdx, scvIdx);
-                //         if (pointSourceMap.count(key))
-                //             pointSourceMap.at(key).push_back(source);
-                //         else
-                //             pointSourceMap.insert({key, {source}});
-                //         // split equally on the number of matched scvs
-                //         auto& s = pointSourceMap.at(key).back();
-                //         s.setEmbeddings(scvIndices.size()*s.embeddings());
-                //     }
-                // }
-                // else
-                // {
+                if (FVGridGeometry::discMethod == DiscretizationMethod::box)
+                {
+                    // check in which subcontrolvolume(s) we are
+                    const auto element = fvGridGeometry.boundingBoxTree().entitySet().entity(eIdx);
+                    auto fvGeometry = localView(fvGridGeometry);
+                    fvGeometry.bindElement(element);
+                    const auto globalPos = source.position();
+                    // loop over all sub control volumes and check if the point source is inside
+                    constexpr int dim = FVGridGeometry::GridView::dimension;
+                    Dune::ReservedVector<std::size_t, 1<<dim> scvIndices;
+                    for (auto&& scv : scvs(fvGeometry))
+                        if (intersectsPointGeometry(globalPos, scv.geometry()))
+                            scvIndices.push_back(scv.indexInElement());
+
+                    // for all scvs that where tested positiv add the point sources
+                    // to the element/scv to point source map
+                    for (auto scvIdx : scvIndices)
+                    {
+                        const auto key = std::make_pair(eIdx, scvIdx);
+                        if (pointSourceMap.count(key))
+                            pointSourceMap.at(key).push_back(source);
+                        else
+                            pointSourceMap.insert({key, {source}});
+                        // split equally on the number of matched scvs
+                        auto& s = pointSourceMap.at(key).back();
+                        s.setEmbeddings(scvIndices.size()*s.embeddings());
+                    }
+                }
+                else
+                {
                     // add the pointsource to the DOF map
                     const auto key = std::make_pair(eIdx, /*scvIdx=*/ 0);
                     if (pointSourceMap.count(key))
                         pointSourceMap.at(key).push_back(source);
                     else
                         pointSourceMap.insert({key, {source}});
-                // }
+                }
             }
         }
     }
