@@ -38,7 +38,6 @@ namespace Properties {
 // Basic properties of numeric models:
 ///////////////////////////////////////
 NEW_PROP_TAG(Scalar);                 //!< Property to specify the type of scalar values.
-NEW_PROP_TAG(ModelParameterGroup);    //!< Property which defines the group that is queried for parameters by default
 NEW_PROP_TAG(ModelDefaultParameters); //!< Property which defines the group that is queried for parameters by default
 NEW_PROP_TAG(GridCreator);            //!< Property which provides a GridCreator (manages grids)
 NEW_PROP_TAG(Grid);                   //!< The DUNE grid type
