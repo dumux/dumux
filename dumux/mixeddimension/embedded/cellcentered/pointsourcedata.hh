@@ -27,6 +27,7 @@
 #define DUMUX_POINTSOURCEDATA_HH
 
 #include <vector>
+#include <unordered_map>
 #include <dune/common/fvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
@@ -190,9 +191,11 @@ public:
                 for (std::size_t j = 0; j < circleStencil_.size(); ++j)
                 {
                     BulkPrimaryVariables priVars(0.0);
-                    for (std::size_t i = 0; i < circleCornerIndices_[j].size(); ++i)
+                    const auto& cornerIndices = circleCornerIndices_[circleStencil_[j]];
+                    const auto& shapeValues = circleShapeValues_[circleStencil_[j]];
+                    for (std::size_t i = 0; i < cornerIndices.size(); ++i)
                         for (std::size_t priVarIdx = 0; priVarIdx < priVars.size(); ++priVarIdx)
-                            priVars[priVarIdx] += sol[circleCornerIndices_[j][i]][priVarIdx]*circleShapeValues_[j][i];
+                            priVars[priVarIdx] += sol[cornerIndices[i]][priVarIdx]*shapeValues[i];
                     // multiply with weight and add
                     priVars *= circleIpWeight_[j];
                     weightSum += circleIpWeight_[j];
@@ -220,8 +223,8 @@ public:
         }
     }
 
-    void addCircleInterpolation(const std::vector<std::vector<std::size_t> >& circleCornerIndices,
-                                const std::vector<ShapeValues>& circleShapeValues,
+    void addCircleInterpolation(const std::unordered_map<std::size_t, std::vector<std::size_t> >& circleCornerIndices,
+                                const std::unordered_map<std::size_t, ShapeValues>& circleShapeValues,
                                 const std::vector<Scalar>& circleIpWeight,
                                 const std::vector<std::size_t>& circleStencil)
     {
@@ -247,8 +250,8 @@ public:
     }
 
 private:
-    std::vector<std::vector<std::size_t> > circleCornerIndices_;
-    std::vector<ShapeValues> circleShapeValues_;
+    std::unordered_map<std::size_t, std::vector<std::size_t> > circleCornerIndices_;
+    std::unordered_map<std::size_t, ShapeValues> circleShapeValues_;
     std::vector<Scalar> circleIpWeight_;
     std::vector<std::size_t> circleStencil_;
     bool enableBulkCircleInterpolation_;
