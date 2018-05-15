@@ -259,8 +259,8 @@ public:
             };
 
             // derive the residuals numerically
-            static const NumericEpsilon<Scalar, numEq> eps_{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
-            static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
+            static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
+            static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
             NumericDifferentiation::partialDerivative(evalResiduals, elemSol[0][pvIdx], partialDerivs, origResiduals,
                                                       eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);
 
@@ -381,8 +381,8 @@ public:
             // for non-ghosts compute the derivative numerically
             if (!this->elementIsGhost())
             {
-                static const NumericEpsilon<Scalar, numEq> eps_{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
-                static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
+                static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
+                static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
                 NumericDifferentiation::partialDerivative(evalStorage, elemSol[0][pvIdx], partialDeriv, residual,
                                                           eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);
             }

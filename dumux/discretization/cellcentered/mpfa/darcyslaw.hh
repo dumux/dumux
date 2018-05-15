@@ -74,12 +74,14 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
         {
             // get interaction volume related data from the filler class & upate the cache
             if (fvGeometry.fvGridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-                scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.secondaryInteractionVolume(),
+                scvfFluxVarsCache.updateAdvection(problem,
+                                                  fluxVarsCacheFiller.secondaryInteractionVolume(),
                                                   fluxVarsCacheFiller.secondaryIvLocalFaceData(),
                                                   fluxVarsCacheFiller.secondaryIvDataHandle(),
                                                   scvf);
             else
-                scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.primaryInteractionVolume(),
+                scvfFluxVarsCache.updateAdvection(problem,
+                                                  fluxVarsCacheFiller.primaryInteractionVolume(),
                                                   fluxVarsCacheFiller.primaryIvLocalFaceData(),
                                                   fluxVarsCacheFiller.primaryIvDataHandle(),
                                                   scvf);
@@ -119,12 +121,15 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
          * \brief Update cached objects (transmissibilities and gravity).
          *        This is used for updates with primary interaction volumes.
          *
+         * \param problem The problem
          * \param iv The interaction volume this scvf is embedded in
          * \param localFaceData iv-local info on this scvf
          * \param dataHandle Transmissibility matrix & gravity data of this iv
          * \param scvf The sub-control volume face
          */
-        void updateAdvection(const PrimaryInteractionVolume& iv,
+        template<class Problem>
+        void updateAdvection(const Problem& problem,
+                             const PrimaryInteractionVolume& iv,
                              const PrimaryIvLocalFaceData& localFaceData,
                              const PrimaryIvDataHandle& dataHandle,
                              const SubControlVolumeFace &scvf)
@@ -135,7 +140,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
                 primaryPj_[pIdx] = &dataHandle.pressures(pIdx);
 
-            static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+            static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
             const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
 
             // standard grids
@@ -171,13 +176,15 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
          * \brief Update cached objects (transmissibilities and gravity).
          *        This is used for updates with secondary interaction volumes.
          *
+         * \param problem The problem
          * \param iv The interaction volume this scvf is embedded in
          * \param localFaceData iv-local info on this scvf
          * \param dataHandle Transmissibility matrix & gravity data of this iv
          * \param scvf The sub-control volume face
          */
-        template< bool doSecondary = considerSecondaryIVs, std::enable_if_t<doSecondary, int > = 0 >
-        void updateAdvection(const SecondaryInteractionVolume& iv,
+        template<class Problem, bool doSecondary = considerSecondaryIVs, std::enable_if_t<doSecondary, int > = 0 >
+        void updateAdvection(const Problem& problem,
+                             const SecondaryInteractionVolume& iv,
                              const SecondaryIvLocalFaceData& localFaceData,
                              const SecondaryIvDataHandle& dataHandle,
                              const SubControlVolumeFace &scvf)
@@ -188,7 +195,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethod::ccmpfa>
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
                 secondaryPj_[pIdx] = &dataHandle.pressures(pIdx);
 
-            static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+            static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
             const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
 
             // standard grids
@@ -296,7 +303,7 @@ public:
         }
 
         // maybe add gravitational acceleration
-        static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
         if (enableGravity)
             scvfFlux += fluxVarsCache.gravity(phaseIdx);
 

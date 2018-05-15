@@ -125,7 +125,7 @@ public:
         source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
 
         // maybe add gravitational acceleration
-        static const bool gravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        static const bool gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
         if (gravity)
         {
             const auto& g = problem.gravityAtPos(scv.center());
