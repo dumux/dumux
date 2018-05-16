@@ -119,8 +119,6 @@ int main (int argc, char *argv[]) try
     using Grid = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>;
 
     constexpr int dim = Grid::dimension;
-    constexpr int dimworld = Grid::dimensionworld;
-
 
     using FVGridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, ENABLE_CACHING>;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
