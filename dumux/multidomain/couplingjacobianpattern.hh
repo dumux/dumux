@@ -109,41 +109,60 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
     return pattern;
 }
 
-
+/*!
+ * \ingroup Assembly
+ * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
+ *        for the staggered scheme (degrees of freedom on cell centers)
+ */
 template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
-         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethod::staggered), int> = 0>
+         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethod::staggered &&
+                                    GridGeometryI::isCellCenter()), int> = 0>
 Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
                                                 Dune::index_constant<i> domainI,
                                                 const GridGeometryI& gridGeometryI,
                                                 Dune::index_constant<j> domainJ,
                                                 const GridGeometryJ& gridGeometryJ)
 {
-    const auto numDofsI = gridGeometryI.numDofs();
-    const auto numDofsJ = gridGeometryJ.numDofs();
-    Dune::MatrixIndexSet pattern(numDofsI, numDofsJ);
+    Dune::MatrixIndexSet pattern(gridGeometryI.numDofs(), gridGeometryJ.numDofs());
 
     for (const auto& elementI : elements(gridGeometryI.gridView()))
     {
-        if(gridGeometryI.isCellCenter())
-        {
-            const auto ccGlobalI = gridGeometryI.elementMapper().index(elementI);
-            for (auto&& faceGlobalJ : couplingManager.couplingStencil(domainI, elementI, domainJ))
-                    pattern.add(ccGlobalI, faceGlobalJ);
-        }
-        else
-        {
-            auto fvGeometry = localView(gridGeometryI);
-            fvGeometry.bindElement(elementI);
+        const auto ccGlobalI = gridGeometryI.elementMapper().index(elementI);
+        for (auto&& faceGlobalJ : couplingManager.couplingStencil(domainI, elementI, domainJ))
+                pattern.add(ccGlobalI, faceGlobalJ);
+    }
 
-            // loop over sub control faces
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                const auto faceGlobalI = scvf.dofIndex();
-                for (auto&& ccGlobalJ : couplingManager.couplingStencil(scvf, domainI, domainJ))
-                    pattern.add(faceGlobalI, ccGlobalJ);
-            }
-        }
+    return pattern;
+}
 
+/*!
+ * \ingroup Assembly
+ * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
+ *        for the staggered scheme (degrees of freedom on faces)
+ */
+template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
+         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethod::staggered &&
+                                    GridGeometryI::isFace()), int> = 0>
+Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
+                                                Dune::index_constant<i> domainI,
+                                                const GridGeometryI& gridGeometryI,
+                                                Dune::index_constant<j> domainJ,
+                                                const GridGeometryJ& gridGeometryJ)
+{
+    Dune::MatrixIndexSet pattern(gridGeometryI.numDofs(), gridGeometryJ.numDofs());
+
+    for (const auto& elementI : elements(gridGeometryI.gridView()))
+    {
+        auto fvGeometry = localView(gridGeometryI);
+        fvGeometry.bindElement(elementI);
+
+        // loop over sub control faces
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            const auto faceGlobalI = scvf.dofIndex();
+            for (auto&& globalJ : couplingManager.couplingStencil(domainI, scvf, domainJ))
+                pattern.add(faceGlobalI, globalJ);
+        }
     }
 
     return pattern;
