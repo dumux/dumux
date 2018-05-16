@@ -435,8 +435,9 @@ public:
                 // restore the original state of the scv's volume variables
                 curVolVars = origVolVars;
 
-                // restore the original element solution
+                // restore the original element solution and coupling context
                 elemSol[scv.indexInElement()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
+                this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol, scv.indexInElement(), pvIdx, this->assembler());
             }
         }
     }
