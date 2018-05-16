@@ -171,23 +171,29 @@ public:
     //! we only need to evaluate the part of the residual that will be influenced by the the privars of dof j
     //! i.e. the source term.
     //! the coupling residual is symmetric so we only need to one template function here
-    template<std::size_t i, std::size_t j>
-    NumEqVector<i> evalCouplingResidual(Dune::index_constant<i> domainI,
-                                        const Element<i>& elementI,
-                                        const FVElementGeometry<i>& fvGeometry,
-                                        const ElementVolumeVariables<i>& curElemVolVars,
-                                        const ElementBoundaryTypes<i>& elemBcTypes,
-                                        const ElementFluxVariablesCache<i>& elemFluxVarsCache,
-                                        Dune::index_constant<j> domainJ,
-                                        const Element<j>& elementJ)
+    template<std::size_t i, std::size_t j, class LocalResidualI>
+    auto evalCouplingResidual(Dune::index_constant<i> domainI,
+                              const Element<i>& elementI,
+                              const FVElementGeometry<i>& fvGeometry,
+                              const ElementVolumeVariables<i>& curElemVolVars,
+                              const ElementBoundaryTypes<i>& elemBcTypes,
+                              const ElementFluxVariablesCache<i>& elemFluxVarsCache,
+                              const LocalResidualI& localResidual,
+                              Dune::index_constant<j> domainJ,
+                              const Element<j>& elementJ)
+    -> typename LocalResidualI::ElementResidualVector
     {
         static_assert(i != j, "A domain cannot be coupled to itself!");
 
-        const auto eIdx = problem(domainI).fvGridGeometry().elementMapper().index(elementI);
-        auto&& scv = fvGeometry.scv(eIdx);
-        auto couplingSource = problem(domainI).scvPointSources(elementI, fvGeometry, curElemVolVars, scv);
-        couplingSource *= -scv.volume()*curElemVolVars[scv].extrusionFactor();
-        return couplingSource;
+        typename LocalResidualI::ElementResidualVector residual;
+        residual.resize(fvGeometry.numScv());
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            auto couplingSource = problem(domainI).scvPointSources(elementI, fvGeometry, curElemVolVars, scv);
+            couplingSource *= -scv.volume()*curElemVolVars[scv].extrusionFactor();
+            residual[scv.indexInElement()] = couplingSource;
+        }
+        return residual;
     }
 
     /*!
@@ -205,11 +211,12 @@ public:
                                Dune::index_constant<j> domainJ,
                                const Element<j>& element,
                                const ElemSolJ& elemSol,
+                               std::size_t localDofIdx,
                                std::size_t pvIdx,
                                const Assembler& assembler)
     {
         const auto eIdx = problem(domainJ).fvGridGeometry().elementMapper().index(element);
-        curSol_[domainJ][eIdx] = elemSol[pvIdx];
+        curSol_[domainJ][eIdx][pvIdx] = elemSol[localDofIdx][pvIdx];
     }
 
     // \}
