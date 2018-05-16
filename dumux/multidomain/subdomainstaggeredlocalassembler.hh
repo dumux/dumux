@@ -334,12 +334,13 @@ private:
         const auto residual = this->asImp_().assembleCellCenterJacobianAndResidualImpl(jacRow[domainId], *std::get<domainId>(gridVariables));
         res[cellCenterGlobalI] = residual;
 
+
         // for the coupling blocks
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(jacRow)), [&, domainId = domainId](auto&& domainJ)
+        static constexpr auto otherDomainIds = makeIncompleteIntegerSequence<Dune::Hybrid::size(jacRow), domainId>{};
+        forEach(otherDomainIds, [&, domainId = domainId](auto&& domainJ)
         {
-            if (domainJ != domainId)
-                this->asImp_().assembleJacobianCellCenterCoupling(domainJ, jacRow[domainJ], residual, *std::get<domainJ>(gridVariables));
+            this->asImp_().assembleJacobianCellCenterCoupling(domainJ, jacRow[domainJ], residual, *std::get<domainJ>(gridVariables));
         });
     }
 
@@ -354,10 +355,10 @@ private:
 
         // for the coupling blocks
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(jacRow)), [&, domainId = domainId](auto&& domainJ)
+        static constexpr auto otherDomainIds = makeIncompleteIntegerSequence<Dune::Hybrid::size(jacRow), domainId>{};
+        forEach(otherDomainIds, [&, domainId = domainId](auto&& domainJ)
         {
-            if (domainJ != domainId)
-                this->asImp_().assembleJacobianFaceCoupling(domainJ, jacRow[domainJ], residual, *std::get<domainJ>(gridVariables));
+            this->asImp_().assembleJacobianFaceCoupling(domainJ, jacRow[domainJ], residual, *std::get<domainJ>(gridVariables));
         });
     }
 
@@ -442,6 +443,8 @@ class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numer
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
 
     enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
     enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
@@ -517,25 +520,32 @@ public:
            auto& curVolVars =  this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
            const auto origVolVars(curVolVars);
 
-           const auto origElemSol = elementSolution<FVElementGeometry>(curSol[globalJ]);
+           // const auto origElemSol = elementSolution<FVElementGeometry>(curSol[globalJ]);
 
            for(auto pvIdx : priVarIndices_(cellCenterId))
            {
-               auto elemSol = origElemSol;
+               using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
+               const auto& cellCenterPriVars = curSol[globalJ];
+               PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
+
+               constexpr auto offset = PrimaryVariables::dimension - CellCenterPrimaryVariables::dimension;
                partialDeriv = 0.0;
 
                auto evalResidual = [&](Scalar priVar)
                {
                    // update the volume variables and compute element residual
-                   elemSol[0][pvIdx] = priVar;
+                   priVars[pvIdx + offset] = priVar;
+                   auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
                    curVolVars.update(elemSol, this->problem(), elementJ, scvJ);
-                    return this->evalLocalResidualForCellCenter();
+                   return this->evalLocalResidualForCellCenter();
                };
 
                // derive the residuals numerically
-               static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-               static const NumericEpsilon<Scalar, numEq> eps_{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
-               NumericDifferentiation::partialDerivative(evalResidual, elemSol[0][pvIdx], partialDeriv, origResidual, eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);
+               static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+               static const NumericEpsilon<Scalar, numEq> eps{this->problem().paramGroup()};
+               NumericDifferentiation::partialDerivative(evalResidual, priVars[pvIdx + offset], partialDeriv, origResidual,
+                                                         eps(priVars[pvIdx + offset], pvIdx + offset), numDiffMethod);
+
 
                // update the global jacobian matrix with the current partial derivatives
                updateGlobalJacobian_(A, cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
@@ -625,8 +635,8 @@ public:
                    };
 
                    // derive the residuals numerically
-                   static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-                   static const NumericEpsilon<Scalar, numEq> eps_{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
+                   static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                   static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
                    NumericDifferentiation::partialDerivative(evalResidual, faceSolution[globalJ][pvIdx], partialDeriv, origResiduals[scvf.localFaceIdx()], eps_(faceSolution[globalJ][pvIdx], pvIdx), numDiffMethod);
 
                    // update the global jacobian matrix with the current partial derivatives
@@ -688,8 +698,8 @@ public:
                 };
 
                 // derive the residuals numerically
-                static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-                static const NumericEpsilon<Scalar, numEq> eps_{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
+                static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
                 NumericDifferentiation::partialDerivative(evalResidual, facePriVars[pvIdx], partialDeriv, origResidual, eps_(facePriVars[pvIdx], pvIdx), numDiffMethod);
 
                 // update the global jacobian matrix with the current partial derivatives
@@ -714,14 +724,14 @@ public:
         const auto& element = this->element();
 
         // get stencil informations
-        const auto& stencil = this->couplingManager().couplingStencil(element, domainI, domainJ);
+        const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
 
         if(stencil.empty())
             return;
 
-        const auto origResidual = this->couplingManager().evalCouplingResidual(*this, domainI, domainJ);
         for (const auto globalJ : stencil)
         {
+            const auto origResidual = this->couplingManager().evalCouplingResidual(domainI, *this, domainJ, globalJ);
             const auto& curSol = this->curSol()[domainJ];
             const auto origPriVarsJ = curSol[globalJ];
 
@@ -729,10 +739,10 @@ public:
             {
                 auto evalCouplingResidual = [&](Scalar priVar)
                 {
-                    auto deflectedPriVars = origPriVarsJ;
-                    deflectedPriVars[pvIdx] = priVar;
-                    this->couplingManager().updateCouplingContext(domainI, domainJ, globalJ, deflectedPriVars, this->assembler());
-                    return this->couplingManager().evalCouplingResidual(*this, domainI, domainJ);
+                    auto deflectedPriVarsJ = origPriVarsJ;
+                    deflectedPriVarsJ[pvIdx] = priVar;
+                    this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, deflectedPriVarsJ, pvIdx);
+                    return this->couplingManager().evalCouplingResidual(domainI, *this, domainJ, globalJ);
                 };
 
                 // derive the residuals numerically
@@ -744,7 +754,7 @@ public:
                 updateGlobalJacobian_(A, cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
 
                 // restore the undeflected state of the coupling context
-                this->couplingManager().updateCouplingContext(domainI, domainJ, globalJ, origPriVarsJ, this->assembler());
+                this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, origPriVarsJ, pvIdx);
             }
         }
     }
@@ -789,23 +799,28 @@ public:
 
                 for(auto pvIdx : priVarIndices_(cellCenterId))
                 {
-                    auto priVars = origCellCenterPriVars;
+
+                    using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
+                    const auto& cellCenterPriVars = this->curSol()[cellCenterId][globalJ];
+                    PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
+
+                    constexpr auto offset = PrimaryVariables::dimension - CellCenterPrimaryVariables::dimension;
 
                     partialDeriv = 0;
 
                     auto evalResidual = [&](Scalar priVar)
                     {
                         // update the volume variables and compute element residual
-                        priVars[pvIdx] = priVar;
-                        auto elemSol = elementSolution<FVElementGeometry>(priVars);
+                        priVars[pvIdx + offset] = priVar;
+                        auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
                         curVolVars.update(elemSol, problem, elementJ, scvJ);
                         return this->evalLocalResidualForFace(scvf);
                     };
 
                     // derive the residuals numerically
-                    static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-                    static const NumericEpsilon<Scalar, numEq> eps_{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
-                    NumericDifferentiation::partialDerivative(evalResidual, priVars[pvIdx], partialDeriv, origResiduals[scvf.localFaceIdx()], eps_(priVars[pvIdx], pvIdx), numDiffMethod);
+                    static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                    static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
+                    NumericDifferentiation::partialDerivative(evalResidual, priVars[pvIdx + offset], partialDeriv, origResiduals[scvf.localFaceIdx()], eps_(priVars[pvIdx + offset], pvIdx + offset), numDiffMethod);
 
                     // update the global jacobian matrix with the current partial derivatives
                     updateGlobalJacobian_(A, faceGlobalI, globalJ, pvIdx, partialDeriv);
@@ -820,7 +835,7 @@ public:
 
     template<std::size_t otherId, class JacobianBlock, class ElementResidualVector, class GridVariables>
     void assembleJacobianFaceCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
-                                  const ElementResidualVector& res, GridVariables& gridVariables)
+                                      const ElementResidualVector& res, GridVariables& gridVariables)
     {
         ////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all dofs in the element with respect to all dofs in the coupling stencil. //
@@ -839,16 +854,16 @@ public:
             const auto faceGlobalI = scvf.dofIndex();
 
             // get stencil informations
-            const auto& stencil = this->couplingManager().couplingStencil(scvf, domainI, domainJ);
+            const auto& stencil = this->couplingManager().couplingStencil(domainI, scvf, domainJ);
 
             if(stencil.empty())
                 continue;
 
-            const auto origResidual = this->couplingManager().evalCouplingResidual(*this, scvf, domainI, domainJ);
             // build derivatives with for face dofs w.r.t. cell center dofs
             for(const auto& globalJ : stencil)
             {
                 const auto origPriVarsJ = curSol[globalJ];
+                const auto origResidual = this->couplingManager().evalCouplingResidual(domainI, scvf, *this, domainJ, globalJ);
 
                 for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
                 {
@@ -856,21 +871,21 @@ public:
                     {
                         auto deflectedPriVars = origPriVarsJ;
                         deflectedPriVars[pvIdx] = priVar;
-                        this->couplingManager().updateCouplingContext(domainI, domainJ, globalJ, deflectedPriVars, this->assembler());
-                        return this->couplingManager().evalCouplingResidual(*this, scvf, domainI, domainJ);
+                        this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, deflectedPriVars, pvIdx);
+                        return this->couplingManager().evalCouplingResidual(domainI, scvf, *this, domainJ, globalJ);
                     };
 
                     // derive the residuals numerically
                     FaceResidualValue partialDeriv(0.0);
-                    static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-                    static const NumericEpsilon<Scalar, numEq> eps_{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
+                    static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                    static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
                     NumericDifferentiation::partialDerivative(evalCouplingResidual, origPriVarsJ[pvIdx], partialDeriv, origResidual, eps_(origPriVarsJ[pvIdx], pvIdx), numDiffMethod);
 
                     // update the global stiffness matrix with the current partial derivatives
                     updateGlobalJacobian_(A, faceGlobalI, globalJ, pvIdx, partialDeriv);
 
                     // restore the undeflected state of the coupling context
-                    this->couplingManager().updateCouplingContext(domainI, domainJ, globalJ, origPriVarsJ, this->assembler());
+                    this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, origPriVarsJ, pvIdx);
                 }
             }
         }

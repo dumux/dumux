@@ -151,11 +151,11 @@ public:
      * \param assembler The assembler
      * \param sol The solution vector
      */
-    template<class Assembler>
-    FluxOverSurface(const Assembler& assembler,
+    FluxOverSurface(const Problem& problem,
+                    const GridVariables& gridVariables,
                     const SolutionVector& sol)
-    : problem_(assembler.problem()),
-      gridVariables_(assembler.gridVariables()),
+    : problem_(problem),
+      gridVariables_(gridVariables),
       sol_(sol)
     {
         verbose_  = getParamFromGroup<bool>(assembler.problem().paramGroup(), "FluxOverSurface.Verbose", false);
@@ -229,15 +229,15 @@ public:
      */
     void calculateMassOrMoleFluxes()
     {
-        auto fluxType = [this](const auto& problem,
-                               const auto& element,
+        auto fluxType = [this](const auto& element,
                                const auto& fvGeometry,
                                const auto& elemVolVars,
                                const auto& elemFaceVars,
                                const auto& scvf,
                                const auto& elemFluxVarsCache)
         {
-            return localResidual_.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+            LocalResidual localResidual(&problem_);
+            return localResidual.computeFluxForCellCenter(problem_, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
         };
 
         calculateFluxes(fluxType);
@@ -256,8 +256,7 @@ public:
      * \brief Calculate the fluxes over all surfaces for a given flux type.
      *
      * \param fluxType The flux type. This can be a lambda of the following form:
-     *                 [](const auto& problem,
-                          const auto& element,
+     *                 [](const auto& element,
                           const auto& fvGeometry,
                           const auto& elemVolVars,
                           const auto& elemFaceVars,
@@ -275,7 +274,6 @@ public:
         // make sure not to iterate over the same dofs twice
         std::vector<bool> dofVisited(problem_.fvGridGeometry().numFaceDofs(), false);
 
-        LocalResidual localResidual;
         auto elemVolVars = localView(gridVariables_.curGridVolVars());
         auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
         auto elemFaceVars = localView(gridVariables_.curGridFaceVars());
@@ -308,7 +306,7 @@ public:
                     {
                         if(intersectsPointGeometry(scvf.center(), subSurfaces[surfaceIdx]))
                         {
-                            const auto result = fluxType(problem_, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+                            const auto result = fluxType(element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
 
                             surface.second.addValue(surfaceIdx, result);
 
@@ -355,15 +353,15 @@ private:
      */
     void calculateVolumeFluxesImpl_(std::true_type)
     {
-        auto fluxType = [this](const auto& problem,
-                               const auto& element,
+        auto fluxType = [this](const auto& element,
                                const auto& fvGeometry,
                                const auto& elemVolVars,
                                const auto& elemFaceVars,
                                const auto& scvf,
                                const auto& elemFluxVarsCache)
         {
-            const auto massOrMoleFlux = localResidual_.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+            LocalResidual localResidual(&problem_);
+            const auto massOrMoleFlux = localResidual.computeFluxForCellCenter(problem_, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
 
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
@@ -407,16 +405,16 @@ private:
      */
     void calculateVolumeFluxesImpl_(std::false_type)
     {
-        auto fluxType = [this](const auto& problem,
-                               const auto& element,
+        auto fluxType = [this](const auto& element,
                                const auto& fvGeometry,
                                const auto& elemVolVars,
                                const auto& elemFaceVars,
                                const auto& scvf,
                                const auto& elemFluxVarsCache)
         {
-            const Scalar totalMassFlux = localResidual_.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars,
-                                                                                 elemFaceVars, scvf, elemFluxVarsCache)[0];
+            LocalResidual localResidual(&problem_);
+            const Scalar totalMassFlux = localResidual.computeFluxForCellCenter(problem_, element, fvGeometry, elemVolVars,
+                                                                                elemFaceVars, scvf, elemFluxVarsCache)[0];
 
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
@@ -436,7 +434,6 @@ private:
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;
     bool verbose_;
-    LocalResidual localResidual_;
 };
 
 } //end namespace

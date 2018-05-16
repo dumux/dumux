@@ -38,6 +38,7 @@ template<class ActualFVGridGeometry>
 class GridGeometryView
 {
 public:
+    using GridView = typename ActualFVGridGeometry::GridView;
 
     explicit GridGeometryView(const ActualFVGridGeometry* actualFVGridGeometry)
     : fvGridGeometry_(actualFVGridGeometry) {}
