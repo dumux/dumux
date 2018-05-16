@@ -344,8 +344,8 @@ protected:
                 };
 
                 // derive the residuals numerically
-                static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-                static const NumericEpsilon<Scalar, numEq> eps{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
+                static const int numDiffMethod = getParamFromGroup<int>(problem.paramGroup(), "Assembly.NumericDifferenceMethod");
+                static const NumericEpsilon<Scalar, numEq> eps{problem.paramGroup()};
                 NumericDifferentiation::partialDerivative(evalResidual, priVars[pvIdx + offset], partialDeriv, ccResidual,
                                                           eps(priVars[pvIdx + offset], pvIdx + offset), numDiffMethod);
 
@@ -409,8 +409,8 @@ protected:
                 };
 
                 // derive the residuals numerically
-                static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-                static const NumericEpsilon<Scalar, numEq> eps{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
+                static const int numDiffMethod = getParamFromGroup<int>(problem.paramGroup(), "Assembly.NumericDifferenceMethod");
+                static const NumericEpsilon<Scalar, numEq> eps{problem.paramGroup()};
                 NumericDifferentiation::partialDerivative(evalResidual, facePriVars[pvIdx], partialDeriv, ccResidual,
                                                           eps(facePriVars, Indices::velocity(scvfJ.directionIndex())), numDiffMethod);
 
@@ -483,8 +483,8 @@ protected:
                     };
 
                     // derive the residuals numerically
-                    static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-                    static const NumericEpsilon<Scalar, numEq> eps{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
+                    static const int numDiffMethod = getParamFromGroup<int>(problem.paramGroup(), "Assembly.NumericDifferenceMethod");
+                    static const NumericEpsilon<Scalar, numEq> eps{problem.paramGroup()};
                     NumericDifferentiation::partialDerivative(evalResidual, priVars[pvIdx + offset], partialDeriv, cachedResidual[scvf.localFaceIdx()],
                                                               eps(priVars[pvIdx + offset], pvIdx + offset), numDiffMethod);
 
@@ -550,8 +550,8 @@ protected:
                     };
 
                     // derive the residuals numerically
-                    static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
-                    static const NumericEpsilon<Scalar, numEq> eps{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
+                    static const int numDiffMethod = getParamFromGroup<int>(problem.paramGroup(), "Assembly.NumericDifferenceMethod");
+                    static const NumericEpsilon<Scalar, numEq> eps{problem.paramGroup()};
                     NumericDifferentiation::partialDerivative(evalResidual, faceSolution[globalJ][pvIdx], partialDeriv, cachedResidual[scvf.localFaceIdx()],
                                                               eps(faceSolution[globalJ], Indices::velocity(scvf.directionIndex())), numDiffMethod);
 

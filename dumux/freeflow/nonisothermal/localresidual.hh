@@ -102,7 +102,8 @@ public:
         static constexpr auto localEnergyBalanceIdx = NumEqVector::dimension - 1;
 
         auto upwindTerm = [](const auto& volVars) { return volVars.density() * volVars.enthalpy(); };
-        flux[localEnergyBalanceIdx] += FluxVariables::advectiveFluxForCellCenter(elemVolVars,
+        flux[localEnergyBalanceIdx] += FluxVariables::advectiveFluxForCellCenter(problem,
+                                                                                 elemVolVars,
                                                                                  elemFaceVars,
                                                                                  scvf,
                                                                                  upwindTerm);

@@ -39,7 +39,6 @@ namespace Properties
     NEW_TYPE_TAG(GridCreatorGmshTest);
     SET_TYPE_PROP(GridCreatorGmshTest, Grid, Dune::UGGrid<3>);
     SET_TYPE_PROP(GridCreatorGmshTest, Scalar, double);
-    SET_STRING_PROP(GridCreatorGmshTest, ModelParameterGroup, "Bifurcation");
     SET_PROP(GridCreatorGmshTest, FVGridGeometry) {
         struct GG {
             static constexpr DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
@@ -114,8 +113,7 @@ int main(int argc, char** argv) try
     Dumux::Parameters::init(argc, argv, "test_gridcreator_gmsh.input");
 
     // Make the grid
-    const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-    GridCreator::makeGrid(modelParamGroup);
+    GridCreator::makeGrid("Bifurcation");
 
     // Read the boundary markers and convert them to vertex flags (e.g. for use in a box method)
     // Write a map from vertex position to boundaryMarker

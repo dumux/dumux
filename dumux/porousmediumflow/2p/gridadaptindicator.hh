@@ -55,18 +55,19 @@ public:
     /*! \brief The Constructor
      *
      * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
      *
      *  Note: refineBound_, coarsenBound_ & maxSaturationDelta_ are chosen
      *        in a way such that the indicator returns false for all elements
      *        before having been calculated.
      */
-    TwoPGridAdaptIndicator(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TwoPGridAdaptIndicator(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : fvGridGeometry_(fvGridGeometry)
     , refineBound_(std::numeric_limits<Scalar>::max())
     , coarsenBound_(std::numeric_limits<Scalar>::lowest())
     , maxSaturationDelta_(fvGridGeometry_->gridView().size(0), 0.0)
-    , minLevel_(getParamFromGroup<std::size_t>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.MinLevel", 0))
-    , maxLevel_(getParamFromGroup<std::size_t>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.MaxLevel", 0))
+    , minLevel_(getParamFromGroup<std::size_t>(paramGroup, "Adaptive.MinLevel", 0))
+    , maxLevel_(getParamFromGroup<std::size_t>(paramGroup, "Adaptive.MaxLevel", 0))
     {}
 
     /*!

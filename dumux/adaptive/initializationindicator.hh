@@ -74,12 +74,12 @@ public:
     : problem_(problem)
     , fvGridGeometry_(fvGridGeometry)
     , gridVariables_(gridVariables)
-    , minLevel_(getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.MinLevel"))
-    , maxLevel_(getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.MaxLevel"))
-    , refineAtDirichletBC_(getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.RefineAtDirichletBC", true))
-    , refineAtFluxBC_(getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.RefineAtFluxBC", true))
-    , refineAtSource_(getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.RefineAtSource", true))
-    , eps_(getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.BCRefinementThreshold", 1e-10))
+    , minLevel_(getParamFromGroup<int>(problem->paramGroup(), "Adaptive.MinLevel"))
+    , maxLevel_(getParamFromGroup<int>(problem->paramGroup(), "Adaptive.MaxLevel"))
+    , refineAtDirichletBC_(getParamFromGroup<bool>(problem->paramGroup(), "Adaptive.RefineAtDirichletBC", true))
+    , refineAtFluxBC_(getParamFromGroup<bool>(problem->paramGroup(), "Adaptive.RefineAtFluxBC", true))
+    , refineAtSource_(getParamFromGroup<bool>(problem->paramGroup(), "Adaptive.RefineAtSource", true))
+    , eps_(getParamFromGroup<Scalar>(problem->paramGroup(), "Adaptive.BCRefinementThreshold", 1e-10))
     {}
 
     /*!

@@ -439,7 +439,7 @@ private:
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
         // Use different assembly if gravity is enabled
-        static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        static const bool enableGravity = getParamFromGroup<bool>(problem().paramGroup(), "Problem.EnableGravity");
 
         // Assemble T only if permeability is sol-dependent or if update is forced
         if (forceUpdateAll || soldependentAdvection)

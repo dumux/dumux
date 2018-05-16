@@ -66,9 +66,6 @@ SET_TYPE_PROP(OnePNIConvectionTypeTag, FluidSystem,
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePNIConvectionTypeTag, SpatialParams, OnePNISpatialParams<TypeTag>);
-
-// Set the model parameter group for the mpfa case (velocity disabled in input file)
-SET_STRING_PROP(OnePNIConvectionCCMpfaTypeTag, ModelParameterGroup, "MpfaTest");
 } // end namespace Properties
 
 
@@ -131,8 +128,8 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    OnePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OnePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup)
+    : ParentType(fvGridGeometry, paramGroup)
     {
         //initialize fluid system
         FluidSystem::init();

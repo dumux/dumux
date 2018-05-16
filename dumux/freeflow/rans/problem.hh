@@ -140,7 +140,7 @@ public:
             for (unsigned int i = 0; i < wallPositions.size(); ++i)
             {
                 static const int problemWallNormalAxis
-                    = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.WallNormalAxis", -1);
+                    = getParamFromGroup<int>(this->paramGroup(), "RANS.WallNormalAxis", -1);
                 int searchAxis = problemWallNormalAxis;
 
                 // search along wall normal axis of the intersection
@@ -215,7 +215,7 @@ public:
         std::cout << "Update dynamic wall properties." << std::endl;
 
         static const int flowNormalAxis
-            = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.FlowNormalAxis", -1);
+            = getParamFromGroup<int>(this->paramGroup(), "RANS.FlowNormalAxis", -1);
 
         // re-initialize min and max values
         velocityMaximum_.assign(this->fvGridGeometry().elementMapper().size(), DimVector(1e-16));

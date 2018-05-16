@@ -48,9 +48,6 @@ SET_TYPE_PROP(ModelProperties, NumEqVector, Dune::FieldVector<typename GET_PROP_
 //! Set the default primary variable vector to a vector of size of number of equations
 SET_TYPE_PROP(ModelProperties, PrimaryVariables, typename GET_PROP_TYPE(TypeTag, NumEqVector));
 
-//! use the global group as default for the model's parameter group
-SET_STRING_PROP(ModelProperties, ModelParameterGroup, "");
-
 //! do not specific any model-specific default parameters here
 SET_PROP(ModelProperties, ModelDefaultParameters)
 {
