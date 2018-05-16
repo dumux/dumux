@@ -227,7 +227,7 @@ public:
         return scvfIndicesOfScv_[scvIdx];
     }
 
-    const auto localToGlobalScvfIndex(IndexType eIdx, IndexType localScvfIdx) const
+    IndexType localToGlobalScvfIndex(IndexType eIdx, IndexType localScvfIdx) const
     {
         return localToGlobalScvfIndices_[eIdx][localScvfIdx];
     }
