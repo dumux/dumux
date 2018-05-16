@@ -140,7 +140,7 @@ public:
         EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto& priVars = elemSol[scv.localDofIndex()];
 
         // set the wetting pressure
         fluidState.setPressure(fluidSystemPhaseIdx, priVars[Indices::pressureIdx]);

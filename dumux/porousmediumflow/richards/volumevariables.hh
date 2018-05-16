@@ -85,7 +85,7 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto& priVars = elemSol[scv.localDofIndex()];
         const auto phasePresence = priVars.state();
 
         // precompute the minimum capillary pressure (entry pressure)
@@ -183,7 +183,7 @@ public:
         EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto& priVars = elemSol[scv.localDofIndex()];
 
         // set the wetting pressure
         using std::max;

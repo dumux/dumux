@@ -103,7 +103,7 @@ public:
                 const Scv& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
-        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto& priVars = elemSol[scv.localDofIndex()];
         const auto phasePresence = priVars.state();
 
         bool onlyGasPhaseCanDisappear = Traits::ModelTraits::onlyGasPhaseCanDisappear();

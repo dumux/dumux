@@ -142,7 +142,7 @@ public:
         EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
         fluidState.setSaturation(fluidSystemPhaseIdx, 1.);
 
-        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto& priVars = elemSol[scv.localDofIndex()];
         fluidState.setPressure(fluidSystemPhaseIdx, priVars[pressureIdx]);
 
         // calculate the phase composition

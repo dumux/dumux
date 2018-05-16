@@ -108,7 +108,7 @@ public:
         EnergyVolVars::updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
         fluidState.setSaturation(/*phaseIdx=*/0, 1.);
 
-        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto& priVars = elemSol[scv.localDofIndex()];
         fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
