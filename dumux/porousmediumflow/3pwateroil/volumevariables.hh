@@ -727,7 +727,6 @@ public:
      */
     const SolidState &solidState() const
     { return solidState_; }
-    /*!
 
     /*!
      * \brief Returns the effective saturation of a given phase within
@@ -738,13 +737,13 @@ public:
     Scalar saturation(const int phaseIdx) const
     { return fluidState_.saturation(phaseIdx); }
 
-     /*!
-     * \brief Returns the mass fraction of a given component in a
-     *        given phase within the control volume in \f$[-]\f$.
-     *
-     * \param phaseIdx The phase index
-     * \param compIdx The component index
-     */
+    /*!
+    * \brief Returns the mass fraction of a given component in a
+    *        given phase within the control volume in \f$[-]\f$.
+    *
+    * \param phaseIdx The phase index
+    * \param compIdx The component index
+    */
     Scalar massFraction(const int phaseIdx, const int compIdx) const
     { return fluidState_.massFraction(phaseIdx, compIdx); }
 
