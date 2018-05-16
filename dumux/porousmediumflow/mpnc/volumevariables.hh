@@ -167,7 +167,7 @@ public:
         /////////////
         // set the phase saturations
         /////////////
-        auto&& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        auto&& priVars = elemSol[scv.localDofIndex()];
         Scalar sumSat = 0;
         for (int phaseIdx = 0; phaseIdx < numPhases() - 1; ++phaseIdx) {
             sumSat += priVars[Indices::s0Idx + phaseIdx];
@@ -620,7 +620,7 @@ public:
         /////////////
         // set the phase saturations
         /////////////
-        auto&& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        auto&& priVars = elemSol[scv.localDofIndex()];
         Scalar sumSat = 0;
         for (int phaseIdx = 0; phaseIdx < numPhases() - 1; ++phaseIdx) {
             sumSat += priVars[Indices::s0Idx + phaseIdx];

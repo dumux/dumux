@@ -125,7 +125,7 @@ public:
         if (numEnergyEq == 1)
         {
             // retrieve temperature from solution vector, all phases have the same temperature
-            const Scalar T = ParentType::extractDofPriVars(elemSol, scv)[temperatureIdx];
+            const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx];
             for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
             {
                 fluidState.setTemperature(phaseIdx, T);
@@ -138,11 +138,11 @@ public:
             for(int phaseIdx=0; phaseIdx < numEnergyEq-1; ++phaseIdx)
             {
                 // retrieve temperatures from solution vector, phases might have different temperature
-                const Scalar T = ParentType::extractDofPriVars(elemSol, scv)[temperatureIdx + phaseIdx];
+                const Scalar T = elemSol[scv.localDofIndex()][temperatureIdx + phaseIdx];
                 fluidState.setTemperature(phaseIdx, T);
             }
 
-            const Scalar solidTemperature = ParentType::extractDofPriVars(elemSol, scv)[temperatureIdx+numEnergyEq-1];
+            const Scalar solidTemperature = elemSol[scv.localDofIndex()][temperatureIdx+numEnergyEq-1];
             solidState.setTemperature(solidTemperature);
         }
     }

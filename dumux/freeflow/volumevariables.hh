@@ -78,17 +78,9 @@ public:
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        priVars_ = extractDofPriVars(elemSol, scv);
+        priVars_ = elemSol[scv.localDofIndex()];
         extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
     }
-
-    /*!
-     * \brief Returns the primary variables at the dof associated with a given scv.
-     */
-    template<class ElementSolution, class SubControlVolume>
-    static const auto& extractDofPriVars(const ElementSolution& elemSol,
-                                         const SubControlVolume& scv)
-    { return elemSol[0]; }
 
     /*!
      * \brief Return how much the sub-control volume is extruded.
@@ -226,7 +218,7 @@ public:
                               const Element &element,
                               const Scv &scv)
     {
-        return ParentType::extractDofPriVars(elemSol, scv)[Indices::temperatureIdx];
+        return elemSol[scv.localDofIndex()][Indices::temperatureIdx];
     }
 
     //! The phase enthalpy is zero for isothermal models

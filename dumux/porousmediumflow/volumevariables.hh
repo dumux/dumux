@@ -65,20 +65,9 @@ public:
                 const Element& element,
                 const Scv& scv)
     {
-        priVars_ = extractDofPriVars(elemSol, scv);
+        priVars_ = elemSol[scv.localDofIndex()];
         extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
     }
-
-    /*!
-     * \brief Returns the primary variables at the dof associated with a given scv.
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param scv The sub-control volume
-     */
-    template<class ElemSol, class Scv>
-    static const PrimaryVariables& extractDofPriVars(const ElemSol& elemSol,
-                                                     const Scv& scv)
-    { return elemSol[scv.localDofIndex()]; }
 
     /*!
      * \brief Return the vector of primary variables
