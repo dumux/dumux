@@ -108,16 +108,15 @@ public:
      * \brief Return whether a phase is liquid
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isLiquid(int phaseIdx)
+    static constexpr bool isLiquid(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        switch(phaseIdx)
+        switch (phaseIdx)
         {
             case wPhaseIdx: return WettingFluid::isLiquid(); break;
             case nPhaseIdx: return NonwettingFluid::isLiquid(); break;
             case gPhaseIdx: return Gas::isLiquid(); break;
-            default: DUNE_THROW(Dune::InvalidStateException, "Invalid phase index");
         }
     }
 
@@ -134,13 +133,8 @@ public:
      * only damage done will be (slightly) increased computation times
      * in some cases.
      */
-    static bool isIdealMixture(int phaseIdx)
-    {
-        assert(0 <= phaseIdx && phaseIdx < numPhases);
-
-        // we assume immisibility
-        return true;
-    }
+    static constexpr bool isIdealMixture(int phaseIdx)
+    { return true; }
 
     /*!
      * \brief Returns true if and only if a fluid phase is assumed to
@@ -161,7 +155,6 @@ public:
             case wPhaseIdx: return WettingFluid::isCompressible(); break;
             case nPhaseIdx: return NonwettingFluid::isCompressible(); break;
             case gPhaseIdx: return Gas::isCompressible(); break;
-            default: DUNE_THROW(Dune::InvalidStateException, "Invalid phase index");
         }
     }
 
@@ -171,7 +164,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isIdealGas(int phaseIdx)
+    static constexpr bool isIdealGas(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -181,7 +174,6 @@ public:
             case wPhaseIdx: return WettingFluid::isIdealGas(); break;
             case nPhaseIdx: return NonwettingFluid::isIdealGas(); break;
             case gPhaseIdx: return Gas::isIdealGas(); break;
-            default: DUNE_THROW(Dune::InvalidStateException, "Invalid phase index");
         }
     }
 
@@ -292,11 +284,11 @@ public:
     /*!
      * \brief Initialize the fluid system's static parameters
      */
-    static void init()
+    static constexpr void init()
     {
         // two gaseous phases at once do not make sense physically!
         // (But two liquids are fine)
-        assert(WettingFluid::isLiquid() && NonwettingFluid::isLiquid() && !Gas::isLiquid());
+        static_assert(WettingFluid::isLiquid() && NonwettingFluid::isLiquid() && !Gas::isLiquid(), "There can only be one gaseous phase!");
     }
 
     /*!
@@ -314,9 +306,9 @@ public:
                      Scalar pressMin, Scalar pressMax, unsigned nPress)
     {
         // two gaseous phases at once do not make sense physically!
-        assert(WettingFluid::isLiquid() && NonwettingFluid::isLiquid() && !Gas::isLiquid());
+        static_assert(WettingFluid::isLiquid() && NonwettingFluid::isLiquid() && !Gas::isLiquid(), "There can only be one gaseous phase!");
 
-        if(WettingFluid::Component::isTabulated)
+        if (WettingFluid::Component::isTabulated)
         {
             std::cout << "Initializing tables for the wetting fluid properties ("
                       << nTemp*nPress
@@ -327,7 +319,7 @@ public:
 
         }
 
-        if(NonwettingFluid::Component::isTabulated)
+        if (NonwettingFluid::Component::isTabulated)
         {
             std::cout << "Initializing tables for the non-wetting fluid properties ("
                       << nTemp*nPress
@@ -338,7 +330,7 @@ public:
 
         }
 
-        if(Gas::Component::isTabulated)
+        if (Gas::Component::isTabulated)
         {
             std::cout << "Initializing tables for the gas fluid properties ("
                       << nTemp*nPress
