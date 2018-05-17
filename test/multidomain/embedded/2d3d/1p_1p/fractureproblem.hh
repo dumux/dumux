@@ -33,7 +33,7 @@
 #include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
 #include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 
 #include "spatialparams.hh"
 
@@ -62,14 +62,15 @@ SET_TYPE_PROP(FractureTypeTag, Problem, FractureProblem<TypeTag>);
 SET_PROP(FractureTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::OnePLiquid<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the problem property
 SET_TYPE_PROP(FractureTypeTag, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(FractureTypeTag, SpatialParams, MatrixFractureSpatialParams<TypeTag>);
+SET_TYPE_PROP(FractureTypeTag, SpatialParams, MatrixFractureSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                                          typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 } // end namespace Properties
 
@@ -81,40 +82,32 @@ template <class TypeTag>
 class FractureProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    // copy some indices for convenience
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimworld = GridView::dimensionworld
-    };
-
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
 
 public:
     FractureProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                     std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry)
+                    std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                    std::shared_ptr<CouplingManager> couplingManager)
+    : ParentType(fvGridGeometry, spatialParams)
     , couplingManager_(couplingManager)
     {
         //read parameters from input file
-        name_ = getParam<std::string>("Problem.Name") + "_1d";
+        name_ = getParam<std::string>("Problem.Name") + "_2d";
     }
 
     /*!
@@ -123,9 +116,10 @@ public:
      * The extrusion factor here makes extrudes the 1d line to a circular tube with
      * cross-section area pi*r^2.
      */
+    template<class ElementSolution>
     Scalar extrusionFactor(const Element &element,
                            const SubControlVolume &scv,
-                           const ElementSolutionVector& elemSol) const
+                           const ElementSolution& elemSol) const
     {
         static const Scalar aperture = getParamFromGroup<Scalar>("Fracture", "SpatialParams.Aperture");
         return aperture;
@@ -229,6 +223,7 @@ public:
      * the absolute rate mass generated or annihilate in kg/s. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
+    template<class ElementVolumeVariables>
     void pointSource(PointSource& source,
                      const Element &element,
                      const FVElementGeometry& fvGeometry,
@@ -241,7 +236,7 @@ public:
         const Scalar pressure3D = this->couplingManager().bulkPriVars(source.id())[Indices::pressureIdx];
 
         // calculate the source
-        const Scalar meanDistance = 0.3;
+        const Scalar meanDistance = this->couplingManager().averageDistance(source.id());
         static const Scalar matrixPerm = getParamFromGroup<Scalar>("Matrix", "SpatialParams.Permeability");
         const Scalar sourceValue = (pressure3D - pressure1D)/meanDistance*matrixPerm;
 
@@ -250,7 +245,7 @@ public:
 
     //! evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
     //! we only need to evaluate the part of the residual that will be influence by the low dim DOF
-    template<class MatrixBlock>
+    template<class MatrixBlock, class VolumeVariables>
     void addSourceDerivatives(MatrixBlock& block,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
@@ -287,7 +282,7 @@ public:
     //! Output the total global exchange term
     void computeSourceIntegral(const SolutionVector& sol, const GridVariables& gridVars)
     {
-        PrimaryVariables source(0.0);
+        NumEqVector source(0.0);
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             auto fvGeometry = localView(this->fvGridGeometry());

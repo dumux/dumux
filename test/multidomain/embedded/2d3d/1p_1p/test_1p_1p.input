@@ -16,7 +16,7 @@ UpperRight = 8 8 5
 Cells = 20 20 10
 
 [Problem]
-Name = test_1p1p_embedded
+Name = test_embedded_fracture
 NormIntegrationOrder = 2
 NormExcludeInnerBulk = true
 IntegrationOrder = 2
