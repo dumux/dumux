@@ -42,38 +42,15 @@ public:
     template<std::size_t domainI, std::size_t domainJ>
     using CouplingStencilType = std::vector< std::size_t >;
 
-    //! default type for encapsulating both the element-local and grid index of a dof
-    template<std::size_t domainI, std::size_t domainJ>
-    struct DofData
-    {
-        std::size_t index;
-        std::size_t localIndex;
-    };
-
-    //! default type for storing data of all dofs within a coupled element
-    template<std::size_t domainI, std::size_t domainJ>
-    using CoupledElementDofData = std::vector< DofData<domainI, domainJ> >;
-
     /*!
      * \brief The coupling element stencil, i.e. which elements of domain J
      *        are coupled to the given element of domain I
      */
     template<class Element, std::size_t i, std::size_t j>
-    const CouplingStencilType<i, j>& couplingElementStencil(const Element& element,
-                                                            Dune::index_constant<i> domainI,
-                                                            Dune::index_constant<j> domainJ) const
+    const CouplingStencilType<i, j>& couplingStencil(const Element& element,
+                                                     Dune::index_constant<i> domainI,
+                                                     Dune::index_constant<j> domainJ) const
     { DUNE_THROW(Dune::NotImplemented, "Coupling manager does not implement couplingElementStencil() function"); }
-
-    /*!
-     * \brief returns data on all dofs inside an element of domain j
-     *        that is coupled to an element of domain i with the given index
-     */
-    template<class ElementI, std::size_t i, class IndexTypeJ, std::size_t j>
-    const CoupledElementDofData<i, j>& coupledElementDofData(Dune::index_constant<i> domainI,
-                                                             const ElementI& elementI,
-                                                             Dune::index_constant<j> domainJ,
-                                                             IndexTypeJ globalJ) const
-    { DUNE_THROW(Dune::NotImplemented, "Coupling manager does not implement coupledElementDofData() function"); }
 
     //! Return an empty list of additional dof dependencies per default
     template<std::size_t id>
@@ -100,10 +77,9 @@ public:
     /*!
      * \brief Update the context for a derivative i->j
      */
-    template<std::size_t i, class Element, class ElementSolution, class Assembler>
+    template<std::size_t i, class IndexTypeJ, class PrimaryVariablesJ, class Assembler>
     void updateCouplingContext(Dune::index_constant<i> domainI, Dune::index_constant<i> domainJ,
-                               const Element& element, const ElementSolution& elemSol,
-                               std::size_t localDofIndex, std::size_t pvIdx,
+                               IndexTypeJ globalJ, const PrimaryVariablesJ& priVarsJ, unsigned int pvIdxJ,
                                const Assembler& assembler)
     { DUNE_THROW(Dune::NotImplemented, "Coupling manager does not implement updateCouplingContext() function"); }
 
@@ -112,14 +88,14 @@ public:
      *        This is only necessary if some of these containers depend on quantities of the other domain
      *        stored in the coupling context here in the coupling manager.
      */
-    template<class Element, class FVElementGeometry,
-             class ElementVolumeVariables, class ElementFluxVariablesCache, class GridVariables>
-    void updateSelf(const Element& element,
+    template<std::size_t i, class Element, class FVElementGeometry,
+             class VolumeVariablesContainer, class FluxVariablesCacheContainer>
+    void updateSelf(Dune::index_constant<i> domainI,
+                    const Element& element,
                     const FVElementGeometry& fvGeometry,
-                    const ElementVolumeVariables& elemVolVars,
-                    const ElementFluxVariablesCache& elemFluxVarsCache,
-                    const GridVariables& gridVariables)
-    {}
+                    const VolumeVariablesContainer& elemVolVars,
+                    const FluxVariablesCacheContainer& elemFluxVarsCache)
+    {  DUNE_THROW(Dune::NotImplemented, "Coupling manager does not implement updateSelf() function"); }
 };
 
 } //end namespace Dumux
