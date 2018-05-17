@@ -58,12 +58,10 @@ class CCTpfaFacetCouplingThreeDomainManager;
  *                  and the edge grid, you should provide an offet of 1.
  */
 template<class MDTraits, class CouplingMapper, std::size_t idOffset = 0>
-class CCTpfaFacetCouplingManager
-      : public CouplingManager< MDTraits, CCTpfaFacetCouplingManager<MDTraits, CouplingMapper> >
+class CCTpfaFacetCouplingManager : public CouplingManager< MDTraits >
 {
     using Scalar = typename MDTraits::Scalar;
-    using ThisType = CCTpfaFacetCouplingManager<MDTraits, CouplingMapper>;
-    using BaseCouplingManager = CouplingManager< MDTraits, ThisType >;
+    using BaseCouplingManager = CouplingManager< MDTraits >;
     using SolutionVector = typename MDTraits::SolutionVector;
 
     using BulkIdType = typename MDTraits::template DomainIdx<idOffset+0>;
@@ -91,7 +89,8 @@ class CCTpfaFacetCouplingManager
     template<std::size_t id> using IndexType = typename GridView<id>::IndexSet::IndexType;
 
     template<std::size_t id> using GridVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVariables);
-    template<std::size_t id> using ElementVolumeVariables = typename GridVariables<id>::GridVolumeVariables::LocalView;
+    template<std::size_t id> using GridVolumeVariables = typename GridVariables<id>::GridVolumeVariables;
+    template<std::size_t id> using ElementVolumeVariables = typename GridVolumeVariables<id>::LocalView;
     template<std::size_t id> using VolumeVariables = typename ElementVolumeVariables<id>::VolumeVariables;
     template<std::size_t id> using GridFluxVariablesCache = typename GridVariables<id>::GridFluxVariablesCache;
     template<std::size_t id> using ElementFluxVariablesCache = typename GridFluxVariablesCache<id>::LocalView;
@@ -121,6 +120,7 @@ class CCTpfaFacetCouplingManager
         std::unique_ptr< FVElementGeometry<bulkId> > bulkFvGeometry;
         std::unique_ptr< ElementVolumeVariables<bulkId> > bulkElemVolVars;
         std::unique_ptr< ElementFluxVariablesCache<bulkId> > bulkElemFluxVarsCache;
+        std::unique_ptr< LocalResidual<bulkId> > bulkLocalResidual;
         IndexType< lowDimId > elementIdx;
         bool isSet;
 
@@ -135,21 +135,12 @@ class CCTpfaFacetCouplingManager
 
 public:
 
-    //! Since we couple two cell-centered schemes here,
-    //! there is only one element-local dof with local index 0
-    template<std::size_t domainI, std::size_t domainJ>
-    struct DofData
-    {
-        IndexType<domainJ> index;
-        static constexpr unsigned int localIndex = 0;
-
-        //! constructor with a given grid index
-        DofData(IndexType<domainJ> dofIdx) : index(dofIdx) {}
-    };
-
-    //! Per element, there will only be one local dof
-    template<std::size_t domainI, std::size_t domainJ>
-    using CoupledElementDofData = std::array< DofData<domainI, domainJ>, 1 >;
+    //! types used for coupling stencils
+    //! the poro-mechanical domain elements only couple to themselves on the cc grid
+    template<std::size_t id>
+    using CouplingStencilType = typename std::conditional< id == bulkId,
+                                                           typename CouplingMapper::template Stencil<bulkId>,
+                                                           typename CouplingMapper::template Stencil<lowDimId> >::type;
 
     /*!
      * \brief Methods to be accessed by main
@@ -188,7 +179,8 @@ public:
     /*!
      * \brief Update after the grid has changed.
      */
-    void update() { DUNE_THROW(Dune::NotImplemented, "Grid updates for models using facet coupling"); }
+    void update()
+    { DUNE_THROW(Dune::NotImplemented, "Grid updates for models using facet coupling"); }
 
     // \}
 
@@ -201,7 +193,7 @@ public:
      * \brief The coupling stencil of the bulk domain with the lowdim domain.
      */
     const typename CouplingMapper::template Stencil<lowDimId>&
-    couplingElementStencil(const Element<bulkId>& element, BulkIdType, LowDimIdType) const
+    couplingStencil(const Element<bulkId>& element, BulkIdType, LowDimIdType) const
     {
         const auto eIdx = problem<bulkId>().fvGridGeometry().elementMapper().index(element);
 
@@ -220,7 +212,7 @@ public:
      * \brief The coupling stencil of the lower-dimensional domain with the bulk domain.
      */
     const typename CouplingMapper::template Stencil<bulkId>&
-    couplingElementStencil(const Element<lowDimId>& element, LowDimIdType, BulkIdType) const
+    couplingStencil(const Element<lowDimId>& element, LowDimIdType, BulkIdType) const
     {
         const auto eIdx = problem<lowDimId>().fvGridGeometry().elementMapper().index(element);
 
@@ -228,20 +220,6 @@ public:
         auto it = map.find(eIdx);
         if (it != map.end()) return it->second.couplingStencil;
         else return getEmptyStencil(bulkId);
-    }
-
-    /*!
-     * \brief returns data on all dofs inside an element of domain j
-     *        that is coupled to an element of domain i
-     */
-     template<class ElementI, std::size_t i, class IndexTypeJ, std::size_t j>
-     CoupledElementDofData<i, j> coupledElementDofData(Dune::index_constant<i> domainI,
-                                                       const ElementI& elementI,
-                                                       Dune::index_constant<j> domainJ,
-                                                       IndexTypeJ globalJ) const
-    {
-        // create and return instance on the fly from the given grid index
-        return CoupledElementDofData<i, j>{ {globalJ} };
     }
 
     /*!
@@ -282,35 +260,50 @@ public:
     //! we only need to evaluate the part of the residual that will be influenced by the the privars of dof j
     //! i.e. the source term for the lower-dimensional and the fluxes for the bulk domain.
     //! This implementation here is the overload for the bulk domain.
-    NumEqVector<bulkId> evalCouplingResidual(Dune::index_constant<bulkId> domainI,
-                                             const Element<bulkId>& elementI,
-                                             const FVElementGeometry<bulkId>& fvGeometry,
-                                             const ElementVolumeVariables<bulkId>& elemVolVars,
-                                             const ElementBoundaryTypes<bulkId>& elemBcTypes,
-                                             const ElementFluxVariablesCache<bulkId>& elemFluxVarsCache,
-                                             Dune::index_constant<lowDimId> domainJ,
-                                             const Element<lowDimId>& elementJ)
+    typename LocalResidual<bulkId>::ElementResidualVector
+    evalCouplingResidual(Dune::index_constant<bulkId> domainI,
+                         const Element<bulkId>& elementI,
+                         const FVElementGeometry<bulkId>& fvGeometry,
+                         const ElementVolumeVariables<bulkId>& elemVolVars,
+                         const ElementBoundaryTypes<bulkId>& elemBcTypes,
+                         const ElementFluxVariablesCache<bulkId>& elemFluxVarsCache,
+                         LocalResidual<bulkId> localResidual,
+                         Dune::index_constant<lowDimId> domainJ,
+                         IndexType<lowDimId> globalJ)
     {
-        return evalFluxToFacetElement_(elementI, fvGeometry, elemVolVars, elemFluxVarsCache, elementJ);
+        typename LocalResidual<bulkId>::ElementResidualVector res(1);
+        res = 0.0;
+        res[0] = evalFluxToFacetElement_(elementI, fvGeometry, elemVolVars, elemFluxVarsCache, localResidual, globalJ);
+        return res;
     }
 
     //! Overload for the lower-dimensional domain.
-    NumEqVector<lowDimId> evalCouplingResidual(Dune::index_constant<lowDimId> domainI,
-                                               const Element<lowDimId>& elementI,
-                                               const FVElementGeometry<lowDimId>& fvGeometry,
-                                               const ElementVolumeVariables<lowDimId>& elemVolVars,
-                                               const ElementBoundaryTypes<lowDimId>& elemBcTypes,
-                                               const ElementFluxVariablesCache<lowDimId>& elemFluxVarsCache,
-                                               Dune::index_constant<bulkId> domainJ,
-                                               const Element<bulkId>& elementJ)
+    typename LocalResidual<lowDimId>::ElementResidualVector
+    evalCouplingResidual(Dune::index_constant<lowDimId> domainI,
+                         const Element<lowDimId>& elementI,
+                         const FVElementGeometry<lowDimId>& fvGeometry,
+                         const ElementVolumeVariables<lowDimId>& elemVolVars,
+                         const ElementBoundaryTypes<lowDimId>& elemBcTypes,
+                         const ElementFluxVariablesCache<lowDimId>& elemFluxVarsCache,
+                         LocalResidual<lowDimId> localResidual,
+                         Dune::index_constant<bulkId> domainJ,
+                         IndexType<bulkId> globalJ)
     {
+        assert(problem<bulkId>().fvGridGeometry().elementMapper().index(elementI) == lowDimContext_.elementIdx);
+        const auto elementJ = problem<bulkId>().fvGridGeometry().element(globalJ);
         auto source = evalFluxToFacetElement_(elementJ,
                                               *lowDimContext_.bulkFvGeometry,
                                               *lowDimContext_.bulkElemVolVars,
                                               *lowDimContext_.bulkElemFluxVarsCache,
-                                              elementI);
+                                              *lowDimContext_.bulkLocalResidual,
+                                              lowDimContext_.elementIdx);
         source *= -1.0;
-        return source;
+
+        // pass to element residual vector and return
+        typename LocalResidual<lowDimId>::ElementResidualVector res(1);
+        res = 0.0;
+        res[0] = source;
+        return res;
     }
 
     //! Computes the sources in a lower-dimensional element stemming from the bulk domain
@@ -333,7 +326,8 @@ public:
                                                *lowDimContext_.bulkFvGeometry,
                                                *lowDimContext_.bulkElemVolVars,
                                                *lowDimContext_.bulkElemFluxVarsCache,
-                                               element);
+                                               *lowDimContext_.bulkLocalResidual,
+                                               eIdx);
 
         return sources;
     }
@@ -341,7 +335,7 @@ public:
     /*!
      * \brief Bind the coupling context of the bulk domain
      */
-    template<class Assembler>
+    template< class Assembler >
     void bindCouplingContext(BulkIdType, const Element<bulkId>& element, const Assembler& assembler)
     {
         // clear context
@@ -384,7 +378,7 @@ public:
      *       the bulk domain, we have to prepare the bulk coupling context
      *       for the neighboring element (where fluxes are calculated) as well.
      */
-    template<class Assembler>
+    template< class Assembler >
     void bindCouplingContext(LowDimIdType, const Element<lowDimId>& element, const Assembler& assembler)
     {
         // clear contexts
@@ -417,101 +411,110 @@ public:
             lowDimContext_.bulkFvGeometry = std::make_unique< FVElementGeometry<bulkId> >(bulkFvGeom);
             lowDimContext_.bulkElemVolVars = std::make_unique< ElementVolumeVariables<bulkId> >(bulkElemVolVars);
             lowDimContext_.bulkElemFluxVarsCache = std::make_unique< ElementFluxVariablesCache<bulkId> >(bulkElemFluxVarsCache);
+            lowDimContext_.bulkLocalResidual = std::make_unique< LocalResidual<bulkId> >(assembler.localResidual(bulkId));
         }
     }
 
     /*!
      * \brief Update the coupling context for a derivative bulk -> lowDim
      */
-    template<class Assembler, class ElementSolution>
+    template< class Assembler >
     void updateCouplingContext(BulkIdType,
                                LowDimIdType,
-                               const Element<lowDimId>& element,
-                               const ElementSolution& elemSol,
+                               IndexType<lowDimId> globalJ,
+                               const PrimaryVariables<lowDimId>& priVarsJ,
+                               unsigned int pvIdxJ,
                                const Assembler& assembler)
     {
         // do nothing if context is empty
         if (bulkContext_.isSet)
         {
             const auto& lowDimGridGeom = problem<lowDimId>().fvGridGeometry();
-            const auto lowDimElemIdx = lowDimGridGeom.elementMapper().index(element);
+            const auto elementJ = lowDimGridGeom.element(globalJ);
 
             // update the solution (cc->elemsol has only one entry)
-            curSol_[lowDimId][lowDimElemIdx] = elemSol[0];
+            curSol_[lowDimId][globalJ][pvIdxJ] = priVarsJ[pvIdxJ];
 
             // update vol vars in context
             const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
             const auto& couplingStencil = map.find(bulkContext_.elementIdx)->second.couplingStencil;
-            auto it = std::find(couplingStencil.begin(), couplingStencil.end(), lowDimElemIdx);
+            auto it = std::find(couplingStencil.begin(), couplingStencil.end(), globalJ);
 
             assert(it != map.end());
             const auto idxInContext = std::distance(couplingStencil.begin(), it);
-            const auto& lowDimScv = bulkContext_.lowDimFvGeometries[idxInContext].scv(lowDimElemIdx);
-            const auto elemSol = elementSolution(element, curSol_[lowDimId], lowDimGridGeom);
-            bulkContext_.lowDimVolVars[idxInContext].update(elemSol, problem<lowDimId>(), element, lowDimScv);
+            const auto& lowDimScv = bulkContext_.lowDimFvGeometries[idxInContext].scv(globalJ);
+            const auto elemSol = elementSolution(elementJ, curSol_[lowDimId], lowDimGridGeom);
+            bulkContext_.lowDimVolVars[idxInContext].update(elemSol, problem<lowDimId>(), elementJ, lowDimScv);
         }
     }
 
     /*!
      * \brief Update the coupling context for a derivative bulk -> bulk.
      */
-    template<class Assembler, class ElementSolution>
+    template< class Assembler >
     void updateCouplingContext(BulkIdType,
                                BulkIdType,
-                               const Element<bulkId>& element,
-                               const ElementSolution& elemSol,
+                               IndexType<bulkId> globalI,
+                               const PrimaryVariables<bulkId>& priVarsJ,
+                               unsigned int pvIdxJ,
                                const Assembler& assembler)
     { /* do nothing here */ }
 
     /*!
      * \brief Update the coupling context for a derivative lowDim -> bulk
      */
-    template<class Assembler, class ElementSolution>
+    template< class Assembler >
     void updateCouplingContext(LowDimIdType,
                                BulkIdType,
-                               const Element<bulkId>& element,
-                               const ElementSolution& elemSol,
+                               IndexType<bulkId> globalJ,
+                               const PrimaryVariables<bulkId>& priVarsJ,
+                               unsigned int pvIdxJ,
                                const Assembler& assembler)
     {
         // do nothing if context is empty
         if (lowDimContext_.isSet)
         {
             const auto& bulkGridGeom = problem<bulkId>().fvGridGeometry();
-            const auto bulkElemIdx = bulkGridGeom.elementMapper().index(element);
+            const auto elementJ = bulkGridGeom.element(globalJ);
 
             // update the solution (cc->elemsol has only one entry)
-            curSol_[bulkId][bulkElemIdx] = elemSol[0];
+            curSol_[bulkId][globalJ][pvIdxJ] = priVarsJ[pvIdxJ];
 
             // update corresponding vol vars in context
-            const auto& scv = lowDimContext_.bulkFvGeometry->scv(bulkElemIdx);
-            const auto elemSol = elementSolution(element, curSol_[bulkId], bulkGridGeom);
-            (*lowDimContext_.bulkElemVolVars)[bulkElemIdx].update(elemSol, problem<bulkId>(), element, scv);
+            const auto& scv = lowDimContext_.bulkFvGeometry->scv(globalJ);
+            const auto elemSol = elementSolution(elementJ, curSol_[bulkId], bulkGridGeom);
+            (*lowDimContext_.bulkElemVolVars)[globalJ].update(elemSol, problem<bulkId>(), elementJ, scv);
 
             // update the element flux variables cache (tij depend on low dim values)
-            const auto contextElem = problem<bulkId>().fvGridGeometry().element(bulkContext_.elementIdx);
-            lowDimContext_.bulkElemFluxVarsCache->update(contextElem, *lowDimContext_.bulkFvGeometry, *lowDimContext_.bulkElemVolVars);
+            if (globalJ == bulkContext_.elementIdx)
+                lowDimContext_.bulkElemFluxVarsCache->update( elementJ, *lowDimContext_.bulkFvGeometry, *lowDimContext_.bulkElemVolVars);
+            else
+                lowDimContext_.bulkElemFluxVarsCache->update( problem<bulkId>().fvGridGeometry().element(bulkContext_.elementIdx),
+                                                              *lowDimContext_.bulkFvGeometry,
+                                                              *lowDimContext_.bulkElemVolVars );
         }
     }
 
     /*!
      * \brief Update the coupling context for a derivative lowDim -> lowDim
      */
-    template<class Assembler, class ElementSolution>
+    template< class Assembler >
     void updateCouplingContext(LowDimIdType,
                                LowDimIdType,
-                               const Element<lowDimId>& element,
-                               const ElementSolution& elemSol,
+                               IndexType<lowDimId> globalI,
+                               const PrimaryVariables<lowDimId>& priVarsI,
+                               unsigned int pvIdxI,
                                const Assembler& assembler)
     {
         // do nothing if context is empty
         if (lowDimContext_.isSet)
         {
             // update the solution (cc->elemsol has only one entry)
-            curSol_[lowDimId][lowDimContext_.elementIdx] = elemSol[0];
+            assert(lowDimContext_.elementIdx == globalI);
+            curSol_[lowDimId][lowDimContext_.elementIdx][pvIdxI] = priVarsI[pvIdxI];
 
             // update the corresponding vol vars in the bulk context
             const auto& lowDimGridGeom = problem<lowDimId>().fvGridGeometry();
-            assert(lowDimGridGeom.elementMapper().index(element) == lowDimContext_.elementIdx);
             const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
             const auto& couplingStencil = bulkMap.find(bulkContext_.elementIdx)->second.couplingStencil;
             auto it = std::find(couplingStencil.begin(), couplingStencil.end(), lowDimContext_.elementIdx);
@@ -519,8 +522,9 @@ public:
             assert(it != couplingStencil.end());
             const auto idxInContext = std::distance(couplingStencil.begin(), it);
             const auto& lowDimScv = bulkContext_.lowDimFvGeometries[idxInContext].scv(lowDimContext_.elementIdx);
-            const auto elemSol = elementSolution(element, curSol_[lowDimId], lowDimGridGeom);
-            bulkContext_.lowDimVolVars[idxInContext].update(elemSol, problem<lowDimId>(), element, lowDimScv);
+            const auto lowDimElement = lowDimGridGeom.element(lowDimContext_.elementIdx);
+            const auto elemSol = elementSolution(lowDimElement, curSol_[lowDimId], lowDimGridGeom);
+            bulkContext_.lowDimVolVars[idxInContext].update(elemSol, problem<lowDimId>(), lowDimElement, lowDimScv);
 
             // update the element flux variables cache (tij depend on low dim values)
             const auto contextElem = problem<bulkId>().fvGridGeometry().element(bulkContext_.elementIdx);
@@ -532,40 +536,44 @@ public:
      * \brief Update the local views of the bulk domain after the coupling context changed
      * \note Specialization of the function for deactivated grid-wide caching
      */
+    template< class FluxVarsCacheContainer >
     void updateSelf(BulkIdType,
                     const Element<bulkId>& element,
                     const FVElementGeometry<bulkId>& fvGeometry,
                     ElementVolumeVariables<bulkId>& elemVolVars,
-                    ElementFluxVariablesCache<bulkId>& elemFluxVarsCache)
+                    FluxVarsCacheContainer& fluxVarsCache)
     {
         // update transmissibilities after low dim context has changed
-        elemFluxVarsCache.update(element, fvGeometry, elemVolVars);
+        fluxVarsCache.update(element, fvGeometry, elemVolVars);
     }
 
     /*!
      * \brief Update the local views of the bulk domain after the coupling context changed
-     * \note Specialization of the function for grid-wide caching
+     * \note Specialization of the function for deactivated grid-wide caching
      */
+    template< class FluxVarsCacheContainer >
     void updateSelf(BulkIdType,
                     const Element<bulkId>& element,
                     const FVElementGeometry<bulkId>& fvGeometry,
-                    ElementVolumeVariables<bulkId>& elemVolVars,
-                    GridFluxVariablesCache<bulkId>& gridFluxVarsCache)
+                    GridVolumeVariables<bulkId>& gridVolVars,
+                    FluxVarsCacheContainer& fluxVarsCache)
     {
         // update transmissibilities after low dim context has changed
-        gridFluxVarsCache.updateElement(element, fvGeometry, elemVolVars);
+        auto elemVolVars = localView(gridVolVars);
+        elemVolVars.bind(element, fvGeometry, curSol_[bulkId]);
+        fluxVarsCache.update(element, fvGeometry, elemVolVars);
     }
 
     /*!
-     * \brief Update the local views of the lowdim domain after the coupling context changed
+     * \brief In the low dim domain the local views do not depend on coupling data
      */
-    template<class FluxVarsCacheContainer>
+    template< class VolVarsContainer, class FluxVarsCacheContainer >
     void updateSelf(LowDimIdType,
                     const Element<lowDimId>& element,
                     const FVElementGeometry<lowDimId>& fvGeometry,
-                    ElementVolumeVariables<lowDimId>& elemVolVars,
-                    FluxVarsCacheContainer& fluxVarsCacheContainer)
-    { /* do nothing here */ }
+                    VolVarsContainer& gridVolVars,
+                    FluxVarsCacheContainer& fluxVarsCache)
+    {}
 
     // \}
 
@@ -612,27 +620,25 @@ private:
                                                 const FVElementGeometry<bulkId>& fvGeometry,
                                                 const ElementVolumeVariables<bulkId>& elemVolVars,
                                                 const ElementFluxVariablesCache<bulkId>& elemFluxVarsCache,
-                                                const Element<lowDimId>& elementJ)
+                                                LocalResidual<bulkId>& localResidual,
+                                                IndexType<lowDimId> globalJ)
     {
         const auto bulkElemIdx = problem<bulkId>().fvGridGeometry().elementMapper().index(elementI);
-        const auto lowDimElemIdx = problem<lowDimId>().fvGridGeometry().elementMapper().index(elementJ);
 
         assert(bulkContext_.isSet);
         assert(bulkElemIsCoupled_[bulkElemIdx]);
 
         NumEqVector<bulkId> coupledFluxes(0.0);
         const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
-        const auto& couplingScvfs = map.find(bulkElemIdx)->second.getCoupledScvfs(lowDimElemIdx);
+        const auto& couplingScvfs = map.find(bulkElemIdx)->second.getCoupledScvfs(globalJ);
 
-        using BulkLocalResidual = LocalResidual<bulkId>;
-        BulkLocalResidual localRes(std::get<bulkId-idOffset>(problemTuple_).get());
         for (const auto& scvfIdx : couplingScvfs)
-            coupledFluxes += localRes.evalFlux(problem<bulkId>(),
-                                               elementI,
-                                               fvGeometry,
-                                               elemVolVars,
-                                               elemFluxVarsCache,
-                                               fvGeometry.scvf(scvfIdx));
+            coupledFluxes += localResidual.evalFlux(problem<bulkId>(),
+                                                    elementI,
+                                                    fvGeometry,
+                                                    elemVolVars,
+                                                    elemFluxVarsCache,
+                                                    fvGeometry.scvf(scvfIdx));
 
         return coupledFluxes;
     }
@@ -693,13 +699,14 @@ class CCTpfaFacetCouplingThreeDomainManager
 
     // further types specific to the sub-problems
     template<std::size_t id> using ElementBoundaryTypes = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementBoundaryTypes);
-    template<std::size_t id> using NumEqVector = typename GET_PROP_TYPE(SubDomainTypeTag<id>, NumEqVector);
+    template<std::size_t id> using LocalResidual = typename GET_PROP_TYPE(SubDomainTypeTag<id>, LocalResidual);
     template<std::size_t id> using PrimaryVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, PrimaryVariables);
     template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
 
     template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
+    template<std::size_t id> using IndexType = typename GridView<id>::IndexSet::IndexType;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
     template<std::size_t id> using GridVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVariables);
@@ -727,27 +734,21 @@ public:
         FacetEdgeManager::init(facetProblem, edgeProblem, couplingMapper, curSol);
     }
 
-    using BulkFacetManager::couplingElementStencil;
-    using FacetEdgeManager::couplingElementStencil;
+    using BulkFacetManager::couplingStencil;
+    using FacetEdgeManager::couplingStencil;
     /*!
      * \brief The coupling stencil of the bulk with the edge domain (empty stencil).
      */
     const typename CouplingMapper::template Stencil<edgeId>&
-    couplingElementStencil(const Element<bulkId>& element, BulkIdType, EdgeIdType) const
+    couplingStencil(const Element<bulkId>& element, BulkIdType, EdgeIdType) const
     { return FacetEdgeManager::getEmptyStencil(edgeId); }
 
     /*!
      * \brief The coupling stencil of the edge with the bulk domain (empty stencil).
      */
     const typename CouplingMapper::template Stencil<bulkId>&
-    couplingElementStencil(const Element<edgeId>& element, EdgeIdType, BulkIdType) const
+    couplingStencil(const Element<edgeId>& element, EdgeIdType, BulkIdType) const
     { return BulkFacetManager::getEmptyStencil(bulkId); }
-
-    //! For the coupled element dof data we simply pull up the
-    //! interface of one of the base classes since it is equal anyway
-    using BulkFacetManager::DofData;
-    using BulkFacetManager::CoupledElementDofData;
-    using BulkFacetManager::coupledElementDofData;
 
     /*!
      * \brief updates the current solution.
@@ -777,16 +778,20 @@ public:
     template<std::size_t i,
              std::size_t j,
              std::enable_if_t<((i==bulkId && j==edgeId) || ((i==edgeId && j==bulkId))), int> = 0>
-    NumEqVector<i> evalCouplingResidual(Dune::index_constant<i> domainI,
-                                        const Element<i>& elementI,
-                                        const FVElementGeometry<i>& fvGeometry,
-                                        const ElementVolumeVariables<i>& elemVolVars,
-                                        const ElementBoundaryTypes<i>& elemBcTypes,
-                                        const ElementFluxVariablesCache<i>& elemFluxVarsCache,
-                                        Dune::index_constant<j> domainJ,
-                                        const Element<j>& elementJ)
+    typename LocalResidual<i>::ElementResidualVector
+    evalCouplingResidual(Dune::index_constant<i> domainI,
+                         const Element<i>& elementI,
+                         const FVElementGeometry<i>& fvGeometry,
+                         const ElementVolumeVariables<i>& elemVolVars,
+                         const ElementBoundaryTypes<i>& elemBcTypes,
+                         const ElementFluxVariablesCache<i>& elemFluxVarsCache,
+                         LocalResidual<i> localResidual,
+                         Dune::index_constant<j> domainJ,
+                         IndexType<j> globalJ)
     {
-        return NumEqVector<i>(0.0);
+        typename LocalResidual<i>::ElementResidualVector res(1);
+        res = 0.0;
+        return res;
     }
 
     using BulkFacetManager::bindCouplingContext;
@@ -810,15 +815,16 @@ public:
      * \brief Interface for updating the coupling context of the facet domain. In this case
      *        we have to update both the facet -> bulk and the facet -> edge coupling context.
      */
-    template<class Assembler, class ElementSolution>
+    template< class Assembler >
     void updateCouplingContext(FacetIdType,
                                FacetIdType,
-                               const Element<facetId>& element,
-                               const ElementSolution& elemSol,
+                               IndexType<facetId> globalI,
+                               const PrimaryVariables<facetId>& priVarsI,
+                               unsigned int pvIdxI,
                                const Assembler& assembler)
     {
-        BulkFacetManager::updateCouplingContext(facetId, facetId, element, elemSol, assembler);
-        FacetEdgeManager::updateCouplingContext(facetId, facetId, element, elemSol, assembler);
+        BulkFacetManager::updateCouplingContext(facetId, facetId, globalI, priVarsI, pvIdxI, assembler);
+        FacetEdgeManager::updateCouplingContext(facetId, facetId, globalI, priVarsI, pvIdxI, assembler);
     }
 
     /*!
@@ -828,12 +834,12 @@ public:
     template<std::size_t i,
              std::size_t j,
              class Assembler,
-             class ElementSolution,
              std::enable_if_t<((i==bulkId && j==edgeId) || (i==edgeId && j==bulkId)), int> = 0>
     void updateCouplingContext(Dune::index_constant<i> domainI,
                                Dune::index_constant<j> domainJ,
-                               const Element<j>& element,
-                               const ElementSolution& elemSol,
+                               IndexType<j> globalJ,
+                               const PrimaryVariables<j>& priVarsJ,
+                               unsigned int pvIdxJ,
                                const Assembler& assembler)
     { /*do nothing here*/ }
 
@@ -845,15 +851,15 @@ public:
      *        the coupling context. In this case we have to forward the both managers as the facet
      *        domain is a part in both.
      */
-    template<class FluxVarsCacheContainer>
+    template<class VolVarsContainer, class FluxVarsCacheContainer>
     void updateSelf(FacetIdType,
-                    const Element<facetId>& element,
+                    const IndexType<facetId>& element,
                     const FVElementGeometry<facetId>& fvGeometry,
-                    ElementVolumeVariables<facetId>& elemVolVars,
+                    VolVarsContainer& volVarsContainer,
                     FluxVarsCacheContainer& fluxVarsCacheContainer)
     {
-        BulkFacetManager::updateSelf(facetId, element, fvGeometry, elemVolVars, fluxVarsCacheContainer);
-        FacetEdgeManager::updateSelf(facetId, element, fvGeometry, elemVolVars, fluxVarsCacheContainer);
+        BulkFacetManager::updateSelf(facetId, element, fvGeometry, volVarsContainer, fluxVarsCacheContainer);
+        FacetEdgeManager::updateSelf(facetId, element, fvGeometry, volVarsContainer, fluxVarsCacheContainer);
     }
 
     //! Return a reference to one of the problems
