@@ -38,8 +38,6 @@
 #include <dumux/multidomain/staggeredcouplingmanager.hh>
 
 #include "diffmethod.hh"
-#include "staggeredlocalassembler.hh"
-#include "staggeredlocalresidual.hh"
 
 namespace Dumux {
 
