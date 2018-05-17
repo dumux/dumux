@@ -24,7 +24,6 @@
 #ifndef DUMUX_FRACTURE_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_FRACTURE_TEST_SPATIAL_PARAMS_HH
 
-#include <dune/common/fvector.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux {
@@ -33,34 +32,26 @@ namespace Dumux {
  * \ingroup OnePTests
  * \brief Definition of the spatial parameters for the matrix and fracture problem
  */
-template<class TypeTag>
-class MatrixFractureSpatialParams : public FVSpatialParamsOneP<TypeTag>
+template<class FVGridGeometry, class Scalar>
+class MatrixFractureSpatialParams
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar, MatrixFractureSpatialParams<FVGridGeometry, Scalar>>
 {
-    using ParentType = FVSpatialParamsOneP<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ThisType = MatrixFractureSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::SubControlVolume;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimworld = GridView::dimensionworld
-    };
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimworld>;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
 
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    MatrixFractureSpatialParams(const Problem& problem)
-    : ParentType(problem)
+    MatrixFractureSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                                const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry)
     {
-        static const auto paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         permeability_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Permeability");
-        porosity_ = 1.0;
+        porosity_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Porosity", 1.0);
     }
 
     /*!
@@ -70,9 +61,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol the element solution vector
      */
+    template<class ElementSolution>
     PermeabilityType permeability(const Element& element,
                                   const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+                                  const ElementSolution& elemSol) const
     {
         return permeability_;
     }
@@ -84,9 +76,10 @@ public:
      * \param scv The sub control volume
      * \param elemSol The current element solution vector
      */
+    template<class ElementSolution>
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
+                    const ElementSolution& elemSol) const
     {
         return porosity_;
     }

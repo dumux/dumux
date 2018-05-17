@@ -53,8 +53,9 @@ namespace Dumux {
  */
 template<class MDTraits>
 class EmbeddedFractureCouplingManager
-: public CouplingManager<MDTraits, EmbeddedFractureCouplingManager<MDTraits>>
+: public CouplingManager<MDTraits>
 {
+    using ParentType = CouplingManager<MDTraits>;
     using Scalar = typename MDTraits::Scalar;
     static constexpr auto bulkIdx = typename MDTraits::template DomainIdx<0>();
     static constexpr auto lowDimIdx = typename MDTraits::template DomainIdx<1>();
@@ -67,18 +68,17 @@ class EmbeddedFractureCouplingManager
     template<std::size_t id>
     using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
 
-    template<std::size_t id> using GridView = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridView);
     template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
     template<std::size_t id> using PointSource = typename GET_PROP_TYPE(SubDomainTypeTag<id>, PointSource);
     template<std::size_t id> using PrimaryVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, PrimaryVariables);
     template<std::size_t id> using NumEqVector = typename GET_PROP_TYPE(SubDomainTypeTag<id>, NumEqVector);
-    template<std::size_t id> using ElementSolutionVector = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementSolutionVector);
     template<std::size_t id> using VolumeVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, VolumeVariables);
-    template<std::size_t id> using ElementVolumeVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementVolumeVariables);
+    template<std::size_t id> using ElementVolumeVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVolumeVariables)::LocalView;
     template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
     template<std::size_t id> using FVElementGeometry = typename FVGridGeometry<id>::LocalView;
     template<std::size_t id> using ElementBoundaryTypes = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementBoundaryTypes);
-    template<std::size_t id> using ElementFluxVariablesCache = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ElementFluxVariablesCache);
+    template<std::size_t id> using ElementFluxVariablesCache = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridFluxVariablesCache)::LocalView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
     enum {
@@ -140,9 +140,9 @@ public:
      *        the given domain I element's residual depends on.
      */
     template<std::size_t i, std::size_t j>
-    const CouplingStencil& couplingStencil(const Element<i>& element,
-                                           Dune::index_constant<i> domainI,
-                                           Dune::index_constant<j> domainJ) const
+    const CouplingStencil& couplingElementStencil(const Element<i>& element,
+                                                  Dune::index_constant<i> domainI,
+                                                  Dune::index_constant<j> domainJ) const
     {
         static_assert(i != j, "A domain cannot be coupled to itself!");
 
@@ -153,27 +153,42 @@ public:
             return emptyStencil_;
     }
 
+    //! the local and global dof indices of the coupled element with index globalJ coupling to dofs of elementI
+    //! for the cellcentered scheme there is only one dof in the element center
+    template<std::size_t i, std::size_t j, class IndexTypeJ>
+    auto coupledElementDofData(Dune::index_constant<i> domainI,
+                               const Element<i>& elementI,
+                               Dune::index_constant<j> domainJ,
+                               IndexTypeJ globalJ) const
+    { return std::array<typename ParentType::template DofData<i,j>, 1>({{globalJ, 0}}); }
+
     //! evaluate coupling residual for the derivative residual i with respect to privars of dof j
     //! we only need to evaluate the part of the residual that will be influenced by the the privars of dof j
     //! i.e. the source term.
     //! the coupling residual is symmetric so we only need to one template function here
-    template<std::size_t i, std::size_t j>
-    NumEqVector<i> evalCouplingResidual(Dune::index_constant<i> domainI,
-                                        const Element<i>& elementI,
-                                        const FVElementGeometry<i>& fvGeometry,
-                                        const ElementVolumeVariables<i>& curElemVolVars,
-                                        const ElementBoundaryTypes<i>& elemBcTypes,
-                                        const ElementFluxVariablesCache<i>& elemFluxVarsCache,
-                                        Dune::index_constant<j> domainJ,
-                                        const Element<j>& elementJ)
+    template<std::size_t i, std::size_t j, class LocalResidualI>
+    auto evalCouplingResidual(Dune::index_constant<i> domainI,
+                              const Element<i>& elementI,
+                              const FVElementGeometry<i>& fvGeometry,
+                              const ElementVolumeVariables<i>& curElemVolVars,
+                              const ElementBoundaryTypes<i>& elemBcTypes,
+                              const ElementFluxVariablesCache<i>& elemFluxVarsCache,
+                              const LocalResidualI& localResidual,
+                              Dune::index_constant<j> domainJ,
+                              const Element<j>& elementJ)
+    -> typename LocalResidualI::ElementResidualVector
     {
         static_assert(i != j, "A domain cannot be coupled to itself!");
 
-        const auto eIdx = problem(domainI).fvGridGeometry().elementMapper().index(elementI);
-        auto&& scv = fvGeometry.scv(eIdx);
-        auto couplingSource = problem(domainI).scvPointSources(elementI, fvGeometry, curElemVolVars, scv);
-        couplingSource *= -scv.volume()*curElemVolVars[scv].extrusionFactor();
-        return couplingSource;
+        typename LocalResidualI::ElementResidualVector residual;
+        residual.resize(fvGeometry.numScv());
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            auto couplingSource = problem(domainI).scvPointSources(elementI, fvGeometry, curElemVolVars, scv);
+            couplingSource *= -scv.volume()*curElemVolVars[scv].extrusionFactor();
+            residual[scv.indexInElement()] = couplingSource;
+        }
+        return residual;
     }
 
     /*!
@@ -186,15 +201,17 @@ public:
     /*!
      * \brief Update the coupling context for a derivative i->j
      */
-    template<std::size_t i, std::size_t j, class Assembler>
+    template<std::size_t i, std::size_t j, class Assembler, class ElemSolJ>
     void updateCouplingContext(Dune::index_constant<i> domainI,
                                Dune::index_constant<j> domainJ,
                                const Element<j>& element,
-                               const PrimaryVariables<j>& priVars,
+                               const ElemSolJ& elemSol,
+                               std::size_t localDofIdx,
+                               std::size_t pvIdx,
                                const Assembler& assembler)
     {
         const auto eIdx = problem(domainJ).fvGridGeometry().elementMapper().index(element);
-        curSol_[domainJ][eIdx] = priVars;
+        curSol_[domainJ][eIdx][pvIdx] = elemSol[localDofIdx][pvIdx];
     }
 
     // \}
@@ -231,6 +248,8 @@ public:
         glue_->build(bulkFvGridGeometry.boundingBoxTree(),
                      lowDimFvGridGeometry.boundingBoxTree());
 
+        pointSourceData_.reserve(glue_->size());
+        averageDistanceToBulkCC_.reserve(glue_->size());
         for (const auto& is : intersections(*glue_))
         {
             // all inside elements are identical...
@@ -268,7 +287,8 @@ public:
                     psData.addBulkInterpolation(bulkElementIdx);
 
                     // publish point source data in the global vector
-                    pointSourceData_.push_back(psData);
+                    pointSourceData_.emplace_back(std::move(psData));
+                    averageDistanceToBulkCC_.push_back(computeDistance_(outside.geometry(), globalPos));
 
                     // compute the coupling stencils
                     bulkCouplingStencils_[bulkElementIdx].push_back(lowDimElementIdx);
@@ -305,6 +325,12 @@ public:
     const PointSourceData& pointSourceData(std::size_t id) const
     {
         return pointSourceData_[id];
+    }
+
+    //! Return a reference to the pointSource data
+    Scalar averageDistance(std::size_t id) const
+    {
+        return averageDistanceToBulkCC_[id];
     }
 
     //! Return a reference to the bulk problem
@@ -398,12 +424,26 @@ protected:
 
 private:
 
+    template<class Geometry, class GlobalPosition>
+    Scalar computeDistance_(const Geometry& geometry, const GlobalPosition& p)
+    {
+        Scalar avgDist = 0.0;
+        const auto& quad = Dune::QuadratureRules<Scalar, bulkDim>::rule(geometry.type(), 5);
+        for (auto&& qp : quad)
+        {
+            const auto globalPos = geometry.global(qp.position());
+            avgDist += (globalPos-p).two_norm()*qp.weight();
+        }
+        return avgDist;
+    }
+
     std::tuple<std::shared_ptr<Problem<0>>, std::shared_ptr<Problem<1>>> problemTuple_;
 
     std::vector<PointSource<bulkIdx>> bulkPointSources_;
     std::vector<PointSource<lowDimIdx>> lowDimPointSources_;
 
     mutable std::vector<PointSourceData> pointSourceData_;
+    std::vector<Scalar> averageDistanceToBulkCC_;
 
     CouplingStencils bulkCouplingStencils_;
     CouplingStencils lowDimCouplingStencils_;
