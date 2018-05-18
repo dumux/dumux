@@ -18,11 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup EmbeddedCoupling
- * \ingroup CCModel
- * \brief Coupling manager for low-dimensional domains embedded in the bulk
- *        domain. Point sources on each integration point are computed by an AABB tree.
- *        Both domain are assumed to be discretized using a cc finite volume scheme.
+ * \ingroup MixedDimension
+ * \ingroup MixedDimensionFacet
+ * \copydoc Dumux::CCTpfaFacetCouplingManager
  */
 
 #ifndef DUMUX_CCTPFA_FACETCOUPLING_MANAGER_HH
