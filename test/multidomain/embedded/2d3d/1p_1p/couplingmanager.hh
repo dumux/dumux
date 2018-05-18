@@ -110,7 +110,7 @@ public:
               std::shared_ptr<Problem<lowDimIdx>> lowDimProblem,
               const SolutionVector& curSol)
     {
-        curSol_ = curSol;
+        this->updateSolution(curSol);
         problemTuple_ = std::make_tuple(bulkProblem, lowDimProblem);
     }
 
@@ -121,12 +121,6 @@ public:
     {
         computePointSourceData();
     }
-
-    /*!
-     * \brief Update the solution vector before assembly
-     */
-    void updateSolution(const SolutionVector& curSol)
-    { curSol_ = curSol; }
 
     // \}
 
@@ -140,9 +134,9 @@ public:
      *        the given domain I element's residual depends on.
      */
     template<std::size_t i, std::size_t j>
-    const CouplingStencil& couplingElementStencil(const Element<i>& element,
-                                                  Dune::index_constant<i> domainI,
-                                                  Dune::index_constant<j> domainJ) const
+    const CouplingStencil& couplingStencil(Dune::index_constant<i> domainI,
+                                           const Element<i>& element,
+                                           Dune::index_constant<j> domainJ) const
     {
         static_assert(i != j, "A domain cannot be coupled to itself!");
 
@@ -153,65 +147,32 @@ public:
             return emptyStencil_;
     }
 
-    //! the local and global dof indices of the coupled element with index globalJ coupling to dofs of elementI
-    //! for the cellcentered scheme there is only one dof in the element center
-    template<std::size_t i, std::size_t j, class IndexTypeJ>
-    auto coupledElementDofData(Dune::index_constant<i> domainI,
-                               const Element<i>& elementI,
-                               Dune::index_constant<j> domainJ,
-                               IndexTypeJ globalJ) const
-    { return std::array<typename ParentType::template DofData<i,j>, 1>({{globalJ, 0}}); }
-
     //! evaluate coupling residual for the derivative residual i with respect to privars of dof j
     //! we only need to evaluate the part of the residual that will be influenced by the the privars of dof j
     //! i.e. the source term.
     //! the coupling residual is symmetric so we only need to one template function here
-    template<std::size_t i, std::size_t j, class LocalResidualI>
-    auto evalCouplingResidual(Dune::index_constant<i> domainI,
-                              const Element<i>& elementI,
-                              const FVElementGeometry<i>& fvGeometry,
-                              const ElementVolumeVariables<i>& curElemVolVars,
-                              const ElementBoundaryTypes<i>& elemBcTypes,
-                              const ElementFluxVariablesCache<i>& elemFluxVarsCache,
-                              const LocalResidualI& localResidual,
-                              Dune::index_constant<j> domainJ,
-                              const Element<j>& elementJ)
-    -> typename LocalResidualI::ElementResidualVector
+    template<std::size_t i, std::size_t j, class LocalAssemblerI>
+    decltype(auto) evalCouplingResidual(Dune::index_constant<i> domainI,
+                                        const LocalAssemblerI& localAssemblerI,
+                                        Dune::index_constant<j> domainJ,
+                                        std::size_t dofIdxGlobalJ)
     {
         static_assert(i != j, "A domain cannot be coupled to itself!");
 
-        typename LocalResidualI::ElementResidualVector residual;
+        typename LocalAssemblerI::LocalResidual::ElementResidualVector residual;
+
+        const auto& element = localAssemblerI.element();
+        const auto& fvGeometry = localAssemblerI.fvGeometry();
+        const auto& curElemVolVars = localAssemblerI.curElemVolVars();
+
         residual.resize(fvGeometry.numScv());
         for (const auto& scv : scvs(fvGeometry))
         {
-            auto couplingSource = problem(domainI).scvPointSources(elementI, fvGeometry, curElemVolVars, scv);
+            auto couplingSource = problem(domainI).scvPointSources(element, fvGeometry, curElemVolVars, scv);
             couplingSource *= -scv.volume()*curElemVolVars[scv].extrusionFactor();
             residual[scv.indexInElement()] = couplingSource;
         }
         return residual;
-    }
-
-    /*!
-     * \brief Bind the coupling context
-     */
-    template<class Element, std::size_t i, class Assembler>
-    void bindCouplingContext(Dune::index_constant<i> domainI, const Element& element, const Assembler& assembler)
-    {}
-
-    /*!
-     * \brief Update the coupling context for a derivative i->j
-     */
-    template<std::size_t i, std::size_t j, class Assembler, class ElemSolJ>
-    void updateCouplingContext(Dune::index_constant<i> domainI,
-                               Dune::index_constant<j> domainJ,
-                               const Element<j>& element,
-                               const ElemSolJ& elemSol,
-                               std::size_t localDofIdx,
-                               std::size_t pvIdx,
-                               const Assembler& assembler)
-    {
-        const auto eIdx = problem(domainJ).fvGridGeometry().elementMapper().index(element);
-        curSol_[domainJ][eIdx][pvIdx] = elemSol[localDofIdx][pvIdx];
     }
 
     // \}
@@ -358,14 +319,14 @@ public:
     PrimaryVariables<bulkIdx> bulkPriVars(std::size_t id) const
     {
         auto& data = pointSourceData_[id];
-        return data.interpolateBulk(curSol_[bulkIdx]);
+        return data.interpolateBulk(this->curSol()[bulkIdx]);
     }
 
     //! Return data for a low dim point source with the identifier id
     PrimaryVariables<lowDimIdx> lowDimPriVars(std::size_t id) const
     {
         auto& data = pointSourceData_[id];
-        return data.interpolateLowDim(curSol_[lowDimIdx]);
+        return data.interpolateLowDim(this->curSol()[lowDimIdx]);
     }
 
     //! Return reference to bulk point sources
@@ -391,14 +352,6 @@ public:
         lowDimCouplingStencils_.clear();
         idCounter_ = 0;
     }
-
-    template<std::size_t i>
-    const std::vector<std::size_t>& getAdditionalDofDependencies(Dune::index_constant<i> dom, std::size_t eIdx) const
-    { return emptyStencil_; }
-
-    template<std::size_t i>
-    const std::vector<std::size_t>& getAdditionalDofDependenciesInverse(Dune::index_constant<i> dom, std::size_t eIdx) const
-    { return emptyStencil_; }
 
 protected:
     //! Return reference to point source data vector member
@@ -454,14 +407,6 @@ private:
 
     //! The glue object
     std::shared_ptr<GlueType> glue_;
-
-    ////////////////////////////////////////////////////////////////////////////
-    //! The coupling context
-    ////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////
-    //! TODO: this is the simplest context -> just the solutionvector
-    ////////////////////////////////////////////////////////////////////////////
-    SolutionVector curSol_;
 };
 
 } // end namespace Dumux

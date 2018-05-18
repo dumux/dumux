@@ -58,7 +58,6 @@ class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assem
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using SolutionVector = typename Assembler::SolutionVector;
     using SubSolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -82,6 +81,8 @@ class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assem
 public:
     //! export the domain id of this sub-domain
     static constexpr auto domainId = typename Dune::index_constant<id>();
+    //! the local residual type of this domain
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     //! pull up constructor of parent class
     using ParentType::ParentType;
 
@@ -301,7 +302,7 @@ public:
         // get stencil informations
         const auto globalI = fvGridGeometry.elementMapper().index(element);
         const auto& connectivityMap = fvGridGeometry.connectivityMap();
-        const auto& couplingSourceStencil = this->couplingManager().getAdditionalDofDependenciesInverse(domainI, globalI);
+        const auto& couplingSourceStencil = this->couplingManager().extendedSourceStencilInverse(domainI, globalI);
         const auto numNeighbors = connectivityMap[globalI].size() + couplingSourceStencil.size();
 
         // container to store the neighboring elements
@@ -362,7 +363,7 @@ public:
                 partialDerivsTmp = 0.0;
                 // update the volume variables and the flux var cache
                 elemSol[0][pvIdx] = priVar;
-                this->couplingManager().updateCouplingContext(domainI, domainI, globalI, elemSol[0], pvIdx, this->assembler());
+                this->couplingManager().updateCouplingContext(domainI, *this, domainI, globalI, elemSol[0], pvIdx);
                 curVolVars.update(elemSol, this->problem(), element, scv);
                 if (enableGridFluxVarsCache)
                     gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
@@ -414,7 +415,7 @@ public:
             elemSol[0][pvIdx] = origPriVars[pvIdx];
 
             // restore the undeflected state of the coupling context
-            this->couplingManager().updateCouplingContext(domainI, domainI, globalI, elemSol[0], pvIdx, this->assembler());
+            this->couplingManager().updateCouplingContext(domainI, *this, domainI, globalI, elemSol[0], pvIdx);
         }
 
         // restore original state of the flux vars cache in case of global caching.
@@ -453,27 +454,27 @@ public:
 
         // get stencil informations
         const auto globalI = fvGridGeometry.elementMapper().index(element);
-        const auto& stencil = this->couplingManager().couplingStencil(element, domainI, domainJ);
+        const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
         const auto& curSolJ = this->curSol()[domainJ];
 
         // convenience lambda for call to update self
-        auto updateSelf = [&] ()
+        auto updateCoupledVariables = [&] ()
         {
             // Update ourself after the context has been modified. Depending on the
             // type of caching, other objects might have to be updated. All ifs can be optimized away.
             if (enableGridFluxVarsCache)
             {
                 if (enableGridVolVarsCache)
-                    this->couplingManager().updateSelf(domainI, element, fvGeometry, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
+                    this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
                 else
-                    this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, gridVariables.gridFluxVarsCache());
+                    this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, gridVariables.gridFluxVarsCache());
             }
             else
             {
                 if (enableGridVolVarsCache)
-                    this->couplingManager().updateSelf(domainI, element, fvGeometry, gridVariables.curGridVolVars(), elemFluxVarsCache);
+                    this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), elemFluxVarsCache);
                 else
-                    this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, elemFluxVarsCache);
+                    this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, elemFluxVarsCache);
             }
         };
 
@@ -483,20 +484,17 @@ public:
             const auto origPriVarsJ = curSolJ[globalJ];
             auto priVarsJ = origPriVarsJ;
 
-            const auto origResidual = this->couplingManager().evalCouplingResidual(domainI, element, fvGeometry, curElemVolVars, this->elemBcTypes(), elemFluxVarsCache, this->assembler().localResidual(domainI),
-                                                                                   domainJ, globalJ)[0];
+            const auto origResidual = this->couplingManager().evalCouplingResidual(domainI, *this, domainJ, globalJ)[0];
 
             for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
             {
-
                 auto evalCouplingResidual = [&](Scalar priVar)
                 {
                     // update the volume variables and the flux var cache
                     priVarsJ[pvIdx] = priVar;
-                    this->couplingManager().updateCouplingContext(domainI, domainJ, globalJ, priVarsJ, pvIdx, this->assembler());
-                    updateSelf();
-                    return this->couplingManager().evalCouplingResidual(domainI, element, fvGeometry, curElemVolVars, this->elemBcTypes(), elemFluxVarsCache, this->assembler().localResidual(domainI),
-                                                                        domainJ, globalJ)[0];
+                    this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
+                    updateCoupledVariables();
+                    return this->couplingManager().evalCouplingResidual(domainI, *this, domainJ, globalJ)[0];
                 };
 
                 // derive the residuals numerically
@@ -514,13 +512,13 @@ public:
                 priVarsJ[pvIdx] = origPriVarsJ[pvIdx];
 
                 // restore the undeflected state of the coupling context
-                this->couplingManager().updateCouplingContext(domainI, domainJ, globalJ, priVarsJ, pvIdx, this->assembler());
+                this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
 
                 // TODO do we have to restore here again???
                 // if (enableGridFluxVarsCache)
-                //     this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, gridVariables.gridFluxVarsCache());
+                //     this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, gridVariables.gridFluxVarsCache());
                 // else
-                //     this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, elemFluxVarsCache);
+                //     this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, elemFluxVarsCache);
             }
         }
 
@@ -530,7 +528,7 @@ public:
         // this is obsolete because the local views used here go out of scope after this.
         // We only have to do this for the last primary variable, for all others the flux var cache
         // is updated with the correct element volume variables before residual evaluations
-        updateSelf();
+        updateCoupledVariables();
     }
 };
 
@@ -643,7 +641,7 @@ public:
 
         // get stencil informations
         const auto globalI = fvGridGeometry.elementMapper().index(element);
-        const auto& stencil = this->couplingManager().couplingStencil(element, domainI, domainJ);
+        const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
 
         for (const auto globalJ : stencil)
         {
