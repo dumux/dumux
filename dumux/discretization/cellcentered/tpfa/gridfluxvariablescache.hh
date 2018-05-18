@@ -116,9 +116,9 @@ public:
     }
 
     template<class FVElementGeometry, class ElementVolumeVariables>
-    void update(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars)
+    void updateElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars)
     {
         if (FluxVariablesCacheFiller::isSolDependent)
         {

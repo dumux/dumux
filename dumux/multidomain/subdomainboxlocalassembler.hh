@@ -183,7 +183,7 @@ public:
     }
 
     ElementResidualVector evalFluxResidual(const Element& neighbor,
-                                         const SubControlVolumeFace& scvf) const
+                                           const SubControlVolumeFace& scvf) const
     {
         return this->localResidual().evalFlux(problem(), neighbor, this->fvGeometry(), this->curElemVolVars(), this->elemFluxVarsCache(), scvf);
     }
@@ -359,7 +359,7 @@ public:
 
         // compute additional derivatives of this element with respect to other elements
         const auto eIdxI = fvGeometry.fvGridGeometry().elementMapper().index(element);
-        for (const auto eIdxJ : this->couplingManager().getAdditionalDofDependencies(domainI, eIdxI))
+        for (const auto eIdxJ : this->couplingManager().extendedSourceStencil(domainI, element))
         {
             const auto elementJ = fvGeometry.fvGridGeometry().element(eIdxJ);
             auto fvGeometryJ = localView(fvGeometry.fvGridGeometry());
@@ -412,7 +412,7 @@ public:
                     const auto localDofIndex = scv.indexInElement();
                     elemSol[localDofIndex][pvIdx] = priVar;
                     curVolVars.update(elemSol, this->problem(), element, scv);
-                    this->couplingManager().updateCouplingContext(domainI, domainI, scv.dofIndex(), elemSol[localDofIndex], pvIdx, this->assembler());
+                    this->couplingManager().updateCouplingContext(domainI, *this, domainI, scv.dofIndex(), elemSol[localDofIndex], pvIdx);
                     return this->evalLocalResidual();
                 };
 
@@ -438,7 +438,7 @@ public:
 
                 // restore the original element solution and coupling context
                 elemSol[scv.indexInElement()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
-                this->couplingManager().updateCouplingContext(domainI, domainI, scv.dofIndex(), elemSol[scv.indexInElement()], pvIdx, this->assembler());
+                this->couplingManager().updateCouplingContext(domainI, *this, domainI, scv.dofIndex(), elemSol[scv.indexInElement()], pvIdx);
             }
         }
     }
@@ -464,7 +464,7 @@ public:
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get element stencil informations
-        const auto& stencil = this->couplingManager().couplingStencil(element, domainI, domainJ);
+        const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
 
         // convenience lambda for call to update self
         auto updateSelf = [&] ()
@@ -474,16 +474,16 @@ public:
             if (enableGridFluxVarsCache)
             {
                 if (enableGridVolVarsCache)
-                    this->couplingManager().updateSelf(domainI, element, fvGeometry, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
+                    this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), gridVariables.gridFluxVarsCache());
                 else
-                    this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, gridVariables.gridFluxVarsCache());
+                    this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, gridVariables.gridFluxVarsCache());
             }
             else
             {
                 if (enableGridVolVarsCache)
-                    this->couplingManager().updateSelf(domainI, element, fvGeometry, gridVariables.curGridVolVars(), elemFluxVarsCache);
+                    this->couplingManager().updateCoupledVariables(domainI, *this, gridVariables.curGridVolVars(), elemFluxVarsCache);
                 else
-                    this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, elemFluxVarsCache);
+                    this->couplingManager().updateCoupledVariables(domainI, *this, curElemVolVars, elemFluxVarsCache);
             }
         };
 
@@ -495,18 +495,16 @@ public:
             auto priVarsJ = origPriVarsJ;
 
             // the undeflected coupling residual
-            const auto origResidual = this->couplingManager().evalCouplingResidual(domainI, element, fvGeometry, curElemVolVars, this->elemBcTypes(), elemFluxVarsCache, this->assembler().localResidual(domainI),
-                                                                                   domainJ, globalJ);
+            const auto origResidual = this->couplingManager().evalCouplingResidual(domainI, *this, domainJ, globalJ);
 
             for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
             {
                 auto evalCouplingResidual = [&](Scalar priVar)
                 {
                     priVarsJ[pvIdx] = priVar;
-                    this->couplingManager().updateCouplingContext(domainI, domainJ, globalJ, priVarsJ, pvIdx, this->assembler());
+                    this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
                     updateSelf();
-                    return this->couplingManager().evalCouplingResidual(domainI, element, fvGeometry, curElemVolVars, this->elemBcTypes(), elemFluxVarsCache,
-                                                                        this->assembler().localResidual(domainI), domainJ, globalJ);
+                    return this->couplingManager().evalCouplingResidual(domainI, *this, domainJ, globalJ);
                 };
 
                 // derive the residuals numerically
@@ -538,7 +536,7 @@ public:
                 priVarsJ[pvIdx] = origPriVarsJ[pvIdx];
 
                 // restore the undeflected state of the coupling context
-                this->couplingManager().updateCouplingContext(domainI, domainJ, globalJ, priVarsJ, pvIdx, this->assembler());
+                this->couplingManager().updateCouplingContext(domainI, *this, domainJ, globalJ, priVarsJ, pvIdx);
             }
         }
 
