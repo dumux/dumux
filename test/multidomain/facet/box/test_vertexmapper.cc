@@ -140,9 +140,15 @@ int main (int argc, char *argv[]) try
     using Displacement = Dune::FieldVector<double, bulkDimWorld>;
     std::vector< Displacement > displacement(mapper.size(), Displacement(0.0));
     for (const auto& e : elements(bulkGridView))
+    {
         for (int i = 0; i < e.geometry().corners(); ++i)
+        {
             if ( mapper.isEnriched(e.template subEntity<bulkDim>(i)) )
                 displacement[ mapper.subIndex(e, i, BulkGrid::dimension) ] = getDisplacement(e.geometry().center());
+            else
+                displacement[ mapper.subIndex(e, i, BulkGrid::dimension) ] = 0.0;
+        }
+    }
 
     // nonconforming vectorial vtk function
     using VTKFunction = Dumux::Vtk::VectorP1NonConformingVTKFunction< typename BulkGrid::LeafGridView,
