@@ -456,6 +456,13 @@ private:
                     pmFlowCouplingMap_[dataJ.globalJ].push_back( vertexMapper.subIndex(elemJ, i , dim) );
             }
         }
+
+        // make stencils unique
+        for (auto& stencil : pmFlowCouplingMap_)
+        {
+            std::sort(stencil.begin(), stencil.end());
+            stencil.erase(std::unique(stencil.begin(), stencil.end()), stencil.end());
+        }
     }
 
     // tuple for storing pointers to the sub-problems
