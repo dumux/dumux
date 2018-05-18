@@ -265,7 +265,7 @@ public:
                          const ElementVolumeVariables<bulkId>& elemVolVars,
                          const ElementBoundaryTypes<bulkId>& elemBcTypes,
                          const ElementFluxVariablesCache<bulkId>& elemFluxVarsCache,
-                         LocalResidual<bulkId> localResidual,
+                         LocalResidual<bulkId>&& localResidual,
                          Dune::index_constant<lowDimId> domainJ,
                          IndexType<lowDimId> globalJ)
     {

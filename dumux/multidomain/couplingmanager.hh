@@ -26,6 +26,7 @@
 #define DUMUX_MULTIDOMAIN_COUPLING_MANAGER_HH
 
 #include <dune/common/exceptions.hh>
+#include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux {
 
@@ -37,65 +38,206 @@ namespace Dumux {
 template<class Traits>
 class CouplingManager
 {
+    template<std::size_t id> using SubDomainTypeTag = typename Traits::template SubDomainTypeTag<id>;
+    template<std::size_t id> using PrimaryVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, PrimaryVariables);
+    template<std::size_t id> using GridView = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry)::GridView;
+    template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
+
+
 public:
     //! default type used for coupling element stencils
-    template<std::size_t domainI, std::size_t domainJ>
-    using CouplingStencilType = std::vector< std::size_t >;
+    template<std::size_t i, std::size_t j>
+    using CouplingStencilType = std::vector<std::size_t>;
+
+    //! the type of the solution vector
+    using SolutionVector = typename Traits::SolutionVector;
 
     /*!
-     * \brief The coupling element stencil, i.e. which elements of domain J
-     *        are coupled to the given element of domain I
+     * \name member functions concerning the coupling stencils
      */
-    template<class Element, std::size_t i, std::size_t j>
-    const CouplingStencilType<i, j>& couplingStencil(const Element& element,
-                                                     Dune::index_constant<i> domainI,
+    // \{
+
+    /*!
+     * \brief returns an iteratable container of all indices of degrees of freedom of domain j
+     *        that couple with / influence the element residual of the given element of domain i
+     *
+     * \param domainI the domain index of domain i
+     * \param elementI the coupled element of domain í
+     * \param domainJ the domain index of domain j
+     *
+     * \note  The element residual definition depends on the discretization scheme of domain i
+     *        box: a container of the residuals of all sub control volumes
+     *        cc : the residual of the (sub) control volume
+     *        fem: the residual of the element
+     * \note  This function has to be implemented by all coupling managers for all combinations of i and j
+     */
+    template<std::size_t i, std::size_t j>
+    const CouplingStencilType<i, j>& couplingStencil(Dune::index_constant<i> domainI,
+                                                     const Element<i>& elementI,
                                                      Dune::index_constant<j> domainJ) const
-    { DUNE_THROW(Dune::NotImplemented, "Coupling manager does not implement couplingElementStencil() function"); }
+    {
+        static_assert(i != j, "Domain i cannot be coupled to itself!");
+        static_assert(AlwaysFalse<Dune::index_constant<i>>::value,
+                      "The coupling manager does not implement the couplingStencil() function");
+    }
 
-    //! Return an empty list of additional dof dependencies per default
+    /*!
+     * \brief return an iteratable container of indices of those degrees of freedom whose variables have an
+     *       influence on the local element residual of the given element
+     * \note this is usually used for the box / fem finite volume assembly
+     * \note per default we return an empty container, i.e. the source for this element does not depend on
+     *       degrees of freedom outside this element
+     * \note the container must not contain dof indices of the degrees of freedom on this element
+     */
     template<std::size_t id>
-    std::vector<std::vector<std::size_t>> additionalDofDependencies(Dune::index_constant<id>)
-    { return std::vector<std::vector<std::size_t>>(); }
-
-    //! Return an empty list of additional dof dependencies per default
-    template<std::size_t id, class Element>
-    std::vector<std::size_t> getAdditionalDofDependencies(Dune::index_constant<id>, const Element& element) const
-    { return std::vector<std::size_t>(); }
-
-    //! Return an empty list of additional dof dependencies per default
-    template<std::size_t id, class Element>
-    std::vector<std::size_t> getAdditionalDofDependenciesInverse(Dune::index_constant<id>, const Element& element) const
+    std::vector<std::size_t> extendedSourceStencil(Dune::index_constant<id>, const Element<id>& element) const
     { return std::vector<std::size_t>(); }
 
     /*!
-     * \brief Prepares all data on the other domains necessary for the assembly of an element of domain i
+     * \brief return an iteratable container of indices of those element indices whose local element residuals depend
+     *        on the variables at the degree of freedom with index dofIdxGlobal
+     * \note this is usually used for the cell-centered finite volume assembly
+     * \note per default we return an empty container, i.e. no element residual depends on this degree of freedom except the ones
+     *       that depend on it through the standard discretization scheme
      */
-    template<class Element, std::size_t i, class Assembler>
-    void bindCouplingContext(Dune::index_constant<i> domainI, const Element& element, const Assembler& assembler)
-    { DUNE_THROW(Dune::NotImplemented, "Coupling manager does not implement bindCouplingContext() function"); }
+    template<std::size_t id>
+    std::vector<std::size_t> extendedSourceStencilInverse(Dune::index_constant<id>, std::size_t dofIdxGlobal) const
+    { return std::vector<std::size_t>(); }
+
+    // \}
 
     /*!
-     * \brief Update the context for a derivative i->j
+     * \name member functions concerning variable caching for element residual evaluations
      */
-    template<std::size_t i, class IndexTypeJ, class PrimaryVariablesJ, class Assembler>
-    void updateCouplingContext(Dune::index_constant<i> domainI, Dune::index_constant<i> domainJ,
-                               IndexTypeJ globalJ, const PrimaryVariablesJ& priVarsJ, unsigned int pvIdxJ,
-                               const Assembler& assembler)
-    { DUNE_THROW(Dune::NotImplemented, "Coupling manager does not implement updateCouplingContext() function"); }
+    // \{
 
     /*!
-     * \brief Update the local views of domain i after the coupling context has been updated.
-     *        This is only necessary if some of these containers depend on quantities of the other domain
-     *        stored in the coupling context here in the coupling manager.
+     * \brief prepares all data and variables that are necessary to evaluate the residual of the element of domain i
+     *
+     * \param domainI the domain index of domain i
+     * \param elementI the element whose residual we are assemling next
+     * \param assembler the multidomain assembler for access to all data necessary for the assembly of all domains
+     *
+     * \note this concerns all data that is used in the evaluation of the element residual and depends on one of the
+     *       degrees of freedom returned by CouplingManager::couplingStencil
+     * \note every coupled element residual depends at least on the solution of another domain, that why we always store a
+     *       copy of the solution vector in the coupling manager, hence, in case the element residual
+     *       only depends on primary variables of the other domain this function does nothing
+     * \note overload this function in case the element residual depends on more than the primary variables of domain j
      */
-    template<std::size_t i, class Element, class FVElementGeometry,
-             class VolumeVariablesContainer, class FluxVariablesCacheContainer>
-    void updateSelf(Dune::index_constant<i> domainI,
-                    const Element& element,
-                    const FVElementGeometry& fvGeometry,
-                    const VolumeVariablesContainer& elemVolVars,
-                    const FluxVariablesCacheContainer& elemFluxVarsCache)
-    {  DUNE_THROW(Dune::NotImplemented, "Coupling manager does not implement updateSelf() function"); }
+    template<std::size_t i, class Assembler>
+    void bindCouplingContext(Dune::index_constant<i> domainI,
+                             const Element<i>& elementI,
+                             const Assembler& assembler)
+    {}
+
+
+    /*!
+     * \brief updates all data and variables that are necessary to evaluate the residual of the element of domain i
+     *        this is called whenever one of the primary variables that the element residual depends on changes in domain j
+     *
+     * \param domainI the domain index of domain i
+     * \param localAssemblerI the local assembler assembling the element residual of an element of domain i
+     * \param domainJ the domain index of domain j
+     * \param dofIdxGlobalJ the index of the degree of freedom of domain j whose solution changed
+     * \param priVarsJ the new solution at the degree of freedom of domain j with index dofIdxGlobalJ
+     * \param pvIdxJ the index of the primary variable of domain j which has been updated
+     *
+     * \note this concerns all data that is used in the evaluation of the element residual and depends on
+     *       the primary variables at the degree of freedom location with index dofIdxGlobalJ
+     * \note  the element whose residual is to be evaluated can be retrieved from the local assembler
+     *        as localAssemblerI.element()
+     * \note  per default, we udpate the solution vector, if the element residual of domain i depends on more than
+     *        the primary variables of domain j update the other dependent data here by overloading this function
+     */
+    template<std::size_t i, std::size_t j, class LocalAssemblerI>
+    void updateCouplingContext(Dune::index_constant<i> domainI,
+                               const LocalAssemblerI& localAssemblerI,
+                               Dune::index_constant<j> domainJ,
+                               std::size_t dofIdxGlobalJ,
+                               const PrimaryVariables<j>& priVarsJ,
+                               int pvIdxJ)
+    {
+        curSol_[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
+    }
+
+    /*!
+     * \brief update variables of domain i that depend on variables in domain j after the coupling context has been updated
+     *
+     * \param domainI the index of domain i
+     * \param localAssemblerI the local assembler assembling the element residual of an element of domain i
+     * \param elemVolVars the element volume variables (all volume variables in the element local stencil) to be updated
+     * \param elemFluxVarsCache the element flux variable cache (all flux variables in the element local stencil) to be updated
+     *
+     * \note Such variables do not necessarily exist and then this function does nothing (default)
+     * \note some examples
+     *       from geomechanics: the porosity of (physical) domain i (porous medium flow) depends on the displacement vector of physical domain j (mechnanics)
+     *       from domaindecomposition: the transmissibilities for fluxes of domain i to domain j depend on the permeability in domain j
+     *                                 (which might depend in turn on the primary variables of domain i)
+     */
+    template<std::size_t i, class LocalAssemblerI, class UpdatableElementVolVars, class UpdatableFluxVarCache>
+    void updateCoupledVariables(Dune::index_constant<i> domainI,
+                                const LocalAssemblerI& localAssemblerI,
+                                UpdatableElementVolVars& elemVolVars,
+                                UpdatableFluxVarCache& elemFluxVarsCache)
+    {}
+
+    /*!
+     * \brief Updates the entire solution vector, e.g. before assembly or after grid adaption
+     */
+    void updateSolution(const SolutionVector& curSol)
+    { curSol_ = curSol; }
+
+    // \}
+
+    /*!
+     * \brief evaluates the element residual of a coupled element of domain i which depends on the variables
+     *        at the degree of freedom with index dofIdxGlobalJ of domain j
+     *
+     * \param domainI the domain index of domain i
+     * \param localAssemblerI the local assembler assembling the element residual of an element of domain i
+     * \param domainJ the domain index of domain j
+     * \param dofIdxGlobalJ the index of the degree of freedom of domain j which has an influence on the element residual of domain i
+     *
+     * \note  the element whose residual is to be evaluated can be retrieved from the local assembler
+     *        as localAssemblerI.element() as well as all up-to-date variables and caches.
+     * \note  the default implementation evaluates the complete element residual
+     *        if only parts (i.e. only certain scvs, or only certain terms of the residual) of the residual are coupled
+     *        to dof with index dofIdxGlobalJ the function can be overloaded in the coupling manager
+     * \return the element residual
+     */
+    template<std::size_t i, std::size_t j, class LocalAssemblerI>
+    decltype(auto) evalCouplingResidual(Dune::index_constant<i> domainI,
+                                        const LocalAssemblerI& localAssemblerI,
+                                        Dune::index_constant<j> domainJ,
+                                        std::size_t dofIdxGlobalJ) const
+    {
+        return localAssemblerI.evalLocalResidual();
+    }
+
+protected:
+
+    /*!
+     * \brief the solution vector of the coupled problem
+     * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     */
+    SolutionVector& curSol()
+    { return curSol_; }
+
+    /*!
+     * \brief the solution vector of the coupled problem
+     * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     */
+    const SolutionVector& curSol() const
+    { return curSol_; }
+
+private:
+    /*!
+     * \brief the solution vector of the coupled problem
+     * \note in case of numeric differentiation the solution vector always carries the deflected solution
+     */
+    SolutionVector curSol_;
+
 };
 
 } //end namespace Dumux

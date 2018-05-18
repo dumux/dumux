@@ -27,78 +27,35 @@
 #include <type_traits>
 #include <dune/istl/matrixindexset.hh>
 #include <dumux/discretization/methods.hh>
-#include <dumux/assembly/jacobianpattern.hh>
 
 namespace Dumux {
-
-/*!
- * \ingroup Assembly
- * \brief Helper function to generate Jacobian pattern (diagonal blocks)
- *        for coupled models, accepting a map storing additional dof dependencies.
- */
-template<bool isImplicit, class GridGeometry, class KeyType, class ValueType>
-Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry,
-                                        const std::unordered_map<KeyType, ValueType>& additionalDofDependencies)
-{
-    Dune::MatrixIndexSet pattern = getJacobianPattern<isImplicit>(gridGeometry);
-
-    for(const auto& entry : additionalDofDependencies)
-    {
-        const auto globalI = entry.first;
-        for(const auto globalJ : entry.second)
-            pattern.add(globalI, globalJ);
-    }
-
-    return pattern;
-}
-
-/*!
- * \ingroup Assembly
- * \brief Helper function to generate Jacobian pattern (diagonal blocks)
- *        for coupled models, accepting a vector like container type storing additional dof dependencies.
- */
-template<bool isImplicit, class GridGeometry, class Vector>
-Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry,
-                                        const Vector& additionalDofDependencies)
-{
-    Dune::MatrixIndexSet pattern = getJacobianPattern<isImplicit>(gridGeometry);
-
-    for(std::size_t i = 0; i < additionalDofDependencies.size(); ++i)
-    {
-        const auto globalI = i;
-        for(const auto globalJ : additionalDofDependencies[i])
-            pattern.add(globalI, globalJ);
-    }
-
-    return pattern;
-}
 
 /*!
  * \ingroup Assembly
  * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
  *        for cell-centered schemes
  */
-template<bool isImplicit, class CouplingManager, class GridGeometry0, class GridGeometry1, std::size_t i, std::size_t j,
-         typename std::enable_if_t<( (GridGeometry0::discMethod == DiscretizationMethod::cctpfa)
-                                     || (GridGeometry0::discMethod == DiscretizationMethod::ccmpfa) ), int> = 0>
+template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
+         typename std::enable_if_t<( (GridGeometryI::discMethod == DiscretizationMethod::cctpfa)
+                                     || (GridGeometryI::discMethod == DiscretizationMethod::ccmpfa) ), int> = 0>
 Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
                                                 Dune::index_constant<i> domainI,
-                                                const GridGeometry0& gridGeometry0,
+                                                const GridGeometryI& gridGeometryI,
                                                 Dune::index_constant<j> domainJ,
-                                                const GridGeometry1& gridGeometry1)
+                                                const GridGeometryJ& gridGeometryJ)
 {
-    const auto numDofs0 = gridGeometry0.numDofs();
-    const auto numDofs1 = gridGeometry1.numDofs();
+    const auto numDofsI = gridGeometryI.numDofs();
+    const auto numDofsJ = gridGeometryJ.numDofs();
     Dune::MatrixIndexSet pattern;
-    pattern.resize(numDofs0, numDofs1);
+    pattern.resize(numDofsI, numDofsJ);
 
     // matrix pattern for implicit Jacobians
     if (isImplicit)
     {
-        for (const auto& element0 : elements(gridGeometry0.gridView()))
+        for (const auto& elementI : elements(gridGeometryI.gridView()))
         {
-            const auto& stencil = couplingManager.couplingStencil(element0, domainI, domainJ);
-            const auto globalI = gridGeometry0.elementMapper().index(element0);
+            const auto& stencil = couplingManager.couplingStencil(domainI, elementI, domainJ);
+            const auto globalI = gridGeometryI.elementMapper().index(elementI);
             for (const auto globalJ : stencil)
                 pattern.add(globalI, globalJ);
         }
@@ -116,29 +73,29 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
  * \brief Helper function to generate coupling Jacobian pattern (off-diagonal blocks)
  *        for the box scheme
  */
-template<bool isImplicit, class CouplingManager, class GridGeometry0, class GridGeometry1, std::size_t i, std::size_t j,
-         typename std::enable_if_t<(GridGeometry0::discMethod == DiscretizationMethod::box), int> = 0>
+template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
+         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethod::box), int> = 0>
 Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
                                                 Dune::index_constant<i> domainI,
-                                                const GridGeometry0& gridGeometry0,
+                                                const GridGeometryI& gridGeometryI,
                                                 Dune::index_constant<j> domainJ,
-                                                const GridGeometry1& gridGeometry1)
+                                                const GridGeometryJ& gridGeometryJ)
 {
-    const auto numDofs0 = gridGeometry0.numDofs();
-    const auto numDofs1 = gridGeometry1.numDofs();
+    const auto numDofsI = gridGeometryI.numDofs();
+    const auto numDofsJ = gridGeometryJ.numDofs();
     Dune::MatrixIndexSet pattern;
-    pattern.resize(numDofs0, numDofs1);
+    pattern.resize(numDofsI, numDofsJ);
 
     // matrix pattern for implicit Jacobians
     if (isImplicit)
     {
-        static constexpr int dim = std::decay_t<decltype(gridGeometry0.gridView())>::dimension;
-        for (const auto& element0 : elements(gridGeometry0.gridView()))
+        static constexpr int dim = std::decay_t<decltype(gridGeometryI.gridView())>::dimension;
+        for (const auto& elementI : elements(gridGeometryI.gridView()))
         {
-            const auto& stencil = couplingManager.couplingStencil(element0, domainI, domainJ);
-            for (std::size_t vIdxLocal = 0; vIdxLocal < element0.subEntities(dim); ++vIdxLocal)
+            const auto& stencil = couplingManager.couplingStencil(domainI, elementI, domainJ);
+            for (std::size_t vIdxLocal = 0; vIdxLocal < elementI.subEntities(dim); ++vIdxLocal)
             {
-                const auto globalI = gridGeometry0.vertexMapper().subIndex(element0, vIdxLocal, dim);
+                const auto globalI = gridGeometryI.vertexMapper().subIndex(elementI, vIdxLocal, dim);
                 for (const auto globalJ : stencil)
                     pattern.add(globalI, globalJ);
             }
@@ -153,30 +110,30 @@ Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingM
 }
 
 
-template<bool isImplicit, class CouplingManager, class GridGeometry0, class GridGeometry1, std::size_t i, std::size_t j,
-         typename std::enable_if_t<(GridGeometry0::discMethod == DiscretizationMethod::staggered), int> = 0>
+template<bool isImplicit, class CouplingManager, class GridGeometryI, class GridGeometryJ, std::size_t i, std::size_t j,
+         typename std::enable_if_t<(GridGeometryI::discMethod == DiscretizationMethod::staggered), int> = 0>
 Dune::MatrixIndexSet getCouplingJacobianPattern(const CouplingManager& couplingManager,
                                                 Dune::index_constant<i> domainI,
-                                                const GridGeometry0& gridGeometry0,
+                                                const GridGeometryI& gridGeometryI,
                                                 Dune::index_constant<j> domainJ,
-                                                const GridGeometry1& gridGeometry1)
+                                                const GridGeometryJ& gridGeometryJ)
 {
-    const auto numDofs0 = gridGeometry0.numDofs();
-    const auto numDofs1 = gridGeometry1.numDofs();
-    Dune::MatrixIndexSet pattern(numDofs0, numDofs1);
+    const auto numDofsI = gridGeometryI.numDofs();
+    const auto numDofsJ = gridGeometryJ.numDofs();
+    Dune::MatrixIndexSet pattern(numDofsI, numDofsJ);
 
-    for (const auto& element0 : elements(gridGeometry0.gridView()))
+    for (const auto& elementI : elements(gridGeometryI.gridView()))
     {
-        if(gridGeometry0.isCellCenter())
+        if(gridGeometryI.isCellCenter())
         {
-            const auto ccGlobalI = gridGeometry0.elementMapper().index(element0);
-            for (auto&& faceGlobalJ : couplingManager.couplingStencil(element0, domainI, domainJ))
+            const auto ccGlobalI = gridGeometryI.elementMapper().index(elementI);
+            for (auto&& faceGlobalJ : couplingManager.couplingStencil(domainI, elementI, domainJ))
                     pattern.add(ccGlobalI, faceGlobalJ);
         }
         else
         {
-            auto fvGeometry = localView(gridGeometry0);
-            fvGeometry.bindElement(element0);
+            auto fvGeometry = localView(gridGeometryI);
+            fvGeometry.bindElement(elementI);
 
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
