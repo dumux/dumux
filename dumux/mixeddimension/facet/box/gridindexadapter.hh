@@ -58,6 +58,12 @@ class FacetGridIndexAdapter
     // Find out if the given bulk grid is on the highest level among the created grids
     static constexpr bool isHighestLevel = (int(BulkGrid::dimension) == GridCreator::bulkDim);
 
+    // check if provided id combination makes sense
+    static_assert( int(LowDimGrid::dimension) == int(BulkGrid::dimension) - 1,
+                   "Grid dimension mismatch! Please check the provided domain ids!" );
+    static_assert( int(LowDimGrid::dimensionworld) == int(BulkGrid::dimensionworld),
+                   "Grid world dimension mismatch! All grids must have the same world dimension" );
+
 public:
 
     //! the constructor
@@ -69,11 +75,27 @@ public:
         const auto& bulkGridFactory = gridCreatorPtr_->template gridFactory<bulkId>();
         auto bulkVertexMapper = BulkMapper(bulkGridView, Dune::mcmgVertexLayout());
 
+        // insertion to grid index map
         bulkInsertionToGridVIdx_.resize(bulkGridView.size(BulkGrid::dimension));
         for (const auto& v : vertices(bulkGridView))
             bulkInsertionToGridVIdx_[ bulkGridFactory.insertionIndex(v) ] = bulkVertexMapper.index(v);
 
+        // set up index map for the bulk vertex indices
         makeBulkIndexMap_(gridCreator);
+
+        // determine which bulk vertices lie on facet elements
+        bulkVertexIsOnLowDimGrid_.resize(bulkGridView.size(BulkGrid::dimension), false);
+        const auto& lowDimGridView = gridCreator.template grid<lowDimId>().leafGridView();
+        const auto& lowDimGridFactory = gridCreatorPtr_->template gridFactory<lowDimId>();
+        for (const auto& v : vertices(lowDimGridView))
+        {
+            const auto insIdx = lowDimGridFactory.insertionIndex(v);
+            const auto highestLevelInsIdx = gridCreatorPtr_->lowDimVertexIndices(lowDimId)[insIdx];
+            const auto bulkInsIdx = isHighestLevel
+                                    ? bulkInsertionToGridVIdx_[ highestLevelInsIdx ]
+                                    : bulkInsertionToGridVIdx_[ highestLevelInsertionToBulkInsertionIdx_[ highestLevelInsIdx] ];
+            bulkVertexIsOnLowDimGrid_[ bulkInsIdx ] = true;
+        }
     }
 
     //! returns the index within the d-dimensional grid of a vertex of the (d-1)-dimensional grid
@@ -93,8 +115,11 @@ public:
     bool isEmbedded(const LowDimGridElement& e) const
     { return gridCreatorPtr_->template embedmentEntityIndices<lowDimId>(e).size() > 0; }
 
-private:
+    //! returns true if a bulk grid vertex lies on a lowDim grid element
+    bool vertexIsOnLowDimGrid(BulkIndexType bulkVIdx) const
+    { return bulkVertexIsOnLowDimGrid_[ bulkVIdx ]; }
 
+private:
     //! Determine the map from the insertion idx of the highest-dimensional grid to bulk insertion index
     template< bool isHighest = isHighestLevel, std::enable_if_t<!isHighest, int> = 0 >
     void makeBulkIndexMap_(const GridCreator& gridCreator)
@@ -113,6 +138,7 @@ private:
 
     // data members
     const GridCreator* gridCreatorPtr_;
+    std::vector<bool> bulkVertexIsOnLowDimGrid_;
     std::vector<BulkIndexType> bulkInsertionToGridVIdx_;
     std::vector<BulkIndexType> highestLevelInsertionToBulkInsertionIdx_;
 };
