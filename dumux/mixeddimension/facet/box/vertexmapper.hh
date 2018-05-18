@@ -74,6 +74,7 @@ class EnrichedVertexDofMapper
     MCMGMapper vertexMapper_;                 //! unmodified vertex mapper
     std::vector< std::vector<IT> > indexMap_; //! contains the new dof indices
     std::vector< bool > isEnriched_;          //! keeps track which vertices are enriched
+    bool hasBeenEnriched_;                    //! keeps track of enrichment having been performed
 
 public:
     //! export the underlying grid view type
@@ -87,30 +88,48 @@ public:
     , elementMapper_(gridView, Dune::mcmgElementLayout())
     , vertexMapper_(gridView, Dune::mcmgVertexLayout())
     {
-        // initialize index map without enriched nodes
-        size_ = gridView.size(dim);
-        indexMap_.resize(gridView.size(0));
-        isEnriched_.resize(gridView.size(dim), false);
-        for (const auto& e : elements(gridView_))
-        {
-            const auto numCorners = e.geometry().corners();
-            const auto eIdxGlobal = elementMapper_.index(e);
-            indexMap_[eIdxGlobal].resize(numCorners);
-            for (unsigned int i = 0; i < numCorners; ++i)
-                indexMap_[eIdxGlobal][i] = vertexMapper_.subIndex(e, i, dim);
-        }
+        initialize_();
     }
 
-    //! map subentity of codim 0 entity
+    //! constructor taking a layout as additional argument (for compatibility)
+    EnrichedVertexDofMapper(const GV& gridView, Dune::MCMGLayout layout)
+    : EnrichedVertexDofMapper(gridView)
+    {
+        if ( !( static_cast<bool>(layout(Dune::GeometryTypes::vertex, dim)) ) )
+            DUNE_THROW(Dune::InvalidStateException, "Vertex mapper only makes sense for vertex layout!");
+    }
+
+    //! map nodal subentity of codim 0 entity to the grid dof
     IndexType subIndex(const Element& e, unsigned int i, unsigned int codim) const
     {
+        assert(hasBeenEnriched_);
         assert(codim == dim && "Only element corners can be mapped by this mapper");
         return indexMap_[elementMapper_.index(e)][i];
     }
 
-    //! maps an index directly from a vertex (inadmissible for enriched vertex dofs)
-    IndexType index(const Vertex& v) const
-    { DUNE_THROW(Dune::InvalidStateException, "Index map not unique for vertices with enriched vertex dofs"); }
+    //! map nodal subentity of codim 0 entity to the grid vertex index
+    IndexType vertexIndex(const Element& e, unsigned int i, unsigned int codim) const
+    {
+        assert(codim == dim && "Only element corners can be mapped by this mapper");
+        return vertexMapper_.subIndex(e, i, codim);
+    }
+
+    //! map nodal subentity of codim 0 entity to the grid vertex index
+    IndexType vertexIndex(const Vertex& v) const
+    {
+        assert(Vertex::Geometry::mydimension == 0 && "Only vertices can be mapped by this mapper");
+        return vertexMapper_.index(v);
+    }
+
+    //! map vertex to the grid vertex index
+    //! \todo TODO this is needed because it is called by the vertex handles.
+    //!            Does this work in parallel actually???
+    template< class EntityType >
+    IndexType index(const EntityType& e) const
+    {
+        assert(EntityType::Geometry::mydimension == 0 && "Only vertices can be mapped by this mapper");
+        return vertexMapper_.index(e);
+    }
 
     //! returns the number of dofs managed by this mapper
     std::size_t size() const
@@ -119,6 +138,14 @@ public:
     //! returns true if a vertex dof had been enriched
     bool isEnriched(const Vertex& v)
     { return isEnriched_[ vertexMapper_.index(v) ]; }
+
+    //! the update here simply updates the non-enriched map
+    //! enrichment has to be done afterwards!
+    void update()
+    {
+        initialize_();
+        hasBeenEnriched_ = false;
+    }
 
     /*!
      * \brief Enriches the dof map subject to a (dim-1)-dimensional grid.
@@ -156,11 +183,28 @@ public:
                                                                     facetGridView,
                                                                     facetGridIndexAdapter);
 
+        hasBeenEnriched_ = true;
         if (verbose)
             std::cout << "Vertex dof enrichment took " << watch.elapsed() << " seconds." << std::endl;
     }
 
 private:
+
+    //! initializes the mapper on the basis of the standard Dune mcmgmapper
+    void initialize_()
+    {
+        size_ = gridView_.size(dim);
+        indexMap_.resize(gridView_.size(0));
+        isEnriched_.resize(gridView_.size(dim), false);
+        for (const auto& e : elements(gridView_))
+        {
+            const auto numCorners = e.geometry().corners();
+            const auto eIdxGlobal = elementMapper_.index(e);
+            indexMap_[eIdxGlobal].resize(numCorners);
+            for (unsigned int i = 0; i < numCorners; ++i)
+                indexMap_[eIdxGlobal][i] = vertexMapper_.subIndex(e, i, dim);
+        }
+    }
 
     //! Determines the nodes that should be enriched. This is necessary as dofs on
     //! immersed boundaries of the lower-dimensional grid it should not be enriched.
@@ -243,7 +287,7 @@ private:
  *                      with the facets of this grid view, indicating on which facets
  *                      nodal dofs should be enriched.
  */
-template< class BulkGridView,class FacetGridView >
+template< class BulkGridView, class FacetGridView >
 class EnrichmentHelper< BulkGridView, FacetGridView, 1 >
 {
     static constexpr int bulkDim = BulkGridView::dimension;
@@ -352,7 +396,7 @@ public:
         {
             const auto vIdx = bulkVertexMapper.index(v);
             if (enrichVertex[vIdx])
-                bulkVertexIndexOffsets[vIdx] = nodalPaths[vIdx].size();
+                bulkVertexIndexOffsets[vIdx] = nodalPaths[vIdx].size()-1;
         }
 
         // ... and accumulate the offsets
@@ -363,7 +407,7 @@ public:
             const auto os = nodalOffset;
             nodalOffset = sumOffset;
             sumOffset += os;
-            size += (os == 0) ? 1 : os;
+            size += (os == 0) ? 1 : os + 1;
         }
 
         // Now, finally set up the new index map
@@ -685,7 +729,7 @@ public:
             const auto bulkVIdx = facetGridIndexAdapter.index(v);
             bulkToFacetIdx[bulkVIdx] = vIdx;
             if (enrichVertex[bulkVIdx])
-                bulkVertexIndexOffsets[bulkVIdx] = nodalPaths[vIdx].size();
+                bulkVertexIndexOffsets[bulkVIdx] = nodalPaths[vIdx].size()-1;
         }
 
         // ... and accumulate the offsets
@@ -696,7 +740,7 @@ public:
             const auto os = nodalOffset;
             nodalOffset = sumOffset;
             sumOffset += os;
-            size += (os == 0) ? 1 : os;
+            size += (os == 0) ? 1 : os + 1;
         }
 
         // Now, finally set up the new index map
