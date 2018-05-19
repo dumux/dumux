@@ -95,13 +95,20 @@ public:
     : ParentType(fvGridGeometry, GET_PROP_VALUE(TypeTag, ModelParameterGroup)) {}
 
     //! The temperature in the domain
-    static constexpr Scalar temperature() { return 273.15; }
+    static constexpr Scalar temperature()
+    { return 273.15; }
+
     //! Evaluate the initial value for a control volume.
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(0.0); }
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(0.0); }
+
     //! Evaluate the boundary conditions for a Dirichlet boundary segment.
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(0.0); }
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(0.0); }
+
     //! Evaluate the boundary conditions for a Neumannboundary segment.
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(0.0); }
+    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(0.0); }
 
     /*!
      * \brief Returns the effective fluid density
@@ -115,7 +122,7 @@ public:
         // here, we know that the flow problem uses cell-centered finite volumes,
         // thus, we simply take the volume variables of the element and return the density
         const auto& context = couplingManager().poroMechanicsCouplingContext();
-        return (*context.pmFlowElemVolVars)[scv.elementIndex()].density();
+        return (*context.pmFlowElemVolVars)[scv].density();
     }
 
     /*!

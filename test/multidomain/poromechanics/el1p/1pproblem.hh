@@ -91,11 +91,16 @@ public:
     {}
 
     //! Return the temperature within the domain in [K].
-    Scalar temperature() const { return 273.15 + 10; } // 10C
+    Scalar temperature() const
+    { return 273.15 + 10; } // 10C
+
     //! Evaluate the boundary conditions for a Dirichlet boundary segment.
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const { return initialAtPos(globalPos); }
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    { return initialAtPos(globalPos); }
+
     //! Evaluate the initial value for a control volume.
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(1.0e5); }
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(1.0e5); }
 
     //! Evaluate source terms
     NumEqVector sourceAtPos(const GlobalPosition& globalPos) const
