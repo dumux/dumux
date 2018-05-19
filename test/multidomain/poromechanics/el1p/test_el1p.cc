@@ -40,7 +40,7 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
 
-#include <dumux/multidomain/poromechanics/pmflowporomechcouplingmanager.hh>
+#include <dumux/multidomain/poromechanics/poromechanicscouplingmanager.hh>
 
 #include <dumux/io/vtkfunction.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
@@ -48,7 +48,6 @@
 // set the coupling manager property in the sub-problems
 namespace Dumux {
 namespace Properties {
-
 NEW_PROP_TAG(CouplingManager);
 
 SET_PROP(OnePSubTypeTag, CouplingManager)
@@ -57,7 +56,7 @@ private:
     // define traits etc. as below in main
     using Traits = MultiDomainTraits<TTAG(OnePSubTypeTag), TTAG(PoroElasticSubTypeTag)>;
 public:
-    using type = PMFlowFlowPoroMechanicsCouplingManager< Traits >;
+    using type = PoroMechanicsCouplingManager< Traits >;
 };
 
 SET_PROP(PoroElasticSubTypeTag, CouplingManager)
@@ -66,7 +65,7 @@ private:
     // define traits etc. as below in main
     using Traits = MultiDomainTraits<TTAG(OnePSubTypeTag), TTAG(PoroElasticSubTypeTag)>;
 public:
-    using type = PMFlowFlowPoroMechanicsCouplingManager< Traits >;
+    using type = PoroMechanicsCouplingManager< Traits >;
 };
 }
 }
@@ -120,7 +119,7 @@ int main(int argc, char** argv) try
     auto onePProblem = std::make_shared<OnePProblem>(onePFvGridGeometry);
     auto poroMechProblem = std::make_shared<PoroMechProblem>(poroMechFvGridGeometry);
 
-    // the solution vector
+    // the solution vectors
     using Traits = MultiDomainTraits<OnePTypeTag, PoroMechTypeTag>;
     using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
@@ -134,7 +133,7 @@ int main(int argc, char** argv) try
     SolutionVector xOld = x;
 
     // the coupling manager
-    using CouplingManager = PMFlowFlowPoroMechanicsCouplingManager<Traits>;
+    using CouplingManager = PoroMechanicsCouplingManager<Traits>;
     auto couplingManager = std::make_shared<CouplingManager>();
     couplingManager->init(onePProblem, poroMechProblem, x);
 
@@ -155,11 +154,9 @@ int main(int argc, char** argv) try
     Dune::VTKWriter<typename OnePFVGridGeometry::GridView> onePVtkWriter(onePFvGridGeometry->gridView());
     Dune::VTKWriter<typename PoroMechFVGridGeometry::GridView> poroMechVtkWriter(poroMechFvGridGeometry->gridView());
 
-    using VTKFunction = Dumux::Vtk::VectorP1VTKFunction< typename PoroMechFVGridGeometry::GridView,
-                                                         decltype(x[poroMechId]) >;
-    auto displacementFunction = std::make_shared< VTKFunction >(poroMechFvGridGeometry->gridView(),
-                                                                poroMechFvGridGeometry->vertexMapper(),
-                                                                x[poroMechId], "u", PoroMechFVGridGeometry::GridView::dimensionworld);
+    using VTKFunction = Dumux::Vtk::VectorP1VTKFunction< typename PoroMechFVGridGeometry::GridView, decltype(x[poroMechId]) >;
+    auto displacementFunction = std::make_shared<VTKFunction>( poroMechFvGridGeometry->gridView(), poroMechFvGridGeometry->vertexMapper(),
+                                                               x[poroMechId], "u", PoroMechFVGridGeometry::GridView::dimensionworld );
 
     // add displacement/pressure to poro-elastic vtk writer and write initial solution
     onePVtkWriter.addCellData(x[onePId], "p");
