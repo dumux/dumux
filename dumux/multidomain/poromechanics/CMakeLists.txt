@@ -1,4 +1,4 @@
 #install headers
 install(FILES
-pmflowporomechcouplingmanager.hh
+poromechanicscouplingmanager.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/poromechanics)
