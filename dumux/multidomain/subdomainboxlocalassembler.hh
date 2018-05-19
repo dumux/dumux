@@ -358,7 +358,6 @@ public:
         computeAndAddDerivatives(element, fvGeometry, origResiduals, curSol, A, gridVariables);
 
         // compute additional derivatives of this element with respect to other elements
-        const auto eIdxI = fvGeometry.fvGridGeometry().elementMapper().index(element);
         for (const auto eIdxJ : this->couplingManager().extendedSourceStencil(domainI, element))
         {
             const auto elementJ = fvGeometry.fvGridGeometry().element(eIdxJ);
