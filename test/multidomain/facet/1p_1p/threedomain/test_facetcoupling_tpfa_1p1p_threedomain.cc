@@ -44,6 +44,7 @@
 #include <dumux/multidomain/traits.hh>
 
 #include <dumux/mixeddimension/facet/gridcreator.hh>
+#include <dumux/mixeddimension/facet/cellcentered/tpfa/couplingmapper.hh>
 #include <dumux/mixeddimension/facet/cellcentered/tpfa/couplingmanager.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
