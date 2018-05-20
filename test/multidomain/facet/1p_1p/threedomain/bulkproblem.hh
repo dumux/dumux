@@ -48,12 +48,12 @@ NEW_TYPE_TAG(OnePBulkTpfa, INHERITS_FROM(OnePBulk, CCTpfaFacetCouplingModel));
 
 // Set the grid type
 SET_TYPE_PROP(OnePBulk, Grid, Dune::ALUGrid<3, 3, Dune::simplex, Dune::nonconforming>);
-
 // Set the problem type
 SET_TYPE_PROP(OnePBulk, Problem, OnePBulkProblem<TypeTag>);
-
 // set the spatial params
 SET_TYPE_PROP(OnePBulk, SpatialParams, OnePSpatialParams<TypeTag>);
+// the group for retrieving sub-domain specific params
+SET_STRING_PROP(OnePBulk, ModelParameterGroup, "Bulk");
 
 // the fluid system
 SET_PROP(OnePBulk, FluidSystem)
@@ -63,9 +63,6 @@ private:
 public:
     using type = FluidSystems::OnePLiquid< Scalar, Components::Constant<1, Scalar> >;
 };
-
-// the group for retrieving sub-domain specific params
-SET_STRING_PROP(OnePBulk, ModelParameterGroup, "Bulk");
 
 // Disable caching (for testing purposes)
 SET_BOOL_PROP(OnePBulk, EnableGridVolumeVariablesCache, false);
@@ -133,13 +130,21 @@ public:
     }
 
     //! Evaluate the Dirichlet boundary conditions at a given position
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const { return PrimaryVariables({2.0}); }
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    { return PrimaryVariables({2.0}); }
+
     //! Evaluat the initial conditions
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(1.0); }
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(1.0); }
+
     //! Return the temperature in \f$\mathrm{[K]}\f$ in the domain
-    Scalar temperature() const { return 283.15; /*10°C*/ }
+    Scalar temperature() const
+    { return 283.15; /*10°C*/ }
+
     //! Return const reference to the coupling manager.
-    const CouplingManager& couplingManager() const { return *couplingManagerPtr_; }
+    const CouplingManager& couplingManager() const
+    { return *couplingManagerPtr_; }
+
     //! sets the pointer to the coupling manager.
     void setCouplingManager(std::shared_ptr<CouplingManager> cm)
     { couplingManagerPtr_ = cm; }
