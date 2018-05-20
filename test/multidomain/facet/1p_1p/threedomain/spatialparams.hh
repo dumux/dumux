@@ -61,9 +61,12 @@ public:
     }
 
     //! Function for defining the (intrinsic) permeability \f$[m^2]\f$.
-    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const { return permeability_; }
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
+    { return permeability_; }
+
     //! Return the porosity
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const { return 1.0; }
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return 1.0; }
 
 private:
     Scalar permeability_;
