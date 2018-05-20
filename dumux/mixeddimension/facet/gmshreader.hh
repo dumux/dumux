@@ -276,7 +276,7 @@ public:
     }
 
     //! Returns the bulk grid vertices
-    const std::vector<GlobalPosition> bulkGridVertices() const
+    const std::vector<GlobalPosition>& bulkGridVertices() const
     { return bulkGridvertices_; }
 
     //! Returns a low-dim grid's vertex indices

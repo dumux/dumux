@@ -106,7 +106,7 @@ public:
         using IndexType = typename BulkGrid::LeafGridView::IndexSet::IndexType;
         //! maps to n-dimensional elements the set of (n-1)-dimensional elements embedded in it
         using EmbeddedEntityMap = std::unordered_map< IndexType, std::vector<IndexType> >;
-        //! maps to m-dimensional elements the set of (n+1)-dimensional elements in which they are embedded
+        //! maps to n-dimensional elements the set of (n+1)-dimensional elements in which they are embedded
         using EmbedmentMap = std::unordered_map< IndexType, std::vector<IndexType> >;
         //! maps to each element a domain marker
         using ElementToDomainMarkerMap = std::vector<int>;

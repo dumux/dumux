@@ -81,7 +81,6 @@ public:
 
     /*!
      * \brief Update coupling maps
-     *
      * \tparam GridCreator Class that contains the grid factories and embedments
      */
     template<class GridCreator>
