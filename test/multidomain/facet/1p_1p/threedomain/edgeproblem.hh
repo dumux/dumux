@@ -49,12 +49,12 @@ NEW_TYPE_TAG(OnePEdgeTpfa, INHERITS_FROM(CCTpfaModel, OnePEdge));
 
 // Set the grid type
 SET_TYPE_PROP(OnePEdge, Grid, Dune::FoamGrid<1, 3>);
-
 // Set the problem type
 SET_TYPE_PROP(OnePEdge, Problem, OnePEdgeProblem<TypeTag>);
-
 // set the spatial params
 SET_TYPE_PROP(OnePEdge, SpatialParams, OnePSpatialParams<TypeTag>);
+// the group for retrieving sub-domain specific params
+SET_STRING_PROP(OnePEdge, ModelParameterGroup, "Edge");
 
 // the fluid system
 SET_PROP(OnePEdge, FluidSystem)
@@ -64,9 +64,6 @@ private:
 public:
     using type = FluidSystems::OnePLiquid< Scalar, Components::Constant<1, Scalar> >;
 };
-
-// the group for retrieving sub-domain specific params
-SET_STRING_PROP(OnePEdge, ModelParameterGroup, "Edge");
 
 // Disable caching (for testing purposes)
 SET_BOOL_PROP(OnePEdge, EnableGridVolumeVariablesCache, false);
@@ -136,15 +133,25 @@ public:
     }
 
     //! Evaluate the Dirichlet boundary conditions for a boundary position
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const { return PrimaryVariables({1.0}); }
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    { return PrimaryVariables({1.0}); }
+
     //! Set the aperture squared as extrusion factor.
-    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const { return exFactor_; }
+    Scalar extrusionFactorAtPos(const GlobalPosition& globalPos) const
+    { return exFactor_; }
+
     //! Evaluate the initial conditions
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(1.0); }
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(1.0); }
+
     //! Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-    Scalar temperature() const { return 283.15; /*10°*/ }
+    Scalar temperature() const
+    { return 283.15; /*10°*/ }
+
     //! Return const reference to the coupling manager.
-    const CouplingManager& couplingManager() const { return *couplingManagerPtr_; }
+    const CouplingManager& couplingManager() const
+    { return *couplingManagerPtr_; }
+
     //! sets the pointer to the coupling manager.
     void setCouplingManager(std::shared_ptr<CouplingManager> cm)
     { couplingManagerPtr_ = cm; }
