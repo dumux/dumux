@@ -216,35 +216,45 @@ public:
     }
 
     //! returns the number of primary scvfs of this interaction volume
-    static constexpr std::size_t numFaces() { return numScvf; }
+    static constexpr std::size_t numFaces()
+    { return numScvf; }
 
     //! returns the number of intermediate unknowns within this interaction volume
-    static constexpr std::size_t numUnknowns() { return numScvf; }
+    static constexpr std::size_t numUnknowns()
+    { return numScvf; }
 
     //! returns the number of (in this context) known solution values within this interaction volume
-    static constexpr std::size_t numKnowns() { return numScv; }
+    static constexpr std::size_t numKnowns()
+    { return numScv; }
 
     //! returns the number of scvs embedded in this interaction volume
-    static constexpr std::size_t numScvs() { return numScv; }
+    static constexpr std::size_t numScvs()
+    { return numScv; }
 
     //! returns the cell-stencil of this interaction volume
-    const Stencil& stencil() const { return *stencil_; }
+    const Stencil& stencil() const
+    { return *stencil_; }
 
     //! returns the grid element corresponding to a given iv-local scv idx
-    const Element& element(LocalIndexType ivLocalScvIdx) const { return elements_[ivLocalScvIdx]; }
+    const Element& element(LocalIndexType ivLocalScvIdx) const
+    { return elements_[ivLocalScvIdx]; }
 
     //! returns the local scvf entity corresponding to a given iv-local scvf idx
-    const LocalScvfType& localScvf(LocalIndexType ivLocalScvfIdx) const { return scvfs_[ivLocalScvfIdx]; }
+    const LocalScvfType& localScvf(LocalIndexType ivLocalScvfIdx) const
+    { return scvfs_[ivLocalScvfIdx]; }
 
     //! returns the local scv entity corresponding to a given iv-local scv idx
-    const LocalScvType& localScv(LocalIndexType ivLocalScvIdx) const { return scvs_[ivLocalScvIdx]; }
+    const LocalScvType& localScv(LocalIndexType ivLocalScvIdx) const
+    { return scvs_[ivLocalScvIdx]; }
 
     //! returns a reference to the container with the local face data
-    const std::array<LocalFaceData, numScvf*2>& localFaceData() const { return localFaceData_; }
+    const std::array<LocalFaceData, numScvf*2>& localFaceData() const
+    { return localFaceData_; }
 
     //! Returns a reference to the information container on Dirichlet BCs within this iv.
     //! Here, we return an empty container as this implementation cannot be used on boundaries.
-    const std::array<DirichletData, 0>& dirichletData() const { return dirichletData_; }
+    const std::array<DirichletData, 0>& dirichletData() const
+    { return dirichletData_; }
 
     //! returns the matrix associated with face unknowns in local equation system
     const AMatrix& A() const { return A_; }
@@ -264,7 +274,8 @@ public:
 
     //! returns the number of interaction volumes living around a vertex
     template< class NI >
-    static constexpr std::size_t numIVAtVertex(const NI& nodalIndexSet) { return 1; }
+    static constexpr std::size_t numIVAtVertex(const NI& nodalIndexSet)
+    { return 1; }
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf

@@ -118,25 +118,32 @@ public:
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
-    const DofMapper& dofMapper() const { return this->elementMapper(); }
+    const DofMapper& dofMapper() const
+    { return this->elementMapper(); }
 
     //! The total number of sub control volumes
-    std::size_t numScv() const { return scvs_.size(); }
+    std::size_t numScv() const
+    { return scvs_.size(); }
 
     //! The total number of sub control volume faces
-    std::size_t numScvf() const { return scvfs_.size(); }
+    std::size_t numScvf() const
+    { return scvfs_.size(); }
 
     //! The total number of boundary sub control volume faces
-    std::size_t numBoundaryScvf() const { return numBoundaryScvf_; }
+    std::size_t numBoundaryScvf() const
+    { return numBoundaryScvf_; }
 
     //! The total number of degrees of freedom
-    std::size_t numDofs() const { return this->gridView().size(0); }
+    std::size_t numDofs() const
+    { return this->gridView().size(0); }
 
     //! Get an element from a global element index
-    Element element(GridIndexType eIdx) const { return this->elementMap()[eIdx]; }
+    Element element(GridIndexType eIdx) const
+    { return this->elementMap()[eIdx]; }
 
     //! Get an element from a sub control volume contained in it
-    Element element(const SubControlVolume& scv) const { return this->elementMap()[scv.elementIndex()]; }
+    Element element(const SubControlVolume& scv) const
+    { return this->elementMap()[scv.elementIndex()]; }
 
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! This specialization is enabled if the use of secondary interaction volumes is active.
@@ -343,26 +350,33 @@ public:
     }
 
     //! Returns instance of the mpfa helper type
-    MpfaHelper mpfaHelper() const { return MpfaHelper(); }
+    MpfaHelper mpfaHelper() const
+    { return MpfaHelper(); }
 
     //! Get a sub control volume with a global scv index
-    const SubControlVolume& scv(GridIndexType scvIdx) const { return scvs_[scvIdx]; }
+    const SubControlVolume& scv(GridIndexType scvIdx) const
+    { return scvs_[scvIdx]; }
 
     //! Get a sub control volume face with a global scvf index
-    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const { return scvfs_[scvfIdx]; }
+    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
+    { return scvfs_[scvfIdx]; }
 
     //! Returns the connectivity map of which dofs
     //! have derivatives with respect to a given dof.
-    const ConnectivityMap& connectivityMap() const { return connectivityMap_; }
+    const ConnectivityMap& connectivityMap() const
+    { return connectivityMap_; }
 
     //! Returns the grid interaction volume index set class.
-    const GridIVIndexSets& gridInteractionVolumeIndexSets() const { return ivIndexSets_; }
+    const GridIVIndexSets& gridInteractionVolumeIndexSets() const
+    { return ivIndexSets_; }
 
     //! Get the sub control volume face indices of an scv by global index
-    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const { return scvfIndicesOfScv_[scvIdx]; }
+    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
+    { return scvfIndicesOfScv_[scvIdx]; }
 
     //! Returns the flip scvf index set
-    const FlipScvfIndexSet& flipScvfIndexSet() const { return flipScvfIndices_; }
+    const FlipScvfIndexSet& flipScvfIndexSet() const
+    { return flipScvfIndices_; }
 
     //! Get the scvf on the same face but from the other side
     //! Note that e.g. the normals might be different in the case of surface grids
@@ -467,22 +481,28 @@ public:
     { return this->elementMapper(); }
 
     //! Returns the total number of sub control volumes.
-    std::size_t numScv() const { return numScvs_; }
+    std::size_t numScv() const
+    { return numScvs_; }
 
     //! Returns the total number of sub control volume faces.
-    std::size_t numScvf() const { return numScvf_; }
+    std::size_t numScvf() const
+    { return numScvf_; }
 
     //! Returns the number of scvfs on the domain boundary.
-    std::size_t numBoundaryScvf() const { return numBoundaryScvf_; }
+    std::size_t numBoundaryScvf() const
+    { return numBoundaryScvf_; }
 
     //! Returns the total number of degrees of freedom.
-    std::size_t numDofs() const { return this->gridView().size(0); }
+    std::size_t numDofs() const
+    { return this->gridView().size(0); }
 
     //! Gets an element from a global element index.
-    Element element(GridIndexType eIdx) const { return this->elementMap()[eIdx]; }
+    Element element(GridIndexType eIdx) const
+    { return this->elementMap()[eIdx]; }
 
     //! Gets an element from a sub control volume contained in it.
-    Element element(const SubControlVolume& scv) const { return this->elementMap()[scv.elementIndex()]; }
+    Element element(const SubControlVolume& scv) const
+    { return this->elementMap()[scv.elementIndex()]; }
 
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! This specialization is enabled if the use of secondary interaction volumes is active.
@@ -496,10 +516,12 @@ public:
     constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const { return false; }
 
     //! Returns true if a given vertex lies on a processor boundary inside a ghost element.
-    bool isGhostVertex(const Vertex& v) const { return isGhostVertex_[this->vertexMapper().index(v)]; }
+    bool isGhostVertex(const Vertex& v) const
+    { return isGhostVertex_[this->vertexMapper().index(v)]; }
 
     //! Returns true if the vertex (index) lies on a processor boundary inside a ghost element.
-    bool isGhostVertex(GridIndexType vIdxGlobal) const { return isGhostVertex_[vIdxGlobal]; }
+    bool isGhostVertex(GridIndexType vIdxGlobal) const
+    { return isGhostVertex_[vIdxGlobal]; }
 
     //! Updates all finite volume geometries of the grid. Has to be called again after grid adaption.
     void update()
@@ -685,7 +707,8 @@ public:
     }
 
     //! Returns instance of the mpfa helper type
-    MpfaHelper mpfaHelper() const { return MpfaHelper(); }
+    MpfaHelper mpfaHelper() const
+    { return MpfaHelper(); }
 
     //! Returns the sub control volume face indices of an scv by global index.
     const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
@@ -701,14 +724,17 @@ public:
     { return flipScvfIndices_[scvfIdx][outsideScvfIdx]; }
 
     //! Returns the flip scvf index set
-    const FlipScvfIndexSet& flipScvfIndexSet() const { return flipScvfIndices_; }
+    const FlipScvfIndexSet& flipScvfIndexSet() const
+    { return flipScvfIndices_; }
 
     //! Returns the connectivity map of which dofs
     //! have derivatives with respect to a given dof.
-    const ConnectivityMap& connectivityMap() const { return connectivityMap_; }
+    const ConnectivityMap& connectivityMap() const
+    { return connectivityMap_; }
 
     //! Returns the grid interaction volume seeds class.
-    const GridIVIndexSets& gridInteractionVolumeIndexSets() const { return ivIndexSets_; }
+    const GridIVIndexSets& gridInteractionVolumeIndexSets() const
+    { return ivIndexSets_; }
 
 private:
     // connectivity map for efficient assembly

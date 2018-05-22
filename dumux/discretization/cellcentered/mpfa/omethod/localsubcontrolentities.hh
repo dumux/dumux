@@ -94,13 +94,16 @@ public:
     }
 
     //! detX is needed for setting up the omegas in the interaction volumes
-    ctype detX() const { return detX_; }
+    ctype detX() const
+    { return detX_; }
 
     //! grid view-global index related to this scv
-    GridIndexType globalScvIndex() const { return globalScvIndex_; }
+    GridIndexType globalScvIndex() const
+    { return globalScvIndex_; }
 
     //! returns the index in the set of cell unknowns of the iv
-    LocalIndexType localDofIndex() const { return localDofIndex_; }
+    LocalIndexType localDofIndex() const
+    { return localDofIndex_; }
 
     //! iv-local index of the coordir's scvf in this scv
     LocalIndexType scvfIdxLocal(unsigned int coordDir) const
