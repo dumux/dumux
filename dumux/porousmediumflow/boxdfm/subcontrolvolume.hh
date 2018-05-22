@@ -172,31 +172,40 @@ public:
     }
 
     //! The center of the sub control volume
-    const GlobalPosition& center() const { return center_; }
+    const GlobalPosition& center() const
+    { return center_; }
 
     //! The volume of the sub control volume
-    Scalar volume() const { return volume_; }
+    Scalar volume() const
+    { return volume_; }
 
     //! The element-local vertex index this scv is connected to
-    LocalIndexType localDofIndex() const { return vIdxLocal_; }
+    LocalIndexType localDofIndex() const
+    { return vIdxLocal_; }
 
     //! The element-local index of this scv
-    LocalIndexType indexInElement() const { return elemLocalScvIdx_; }
+    LocalIndexType indexInElement() const
+    { return elemLocalScvIdx_; }
 
     //! The element-local facet index for which a fracture scv was created
-    LocalIndexType facetIndexInElement() const { assert(isFractureScv_); return facetIdx_; }
+    LocalIndexType facetIndexInElement() const
+    { assert(isFractureScv_); return facetIdx_; }
 
     //! The index of the dof this scv is embedded in
-    GridIndexType dofIndex() const { return dofIndex_; }
+    GridIndexType dofIndex() const
+    { return dofIndex_; }
 
     // The position of the dof this scv is embedded in (list is defined such that first entry is vertex itself)
-    const GlobalPosition& dofPosition() const { return corners_[0]; }
+    const GlobalPosition& dofPosition() const
+    { return corners_[0]; }
 
     //! The global index of the element this scv is embedded in
-    GridIndexType elementIndex() const { return elementIndex_; }
+    GridIndexType elementIndex() const
+    { return elementIndex_; }
 
     //! Return true if this scv is part of the fracture domain
-    bool isOnFracture() const { return isFractureScv_; }
+    bool isOnFracture() const
+    { return isFractureScv_; }
 
     //! The geometry of the sub control volume
     // e.g. for integration

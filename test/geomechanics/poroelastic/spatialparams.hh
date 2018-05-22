@@ -59,11 +59,16 @@ public:
     }
 
     //! Define the Lame parameters
-    const LameParams& lameParamsAtPos(const GlobalPosition& globalPos) const { return lameParams_; }
+    const LameParams& lameParamsAtPos(const GlobalPosition& globalPos) const
+    { return lameParams_; }
+
     //! Return the porosity of the porous medium
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const { return 0.3; }
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return 0.3; }
+
     //! Return the biot coefficient of the porous medium
-    Scalar biotCoefficientAtPos(const GlobalPosition& globalPos) const { return 1.0; }
+    Scalar biotCoefficientAtPos(const GlobalPosition& globalPos) const
+    { return 1.0; }
 
 private:
     LameParams lameParams_;

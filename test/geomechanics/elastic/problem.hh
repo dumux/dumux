@@ -62,6 +62,7 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -73,6 +74,7 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
+    static constexpr Scalar pi = M_PI;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     using GradU = Dune::FieldMatrix<Scalar, dim, dimWorld>;
@@ -83,13 +85,16 @@ public:
     : ParentType(fvGridGeometry) {}
 
     //! The temperature in the domain
-    static constexpr Scalar temperature() { return 273.15; }
+    static constexpr Scalar temperature()
+    { return 273.15; }
+
     //! Evaluate the initial value for a control volume.
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(0.0); }
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(0.0); }
+
     //! Evaluate the boundary conditions for a Dirichlet boundary segment.
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(0.0); }
-    //! Evaluate the boundary conditions for a Neumannboundary segment.
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(0.0); }
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(0.0); }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -108,15 +113,14 @@ public:
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      */
-    PrimaryVariables source(const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume& scv) const
+    NumEqVector source(const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume& scv) const
     {
         using std::sin;
         using std::cos;
 
-        static const Scalar pi = 3.14159265358979323846;
         const auto ipGlobal = scv.center();
         const auto x = ipGlobal[0];
         const auto y = ipGlobal[1];
@@ -155,7 +159,6 @@ public:
     {
         using std::sin;
 
-        static const Scalar pi = 3.14159265358979323846;
         const auto x = globalPos[0];
         const auto y = globalPos[1];
 
@@ -173,7 +176,6 @@ public:
         using std::sin;
         using std::cos;
 
-        static const Scalar pi = 3.14159265358979323846;
         const auto x = globalPos[0];
         const auto y = globalPos[1];
 

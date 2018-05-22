@@ -40,10 +40,12 @@ public:
     GeomechanicsVelocityOutput(Args&&... args) {}
 
     //! Output is currently disabled (not implemented)
-    static constexpr bool enableOutput() { return false; }
+    static constexpr bool enableOutput()
+    { return false; }
 
     //! There is always only one solid phase
-    static constexpr int numPhaseVelocities() { return 1; }
+    static constexpr int numPhaseVelocities()
+    { return 1; }
 
     //! Returns the name of phase for which velocity is computed
     static std::string phaseName(int phaseIdx)

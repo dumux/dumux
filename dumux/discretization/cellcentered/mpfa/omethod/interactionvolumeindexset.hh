@@ -122,16 +122,20 @@ public:
     }
 
     //! returns the corresponding nodal index set
-    const NodalIndexSet& nodalIndexSet() const { return nodalIndexSet_; }
+    const NodalIndexSet& nodalIndexSet() const
+    { return nodalIndexSet_; }
 
     //! returns the global scv indices connected to this dual grid node
-    const NodalGridStencilType& globalScvIndices() const { return nodalIndexSet_.globalScvIndices(); }
+    const NodalGridStencilType& globalScvIndices() const
+    { return nodalIndexSet_.globalScvIndices(); }
 
     //! returns the number of faces in the interaction volume
-    std::size_t numFaces() const { return numFaces_; }
+    std::size_t numFaces() const
+    { return numFaces_; }
 
     //! returns the number of scvs in the interaction volume
-    std::size_t numScvs() const { return nodalIndexSet_.numScvs(); }
+    std::size_t numScvs() const
+    { return nodalIndexSet_.numScvs(); }
 
     //! returns a global scvf idx for a given iv-local scvf index
     GridIndexType scvfIdxGlobal(LocalIndexType ivLocalScvfIdx) const

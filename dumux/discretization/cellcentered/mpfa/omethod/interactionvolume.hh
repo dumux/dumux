@@ -258,34 +258,44 @@ public:
     }
 
     //! returns the number of primary scvfs of this interaction volume
-    std::size_t numFaces() const { return numFaces_; }
+    std::size_t numFaces() const
+    { return numFaces_; }
 
     //! returns the number of intermediate unknowns within this interaction volume
-    std::size_t numUnknowns() const { return numUnknowns_; }
+    std::size_t numUnknowns() const
+    { return numUnknowns_; }
 
     //! returns the number of (in this context) known solution values within this interaction volume
-    std::size_t numKnowns() const { return numKnowns_; }
+    std::size_t numKnowns() const
+    { return numKnowns_; }
 
     //! returns the number of scvs embedded in this interaction volume
-    std::size_t numScvs() const { return scvs_.size(); }
+    std::size_t numScvs() const
+    { return scvs_.size(); }
 
     //! returns the cell-stencil of this interaction volume
-    const Stencil& stencil() const { return *stencil_; }
+    const Stencil& stencil() const
+    { return *stencil_; }
 
     //! returns the grid element corresponding to a given iv-local scv idx
-    const Element& element(LocalIndexType ivLocalScvIdx) const { return elements_[ivLocalScvIdx]; }
+    const Element& element(LocalIndexType ivLocalScvIdx) const
+    { return elements_[ivLocalScvIdx]; }
 
     //! returns the local scvf entity corresponding to a given iv-local scvf idx
-    const LocalScvfType& localScvf(LocalIndexType ivLocalScvfIdx) const { return scvfs_[ivLocalScvfIdx]; }
+    const LocalScvfType& localScvf(LocalIndexType ivLocalScvfIdx) const
+    { return scvfs_[ivLocalScvfIdx]; }
 
     //! returns the local scv entity corresponding to a given iv-local scv idx
-    const LocalScvType& localScv(LocalIndexType ivLocalScvIdx) const { return scvs_[ivLocalScvIdx]; }
+    const LocalScvType& localScv(LocalIndexType ivLocalScvIdx) const
+    { return scvs_[ivLocalScvIdx]; }
 
     //! returns a reference to the container with the local face data
-    const std::vector<LocalFaceData>& localFaceData() const { return localFaceData_; }
+    const std::vector<LocalFaceData>& localFaceData() const
+    { return localFaceData_; }
 
     //! returns a reference to the information container on Dirichlet BCs within this iv
-    const std::vector<DirichletData>& dirichletData() const { return dirichletData_; }
+    const std::vector<DirichletData>& dirichletData() const
+    { return dirichletData_; }
 
     //! returns the matrix associated with face unknowns in local equation system
     const AMatrix& A() const { return A_; }

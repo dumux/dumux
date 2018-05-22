@@ -87,21 +87,36 @@ public:
     };
 
     //! Return the average porosity \f$\mathrm{[-]}\f$ within the scv.
-    Scalar solidDensity() const { return solidState_.density(); }
+    Scalar solidDensity() const
+    { return solidState_.density(); }
+
     //! Returns the effective fluid density within the scv in \f$\mathrm{[kg/m^3]}\f$
-    Scalar effectiveFluidDensity() const { return effectiveFluidDensity_; }
+    Scalar effectiveFluidDensity() const
+    { return effectiveFluidDensity_; }
+
     //! Return the average porosity \f$\mathrm{[-]}\f$ within the scv
-    Scalar porosity() const { return solidState_.porosity()*divU_; }
+    Scalar porosity() const
+    { return solidState_.porosity()*divU_; }
+
     //! Returns the divergence of u within this scv
-    Scalar divU() const { return divU_; }
+    Scalar divU() const
+    { return divU_; }
+
     //! Returns the permeability within the scv in \f$[m^2]\f$.
-    Scalar displacement(unsigned int dir) const { return priVars_[ Indices::momentum(dir) ]; }
+    Scalar displacement(unsigned int dir) const
+    { return priVars_[ Indices::momentum(dir) ]; }
+
     //! Return a component of primary variable vector for a given index
-    Scalar priVar(const int pvIdx) const { return priVars_[pvIdx]; }
+    Scalar priVar(const int pvIdx) const
+    { return priVars_[pvIdx]; }
+
     //! Return the vector of primary variables
-    const PrimaryVariables& priVars() const { return priVars_; }
+    const PrimaryVariables& priVars() const
+    { return priVars_; }
+
     //! TODO We don't know yet how to interpret extrusion for mechanics
-    static constexpr Scalar extrusionFactor() { return 1.0; }
+    static constexpr Scalar extrusionFactor()
+    { return 1.0; }
 
 private:
     //! updates the volume fractions of the solid components

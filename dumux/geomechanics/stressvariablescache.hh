@@ -70,7 +70,8 @@ public:
      *        the volume variables as well as the stress tensor assembly laws have to be restructured!
      */
     template<typename... Args>
-    void update(Args&&... args) { DUNE_THROW(Dune::NotImplemented, "Geomechanics with cell-centered schemes"); }
+    void update(Args&&... args)
+    { DUNE_THROW(Dune::NotImplemented, "Geomechanics with cell-centered schemes"); }
 };
 
 // specialization for the cell centered mpfa method

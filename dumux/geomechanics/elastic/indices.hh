@@ -20,13 +20,12 @@
  * \file
  * \ingroup Geomechanics
  * \ingroup Elastic
- * \brief  Defines the indices for the elastic model
+ * \brief Defines the indices for the elastic model
  */
 #ifndef DUMUX_ELASTIC_INDICES_HH
 #define DUMUX_ELASTIC_INDICES_HH
 
 namespace Dumux {
-// \{
 
 /*!
  * \ingroup Geomechanics
@@ -52,7 +51,6 @@ struct ElasticIndices
     static constexpr int uzIdx = 2;
 };
 
-// \}
-} // end namespace
+} // end namespace Dumux
 
 #endif
