@@ -62,6 +62,7 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -112,10 +113,10 @@ public:
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      */
-    PrimaryVariables source(const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume& scv) const
+    NumEqVector source(const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume& scv) const
     {
         using std::sin;
         using std::cos;
