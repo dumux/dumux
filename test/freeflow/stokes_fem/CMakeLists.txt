@@ -1,0 +1,1 @@
+add_executable(test_stokesfem test_stokesfem test_stokesfem.cc)
