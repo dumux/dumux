@@ -16,7 +16,7 @@ InletVelocity = 0.1 # [m/s]
 EnableGravity = false
 
 [RANS]
-EddyViscosityModel = "baldwinLomax"
+EddyViscosityModel = "prandtl"
 TurbulentSchmidtNumber = 0.7
 
 [Assembly]
