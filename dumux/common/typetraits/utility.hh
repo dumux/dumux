@@ -43,6 +43,32 @@ struct makeFromIndexedType<Variadic, Indexed, std::index_sequence<IndexSeq...>>
     using type = Variadic<Indexed<IndexSeq>...>;
 };
 
+namespace Detail {
+    template <class Seq1, std::size_t offset, class Seq2> struct ConcatSeq;
+
+    template <std::size_t ... Is1, std::size_t offset, std::size_t ... Is2>
+    struct ConcatSeq<std::index_sequence<Is1...>, offset, std::index_sequence<Is2...>>
+    {
+        using type = std::index_sequence<Is1..., (offset + Is2)...>;
+    };
+}
+
+/*
+ * \ingroup TypeTraits
+ * \brief create an integer sequence from 0 to n-1, omitting one specific number e
+ * \tparam n number of integers in complete sequence before omitting
+ * \tparam e value of integer to be omitted
+ *
+ * example: makeIncompleteIntegerSequence<3, 1> = [0, 2]
+ * example: makeIncompleteIntegerSequence<4, 4> = [0, 1, 2, 3]
+ *
+ * see https://stackoverflow.com/questions/27124920/compile-time-generate-integer-sequence-with-one-left-out for details
+ */
+template <std::size_t n, std::size_t e>
+using makeIncompleteIntegerSequence =
+        typename Detail::ConcatSeq<decltype(std::make_index_sequence<e>{}), e + 1, decltype(std::make_index_sequence<(n > e) ? (n - e - 1) : 0>{})>::type;
+
+
 } // end namespace Dumux
 
 #endif
