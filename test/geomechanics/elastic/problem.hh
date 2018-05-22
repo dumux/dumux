@@ -84,13 +84,16 @@ public:
     : ParentType(fvGridGeometry) {}
 
     //! The temperature in the domain
-    static constexpr Scalar temperature() { return 273.15; }
+    static constexpr Scalar temperature()
+    { return 273.15; }
+
     //! Evaluate the initial value for a control volume.
-    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(0.0); }
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(0.0); }
+
     //! Evaluate the boundary conditions for a Dirichlet boundary segment.
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(0.0); }
-    //! Evaluate the boundary conditions for a Neumannboundary segment.
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const { return PrimaryVariables(0.0); }
+    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
+    { return PrimaryVariables(0.0); }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
