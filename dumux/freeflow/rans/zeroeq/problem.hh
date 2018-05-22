@@ -24,6 +24,8 @@
 #ifndef DUMUX_ZEROEQ_PROBLEM_HH
 #define DUMUX_ZEROEQ_PROBLEM_HH
 
+#include <string>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
@@ -32,7 +34,6 @@
 #include <dumux/freeflow/rans/problem.hh>
 
 #include "model.hh"
-#include "models.hh"
 
 namespace Dumux {
 
@@ -77,7 +78,7 @@ public:
     ZeroEqProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry, paramGroup)
     {
-        eddyViscosityModel_ = getParamFromGroup<int>(paramGroup, "RANS.EddyViscosityModel", 1);
+        eddyViscosityModel_ = getParamFromGroup<std::string>(paramGroup, "RANS.EddyViscosityModel", "vanDriest");
     }
 
     /*!
@@ -127,7 +128,7 @@ public:
                 volVars.update(elemSol, asImp_(), element, scv);
 
                 Scalar ksPlus = this->sandGrainRoughness_[elementID] * volVars.uStar() / volVars.kinematicViscosity();
-                if (ksPlus > 0 && eddyViscosityModel_ == EddyViscosityModels::baldwinLomax)
+                if (ksPlus > 0 && eddyViscosityModel_.compare("baldwinLomax") == 0)
                 {
                     DUNE_THROW(Dune::NotImplemented, "Roughness is not implemented for the Baldwin-Lomax model.");
                 }
@@ -151,7 +152,7 @@ public:
         }
 
         // update routine for specfic models
-        if (eddyViscosityModel_ == EddyViscosityModels::baldwinLomax)
+        if (eddyViscosityModel_.compare("baldwinLomax") == 0)
             updateBaldwinLomaxProperties();
     }
 
@@ -265,7 +266,7 @@ public:
     }
 
 public:
-    int eddyViscosityModel_;
+    std::string eddyViscosityModel_;
     std::vector<Scalar> kinematicEddyViscosity_;
     std::vector<Scalar> additionalRoughnessLength_;
 

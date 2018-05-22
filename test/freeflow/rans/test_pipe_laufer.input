@@ -21,7 +21,7 @@ EnableGravity = false
 SandGrainRoughness = 0.0 # [m] # not implemented for EddyViscosityModel = 3
 
 [RANS]
-EddyViscosityModel = 3
+EddyViscosityModel = "baldwinLomax"
 UseStoredEddyViscosity = false
 
 [Assembly]

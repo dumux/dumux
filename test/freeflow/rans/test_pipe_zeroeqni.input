@@ -18,7 +18,7 @@ WallTemperature = 303.15 # [K]
 EnableGravity = false
 
 [RANS]
-EddyViscosityModel = 3
+EddyViscosityModel = "baldwinLomax"
 
 [Assembly]
 NumericDifferenceMethod = 0

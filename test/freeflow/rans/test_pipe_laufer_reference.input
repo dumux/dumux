@@ -16,7 +16,7 @@ InletVelocity = 2.5 # [m/s]
 EnableGravity = false
 
 [RANS]
-EddyViscosityModel = 3
+EddyViscosityModel = "baldwinLomax"
 
 [Assembly]
 NumericDifferenceMethod = 0

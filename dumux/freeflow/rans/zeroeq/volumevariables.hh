@@ -25,9 +25,10 @@
 #ifndef DUMUX_ZEROEQ_VOLUME_VARIABLES_HH
 #define DUMUX_ZEROEQ_VOLUME_VARIABLES_HH
 
+#include <string>
+
 #include <dune/common/exceptions.hh>
 #include <dumux/freeflow/rans/volumevariables.hh>
-#include "models.hh"
 
 namespace Dumux
 {
@@ -94,7 +95,7 @@ public:
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
         additionalRoughnessLength_ = problem.additionalRoughnessLength_[RANSParentType::elementID()];
         yPlusRough_ = wallDistanceRough() * RANSParentType::uStar() / RANSParentType::kinematicViscosity();
-        dynamicEddyViscosity_ = calculateEddyViscosity(elemSol, problem, element, scv);
+        dynamicEddyViscosity_ = calculateEddyViscosity(elemSol, problem, element, scv, problem.eddyViscosityModel_);
         calculateEddyDiffusivity(problem);
     }
 
@@ -129,12 +130,14 @@ public:
      * \param problem The object specifying the problem which ought to be simulated
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
+     * \param modelName The name of the used model
      */
     template<class ElementSolution, class Problem, class Element, class SubControlVolume>
     Scalar calculateEddyViscosity(const ElementSolution &elemSol,
                                   const Problem &problem,
                                   const Element &element,
-                                  const SubControlVolume& scv)
+                                  const SubControlVolume& scv,
+                                  const std::string modelName)
     {
         using std::abs;
         using std::exp;
@@ -144,30 +147,30 @@ public:
         unsigned int wallNormalAxis = problem.wallNormalAxis_[RANSParentType::elementID()];
         Scalar velGrad = abs(RANSParentType::velocityGradients()[flowNormalAxis][wallNormalAxis]);
 
-        if (problem.eddyViscosityModel_ == EddyViscosityModels::none)
+        if (modelName.compare("none") == 0)
         {
             // kinematicEddyViscosity = 0.0
         }
-        else if (problem.eddyViscosityModel_ == EddyViscosityModels::prandtl)
+        else if (modelName.compare("prandtl") == 0)
         {
             Scalar mixingLength = problem.karmanConstant() * wallDistanceRough();
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
-        else if (problem.eddyViscosityModel_ == EddyViscosityModels::modifiedVanDriest)
+        else if (modelName.compare("vanDriest") == 0)
         {
             Scalar mixingLength = problem.karmanConstant() * wallDistanceRough()
                                   * (1.0 - exp(-yPlusRough() / 26.0))
                                   / sqrt(1.0 - exp(-0.26 * yPlusRough()));
             kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
         }
-        else if (problem.eddyViscosityModel_ == EddyViscosityModels::baldwinLomax)
+        else if (modelName.compare("baldwinLomax") == 0)
         {
             kinematicEddyViscosity = problem.kinematicEddyViscosity_[RANSParentType::elementID()];
         }
         else
         {
             DUNE_THROW(Dune::NotImplemented,
-                       "This eddy viscosity model is not implemented: " << problem.eddyViscosityModel_);
+                       "The eddy viscosity model \"" << modelName << "\" is not implemented.");
         }
 
         return kinematicEddyViscosity * NavierStokesParentType::density();
