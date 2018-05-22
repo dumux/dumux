@@ -18,7 +18,7 @@
  *****************************************************************************/
  /*!
   * \file
-  * \ingroup LowReKepsilonModel
+  * \ingroup LowReKEpsilonModel
   * \copydoc Dumux::LowReKepsilonResidualImpl
   */
 #ifndef DUMUX_STAGGERED_LOWREKEPSILON_LOCAL_RESIDUAL_HH
@@ -36,7 +36,7 @@ template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod
 class LowReKEpsilonResidualImpl;
 
 /*!
- * \ingroup LowReKepsilonModel
+ * \ingroup LowReKEpsilonModel
  * \brief Element-wise calculation of the residual for low-Reynolds k-epsilon models using the staggered discretization
  */
 template<class TypeTag, class BaseLocalResidual>

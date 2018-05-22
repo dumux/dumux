@@ -223,4 +223,4 @@ public:
 
 } // end namespace
 
-#endif // DUMUX_LOWREKEPSILON_MODEL_HH
+#endif

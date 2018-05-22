@@ -31,7 +31,7 @@ namespace Dumux
 
 /*!
  * \ingroup LowReKEpsilonModel
- * \brief Adds vtk output fields for the Reynolds-Averaged Navier-Stokes model
+ * \brief Adds vtk output fields for the low-Re k-epsilon turbulence model
  */
 template<class FVGridGeometry>
 class LowReKEpsilonVtkOutputFields : public RANSVtkOutputFields<FVGridGeometry>
@@ -39,7 +39,7 @@ class LowReKEpsilonVtkOutputFields : public RANSVtkOutputFields<FVGridGeometry>
     enum { dim = FVGridGeometry::GridView::dimension };
 
 public:
-    //! Initialize the Navier-Stokes specific vtk output fields.
+    //! Initialize the Reynolds-averagedNavier-Stokes specific vtk output fields.
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
