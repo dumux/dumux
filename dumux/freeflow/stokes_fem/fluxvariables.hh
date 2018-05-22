@@ -78,6 +78,7 @@ public:
      * are calculated for interior SCV faces or boundary faces, default=false
      * \todo The fvGeometry should be better initialized, passed and stored as an std::shared_ptr
      */
+    //wird wohl nicht benötigt
     void update(const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
@@ -87,14 +88,15 @@ public:
     {
         fvGeometryPtr_ = &fvGeometry;
         onBoundary_ = onBoundary;
-        fIdx_ = fIdx;
+
+        //altered to resemble geomechanics, no more fIdx_
+        faceIdx_ = fIdx;
 
         asImp_().calculateValues_(problem, element, elemVolVars);
         asImp_().determineUpwindDirection_(elemVolVars);
     }
 
 protected:
-    //! Returns the implementation of the flux variables (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
@@ -163,6 +165,7 @@ protected:
         Valgrind::CheckDefined(velocityGrad_);
     }
 
+    /*
     void determineUpwindDirection_(const ElementVolumeVariables &elemVolVars)
     {
 
@@ -176,6 +179,7 @@ protected:
             swap(upstreamIdx_, downstreamIdx_);
         }
     }
+    */
 
 public:
     /*!
@@ -185,20 +189,22 @@ public:
     const SCVFace &face() const
     {
         if (onBoundary_)
-            return fvGeometry_().boundaryFace[fIdx_];
+            return fvGeometry_().boundaryFace[faceIdx_];
         else
-            return fvGeometry_().subContVolFace[fIdx_];
+            return fvGeometry_().subContVolFace[faceIdx_];
     }
 
     /*!
      * \brief Return the average volume of the upstream and the downstream sub-control volume;
      *        this is required for the stabilization.
      */
+    /*
     const Scalar averageSCVVolume() const
     {
         return 0.5*(fvGeometry_().subContVol[upstreamIdx_].volume +
                 fvGeometry_().subContVol[downstreamIdx_].volume);
     }
+     */
 
     /*!
      * \brief Return the pressure \f$\mathrm{[Pa]}\f$ at the integration
@@ -271,14 +277,14 @@ public:
     /*!
      * \brief Return the local index of the upstream sub-control volume.
      */
-    int upstreamIdx() const
-    { return upstreamIdx_; }
+   // int upstreamIdx() const
+    //{ return upstreamIdx_; }
 
     /*!
      * \brief Return the local index of the downstream sub-control volume.
      */
-    int downstreamIdx() const
-    { return downstreamIdx_; }
+    //int downstreamIdx() const
+    //{ return downstreamIdx_; }
 
     /*!
      * \brief Indicates if a face is on a boundary. Used for in the
@@ -306,11 +312,11 @@ protected:
     DimMatrix velocityGrad_;
 
     // local index of the upwind vertex
-    int upstreamIdx_;
+   // int upstreamIdx_;
     // local index of the downwind vertex
-    int downstreamIdx_;
+    //int downstreamIdx_;
     // the index of the considered face
-    int fIdx_;
+    int faceIdx_;
 
 private:
     const FVElementGeometry* fvGeometryPtr_; //!< Information about the geometry of discretization

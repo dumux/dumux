@@ -34,14 +34,18 @@
 
 #include "properties.hh"
 #include "indices.hh"
-#include "localjacobian.hh"
+//#include "localjacobian.hh"
 #include "localresidual.hh"
 #include "model.hh"
-#include "volumevariables.hh"
+//#include "volumevariables.hh"
 #include "fluxvariables.hh"
 #include "newtoncontroller.hh"
 
+
+//added to resemble geomechanics
 #include <dumux/discretization/fem/ipdata.hh>  //include ipData from elastic for FEM
+#include "secondaryvariables.hh"
+
 
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -60,7 +64,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The local jacobian operator for the stokes box scheme
-SET_TYPE_PROP(BoxStokes, LocalJacobian, StokesLocalJacobian<TypeTag>);
+//SET_TYPE_PROP(BoxStokes, LocalJacobian, StokesLocalJacobian<TypeTag>);
 
 SET_PROP(BoxStokes, NumEq) //!< set the number of equations
 {
@@ -85,10 +89,14 @@ SET_TYPE_PROP(BoxStokes, LinearSolver, UMFPackBackend<TypeTag>);
 #endif
 
 //! the Model property
-SET_TYPE_PROP(BoxStokes, Model, StokesModel<TypeTag>);
+SET_TYPE_PROP(BoxStokes, Model, StokesFemModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxStokes, VolumeVariables, StokesVolumeVariables<TypeTag>);
+//SET_TYPE_PROP(BoxStokes, VolumeVariables, StokesVolumeVariables<TypeTag>);
+
+//! define the VolumeVariables
+SET_TYPE_PROP(BoxStokes, SecondaryVariables, StokesSecondaryVariables<TypeTag>);
+
 
 //! the FluxVariables property
 SET_TYPE_PROP(BoxStokes, FluxVariables, StokesFluxVariables<TypeTag>);
@@ -163,8 +171,8 @@ SET_INT_PROP(BoxStokes, NewtonTargetSteps, 10);
 
 //! Set the number of maximum iterations for the Newton method.
 SET_INT_PROP(BoxStokes, NewtonMaxSteps, 18);
-}
 
+}
 }
 
 #endif

@@ -28,7 +28,7 @@
 
 #include "localresidual.hh"
 #include "newtoncontroller.hh"
-#include "localjacobian.hh"
+//#include "localjacobian.hh"
 #include "problem.hh"
 #include "properties.hh"
 
@@ -63,10 +63,11 @@ namespace Dumux
  * (box) scheme in space and by the implicit Euler method in time.
  */
 template<class TypeTag>
-class StokesModel : public GET_PROP_TYPE(TypeTag, BaseModel)
+class StokesFemModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+/*
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum {
         dim = GridView::dimension,
@@ -76,13 +77,26 @@ class StokesModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+//    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+//    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+//    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+*/
+
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using IpData = typename GET_PROP_TYPE(TypeTag, FemIntegrationPointData);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using SecondaryVariables = typename GET_PROP_TYPE(TypeTag, SecondaryVariables);
+
+    static const int dim = GridView::dimension;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+
 
 public:
     /*!
@@ -95,6 +109,7 @@ public:
      * \param axis The dimension, perpendicular to which the layer is situated
      * \param coordVal The (Scalar) coordinate on the axis, at which the layer is situated
      */
+    /*
     void calculateFluxAcrossLayer(const SolutionVector &globalSol, Dune::FieldVector<Scalar, numEq> &flux, int axis, Scalar coordVal)
     {
         GlobalPosition globalI, globalJ;
@@ -131,66 +146,157 @@ public:
 
         flux = this->problem_.gridView().comm().sum(flux);
     }
+    */
 
     //! \copydoc ImplicitModel::addOutputVtkFields
     template <class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VelocityField;
+        //create the required scalar fields
+    unsigned numVert = this->gridView_().size(dim);
+    unsigned numElements = this->gridView_().size(0);
 
-        // create the required scalar fields
-        unsigned numVertices = this->gridView_().size(dim);
-        ScalarField &pn = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &delP = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
-        VelocityField &velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVertices);
+    auto& vx = *writer.allocateManagedBuffer(numVert);
+    auto& vy = *writer.allocateManagedBuffer(numVert);
+    auto& vz = *writer.allocateManagedBuffer(numVert);
 
-        unsigned numElements = this->gridView_().size(0);
-        ScalarField &rank = *writer.allocateManagedBuffer(numElements);
+    auto& p = *writer.allocateManagedBuffer(numVert);
 
-        FVElementGeometry fvGeometry;
-        VolumeVariables volVars;
-        ElementBoundaryTypes elemBcTypes;
+    //      auto& p = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
 
-        for (const auto& element : elements(this->gridView_()))
+/*
+    ScalarField &pn = *writer.allocateManagedBuffer(numVertices);
+    ScalarField &delP = *writer.allocateManagedBuffer(numVertices);
+    ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
+    ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
+    VelocityField &velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVertices);
+*/
+
+    auto& rank = *writer.allocateManagedBuffer(numElements);
+
+
+    auto localView = this->feBasis().localView();
+    auto localIndexSet = this->feBasis().localIndexSet();
+
+    for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
+    {
+        auto eIdx = this->problem_().model().elementMapper().index(element);
+
+        // rank output
+        rank[eIdx] = this->gridView_().comm().rank();
+
+        // bind local restrictions to element
+        localView.bind(element);
+        localIndexSet.bind(localView);
+
+        // obtain the finite element
+        const auto& fe = localView.tree().finiteElement();
+
+        // loop over dofs inside the element and store solution at vertices
+        // TODO HOW TO INCLUDE SUBSAMPLING
+        const auto numLocalDofs = fe.localBasis().size();
+        ElementSolution elemSol(numLocalDofs);
+        for (unsigned int i = 0; i < numLocalDofs; ++i)
         {
-            int eIdx = this->elementMapper().index(element);
+            // only proceed for vertex dofs
+            if (fe.localCoefficients().localKey(i).codim() != dim)
+                continue;
 
-            rank[eIdx] = this->gridView_().comm().rank();
+            const auto dofIdxGlobal = localIndexSet.index(i);
 
-            fvGeometry.update(this->gridView_(), element);
-            elemBcTypes.update(this->problem_(), element);
+            const auto dofSol = sol[dofIdxGlobal];
+            vx[dofIdxGlobal] = dofSol[Indices::v(0)];
+            if (dim >= 2)
+               vy[dofIdxGlobal] = dofSol[Indices::v(1)];
+            if (dim >= 3)
+               vz[dofIdxGlobal] = dofSol[Indices::v(2)];
 
-            int numLocalVerts = element.subEntities(dim);
 
-            for (int i = 0; i < numLocalVerts; ++i)
-            {
-                int vIdxGlobal = this->vertexMapper().subIndex(element, i, dim);
-
-                volVars.update(sol[vIdxGlobal],
-                               this->problem_(),
-                               element,
-                               fvGeometry,
-                               i,
-                               false);
-
-                pn[vIdxGlobal] = volVars.pressure();
-                delP[vIdxGlobal] = volVars.pressure() - 1e5;
-                rho[vIdxGlobal] = volVars.density();
-                mu[vIdxGlobal] = volVars.dynamicViscosity();
-                velocity[vIdxGlobal] = volVars.velocity();
-            }
+            elemSol[i] = std::move(dofSol);
         }
-        writer.attachVertexData(pn, "P");
-        writer.attachVertexData(delP, "delP");
-        writer.attachVertexData(rho, "rho");
-        writer.attachVertexData(mu, "mu");
-        writer.attachVertexData(velocity, "v", dim);
+
+        // obtain element geometry
+        auto eg = element.geometry();
+
+        // evaluate shape function data and secondary variables at the cell center
+        IpData ipData(eg, eg.local(eg.center()), fe.localBasis());
+        SecondaryVariables secVars;
+        secVars.update(elemSol, this->problem_(), element, ipData);
+
+        // compute the stress tensor and add to container
+        p = secVars.pressure();
+    }
+
+
+    writer.attachDofData(vx, "vx", true);
+    if (dim >= 2)
+        writer.attachDofData(vy, "vy", true);
+    if (dim == 3)
+        writer.attachDofData(vz, "vz", true);
+
+    writer.attachDofData(p, "p", true);
+
+/*        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VelocityField;
+
+    // create the required scalar fields
+    unsigned numVertices = this->gridView_().size(dim);
+
+    //added to resemble elastic
+    unsigned numElements = this->gridView_().size(0);
+
+    ScalarField &pn = *writer.allocateManagedBuffer(numVertices);
+    ScalarField &delP = *writer.allocateManagedBuffer(numVertices);
+    ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
+    ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
+    VelocityField &velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVertices);
+
+    ScalarField &rank = *writer.allocateManagedBuffer(numElements);
+
+    //        FVElementGeometry fvGeometry;
+    //        VolumeVariables volVars;
+    //        ElementBoundaryTypes elemBcTypes;
+
+    for (const auto& element : elements(this->gridView_()))
+    {
+    int eIdx = this->elementMapper().index(element);
+
+    rank[eIdx] = this->gridView_().comm().rank();
+
+    fvGeometry.update(this->gridView_(), element);
+    elemBcTypes.update(this->problem_(), element);
+
+    int numLocalVerts = element.subEntities(dim);
+
+    for (int i = 0; i < numLocalVerts; ++i)
+    {
+    int vIdxGlobal = this->vertexMapper().subIndex(element, i, dim);
+
+    volVars.update(sol[vIdxGlobal],
+                   this->problem_(),
+                   element,
+                   fvGeometry,
+                   i,
+                   false);
+
+    pn[vIdxGlobal] = volVars.pressure();
+    delP[vIdxGlobal] = volVars.pressure() - 1e5;
+    rho[vIdxGlobal] = volVars.density();
+    mu[vIdxGlobal] = volVars.dynamicViscosity();
+    velocity[vIdxGlobal] = volVars.velocity();
+    }
+    }
+    writer.attachVertexData(pn, "P");
+    writer.attachVertexData(delP, "delP");
+    writer.attachVertexData(rho, "rho");
+    writer.attachVertexData(mu, "mu");
+    writer.attachVertexData(velocity, "v", dim);
+*/
     }
 };
+
+
 }
 
 #include "propertydefaults.hh"

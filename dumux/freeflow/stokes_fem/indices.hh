@@ -42,8 +42,23 @@ namespace Dumux
 template <class TypeTag, int PVOffset = 0>
 struct StokesCommonIndices
 {
+//added to resemble elastic
+    // returns the equation index for a given space direction
+    static int momentum(int dirIdx)
+    {
+        return PVOffset + dirIdx;
+    };
+
+    // returns the primary variable index for a given space direction
+    //copied from elastic indices
+    static int v(int dirIdx)
+    {
+        return PVOffset + dirIdx;
+    };
+
+
     // number of dimensions
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     static const int dim = Grid::dimension;
 
     // Primary variable indices

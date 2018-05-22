@@ -31,6 +31,11 @@
 
 #include <dumux/implicit/box/properties.hh>
 
+
+//added to resemble geomechanics
+#include <dumux/implicit/fem/properties.hh>
+
+
 namespace Dumux
 {
 

@@ -18,42 +18,69 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Quantities required by the linear elasticity box
- *        model defined on a vertex.
+ *
+ * \brief Contains the quantities which are constant within a
+ *        finite volume in the Stokes box model.
  */
-#ifndef DUMUX_ELASTIC_SECONDARY_VARIABLES_HH
-#define DUMUX_ELASTIC_SECONDARY_VARIABLES_HH
-
-#include <dumux/discretization/fem/secondaryvariablesbase.hh>
+#ifndef DUMUX_STOKES_SECONDARY_VARIABLES_HH
+#define DUMUX_STOKES_SECONDARY_VARIABLES_HH
 
 #include "properties.hh"
 
+//from elastic
+#include <dumux/discretization/fem/secondaryvariablesbase.hh>
+
+//#include <dumux/implicit/volumevariables.hh>
+#include <dumux/material/fluidstates/immiscible.hh>
+
 namespace Dumux
 {
+
 /*!
- * \ingroup ElasticFemModel
- * \ingroup FemImplicitSecondaryVariables
+ * \ingroup BoxStokesModel
+ * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are constant within a
- *        finite volume in the linear elasticity model.
+ *        finite volume in the Stokes box model.
  */
 template <class TypeTag>
-class ElasticSecondaryVariables : public FemSecondaryVariablesBase<TypeTag>
+class StokesSecondaryVariables : public FemSecondaryVariablesBase<TypeTag>
 {
-    using ParentType = FemSecondaryVariablesBase<TypeTag>;
+using ParentType = FemSecondaryVariablesBase<TypeTag>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
+using Element = typename GridView::template Codim<0>::Entity;
+using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
+//copied from secondaryvariablesbase
+using IpData = typename GET_PROP_TYPE(TypeTag, FemIntegrationPointData);
+using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+
+    enum {
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
+        momentumXIdx = Indices::momentumXIdx,
+        lastMomentumIdx = Indices::lastMomentumIdx,
+        pressureIdx = Indices::pressureIdx
+    };
+
+    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
+
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MechanicalLaw = typename GET_PROP_TYPE(TypeTag, MechanicalLaw);
-    using IpData = typename GET_PROP_TYPE(TypeTag, FemIntegrationPointData);
+///    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    static constexpr int dim = GridView::dimension;
     using DimVector = Dune::FieldVector<Scalar, dim>;
 
-    using Element = typename GridView::template Codim<0>::Entity;
+
+  //  typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
+    //added to resemble geomechanics, not needed as it is included in volumevariables
+//    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
 public:
     /*!
@@ -64,57 +91,170 @@ public:
                 const Element& element,
                 const IpData& ipData)
     {
-        ParentType::update(elemSol, problem, element, ipData);
+std::cout << "Wir sind in secVarsUpdate" << std::endl;
+//copied secondaryvariablesbase from fem
+// interpolate primary variables
+//printvector(std::cout, elemSol, "secVarsElemSol","");
 
-        for (int i = 0; i < dim; ++i)
-            displacement_[i] = this->priVar(Indices::u(i));
+    ParentType::update(elemSol, problem, element, ipData);
 
-        // retrieve Lame parameters and rock density from spatialParams
-        const auto& lameParams = problem.spatialParams().lameParams(element, this->priVars());
-        lambda_ = lameParams[0];
-        mu_ = lameParams[1];
 
-        // the density of the solid material
-        rockDensity_ = problem.spatialParams().rockDensity(element, this->priVars());
+//printvector(std::cout, ParentType::priVars(), "ParentType::priVars(): ", "");
+
+    completeFluidState(ParentType::priVars(), problem, element, fluidState_);
+    for (int dimIdx=0; dimIdx<dim; ++dimIdx)
+        velocity_[dimIdx] = ParentType::priVars()[Indices::momentum(dimIdx)];
+
+// printvector(std::cout, ParentType::priVars(), "ParentType::priVars(): ", "");
+
+//        printvector(std::cout, velocity_, "SecondaryVarsVelocity_: ", "");
+//        std::cout << "secVarspressure: " << ParentType::priVars()[pressureIdx] << std::endl;
+//        std::cout << "pressure: " << pressure() << std::endl;
+//        std::cout << "temperature: " << temperature() << std::endl;
+//        std::cout << "secVarsdensity: " << density() << std::endl;
+//        std::cout << "dynamicViscosity: " << dynamicViscosity() << std::endl;
+////        std::cout << "extrusionFactor(): " << ParentType::extrusionFactor() << std::endl;
+//        printvector(std::cout, elemSol, "elemSol: ", "");
     }
 
     /*!
-      * \brief Return the Lame parameter lambda \f$\mathrm{[Pa]}\f$ at the integration point.
-      */
-    Scalar lambda() const
-    { return lambda_; }
-
-    /*!
-      * \brief Return the Lame parameter mu \f$\mathrm{[Pa]}\f$ at the integration point.
-      */
-    Scalar mu() const
-    { return mu_; }
-
-    /*!
-     * \brief Returns the rock density \f$\mathrm{[kg / m^3]}\f$ at the integration point.
+     * \copydoc ImplicitModel::completeFluidState()
+     * \param isOldSol Specifies whether this is the previous solution or the current one
      */
-    Scalar rockDensity() const
-    { return rockDensity_; }
+    static void completeFluidState(const PrimaryVariables& priVars,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   FluidState& fluidState
+                                   )
+    {
+        Scalar temperature = problem.temperature();
+
+        fluidState.setTemperature(temperature);
+        fluidState.setPressure(phaseIdx, priVars[pressureIdx]);
+
+        // create NullParameterCache and do dummy update
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updateAll(fluidState);
+
+        fluidState.setDensity(phaseIdx,
+                              FluidSystem::density(fluidState,
+                                                   paramCache,
+                                                   phaseIdx));
+
+        fluidState.setViscosity(phaseIdx,
+                                FluidSystem::viscosity(fluidState,
+                                                       paramCache,
+                                                       phaseIdx));
+
+        // compute and set the enthalpy
+        //TODO: commented enthalpy for running purposes
+//        Scalar h = Implementation::enthalpy_(fluidState, paramCache, phaseIdx);
+//        fluidState.setEnthalpy(phaseIdx, h);
+    }
 
     /*!
-     * \brief Returns the solid displacement \f$\mathrm{[m]}\f$ in space
-     * directions dimIdx at the integration point.
+     * \brief Returns the phase state for the control-volume.
      */
-    Scalar displacement(int dimIdx) const
-    { return displacement_[dimIdx]; }
+    const FluidState &fluidState() const
+    { return fluidState_; }
+    FluidState &fluidState()
+    { return fluidState_; }
+
 
     /*!
-     * \brief Returns the solid displacement vector \f$\mathrm{[m]}\f$
-     *  at the integration point.
+     * \brief Returns the global position for the control-volume.
      */
-    const DimVector& displacement() const
-    { return displacement_; }
+    /*deleted GlobalPos from update
+     * const GlobalPosition globalPos() const
+    { return globalPos_; }
+    */
+
+    /*!
+     * \brief Returns the mass density \f$\mathrm{[kg/m^3]}\f$ of the fluid within the
+     *        sub-control volume.
+     */
+    Scalar density() const
+    { return fluidState_.density(phaseIdx); }
+
+    /*!
+     * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ of the fluid within the
+     *        sub-control volume.
+     */
+    Scalar molarDensity() const
+    { return this->fluidState_.density(phaseIdx) / this->fluidState_.averageMolarMass(phaseIdx); }
+
+    /*!
+     * \brief Returns the fluid pressure \f$\mathrm{[Pa]}\f$ within
+     *        the sub-control volume.
+     */
+    Scalar pressure() const
+    { return fluidState_.pressure(phaseIdx); }
+
+    /*!
+     * \brief Returns temperature\f$\mathrm{[T]}\f$ inside the sub-control volume.
+     */
+    Scalar temperature() const
+    { return fluidState_.temperature(phaseIdx); }
+
+    /*!
+     * \brief Returns the dynamic viscosity \f$ \mathrm{[Pa s]} \f$ of the fluid in
+     *        the sub-control volume.
+     */
+    Scalar dynamicViscosity() const
+    { return fluidState_.viscosity(phaseIdx); }
+
+    /*!
+     * \brief Returns the kinematic viscosity \f$ \frac{m^2}{s} \f$ of the fluid in
+     *        the sub-control volume.
+     */
+    Scalar kinematicViscosity() const
+    { return fluidState_.viscosity(phaseIdx) / fluidState_.density(phaseIdx); }
+
+    /*!
+     * \brief Return the dynamic eddy viscosity
+     *        \f$\mathrm{[Pa \cdot s]} = \mathrm{[N \cdot s/m^2]}\f$ (if implemented).
+     */
+//    const Scalar dynamicEddyViscosity() const
+//    { return kinematicEddyViscosity() * density(); }
+
+    /*!
+     * \brief Returns the velocity vector in the sub-control volume.
+     */
+    const DimVector &velocity() const
+    { return velocity_; }
+
 
 protected:
-    DimVector displacement_;
-    Scalar lambda_;
-    Scalar mu_;
-    Scalar rockDensity_;
+//    template<class ParameterCache>
+//    static Scalar enthalpy_(const FluidState& fluidState,
+//                            const ParameterCache& paramCache,
+//                            int phaseIdx)
+//    {
+//        return 0;
+//    }
+
+    //solved differently in the update function
+    /*static Scalar temperature_(const PrimaryVariables &priVars,
+                            const Problem& problem,
+                            const Element &element,
+                            const FVElementGeometry &fvGeometry,
+                            const int scvIdx)
+    {
+        return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
+    }
+    */
+
+    DimVector velocity_;
+
+ //   GlobalPosition globalPos_;
+
+    FluidState fluidState_;
+
+private:
+    Implementation &asImp()
+    { return *static_cast<Implementation*>(this); }
+    const Implementation &asImp() const
+    { return *static_cast<const Implementation*>(this); }
 };
 
 }

@@ -39,25 +39,24 @@ namespace Dumux
 template<class TypeTag>
 class StokesProblem : public ImplicitProblem<TypeTag>
 {
-    typedef ImplicitProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
+    using ParentType = ImplicitProblem<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GridView::Grid Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using Grid = typename GridView::Grid;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
     enum {
         dim = Grid::dimension,
         dimWorld = Grid::dimensionworld
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     StokesProblem(TimeManager &timeManager, const GridView &gridView)
@@ -81,8 +80,8 @@ public:
      *
      * \param globalPos The position in global coordinates where the temperature should be specified.
      */
-    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
-    { return asImp_().temperature(); }
+//    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
+//    { return asImp_().temperature(); }
 
     /*!
      * \brief Returns the temperature within the domain.

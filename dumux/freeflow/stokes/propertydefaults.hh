@@ -41,6 +41,9 @@
 #include "fluxvariables.hh"
 #include "newtoncontroller.hh"
 
+//added for update function for fvGeometry.update in stokes/model.hh
+//#include "dumux/implicit/box/fvelementgeometry.hh"
+
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>

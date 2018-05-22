@@ -33,8 +33,14 @@
 
 #include <dumux/implicit/model.hh>
 #include "properties.hh"
-#include "volumevariables.hh"
-#include "fluxvariables.hh"
+
+//non-existent volumevariables
+//#include "volumevariables.hh"
+
+//non-existent fluxvariables
+//#include "fluxvariables.hh"
+
+
 
 namespace Dumux
 {
@@ -51,21 +57,29 @@ template<class TypeTag>
 class StokesLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
 protected:
-    typedef typename GET_PROP_TYPE(TypeTag, BaseLocalResidual) ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
+using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
+using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    //from elastic
+    //added to resemble hookes law
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+    //added to resemble elastic
     using IpData = typename GET_PROP_TYPE(TypeTag, FemIntegrationPointData);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using SecondaryVariables = typename GET_PROP_TYPE(TypeTag, SecondaryVariables);
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum {
         dim = GridView::dimension,
         numEq = GET_PROP_VALUE(TypeTag, NumEq)
     };
+
     enum {
         massBalanceIdx = Indices::massBalanceIdx, //!< Index of the mass balance
         momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
@@ -73,345 +87,191 @@ protected:
     };
     enum { pressureIdx = Indices::pressureIdx }; //!< Index of the pressure in a solution vector
 
-    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
+    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
+    using ReferenceElement = typename Dune::ReferenceElement<Scalar, dim>;
 
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+
+
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+
 
     static const bool enableUnsymmetrizedVelocityGradient = GET_PROP_VALUE(TypeTag, EnableUnsymmetrizedVelocityGradient);
     static const bool calculateNavierStokes = GET_PROP_VALUE(TypeTag, EnableNavierStokes);
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static const bool enablePseudo3dWallFriction = GET_PROP_VALUE(TypeTag, EnablePseudoThreeDWallFriction);
+
+    //copied from hookesLaw
+    using StressTensor = Dune::FieldMatrix<Scalar, dim, dimWorld>;
 
  public:
-    /*!
-     * \brief Constructor. Sets the upwind weight and the stabilization parameters.
-     */
-    StokesLocalResidual()
-    {
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
-        stabilizationAlpha_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Stokes, StabilizationAlpha);
-        stabilizationBeta_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Stokes, StabilizationBeta);
-    }
+    //added to resemble elastic
+    using typename ParentType::FluxTermType;
+
 
     /*!
-     * method signature taken from elastic (4 parameters)
+     *  method signature taken from elastic (4 parameters)
      *
-     * \brief Evaluates the amount of all conservation quantities
-     *        (mass and momentum) within a sub-control volume.
+     * \brief Evaluate the amount of all conservation quantities
+     *        within a finite volume.
      *
-     * The result should be averaged over the volume (e.g. phase mass
-     * inside a sub control volume divided by the volume)
-     *
-     *  \param storage The mass of the component within the sub-control volume
-     *  \param scvIdx The SCV (sub-control-volume) index
-     *  \param usePrevSol Evaluate function with solution of current or previous time step
+     *        \param element The finite element
+     *        \param ipData Data on shape values and gradients at the integration point
+     *        \param secVars Secondary variables object evaluated at integration point
+     *        \param elemSol The current primary variables at the dofs of the element
      */
-    PrimaryVariables computeStorage(const Element& element, const IpData& ipData, const VolumeVariables& volVars,
-            const ElementSolution& elemSol) const
+    PrimaryVariables computeStorage(const Element& element,
+    const IpData& ipData,
+    const SecondaryVariables& secVars,
+    const ElementSolution& elemSol) const
     {
-    PrimaryVariables storage(0.0);
-        // if flag usePrevSol is set, the solution from the previous
-        // time step is used, otherwise the current solution is
-        // used. The secondary variables are used accordingly.  This
-        // is required to compute the derivative of the storage term
-        // using the implicit Euler method.
-//        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
-//            : this->curVolVars_();
-//        const VolumeVariables &volVars = elemVolVars[scvIdx];
+        PrimaryVariables storage(secVars.density());
+
+    for (int dir = 0; dir < dim; ++dir)
+        storage[Indices::momentum(dir)] *= secVars.velocity()[dir];
+
+//        PrimaryVariables storage(0.0);
+//
+//		for (int dir = 0; dir < dim; ++dir)
+//        storage[Indices::momentum(dir)] = secVars.velocity()[dir];
+//
+//		storage *= secVars.density();
 
 
-        if(useMoles)
-            // mass balance mole fraction based
-            storage[massBalanceIdx] = volVars.molarDensity();  //
-        else
-            // mass balance mass fraction based
-            storage[massBalanceIdx] = volVars.density();
+//std::cout << "MyLocResdensityStorage: " << secVars.density() << std::endl;
+//std::cout << "pressureStorage: " << secVars.pressure() << std::endl;
+//printvector(std::cout, secVars.velocity(), "MyLocResStorageVelocity: ","");
+//printvector(std::cout, secVars.velocity(), "MyLocResStorageVelocity: ","");
+//printvector(std::cout, storage, "MyLocStorage: ","");
 
-        // momentum balance
-        for (int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; ++momentumIdx)
-            storage[momentumIdx] = volVars.density()
-                * volVars.velocity()[momentumIdx-momentumXIdx];
 
-        return PrimaryVariables(0.0); //changed from void to PrimaryVariables as its required in geomechanics
+        return storage; //changed from void to PrimaryVariables as its required in geomechanics
     }
 
     /*!
      *  method signature taken from elastic (4 parameters)
      *
-     * \brief Evaluates the total flux of all conservation quantities
-     *        over a face of a sub-control volume. The face may be within
-     *        an element (SCV face) or on the boundary. The advective and
-     *        the diffusive fluxes are computed.
+     * \brief Evaluate the stresses.
      *
-     * \param flux The flux over the SCV (sub-control-volume) face
-     * \param fIdx The index of the SCV face (may also be a boundary face)
-     * \param onBoundary Indicates, if the flux is evaluated on a boundary face. If it is true,
-     *        the created fluxVars object contains boundary variables evaluated at the IP of the
-     *        boundary face
+     *        \param element The finite element
+     *        \param ipData Data on shape values and gradients at the integration point
+     *        \param secVars Secondary variables object evaluated at integration point
+     *        \param elemSol The current primary variables at the dofs of the element
      */
-    PrimaryVariables computeFlux(const Element& element, const IpData& ipData, const VolumeVariables& volVars,
-            const ElementSolution& elemSol) const
+    FluxTermType computeFlux(const Element& element,
+    const IpData& ipData,
+    const SecondaryVariables& secVars,
+    const ElementSolution& elemSol) const
     {
-        FluxVariables fluxVars;
-        fluxVars.update(this->problem_(),
-                        this->element_(),
-                        this->fvGeometry_(),
-                        fIdx,
-                        this->curVolVars_(),
-                        onBoundary);
-        PrimaryVariables flux(0.0);    //Addition: declare 'flux' as PrimaryVariables
-
-        asImp_()->computeAdvectiveFlux(flux, fluxVars);
-        Valgrind::CheckDefined(flux);
-        asImp_()->computeDiffusiveFlux(flux, fluxVars);
-        Valgrind::CheckDefined(flux);
-
-        return flux;
-    }
-
-    /*!
-     * \brief Evaluates the advective fluxes over
-     *        a face of a sub-control volume.
-     *
-     * \todo dilatation term has to be accounted for in outflow, coupling, neumann
-     *
-     * \param flux The advective flux over the sub-control-volume face for each component
-     * \param fluxVars The flux variables at the current SCV/boundary face
-     *
-     * An additional wall friction term can be added to account for a dimensional reduction from 3d to 2d (Kunz et al., 2016) \cite Kunz2016 <BR>
+    /*
+      *folgende Gradientenberechnung statt update-funktion
      */
-    void computeAdvectiveFlux(PrimaryVariables &flux,
-                              const FluxVariables &fluxVars) const
-    {
-//        // if the momentum balance has a dirichlet b.c., the mass balance
-//        // is replaced, thus we do not need to calculate outflow fluxes here
-//        if (fluxVars.onBoundary() &&
-//            momentumBalanceDirichlet_(this->bcTypes_(fluxVars.upstreamIdx())))
-//        {
-//            return;
-//        }
 
-//        // data attached to upstream and the downstream vertices
-//        const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx());
-//        const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx());
-//
-          DimVector massBalanceResidual = fluxVars.velocity();
-//
-//        if(useMoles)
-//        {
-//            massBalanceResidual *= (massUpwindWeight_ * up.molarDensity()
-//                                    + (1.-massUpwindWeight_) * dn.molarDensity());
-//        }
-//        else
-//        {
-//            massBalanceResidual *= (massUpwindWeight_ * up.density()
-//                                    + (1.-massUpwindWeight_) * dn.density());
-//        }
+    FluxTermType flux(0.0);
 
-          // adapted
-          if(useMoles)
-                 {
-                     massBalanceResidual *= volVars.molarDensity();
-                 }
-                 else
-                 {
-                     massBalanceResidual *= volVars.density();
-                 }
-
-//        if (!fluxVars.onBoundary())
-//        {
-//            // stabilization of the mass balance
-//            // with 0.5*alpha*(V_i + V_j)*grad P
-//            DimVector stabilizationTerm = fluxVars.pressureGrad();
-//            stabilizationTerm *= stabilizationAlpha_*
-//                fluxVars.averageSCVVolume();
-//            massBalanceResidual += stabilizationTerm;
-//        }
-
-        flux[massBalanceIdx] +=
-            massBalanceResidual*fluxVars.face().normal;
-
-        // momentum balance - pressure is evaluated as volume term
-        // at the center of the SCV in computeSource
-        // dynamic viscosity is upwinded
-
-        Dune::FieldMatrix<Scalar, dim, dim> velGrad = fluxVars.velocityGrad();
-        if (enableUnsymmetrizedVelocityGradient)
-        {
-            // nothing has to be done in this case:
-            // grad v
-        }
-        else
-        {
-            // compute symmetrized gradient for the momentum flux:
-            // grad v + (grad v)^T
-            for (int i=0; i<dim; ++i)
-                for (int j=0; j<dim; ++j)
-                    velGrad[i][j] += fluxVars.velocityGrad()[j][i];
-        }
-
-        DimVector velGradComp(0.0);
-        for (int velIdx = 0; velIdx < dim; ++velIdx)
-        {
-            velGradComp = velGrad[velIdx];
-
-            //            velGradComp[velIdx] += 2./3*fluxVars.velocityDiv;
-
-            velGradComp *= fluxVars.dynamicViscosity() + fluxVars.dynamicEddyViscosity();
-
-            flux[momentumXIdx + velIdx] -=
-                velGradComp*fluxVars.face().normal;
-
-            // gravity is accounted for in computeSource; alternatively:
-            //            Scalar gravityTerm = fluxVars.density *
-            //                    this->problem_().gravity()[dim-1] *
-            //                    fluxVars.face().ipGlobal[dim-1]*
-            //                    fluxVars.face().normal[velIdx];
-            //            flux[momentumXIdx + velIdx] -=
-            //                    gravityTerm;
-
-        }
-
-        // this term changes the Stokes equation to the Navier-Stokes equation
-        // rho v (v*n)
-        // rho and first v are upwinded, second v is evaluated at the face
-        if (calculateNavierStokes)
-        {
-            for (int dimIndex = 0; dimIndex < dim; ++dimIndex)
-                flux[momentumXIdx + dimIndex] +=
-                        volVars.density() * volVars.velocity()[dimIndex] * fluxVars.normalVelocity();
+    StressTensor gradV(0.0);
+    for (int dir = 0; dir < dim; ++dir){
+        for (unsigned int i = 0; i < elemSol.size(); ++i){
+            gradV[dir].axpy(elemSol[i][Indices::momentum(dir)], ipData.shapeGradients(i));
         }
     }
 
-    /*!
-     * \brief Adds the diffusive flux to the flux vector over
-     *        a SCV face or a boundary face.
-     *
-     * It doesn't do anything in the Stokes model but is used by the
-     * transport and non-isothermal models to calculate diffusive and
-     * conductive fluxes.
-     *
-     * \param flux The diffusive flux over the SCV face or boundary face for each component
-     * \param fluxVars The flux variables at the current SCV/boundary face
-     */
-    void computeDiffusiveFlux(PrimaryVariables &flux,
-                              const FluxVariables &fluxVars) const
-    { }
+    StressTensor gradSym(0.0);
+    for(int i=0; i<dim; i++){
+        for(int j=0; j<dimWorld; j++){
+            gradSym[i][j] = gradV[i][j] + gradV[j][i];
+        }
+    }
+
+    StressTensor sigma(0.0);
+    sigma = gradSym;
+    sigma *= secVars.dynamicViscosity();
+
+//std::cout << secVars.pressure() << std::endl;
+
+    for(int i=0; i<dim; i++){
+        sigma[i][i] -= secVars.pressure();
+    }
+
+
+//		//add advective term
+//		StressTensor advTerm(0.0);
+//		for (int dir = 0; dir < dim; ++dir){
+//			for (unsigned int i = 0; i < elemSol.size(); ++i){
+//				advTerm[dir].axpy(elemSol[i][Indices::momentum(dir)]*elemSol[i][Indices::momentum(dir)], ipData.shapeValues(i));
+//			}
+//		}
+//
+//		advTerm *= secVars.density();
+
+//printmatrix(std::cout, flux, "fluxVor", "");
+
+    for(int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; ++momentumIdx)
+    {
+        for(int col=0; col<dim; col++)
+        {
+            flux[momentumIdx][col]= -sigma[momentumIdx][col];//+advTerm[momentumIdx][col];
+        }
+    }
+
+//printmatrix(std::cout, flux, "MyLocResfluxNachAdvDiff", "");
+
+
+        //mass Balance
+
+
+    auto velocityU = secVars.velocity();
+
+//printvector(std::cout, velocityU, "MyLocResFluxVelocityU: ","");
+
+    velocityU *= secVars.density();
+
+    //add massBalance to flux
+    for(int col=0; col<dim; col++)
+    {
+         flux[dim][col]= velocityU[col];
+    }
+
+//printmatrix(std::cout, flux, "MyLocResflux", "");
+
+//flux *= -1;    //weil in implicit/fem/localresidual: ... -flux
+//printmatrix(std::cout, flux, "fluxNachMass", "");
+
+
+    return flux;
+    }
+
+
+
 
     /*!
      *  method signature taken from elastic (4 parameters)
      *
-     * \brief Calculate the source term of all equations.
-     *        The pressure gradient at the center of a SCV is computed
-     *        and the gravity term evaluated.
+     *        \param element The finite element
+     *        \param ipData Data on shape values and gradients at the integration point
+     *        \param secVars Secondary variables object evaluated at integration point
+     *        \param elemSol The current primary variables at the dofs of the element
      *
-     * \param source The source/sink in the sub control volume for each component
-     * \param scvIdx The local index of the sub-control volume
      */
     PrimaryVariables computeSource(const Element& element,
-            const IpData& ipData,
-            const SecondaryVariables& secVars,
-            const ElementSolution& elemSol)
-    {   PrimaryVariables source(0.0);
-
-        const ElementVolumeVariables &elemVolVars = this->curVolVars_();
-        const VolumeVariables &volVars = elemVolVars[scvIdx];
-
-        // retrieve the source term intrinsic to the problem
-        this->problem_().solDependentSource(source,
-                                     this->element_(),
-                                     this->fvGeometry_(),
-                                     scvIdx,
-                                     this->curVolVars_());
-
-//        // ATTENTION: The source term of the mass balance has to be chosen as
-//        // div (q_momentum) in the problem file
-//        const Scalar alphaH2 = stabilizationAlpha_*
-//            this->fvGeometry_().subContVol[scvIdx].volume;
-//        source[massBalanceIdx] *= alphaH2; // stabilization of the source term
-
-
-        // pressure gradient at the center of the SCV,
-        // the pressure is discretized as volume term,
-        // while -mu grad v is calculated in computeFlux
-        DimVector pressureGradAtSCVCenter(0.0);
-        DimVector grad(0.0);
-
-        for (int scvIdx2 = 0; scvIdx2 < this->fvGeometry_().numScv; scvIdx2++)
-        {
-            grad = this->fvGeometry_().subContVol[scvIdx].gradCenter[scvIdx2];
-            Valgrind::CheckDefined(grad);
-            grad *= elemVolVars[scvIdx2].pressure();
-
-            pressureGradAtSCVCenter += grad;
-        }
-
-        // add the component of the pressure gradient to the respective part
-        // of the momentum equation and take the gravity term into account
-        // signs are inverted, since q is subtracted
-        for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
-        {
-            source[momentumXIdx + dimIdx] -= pressureGradAtSCVCenter[dimIdx];
-            source[momentumXIdx + dimIdx] += volVars.density()*this->problem_().gravity()[dimIdx];
-
-//            if(enablePseudo3dWallFriction)
-//            {
-//                // add a wall friction term to account for a dimensional reduction from 3d to 2d
-//                const auto pos = this->element_().geometry().corner(scvIdx);
-//                const Scalar height = this->problem_().extrusionFactorAtPos(pos);
-//                const Scalar wallFriction = 12*volVars.velocity()[dimIdx]*volVars.dynamicViscosity()/(height*height);
-//                source[momentumXIdx + dimIdx] -= wallFriction;
-//            }
-        }
-
-        return source;
-    }
-
-    /*!
-     * \brief The Stokes model needs a modified treatment of the boundary conditions as
-     *        the common box models
-     */
-    void evalBoundary_(const Element& element,
-            const ElementGeometry& geometry,
-            const LocalView& localView,
-            const LocalIndexSet& localIndexSet,
-            const ElementSolutionVector& curElemSol,
-            const ElementSolutionVector& prevElemSol)
-    {   //TODO
-
-    }
-
-protected:
-    //functions deleted from STOKES needed for evalBoundary_
-
-
-    /*!
-     * \brief Returns true, if all boundary conditions for the momentum balance
-     *        at the considered vertex are Dirichlet.
-     */
-    bool momentumBalanceDirichlet_(const BoundaryTypes& bcTypes) const
+    const IpData& ipData,
+    const SecondaryVariables& secVars,
+    const ElementSolution& elemSol)
     {
-        for (int momentumIdx=momentumXIdx; momentumIdx<=lastMomentumIdx; ++momentumIdx)
-            if (!bcTypes.isDirichlet(momentumIdx))
-                return false;
-        return true;
+    PrimaryVariables source(0.0);
+//    source = problem.sourceAtPos(ipData.ipGlobal());
+
+    source += ParentType::computeSource(element, ipData, secVars, elemSol);
+
+//printvector(std::cout, source, "MyLocRessourceEnd: ","");
+    return source;
     }
 
-
-    Implementation *asImp_()
-    { return static_cast<Implementation *>(this); }
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *>(this); }
 };
 
 }
