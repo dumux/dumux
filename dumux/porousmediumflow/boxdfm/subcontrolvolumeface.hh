@@ -196,34 +196,44 @@ public:
     }
 
     //! The center of the sub control volume face
-    const GlobalPosition& center() const { return center_; }
+    const GlobalPosition& center() const
+    { return center_; }
 
     //! The integration point for flux evaluations in global coordinates
-    const GlobalPosition& ipGlobal() const { return center_; }
+    const GlobalPosition& ipGlobal() const
+    { return center_; }
 
     //! The area of the sub control volume face
-    Scalar area() const { return area_; }
+    Scalar area() const
+    { return area_; }
 
     //! returns bolean if the sub control volume face is on the boundary
-    bool boundary() const { return boundary_; }
+    bool boundary() const
+    { return boundary_; }
 
     //! returns the unit normal vector pointing outwards
-    const GlobalPosition& unitOuterNormal() const { return unitOuterNormal_; }
+    const GlobalPosition& unitOuterNormal() const
+    { return unitOuterNormal_; }
 
     //! The global index of this sub control volume face
-    GridIndexType index() const { return scvfIndex_; }
+    GridIndexType index() const
+    { return scvfIndex_; }
 
     //! Return if this is a fracture scvf
-    bool isOnFracture() const { return isFractureScvf_; }
+    bool isOnFracture() const
+    { return isFractureScvf_; }
 
     //! The element-local facet index for which a fracture scv was created
-    LocalIndexType facetIndexInElement() const { assert(isFractureScvf_); return facetIdx_; }
+    LocalIndexType facetIndexInElement() const
+    { assert(isFractureScvf_); return facetIdx_; }
 
     //! Return the boundary flag
-    typename BoundaryFlag::value_type boundaryFlag() const { return boundaryFlag_.get(); }
+    typename BoundaryFlag::value_type boundaryFlag() const
+    { return boundaryFlag_.get(); }
 
     //! index of the inside sub control volume for spatial param evaluation
-    LocalIndexType insideScvIdx() const { return scvIndices_[0]; }
+    LocalIndexType insideScvIdx() const
+    { return scvIndices_[0]; }
 
     //! index of the outside sub control volume for spatial param evaluation
     // This results in undefined behaviour if boundary is true
