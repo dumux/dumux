@@ -37,7 +37,7 @@ namespace Dumux {
  *        using the elastic model considering linear elasticity.
  */
 template<class TypeTag>
-class ElasticLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
+class ElasticLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
 
