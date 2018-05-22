@@ -36,18 +36,27 @@ struct LameParams
 {
     //! Default constructor
     LameParams() = default;
+
     //! Constructor taking lambda and mu directly
-    LameParams(Scalar lambda, Scalar mu) : lambda_(lambda), mu_(mu) {}
+    LameParams(Scalar lambda, Scalar mu)
+    : lambda_(lambda) , mu_(mu)
+    {}
 
     //! Return the first lame parameter
-    Scalar lambda() const { return lambda_; }
+    Scalar lambda() const
+    { return lambda_; }
+
     //! Return the second lame parameter
-    Scalar mu() const { return mu_; }
+    Scalar mu() const
+    { return mu_; }
 
     //! set the first lame parameter
-    void setLambda(Scalar lambda) { lambda_ = lambda; }
+    void setLambda(Scalar lambda)
+    { lambda_ = lambda; }
+
     //! set the second lame parameter
-    void setMu(Scalar mu) { mu_ = mu; }
+    void setMu(Scalar mu)
+    { mu_ = mu; }
 
 private:
     Scalar lambda_;
