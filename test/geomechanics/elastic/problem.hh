@@ -73,6 +73,7 @@ class ElasticProblem : public GeomechanicsFVProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
+    static constexpr Scalar pi = M_PI;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     using GradU = Dune::FieldMatrix<Scalar, dim, dimWorld>;
@@ -116,7 +117,6 @@ public:
         using std::sin;
         using std::cos;
 
-        static const Scalar pi = 3.14159265358979323846;
         const auto ipGlobal = scv.center();
         const auto x = ipGlobal[0];
         const auto y = ipGlobal[1];
@@ -155,7 +155,6 @@ public:
     {
         using std::sin;
 
-        static const Scalar pi = 3.14159265358979323846;
         const auto x = globalPos[0];
         const auto y = globalPos[1];
 
@@ -173,7 +172,6 @@ public:
         using std::sin;
         using std::cos;
 
-        static const Scalar pi = 3.14159265358979323846;
         const auto x = globalPos[0];
         const auto y = globalPos[1];
 
