@@ -32,6 +32,13 @@
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/implicit/box/properties.hh>
 
+//added for update function for fvGeometry.update in stokes/model.hh
+//#include "dumux/implicit/box/fvelementgeometry.hh"
+//#include <dune/geometry/multilineargeometry.hh>
+//#include <dumux/common/parameters.hh>
+//#include <dumux/common/propertysystem.hh>
+
+
 namespace Dumux
 {
 

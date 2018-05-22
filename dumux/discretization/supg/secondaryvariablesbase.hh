@@ -66,10 +66,13 @@ public:
         for (unsigned int i = 0; i < elemSol.size(); ++i)
         {
             PrimaryVariables tmp(elemSol[i]);
+
+printvector(std::cout, tmp, "secVarsBaseTmpElemSol", "");
+
             tmp *= ipData.shapeValues()[i];
             priVars_ += tmp;
         }
-
+std::cout << "Wir sind in secVarsBaseUpdate" << std::endl;
         // set the extrusion factor
         extrusionFactor_ = problem.extrusionFactor(element, priVars_);
     }

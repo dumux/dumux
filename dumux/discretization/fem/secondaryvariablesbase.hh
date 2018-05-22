@@ -61,13 +61,19 @@ public:
                 const Element& element,
                 const IpData& ipData)
     {
+std::cout << "Wir sind in secVarsBaseUpdate" << std::endl << std::endl;
+printvector(std::cout, elemSol, "secVarsBaseElemSol","");
         // interpolate primary variables
         priVars_ = 0.0;
         for (unsigned int i = 0; i < elemSol.size(); ++i)
         {
+//std::cout << "secVarsBaseElemSolSizeCounter_i: " << i << std::endl;
             PrimaryVariables tmp(elemSol[i]);
+
             tmp *= ipData.shapeValues()[i];
             priVars_ += tmp;
+
+//printvector(std::cout, priVars_, "secVarsBasePriVars_","");
         }
 
         // set the extrusion factor
