@@ -38,6 +38,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/geometry/makegeometry.hh>
+#include <dumux/common/geometry/intersectspointgeometry.hh>
 
 namespace Dumux {
 
