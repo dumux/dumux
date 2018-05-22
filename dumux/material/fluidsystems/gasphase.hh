@@ -174,7 +174,8 @@ public:
     template <class FluidState>
     static Scalar density(const FluidState &fluidState,
                           const int phaseIdx)
-    {
+    { // std::cout << "temp: " << fluidState.temperature(phaseIdx) << std::endl;
+//    std::cout << "pressure: " << fluidState.pressure(phaseIdx) << std::endl;
         return density(fluidState.temperature(phaseIdx),
                        fluidState.pressure(phaseIdx));
     }

@@ -21,6 +21,8 @@
  * \brief Quantities required by the linear elasticity box
  *        model defined on a vertex.
  */
+
+
 #ifndef DUMUX_ELASTIC_SECONDARY_VARIABLES_HH
 #define DUMUX_ELASTIC_SECONDARY_VARIABLES_HH
 
@@ -63,7 +65,7 @@ public:
                 const Problem& problem,
                 const Element& element,
                 const IpData& ipData)
-    {
+    { //std::cout << "KAMEN HIER VORBEI secvars" << std::endl;
         ParentType::update(elemSol, problem, element, ipData);
 
         for (int i = 0; i < dim; ++i)

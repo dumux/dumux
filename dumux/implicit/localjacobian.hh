@@ -225,6 +225,8 @@ protected:
                                const int pvIdx,
                                const PrimaryVariables &partialDeriv)
     {
+//	std::cout << std::endl;
+//	printmatrix(std::cout, matrix, "nachAsssembleMatrix", "", 7, 0);
         for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
         {
             // A[i][col][eqIdx][pvIdx] is the rate of change of

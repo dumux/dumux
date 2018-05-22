@@ -69,8 +69,17 @@ public:
         // evaluate displacement gradient
         StressTensor gradU(0.0);
         for (int dir = 0; dir < dim; ++dir)
-            for (unsigned int i = 0; i < elemSol.size(); ++i)
+            for (unsigned int i = 0; i < elemSol.size(); ++i){
                 gradU[dir].axpy(elemSol[i][Indices::u(dir)], ipData.shapeGradients(i));
+           //     std::cout << "i: " << i << std::endl;
+           //     std::cout << "Indices::u(dir): " << Indices::u(dir) << std::endl;
+           //     std::cout << "ipData.shapeValues(i): " << ipData.shapeValues(i) << std::endl;
+           //     std::cout << "ipData.shapeGradients(i): " << ipData.shapeGradients(i) << std::endl;
+           //     std::cout << "elemSol[i][Indices::u(dir)]: " << elemSol[i][Indices::u(dir)] << std::endl;
+           //     printmatrix(std::cout, gradU, "gradU: ", "");
+           //     printvector(std::cout, elemSol, "elemSol: ", "");
+
+            }
 
         // evaluate strain tensor
         StressTensor epsilon;

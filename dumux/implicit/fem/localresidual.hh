@@ -29,6 +29,8 @@
 
 #include "properties.hh"
 
+#include <dune/istl/io.hh>
+
 namespace Dumux
 {
 /*!
@@ -122,6 +124,8 @@ public:
             prevElemSol[i] = prevSol[dofIdxGlobal];
         }
 
+       // printvector(std::cout, curElemSol, "curElemSol", "");
+
         // call the eval routine using the prepared local variables
         asImp_().eval(element, localView, localIndexSet, curElemSol, prevElemSol);
     }
@@ -177,6 +181,8 @@ public:
         residual_ = 0.0;
         storageTerm_ = 0.0;
 
+       // printvector(std::cout, residual_, "residual", "");
+
         // integrate over the element and eventually handle boundary conditions
         auto geometry = element.geometry();
         evalVolume_(element, geometry, localView, localIndexSet, curElemSol, prevElemSol);
@@ -197,7 +203,7 @@ public:
                                    const ElementSolutionVector& elemSol) const
     {
         PrimaryVariables source(0);
-
+//        std::cout<<"fem/locres:computeSource wird aufgerufen"<<std::endl;
         // add contributions from volume flux sources
         source += this->problem().source(element, ipData, secVars);
 
@@ -285,8 +291,14 @@ protected:
             // scale by extrusion factors
             storage *= curSecVars.extrusionFactor();
 
+           // std::cout << "curSecVars.extrusionfactor: " << curSecVars.extrusionFactor() << std::endl;
+
+
             // Scale by determinant of the transformation and integration weight
             storage *= it->weight() * geometry.integrationElement(it->position());
+
+//std::cout << "hello" << std::endl;
+//printvector(std::cout, storage, "storage","");
 
             // add to container
             result += storage;
@@ -307,17 +319,28 @@ protected:
 
         // select quadrature rule
         const auto& rule = Dune::QuadratureRules<Scalar, dim>::rule(geometry.type(), qOrder);
-
+int count = 0;
         // loop over quadrature points
         for (auto it = rule.begin(); it != rule.end(); ++it)
-        {
+        {   count++;
+std::cout << "femLocResItRuleCounter" << count << std::endl;
             // Obtain and store shape function values and gradients at the current quad point
             IpData ipData(geometry, it->position(), localBasis);
 
             // calculate secondary variables for the previous and the current solution at the ip
             SecondaryVariables curSecVars, prevSecVars;
+
+std::cout << "femLocRes vor curSecVars und prevSecVars.update()" << std::endl;
+//printvector(std::cout, curElemSol, "femLocalResCurElemSol","");
+//printvector(std::cout, prevElemSol, "femLocalResPrevElemSol","");
+
+std::cout << "femLocResCurElemSol: " << std::endl;
             curSecVars.update(curElemSol, problem(), element, ipData);
+std::cout << "femLocResPrevElemSol: " << std::endl;
             prevSecVars.update(prevElemSol, problem(), element, ipData);
+
+         //   printvector(std::cout, curElemSol, "curElemSol", "");
+         //   printvector(std::cout, prevElemSol, "prevElemSol", "");
 
             // evaluate storage term contribution
             PrimaryVariables storage = asImp_().computeStorage(element, ipData, curSecVars, curElemSol);
@@ -332,15 +355,43 @@ protected:
             // evaluate stabilization term contributions
             PrimaryVariables stabTerms = asImp_().computeStabilizationTerms(element, ipData, curSecVars, curElemSol);
 
+
+
+//            printvector(std::cout, storage, "storage", "");
+//            printvector(std::cout, prevStorage, "prevStorage", "");
+//            printvector(std::cout, source, "sourceresidual", "");
+//            printmatrix(std::cout, flux, "flux", "");
+
+      //      std::cout << "dim = " << dim << std::endl;
+      //      std::cout << "dimWorld = " << dimWorld << std::endl;
+
+            //TODO: extrusionfactor zugriff
             // scale terms by extrusion factors
+//            storage *= problem().extrusionFactorAtPos(element.geometry().center());
+//            prevStorage *= problem().extrusionFactorAtPos(element.geometry().center());
+//            source *= problem().extrusionFactorAtPos(element.geometry().center());
+//            flux *= problem().extrusionFactorAtPos(element.geometry().center());
+
             storage *= curSecVars.extrusionFactor();
-            prevStorage *= prevSecVars.extrusionFactor();
+            prevStorage *= curSecVars.extrusionFactor();
             source *= curSecVars.extrusionFactor();
             flux *= curSecVars.extrusionFactor();
+
+      //      std::cout << "curSecVars.extrusionfactor: " << curSecVars.extrusionFactor() << std::endl;
+      //      std::cout << "prevSecVars.extrusionfactor: " << prevSecVars.extrusionFactor() << std::endl;
+
+
+//            printvector(std::cout, storage, "storage", "");
+//            printvector(std::cout, prevStorage, "prevStorage", "");
+//            printvector(std::cout, source, "sourceresidual", "");
+//            printmatrix(std::cout, flux, "flux", "");
 
             // calculate time derivative
             storage -= prevStorage;
             storage /= problem().timeManager().timeStepSize();
+
+   //         std::cout << "sind in evalVolume in fem/locres" <<std::endl;
+   //		    std::cout << residual_[0][0] << std::endl;
 
             // add entries to residual vector
             Scalar qWeight = it->weight() * geometry.integrationElement(it->position());
@@ -348,11 +399,22 @@ protected:
             {
                 for (unsigned int i = 0; i < numLocalDofs; ++i)
                 {
+//    std::cout <<"Index i: "<< i << "    Index eqIdx: " << eqIdx <<std::endl;
+//	std::cout <<"LocResstorage[eqIdx]: "<< storage[eqIdx] <<std::endl;
+//	std::cout <<"LocRessource[eqIdx]: "<< source[eqIdx] <<std::endl;
+//	std::cout <<"LocResflux[eqIdx]: "<< flux[eqIdx] <<std::endl;
+//	printmatrix(std::cout, flux, "flux", "");
+//	std::cout <<"stabTerms[eqIdx]: "<< stabTerms[eqIdx] <<std::endl;
+//	std::cout <<"FemLocResqWeight: "<< qWeight <<std::endl;
                     residual_[i][eqIdx] += (storage[eqIdx] - source[eqIdx])*ipData.shapeValues(i)*qWeight;
                     residual_[i][eqIdx] -= (flux[eqIdx]*ipData.shapeGradients(i))*qWeight;
                     residual_[i][eqIdx] += stabTerms[eqIdx];
+//  printvector(std::cout, residual_, "LocResresidual", "");
+//std::cout << "FemLocResipData.shapeValues(i): " << ipData.shapeValues(i) << std::endl;
                 }
             }
+
+//printvector(std::cout, residual_, "FemLocResresidual", "");
         }
     }
 

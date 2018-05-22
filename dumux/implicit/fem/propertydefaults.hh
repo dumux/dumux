@@ -48,6 +48,8 @@
 #include "properties.hh"
 #include "model.hh"
 
+//#include <dumux/freeflow/stokes_fem/secondaryvariables.hh>
+
 namespace Dumux
 {
 // forward declarations
@@ -56,6 +58,10 @@ template<class TypeTag> class AMGBackend;
 
 namespace Properties
 {
+//! define the VolumeVariables
+//SET_TYPE_PROP(BoxStokes, SecondaryVariables, StokesSecondaryVariables<TypeTag>);
+
+
 //////////////////////////////////////////////////////////////////
 // Some defaults for very fundamental properties
 //////////////////////////////////////////////////////////////////

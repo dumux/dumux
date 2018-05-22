@@ -35,6 +35,8 @@
 #include "newtonconvergencewriter.hh"
 #include "newtonmethod.hh"
 
+#include <dune/istl/io.hh>
+
 namespace Dumux
 {
 template <class TypeTag>
@@ -374,6 +376,10 @@ public:
 
                 initialResidual_ = std::sqrt(norm2);
             }
+
+//printmatrix(std::cout, A, "A", "", 6, 0);
+//printvector(std::cout, b, "b", "");
+
 
             int converged = linearSolver_.solve(A, x, b);
 

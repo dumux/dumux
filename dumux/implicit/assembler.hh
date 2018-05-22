@@ -153,6 +153,8 @@ protected:
     {
         asImp_().resetSystem_();
 
+//	std::cout << std::endl;
+//	printmatrix(std::cout, this->matrix(), "Matrix", "", 7, 0);
         // assemble the elements...
         for (const auto& element : elements(gridView_()))
             this->model_().localJacobian().assemble(element, this->matrix(), this->residual());

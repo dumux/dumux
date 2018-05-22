@@ -86,7 +86,7 @@ public:
                 const int fIdx,
                 const ElementVolumeVariables &elemVolVars,
                 const bool onBoundary = false)
-    {
+    {   std::cout << "KAMEN HIER VORBEI fluxvars" << std::endl;
         fvGeometryPtr_ = &fvGeometry;
         onBoundary_ = onBoundary;
         faceIdx_ = fIdx;
@@ -153,7 +153,7 @@ protected:
     void calculateGradients_(const Problem &problem,
             const Element &element,
             const ElementVolumeVariables &elemVolVars)
-    {
+    { std::cout << "calculateGradients: " << std::endl;
         const VolumeVariables &volVarsI = elemVolVars[face().i];
         const VolumeVariables &volVarsJ = elemVolVars[face().j];
 
@@ -198,7 +198,7 @@ protected:
     void calculateStrain_(const Problem &problem,
             const Element &element,
             const ElementVolumeVariables &elemVolVars)
-    {
+    { std::cout << "calculateStrain: " << std::endl;
         // calculate the strain tensor
         epsilon_ += gradU_;
         epsilon_ += gradUTransposed_;
@@ -215,7 +215,7 @@ protected:
     void calculateStress_(const Problem &problem,
             const Element &element,
             const ElementVolumeVariables &elemVolVars)
-    {
+    { std::cout << "calculateStress: " << std::endl;
         DimMatrix firstTerm(0.0), secondTerm(0.0);
 
         epsilonTimesIdentity_ = divU_;

@@ -28,6 +28,8 @@
 #include <dumux/implicit/properties.hh>
 #include <dumux/implicit/assembler.hh>
 
+#include <dune/istl/io.hh>
+
 namespace Dumux {
 
 /*!
@@ -69,10 +71,18 @@ protected:
     // linearize the whole system
     void assemble_()
     {
+//    	std::cout << std::endl;
+//    	printmatrix(std::cout, this->matrix(), "vorAssembleMatrix", "", 7, 0);
         ParentType::assemble_();
+
+//        std::cout << std::endl;
+//        printmatrix(std::cout, this->matrix(), "nachAsssembleMatrix", "", 7, 0);
+
 
         // treat Dirichlet boundary conditions
         incorporateDirichletBC_();
+//        std::cout << std::endl;
+//        printmatrix(std::cout, this->matrix(), "nachDirichletMatrix", "", 7, 0);
     }
 
 private:
@@ -121,10 +131,13 @@ private:
                     auto subEntity = localKey.subEntity();
                     auto codim = localKey.codim();
 
-                    // skip interior dofs
-                    if (codim == 0)
-                        continue;
+                    //std::cout << "codim= " << codim << "   " << "dofidxglobal= " << dofIdxGlobal << std::endl;
 
+                    // skip interior dofs
+                    if (codim == 0){
+
+                        continue;
+                    }
                     // iterate over number of degrees of freedom with the given codim which are on the current face
                     for (int j = 0; j < refElement.size(fIdx, 1, codim); j++)
                     {
@@ -145,6 +158,10 @@ private:
                                     auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
                                     auto& residual = this->residual()[dofIdxGlobal][eqIdx];
                                     residual = this->model_().curSol()[dofIdxGlobal][eqIdx] - diriValues[pvIdx];
+//std::cout << residual << std::endl;
+
+//std::cout << std::endl;
+//printmatrix(std::cout, this->matrix(), "matrix", "", 7, 0);
 
                                     // Modify the row of the global matrix
                                     auto cIt = this->matrix()[dofIdxGlobal].begin();
