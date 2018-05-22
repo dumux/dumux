@@ -39,6 +39,9 @@
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 #include <dumux/discretization/methods.hh>
 
+//added for update function for fvGeometry.update in stokes/model.hh
+//#include "fvelementgeometry.hh"
+
 #include "elementboundarytypes.hh"
 #include "localresidual.hh"
 #include "localjacobian.hh"
