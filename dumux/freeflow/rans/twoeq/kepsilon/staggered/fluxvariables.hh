@@ -18,32 +18,32 @@
  *****************************************************************************/
  /*!
   * \file
-  * \ingroup LowReKEpsilonModel
-  * \copydoc Dumux::LowReKEpsilonFluxVariablesImpl
+  * \ingroup KEpsilonModel
+  * \copydoc Dumux::KEpsilonFluxVariablesImpl
   */
-#ifndef DUMUX_LOWREKEPSILON_STAGGERED_FLUXVARIABLES_HH
-#define DUMUX_LOWREKEPSILON_STAGGERED_FLUXVARIABLES_HH
+#ifndef DUMUX_KEPSILON_STAGGERED_FLUXVARIABLES_HH
+#define DUMUX_KEPSILON_STAGGERED_FLUXVARIABLES_HH
 
 #include <numeric>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/freeflow/navierstokes/fluxvariables.hh>
-#include <dumux/freeflow/rans/twoeq/lowrekepsilon/fluxvariables.hh>
+#include <dumux/freeflow/rans/twoeq/kepsilon/fluxvariables.hh>
 
 namespace Dumux
 {
 
 // forward declaration
 template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
-class LowReKEpsilonFluxVariablesImpl;
+class KEpsilonFluxVariablesImpl;
 
 /*!
- * \ingroup LowReKEpsilonModel
- * \brief The flux variables class for the low-Reynolds k-epsilon model using the staggered grid discretization.
+ * \ingroup KEpsilonModel
+ * \brief The flux variables class for the k-epsilon model using the staggered grid discretization.
  */
 template<class TypeTag, class BaseFluxVariables>
-class LowReKEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
+class KEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
 : public BaseFluxVariables
 {
     using ParentType = BaseFluxVariables;
@@ -97,12 +97,12 @@ public:
         };
         auto upwindTermEpsilon = [](const auto& volVars)
         {
-            return volVars.dissipationTilde();
+            return volVars.dissipation();
         };
 
         flux[turbulentKineticEnergyEqIdx]
             = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermK);
-        flux[dissipationEqIdx]
+        flux[dissipationEqIdx ]
             = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermEpsilon);
 
         // calculate diffusive flux
@@ -112,14 +112,19 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         // effective diffusion coefficients
-        Scalar insideCoeff_k = insideVolVars.kinematicViscosity()
-                               + insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaK();
-        Scalar outsideCoeff_k = outsideVolVars.kinematicViscosity()
-                                + outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaK();
-        Scalar insideCoeff_e = insideVolVars.kinematicViscosity()
-                               + insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaEpsilon();
-        Scalar outsideCoeff_e = outsideVolVars.kinematicViscosity()
-                                + outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaEpsilon();
+        Scalar insideCoeff_k = insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaK();
+        Scalar outsideCoeff_k = outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaK();
+        Scalar insideCoeff_e = insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaEpsilon();
+        Scalar outsideCoeff_e = outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaEpsilon();
+        static const auto kEpsilonEnableKinematicViscosity_
+            = getParamFromGroup<bool>(problem.paramGroup(), "KEpsilon.EnableKinematicViscosity_", true);
+        if (kEpsilonEnableKinematicViscosity_)
+        {
+            insideCoeff_k += insideVolVars.kinematicViscosity();
+            outsideCoeff_k += outsideVolVars.kinematicViscosity();
+            insideCoeff_e += insideVolVars.kinematicViscosity();
+            outsideCoeff_e += outsideVolVars.kinematicViscosity();
+        }
 
         // scale by extrusion factor
         insideCoeff_k *= insideVolVars.extrusionFactor();
@@ -148,17 +153,21 @@ public:
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
                                   || bcTypes.isSymmetry())))
         {
-            flux[turbulentKineticEnergyEqIdx]
-                += coeff_k / distance
-                   * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
-                   * scvf.area();
+            if (!insideVolVars.inNearWallRegion()
+                || !insideVolVars.inNearWallRegion())
+            {
+                flux[turbulentKineticEnergyEqIdx]
+                    += coeff_k / distance
+                       * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
+                       * scvf.area();
+            }
         }
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::dissipationEqIdx)
                                   || bcTypes.isSymmetry())))
         {
             flux[dissipationEqIdx]
                 += coeff_e / distance
-                   * (insideVolVars.dissipationTilde() - outsideVolVars.dissipationTilde())
+                   * (insideVolVars.dissipation() - outsideVolVars.dissipation())
                    * scvf.area();
         }
         return flux;

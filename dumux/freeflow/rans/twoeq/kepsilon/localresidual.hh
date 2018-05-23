@@ -16,46 +16,36 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- * \ingroup LowReKEpsilonModel
- * \copydoc Dumux::LowReKEpsilonVtkOutputFields
- */
-#ifndef DUMUX_LOWREKEPSILON_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_LOWREKEPSILON_VTK_OUTPUT_FIELDS_HH
+ /*!
+  * \file
+  * \ingroup KEpsilonModel
+  * \copydoc Dumux::KEpsilonResidual
+  */
+#ifndef DUMUX_KEPSILON_LOCAL_RESIDUAL_HH
+#define DUMUX_KEPSILON_LOCAL_RESIDUAL_HH
 
-#include <dumux/freeflow/rans/vtkoutputfields.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
+#include <dumux/freeflow/navierstokes/localresidual.hh>
+#include <dumux/freeflow/rans/twoeq/kepsilon/staggered/localresidual.hh>
 
 namespace Dumux
 {
 
+// forward declaration
+template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
+class KEpsilonResidualImpl;
+
 /*!
- * \ingroup LowReKEpsilonModel
- * \brief Adds vtk output fields for the low-Re k-epsilon turbulence model
+ * \ingroup KEpsilonModel
+ * \brief The local residual class for the k-epsilon model.
+          This is a convenience alias for the actual,
+          discretization-specific local residual.
+ * \note  Not all specializations are currently implemented
  */
-template<class FVGridGeometry>
-class LowReKEpsilonVtkOutputFields : public RANSVtkOutputFields<FVGridGeometry>
-{
-    enum { dim = FVGridGeometry::GridView::dimension };
+template<class TypeTag, class BaseLocalResidual>
+using KEpsilonResidual = KEpsilonResidualImpl<TypeTag, BaseLocalResidual, GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
 
-public:
-    //! Initialize the Reynolds-averagedNavier-Stokes specific vtk output fields.
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
-    {
-        RANSVtkOutputFields<FVGridGeometry>::init(vtk);
-        add(vtk);
-    }
-
-    //! Add the LowReKEpsilon specific vtk output fields.
-    template <class VtkOutputModule>
-    static void add(VtkOutputModule& vtk)
-    {
-        vtk.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
-        vtk.addVolumeVariable([](const auto& v){ return v.dissipationTilde(); }, "epsilon");
-    }
-};
-
-} // end namespace Dumux
+}
 
 #endif

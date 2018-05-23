@@ -18,11 +18,11 @@
  *****************************************************************************/
  /*!
   * \file
-  * \ingroup LowReKEpsilonModel
-  * \copydoc Dumux::LowReKepsilonResidualImpl
+  * \ingroup KepsilonModel
+  * \copydoc Dumux::KepsilonResidualImpl
   */
-#ifndef DUMUX_STAGGERED_LOWREKEPSILON_LOCAL_RESIDUAL_HH
-#define DUMUX_STAGGERED_LOWREKEPSILON_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_STAGGERED_KEPSILON_LOCAL_RESIDUAL_HH
+#define DUMUX_STAGGERED_KEPSILON_LOCAL_RESIDUAL_HH
 
 #include <dune/common/hybridutilities.hh>
 #include <dumux/common/properties.hh>
@@ -33,17 +33,18 @@ namespace Dumux {
 
 // forward declaration
 template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
-class LowReKEpsilonResidualImpl;
+class KEpsilonResidualImpl;
 
 /*!
- * \ingroup LowReKEpsilonModel
- * \brief Element-wise calculation of the residual for low-Reynolds k-epsilon models using the staggered discretization
+ * \ingroup KEpsilonModel
+ * \brief Element-wise calculation of the residual for k-epsilon models using the staggered discretization
  */
 template<class TypeTag, class BaseLocalResidual>
-class LowReKEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
+class KEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
 : public BaseLocalResidual
 {
     using ParentType = BaseLocalResidual;
+    friend class StaggeredLocalResidual<TypeTag>;
 
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
@@ -69,11 +70,17 @@ class LowReKEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
+    using CellCenterResidual = CellCenterPrimaryVariables;
+
     static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
     static constexpr int dissipationEqIdx = Indices::dissipationEqIdx - ModelTraits::dim();
 
 public:
     using ParentType::ParentType;
+
+    // account for the offset of the cell center privars within the PrimaryVariables container
+    static constexpr auto cellCenterOffset = ModelTraits::numEq() - CellCenterPrimaryVariables::dimension;
+    static_assert(cellCenterOffset == ModelTraits::dim(), "cellCenterOffset must equal dim for staggered NavierStokes");
 
     //! Evaluate fluxes entering or leaving the cell center control volume.
     CellCenterPrimaryVariables computeStorageForCellCenter(const Problem& problem,
@@ -83,7 +90,7 @@ public:
         CellCenterPrimaryVariables storage = ParentType::computeStorageForCellCenter(problem, scv, volVars);
 
         storage[turbulentKineticEnergyEqIdx] = volVars.turbulentKineticEnergy();
-        storage[dissipationEqIdx] = volVars.dissipationTilde();
+        storage[dissipationEqIdx] = volVars.dissipation();
 
         return storage;
     }
@@ -99,26 +106,72 @@ public:
                                                                                    elemVolVars, elemFaceVars, scv);
 
         const auto& volVars = elemVolVars[scv];
+        unsigned int elementID = problem.fvGridGeometry().elementMapper().index(element);
+        Scalar turbulentKineticEnergy = volVars.turbulentKineticEnergy();
+        Scalar dissipation = volVars.dissipation();
 
         // production
-        source[turbulentKineticEnergyEqIdx] += 2.0 * volVars.kinematicEddyViscosity()
-                                               * volVars.stressTensorScalarProduct();
-        source[dissipationEqIdx] += volVars.cOneEpsilon() * volVars.fOne()
-                                    * volVars.dissipationTilde() / volVars.turbulentKineticEnergy()
+        // turbulence production is equal to dissipation -> exclude both terms (according to local equilibrium hypothesis, see FLUENT)
+        if (!problem.isMatchingPoint(elementID))
+        {
+            source[turbulentKineticEnergyEqIdx] += 2.0 * volVars.kinematicEddyViscosity()
+                                                   * volVars.stressTensorScalarProduct();
+        }
+        source[dissipationEqIdx] += volVars.cOneEpsilon()
+                                    * dissipation / turbulentKineticEnergy
                                     * 2.0 * volVars.kinematicEddyViscosity()
                                     * volVars.stressTensorScalarProduct();
 
         // destruction
-        source[turbulentKineticEnergyEqIdx] -= volVars.dissipationTilde();
-        source[dissipationEqIdx] -= volVars.cTwoEpsilon() * volVars.fTwo()
-                                    * volVars.dissipationTilde() * volVars.dissipationTilde()
-                                    / volVars.turbulentKineticEnergy();
-
-        // dampening functions
-        source[turbulentKineticEnergyEqIdx] -= volVars.dValue();
-        source[dissipationEqIdx] += volVars.eValue();
+        // turbulence production is equal to dissipation -> exclude both terms (according to local equilibrium hypothesis, see FLUENT)
+        if (!problem.isMatchingPoint(elementID))
+        {
+            source[turbulentKineticEnergyEqIdx] -= dissipation;
+        }
+        source[dissipationEqIdx] -= volVars.cTwoEpsilon()
+                                    * dissipation * dissipation
+                                    / turbulentKineticEnergy;
 
         return source;
+    }
+
+protected:
+     /*!
+      * \brief Evaluate boundary conditions for a cell center dof
+      */
+    template<class ElementBoundaryTypes>
+    void evalBoundaryForCellCenter_(CellCenterResidual& residual,
+                                    const Problem& problem,
+                                    const Element& element,
+                                    const FVElementGeometry& fvGeometry,
+                                    const ElementVolumeVariables& elemVolVars,
+                                    const ElementFaceVariables& elemFaceVars,
+                                    const ElementBoundaryTypes& elemBcTypes,
+                                    const ElementFluxVariablesCache& elemFluxVarsCache) const
+    {
+        BaseLocalResidual::evalBoundaryForCellCenter_(residual, problem, element, fvGeometry,
+                                                      elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            unsigned int elementID = problem.fvGridGeometry().elementMapper().index(element);
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& insideVolVars = elemVolVars[insideScv];
+
+            // fixed value for the turbulent kinetic energy
+            if(problem.inNearWallRegion(elementID) && !problem.isMatchingPoint(elementID))
+            {
+//                 unsigned int matchingPointID = problem.matchingPointID_[elementID];
+                residual[Indices::turbulentKineticEnergyEqIdx - cellCenterOffset]
+                    = insideVolVars.turbulentKineticEnergy() - problem.turbulentKineticEnergyWallFunction(elementID);
+            }
+
+            // fixed value for the dissipation
+            if(problem.inNearWallRegion(elementID))
+            {
+                residual[Indices::dissipationEqIdx - cellCenterOffset]
+                    = insideVolVars.dissipation() - problem.dissipationWallFunction(elementID);
+            }
+        }
     }
 };
 }

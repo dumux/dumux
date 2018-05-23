@@ -18,31 +18,31 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ZeroEqModel
+ * \ingroup KEpsilonModel
  *
- * \copydoc Dumux::ZeroEqVolumeVariables
+ * \copydoc Dumux::KEpsilonVolumeVariables
  */
-#ifndef DUMUX_ZEROEQ_VOLUME_VARIABLES_HH
-#define DUMUX_ZEROEQ_VOLUME_VARIABLES_HH
+#ifndef DUMUX_KEPSILON_VOLUME_VARIABLES_HH
+#define DUMUX_KEPSILON_VOLUME_VARIABLES_HH
 
-#include <string>
-
-#include <dune/common/exceptions.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/freeflow/rans/volumevariables.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup ZeroEqModel
- * \brief Volume variables for the single-phase 0-Eq. model.
+ * \ingroup KEpsilonModel
+ * \brief Volume variables for the isothermal single-phase k-epsilon model.
  */
 template <class Traits, class NSVolumeVariables>
-class ZeroEqVolumeVariables
-:  public RANSVolumeVariables< Traits, ZeroEqVolumeVariables<Traits, NSVolumeVariables> >
+class KEpsilonVolumeVariables
+:  public RANSVolumeVariables< Traits, KEpsilonVolumeVariables<Traits, NSVolumeVariables> >
 ,  public NSVolumeVariables
 {
-    using ThisType = ZeroEqVolumeVariables<Traits, NSVolumeVariables>;
+    using ThisType = KEpsilonVolumeVariables<Traits, NSVolumeVariables>;
     using RANSParentType = RANSVolumeVariables<Traits, ThisType>;
     using NavierStokesParentType = NSVolumeVariables;
 
@@ -54,8 +54,6 @@ class ZeroEqVolumeVariables
 public:
     //! export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
-    //! export the fluid state type
-    using FluidState = typename Traits::FluidState;
     //! export the indices type
     using Indices = typename Traits::ModelTraits::Indices;
 
@@ -81,6 +79,8 @@ public:
     /*!
      * \brief Update all turbulent quantities for a given control volume
      *
+     * Wall and roughness related quantities are stored. Eddy viscosity is set.
+     *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param problem The object specifying the problem which ought to be simulated
      * \param element An element which contains part of the control volume
@@ -93,9 +93,21 @@ public:
                               const SubControlVolume& scv)
     {
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
-        additionalRoughnessLength_ = problem.additionalRoughnessLength_[RANSParentType::elementID()];
-        yPlusRough_ = wallDistanceRough() * RANSParentType::uStar() / RANSParentType::kinematicViscosity();
-        dynamicEddyViscosity_ = calculateEddyViscosity(elemSol, problem, element, scv, problem.eddyViscosityModel_);
+        isMatchingPoint_ = problem.isMatchingPoint(RANSParentType::elementID());
+        inNearWallRegion_ = problem.inNearWallRegion(RANSParentType::elementID());
+        turbulentKineticEnergy_ = elemSol[0][Indices::turbulentKineticEnergyIdx];
+        dissipation_ = elemSol[0][Indices::dissipationIdx];
+        storedDissipation_ = problem.storedDissipation_[RANSParentType::elementID()];
+        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementID()];
+        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementID()];
+        if (problem.useStoredEddyViscosity_)
+            dynamicEddyViscosity_ = problem.storedDynamicEddyViscosity_[RANSParentType::elementID()];
+        else
+            dynamicEddyViscosity_ = calculateEddyViscosity();
+        if (inNearWallRegion_ && !isMatchingPoint_)
+        {
+            dynamicEddyViscosity_ = problem.zeroEqDynamicEddyViscosity_[RANSParentType::elementID()];
+        }
         calculateEddyDiffusivity(problem);
     }
 
@@ -124,56 +136,12 @@ public:
     }
 
     /*!
-     * \brief Calculate and set the dynamic eddy viscosity.
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
-     * \param modelName The name of the used model
+     * \brief Returns the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$.
      */
-    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
-    Scalar calculateEddyViscosity(const ElementSolution &elemSol,
-                                  const Problem &problem,
-                                  const Element &element,
-                                  const SubControlVolume& scv,
-                                  const std::string modelName)
+    Scalar calculateEddyViscosity()
     {
-        using std::abs;
-        using std::exp;
-        using std::sqrt;
-        Scalar kinematicEddyViscosity = 0.0;
-        unsigned int flowNormalAxis = problem.flowNormalAxis_[RANSParentType::elementID()];
-        unsigned int wallNormalAxis = problem.wallNormalAxis_[RANSParentType::elementID()];
-        Scalar velGrad = abs(RANSParentType::velocityGradients()[flowNormalAxis][wallNormalAxis]);
-
-        if (modelName.compare("none") == 0)
-        {
-            // kinematicEddyViscosity = 0.0
-        }
-        else if (modelName.compare("prandtl") == 0)
-        {
-            Scalar mixingLength = problem.karmanConstant() * wallDistanceRough();
-            kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
-        }
-        else if (modelName.compare("vanDriest") == 0)
-        {
-            Scalar mixingLength = problem.karmanConstant() * wallDistanceRough()
-                                  * (1.0 - exp(-yPlusRough() / 26.0))
-                                  / sqrt(1.0 - exp(-0.26 * yPlusRough()));
-            kinematicEddyViscosity = mixingLength * mixingLength * velGrad;
-        }
-        else if (modelName.compare("baldwinLomax") == 0)
-        {
-            kinematicEddyViscosity = problem.kinematicEddyViscosity_[RANSParentType::elementID()];
-        }
-        else
-        {
-            DUNE_THROW(Dune::NotImplemented,
-                       "The eddy viscosity model \"" << modelName << "\" is not implemented.");
-        }
-
-        return kinematicEddyViscosity * NavierStokesParentType::density();
+        return cMu() * turbulentKineticEnergy() * turbulentKineticEnergy()
+               / dissipation() *  NavierStokesParentType::density();
     }
 
     /*!
@@ -190,16 +158,80 @@ public:
     }
 
     /*!
-     * \brief Return the wall distance \f$\mathrm{[m]}\f$ including an additional roughness length
+     * \brief Returns the turbulent kinetic energy \f$ m^2/s^2 \f$
      */
-    Scalar wallDistanceRough() const
-    { return RANSParentType::wallDistance() + additionalRoughnessLength_; }
+    Scalar turbulentKineticEnergy() const
+    {
+        return turbulentKineticEnergy_;
+    }
 
     /*!
-     * \brief Return the dimensionless wall distance \f$\mathrm{[-]}\f$  including an additional roughness length
+     * \brief Returns an effective dissipation \f$ m^2/s^3 \f$
      */
-    Scalar yPlusRough() const
-    { return yPlusRough_; }
+    Scalar dissipation() const
+    {
+        return dissipation_;
+    }
+
+    /*!
+     * \brief Returns the turbulent kinetic energy \f$ m^2/s^2 \f$
+     */
+    Scalar storedTurbulentKineticEnergy() const
+    {
+        return storedTurbulentKineticEnergy_;
+    }
+
+    /*!
+     * \brief Returns an effective dissipation \f$ m^2/s^3 \f$
+     */
+    Scalar storedDissipation() const
+    {
+        return storedDissipation_;
+    }
+
+    /*!
+     * \brief Returns the scalar product of the stress tensor
+     */
+    Scalar stressTensorScalarProduct() const
+    {
+        return stressTensorScalarProduct_;
+    }
+
+    /*
+     * \brief Returns if an element is located in the near-wall region
+     */
+    bool inNearWallRegion() const
+    {
+        return inNearWallRegion_;
+    }
+
+    /*!
+     * \brief Returns if an element is the matching point
+     */
+    Scalar isMatchingPoint() const
+    {
+        return isMatchingPoint_;
+    }
+
+    //! \brief Returns the \$f C_\mu \$f constant
+    const Scalar cMu() const
+    { return 0.09; }
+
+    //! \brief Returns the \$f \sigma_\textrm{k} \$f constant
+    const Scalar sigmaK() const
+    { return 1.0; }
+
+    //! \brief Returns the \$f \sigma_\varepsilon \$f constant
+    const Scalar sigmaEpsilon() const
+    { return 1.3; }
+
+    //! \brief Returns the \$f C_{1\varepsilon}  \$f constant
+    const Scalar cOneEpsilon() const
+    { return 1.44; }
+
+    //! \brief Returns the \$f C_{2\varepsilon} \$f constant
+    const Scalar cTwoEpsilon() const
+    { return 1.92; }
 
     /*!
      * \brief Returns the eddy diffusivity \f$\mathrm{[m^2/s]}\f$
@@ -218,19 +250,18 @@ public:
         return NavierStokesParentType::diffusionCoefficient(compIIdx, compJIdx) + eddyDiffusivity();
     }
 
-    /*!
-     * \brief Return the fluid state of the control volume.
-     */
-    const FluidState& fluidState() const
-    { return NavierStokesParentType::fluidState_; }
-
 protected:
     Scalar dynamicEddyViscosity_;
     Scalar eddyDiffusivity_;
-    Scalar additionalRoughnessLength_;
-    Scalar yPlusRough_;
+    Scalar turbulentKineticEnergy_;
+    Scalar dissipation_;
+    Scalar storedTurbulentKineticEnergy_;
+    Scalar storedDissipation_;
+    Scalar stressTensorScalarProduct_;
+    bool inNearWallRegion_;
+    bool isMatchingPoint_;
 };
 
-} // end namespace Dumux
+}
 
-#endif // DUMUX_ZEROEQ_VOLUME_VARIABLES_HH
+#endif

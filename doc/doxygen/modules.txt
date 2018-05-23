@@ -198,6 +198,12 @@
        */
         /*!
          * \ingroup TwoEqModel
+         * \defgroup KEpsilonModel K-epsilon model
+         * \brief K-epsilon model
+         * \copydetails ./freeflow/rans/twoeq/kepsilon/model.hh
+         */
+        /*!
+         * \ingroup TwoEqModel
          * \defgroup LowReKEpsilonModel Low-Re k-epsilon model
          * \brief Low-Re k-epsilon model
          * \copydetails ./freeflow/rans/twoeq/lowrekepsilon/model.hh

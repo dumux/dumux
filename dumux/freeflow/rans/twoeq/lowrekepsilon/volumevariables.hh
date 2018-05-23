@@ -35,7 +35,7 @@ namespace Dumux
 
 /*!
  * \ingroup LowReKEpsilonModel
- * \brief Volume variables for the isothermal single-phase 0-Eq. model.
+ * \brief Volume variables for the isothermal single-phase low-Re k-epsilons model.
  */
 template <class Traits, class NSVolumeVariables>
 class LowReKEpsilonVolumeVariables

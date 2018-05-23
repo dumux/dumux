@@ -18,67 +18,51 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup LowReKEpsilonModel
+ * \ingroup KEpsilonModel
  *
- * \brief A single-phase, isothermal low-Reynolds k-epsilon model
+ * \brief A single-phase, isothermal k-epsilon model
  *
  * \copydoc RANSModel
  *
- * The low-Reynolds k-epsilon models calculate the eddy viscosity with two additional PDEs,
+ * The k-epsilon models calculate the eddy viscosity with two additional PDEs,
  * one for the turbulent kinetic energy (k) and for the dissipation (\f$ \varepsilon \f$).
- * The model uses the one proposed by Chien \cite Chien1982a.
- * A good overview and additional models are given in Patel et al. \cite Patel1985a.
+ * The model uses the one proposed by Launder and Sharma \cite Launder1994a.
  *
- * The turbulent kinetic energy balance is identical with the one from the k-epsilon model,
- * but the dissipation includes a dampening function (\f$ D_\varepsilon \f$):
- * \f$ \varepsilon = \tilde{\varepsilon} + D_\varepsilon \f$:
- *
+ * The turbulent kinetic energy balance is:
  * \f[
  *    \frac{\partial \left( k \right)}{\partial t}
  *    + \nabla \cdot \left( \textbf{v} k \right)
  *    - \nabla \cdot \left( \left( \nu + \frac{\nu_\text{t}}{\sigma_\text{k}} \right) \nabla k \right)
  *    - 2 \nu_\text{t} \textbf{S} \cdot \textbf{S}
- *    + \tilde{\varepsilon}
- *    + D_\varepsilon
+ *    + \varepsilon
  *    = 0
  * \f].
  *
- * The dissipation balance is changed by introducing additional functions
- * (\f$ E_\text{k}\f$, \f$ f_1 \f$, and \f$ f_2 \f$) to account for a dampening towards the wall:
+ * The dissipation balance is:
  * \f[
- *   \frac{\partial \left( \tilde{\varepsilon} \right)}{\partial t}
- *   + \nabla \cdot \left( \textbf{v} \tilde{\varepsilon} \right)
- *   - \nabla \cdot \left( \left( \nu + \frac{\nu_\text{t}}{\sigma_{\varepsilon}} \right) \nabla \tilde{\varepsilon} \right)
- *   - C_{1\tilde{\varepsilon}} f_1 \frac{\tilde{\varepsilon}}{k} 2 \nu_\text{t} \textbf{S} \cdot \textbf{S}
- *   + C_{2\tilde{\varepsilon}} f_2 \frac{\tilde{\varepsilon}^2}{k}
- *   - E_\text{k}
+ *   \frac{\partial \left( \varepsilon \right)}{\partial t}
+ *   + \nabla \cdot \left( \textbf{v} \varepsilon \right)
+ *   - \nabla \cdot \left( \left( \nu + \frac{\nu_\text{t}}{\sigma_{\varepsilon}} \right) \nabla \varepsilon \right)
+ *   - C_{1\varepsilon} \frac{\varepsilon}{k} 2 \nu_\text{t} \textbf{S} \cdot \textbf{S}
+ *   + C_{2\varepsilon} \frac{\varepsilon^2}{k}
  *   = 0
  * \f].
  *
- * The kinematic eddy viscosity \f$ \nu_\text{t} \f$ is dampened by \f$ f_\mu \f$:
+ * The kinematic eddy viscosity \f$ \nu_\text{t} \f$ is:
  * \f[
- * \nu_\text{t} = C_\mu f_\mu \frac{k^2}{\tilde{\varepsilon}}
+ * \nu_\text{t} = C_\mu \frac{k^2}{\tilde{\varepsilon}}
  * \f].
- *
- * The auxiliary and dampening functions are defined as:
- * \f[ D_\varepsilon = 2 \nu \nicefrac{k}{y^2} \f]
- * \f[ E_\text{k} = -2 \nu \frac{\tilde{\varepsilon}}{y^2} \exp \left( -0.5 y^+ \right) \f]
- * \f[ f_1 = 1 \f]
- * \f[ f_2 = 1 - 0.22 \exp \left( - \left( \frac{\mathit{Re}_\text{t}}{6} \right)^2 \right) \f]
- * \f[ f_\mu = 1 - \exp \left( -0.0115 y^+ \right) \f]
- * \f[ \mathit{Re}_\text{t} = \frac{k^2}{\nu \tilde{\varepsilon}} \f]
- * .
  *
  * Finally, the model is closed with the following constants:
  * \f[ \sigma_\text{k} = 1.00 \f]
  * \f[ \sigma_\varepsilon =1.30 \f]
- * \f[ C_{1\tilde{\varepsilon}} = 1.35 \f]
- * \f[ C_{2\tilde{\varepsilon}} = 1.80 \f]
+ * \f[ C_{1\varepsilon} = 1.44 \f]
+ * \f[ C_{2\varepsilon} = 1.92 \f]
  * \f[ C_\mu = 0.09 \f]
  */
 
-#ifndef DUMUX_LOWREKEPSILON_MODEL_HH
-#define DUMUX_LOWREKEPSILON_MODEL_HH
+#ifndef DUMUX_KEPSILON_MODEL_HH
+#define DUMUX_KEPSILON_MODEL_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/properties.hh>
@@ -95,11 +79,11 @@ namespace Dumux
 namespace Properties {
 
 /*!
- * \ingroup LowReKEpsilonModel
- * \brief Traits for the low-Reynolds k-epsilon model
+ * \ingroup KEpsilonModel
+ * \brief Traits for the k-epsilon model
  */
 template<int dimension>
-struct LowReKEpsilonModelTraits : RANSModelTraits<dimension>
+struct KEpsilonModelTraits : RANSModelTraits<dimension>
 {
     //! The dimension of the model
     static constexpr int dim() { return dimension; }
@@ -112,46 +96,46 @@ struct LowReKEpsilonModelTraits : RANSModelTraits<dimension>
     static constexpr int numComponents() { return 1; }
 
     //! the indices
-    using Indices = LowReKEpsilonIndices<dim(), numComponents()>;
+    using Indices = KEpsilonIndices<dim(), numComponents()>;
 };
 
 ///////////////////////////////////////////////////////////////////////////
-// default property values for the isothermal low-Reynolds k-epsilon model
+// default property values for the isothermal k-epsilon model
 ///////////////////////////////////////////////////////////////////////////
 
-//! The type tag for the single-phase, isothermal low-Reynolds k-epsilon model
-NEW_TYPE_TAG(LowReKEpsilon, INHERITS_FROM(RANS));
+//! The type tag for the single-phase, isothermal k-epsilon model
+NEW_TYPE_TAG(KEpsilon, INHERITS_FROM(RANS));
 
-//!< states some specifics of the isothermal low-Reynolds k-epsilon model
-SET_PROP(LowReKEpsilon, ModelTraits)
+//!< states some specifics of the isothermal k-epsilon model
+SET_PROP(KEpsilon, ModelTraits)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr int dim = GridView::dimension;
 public:
-    using type = LowReKEpsilonModelTraits<dim>;
+    using type = KEpsilonModelTraits<dim>;
 };
 
 //! The flux variables
-SET_PROP(LowReKEpsilon, FluxVariables)
+SET_PROP(KEpsilon, FluxVariables)
 {
 private:
     using BaseFluxVariables = NavierStokesFluxVariables<TypeTag>;
 public:
-    using type = LowReKEpsilonFluxVariables<TypeTag, BaseFluxVariables>;
+    using type = KEpsilonFluxVariables<TypeTag, BaseFluxVariables>;
 };
 
 //! The local residual
-SET_PROP(LowReKEpsilon, LocalResidual)
+SET_PROP(KEpsilon, LocalResidual)
 {
 private:
     using BaseLocalResidual = NavierStokesResidual<TypeTag>;
 public:
-    using type = LowReKEpsilonResidual<TypeTag, BaseLocalResidual>;
+    using type = KEpsilonResidual<TypeTag, BaseLocalResidual>;
 };
 
 //! Set the volume variables property
-SET_PROP(LowReKEpsilon, VolumeVariables)
+SET_PROP(KEpsilon, VolumeVariables)
 {
 private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -162,38 +146,38 @@ private:
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
     using NSVolVars = NavierStokesVolumeVariables<Traits>;
 public:
-    using type = LowReKEpsilonVolumeVariables<Traits, NSVolVars>;
+    using type = KEpsilonVolumeVariables<Traits, NSVolVars>;
 };
 
 //! The specific vtk output fields
-SET_PROP(LowReKEpsilon, VtkOutputFields)
+SET_PROP(KEpsilon, VtkOutputFields)
 {
 private:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 public:
-    using type = LowReKEpsilonVtkOutputFields<FVGridGeometry>;
+    using type = KEpsilonVtkOutputFields<FVGridGeometry>;
 };
 
 //////////////////////////////////////////////////////////////////
-// default property values for the non-isothermal low-Reynolds k-epsilon model
+// default property values for the non-isothermal k-epsilon model
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the single-phase, isothermal low-Reynolds k-epsilon model
-NEW_TYPE_TAG(LowReKEpsilonNI, INHERITS_FROM(RANSNI));
+//! The type tag for the single-phase, isothermal k-epsilon model
+NEW_TYPE_TAG(KEpsilonNI, INHERITS_FROM(RANSNI));
 
 //! The model traits of the non-isothermal model
-SET_PROP(LowReKEpsilonNI, ModelTraits)
+SET_PROP(KEpsilonNI, ModelTraits)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr int dim = GridView::dimension;
-    using IsothermalTraits = LowReKEpsilonModelTraits<dim>;
+    using IsothermalTraits = KEpsilonModelTraits<dim>;
 public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };
 
 //! Set the volume variables property
-SET_PROP(LowReKEpsilonNI, VolumeVariables)
+SET_PROP(KEpsilonNI, VolumeVariables)
 {
 private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -204,16 +188,16 @@ private:
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
     using NSVolVars = NavierStokesVolumeVariables<Traits>;
 public:
-    using type = LowReKEpsilonVolumeVariables<Traits, NSVolVars>;
+    using type = KEpsilonVolumeVariables<Traits, NSVolVars>;
 };
 
 //! The specific non-isothermal vtk output fields
-SET_PROP(LowReKEpsilonNI, VtkOutputFields)
+SET_PROP(KEpsilonNI, VtkOutputFields)
 {
 private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IsothermalFields = LowReKEpsilonVtkOutputFields<FVGridGeometry>;
+    using IsothermalFields = KEpsilonVtkOutputFields<FVGridGeometry>;
 public:
     using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
 };

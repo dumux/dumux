@@ -18,44 +18,35 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup LowReKEpsilonModel
- * \copydoc Dumux::LowReKEpsilonVtkOutputFields
+ * \ingroup KEpsilonModel
+ * \copydoc Dumux::KEpsilonIndices
  */
-#ifndef DUMUX_LOWREKEPSILON_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_LOWREKEPSILON_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_KEPSILON_INDICES_HH
+#define DUMUX_KEPSILON_INDICES_HH
 
-#include <dumux/freeflow/rans/vtkoutputfields.hh>
+#include <dumux/freeflow/navierstokes/indices.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
+// \{
 /*!
- * \ingroup LowReKEpsilonModel
- * \brief Adds vtk output fields for the low-Re k-epsilon turbulence model
+ * \ingroup KEpsilonModel
+ * \brief The common indices for the isothermal k-epsilon model.
+ *
+ * \tparam dimension The dimension of the problem
+ * \tparam numComponents The number of considered transported components
  */
-template<class FVGridGeometry>
-class LowReKEpsilonVtkOutputFields : public RANSVtkOutputFields<FVGridGeometry>
+template<int dimension, int numComponents>
+struct KEpsilonIndices : public NavierStokesIndices<dimension>
 {
-    enum { dim = FVGridGeometry::GridView::dimension };
-
 public:
-    //! Initialize the Reynolds-averagedNavier-Stokes specific vtk output fields.
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
-    {
-        RANSVtkOutputFields<FVGridGeometry>::init(vtk);
-        add(vtk);
-    }
-
-    //! Add the LowReKEpsilon specific vtk output fields.
-    template <class VtkOutputModule>
-    static void add(VtkOutputModule& vtk)
-    {
-        vtk.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
-        vtk.addVolumeVariable([](const auto& v){ return v.dissipationTilde(); }, "epsilon");
-    }
+    static constexpr auto turbulentKineticEnergyEqIdx = dimension + numComponents;
+    static constexpr auto turbulentKineticEnergyIdx = turbulentKineticEnergyEqIdx;
+    static constexpr auto dissipationEqIdx = turbulentKineticEnergyEqIdx + 1;
+    static constexpr auto dissipationIdx = dissipationEqIdx;
 };
 
-} // end namespace Dumux
+// \}
+} // end namespace
 
 #endif

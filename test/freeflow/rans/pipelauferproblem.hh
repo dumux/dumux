@@ -27,6 +27,7 @@
 #ifndef DUMUX_PIPE_LAUFER_PROBLEM_HH
 #define DUMUX_PIPE_LAUFER_PROBLEM_HH
 
+#include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/turbulenceproperties.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/components/air.hh>
@@ -34,11 +35,13 @@
 #if LOWREKEPSILON
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/model.hh>
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/problem.hh>
+#elif KEPSILON
+#include <dumux/freeflow/rans/twoeq/kepsilon/model.hh>
+#include <dumux/freeflow/rans/twoeq/kepsilon/problem.hh>
 #else
 #include <dumux/freeflow/rans/zeroeq/model.hh>
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
 #endif
-#include <dumux/discretization/staggered/freeflow/properties.hh>
 
 namespace Dumux
 {
@@ -52,6 +55,8 @@ NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNI))
 #else
 #if LOWREKEPSILON
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilon));
+#elif KEPSILON
+NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilon));
 #else
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEq));
 #endif
@@ -89,6 +94,10 @@ template <class TypeTag>
 class PipeLauferProblem : public LowReKEpsilonProblem<TypeTag>
 {
     using ParentType = LowReKEpsilonProblem<TypeTag>;
+#elif KEPSILON
+class PipeLauferProblem : public KEpsilonProblem<TypeTag>
+{
+    using ParentType = KEpsilonProblem<TypeTag>;
 #else
 class PipeLauferProblem : public ZeroEqProblem<TypeTag>
 {
@@ -197,7 +206,7 @@ public:
             values.setOutflow(Indices::energyBalanceIdx);
 #endif
 
-#if LOWREKEPSILON
+#if LOWREKEPSILON || KEPSILON
             values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
             values.setOutflow(Indices::dissipationEqIdx);
 #endif
@@ -211,7 +220,7 @@ public:
             values.setDirichlet(Indices::temperatureIdx);
 #endif
 
-#if LOWREKEPSILON
+#if LOWREKEPSILON || KEPSILON
             values.setDirichlet(Indices::turbulentKineticEnergyIdx);
             values.setDirichlet(Indices::dissipationIdx);
 #endif
@@ -258,7 +267,8 @@ public:
         PrimaryVariables values(0.0);
         values[Indices::pressureIdx] = 1.0e+5;
         values[Indices::velocityXIdx] = inletVelocity_;
-        if (isOnWall(globalPos))
+        if (isOnWall(globalPos)
+            || (startWithZeroVelocity_ && time() < eps_))
         {
             values[Indices::velocityXIdx] = 0.0;
         }
@@ -271,11 +281,7 @@ public:
         }
 #endif
 
-#if LOWREKEPSILON
-        if (time() < eps_ && startWithZeroVelocity_)
-        {
-            values[Indices::velocityXIdx] = 0.0;
-        }
+#if LOWREKEPSILON || KEPSILON
         values[Indices::turbulentKineticEnergyEqIdx] = turbulentKineticEnergy_;
         values[Indices::dissipationEqIdx] = dissipation_;
         if (isOnWall(globalPos))

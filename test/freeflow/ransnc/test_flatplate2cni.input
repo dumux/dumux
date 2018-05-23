@@ -16,6 +16,7 @@ InletVelocity = 0.1 # [m/s]
 EnableGravity = false
 
 [RANS]
+EddyViscosityModel = "prandtl"
 TurbulentSchmidtNumber = 0.7
 TurbulentPrandtlNumber = 0.85
 

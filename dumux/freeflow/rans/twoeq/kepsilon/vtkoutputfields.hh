@@ -18,30 +18,44 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ZeroEqModel
- * \copydoc Dumux::EddyViscosityModels
+ * \ingroup KEpsilonModel
+ * \copydoc Dumux::KEpsilonVtkOutputFields
  */
-#ifndef DUMUX_ZEROEQ_MODELS_HH
-#define DUMUX_ZEROEQ_MODELS_HH
+#ifndef DUMUX_KEPSILON_VTK_OUTPUT_FIELDS_HH
+#define DUMUX_KEPSILON_VTK_OUTPUT_FIELDS_HH
 
-namespace Dumux {
+#include <dumux/freeflow/rans/vtkoutputfields.hh>
+
+namespace Dumux
+{
 
 /*!
- * \ingroup ZeroEqModel
- * \brief The available 0-eq. eddy viscosity models.
- *
- * The following models are available:
- *  -# Prandtl's mixing length, e.g. \cite Oertel2012a
- *  -# Van-Driest modification, \cite vanDriest1956a and \cite Hanna1981a
- *  -# Baldwin-Lomax, \cite Baldwin1978a
+ * \ingroup KEpsilonModel
+ * \brief Adds vtk output fields for the k-epsilon turbulence model
  */
-class EddyViscosityModels
+template<class FVGridGeometry>
+class KEpsilonVtkOutputFields : public RANSVtkOutputFields<FVGridGeometry>
 {
+    enum { dim = FVGridGeometry::GridView::dimension };
+
 public:
-    static constexpr int none = 0;
-    static constexpr int prandtl = 1;
-    static constexpr int modifiedVanDriest = 2;
-    static constexpr int baldwinLomax = 3;
+    //! Initialize the Reynolds-averaged Navier-Stokes specific vtk output fields.
+    template <class VtkOutputModule>
+    static void init(VtkOutputModule& vtk)
+    {
+        RANSVtkOutputFields<FVGridGeometry>::init(vtk);
+        add(vtk);
+    }
+
+    //! Add the KEpsilon specific vtk output fields.
+    template <class VtkOutputModule>
+    static void add(VtkOutputModule& vtk)
+    {
+        vtk.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
+        vtk.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "epsilon");
+        vtk.addVolumeVariable([](const auto& v){ return v.inNearWallRegion(); }, "inNearWallRegion");
+        vtk.addVolumeVariable([](const auto& v){ return v.isMatchingPoint(); }, "isMatchingPoint");
+    }
 };
 
 } // end namespace Dumux
