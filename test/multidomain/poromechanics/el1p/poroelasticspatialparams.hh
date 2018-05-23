@@ -18,6 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup MultiDomain
+ * \ingroup Geomechanics
+ * \ingroup PoroElastic
  * \brief Definition of the spatial parameters for the poro-elastic problem
  */
 #ifndef DUMUX_POROELASTIC_SPATIAL_PARAMS_HH
@@ -64,15 +67,19 @@ public:
        // Lame parameters [Pa]
        lameParams_.setLambda( (E * nu) / ((1 + nu)*(1 - 2 * nu)) );
        lameParams_.setMu( E / (2 * (1 + nu)) );
-
     }
 
     //! Define the Lame parameters
-    const LameParams& lameParamsAtPos(const GlobalPosition& globalPos) const { return lameParams_; }
+    const LameParams& lameParamsAtPos(const GlobalPosition& globalPos) const
+    { return lameParams_; }
+
     //! Return the porosity of the porous medium
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const { return porosity_; }
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    { return porosity_; }
+
     //! Return the biot coefficient of the porous medium
-    Scalar biotCoefficientAtPos(const GlobalPosition& globalPos) const { return 1.0; }
+    Scalar biotCoefficientAtPos(const GlobalPosition& globalPos) const
+    { return 1.0; }
 
 private:
     Scalar porosity_;
