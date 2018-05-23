@@ -77,6 +77,7 @@ class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assem
     using Element = typename GridView::template Codim<0>::Entity;
 
     using CouplingManager = typename Assembler::CouplingManager;
+    using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
 
 public:
     //! export the domain id of this sub-domain
@@ -149,12 +150,22 @@ public:
         res[globalI] = this->asImp_().assembleResidualImpl(); // forward to the internal implementation
     }
 
-    LocalResidualValues evalLocalSourceResidual(const Element& neighbor, const ElementVolumeVariables& elemVolVars, const SubControlVolume& scv) const
+    ElementResidualVector evalLocalSourceResidual(const Element& element, const ElementVolumeVariables& elemVolVars) const
     {
-        const auto& curVolVars = elemVolVars[scv];
-        auto source = this->localResidual().computeSource(problem(), neighbor, this->fvGeometry(), elemVolVars, scv);
-        source *= scv.volume()*curVolVars.extrusionFactor();
-        return source;
+        // initialize the residual vector for all scvs in this element
+        ElementResidualVector residual(this->fvGeometry().numScv());
+
+        // evaluate the volume terms (storage + source terms)
+        // forward to the local residual specialized for the discretization methods
+        for (auto&& scv : scvs(this->fvGeometry()))
+        {
+            const auto& curVolVars = elemVolVars[scv];
+            auto source = this->localResidual().computeSource(problem(), element, this->fvGeometry(), elemVolVars, scv);
+            source *= -scv.volume()*curVolVars.extrusionFactor();
+            residual[scv.indexInElement()] = std::move(source);
+        }
+
+        return residual;
     }
 
     LocalResidualValues evalLocalStorageResidual() const
@@ -191,6 +202,7 @@ class SubDomainCCLocalAssemblerImplicitBase : public SubDomainCCLocalAssemblerBa
     using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, Implementation>;
 
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;
@@ -223,8 +235,8 @@ public:
     }
 
     using ParentType::evalLocalSourceResidual;
-    LocalResidualValues evalLocalSourceResidual(const Element& neighbor, const SubControlVolume& scv) const
-    { return this->evalLocalSourceResidual(neighbor, this->curElemVolVars(), scv); }
+    ElementResidualVector evalLocalSourceResidual(const Element& neighbor) const
+    { return this->evalLocalSourceResidual(neighbor, this->curElemVolVars()); }
 
     /*!
      * \brief Computes the residual
@@ -302,8 +314,7 @@ public:
         // get stencil informations
         const auto globalI = fvGridGeometry.elementMapper().index(element);
         const auto& connectivityMap = fvGridGeometry.connectivityMap();
-        const auto& couplingSourceStencil = this->couplingManager().extendedSourceStencilInverse(domainI, globalI);
-        const auto numNeighbors = connectivityMap[globalI].size() + couplingSourceStencil.size();
+        const auto numNeighbors = connectivityMap[globalI].size();
 
         // container to store the neighboring elements
         Dune::ReservedVector<Element, maxNeighbors*2+1> neighborElements;
@@ -326,10 +337,6 @@ public:
             ++j;
         }
 
-        // we assume all the data for global J is also available in the local views
-        for (const auto& globalJ : couplingSourceStencil)
-            origResiduals[j++] -= this->evalLocalSourceResidual(fvGridGeometry.element(globalJ), fvGeometry.scv(globalJ));
-
         // reference to the element's scv (needed later) and corresponding vol vars
         const auto& scv = fvGeometry.scv(globalI);
         auto& curVolVars = ParentType::getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
@@ -349,7 +356,6 @@ public:
 
         for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
         {
-
             // for ghost elements we assemble a 1.0 where the primary variable and zero everywhere else
             // as we always solve for a delta of the solution with repect to the initial solution this
             // results in a delta of zero for ghosts, we still need to do the neighbor derivatives though
@@ -378,18 +384,11 @@ public:
                     for (auto scvfIdx : connectivityMap[globalI][k].scvfsJ)
                         partialDerivsTmp[k+1] += this->evalFluxResidual(neighborElements[k], fvGeometry.scvf(scvfIdx));
 
-                for (std::size_t k = 0; k < couplingSourceStencil.size(); ++k)
-                {
-                    const auto offset = connectivityMap[globalI].size() + 1;
-                    const auto globalJ = couplingSourceStencil[k];
-                    partialDerivsTmp[k+offset] -= this->evalLocalSourceResidual(fvGridGeometry.element(globalJ), fvGeometry.scv(globalJ));
-                }
-
                 return partialDerivsTmp;
             };
 
             // derive the residuals numerically
-            static const NumericEpsilon<Scalar, numEq> eps_{GET_PROP_VALUE(TypeTag, ModelParameterGroup)};
+            static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
             NumericDifferentiation::partialDerivative(evalResiduals, elemSol[0][pvIdx], partialDerivs, origResiduals,
                                                       eps_(elemSol[0][pvIdx], pvIdx));
 
@@ -403,9 +402,6 @@ public:
                 j = 1;
                 for (const auto& dataJ : connectivityMap[globalI])
                     A[dataJ.globalJ][globalI][eqIdx][pvIdx] += partialDerivs[j++][eqIdx];
-
-                for (const auto& globalJ : couplingSourceStencil)
-                    A[globalJ][globalI][eqIdx][pvIdx] += partialDerivs[j++][eqIdx];
             }
 
             // restore the original state of the scv's volume variables
@@ -426,6 +422,10 @@ public:
         // is updated with the correct element volume variables before residual evaluations
         if (enableGridFluxVarsCache)
             gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
+
+        // compute potential additional derivatives causes by the coupling
+        typename ParentType::LocalResidual::ElementResidualVector origElementResidual({origResiduals[0]});
+        this->couplingManager().evalAdditionalDomainDerivatives(domainI, *this, origElementResidual, A, gridVariables);
 
         // return the original residual
         return origResiduals[0];
