@@ -31,8 +31,8 @@
 
 #include <dune/common/indices.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 //! Forward declaration of the mapper implementation between two domains
 template<std::size_t idOffset, class BulkFVG, class LowDimFVG>
 class CCTpfaFacetCouplingTwoDomainMapper;

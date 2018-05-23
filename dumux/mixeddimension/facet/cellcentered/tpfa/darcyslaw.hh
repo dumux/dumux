@@ -37,8 +37,8 @@
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 #include <dumux/discretization/cellcentered/tpfa/darcyslaw.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 //! Forward declaration of the implementation
 template<class TypeTag, bool isNetwork>
 class FacetCouplingCCTpfaDarcysLawImpl;
