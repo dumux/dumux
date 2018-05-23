@@ -18,6 +18,9 @@
  *****************************************************************************/
 /**
  * \file
+ * \ingroup MultiDomain
+ * \ingroup Geomechanics
+ * \ingroup PoroElastic
  * \brief The poro-elastic sub-problem in the el1p coupled problem.
  */
 #ifndef DUMUX_POROELASTIC_SUBPROBLEM_HH
@@ -36,10 +39,12 @@
 
 namespace Dumux {
 
+// forward declaration of the problem class
 template <class TypeTag>
 class PoroElasticSubProblem;
 
 namespace Properties {
+
 NEW_TYPE_TAG(PoroElasticSubTypeTag, INHERITS_FROM(BoxModel, PoroElastic));
 // Set the grid type
 SET_TYPE_PROP(PoroElasticSubTypeTag, Grid, Dune::YaspGrid<2>);
