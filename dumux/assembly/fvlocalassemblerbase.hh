@@ -46,8 +46,6 @@ template<class TypeTag, class Assembler, class Implementation, bool isImplicit>
 class FVLocalAssemblerBase
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
@@ -64,6 +62,8 @@ class FVLocalAssemblerBase
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     /*!
      * \brief The constructor. Delegates to the general constructor.
