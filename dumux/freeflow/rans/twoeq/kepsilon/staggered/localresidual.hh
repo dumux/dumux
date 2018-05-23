@@ -160,13 +160,12 @@ protected:
             // fixed value for the turbulent kinetic energy
             if(problem.inNearWallRegion(elementID) && !problem.isMatchingPoint(elementID))
             {
-//                 unsigned int matchingPointID = problem.matchingPointID_[elementID];
                 residual[Indices::turbulentKineticEnergyEqIdx - cellCenterOffset]
                     = insideVolVars.turbulentKineticEnergy() - problem.turbulentKineticEnergyWallFunction(elementID);
             }
 
             // fixed value for the dissipation
-            if(problem.inNearWallRegion(elementID))
+            if(problem.inNearWallRegion(elementID) || problem.isMatchingPoint(elementID))
             {
                 residual[Indices::dissipationEqIdx - cellCenterOffset]
                     = insideVolVars.dissipation() - problem.dissipationWallFunction(elementID);
