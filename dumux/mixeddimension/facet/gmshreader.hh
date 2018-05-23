@@ -35,8 +35,8 @@
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*
  * \ingroup MixedDimension
  * \ingroup MixedDimensionFacet

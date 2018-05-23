@@ -770,10 +770,10 @@ public:
     /*!
      * \brief The coupling stencil of the edge with the bulk domain (empty stencil).
      */
-     const CouplingStencilType<edgeId, bulkId>& couplingStencil(EdgeIdType domainI,
-                                                                const Element<edgeId>& element,
-                                                                BulkIdType domainJ) const
-     { return BulkFacetManager::getEmptyStencil(bulkId); }
+    const CouplingStencilType<edgeId, bulkId>& couplingStencil(EdgeIdType domainI,
+                                                               const Element<edgeId>& element,
+                                                               BulkIdType domainJ) const
+    { return BulkFacetManager::getEmptyStencil(bulkId); }
 
     /*!
      * \brief updates the current solution. We have to overload this here
