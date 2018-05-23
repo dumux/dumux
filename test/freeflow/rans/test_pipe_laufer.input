@@ -25,7 +25,7 @@ EddyViscosityModel = "baldwinLomax"
 UseStoredEddyViscosity = false
 
 [KEpsilon]
-YPlusThreshold = 40.
+YPlusThreshold = 30.
 
 [Assembly]
 NumericDifferenceMethod = 0

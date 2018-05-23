@@ -177,7 +177,7 @@ public:
      * \brief Returns if an element is located in the near-wall region
      */
     const bool inNearWallRegion(unsigned int elementID) const
-    { return yPlus(elementID) < yPlusThreshold_; }
+    { return yPlusNominal(elementID) < yPlusThreshold_; }
 
     /*!
      * \brief Returns if an element is the matching point
@@ -191,6 +191,14 @@ public:
     const Scalar yPlus(unsigned int elementID) const
     {
         return asImp_().wallDistance_[elementID] * uStar(elementID)
+               / asImp_().kinematicViscosity_[elementID];
+    }
+    /*!
+     * \brief Returns the nominal \f$ y^+ \f$ value at an element center
+     */
+    const Scalar yPlusNominal(unsigned int elementID) const
+    {
+        return asImp_().wallDistance_[elementID] * uStarNominal(elementID)
                / asImp_().kinematicViscosity_[elementID];
     }
 
