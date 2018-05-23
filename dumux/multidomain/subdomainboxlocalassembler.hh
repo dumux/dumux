@@ -56,8 +56,7 @@ class SubDomainBoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Asse
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
+    using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using SolutionVector = typename Assembler::SolutionVector;
     using SubSolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -173,19 +172,22 @@ public:
             res[scv.dofIndex()] += residual[scv.indexInElement()];
     }
 
-
-    ElementResidualVector evalLocalSourceResidual(const Element& neighbor, const ElementVolumeVariables& elemVolVars, const SubControlVolume& scv) const
+    ElementResidualVector evalLocalSourceResidual(const Element& element, const ElementVolumeVariables& elemVolVars) const
     {
-        const auto& curVolVars = elemVolVars[scv];
-        auto source = this->localResidual().computeSource(problem(), neighbor, this->fvGeometry(), elemVolVars, scv);
-        source *= scv.volume()*curVolVars.extrusionFactor();
-        return source;
-    }
+        // initialize the residual vector for all scvs in this element
+        ElementResidualVector residual(this->fvGeometry().numScv());
 
-    ElementResidualVector evalFluxResidual(const Element& neighbor,
-                                           const SubControlVolumeFace& scvf) const
-    {
-        return this->localResidual().evalFlux(problem(), neighbor, this->fvGeometry(), this->curElemVolVars(), this->elemFluxVarsCache(), scvf);
+        // evaluate the volume terms (storage + source terms)
+        // forward to the local residual specialized for the discretization methods
+        for (auto&& scv : scvs(this->fvGeometry()))
+        {
+            const auto& curVolVars = elemVolVars[scv];
+            auto source = this->localResidual().computeSource(problem(), element, this->fvGeometry(), elemVolVars, scv);
+            source *= -scv.volume()*curVolVars.extrusionFactor();
+            residual[scv.indexInElement()] = std::move(source);
+        }
+
+        return residual;
     }
 
     const Problem& problem() const
@@ -241,8 +243,8 @@ template<std::size_t id, class TypeTag, class Assembler, class Implementation>
 class SubDomainBoxLocalAssemblerImplicitBase : public SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, Implementation>
 {
     using ParentType = SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, Implementation>;
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
+    using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
@@ -270,14 +272,9 @@ public:
             this->prevElemVolVars().bindElement(element, fvGeometry, this->assembler().prevSol()[domainId]);
     }
 
-
-    using ParentType::evalLocalFluxAndSourceResidual;
-    ElementResidualVector evalLocalFluxAndSourceResidual() const
-    { return this->evalLocalFluxAndSourceResidual(this->curElemVolVars()); }
-
     using ParentType::evalLocalSourceResidual;
-    ElementResidualVector evalLocalSourceResidual(const Element& neighbor, const SubControlVolume& scv) const
-    { return this->evalLocalSourceResidual(neighbor, this->curElemVolVars(), scv); }
+    ElementResidualVector evalLocalSourceResidual(const Element& neighbor) const
+    { return this->evalLocalSourceResidual(neighbor, this->curElemVolVars()); }
 
     /*!
      * \brief Computes the residual
@@ -312,9 +309,9 @@ class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*
     using ParentType = SubDomainBoxLocalAssemblerImplicitBase<id, TypeTag, Assembler, ThisType>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
+    using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
 
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
@@ -346,57 +343,27 @@ public:
         // actual element. In the actual element we evaluate the derivative of the entire residual.     //
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // get some aliases for convenience
-        const auto& element = this->element();
-        const auto& fvGeometry = this->fvGeometry();
-        const auto& curSol = this->curSol()[domainI];
-
         // get the vecor of the acutal element residuals
         const auto origResiduals = this->evalLocalResidual();
 
-        // compute the derivatives of this element and add them to the Jacobian
-        computeAndAddDerivatives(element, fvGeometry, origResiduals, curSol, A, gridVariables);
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // compute the derivatives of this element with respect to all of the element's dofs and add them to the Jacobian //
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        const auto& element = this->element();
+        const auto& fvGeometry = this->fvGeometry();
+        const auto& curSol = this->curSol()[domainI];
+        auto&& curElemVolVars = this->curElemVolVars();
 
-        // compute additional derivatives of this element with respect to other elements
-        for (const auto eIdxJ : this->couplingManager().extendedSourceStencil(domainI, element))
-        {
-            const auto elementJ = fvGeometry.fvGridGeometry().element(eIdxJ);
-            auto fvGeometryJ = localView(fvGeometry.fvGridGeometry());
-            fvGeometryJ.bindElement(elementJ);
-            computeAndAddDerivatives(elementJ, fvGeometryJ, origResiduals, curSol, A, gridVariables);
-        }
-
-        return origResiduals;
-    }
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                                                                              //
-    // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
-    // neighboring elements we do so by computing the derivatives of the fluxes which depend on the //
-    // actual element. In the actual element we evaluate the derivative of the entire residual.     //
-    //                                                                                              //
-    //////////////////////////////////////////////////////////////////////////////////////////////////
-    template<class ElementResidual, class SolutionVector,
-             class JacobianMatrixDiagBlock, class GridVariables>
-    void computeAndAddDerivatives(const Element& element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const ElementResidual& origResiduals,
-                                  const SolutionVector& curSol,
-                                  JacobianMatrixDiagBlock& A,
-                                  GridVariables& gridVariables)
-    {
         // create the element solution
         auto elemSol = elementSolution(element, curSol, fvGeometry.fvGridGeometry());
 
         auto partialDerivs = origResiduals;
         partialDerivs = 0.0;
 
-        // calculation of the derivatives
         for (auto&& scv : scvs(fvGeometry))
         {
             // dof index and corresponding actual pri vars
             const auto dofIdx = scv.dofIndex();
-            auto&& curElemVolVars = this->curElemVolVars();
             auto& curVolVars = this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
             const VolumeVariables origVolVars(curVolVars);
 
@@ -440,6 +407,11 @@ public:
                 this->couplingManager().updateCouplingContext(domainI, *this, domainI, scv.dofIndex(), elemSol[scv.indexInElement()], pvIdx);
             }
         }
+
+        // evaluate additional derivatives that might arise from the coupling
+        this->couplingManager().evalAdditionalDomainDerivatives(domainI, *this, origResiduals, A, gridVariables);
+
+        return origResiduals;
     }
 
     /*!

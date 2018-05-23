@@ -43,7 +43,6 @@ class CouplingManager
     template<std::size_t id> using GridView = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry)::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
-
 public:
     //! default type used for coupling element stencils
     template<std::size_t i, std::size_t j>
@@ -82,27 +81,16 @@ public:
     }
 
     /*!
-     * \brief return an iteratable container of indices of those degrees of freedom whose variables have an
-     *       influence on the local element residual of the given element
-     * \note this is usually used for the box / fem finite volume assembly
-     * \note per default we return an empty container, i.e. the source for this element does not depend on
-     *       degrees of freedom outside this element
-     * \note the container must not contain dof indices of the degrees of freedom on this element
+     * \brief extend the jacobian pattern of the diagonal block of domain i
+     *        by those entries that are not already in the uncoupled pattern
+     * \note per default we do not add such additional dependencies
+     * \note Such additional dependencies can arise from the coupling, e.g. if a coupling source
+     *       term depends on a non-local average of a quantity of the same domain
+     * \warning if you overload this also implement evalAdditionalDomainDerivatives
      */
-    template<std::size_t id>
-    std::vector<std::size_t> extendedSourceStencil(Dune::index_constant<id>, const Element<id>& element) const
-    { return std::vector<std::size_t>(); }
-
-    /*!
-     * \brief return an iteratable container of indices of those element indices whose local element residuals depend
-     *        on the variables at the degree of freedom with index dofIdxGlobal
-     * \note this is usually used for the cell-centered finite volume assembly
-     * \note per default we return an empty container, i.e. no element residual depends on this degree of freedom except the ones
-     *       that depend on it through the standard discretization scheme
-     */
-    template<std::size_t id>
-    std::vector<std::size_t> extendedSourceStencilInverse(Dune::index_constant<id>, std::size_t dofIdxGlobal) const
-    { return std::vector<std::size_t>(); }
+    template<std::size_t id, class JacobianPattern>
+    void extendJacobianPattern(Dune::index_constant<id> domainI, JacobianPattern& pattern) const
+    {}
 
     // \}
 
@@ -214,6 +202,20 @@ public:
     {
         return localAssemblerI.evalLocalResidual();
     }
+
+    /*!
+     * \brief evaluate additional derivatives of the element residual of a domain with respect
+     *        to dofs in the same domain that are not in the regular stencil (see CouplingManager::extendJacobianPattern)
+     * \note Such additional dependencies can arise from the coupling, e.g. if a coupling source
+     *       term depends on a non-local average of a quantity of the same domain
+     */
+    template<std::size_t i, class LocalAssemblerI, class JacobianMatrixDiagBlock, class GridVariables>
+    void evalAdditionalDomainDerivatives(Dune::index_constant<i> domainI,
+                                         const LocalAssemblerI& localAssemblerI,
+                                         const typename LocalAssemblerI::LocalResidual::ElementResidualVector& origResiduals,
+                                         JacobianMatrixDiagBlock& A,
+                                         GridVariables& gridVariables)
+    {}
 
 protected:
 
