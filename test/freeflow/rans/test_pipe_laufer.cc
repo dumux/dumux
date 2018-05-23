@@ -245,6 +245,8 @@ int main(int argc, char** argv) try
 #elif KEPSILON
             gnuplot_lawOfTheWall.addFileToPlot("pdelab-kepsilon_twolayers.csv", "u 34:33 w l lw 2 t 'PDELab k-epsilon (two layers)'");
             gnuplot_lawOfTheWall.addFileToPlot("pdelab-kepsilon_wallfunction.csv", "u 36:35 w l lw 2 t 'PDELab k-epsilon (wall function)'");
+            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7 t 'with u_{tau}'");
+            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 16:17 w l lc 8 t 'with u_{tau,nom}'");
             gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
 #elif KOMEGA
             gnuplot_lawOfTheWall.addFileToPlot("pdelab-komega.csv", "u 24:23 w l lw 2 t 'PDELab k-omega'");

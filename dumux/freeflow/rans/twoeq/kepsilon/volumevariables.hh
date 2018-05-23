@@ -99,6 +99,10 @@ public:
         storedDissipation_ = problem.storedDissipation_[RANSParentType::elementID()];
         storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementID()];
         stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementID()];
+        const Scalar uStarNominal = problem.uStarNominal(RANSParentType::elementID());
+        const auto flowNormalAxis = problem.flowNormalAxis_[RANSParentType::elementID()];
+        yPlusNominal_ = RANSParentType::wallDistance() * uStarNominal / problem.kinematicViscosity_[RANSParentType::elementID()];
+        uPlusNominal_ = RANSParentType::velocity()[flowNormalAxis] / uStarNominal;
         if (problem.useStoredEddyViscosity_)
             dynamicEddyViscosity_ = problem.storedDynamicEddyViscosity_[RANSParentType::elementID()];
         else
@@ -233,6 +237,18 @@ public:
     { return 1.92; }
 
     /*!
+     * \brief Return the nominal dimensionless wall distance \f$\mathrm{[-]}\f$.
+     */
+    Scalar yPlusNominal() const
+    { return yPlusNominal_; }
+
+    /*!
+     * \brief Return the nominal dimensionless velocity \f$\mathrm{[-]}\f$.
+     */
+    Scalar uPlusNominal() const
+    { return uPlusNominal_; }
+
+    /*!
      * \brief Returns the eddy diffusivity \f$\mathrm{[m^2/s]}\f$
      */
     Scalar eddyDiffusivity() const
@@ -257,6 +273,8 @@ protected:
     Scalar storedTurbulentKineticEnergy_;
     Scalar storedDissipation_;
     Scalar stressTensorScalarProduct_;
+    Scalar yPlusNominal_;
+    Scalar uPlusNominal_;
     bool inNearWallRegion_;
     bool isMatchingPoint_;
 };
