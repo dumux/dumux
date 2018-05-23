@@ -62,8 +62,6 @@ class CCBBoxTreeEmbeddedCouplingManager
     static constexpr auto lowDimIdx = typename MDTraits::template DomainIdx<1>();
     using SolutionVector = typename MDTraits::SolutionVector;
     using PointSourceData = Dumux::PointSourceDataCircleAverage<MDTraits>;
-    using CouplingStencils = std::unordered_map<std::size_t, std::vector<std::size_t> >;
-    using CouplingStencil = CouplingStencils::mapped_type;
 
     // the sub domain type tags
     template<std::size_t id>
@@ -87,6 +85,13 @@ class CCBBoxTreeEmbeddedCouplingManager
         lowDimDim = GridView<lowDimIdx>::dimension,
         dimWorld = GridView<bulkIdx>::dimensionworld
     };
+
+    template<std::size_t id>
+    static constexpr bool isBox()
+    { return FVGridGeometry<id>::discMethod == DiscretizationMethod::box; }
+
+    using CouplingStencil = std::vector<std::size_t>;
+    using CouplingStencils = std::unordered_map<std::size_t, CouplingStencil>;
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using GlueType = CCMixedDimensionGlue<GridView<bulkIdx>, GridView<lowDimIdx>>;
@@ -119,19 +124,13 @@ public:
               std::shared_ptr<Problem<lowDimIdx>> lowDimProblem,
               const SolutionVector& curSol)
     {
-        curSol_ = curSol;
+        this->updateSolution(curSol);
         problemTuple_ = std::make_tuple(bulkProblem, lowDimProblem);
 
         integrationOrder_ = getParam<int>("MixedDimension.IntegrationOrder", 1);
         computePointSourceData(integrationOrder_);
         computeLowDimVolumeFractions();
     }
-
-    /*!
-     * \brief Update the solution vector before assembly
-     */
-    void updateSolution(const SolutionVector& curSol)
-    { curSol_ = curSol; }
 
     // \}
 
@@ -145,9 +144,9 @@ public:
      *        the given domain I element's residual depends on.
      */
     template<std::size_t i, std::size_t j>
-    const CouplingStencil& couplingElementStencil(const Element<i>& element,
-                                                  Dune::index_constant<i> domainI,
-                                                  Dune::index_constant<j> domainJ) const
+    const CouplingStencil& couplingStencil(Dune::index_constant<i> domainI,
+                                           const Element<i>& element,
+                                           Dune::index_constant<j> domainJ) const
     {
         static_assert(i != j, "A domain cannot be coupled to itself!");
 
@@ -158,44 +157,123 @@ public:
             return emptyStencil_;
     }
 
-    /*!
-     * \brief returns data on all dofs inside an element of domain j
-     *        that is coupled to an element of domain i with the given index
-     */
-    template<std::size_t i, std::size_t j, class IndexTypeJ>
-    auto coupledElementDofData(Dune::index_constant<i> domainI,
-                               const Element<i>& elementI,
-                               Dune::index_constant<j> domainJ,
-                               IndexTypeJ globalJ) const
-    { return std::array<typename ParentType::template DofData<i,j>, 1>({{globalJ, 0}}); }
-
     //! evaluate coupling residual for the derivative residual i with respect to privars of dof j
     //! we only need to evaluate the part of the residual that will be influenced by the the privars of dof j
     //! i.e. the source term.
     //! the coupling residual is symmetric so we only need to one template function here
-    template<std::size_t i, std::size_t j, class LocalResidualI>
-    auto evalCouplingResidual(Dune::index_constant<i> domainI,
-                              const Element<i>& elementI,
-                              const FVElementGeometry<i>& fvGeometry,
-                              const ElementVolumeVariables<i>& curElemVolVars,
-                              const ElementBoundaryTypes<i>& elemBcTypes,
-                              const ElementFluxVariablesCache<i>& elemFluxVarsCache,
-                              const LocalResidualI& localResidual,
-                              Dune::index_constant<j> domainJ,
-                              const Element<j>& elementJ)
-    -> typename LocalResidualI::ElementResidualVector
+    template<std::size_t i, std::size_t j, class LocalAssemblerI>
+    decltype(auto) evalCouplingResidual(Dune::index_constant<i> domainI,
+                                        const LocalAssemblerI& localAssemblerI,
+                                        Dune::index_constant<j> domainJ,
+                                        std::size_t dofIdxGlobalJ)
     {
         static_assert(i != j, "A domain cannot be coupled to itself!");
 
-        typename LocalResidualI::ElementResidualVector residual;
+        typename LocalAssemblerI::LocalResidual::ElementResidualVector residual;
+
+        const auto& element = localAssemblerI.element();
+        const auto& fvGeometry = localAssemblerI.fvGeometry();
+        const auto& curElemVolVars = localAssemblerI.curElemVolVars();
+
         residual.resize(fvGeometry.numScv());
         for (const auto& scv : scvs(fvGeometry))
         {
-            auto couplingSource = problem(domainI).scvPointSources(elementI, fvGeometry, curElemVolVars, scv);
+            auto couplingSource = problem(domainI).scvPointSources(element, fvGeometry, curElemVolVars, scv);
             couplingSource *= -scv.volume()*curElemVolVars[scv].extrusionFactor();
             residual[scv.indexInElement()] = couplingSource;
         }
         return residual;
+    }
+
+    /*!
+     * \brief evaluate additional derivatives of the element residual of a domain with respect
+     *        to dofs in the same domain that are not in the regular stencil (per default this is not the case)
+     * \note Such additional dependencies can arise from the coupling, e.g. if a coupling source
+     *       term depends on a non-local average of a quantity of the same domain
+     */
+    template<std::size_t i, class LocalAssemblerI, class JacobianMatrixDiagBlock, class GridVariables>
+    void evalAdditionalDomainDerivatives(Dune::index_constant<i> domainI,
+                                         const LocalAssemblerI& localAssemblerI,
+                                         const typename LocalAssemblerI::LocalResidual::ElementResidualVector&,
+                                         JacobianMatrixDiagBlock& A,
+                                         GridVariables& gridVariables)
+    {
+        constexpr auto numEq = GET_PROP_TYPE(SubDomainTypeTag<i>, ModelTraits)::numEq();
+        const auto& elementI = localAssemblerI.element();
+        const auto origResidual = localAssemblerI.evalLocalSourceResidual(elementI);
+        for (const auto dofIndex : extendedSourceStencil(domainI, elementI))
+        {
+            auto partialDerivs = origResidual;
+            const auto origPriVars = this->curSol()[domainI][dofIndex];
+
+            // calculate derivatives w.r.t to the privars at the dof at hand
+            for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
+            {
+                // reset partial derivatives
+                partialDerivs = 0.0;
+
+                auto evalResiduals = [&](Scalar priVar)
+                {
+                    // update the coupling context (solution vector and recompute element residual)
+                    auto priVars = origPriVars;
+                    priVars[pvIdx] = priVar;
+                    this->updateCouplingContext(domainI, localAssemblerI, domainI, dofIndex, priVars, pvIdx);
+                    return localAssemblerI.evalLocalSourceResidual(elementI);
+                };
+
+                // derive the residuals numerically
+                static const int numDiffMethod = getParam<int>("Assembly.NumericDifferenceMethod");
+                NumericDifferentiation::partialDerivative(evalResiduals, this->curSol()[domainI][dofIndex][pvIdx],
+                                                          partialDerivs, origResidual, numDiffMethod);
+
+                // update the global stiffness matrix with the current partial derivatives
+                for (auto&& scvJ : scvs(localAssemblerI.fvGeometry()))
+                {
+                    for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                    {
+                        // A[i][col][eqIdx][pvIdx] is the rate of change of
+                        // the residual of equation 'eqIdx' at dof 'i'
+                        // depending on the primary variable 'pvIdx' at dof
+                        // 'col'.
+                        A[scvJ.dofIndex()][dofIndex][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
+                    }
+                }
+
+                // restore the original coupling context
+                this->updateCouplingContext(domainI, localAssemblerI, domainI, dofIndex, origPriVars, pvIdx);
+            }
+        }
+    }
+
+    /*!
+     * \brief extend the jacobian pattern of the diagonal block of domain i
+     *        by those entries that are not already in the uncoupled pattern
+     * \note per default we do not add such additional dependencies
+     * \note Such additional dependencies can arise from the coupling, e.g. if a coupling source
+     *       term depends on a non-local average of a quantity of the same domain
+     * \warning if you overload this also implement evalAdditionalDomainDerivatives
+     */
+    template<std::size_t id, class JacobianPattern>
+    void extendJacobianPattern(Dune::index_constant<id> domainI, JacobianPattern& pattern) const
+    {
+        // add additional dof dependencies
+        for (const auto& element : elements(gridView(domainI)))
+        {
+            const auto& dofs = this->extendedSourceStencil(domainI, element);
+
+            if (isBox<domainI>())
+            {
+                for (int i = 0; i < element.subEntities(GridView<domainI>::dimension); ++i)
+                    for (const auto globalJ : dofs)
+                        pattern.add(problem(domainI).fvGridGeometry().vertexMapper().subIndex(element, i, GridView<domainI>::dimension), globalJ);
+            }
+            else
+            {
+                const auto globalI = problem(domainI).fvGridGeometry().elementMapper().index(element);
+                for (const auto globalJ : dofs)
+                    pattern.add(globalI, globalJ);
+            }
+        }
     }
 
     //! evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
@@ -239,29 +317,6 @@ public:
         return sign*beta*source.quadratureWeight()*source.integrationElement()/source.embeddings();
     }
 
-    /*!
-     * \brief Bind the coupling context
-     */
-    template<class Element, std::size_t i, class Assembler>
-    void bindCouplingContext(Dune::index_constant<i> domainI, const Element& element, const Assembler& assembler)
-    {}
-
-    /*!
-     * \brief Update the coupling context for a derivative i->j
-     */
-    template<std::size_t i, std::size_t j, class ElemSolJ, class Assembler>
-    void updateCouplingContext(Dune::index_constant<i> domainI,
-                               Dune::index_constant<j> domainJ,
-                               const Element<j>& element,
-                               const ElemSolJ& elemSolJ,
-                               std::size_t localDofIdx,
-                               std::size_t pvIdx,
-                               const Assembler& assembler)
-    {
-        const auto eIdx = problem(domainJ).fvGridGeometry().elementMapper().index(element);
-        curSol_[domainJ][eIdx][pvIdx] = elemSolJ[localDofIdx][pvIdx];
-    }
-
     // \}
 
     /* \brief Compute integration point point sources and associated data
@@ -276,6 +331,20 @@ public:
     void computePointSourceData(std::size_t order = 1,
                                 bool verbose = false)
     {
+        // fill helper structure for box discretization
+        if (isBox<bulkIdx>())
+        {
+
+            bulkVertexIndices_.resize(gridView(bulkIdx).size(0));
+            for (const auto& element : elements(gridView(bulkIdx)))
+            {
+                const auto eIdx = problem(bulkIdx).fvGridGeometry().elementMapper().index(element);
+                bulkVertexIndices_[eIdx].resize(element.subEntities(bulkDim));
+                for (int i = 0; i < element.subEntities(bulkDim); ++i)
+                    bulkVertexIndices_[eIdx][i] = problem(bulkIdx).fvGridGeometry().vertexMapper().subIndex(element, i, bulkDim);
+            }
+        }
+
         // Initialize the bulk bounding box tree
         const auto& bulkTree = problem(bulkIdx).fvGridGeometry().boundingBoxTree();
 
@@ -289,7 +358,7 @@ public:
         clear();
 
         // iterate over all lowdim elements
-        const auto lowDimProblem = problem(lowDimIdx);
+        const auto& lowDimProblem = problem(lowDimIdx);
         for (const auto& lowDimElement : elements(gridView(lowDimIdx)))
         {
             // get the Gaussian quadrature rule for the low dim element
@@ -327,26 +396,57 @@ public:
                 const auto length = 2*M_PI*radius/numIp;
 
                 const auto circlePoints = getCirclePoints_(globalPos, normal, radius, numIp);
-                std::vector<Scalar> circleIpWeight;
-                std::vector<std::size_t> circleStencil;
-                for (const auto& p : circlePoints)
+                std::vector<Scalar> circleIpWeight(circlePoints.size());
+                std::vector<std::size_t> circleStencil(circlePoints.size());
+                std::unordered_map<std::size_t, std::vector<std::size_t> > circleCornerIndices;
+                using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
+                std::unordered_map<std::size_t, ShapeValues> circleShapeValues;
+                for (int k = 0; k < circlePoints.size(); ++k)
                 {
-                    const auto circleBulkElementIndices = intersectingEntities(p, bulkTree);
+                    const auto circleBulkElementIndices = intersectingEntities(circlePoints[k], bulkTree);
                     if (circleBulkElementIndices.empty())
                         continue;
 
-                    for (auto bulkElementIdx : circleBulkElementIndices)
-                    {
-                        circleStencil.push_back(bulkElementIdx);
-                        circleIpWeight.push_back(length);
-                    }
+                    const auto bulkElementIdx = circleBulkElementIndices[0];
+                    circleStencil[k] = bulkElementIdx;
+                    circleIpWeight[k] = length;
+                    //
+                    // if (isBox<bulkIdx>())
+                    // {
+                    //     if (!static_cast<bool>(circleCornerIndices.count(bulkElementIdx)))
+                    //     {
+                    //         const auto bulkElement = problem(bulkIdx).fvGridGeometry().element(bulkElementIdx);
+                    //         circleCornerIndices[bulkElementIdx] = bulkVertexIndices_[bulkElementIdx];
+                    //
+                    //         // evaluate shape functions at the integration point
+                    //         const auto bulkGeometry = bulkElement.geometry();
+                    //         const auto& localBasis = problem(bulkIdx).fvGridGeometry().feCache().get(bulkGeometry.type()).localBasis();
+                    //         const auto ipLocal = bulkGeometry.local(circlePoints[k]);
+                    //         localBasis.evaluateFunction(ipLocal, circleShapeValues[bulkElementIdx]);
+                    //     }
+                    // }
                 }
 
                 // export low dim circle stencil
-                lowDimCouplingStencils_[lowDimElementIdx].insert(lowDimCouplingStencils_[lowDimElementIdx].end(),
-                                                                 circleStencil.begin(),
-                                                                 circleStencil.end());
+                // if (isBox<bulkIdx>())
+                // {
+                //     // we insert all vertices and make it unique later
+                //     for (const auto& vertices : circleCornerIndices)
+                //     {
+                //         lowDimCouplingStencils_[lowDimElementIdx].insert(lowDimCouplingStencils_[lowDimElementIdx].end(),
+                //                                                          vertices.second.begin(),
+                //                                                          vertices.second.end());
+                //
+                //     }
+                // }
+                // else
+                // {
+                    lowDimCouplingStencils_[lowDimElementIdx].insert(lowDimCouplingStencils_[lowDimElementIdx].end(),
+                                                                     circleStencil.begin(),
+                                                                     circleStencil.end());
+                // }
 
+                // loop over the bulk elements at the integration points (usually one except when it is on a face or edge or vertex)
                 for (auto bulkElementIdx : bulkElementIndices)
                 {
                     const auto id = idCounter_++;
@@ -364,42 +464,81 @@ public:
                     psData.addLowDimInterpolation(lowDimElementIdx);
                     psData.addBulkInterpolation(bulkElementIdx);
                     // add data needed to compute integral over the circle
-                    psData.addCircleInterpolation(circleIpWeight, circleStencil);
+                    // if (isBox<bulkIdx>())
+                    //     psData.addCircleInterpolation(circleCornerIndices, circleShapeValues, circleIpWeight, circleStencil);
+                    // else
+                        psData.addCircleInterpolation(circleIpWeight, circleStencil);
 
                     // publish point source data in the global vector
                     pointSourceData_.push_back(psData);
 
                     // compute the coupling stencils
-                    bulkCouplingStencils_[bulkElementIdx].push_back(lowDimElementIdx);
+                    // if (isBox<lowDimIdx>())
+                    // {
+                    //     bulkCouplingStencils_[bulkElementIdx].insert(bulkCouplingStencils_[bulkElementIdx].end(),
+                    //                                                  bulkVertexIndices_[bulkElementIdx].begin(),
+                    //                                                  bulkVertexIndices_[bulkElementIdx].end());
+                    //
+                    // } else {
+                        bulkCouplingStencils_[bulkElementIdx].push_back(lowDimElementIdx);
+                    // }
 
                     // export bulk circle stencil
-                    bulkCircleStencils_[bulkElementIdx].insert(bulkCircleStencils_[bulkElementIdx].end(),
-                                                               circleStencil.begin(),
-                                                               circleStencil.end());
+                    // if (isBox<bulkIdx>())
+                    // {
+                    //     // we insert all vertices and make it unique later
+                    //     for (const auto& vertices : circleCornerIndices)
+                    //     {
+                    //         bulkCircleStencils_[bulkElementIdx].insert(bulkCircleStencils_[bulkElementIdx].end(),
+                    //                                                    vertices.second.begin(),
+                    //                                                    vertices.second.end());
+                    //
+                    //     }
+                    // }
+                    // else
+                    // {
+                        bulkCircleStencils_[bulkElementIdx].insert(bulkCircleStencils_[bulkElementIdx].end(),
+                                                                   circleStencil.begin(),
+                                                                   circleStencil.end());
+                    // }
 
-                    // export inverse bulk circle stencil
+                    // export inverse bulk circle stencil (cell-centered only)
                     for (const auto eIdx : circleStencil)
                         bulkCircleStencilsInverse_[eIdx].push_back(bulkElementIdx);
                 }
             }
         }
 
-        // make the circle stencil unique
+        // make the circle stencil unique (for source derivatives)
         for (auto&& stencil : bulkCircleStencils_)
         {
             std::sort(stencil.second.begin(), stencil.second.end());
             stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
-            stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
-                                               [&](auto i){ return i == stencil.first; }),
-                                 stencil.second.end());
+
+            // remove the vertices element (box)
+            // if (isBox<bulkIdx>)
+            // {
+            //     const auto& indices = bulkVertexIndices_[stencil.first];
+            //     stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
+            //                                        [&](auto i){ return std::find(indices.begin(), indices.end(), i) != indices.end(); }),
+            //                          stencil.second.end());
+            // }
+            // // remove the own element (cell-centered)
+            // else
+            // {
+                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
+                                                   [&](auto i){ return i == stencil.first; }),
+                                     stencil.second.end());
+            // }
         }
 
+        // make the inverse circle stencil unique (cellcentered only) (for source derivatives)
         for (auto&& stencil : bulkCircleStencilsInverse_)
         {
             std::sort(stencil.second.begin(), stencil.second.end());
             stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
             stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
-                                               [&](auto i){ return i == stencil.first; }),
+                                                [&](auto i){ return i == stencil.first; }),
                                  stencil.second.end());
         }
 
@@ -501,14 +640,14 @@ public:
     PrimaryVariables<bulkIdx> bulkPriVars(std::size_t id) const
     {
         auto& data = pointSourceData_[id];
-        return data.interpolateBulk(curSol_[bulkIdx]);
+        return data.interpolateBulk(this->curSol()[bulkIdx]);
     }
 
     //! Return data for a low dim point source with the identifier id
     PrimaryVariables<lowDimIdx> lowDimPriVars(std::size_t id) const
     {
         auto& data = pointSourceData_[id];
-        return data.interpolateLowDim(curSol_[lowDimIdx]);
+        return data.interpolateLowDim(this->curSol()[lowDimIdx]);
     }
 
     //! Return reference to bulk point sources
@@ -538,26 +677,17 @@ public:
         idCounter_ = 0;
     }
 
-    const std::vector<std::size_t>& getAdditionalDofDependencies(Dune::index_constant<0> bulkDomain, std::size_t bulkElementIdx) const
-    { return bulkCircleStencils_.count(bulkElementIdx) ? bulkCircleStencils_.at(bulkElementIdx) : emptyStencil_; }
+    const std::vector<std::size_t>& extendedSourceStencil(Dune::index_constant<0> bulkDomain, const Element<0>& bulkElement) const
+    {
+        const auto bulkElementIdx = problem(bulkIdx).fvGridGeometry().elementMapper().index(bulkElement);
+        if (bulkCircleStencils_.count(bulkElementIdx))
+            return bulkCircleStencils_.at(bulkElementIdx);
+        else
+            return emptyStencil_;
+    }
 
-
-    const std::vector<std::size_t>& getAdditionalDofDependencies(Dune::index_constant<1> lowDimDomain, std::size_t lowDimElementIdx) const
+    const std::vector<std::size_t>& extendedSourceStencil(Dune::index_constant<1> lowDimDomain, const Element<1>& lowDimElement) const
     { return emptyStencil_; }
-
-    const std::vector<std::size_t>& getAdditionalDofDependenciesInverse(Dune::index_constant<0> bulkDomain, std::size_t bulkElementIdx) const
-    { return bulkCircleStencilsInverse_.count(bulkElementIdx) ? bulkCircleStencilsInverse_.at(bulkElementIdx) : emptyStencil_; }
-
-    const std::vector<std::size_t>& getAdditionalDofDependenciesInverse(Dune::index_constant<1> lowDimDomain, std::size_t lowDimElementIdx) const
-    { return emptyStencil_; }
-
-    //! Return a map containing additional dof dependencies
-    const CouplingStencils& additionalDofDependencies(Dune::index_constant<0> bulkDomain)
-    { return bulkCircleStencils_; }
-
-    //! Return a map containing additional dof dependencies
-    CouplingStencils additionalDofDependencies(Dune::index_constant<1> lowDimDomain)
-    { return CouplingStencils(); }
 
     //! Return reference to point source data vector member
     const std::vector<PointSourceData>& pointSourceData() const
@@ -643,6 +773,7 @@ private:
 
     mutable std::vector<PointSourceData> pointSourceData_;
 
+    std::vector<std::vector<std::size_t>> bulkVertexIndices_;
     CouplingStencils bulkCouplingStencils_;
     CouplingStencils lowDimCouplingStencils_;
     CouplingStencil emptyStencil_;
@@ -659,14 +790,6 @@ private:
 
     //! The glue object
     std::shared_ptr<GlueType> glue_;
-
-    ////////////////////////////////////////////////////////////////////////////
-    //! The coupling context
-    ////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////
-    //! TODO: this is the simplest context -> just the solutionvector
-    ////////////////////////////////////////////////////////////////////////////
-    SolutionVector curSol_;
 
     // integration order for coupling source
     int integrationOrder_;
