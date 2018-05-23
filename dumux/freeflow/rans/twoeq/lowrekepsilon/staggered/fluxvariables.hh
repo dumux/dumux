@@ -71,10 +71,8 @@ class LowReKEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationM
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
 
-    enum {
-        turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx,
-        dissipationEqIdx = Indices::dissipationEqIdx,
-    };
+    static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
+    static constexpr int dissipationEqIdx = Indices::dissipationEqIdx - ModelTraits::dim();
 
 public:
 
@@ -102,9 +100,9 @@ public:
             return volVars.dissipationTilde();
         };
 
-        flux[turbulentKineticEnergyEqIdx - ModelTraits::dim()]
+        flux[turbulentKineticEnergyEqIdx]
             = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermK);
-        flux[dissipationEqIdx - ModelTraits::dim()]
+        flux[dissipationEqIdx]
             = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermEpsilon);
 
         // calculate diffusive flux
@@ -147,18 +145,18 @@ public:
         }
 
         const auto bcTypes = problem.boundaryTypes(element, scvf);
-        if (!(scvf.boundary() && (bcTypes.isOutflow(turbulentKineticEnergyEqIdx)
+        if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
                                   || bcTypes.isSymmetry())))
         {
-            flux[turbulentKineticEnergyEqIdx - ModelTraits::dim()]
+            flux[turbulentKineticEnergyEqIdx]
                 += coeff_k / distance
                    * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
                    * scvf.area();
         }
-        if (!(scvf.boundary() && (bcTypes.isOutflow(dissipationEqIdx)
+        if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::dissipationEqIdx)
                                   || bcTypes.isSymmetry())))
         {
-            flux[dissipationEqIdx - ModelTraits::dim()]
+            flux[dissipationEqIdx]
                 += coeff_e / distance
                    * (insideVolVars.dissipationTilde() - outsideVolVars.dissipationTilde())
                    * scvf.area();

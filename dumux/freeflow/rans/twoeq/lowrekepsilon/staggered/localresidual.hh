@@ -69,6 +69,9 @@ class LowReKEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
+    static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
+    static constexpr int dissipationEqIdx = Indices::dissipationEqIdx - ModelTraits::dim();
+
 public:
     using ParentType::ParentType;
 
@@ -79,8 +82,6 @@ public:
     {
         CellCenterPrimaryVariables storage = ParentType::computeStorageForCellCenter(problem, scv, volVars);
 
-        static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
-        static constexpr int dissipationEqIdx = Indices::dissipationEqIdx - ModelTraits::dim();
         storage[turbulentKineticEnergyEqIdx] = volVars.turbulentKineticEnergy();
         storage[dissipationEqIdx] = volVars.dissipationTilde();
 
@@ -98,9 +99,6 @@ public:
                                                                                    elemVolVars, elemFaceVars, scv);
 
         const auto& volVars = elemVolVars[scv];
-
-        static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
-        static constexpr int dissipationEqIdx = Indices::dissipationEqIdx - ModelTraits::dim();
 
         // production
         source[turbulentKineticEnergyEqIdx] += 2.0 * volVars.kinematicEddyViscosity()
