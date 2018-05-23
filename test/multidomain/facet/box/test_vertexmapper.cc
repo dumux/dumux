@@ -30,7 +30,7 @@
 
 #include <dumux/io/vtkfunction.hh>
 #include <dumux/mixeddimension/facet/gridcreator.hh>
-#include <dumux/mixeddimension/facet/box/gridindexadapter.hh>
+#include <dumux/mixeddimension/facet/gridvertexadapter.hh>
 #include <dumux/mixeddimension/facet/box/vertexmapper.hh>
 
 #ifndef BULKGRIDTYPE // default to alu grid if not provided by CMake
@@ -113,7 +113,7 @@ int main (int argc, char *argv[]) try
     const auto& facetGridView = gridCreator.grid<1>().leafGridView();
 
     // data converter
-    Dumux::FacetGridIndexAdapter<GridCreator, 0, 1> facetGridIndexAdapter(gridCreator);
+    Dumux::FacetGridVertexAdapter<GridCreator, 0, 1> facetGridVertexAdapter(gridCreator);
 
     // enriched vertex dof mapper
     Dumux::EnrichedVertexDofMapper<typename BulkGrid::LeafGridView> mapper(bulkGridView);
@@ -127,7 +127,7 @@ int main (int argc, char *argv[]) try
         DUNE_THROW(Dune::InvalidStateException, "2d test: Number of dofs before enrichment is expected to be 169 but is " << numDofsBefore);
 
     // enrich nodes subject to facet grid
-    mapper.enrich(facetGridView, facetGridIndexAdapter, true);
+    mapper.enrich(facetGridView, facetGridVertexAdapter, true);
     const auto numDofsAfter = mapper.size();
     std::cout << "Number of dofs after enrichment: " << numDofsAfter << std::endl;
     if (bulkDim == 3 && numDofsAfter != 164)
