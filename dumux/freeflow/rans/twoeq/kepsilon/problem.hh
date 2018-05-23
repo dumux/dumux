@@ -65,7 +65,8 @@ public:
     KEpsilonProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", true);
+        yPlusThreshold_ = getParamFromGroup<Scalar>(this->paramGroup(), "KEpsilon.YPlusThreshold", 30);
+        useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);
     }
 
     /*!
@@ -76,9 +77,12 @@ public:
         ParentType::updateStaticWallProperties();
 
         // update size and initial values of the global vectors
-        storedDissipationTilde_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedDynamicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        matchingPointID_.resize(this->fvGridGeometry().elementMapper().size(), 0);
+        storedDensity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        storedDissipation_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
         storedTurbulentKineticEnergy_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        storedDynamicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        zeroEqDynamicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
     }
 
     /*!
@@ -90,6 +94,7 @@ public:
     {
         ParentType::updateDynamicWallProperties(curSol);
 
+        // update the stored eddy viscosities
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
@@ -103,21 +108,166 @@ public:
                 PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
                 auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
                 // NOTE: first update the turbulence quantities
-                storedDissipationTilde_[elementID] = elemSol[0][Indices::dissipationEqIdx];
+                storedDissipation_[elementID] = elemSol[0][Indices::dissipationEqIdx];
                 storedTurbulentKineticEnergy_[elementID] = elemSol[0][Indices::turbulentKineticEnergyEqIdx];
                 // NOTE: then update the volVars
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
                 storedDynamicEddyViscosity_[elementID] = volVars.calculateEddyViscosity();
+                storedDensity_[elementID] = volVars.density();
+            }
+        }
+
+        // get matching point for k-epsilon wall function
+        unsigned int numElementsInWallRegion = 0;
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int wallNormalAxis = asImp_().wallNormalAxis_[elementID];
+            unsigned int neighborID0 = asImp_().neighborID_[elementID][wallNormalAxis][0];
+            unsigned int neighborID1 = asImp_().neighborID_[elementID][wallNormalAxis][1];
+            numElementsInWallRegion = inNearWallRegion(elementID) ? numElementsInWallRegion + 1 : numElementsInWallRegion + 0;
+            if ((inNearWallRegion(elementID) && (inNearWallRegion(neighborID0) != inNearWallRegion(neighborID1)))
+                || (inNearWallRegion(elementID) && (asImp_().wallElementID_[neighborID0] != asImp_().wallElementID_[neighborID1]))
+                || (elementID == asImp_().wallElementID_[elementID] && (!inNearWallRegion(neighborID0) || !inNearWallRegion(neighborID1))))
+            {
+                matchingPointID_[asImp_().wallElementID_[elementID]] = elementID;
+            }
+        }
+        std::cout << "numElementsInWallRegion: " << numElementsInWallRegion << std::endl;
+
+        // calculate the potential zeroeq eddy viscosities for two-layer model
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            zeroEqDynamicEddyViscosity_[elementID] = zeroEqEddyViscosityModel(elementID);
+        }
+
+        // then make them match at the matching point
+        static const auto enableZeroEqScaling
+            = getParamFromGroup<bool>(this->paramGroup(), "KEpsilon.EnableZeroEqScaling", true);
+        if (enableZeroEqScaling)
+        {
+            for (const auto& element : elements(this->fvGridGeometry().gridView()))
+            {
+                unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+                unsigned int matchingPointID = matchingPointID_[asImp_().wallElementID_[elementID]];
+
+                Scalar scalingFactor = storedDynamicEddyViscosity_[matchingPointID]
+                                       / zeroEqDynamicEddyViscosity_[matchingPointID];
+                if (!isMatchingPoint(elementID)
+                    && !std::isnan(scalingFactor) && !std::isinf(scalingFactor))
+                {
+                    zeroEqDynamicEddyViscosity_[elementID] *= scalingFactor;
+                }
+            }
+            for (const auto& element : elements(this->fvGridGeometry().gridView()))
+            {
+                unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+                unsigned int matchingPointID = matchingPointID_[asImp_().wallElementID_[elementID]];
+                if (isMatchingPoint(elementID))
+                {
+                    zeroEqDynamicEddyViscosity_[matchingPointID] = storedDynamicEddyViscosity_[matchingPointID];
+                }
             }
         }
     }
 
+    /*!
+     * \brief Returns if an element is located in the near-wall region
+     */
+    const bool inNearWallRegion(unsigned int elementID) const
+    { return yPlus(elementID) < yPlusThreshold_; }
+
+    /*!
+     * \brief Returns if an element is the matching point
+     */
+    const bool isMatchingPoint(unsigned int elementID) const
+    { return matchingPointID_[asImp_().wallElementID_[elementID]] == elementID; }
+
+    /*!
+     * \brief Returns the \f$ y^+ \f$ value at an element center
+     */
+    const Scalar yPlus(unsigned int elementID) const
+    {
+        return asImp_().wallDistance_[elementID] * uStar(elementID)
+               / asImp_().kinematicViscosity_[elementID];
+    }
+
+    /*!
+     * \brief Returns the kinematic eddy viscosity of a 0-Eq. model
+     */
+    const Scalar zeroEqEddyViscosityModel(unsigned int elementID) const
+    {
+        using std::abs;
+        using std::exp;
+        using std::sqrt;
+
+        // use VanDriest's model
+        Scalar yPlusValue = yPlus(elementID);
+        Scalar mixingLength = 0.0;
+        if (yPlusValue > 0.0)
+        {
+            mixingLength = asImp_().karmanConstant() * asImp_().wallDistance_[elementID]
+                           * (1.0 - exp(-yPlusValue / 26.0 ))
+                           / sqrt(1.0 - exp(-0.26 * yPlusValue));
+        }
+
+        unsigned int wallNormalAxis = asImp_().wallNormalAxis_[elementID];
+        unsigned int flowNormalAxis = asImp_().flowNormalAxis_[elementID];
+        Scalar velocityGradient = asImp_().velocityGradients_[elementID][flowNormalAxis][wallNormalAxis];
+        return mixingLength * mixingLength * abs(velocityGradient) * storedDensity_[elementID];
+    }
+
+    //! \brief Returns the wall shear stress velocity
+    const Scalar uStar(unsigned int elementID) const
+    {
+        using std::abs;
+        using std::sqrt;
+        unsigned int wallElementID = asImp_().wallElementID_[elementID];
+        unsigned int wallNormalAxis = asImp_().wallNormalAxis_[elementID];
+        unsigned int flowNormalAxis = asImp_().flowNormalAxis_[elementID];
+        return sqrt(asImp_().kinematicViscosity_[wallElementID]
+                    * abs(asImp_().velocityGradients_[wallElementID][flowNormalAxis][wallNormalAxis]));
+    }
+
+    //! \brief Returns the nominal wall shear stress velocity (accounts for poor approximation of viscous sublayer)
+    const Scalar uStarNominal(unsigned int elementID) const
+    {
+        using std::max;
+        using std::pow;
+        using std::sqrt;
+        unsigned int matchingPointID = matchingPointID_[asImp_().wallElementID_[elementID]];
+        return pow(0.09/*c_mu*/, 0.25)
+               * sqrt(max(storedTurbulentKineticEnergy_[matchingPointID],1e-8));
+    }
+
+    /*!
+     * \brief Returns the dissipation calculated from the wall function consideration
+     */
+    const Scalar dissipationWallFunction(unsigned int elementID) const
+    {
+        return uStarNominal(elementID) * uStarNominal(elementID) * uStarNominal(elementID)
+               / asImp_().karmanConstant() / asImp_().wallDistance_[elementID];
+    }
+
+    /*!
+     * \brief Returns the turbulentKineticEnergy calculated from the wall function consideration
+     */
+    const Scalar turbulentKineticEnergyWallFunction(unsigned int elementID) const
+    {
+        return storedTurbulentKineticEnergy_[elementID];
+    }
+
 public:
-    std::vector<Scalar> storedDissipationTilde_;
-    std::vector<Scalar> storedDynamicEddyViscosity_;
+    std::vector<unsigned int> matchingPointID_;
+    std::vector<Scalar> storedDensity_;
+    std::vector<Scalar> storedDissipation_;
     std::vector<Scalar> storedTurbulentKineticEnergy_;
+    std::vector<Scalar> storedDynamicEddyViscosity_;
+    std::vector<Scalar> zeroEqDynamicEddyViscosity_;
     bool useStoredEddyViscosity_;
+    Scalar yPlusThreshold_;
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)

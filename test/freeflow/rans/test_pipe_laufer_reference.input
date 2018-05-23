@@ -18,6 +18,9 @@ EnableGravity = false
 [RANS]
 EddyViscosityModel = "baldwinLomax"
 
+[KEpsilon]
+YPlusThreshold = 50.
+
 [Assembly]
 NumericDifferenceMethod = 0
 NumericDifference.BaseEpsilon = 1e-8

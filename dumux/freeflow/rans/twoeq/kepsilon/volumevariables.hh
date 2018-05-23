@@ -93,15 +93,21 @@ public:
                               const SubControlVolume& scv)
     {
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
+        isMatchingPoint_ = problem.isMatchingPoint(RANSParentType::elementID());
+        inNearWallRegion_ = problem.inNearWallRegion(RANSParentType::elementID());
         turbulentKineticEnergy_ = elemSol[0][Indices::turbulentKineticEnergyIdx];
-        dissipationTilde_ = elemSol[0][Indices::dissipationIdx];
-        storedDissipationTilde_ = problem.storedDissipationTilde_[RANSParentType::elementID()];
+        dissipation_ = elemSol[0][Indices::dissipationIdx];
+        storedDissipation_ = problem.storedDissipation_[RANSParentType::elementID()];
         storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementID()];
         stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementID()];
         if (problem.useStoredEddyViscosity_)
             dynamicEddyViscosity_ = problem.storedDynamicEddyViscosity_[RANSParentType::elementID()];
         else
             dynamicEddyViscosity_ = calculateEddyViscosity();
+        if (inNearWallRegion_ && !isMatchingPoint_)
+        {
+            dynamicEddyViscosity_ = problem.zeroEqDynamicEddyViscosity_[RANSParentType::elementID()];
+        }
         calculateEddyDiffusivity(problem);
     }
 
@@ -134,8 +140,8 @@ public:
      */
     Scalar calculateEddyViscosity()
     {
-        return cMu() * fMu() * turbulentKineticEnergy() * turbulentKineticEnergy()
-               / dissipationTilde() *  NavierStokesParentType::density();
+        return cMu() * turbulentKineticEnergy() * turbulentKineticEnergy()
+               / dissipation() *  NavierStokesParentType::density();
     }
 
     /*!
@@ -162,9 +168,9 @@ public:
     /*!
      * \brief Returns an effective dissipation \f$ m^2/s^3 \f$
      */
-    Scalar dissipationTilde() const
+    Scalar dissipation() const
     {
-        return dissipationTilde_;
+        return dissipation_;
     }
 
     /*!
@@ -178,9 +184,9 @@ public:
     /*!
      * \brief Returns an effective dissipation \f$ m^2/s^3 \f$
      */
-    Scalar storedDissipationTilde() const
+    Scalar storedDissipation() const
     {
-        return storedDissipationTilde_;
+        return storedDissipation_;
     }
 
     /*!
@@ -191,19 +197,20 @@ public:
         return stressTensorScalarProduct_;
     }
 
-    //! \brief Returns the \$f Re_\textrm{T} \$f value
-    const Scalar reT() const
+    /*
+     * \brief Returns if an element is located in the near-wall region
+     */
+    bool inNearWallRegion() const
     {
-        return turbulentKineticEnergy() * turbulentKineticEnergy()
-               / RANSParentType::kinematicViscosity() / dissipationTilde();
+        return inNearWallRegion_;
     }
 
-    //! \brief Returns the \$f Re_\textrm{y} \$f value
-    const Scalar reY() const
+    /*!
+     * \brief Returns if an element is the matching point
+     */
+    Scalar isMatchingPoint() const
     {
-        using std::sqrt;
-        return sqrt(turbulentKineticEnergy()) * RANSParentType::wallDistance()
-               / RANSParentType::kinematicViscosity();
+        return isMatchingPoint_;
     }
 
     //! \brief Returns the \$f C_\mu \$f constant
@@ -218,48 +225,13 @@ public:
     const Scalar sigmaEpsilon() const
     { return 1.3; }
 
-    //! \brief Returns the \$f C_{1\tilde{\varepsilon}}  \$f constant
+    //! \brief Returns the \$f C_{1\varepsilon}  \$f constant
     const Scalar cOneEpsilon() const
-    { return 1.35; }
+    { return 1.44; }
 
-    //! \brief Returns the \$f C_{2\tilde{\varepsilon}} \$f constant
+    //! \brief Returns the \$f C_{2\varepsilon} \$f constant
     const Scalar cTwoEpsilon() const
-    { return 1.8; }
-
-    //! \brief Returns the \$f D \$f value
-    const Scalar dValue() const
-    {
-        return 2.0 * RANSParentType::kinematicViscosity() * turbulentKineticEnergy()
-               / RANSParentType::wallDistance() / RANSParentType::wallDistance();
-    }
-
-    //! \brief Returns the \$f f_\mu \$f value
-    const Scalar fMu() const
-    {
-        using std::exp;
-        using std::pow;
-        return 1.0 - exp(-0.0115 * RANSParentType::yPlus());
-    }
-
-    //! \brief Returns the \$f f_1 \$f value
-    const Scalar fOne() const
-    { return 1.0; }
-
-    //! \brief Returns the \$f f_2 \$f value
-    const Scalar fTwo() const
-    {
-        using std::exp;
-        return 1.0 - 0.22 * exp(-1.0 * (reT() * reT() / 6.0 / 6.0));
-    }
-
-    //! \brief Returns the \$f E \$f value
-    const Scalar eValue() const
-    {
-        using std::exp;
-        return -2.0 * RANSParentType::kinematicViscosity() * dissipationTilde()
-                / RANSParentType::wallDistance() / RANSParentType::wallDistance()
-                * exp(-0.5 * RANSParentType::yPlus());
-    }
+    { return 1.92; }
 
     /*!
      * \brief Returns the eddy diffusivity \f$\mathrm{[m^2/s]}\f$
@@ -282,10 +254,12 @@ protected:
     Scalar dynamicEddyViscosity_;
     Scalar eddyDiffusivity_;
     Scalar turbulentKineticEnergy_;
-    Scalar dissipationTilde_;
+    Scalar dissipation_;
     Scalar storedTurbulentKineticEnergy_;
-    Scalar storedDissipationTilde_;
+    Scalar storedDissipation_;
     Scalar stressTensorScalarProduct_;
+    bool inNearWallRegion_;
+    bool isMatchingPoint_;
 };
 
 }

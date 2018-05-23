@@ -243,10 +243,14 @@ int main(int argc, char** argv) try
             gnuplot_lawOfTheWall.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer 1954, Re=50000'");
 #if LOWREKEPSILON
             gnuplot_lawOfTheWall.addFileToPlot("pdelab-lowrekepsilon.csv", "u 23:22 w l lw 2 t 'PDELab Low-Re k-epsilon'");
-            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l");
+            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
+#elif KEPSILON
+            gnuplot_lawOfTheWall.addFileToPlot("pdelab-kepsilon_twolayers.csv", "u 34:33 w l lw 2 t 'PDELab k-epsilon (two layers)'");
+            gnuplot_lawOfTheWall.addFileToPlot("pdelab-kepsilon_wallfunction.csv", "u 36:35 w l lw 2 t 'PDELab k-epsilon (wall function)'");
+            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
 #else
             gnuplot_lawOfTheWall.addFileToPlot("pdelab-zeroeq.csv", "u 22:21 w l lw 2 t 'PDELab 0-Eq.'");
-            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l");
+            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
 #endif
             gnuplot_lawOfTheWall.plot(std::string(gnuplotFileName));
 
@@ -260,10 +264,14 @@ int main(int argc, char** argv) try
             gnuplot_velocityProfile.addFileToPlot("laufer_re50000.csv", "u 2:1 w p t 'Laufer 1954, Re=50000'");
 #if LOWREKEPSILON
             gnuplot_velocityProfile.addFileToPlot("pdelab-lowrekepsilon.csv", "u 5:($27/0.2456) w l lw 2 t 'PDELab Low-Re k-epsilon'");
-            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($32/0.2456) w l");
+            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($26/0.2456) w l lc 7");
+#elif KEPSILON
+            gnuplot_velocityProfile.addFileToPlot("pdelab-kepsilon_twolayers.csv", "u ($5):($40/0.2469) w l lw 2 t 'PDELab k-epsilon (two layers)'");
+            gnuplot_velocityProfile.addFileToPlot("pdelab-kepsilon_wallfunction.csv", "u ($5):($40/0.2469) w l lw 2 t 'PDELab k-epsilon (wall function)'");
+            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($28/0.2456) w l lc 7");
 #else
             gnuplot_velocityProfile.addFileToPlot("pdelab-zeroeq.csv", "u 5:($26/0.2456) w l lw 2 t 'PDELab 0-Eq.'");
-            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($24/0.2456) w l");
+            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($24/0.2456) w l lc 7");
 #endif
             gnuplot_velocityProfile.plot(std::string(gnuplotFileName));
         }

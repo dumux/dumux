@@ -1,5 +1,7 @@
 add_input_file_links()
-dune_symlink_to_source_files(FILES laufer_re50000.csv laufer_re50000_u+y+.csv pdelab-lowrekepsilon.csv pdelab-zeroeq.csv)
+dune_symlink_to_source_files(FILES laufer_re50000.csv laufer_re50000_u+y+.csv
+                                   pdelab-kepsilon_twolayers.csv pdelab-kepsilon_wallfunction.csv
+                                   pdelab-lowrekepsilon.csv pdelab-zeroeq.csv)
 
 dune_add_test(NAME test_pipe_laufer_zeroeq
               SOURCES test_pipe_laufer.cc
@@ -15,8 +17,8 @@ dune_add_test(NAME test_pipe_laufer_kepsilon
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/pipe_laufer_lowrekepsilon.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/pipe_laufer_reference-00064.vtu
+                        --files ${CMAKE_SOURCE_DIR}/test/references/pipe_laufer_kepsilon.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/pipe_laufer_reference-00051.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_pipe_laufer_kepsilon test_pipe_laufer_reference.input")
 target_compile_definitions(test_pipe_laufer_kepsilon PUBLIC "KEPSILON=1")
 

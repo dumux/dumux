@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 1e-3 # [s]
+DtInitial = 1e-1 # [s]
 TEnd = 100 # [s]
 
 [Grid]
@@ -23,6 +23,9 @@ SandGrainRoughness = 0.0 # [m] # not implemented for EddyViscosityModel = 3
 [RANS]
 EddyViscosityModel = "baldwinLomax"
 UseStoredEddyViscosity = false
+
+[KEpsilon]
+YPlusThreshold = 30.
 
 [Assembly]
 NumericDifferenceMethod = 0

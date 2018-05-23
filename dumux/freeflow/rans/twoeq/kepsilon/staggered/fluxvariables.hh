@@ -71,10 +71,8 @@ class KEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
 
-    enum {
-        turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx,
-        dissipationEqIdx = Indices::dissipationEqIdx,
-    };
+    static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
+    static constexpr int dissipationEqIdx = Indices::dissipationEqIdx - ModelTraits::dim();
 
 public:
 
@@ -99,12 +97,12 @@ public:
         };
         auto upwindTermEpsilon = [](const auto& volVars)
         {
-            return volVars.dissipationTilde();
+            return volVars.dissipation();
         };
 
-        flux[turbulentKineticEnergyEqIdx - ModelTraits::dim()]
+        flux[turbulentKineticEnergyEqIdx]
             = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermK);
-        flux[dissipationEqIdx - ModelTraits::dim()]
+        flux[dissipationEqIdx ]
             = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermEpsilon);
 
         // calculate diffusive flux
@@ -114,14 +112,19 @@ public:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         // effective diffusion coefficients
-        Scalar insideCoeff_k = insideVolVars.kinematicViscosity()
-                               + insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaK();
-        Scalar outsideCoeff_k = outsideVolVars.kinematicViscosity()
-                                + outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaK();
-        Scalar insideCoeff_e = insideVolVars.kinematicViscosity()
-                               + insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaEpsilon();
-        Scalar outsideCoeff_e = outsideVolVars.kinematicViscosity()
-                                + outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaEpsilon();
+        Scalar insideCoeff_k = insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaK();
+        Scalar outsideCoeff_k = outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaK();
+        Scalar insideCoeff_e = insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaEpsilon();
+        Scalar outsideCoeff_e = outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaEpsilon();
+        static const auto kEpsilonEnableKinematicViscosity_
+            = getParamFromGroup<bool>(problem.paramGroup(), "KEpsilon.EnableKinematicViscosity_", true);
+        if (kEpsilonEnableKinematicViscosity_)
+        {
+            insideCoeff_k += insideVolVars.kinematicViscosity();
+            outsideCoeff_k += outsideVolVars.kinematicViscosity();
+            insideCoeff_e += insideVolVars.kinematicViscosity();
+            outsideCoeff_e += outsideVolVars.kinematicViscosity();
+        }
 
         // scale by extrusion factor
         insideCoeff_k *= insideVolVars.extrusionFactor();
@@ -147,20 +150,24 @@ public:
         }
 
         const auto bcTypes = problem.boundaryTypes(element, scvf);
-        if (!(scvf.boundary() && (bcTypes.isOutflow(turbulentKineticEnergyEqIdx)
+        if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
                                   || bcTypes.isSymmetry())))
         {
-            flux[turbulentKineticEnergyEqIdx - ModelTraits::dim()]
-                += coeff_k / distance
-                   * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
-                   * scvf.area();
+            if (!insideVolVars.inNearWallRegion()
+                || !insideVolVars.inNearWallRegion())
+            {
+                flux[turbulentKineticEnergyEqIdx]
+                    += coeff_k / distance
+                       * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
+                       * scvf.area();
+            }
         }
-        if (!(scvf.boundary() && (bcTypes.isOutflow(dissipationEqIdx)
+        if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::dissipationEqIdx)
                                   || bcTypes.isSymmetry())))
         {
-            flux[dissipationEqIdx - ModelTraits::dim()]
+            flux[dissipationEqIdx]
                 += coeff_e / distance
-                   * (insideVolVars.dissipationTilde() - outsideVolVars.dissipationTilde())
+                   * (insideVolVars.dissipation() - outsideVolVars.dissipation())
                    * scvf.area();
         }
         return flux;

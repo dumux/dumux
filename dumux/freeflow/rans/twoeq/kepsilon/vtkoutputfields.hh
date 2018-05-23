@@ -52,7 +52,9 @@ public:
     static void add(VtkOutputModule& vtk)
     {
         vtk.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
-        vtk.addVolumeVariable([](const auto& v){ return v.dissipationTilde(); }, "epsilon");
+        vtk.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "epsilon");
+        vtk.addVolumeVariable([](const auto& v){ return v.inNearWallRegion(); }, "inNearWallRegion");
+        vtk.addVolumeVariable([](const auto& v){ return v.isMatchingPoint(); }, "isMatchingPoint");
     }
 };
 

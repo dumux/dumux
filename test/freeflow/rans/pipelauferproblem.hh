@@ -267,7 +267,8 @@ public:
         PrimaryVariables values(0.0);
         values[Indices::pressureIdx] = 1.0e+5;
         values[Indices::velocityXIdx] = inletVelocity_;
-        if (isOnWall(globalPos))
+        if (isOnWall(globalPos)
+            || (startWithZeroVelocity_ && time() < eps_))
         {
             values[Indices::velocityXIdx] = 0.0;
         }
@@ -281,10 +282,6 @@ public:
 #endif
 
 #if LOWREKEPSILON || KEPSILON
-        if (time() < eps_ && startWithZeroVelocity_)
-        {
-            values[Indices::velocityXIdx] = 0.0;
-        }
         values[Indices::turbulentKineticEnergyEqIdx] = turbulentKineticEnergy_;
         values[Indices::dissipationEqIdx] = dissipation_;
         if (isOnWall(globalPos))
