@@ -127,9 +127,9 @@ public:
             unsigned int neighborID0 = asImp_().neighborID_[elementID][wallNormalAxis][0];
             unsigned int neighborID1 = asImp_().neighborID_[elementID][wallNormalAxis][1];
             numElementsInWallRegion = inNearWallRegion(elementID) ? numElementsInWallRegion + 1 : numElementsInWallRegion + 0;
-            if ((inNearWallRegion(elementID) && (inNearWallRegion(neighborID0) != inNearWallRegion(neighborID1)))
-                || (inNearWallRegion(elementID) && (asImp_().wallElementID_[neighborID0] != asImp_().wallElementID_[neighborID1]))
-                || (elementID == asImp_().wallElementID_[elementID] && (!inNearWallRegion(neighborID0) || !inNearWallRegion(neighborID1))))
+            if ((!inNearWallRegion(elementID) && (inNearWallRegion(neighborID0) || inNearWallRegion(neighborID1)))
+                || (!inNearWallRegion(elementID) && elementID == asImp_().wallElementID_[elementID])
+                || (inNearWallRegion(elementID) && (asImp_().wallElementID_[neighborID0] != asImp_().wallElementID_[neighborID1])))
             {
                 matchingPointID_[asImp_().wallElementID_[elementID]] = elementID;
             }

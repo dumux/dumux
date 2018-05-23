@@ -154,8 +154,8 @@ public:
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
                                   || bcTypes.isSymmetry())))
         {
-            if (!insideVolVars.inNearWallRegion()
-                || !insideVolVars.inNearWallRegion())
+            if (!(insideVolVars.inNearWallRegion() || insideVolVars.isMatchingPoint())
+                || !(insideVolVars.inNearWallRegion() || insideVolVars.isMatchingPoint()))
             {
                 flux[turbulentKineticEnergyEqIdx]
                     += coeff_k / distance

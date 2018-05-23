@@ -107,7 +107,7 @@ public:
             dynamicEddyViscosity_ = problem.storedDynamicEddyViscosity_[RANSParentType::elementID()];
         else
             dynamicEddyViscosity_ = calculateEddyViscosity();
-        if (inNearWallRegion_ && !isMatchingPoint_)
+        if (inNearWallRegion_)
         {
             dynamicEddyViscosity_ = problem.zeroEqDynamicEddyViscosity_[RANSParentType::elementID()];
         }

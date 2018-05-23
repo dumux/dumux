@@ -157,7 +157,7 @@ protected:
             const auto& insideVolVars = elemVolVars[insideScv];
 
             // fixed value for the turbulent kinetic energy
-            if (insideVolVars.inNearWallRegion() && !insideVolVars.isMatchingPoint())
+            if (problem.inNearWallRegion(elementID))
             {
                 residual[Indices::turbulentKineticEnergyEqIdx - cellCenterOffset]
                     = insideVolVars.turbulentKineticEnergy() - problem.turbulentKineticEnergyWallFunction(elementID);
