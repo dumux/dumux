@@ -154,13 +154,13 @@ public:
      * \param facetGridView The grid view of a (dim-1)-dimensional grid conforming
      *                      with the facets of this grid view, indicating on which facets
      *                      nodal dofs should be enriched.
-     * \param FacetGridIndexAdapter Allows retrieving the index of (d-1)-dimensional vertices
-     *                              within a d-dimensional grid.
+     * \param FacetGridVertexAdapter Allows retrieving the index of (d-1)-dimensional vertices
+     *                               within a d-dimensional grid.
      * \param verbose Verbosity level
      */
-    template<class FacetGridView, class FacetGridIndexAdapter>
+    template<class FacetGridView, class FacetGridVertexAdapter>
     void enrich(const FacetGridView& facetGridView,
-                const FacetGridIndexAdapter& facetGridIndexAdapter,
+                const FacetGridVertexAdapter& facetGridVertexAdapter,
                 bool verbose = false)
     {
         static const int facetDim = FacetGridView::dimension;
@@ -172,7 +172,7 @@ public:
         Dune::Timer watch;
 
         // determine which nodal dofs should actually be enriched
-        determineEnrichedVertices_(facetGridView, facetGridIndexAdapter);
+        determineEnrichedVertices_(facetGridView, facetGridVertexAdapter);
 
         // let the helper class do the enrichment of the index map
         size_ = EnrichmentHelper< GridView, FacetGridView >::enrich(indexMap_,
@@ -181,7 +181,7 @@ public:
                                                                     vertexMapper_,
                                                                     elementMapper_,
                                                                     facetGridView,
-                                                                    facetGridIndexAdapter);
+                                                                    facetGridVertexAdapter);
 
         hasBeenEnriched_ = true;
         if (verbose)
@@ -208,8 +208,8 @@ private:
 
     //! Determines the nodes that should be enriched. This is necessary as dofs on
     //! immersed boundaries of the lower-dimensional grid it should not be enriched.
-    template<class FacetGridView, class FacetGridIndexAdapter>
-    void determineEnrichedVertices_(const FacetGridView& facetGridView, const FacetGridIndexAdapter& facetGridIndexAdapter)
+    template<class FacetGridView, class FacetGridVertexAdapter>
+    void determineEnrichedVertices_(const FacetGridView& facetGridView, const FacetGridVertexAdapter& facetGridVertexAdapter)
     {
         // first find all bulk grid vertices on the boundary.
         using ReferenceElements = typename Dune::ReferenceElements<typename GV::ctype, dim>;
@@ -227,7 +227,7 @@ private:
 
         // for now, mark all vertices on facet grid for enrichment
         for (const auto& v : vertices(facetGridView))
-            isEnriched_[ facetGridIndexAdapter.index(v) ] = true;
+            isEnriched_[ facetGridVertexAdapter.bulkGridVertexIndex(v) ] = true;
 
         // unmark those vertices connected to an immersed boundary
         static const int facetDim = FacetGridView::dimension;
@@ -246,13 +246,13 @@ private:
                     for (int i = 0; i < numCorners; ++i)
                     {
                         const auto vIdxLocal = refElem.subEntity(is.indexInInside(), 1, i, facetDim);
-                        vertexIndices.push_back( facetGridIndexAdapter.index(facetElement.template subEntity<facetDim>(vIdxLocal)) );
+                        vertexIndices.push_back( facetGridVertexAdapter.bulkGridVertexIndex(facetElement.template subEntity<facetDim>(vIdxLocal)) );
                     }
                     return vertexIndices;
                 };
 
                 // all nodes around non-embedded elements must not be enriched
-                if (!facetGridIndexAdapter.isEmbedded(facetElement))
+                if (!facetGridVertexAdapter.isEmbedded(facetElement))
                 {
                     const auto vertexIndices = getCornerIndices(facetIs);
                     std::for_each( vertexIndices.begin(),
@@ -315,23 +315,23 @@ public:
      * \param facetGridView The grid view of a (dim-1)-dimensional grid conforming
      *                      with the facets of this grid view, indicating on which facets
      *                      nodal dofs should be enriched.
-     * \param FacetGridIndexAdapter Allows retrieving the index of (d-1)-dimensional vertices
-     *                              within a d-dimensional grid.
+     * \param FacetGridVertexAdapter Allows retrieving the index of (d-1)-dimensional vertices
+     *                               within a d-dimensional grid.
      * \return the number of dofs after enrichment
      */
-    template< class IndexMap, class FacetGridIndexAdapter >
+    template< class IndexMap, class FacetGridVertexAdapter >
     static std::size_t enrich(IndexMap& indexMap,
                               const std::vector< bool >& enrichVertex,
                               const BulkGridView& bulkGridView,
                               const BulkMCMGMapper& bulkVertexMapper,
                               const BulkMCMGMapper& bulkElementMapper,
                               const FacetGridView& facetGridView,
-                              const FacetGridIndexAdapter& facetGridIndexAdapter)
+                              const FacetGridVertexAdapter& facetGridVertexAdapter)
     {
         // first, find out which bulk vertices lie on the given facet grid
         std::vector< bool > isOnFacetGrid(bulkGridView.size(bulkDim), false);
         for (const auto& v : vertices(facetGridView))
-            isOnFacetGrid[ facetGridIndexAdapter.index(v) ] = true;
+            isOnFacetGrid[ facetGridVertexAdapter.bulkGridVertexIndex(v) ] = true;
 
         // determine the bulk element paths around vertices marked for enrichment
         NodalElementPaths nodalPaths(bulkGridView.size(bulkDim));
@@ -569,18 +569,19 @@ public:
      * \param facetGridView The grid view of a (dim-1)-dimensional grid conforming
      *                      with the facets of this grid view, indicating on which facets
      *                      nodal dofs should be enriched.
-     * \param FacetGridIndexAdapter TODO rename and doc this
+     * \param FacetGridVertexAdapter Allows retrieving the index of (d-1)-dimensional vertices
+     *                               within a d-dimensional grid.
      *
      * \return the number of dofs after enrichment
      */
-    template< class IndexMap, class FacetGridIndexAdapter >
+    template< class IndexMap, class FacetGridVertexAdapter >
     static std::size_t enrich(IndexMap& indexMap,
                               const std::vector< bool >& enrichVertex,
                               const BulkGridView& bulkGridView,
                               const BulkMCMGMapper& bulkVertexMapper,
                               const BulkMCMGMapper& bulkElementMapper,
                               const FacetGridView& facetGridView,
-                              const FacetGridIndexAdapter& facetGridIndexAdapter)
+                              const FacetGridVertexAdapter& facetGridVertexAdapter)
     {
         // determine the element paths around the facet grid vertices
         auto facetVertexMapper = FacetMCMGMapper(facetGridView, Dune::mcmgVertexLayout());
@@ -597,7 +598,7 @@ public:
         for (const auto& e : elements(facetGridView))
         {
             // skip non-embedded elements
-            if (!facetGridIndexAdapter.isEmbedded(e)) continue;
+            if (!facetGridVertexAdapter.isEmbedded(e)) continue;
 
             const auto eIdx = facetElementMapper.index(e);
             const auto refElem = FacetReferenceElements::general(e.geometry().type());
@@ -619,7 +620,7 @@ public:
                     const auto vIdxLocal = refElem.subEntity(idxInInside, 1, i, facetDim);
                     const auto vIdxGlobal = facetVertexMapper.subIndex(e, vIdxLocal, facetDim);
                     const auto& vertex = e.template subEntity<facetDim>(vIdxLocal);
-                    const auto idxInBulkGrid = facetGridIndexAdapter.index(vertex);
+                    const auto idxInBulkGrid = facetGridVertexAdapter.bulkGridVertexIndex(vertex);
 
                     // Bother setting up the connectivity only for nodes that are enriched
                     if (enrichVertex[idxInBulkGrid])
@@ -637,7 +638,7 @@ public:
         std::vector< NodalElementPaths > nodalPaths(numNodes);
         for (const auto& v : vertices(facetGridView))
         {
-            if (!enrichVertex[facetGridIndexAdapter.index(v)])
+            if (!enrichVertex[facetGridVertexAdapter.bulkGridVertexIndex(v)])
                 continue;
 
             const auto vIdx = facetVertexMapper.index(v);
@@ -726,7 +727,7 @@ public:
         for (const auto& v : vertices(facetGridView))
         {
             const auto vIdx = facetVertexMapper.index(v);
-            const auto bulkVIdx = facetGridIndexAdapter.index(v);
+            const auto bulkVIdx = facetGridVertexAdapter.bulkGridVertexIndex(v);
             bulkToFacetIdx[bulkVIdx] = vIdx;
             if (enrichVertex[bulkVIdx])
                 bulkVertexIndexOffsets[bulkVIdx] = nodalPaths[vIdx].size()-1;
