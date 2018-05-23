@@ -18,7 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup MultiDomain
  * \ingroup OnePTests
+ * \ingroup PoroElastic
  * \brief The spatial parameters class for the test problem using the
  *        1p box model
  */
@@ -31,7 +33,9 @@
 namespace Dumux {
 
 /*!
+ * \ingroup MultiDomain
  * \ingroup OnePTests
+ * \ingroup PoroElastic
  * \brief The spatial parameters class for the test problem using the
  *        1p box model
  */

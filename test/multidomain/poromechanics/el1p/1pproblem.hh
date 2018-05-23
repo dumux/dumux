@@ -19,7 +19,8 @@
 /*!
  * \file
  * \ingroup MultiDomain
- * \ingroup OneP
+ * \ingroup OnePTests
+ * \ingroup PoroElastic
  * \brief Definition of the spatial parameters for the single-phase flow
  *        sub-problem in the coupled poro-mechanical el1p problem.
  */
@@ -35,13 +36,14 @@
 
 #include "1pspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
+// forward declaration of the problem class
 template <class TypeTag>
 class OnePSubProblem;
 
-namespace Properties
-{
+namespace Properties {
+
 NEW_TYPE_TAG(OnePSubTypeTag, INHERITS_FROM(CCTpfaModel, OneP));
 
 // The fluid phase consists of one constant component
@@ -62,7 +64,7 @@ SET_STRING_PROP(OnePSubTypeTag, ModelParameterGroup, "OneP");
 
 /*!
  * \ingroup MultiDomain
- * \ingroup OneP
+ * \ingroup OnePTests
  * \ingroup PoroElastic
  *
  * \brief The single-phase sub problem in the el1p coupled problem.
