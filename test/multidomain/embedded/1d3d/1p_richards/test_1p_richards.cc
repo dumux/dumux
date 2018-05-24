@@ -43,8 +43,7 @@
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
-#include <dumux/mixeddimension/embedded/cellcentered/bboxtreecouplingmanager.hh>
-#include <dumux/mixeddimension/embedded/integrationpointsource.hh>
+#include <dumux/multidomain/embedded/couplingmanager1d3d.hh>
 
 #include "rootproblem.hh"
 #include "soilproblem.hh"
@@ -55,22 +54,19 @@ namespace Properties {
 SET_PROP(SoilTypeTag, CouplingManager)
 {
     using Traits = MultiDomainTraits<TypeTag, TTAG(RootTypeTag)>;
-    using type = Dumux::CCBBoxTreeEmbeddedCouplingManager<Traits>;
+    using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
 SET_PROP(RootTypeTag, CouplingManager)
 {
     using Traits = MultiDomainTraits<TTAG(SoilTypeTag), TypeTag>;
-    using type = Dumux::CCBBoxTreeEmbeddedCouplingManager<Traits>;
+    using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
-SET_TYPE_PROP(SoilTypeTag, PointSource, IntegrationPointSource<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GlobalCoordinate,
-                                                               typename GET_PROP_TYPE(TypeTag, NumEqVector)>);
-SET_TYPE_PROP(RootTypeTag, PointSource, IntegrationPointSource<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GlobalCoordinate,
-                                                               typename GET_PROP_TYPE(TypeTag, NumEqVector)>);
-
-SET_TYPE_PROP(SoilTypeTag, PointSourceHelper, IntegrationPointSourceHelper);
-SET_TYPE_PROP(RootTypeTag, PointSourceHelper, IntegrationPointSourceHelper);
+SET_TYPE_PROP(SoilTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<0>);
+SET_TYPE_PROP(RootTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<1>);
+SET_TYPE_PROP(SoilTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<0>);
+SET_TYPE_PROP(RootTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<1>);
 
 } // end namespace Properties
 } // end namespace Dumux
