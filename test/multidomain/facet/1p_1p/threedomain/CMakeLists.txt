@@ -16,4 +16,4 @@ bulkProblem.hh
 facetproblem.hh
 edgeproblem.hh
 spatialparams.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/mixeddimension/facet/1p_1p/threedomain)
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/multidomain/facet/1p_1p/threedomain)

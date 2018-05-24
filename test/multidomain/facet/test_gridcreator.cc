@@ -33,7 +33,7 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/mixeddimension/facet/gridcreator.hh>
+#include <dumux/multidomain/facet/gridcreator.hh>
 
 #ifndef BULKGRIDTYPE // default to ug grid if not provided by CMake
 #define BULKGRIDTYPE Dune::UGGrid<3>

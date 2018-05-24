@@ -32,8 +32,8 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
-#include <dumux/mixeddimension/facet/gridcreator.hh>
-#include <dumux/mixeddimension/facet/cellcentered/tpfa/couplingmapper.hh>
+#include <dumux/multidomain/facet/gridcreator.hh>
+#include <dumux/multidomain/facet/cellcentered/tpfa/couplingmapper.hh>
 
 #ifndef BULKGRIDTYPE // default to ug grid if not provided by CMake
 #define BULKGRIDTYPE Dune::UGGrid<3>
