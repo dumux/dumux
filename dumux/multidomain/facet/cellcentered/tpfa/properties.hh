@@ -32,9 +32,9 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
-#include <dumux/mixeddimension/facet/cellcentered/upwindscheme.hh>
-#include <dumux/mixeddimension/facet/cellcentered/localresidual.hh>
-#include <dumux/mixeddimension/facet/cellcentered/tpfa/darcyslaw.hh>
+#include <dumux/multidomain/facet/cellcentered/upwindscheme.hh>
+#include <dumux/multidomain/facet/cellcentered/localresidual.hh>
+#include <dumux/multidomain/facet/cellcentered/tpfa/darcyslaw.hh>
 
 #include <dumux/porousmediumflow/fluxvariables.hh>
 

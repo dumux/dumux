@@ -29,8 +29,7 @@
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
-#include <dumux/mixeddimension/facet/cellcentered/tpfa/properties.hh>
-
+#include <dumux/multidomain/facet/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
 

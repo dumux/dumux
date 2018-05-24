@@ -71,4 +71,4 @@ test_facetcoupling_tpfa_1p1p.cc
 bulkProblem.hh
 lowdimproblem.hh
 spatialparams.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/mixeddimension/facet/1p_1p/analytical)
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/multidomain/facet/1p_1p/analytical)
