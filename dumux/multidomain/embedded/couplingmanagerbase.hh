@@ -116,8 +116,8 @@ public:
     /*!
     * \brief call this after grid adaption
     */
-    void updateGrid(std::shared_ptr<const FVGridGeometry<bulkIdx>> bulkFvGridGeometry,
-                    std::shared_ptr<const FVGridGeometry<lowDimIdx>> lowDimFvGridGeometry)
+    void updateAfterGridAdaption(std::shared_ptr<const FVGridGeometry<bulkIdx>> bulkFvGridGeometry,
+                                 std::shared_ptr<const FVGridGeometry<lowDimIdx>> lowDimFvGridGeometry)
     {
         glue_ = std::make_shared<GlueType>();
     }
@@ -128,7 +128,7 @@ public:
     EmbeddedCouplingManagerBase(std::shared_ptr<const FVGridGeometry<bulkIdx>> bulkFvGridGeometry,
                                 std::shared_ptr<const FVGridGeometry<lowDimIdx>> lowDimFvGridGeometry)
     {
-        updateGrid(bulkFvGridGeometry, lowDimFvGridGeometry);
+        updateAfterGridAdaption(bulkFvGridGeometry, lowDimFvGridGeometry);
     }
 
     /*!
