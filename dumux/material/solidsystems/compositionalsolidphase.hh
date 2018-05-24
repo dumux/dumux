@@ -24,6 +24,9 @@
 #ifndef DUMUX_SOLIDSYSTEMS_COMPOSITIONAL_SOLID_PHASE_HH
 #define DUMUX_SOLIDSYSTEMS_COMPOSITIONAL_SOLID_PHASE_HH
 
+#include <string>
+#include <dune/common/exceptions.hh>
+
 namespace Dumux {
 namespace SolidSystems {
 
@@ -62,8 +65,8 @@ public:
         {
             case comp0Idx: return ComponentOne::name();
             case comp1Idx: return ComponentTwo::name();
+            default: DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
         }
-        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
     /*!
@@ -93,8 +96,8 @@ public:
         {
             case comp0Idx: return ComponentOne::molarMass();
             case comp1Idx: return ComponentTwo::molarMass();
+            default: DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
         }
-        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
     /*!
@@ -122,8 +125,8 @@ public:
         {
             case comp0Idx: return ComponentOne::solidDensity(solidState.temperature());
             case comp1Idx: return ComponentTwo::solidDensity(solidState.temperature());
+            default: DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
         }
-        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
     /*!
@@ -136,8 +139,8 @@ public:
         {
             case comp0Idx: return ComponentOne::solidDensity(solidState.temperature())/ComponentOne::molarMass();
             case comp1Idx: return ComponentTwo::solidDensity(solidState.temperature())/ComponentTwo::molarMass();
+            default: DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
         }
-        DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
     /*!
