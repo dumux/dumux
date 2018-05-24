@@ -59,9 +59,7 @@ SET_TYPE_PROP(PoroElasticSubTypeTag,
 SET_TYPE_PROP(PoroElasticSubTypeTag, SpatialParams, PoroElasticSpatialParams< typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                               typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
 
-// The model parameter group
-SET_STRING_PROP(PoroElasticSubTypeTag, ModelParameterGroup, "PoroElastic");
-}
+} // end namespace Properties
 
 /*!
  * \ingroup MultiDomain
@@ -96,8 +94,8 @@ class PoroElasticSubProblem : public GeomechanicsFVProblem<TypeTag>
 
 public:
     //! The constructor
-    PoroElasticSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry, GET_PROP_VALUE(TypeTag, ModelParameterGroup)) {}
+    PoroElasticSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup) {}
 
     //! The temperature in the domain
     static constexpr Scalar temperature()

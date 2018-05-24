@@ -36,13 +36,11 @@
 
 #include "spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 // forward declarations
 template<class TypeTag> class OnePEdgeProblem;
 
-namespace Properties
-{
+namespace Properties {
 // create the type tag nodes
 NEW_TYPE_TAG(OnePEdge, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(OnePEdgeTpfa, INHERITS_FROM(CCTpfaModel, OnePEdge));
@@ -53,8 +51,6 @@ SET_TYPE_PROP(OnePEdge, Grid, Dune::FoamGrid<1, 3>);
 SET_TYPE_PROP(OnePEdge, Problem, OnePEdgeProblem<TypeTag>);
 // set the spatial params
 SET_TYPE_PROP(OnePEdge, SpatialParams, OnePSpatialParams<TypeTag>);
-// the group for retrieving sub-domain specific params
-SET_STRING_PROP(OnePEdge, ModelParameterGroup, "Edge");
 
 // the fluid system
 SET_PROP(OnePEdge, FluidSystem)
@@ -100,8 +96,10 @@ class OnePEdgeProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     //! The constructor
-    OnePEdgeProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry, GET_PROP_VALUE(TypeTag, ModelParameterGroup))
+    OnePEdgeProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                    std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                    const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, spatialParams, paramGroup)
     {
         const auto a = getParam<Scalar>("Extrusion.Aperture");
         exFactor_ = a*a;

@@ -114,8 +114,9 @@ class MatrixProblem : public PorousMediumFlowProblem<TypeTag>
 public:
     MatrixProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                   std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
-                  std::shared_ptr<CouplingManager> couplingManager)
-    : ParentType(fvGridGeometry, spatialParams)
+                  std::shared_ptr<CouplingManager> couplingManager,
+                  const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, spatialParams, paramGroup)
     , couplingManager_(couplingManager)
     {
         //read parameters from input file

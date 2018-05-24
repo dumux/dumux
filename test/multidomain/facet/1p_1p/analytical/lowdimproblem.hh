@@ -35,13 +35,11 @@
 
 #include "spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 // forward declarations
 template<class TypeTag> class OnePLowDimProblem;
 
-namespace Properties
-{
+namespace Properties {
 // create the type tag nodes
 NEW_TYPE_TAG(OnePLowDim, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(OnePLowDimTpfa, INHERITS_FROM(CCTpfaModel, OnePLowDim));
@@ -52,8 +50,6 @@ SET_TYPE_PROP(OnePLowDim, Grid, Dune::FoamGrid<1, 2>);
 SET_TYPE_PROP(OnePLowDim, Problem, OnePLowDimProblem<TypeTag>);
 // set the spatial params
 SET_TYPE_PROP(OnePLowDim, SpatialParams, OnePSpatialParams<TypeTag>);
-// the group for retrieving sub-domain specific params
-SET_STRING_PROP(OnePLowDim, ModelParameterGroup, "LowDim");
 
 // Disable caching
 SET_BOOL_PROP(OnePLowDim, EnableGridVolumeVariablesCache, false);
@@ -68,10 +64,8 @@ private:
 public:
     using type = FluidSystems::OnePLiquid< Scalar, Components::Constant<1, Scalar> >;
 };
-
-
-
 } // end namespace Properties
+
 /*!
  * \ingroup OnePTests
  * \brief The lower-dimensional test problem for the incompressible
@@ -99,8 +93,10 @@ class OnePLowDimProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
 public:
-    OnePLowDimProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry, GET_PROP_VALUE(TypeTag, ModelParameterGroup))
+    OnePLowDimProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                      std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                      const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, spatialParams, paramGroup)
     , useAnalyticProblem_(getParam<bool>("Problem.UseAnalyticProblem"))
     , useDirichletBCs_(getParam<bool>("LowDim.Problem.UseDirichletBCs"))
     , aperture_(getParam<Scalar>("Problem.LowDimAperture"))

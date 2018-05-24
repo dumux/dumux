@@ -70,9 +70,6 @@ SET_TYPE_PROP(FractureTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, Coup
 SET_TYPE_PROP(MatrixTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<0>);
 SET_TYPE_PROP(FractureTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<1>);
 
-SET_STRING_PROP(MatrixTypeTag, ModelParameterGroup, "Matrix");
-SET_STRING_PROP(FractureTypeTag, ModelParameterGroup, "Fracture");
-
 } // end namespace Properties
 } // end namespace Dumux
 
@@ -130,10 +127,10 @@ int main(int argc, char** argv) try
     // the problem (initial and boundary conditions)
     using BulkProblem = typename GET_PROP_TYPE(BulkTypeTag, Problem);
     auto bulkSpatialParams = std::make_shared<typename BulkProblem::SpatialParams>(bulkFvGridGeometry, "Matrix");
-    auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, bulkSpatialParams, couplingManager);
+    auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, bulkSpatialParams, couplingManager, "Matrix");
     using LowDimProblem = typename GET_PROP_TYPE(LowDimTypeTag, Problem);
     auto lowDimSpatialParams = std::make_shared<typename LowDimProblem::SpatialParams>(lowDimFvGridGeometry, "Fracture");
-    auto lowDimProblem = std::make_shared<LowDimProblem>(lowDimFvGridGeometry, lowDimSpatialParams, couplingManager);
+    auto lowDimProblem = std::make_shared<LowDimProblem>(lowDimFvGridGeometry, lowDimSpatialParams, couplingManager, "Fracture");
 
     // the solution vector
     Traits::SolutionVector sol;
