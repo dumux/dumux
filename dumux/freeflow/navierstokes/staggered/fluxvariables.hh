@@ -172,7 +172,7 @@ public:
     *                    scvf
     *              ---------=======                 == and # staggered half-control-volume
     *              |       #      | current scvf
-    *              |       #      |                 # staggered face over wich fluxes are calculated
+    *              |       #      |                 # staggered face over which fluxes are calculated
     *   vel.Opp <~~|       #~~>   x~~~~> vel.Self
     *              |       #      |                 x dof position
     *        scvf  |       #      |
@@ -265,7 +265,7 @@ public:
     *                scvf
     *              ---------#######                 || and # staggered half-control-volume
     *              |      ||      | current scvf
-    *              |      ||      |                 # normal staggered sub faces over wich fluxes are calculated
+    *              |      ||      |                 # normal staggered sub faces over which fluxes are calculated
     *              |      ||      x~~~~> vel.Self
     *              |      ||      |                 x dof position
     *        scvf  |      ||      |
@@ -344,7 +344,7 @@ private:
     *              |       |      |
     *       scvf   ---------#######                 || and # staggered half-control-volume
     *              |      ||      | current scvf
-    *              |      ||      |                 # normal staggered faces over wich fluxes are calculated
+    *              |      ||      |                 # normal staggered faces over which fluxes are calculated
     *              |      ||      x~~~~> vel.Self
     *              |      ||      |                 x dof position
     *        scvf  |      ||      |
@@ -423,7 +423,7 @@ private:
     *              |      ||      | curr. ::
     *              |      ||      | scvf  ::       :: staggered half-control-volume (neighbor element)
     *              |      ||      x~~~~>  ::
-    *              |      ||      | vel.  ::       # normal staggered faces over wich fluxes are calculated
+    *              |      ||      | vel.  ::       # normal staggered faces over which fluxes are calculated
     *        scvf  |      ||      | Self  ::
     *              ---------#######:::::::::       x dof position
     *                 scvf
@@ -513,7 +513,7 @@ private:
     *                    scvf      //
     *              ---------=======//               == and # staggered half-control-volume
     *              |      ||      #// current scvf
-    *              |      ||      #//               # staggered boundary face over wich fluxes are calculated
+    *              |      ||      #//               # staggered boundary face over which fluxes are calculated
     *              |      ||      x~~~~> vel.Self
     *              |      ||      #//               x dof position
     *        scvf  |      ||      #//

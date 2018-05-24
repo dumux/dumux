@@ -121,7 +121,7 @@ public:
 
     /*! \brief Compositional pressure solution routine: update estimate for secants, assemble, solve.
      * An update estime (transport step acoording to old pressure field) determines changes in
-     * mass, composition, wich is used to calculate volume derivatives entering the pressure
+     * mass, composition, which is used to calculate volume derivatives entering the pressure
      * equation, as well as an approximate guess for time step size for the storage terms in the
      * p.e.
      * Afterwards, the system is assembled and solved for pressure.

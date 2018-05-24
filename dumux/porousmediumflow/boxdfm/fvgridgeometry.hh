@@ -218,7 +218,7 @@ public:
             // NOTE We do not construct fracture scvfs on boundaries here!
             //      That means specifying Neumann fluxes on only the fractures is not possible
             //      However, it is difficult to interpret this here as a fracture ending on the boundary
-            //      could also be connected to a facet wich is both boundary and fracture at the same time!
+            //      could also be connected to a facet which is both boundary and fracture at the same time!
             //      In that case, the fracture boundary scvf wouldn't make sense. In order to do it properly
             //      we would have to find only those fractures that are at the boundary and aren't connected
             //      to a fracture which is a boundary.
