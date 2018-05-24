@@ -29,8 +29,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Discretization
@@ -54,8 +53,7 @@ public:
           const UpwindTermFunction& upwindTerm,
           Scalar flux, int phaseIdx)
     {
-        static const Scalar upwindWeight = getParamFromGroup<Scalar>
-            (GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
 
         // the volume variables of the inside sub-control volume
         const auto& scvf = fluxVars.scvFace();
@@ -149,8 +147,7 @@ public:
           const UpwindTermFunction& upwindTerm,
           Scalar flux, int phaseIdx)
     {
-        static const Scalar upwindWeight = getParamFromGroup<Scalar>
-            (GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
 
         const auto& scvf = fluxVars.scvFace();
         const auto& elemVolVars = fluxVars.elemVolVars();

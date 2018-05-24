@@ -94,8 +94,8 @@ private:
 public:
     using type = CCTpfaFacetCouplingThreeDomainManager<Traits, CouplingMapper>;
 };
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 int main(int argc, char** argv) try
 {
@@ -153,9 +153,12 @@ int main(int argc, char** argv) try
     using BulkProblem = typename GET_PROP_TYPE(BulkProblemTypeTag, Problem);
     using FacetProblem = typename GET_PROP_TYPE(FacetProblemTypeTag, Problem);
     using EdgeProblem = typename GET_PROP_TYPE(EdgeProblemTypeTag, Problem);
-    auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry);
-    auto facetProblem = std::make_shared<FacetProblem>(facetFvGridGeometry);
-    auto edgeProblem = std::make_shared<EdgeProblem>(edgeFvGridGeometry);
+    auto bulkSpatialParams = std::make_shared<typename BulkProblem::SpatialParams>(bulkFvGridGeometry, "Bulk");
+    auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, bulkSpatialParams, "Bulk");
+    auto facetSpatialParams = std::make_shared<typename FacetProblem::SpatialParams>(facetFvGridGeometry, "Facet");
+    auto facetProblem = std::make_shared<FacetProblem>(facetFvGridGeometry, facetSpatialParams, "Facet");
+    auto edgeSpatialParams = std::make_shared<typename EdgeProblem::SpatialParams>(edgeFvGridGeometry, "Edge");
+    auto edgeProblem = std::make_shared<EdgeProblem>(edgeFvGridGeometry, edgeSpatialParams, "Edge");
 
     // the solution vector
     using Traits = MultiDomainTraits<BulkProblemTypeTag, FacetProblemTypeTag, EdgeProblemTypeTag>;

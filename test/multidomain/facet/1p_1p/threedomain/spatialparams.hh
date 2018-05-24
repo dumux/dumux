@@ -26,8 +26,7 @@
 
 #include <dumux/material/spatialparams/fv1p.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup OnePTests
@@ -53,11 +52,10 @@ public:
     using PermeabilityType = Scalar;
 
     //! the constructor
-    OnePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    OnePSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
     : ParentType(fvGridGeometry)
     {
-        const auto modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        permeability_ = getParamFromGroup<Scalar>(modelParamGroup, "SpatialParams.Permeability");
+        permeability_ = getParamFromGroup<Scalar>(paramGroup, "SpatialParams.Permeability");
     }
 
     //! Function for defining the (intrinsic) permeability \f$[m^2]\f$.

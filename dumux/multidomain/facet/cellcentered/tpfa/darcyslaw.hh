@@ -168,7 +168,7 @@ class FacetCouplingCCTpfaDarcysLawImpl<TypeTag, /*isNetwork*/false>
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
-        static const Scalar gravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        static const Scalar gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
         if (gravity)
             DUNE_THROW(Dune::NotImplemented, "gravity for darcys law with facet coupling");
 
@@ -210,7 +210,7 @@ class FacetCouplingCCTpfaDarcysLawImpl<TypeTag, /*isNetwork*/false>
         }
 
         //! xi factor for the coupling conditions
-        static const Scalar xi = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "FacetCoupling.Xi", 1.0);
+        static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
         static const Scalar oneMinusXi = 1.0 - xi;
 
         const auto area = scvf.area();
@@ -392,7 +392,7 @@ class FacetCouplingCCTpfaDarcysLawImpl<TypeTag, /*isNetwork*/true>
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
-        static const Scalar gravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        static const Scalar gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
         if (gravity)
             DUNE_THROW(Dune::NotImplemented, "gravity for darcys law with facet coupling");
 
@@ -441,7 +441,7 @@ class FacetCouplingCCTpfaDarcysLawImpl<TypeTag, /*isNetwork*/true>
         }
 
         //! xi factor for the coupling conditions
-        static const Scalar xi = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "FacetCoupling.Xi", 1.0);
+        static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
         static const Scalar oneMinusXi = 1.0 - xi;
 
         const auto area = scvf.area();

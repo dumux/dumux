@@ -388,9 +388,10 @@ public:
             };
 
             // derive the residuals numerically
+            static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
             static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
             NumericDifferentiation::partialDerivative(evalResiduals, elemSol[0][pvIdx], partialDerivs, origResiduals,
-                                                      eps_(elemSol[0][pvIdx], pvIdx));
+                                                      eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);
 
             // add the current partial derivatives to the global jacobian matrix
             for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
@@ -499,10 +500,10 @@ public:
 
                 // derive the residuals numerically
                 LocalResidualValues partialDeriv(0.0);
-                using CoupledDomainTypeTag = typename Assembler::Traits::template SubDomainTypeTag<domainJ>;
-                static const NumericEpsilon<Scalar, JacobianBlock::block_type::cols> epsCoupl_{GET_PROP_VALUE(CoupledDomainTypeTag, ModelParameterGroup)};
+                static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
+                static const NumericEpsilon<Scalar, JacobianBlock::block_type::cols> epsCoupl_{this->problem().paramGroup()};
                 NumericDifferentiation::partialDerivative(evalCouplingResidual, priVarsJ[pvIdx], partialDeriv, origResidual,
-                                                          epsCoupl_(priVarsJ[pvIdx], pvIdx));
+                                                          epsCoupl_(priVarsJ[pvIdx], pvIdx), numDiffMethod);
 
                 // add the current partial derivatives to the global jacobian matrix
                 for (int eqIdx = 0; eqIdx < numEq; eqIdx++)

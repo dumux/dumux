@@ -58,9 +58,7 @@ SET_TYPE_PROP(OnePSubTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(OnePSubTypeTag, Problem, OnePSubProblem<TypeTag> );
 // Set the spatial parameters
 SET_TYPE_PROP(OnePSubTypeTag, SpatialParams, OnePSpatialParams<TypeTag> );
-// The model parameter group
-SET_STRING_PROP(OnePSubTypeTag, ModelParameterGroup, "OneP");
-}
+} // end namespace Properties
 
 /*!
  * \ingroup MultiDomain
@@ -88,8 +86,8 @@ class OnePSubProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    OnePSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry, GET_PROP_VALUE(TypeTag, ModelParameterGroup))
+    OnePSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup)
     {}
 
     //! Return the temperature within the domain in [K].

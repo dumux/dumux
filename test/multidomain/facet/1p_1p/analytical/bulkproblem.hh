@@ -34,13 +34,11 @@
 
 #include "spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 // forward declarations
 template<class TypeTag> class OnePBulkProblem;
 
-namespace Properties
-{
+namespace Properties {
 // create the type tag nodes
 NEW_TYPE_TAG(OnePBulk, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(OnePBulkTpfa, INHERITS_FROM(OnePBulk, CCTpfaFacetCouplingModel));
@@ -51,8 +49,6 @@ SET_TYPE_PROP(OnePBulk, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconformin
 SET_TYPE_PROP(OnePBulk, Problem, OnePBulkProblem<TypeTag>);
 // set the spatial params
 SET_TYPE_PROP(OnePBulk, SpatialParams, OnePSpatialParams<TypeTag>);
-// the group for retrieving sub-domain specific params
-SET_STRING_PROP(OnePBulk, ModelParameterGroup, "Bulk");
 
 // the fluid system
 SET_PROP(OnePBulk, FluidSystem)
@@ -96,8 +92,10 @@ class OnePBulkProblem : public PorousMediumFlowProblem<TypeTag>
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
 public:
-    OnePBulkProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry, GET_PROP_VALUE(TypeTag, ModelParameterGroup))
+    OnePBulkProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                    std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                    const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, spatialParams, paramGroup)
     , useAnalyticProblem_(getParam<bool>("Problem.UseAnalyticProblem"))
     , useInteriorDirichletBCs_(getParam<bool>("Problem.UseInteriorDirichletBCs"))
     , lowDimPermeability_(getParam<Scalar>("LowDim.SpatialParams.Permeability"))
