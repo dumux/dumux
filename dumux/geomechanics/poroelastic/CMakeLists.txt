@@ -1,4 +1,5 @@
 install(FILES
+couplingmanager.hh
 localresidual.hh
 model.hh
 volumevariables.hh

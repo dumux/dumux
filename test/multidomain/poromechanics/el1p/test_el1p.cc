@@ -40,7 +40,7 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
 
-#include <dumux/multidomain/poromechanics/poromechanicscouplingmanager.hh>
+#include <dumux/geomechanics/poroelastic/couplingmanager.hh>
 
 #include <dumux/io/vtkfunction.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
@@ -67,8 +67,8 @@ private:
 public:
     using type = PoroMechanicsCouplingManager< Traits >;
 };
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 int main(int argc, char** argv) try
 {
@@ -192,7 +192,10 @@ int main(int argc, char** argv) try
     // finalize, print dumux message to say goodbye
     ////////////////////////////////////////////////////////////
     if (mpiHelper.rank() == 0)
+    {
+        Parameters::print();
         DumuxMessage::print(/*firstCall=*/false);
+    }
 
     return 0;
 
