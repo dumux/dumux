@@ -25,6 +25,7 @@
 #ifndef DUMUX_MULTIDOMAIN_COUPLING_MANAGER_HH
 #define DUMUX_MULTIDOMAIN_COUPLING_MANAGER_HH
 
+#include <vector>
 #include <dune/common/exceptions.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 

@@ -45,11 +45,10 @@
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
-#include <dumux/mixeddimension/embedded/integrationpointsource.hh>
+#include <dumux/multidomain/embedded/couplingmanager2d3d.hh>
 
 #include "matrixproblem.hh"
 #include "fractureproblem.hh"
-#include "couplingmanager.hh"
 
 namespace Dumux {
 namespace Properties {
@@ -57,22 +56,19 @@ namespace Properties {
 SET_PROP(MatrixTypeTag, CouplingManager)
 {
     using Traits = MultiDomainTraits<TypeTag, TTAG(FractureTypeTag)>;
-    using type = Dumux::EmbeddedFractureCouplingManager<Traits>;
+    using type = EmbeddedCouplingManager2d3d<Traits>;
 };
 
 SET_PROP(FractureTypeTag, CouplingManager)
 {
     using Traits = MultiDomainTraits<TTAG(MatrixTypeTag), TypeTag>;
-    using type = Dumux::EmbeddedFractureCouplingManager<Traits>;
+    using type = EmbeddedCouplingManager2d3d<Traits>;
 };
 
-SET_TYPE_PROP(MatrixTypeTag, PointSource, IntegrationPointSource<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GlobalCoordinate,
-                                                                 typename GET_PROP_TYPE(TypeTag, NumEqVector)>);
-SET_TYPE_PROP(FractureTypeTag, PointSource, IntegrationPointSource<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GlobalCoordinate,
-                                                                   typename GET_PROP_TYPE(TypeTag, NumEqVector)>);
-
-SET_TYPE_PROP(MatrixTypeTag, PointSourceHelper, IntegrationPointSourceHelper);
-SET_TYPE_PROP(FractureTypeTag, PointSourceHelper, IntegrationPointSourceHelper);
+SET_TYPE_PROP(MatrixTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<0>);
+SET_TYPE_PROP(FractureTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<1>);
+SET_TYPE_PROP(MatrixTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<0>);
+SET_TYPE_PROP(FractureTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<1>);
 
 SET_STRING_PROP(MatrixTypeTag, ModelParameterGroup, "Matrix");
 SET_STRING_PROP(FractureTypeTag, ModelParameterGroup, "Fracture");

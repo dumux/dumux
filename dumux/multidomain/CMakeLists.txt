@@ -1,4 +1,5 @@
-add_subdirectory("poromechanics")
+add_subdirectory(poromechanics)
+add_subdirectory(embedded)
 
 #install headers
 install(FILES

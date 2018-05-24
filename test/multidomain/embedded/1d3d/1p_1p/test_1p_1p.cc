@@ -44,9 +44,7 @@
 #include <dumux/multidomain/traits.hh>
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtonsolver.hh>
-// #include <dumux/mixeddimension/embedded/cellcentered/bboxtreecouplingmanagersimple.hh>
-#include <dumux/mixeddimension/embedded/cellcentered/bboxtreecouplingmanager.hh>
-#include <dumux/mixeddimension/embedded/integrationpointsource.hh>
+#include <dumux/multidomain/embedded/couplingmanager1d3d.hh>
 
 #include "bloodflowproblem.hh"
 #include "tissueproblem.hh"
@@ -58,24 +56,19 @@ namespace Properties {
 SET_PROP(TissueCCTypeTag, CouplingManager)
 {
     using Traits = MultiDomainTraits<TypeTag, TTAG(BloodFlowCCTypeTag)>;
-    // using type = Dumux::CCBBoxTreeEmbeddedCouplingManagerSimple<Traits>;
-    using type = Dumux::CCBBoxTreeEmbeddedCouplingManager<Traits>;
+    using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
 SET_PROP(BloodFlowCCTypeTag, CouplingManager)
 {
     using Traits = MultiDomainTraits<TTAG(TissueCCTypeTag), TypeTag>;
-    // using type = Dumux::CCBBoxTreeEmbeddedCouplingManagerSimple<Traits>;
-    using type = Dumux::CCBBoxTreeEmbeddedCouplingManager<Traits>;
+    using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
 };
 
-SET_TYPE_PROP(TissueCCTypeTag, PointSource, IntegrationPointSource<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GlobalCoordinate,
-                                                                   typename GET_PROP_TYPE(TypeTag, NumEqVector)>);
-SET_TYPE_PROP(BloodFlowCCTypeTag, PointSource, IntegrationPointSource<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GlobalCoordinate,
-                                                                      typename GET_PROP_TYPE(TypeTag, NumEqVector)>);
-
-SET_TYPE_PROP(TissueCCTypeTag, PointSourceHelper, IntegrationPointSourceHelper);
-SET_TYPE_PROP(BloodFlowCCTypeTag, PointSourceHelper, IntegrationPointSourceHelper);
+SET_TYPE_PROP(TissueCCTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<0>);
+SET_TYPE_PROP(BloodFlowCCTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<1>);
+SET_TYPE_PROP(TissueCCTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<0>);
+SET_TYPE_PROP(BloodFlowCCTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<1>);
 
 } // end namespace Properties
 } // end namespace Dumux
