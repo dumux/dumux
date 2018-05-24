@@ -24,6 +24,9 @@
 #ifndef DUMUX_SOLIDSYSTEMS_INERT_SOLID_PHASE_HH
 #define DUMUX_SOLIDSYSTEMS_INERT_SOLID_PHASE_HH
 
+#include <string>
+#include <dune/common/exceptions.hh>
+
 namespace Dumux {
 namespace SolidSystems {
 
