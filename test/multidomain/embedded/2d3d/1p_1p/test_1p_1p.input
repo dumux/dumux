@@ -1,11 +1,7 @@
-[MixedDimension]
-NumCircleSegments = 100
-
 [TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 1 # [s]
 MaxTimeStepSize = 1
-MaxTimeStepDivisions = 2
 
 [Fracture.Grid]
 File = fracture.msh
@@ -17,9 +13,6 @@ Cells = 20 20 10
 
 [Problem]
 Name = test_embedded_fracture
-NormIntegrationOrder = 2
-NormExcludeInnerBulk = true
-IntegrationOrder = 2
 EnableGravity = false
 
 [Component]
@@ -35,6 +28,3 @@ Aperture = 0.01 # [m]
 
 [Vtk]
 AddVelocity = false
-
-[Assembly]
-Invert = true

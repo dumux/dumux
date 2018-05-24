@@ -18,13 +18,14 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup MultiDomain
  * \ingroup MixedDimension
  * \brief A class glueing two grids of different dimension geometrically
  *        Intersections are computed using axis-aligned bounding box trees
  */
 
-#ifndef DUMUX_MIXEDDIMENSION_GLUE_HH
-#define DUMUX_MIXEDDIMENSION_GLUE_HH
+#ifndef DUMUX_MULTIDOMAIN_MIXEDDIMENSION_GLUE_HH
+#define DUMUX_MULTIDOMAIN_MIXEDDIMENSION_GLUE_HH
 
 #include <iostream>
 #include <fstream>
@@ -44,7 +45,7 @@ namespace Dumux {
 
 // forward declaration
 template<class BulkGridView, class LowDimGridView>
-class CCMixedDimensionGlue;
+class MixedDimensionGlue;
 
 /*!
  * \ingroup MixedDimension
@@ -52,8 +53,8 @@ class CCMixedDimensionGlue;
  *        as follows: for (const auto& is : intersections(glue)) { ... }
  */
 template<class BulkGridView, class LowDimGridView>
-Dune::IteratorRange<typename CCMixedDimensionGlue<BulkGridView, LowDimGridView>::Intersections::const_iterator>
-intersections(const CCMixedDimensionGlue<BulkGridView, LowDimGridView>& glue)
+Dune::IteratorRange<typename MixedDimensionGlue<BulkGridView, LowDimGridView>::Intersections::const_iterator>
+intersections(const MixedDimensionGlue<BulkGridView, LowDimGridView>& glue)
 { return {glue.ibegin(), glue.iend()}; }
 
 namespace Glue {
@@ -66,7 +67,6 @@ namespace Glue {
 template<class BulkGridView, class LowDimGridView>
 class Intersection
 {
-
     using BulkElement = typename BulkGridView::template Codim<0>::Entity;
     using LowDimElement = typename LowDimGridView::template Codim<0>::Entity;
 
@@ -138,7 +138,7 @@ private:
  *        Both domain are assumed to be discretized using a cc finite volume scheme.
  */
 template<class BulkGridView, class LowDimGridView>
-class CCMixedDimensionGlue
+class MixedDimensionGlue
 {
     using BulkEntitySet = GridViewGeometricEntitySet<BulkGridView, 0>;
     using BulkTree = BoundingBoxTree<BulkEntitySet>;
@@ -158,12 +158,12 @@ public:
     /*!
      * \brief Default constructor
      */
-    CCMixedDimensionGlue() = default;
+    MixedDimensionGlue() = default;
 
     /*!
      * \brief Constructor
      */
-    CCMixedDimensionGlue(const BulkTree& bulkTree, const LowDimTree& lowDimTree)
+    MixedDimensionGlue(const BulkTree& bulkTree, const LowDimTree& lowDimTree)
     { build(bulkTree, lowDimTree); }
 
     void build(const BulkTree& bulkTree, const LowDimTree& lowDimTree)

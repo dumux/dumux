@@ -236,34 +236,9 @@ public:
         source = sourceValue*source.quadratureWeight()*source.integrationElement();
     }
 
-    //! evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
-    //! we only need to evaluate the part of the residual that will be influence by the low dim DOF
-    template<class MatrixBlock, class VolumeVariables>
-    void addSourceDerivatives(MatrixBlock& block,
-                              const Element& element,
-                              const FVElementGeometry& fvGeometry,
-                              const VolumeVariables& curElemVolVars,
-                              const SubControlVolume& scv) const
-    {
-        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
-
-        auto key = std::make_pair(eIdx, 0);
-        if (this->pointSourceMap().count(key))
-        {
-            // call the solDependent function. Herein the user might fill/add values to the point sources
-            // we make a copy of the local point sources here
-            auto pointSources = this->pointSourceMap().at(key);
-
-            // add the point source values to the local residual (negative sign is convention for source term)
-            for (const auto& source : pointSources)
-                block[0][0] -= this->couplingManager().pointSourceDerivative(source, Dune::index_constant<0>{}, Dune::index_constant<0>{});
-        }
-    }
-
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
      * \param globalPos The position for which the initial condition should be evaluated
      *
      * For this method, the \a values parameter stores primary
