@@ -116,8 +116,8 @@ int main(int argc, char** argv) try
     // the problems (boundary conditions)
     using OnePProblem = typename GET_PROP_TYPE(OnePTypeTag, Problem);
     using PoroMechProblem = typename GET_PROP_TYPE(PoroMechTypeTag, Problem);
-    auto onePProblem = std::make_shared<OnePProblem>(onePFvGridGeometry);
-    auto poroMechProblem = std::make_shared<PoroMechProblem>(poroMechFvGridGeometry);
+    auto onePProblem = std::make_shared<OnePProblem>(onePFvGridGeometry, "OneP");
+    auto poroMechProblem = std::make_shared<PoroMechProblem>(poroMechFvGridGeometry, "PoroElastic");
 
     // the solution vectors
     using Traits = MultiDomainTraits<OnePTypeTag, PoroMechTypeTag>;

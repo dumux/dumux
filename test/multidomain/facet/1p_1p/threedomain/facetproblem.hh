@@ -35,13 +35,11 @@
 
 #include "spatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 // forward declarations
 template<class TypeTag> class OnePFacetProblem;
 
-namespace Properties
-{
+namespace Properties {
 // create the type tag nodes
 NEW_TYPE_TAG(OnePFacet, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(OnePFacetTpfa, INHERITS_FROM(OnePFacet, CCTpfaFacetCouplingModel));
@@ -52,8 +50,6 @@ SET_TYPE_PROP(OnePFacet, Grid, Dune::FoamGrid<2, 3>);
 SET_TYPE_PROP(OnePFacet, Problem, OnePFacetProblem<TypeTag>);
 // set the spatial params
 SET_TYPE_PROP(OnePFacet, SpatialParams, OnePSpatialParams<TypeTag>);
-// the group for retrieving sub-domain specific params
-SET_STRING_PROP(OnePFacet, ModelParameterGroup, "Facet");
 
 // the fluid system
 SET_PROP(OnePFacet, FluidSystem)
@@ -100,9 +96,11 @@ class OnePFacetProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     //! The constructor
-    OnePFacetProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry, GET_PROP_VALUE(TypeTag, ModelParameterGroup)),
-      aperture_(getParam<Scalar>("Extrusion.Aperture"))
+    OnePFacetProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                     std::shared_ptr<typename ParentType::SpatialParams> spatialParams,
+                     const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, spatialParams, paramGroup)
+    , aperture_(getParam<Scalar>("Extrusion.Aperture"))
     {}
 
     //! Specifies the kind of boundary condition at a boundary position

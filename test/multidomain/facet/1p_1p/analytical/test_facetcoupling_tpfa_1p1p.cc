@@ -50,7 +50,6 @@
 
 // set the coupling manager property in the sub-problems
 namespace Dumux {
-
 namespace Properties {
 
 NEW_PROP_TAG(CouplingManager);
@@ -78,8 +77,8 @@ private:
 public:
     using type = CCTpfaFacetCouplingManager<Traits, CouplingMapper>;
 };
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 int main(int argc, char** argv) try
 {
@@ -130,8 +129,10 @@ int main(int argc, char** argv) try
     // the problems (boundary conditions)
     using BulkProblem = typename GET_PROP_TYPE(BulkProblemTypeTag, Problem);
     using LowDimProblem = typename GET_PROP_TYPE(LowDimProblemTypeTag, Problem);
-    auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry);
-    auto lowDimProblem = std::make_shared<LowDimProblem>(lowDimFvGridGeometry);
+    auto bulkSpatialParams = std::make_shared<typename BulkProblem::SpatialParams>(bulkFvGridGeometry, "Bulk");
+    auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, bulkSpatialParams, "Bulk");
+    auto lowDimSpatialParams = std::make_shared<typename LowDimProblem::SpatialParams>(lowDimFvGridGeometry, "LowDim");
+    auto lowDimProblem = std::make_shared<LowDimProblem>(lowDimFvGridGeometry, lowDimSpatialParams, "LowDim");
 
     // the solution vector
     using Traits = MultiDomainTraits<BulkProblemTypeTag, LowDimProblemTypeTag>;
