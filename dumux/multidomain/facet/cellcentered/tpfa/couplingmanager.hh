@@ -885,21 +885,25 @@ public:
      * \brief We have to provide the overload of this function in order to avoid
      *        ambiguity due to the inheritance of two classes. Models using facet
      *        coupling together with the cell-centered tpfa scheme have no extended
-     *        source stencils.
+     *        jacobian pattern.
      */
-    template<std::size_t id>
-    std::vector<std::size_t> extendedSourceStencil(Dune::index_constant<id>, const Element<id>& element) const
-    { return std::vector<std::size_t>(); }
+    template<std::size_t id, class JacobianPattern>
+    void extendJacobianPattern(Dune::index_constant<id> domainI, JacobianPattern& pattern) const
+    {}
 
     /*!
      * \brief We have to provide the overload of this function in order to avoid
      *        ambiguity due to the inheritance of two classes. Models using facet
      *        coupling together with the cell-centered tpfa scheme have no extended
-     *        source stencils.
+     *        jacobian pattern and thus no additional derivatives.
      */
-    template<std::size_t id>
-    std::vector<std::size_t> extendedSourceStencilInverse(Dune::index_constant<id>, std::size_t dofIdxGlobal) const
-    { return std::vector<std::size_t>(); }
+    template<std::size_t i, class LocalAssemblerI, class JacobianMatrixDiagBlock, class GridVariables>
+    void evalAdditionalDomainDerivatives(Dune::index_constant<i> domainI,
+                                         const LocalAssemblerI& localAssemblerI,
+                                         const typename LocalAssemblerI::LocalResidual::ElementResidualVector& origResiduals,
+                                         JacobianMatrixDiagBlock& A,
+                                         GridVariables& gridVariables)
+    {}
 };
 
 } // end namespace Dumux
