@@ -483,8 +483,8 @@ public:
 
                 // derive the residuals numerically
                 ElementResidualVector partialDerivs(element.subEntities(dim));
-                static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
-                static const NumericEpsilon<Scalar, JacobianBlock::block_type::cols> epsCoupl_{this->problem().paramGroup()};
+                static const int numDiffMethod = getParamFromGroup<int>(this->assembler().problem(domainJ).paramGroup(), "Assembly.NumericDifferenceMethod");
+                static const NumericEpsilon<Scalar, JacobianBlock::block_type::cols> epsCoupl_{this->assembler().problem(domainJ).paramGroup()};
                 NumericDifferentiation::partialDerivative(evalCouplingResidual, origPriVarsJ[pvIdx], partialDerivs, origResidual,
                                                           epsCoupl_(origPriVarsJ[pvIdx], pvIdx), numDiffMethod);
 
