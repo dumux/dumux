@@ -21,5 +21,12 @@ WriteFaceData = false
 
 
 [Assembly]
-NumericDifference.BaseEpsilon =  1e-4
-NumericDifference.PriVarMagnitude =  1e5 1 1
+NumericDifference.BaseEpsilon =  1e-8
+
+# This test does actually not require setting the primary variable magnitues.
+# This rather serves as a demonstration of how to use the feature.
+[CellCenter.Assembly]
+NumericDifference.PriVarMagnitude = 1e5 # pressure is in the order of 1e5
+
+[Face.Assembly]
+NumericDifference.PriVarMagnitude = 1 # velocity is in the order of 1
