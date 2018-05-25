@@ -36,6 +36,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/numericdifferentiation.hh>
+#include <dumux/common/typetraits/utility.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/fvlocalassemblerbase.hh>
 
@@ -445,15 +446,18 @@ class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numer
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-
-    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
-    enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
-    static constexpr int maxNeighbors = 4*(2*dim);
+    static constexpr int maxNeighbors = 4*(2*ModelTraits::dim());
     static constexpr auto domainI = Dune::index_constant<id>();
     static constexpr auto cellCenterId = typename Dune::index_constant<0>();
     static constexpr auto faceId = typename Dune::index_constant<1>();
+
+    static constexpr auto numEq = ModelTraits::numEq();
+    static constexpr auto numEqCellCenter = CellCenterPrimaryVariables::dimension;
+    static constexpr auto numEqFace = FacePrimaryVariables::dimension;
 
 public:
     using ParentType::ParentType;
@@ -520,15 +524,13 @@ public:
            auto& curVolVars =  this->getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
            const auto origVolVars(curVolVars);
 
-           // const auto origElemSol = elementSolution<FVElementGeometry>(curSol[globalJ]);
-
-           for(auto pvIdx : priVarIndices_(cellCenterId))
+           for(int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
            {
                using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
                const auto& cellCenterPriVars = curSol[globalJ];
                PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
 
-               constexpr auto offset = PrimaryVariables::dimension - CellCenterPrimaryVariables::dimension;
+               constexpr auto offset = numEq - numEqCellCenter;
                partialDeriv = 0.0;
 
                auto evalResidual = [&](Scalar priVar)
@@ -541,10 +543,11 @@ public:
                };
 
                // derive the residuals numerically
-               static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
-               static const NumericEpsilon<Scalar, numEq> eps{this->problem().paramGroup()};
+               const auto& paramGroup = this->problem().paramGroup();
+               static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
+               static const auto eps = this->couplingManager().numericEpsilon(domainI, paramGroup);
                NumericDifferentiation::partialDerivative(evalResidual, priVars[pvIdx + offset], partialDeriv, origResidual,
-                                                         eps(priVars[pvIdx + offset], pvIdx + offset), numDiffMethod);
+                                                         eps(priVars[pvIdx + offset], pvIdx), numDiffMethod);
 
 
                // update the global jacobian matrix with the current partial derivatives
@@ -621,7 +624,7 @@ public:
             auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), this->curElemFaceVars(), scvf);
             const auto origFaceVars(faceVars);
 
-               for(auto pvIdx : priVarIndices_(faceId))
+               for(int pvIdx = 0; pvIdx < numEqFace; ++pvIdx)
                {
                    auto faceSolution = origFaceSolution;
                    partialDeriv = 0;
@@ -635,12 +638,14 @@ public:
                    };
 
                    // derive the residuals numerically
-                   static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
-                   static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
-                   NumericDifferentiation::partialDerivative(evalResidual, faceSolution[globalJ][pvIdx], partialDeriv, origResiduals[scvf.localFaceIdx()], eps_(faceSolution[globalJ][pvIdx], pvIdx), numDiffMethod);
+                   const auto& paramGroup = problem.paramGroup();
+                   static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
+                   static const auto eps = this->couplingManager().numericEpsilon(domainI, paramGroup);
+                   NumericDifferentiation::partialDerivative(evalResidual, faceSolution[globalJ][pvIdx], partialDeriv, origResiduals[scvf.localFaceIdx()],
+                                                             eps(faceSolution[globalJ][pvIdx], pvIdx), numDiffMethod);
 
                    // update the global jacobian matrix with the current partial derivatives
-                   updateGlobalJacobian_(A, faceGlobalI, globalJ, pvIdx - ParentType::faceOffset, partialDeriv);
+                   updateGlobalJacobian_(A, faceGlobalI, globalJ, pvIdx, partialDeriv);
 
                    // restore the original faceVars
                    faceVars = origFaceVars;
@@ -684,7 +689,7 @@ public:
             auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), this->curElemFaceVars(), scvfJ);
             const auto origFaceVars(faceVars);
 
-            for(auto pvIdx : priVarIndices_(faceId))
+            for(int pvIdx = 0; pvIdx < numEqFace; ++pvIdx)
             {
                 auto facePriVars(this->curSol()[faceId][globalJ]);
                 partialDeriv = 0.0;
@@ -698,12 +703,14 @@ public:
                 };
 
                 // derive the residuals numerically
-                static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
-                static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
-                NumericDifferentiation::partialDerivative(evalResidual, facePriVars[pvIdx], partialDeriv, origResidual, eps_(facePriVars[pvIdx], pvIdx), numDiffMethod);
+                const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
+                static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
+                static const auto epsCoupl = this->couplingManager().numericEpsilon(domainJ, paramGroup);
+                NumericDifferentiation::partialDerivative(evalResidual, facePriVars[pvIdx], partialDeriv, origResidual,
+                                                          epsCoupl(facePriVars[pvIdx], pvIdx), numDiffMethod);
 
                 // update the global jacobian matrix with the current partial derivatives
-                updateGlobalJacobian_(A, cellCenterGlobalI, globalJ, pvIdx - ParentType::faceOffset, partialDeriv);
+                updateGlobalJacobian_(A, cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
 
                 // restore the original faceVars
                 faceVars = origFaceVars;
@@ -745,9 +752,14 @@ public:
                     return this->couplingManager().evalCouplingResidual(domainI, *this, domainJ, globalJ);
                 };
 
-                // derive the residuals numerically
                 CellCenterResidualValue partialDeriv(0.0);
-                NumericDifferentiation::partialDerivative(evalCouplingResidual, origPriVarsJ[pvIdx], partialDeriv, origResidual);
+
+                // derive the residuals numerically
+                const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
+                static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
+                static const auto epsCoupl = this->couplingManager().numericEpsilon(domainJ, paramGroup);
+                NumericDifferentiation::partialDerivative(evalCouplingResidual, origPriVarsJ[pvIdx], partialDeriv, origResidual,
+                                                          epsCoupl(origPriVarsJ[pvIdx], pvIdx), numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
                 const auto cellCenterGlobalI = this->problem().fvGridGeometry().elementMapper().index(element);
@@ -797,7 +809,7 @@ public:
                 const auto origVolVars(curVolVars);
                 const auto origCellCenterPriVars(this->curSol()[cellCenterId][globalJ]);
 
-                for(auto pvIdx : priVarIndices_(cellCenterId))
+                for(int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
                 {
 
                     using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
@@ -818,9 +830,11 @@ public:
                     };
 
                     // derive the residuals numerically
-                    static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
-                    static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
-                    NumericDifferentiation::partialDerivative(evalResidual, priVars[pvIdx + offset], partialDeriv, origResiduals[scvf.localFaceIdx()], eps_(priVars[pvIdx + offset], pvIdx + offset), numDiffMethod);
+                    const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
+                    static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
+                    static const auto epsCoupl = this->couplingManager().numericEpsilon(domainJ, paramGroup);
+                    NumericDifferentiation::partialDerivative(evalResidual, priVars[pvIdx + offset], partialDeriv, origResiduals[scvf.localFaceIdx()],
+                                                              epsCoupl(priVars[pvIdx + offset], pvIdx), numDiffMethod);
 
                     // update the global jacobian matrix with the current partial derivatives
                     updateGlobalJacobian_(A, faceGlobalI, globalJ, pvIdx, partialDeriv);
@@ -877,9 +891,11 @@ public:
 
                     // derive the residuals numerically
                     FaceResidualValue partialDeriv(0.0);
-                    static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
-                    static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
-                    NumericDifferentiation::partialDerivative(evalCouplingResidual, origPriVarsJ[pvIdx], partialDeriv, origResidual, eps_(origPriVarsJ[pvIdx], pvIdx), numDiffMethod);
+                    const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
+                    static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
+                    static const auto epsCoupl = this->couplingManager().numericEpsilon(domainJ, paramGroup);
+                    NumericDifferentiation::partialDerivative(evalCouplingResidual, origPriVarsJ[pvIdx], partialDeriv, origResidual,
+                                                              epsCoupl(origPriVarsJ[pvIdx], pvIdx), numDiffMethod);
 
                     // update the global stiffness matrix with the current partial derivatives
                     updateGlobalJacobian_(A, faceGlobalI, globalJ, pvIdx, partialDeriv);
@@ -927,31 +943,6 @@ public:
     }
 
 private:
-    //! Helper function that returns an iterable range of primary variable indices.
-    //! Specialization for cell center dofs.
-    static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::CellCenterIdx)
-    {
-        constexpr auto numEqCellCenter =  GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-        return Dune::range(0, numEqCellCenter);
-#else
-        return IntRange(0, numEqCellCenter);
-#endif
-    }
-
-    //! Helper function that returns an iterable range of primary variable indices.
-    //! Specialization for face dofs.
-    static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::FaceIdx)
-    {
-        constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-        constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
-    #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-        return Dune::range(numEqCellCenter, numEqCellCenter + numEqFace);
-    #else
-        return IntRange(numEqCellCenter, numEqCellCenter + numEqFace);
-    #endif
-    }
 
     template<class T = TypeTag>
     static typename std::enable_if<!GET_PROP_VALUE(T, EnableGridFaceVariablesCache), FaceVariables&>::type
@@ -963,8 +954,6 @@ private:
     getFaceVarAccess(GridFaceVariables& gridFaceVariables, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
     { return gridFaceVariables.faceVars(scvf.index()); }
 };
-
-
 
 } // end namespace Dumux
 
