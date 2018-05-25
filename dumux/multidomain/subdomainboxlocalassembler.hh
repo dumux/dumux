@@ -483,10 +483,13 @@ public:
 
                 // derive the residuals numerically
                 ElementResidualVector partialDerivs(element.subEntities(dim));
-                static const int numDiffMethod = getParamFromGroup<int>(this->assembler().problem(domainJ).paramGroup(), "Assembly.NumericDifferenceMethod");
-                static const NumericEpsilon<Scalar, JacobianBlock::block_type::cols> epsCoupl_{this->assembler().problem(domainJ).paramGroup()};
+
+                const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
+                static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
+                static const auto epsCoupl = this->couplingManager().numericEpsilon(domainJ, paramGroup);
+
                 NumericDifferentiation::partialDerivative(evalCouplingResidual, origPriVarsJ[pvIdx], partialDerivs, origResidual,
-                                                          epsCoupl_(origPriVarsJ[pvIdx], pvIdx), numDiffMethod);
+                                                          epsCoupl(origPriVarsJ[pvIdx], pvIdx), numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
                 for (auto&& scv : scvs(fvGeometry))
