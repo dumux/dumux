@@ -27,6 +27,7 @@
 #define DUMUX_STAGGERED_COUPLING_MANAGER_HH
 
 #include <dumux/multidomain/couplingmanager.hh>
+#include <dumux/assembly/numericepsilon.hh>
 
 namespace Dumux {
 
@@ -44,10 +45,13 @@ class StaggeredCouplingManagerBase: public CouplingManager<MDTraits>
     template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
 
     using StaggeredSubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
-    using GridView = typename GET_PROP_TYPE(StaggeredSubDomainTypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(StaggeredSubDomainTypeTag, FVGridGeometry)::LocalView;
+
+    template<std::size_t id> using FVGridGeometry = typename std::tuple_element_t<id, typename MDTraits::FVGridGeometryTuple>::element_type;
+    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
+
+    using FVElementGeometry = typename FVGridGeometry<0>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using Element = typename GridView<0>::template Codim<0>::Entity;
     using LocalResidual = typename GET_PROP_TYPE(StaggeredSubDomainTypeTag, LocalResidual);
 
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(StaggeredSubDomainTypeTag, CellCenterPrimaryVariables);
@@ -213,6 +217,35 @@ public:
     {
         static_assert(domainI != domainJ, "Domain i cannot be coupled to itself!");
         return localAssemblerI.evalLocalResidualForFace(scvfI);
+    }
+
+    /*!
+     * \brief return the numeric epsilon used for deflecting primary variables of coupled domain j
+     */
+    using ParentType::numericEpsilon;
+    template<std::size_t j, typename std::enable_if_t<(FVGridGeometry<j>::discMethod == DiscretizationMethod::staggered), int> = 0>
+    decltype(auto) numericEpsilon(Dune::index_constant<j> domainJ,
+                                  const std::string& paramGroup) const
+    {
+        constexpr std::size_t numEqCellCenter = Traits::template PrimaryVariables<cellCenterIdx>::dimension;
+        constexpr std::size_t numEqFace = Traits::template PrimaryVariables<faceIdx>::dimension;
+        constexpr bool isCellCenter = FVGridGeometry<j>::isCellCenter();
+        constexpr std::size_t numEq = isCellCenter ? numEqCellCenter : numEqFace;
+        constexpr auto prefix = isCellCenter ? "CellCenter" : "Face";
+
+        try {
+            return NumericEpsilon<typename Traits::Scalar, numEq>(paramGroup + "." + prefix);
+         }
+         catch(Dune::RangeError e)
+         {
+             DUNE_THROW(Dumux::ParameterException, "For the staggered model, you can to specify \n\n"
+                        "  CellCenter.Assembly.NumericDifference.PriVarMagnitude = mCC\n"
+                        "  Face.Assembly.NumericDifference.PriVarMagnitude = mFace\n"
+                        "  CellCenter.Assembly.NumericDifference.BaseEpsilon = eCC_0 ... eCC_numEqCellCenter-1\n"
+                        "  Face.Assembly.NumericDifference.BaseEpsilon = eFace_0 ... eFace_numEqFace-1\n\n"
+                        "Wrong numer of values set for " << prefix  << " (has " << numEq << " primary variable(s))\n\n" << e);
+         }
+
     }
 
     //! Return a reference to the problem

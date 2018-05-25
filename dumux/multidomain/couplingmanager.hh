@@ -28,6 +28,7 @@
 #include <vector>
 #include <dune/common/exceptions.hh>
 #include <dumux/common/typetraits/typetraits.hh>
+#include <dumux/assembly/numericepsilon.hh>
 
 namespace Dumux {
 
@@ -217,6 +218,17 @@ public:
                                          JacobianMatrixDiagBlock& A,
                                          GridVariables& gridVariables)
     {}
+
+    /*!
+     * \brief return the numeric epsilon used for deflecting primary variables of coupled domain j
+     */
+    template<std::size_t j>
+    decltype(auto) numericEpsilon(Dune::index_constant<j> domainJ,
+                                  const std::string& paramGroup) const
+    {
+        constexpr auto numEq = PrimaryVariables<j>::dimension;
+        return NumericEpsilon<typename Traits::Scalar, numEq>(paramGroup);
+    }
 
 protected:
 
