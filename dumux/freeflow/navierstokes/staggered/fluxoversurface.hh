@@ -158,7 +158,7 @@ public:
       gridVariables_(gridVariables),
       sol_(sol)
     {
-        verbose_  = getParamFromGroup<bool>(assembler.problem().paramGroup(), "FluxOverSurface.Verbose", false);
+        verbose_  = getParamFromGroup<bool>(problem.paramGroup(), "FluxOverSurface.Verbose", false);
     }
 
     /*!
