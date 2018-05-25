@@ -36,12 +36,18 @@ namespace Dumux {
 template<class ActualGridVariables>
 class StaggeredGridVariablesView
 {
+public:
     using GridVolumeVariables = typename ActualGridVariables::GridVolumeVariables;
     using GridFaceVariables = typename ActualGridVariables::GridFaceVariables;
     using GridFluxVariablesCache = typename ActualGridVariables::GridFluxVariablesCache;
+
+    //! export type of the volume variables
+    using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
+
+    //! export primary variable type
+    using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
     using FVGridGeometry = typename ActualGridVariables::FVGridGeometry;
 
-public:
     explicit StaggeredGridVariablesView(ActualGridVariables* gridVariables)
     : gridVariables_(gridVariables) {}
 
