@@ -500,10 +500,11 @@ public:
 
                 // derive the residuals numerically
                 LocalResidualValues partialDeriv(0.0);
-                static const int numDiffMethod = getParamFromGroup<int>(this->assembler().problem(domainJ).paramGroup(), "Assembly.NumericDifferenceMethod");
-                static const NumericEpsilon<Scalar, JacobianBlock::block_type::cols> epsCoupl_{this->assembler().problem(domainJ).paramGroup()};
+                const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
+                static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
+                static const auto epsCoupl = this->couplingManager().numericEpsilon(domainJ, paramGroup);
                 NumericDifferentiation::partialDerivative(evalCouplingResidual, priVarsJ[pvIdx], partialDeriv, origResidual,
-                                                          epsCoupl_(priVarsJ[pvIdx], pvIdx), numDiffMethod);
+                                                          epsCoupl(priVarsJ[pvIdx], pvIdx), numDiffMethod);
 
                 // add the current partial derivatives to the global jacobian matrix
                 for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
