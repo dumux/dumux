@@ -36,6 +36,10 @@
 #include <dumux/freeflow/navierstokes/model.hh>
 #include <dune/common/float_cmp.hh>
 
+#ifndef DIM_3D
+#define DIM_3D 0
+#endif
+
 namespace Dumux
 {
 

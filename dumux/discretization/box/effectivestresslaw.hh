@@ -29,6 +29,10 @@
 
 namespace Dumux {
 
+// forward declaration
+template<class StressType, class FVGridGeometry, DiscretizationMethod discMethod>
+class EffectiveStressLaw;
+
 /*!
  * \ingroup BoxDiscretization
  * \brief Effective stress law for box scheme

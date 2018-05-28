@@ -32,6 +32,10 @@
 
 namespace Dumux {
 
+// forward declaration
+template<class StressType, class FVGridGeometry, DiscretizationMethod discMethod>
+class HookesLaw;
+
 /*!
  * \ingroup BoxDiscretization
  * \brief Hooke's law for box scheme

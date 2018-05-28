@@ -24,6 +24,8 @@
 #ifndef DUMUX_MYCOMPRESSIBLECOMPONENT_HH
 #define DUMUX_MYCOMPRESSIBLECOMPONENT_HH
 
+#ifndef HEADERCHECK
+
 #include <dumux/material/idealgas.hh>
 
 #include <dumux/material/components/base.hh>
@@ -110,4 +112,5 @@ public:
 
 } // end namespace
 
+#endif
 #endif
