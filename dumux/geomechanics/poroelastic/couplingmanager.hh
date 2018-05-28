@@ -166,9 +166,8 @@ public:
         return CouplingStencilType<PoroMechId>{ {eIdx} };
     }
 
-    //! Pull up the base class' default implementations
+    //! Pull up the base class' default implementation
     using ParentType::bindCouplingContext;
-    using ParentType::updateCoupledVariables;
 
     /*!
      * \brief For the assembly of the element residual of an element of the poro-mechanics domain,
@@ -256,12 +255,15 @@ public:
         ParentType::updateCouplingContext(pmFlowDomainId, pmFlowLocalAssembler, domainIdJ, dofIdxGlobalJ, priVarsJ, pvIdxJ);
     }
 
+    //! Pull up the base class' default implementation
+    using ParentType::updateCoupledVariables;
+
     /*!
      * \brief Update the porous medium flow domain volume variables and flux variables cache
      *        after the coupling context has been updated. This has to be done because the
      *        mechanical deformation enters the porosity/permeability relationships.
      */
-    template< class PMFlowLocalAssembler, class UpdatableElementVolVars, class UpdatableFluxVarCache >
+    template< class PMFlowLocalAssembler, class UpdatableFluxVarCache >
     void updateCoupledVariables(Dune::index_constant<PMFlowId> pmFlowDomainId,
                                 const PMFlowLocalAssembler& pmFlowLocalAssembler,
                                 ElementVolumeVariables<PMFlowId>& elemVolVars,
@@ -283,7 +285,7 @@ public:
      *        This is necessary because the fluid density is stored in them and which potentially is
      *        solution-dependent.
      */
-    template< class PoroMechLocalAssembler, class UpdatableElementVolVars, class UpdatableFluxVarCache >
+    template< class PoroMechLocalAssembler, class UpdatableFluxVarCache >
     void updateCoupledVariables(Dune::index_constant<PoroMechId> poroMechDomainId,
                                 const PoroMechLocalAssembler& poroMechLocalAssembler,
                                 ElementVolumeVariables<PoroMechId>& elemVolVars,
