@@ -26,6 +26,7 @@
 #define DUMUX_MULTIDOMAIN_COUPLING_MANAGER_HH
 
 #include <vector>
+#include <dune/common/indices.hh>
 #include <dune/common/exceptions.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/assembly/numericepsilon.hh>
@@ -220,13 +221,13 @@ public:
     {}
 
     /*!
-     * \brief return the numeric epsilon used for deflecting primary variables of coupled domain j
+     * \brief return the numeric epsilon used for deflecting primary variables of coupled domain i
      */
-    template<std::size_t j>
-    decltype(auto) numericEpsilon(Dune::index_constant<j> domainJ,
+    template<std::size_t i>
+    decltype(auto) numericEpsilon(Dune::index_constant<i>,
                                   const std::string& paramGroup) const
     {
-        constexpr auto numEq = PrimaryVariables<j>::dimension;
+        constexpr auto numEq = PrimaryVariables<i>::dimension;
         return NumericEpsilon<typename Traits::Scalar, numEq>(paramGroup);
     }
 
