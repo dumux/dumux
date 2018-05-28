@@ -54,7 +54,7 @@ class CCTpfaFacetCouplingThreeDomainManager;
  *                  and the edge grid, you should provide an offet of 1.
  */
 template<class MDTraits, class CouplingMapper, std::size_t idOffset = 0>
-class CCTpfaFacetCouplingManager : public CouplingManager< MDTraits >
+class CCTpfaFacetCouplingManager : public virtual CouplingManager< MDTraits >
 {
     using ParentType = CouplingManager< MDTraits >;
 
@@ -672,8 +672,8 @@ private:
  */
 template<class MDTraits, class CouplingMapper>
 class CCTpfaFacetCouplingThreeDomainManager
-      : public CCTpfaFacetCouplingManager<MDTraits, CouplingMapper, 0>,
-        public CCTpfaFacetCouplingManager<MDTraits, CouplingMapper, 1>
+: public CCTpfaFacetCouplingManager<MDTraits, CouplingMapper, 0>
+, public CCTpfaFacetCouplingManager<MDTraits, CouplingMapper, 1>
 {
     using BulkFacetManager = CCTpfaFacetCouplingManager<MDTraits, CouplingMapper, 0>;
     using FacetEdgeManager = CCTpfaFacetCouplingManager<MDTraits, CouplingMapper, 1>;
