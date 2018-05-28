@@ -21,8 +21,8 @@
  * \ingroup KEpsilonModel
  * \copydoc Dumux::KEpsilonProblem
  */
-#ifndef DUMUX_REKEPSILON_PROBLEM_HH
-#define DUMUX_REKEPSILON_PROBLEM_HH
+#ifndef DUMUX_KEPSILON_PROBLEM_HH
+#define DUMUX_KEPSILON_PROBLEM_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
