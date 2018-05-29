@@ -44,7 +44,7 @@ namespace Properties
 * TODO:dumux-course-task:
 * inherit from the TwoPNI model instead of TwoP here
 */
-NEW_TYPE_TAG(Injection2pNITypeTag, INHERITS_FROM(TwoP, InjectionSpatialParamsTypeTag));
+NEW_TYPE_TAG(Injection2pNITypeTag, INHERITS_FROM(TwoP));
 NEW_TYPE_TAG(Injection2pNICCTypeTag, INHERITS_FROM(CCTpfaModel, Injection2pNITypeTag));
 
 // Set the grid type
@@ -193,8 +193,8 @@ public:
         {
             // inject nitrogen. negative values mean injection
             // units kg/(s*m^2)
-            values[Indices::contiNEqIdx] = -1e-4;
-            values[Indices::contiWEqIdx] = 0.0;
+            values[Indices::conti0EqIdx + FluidSystem::N2Idx] = -1e-4;
+            values[Indices::conti0EqIdx + FluidSystem::H2OIdx] = 0.0;
 
          /*!
           * TODO:dumux-course-task:
