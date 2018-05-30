@@ -176,8 +176,9 @@ public:
         for (const auto& entry : bulkMap)
         {
             bulkElemIsCoupled_[entry.first] = true;
-            for (const auto& scvfs : entry.second.couplingScvfs)
-                bulkScvfIsCoupled_[scvfs[0]] = true;
+            for (const auto& couplingEntry : entry.second.couplingScvfs)
+                for (const auto& scvfIdx : couplingEntry.second)
+                    bulkScvfIsCoupled_[scvfIdx] = true;
         }
     }
 
@@ -195,7 +196,6 @@ public:
             const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
             auto it = map.find(eIdx);
             assert(it != map.end());
-            if (it == map.end()) DUNE_THROW(Dune::InvalidStateException, "not found!");
             return it->second.couplingStencil;
         }
 
@@ -236,11 +236,18 @@ public:
 
         const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
         const auto& couplingData = map.find(scvf.insideScvIdx())->second;
-        const auto lowDimElemIdx = couplingData.getCoupledFacetElementIdx(scvf.index());
+
+        // search the low dim element idx this scvf couples to
+        auto it = std::find_if( couplingData.couplingScvfs.begin(),
+                                couplingData.couplingScvfs.end(),
+                                [&scvf] (auto& dataPair) { return dataPair.second[0] == scvf.index(); } );
+
+        assert(it != couplingData.couplingScvfs.end());
+        const auto lowDimElemIdx = it->first;
 
         const auto& s = map.find(bulkContext_.elementIdx)->second.couplingStencil;
         const auto& idxInContext = std::distance( s.begin(), std::find(s.begin(), s.end(), lowDimElemIdx) );
-        assert(std::find(s.begin(), s.end(), lowDimElemIdx) != s.end()); if (std::find(s.begin(), s.end(), lowDimElemIdx) == s.end()) DUNE_THROW(Dune::InvalidStateException, "hure element!");
+        assert(std::find(s.begin(), s.end(), lowDimElemIdx) != s.end());
         return bulkContext_.lowDimVolVars[idxInContext];
     }
 
@@ -286,6 +293,7 @@ public:
         assert(problem<lowDimId>().fvGridGeometry().elementMapper().index(lowDimLocalAssembler.element()) == lowDimContext_.elementIdx);
 
         // since we use cc schemes: dof index = element index
+        // TODO: if xi != 1.0, we have to compute all fluxes
         const auto elementJ = problem<bulkId>().fvGridGeometry().element(dofIdxGlobalJ);
         typename LocalResidual<lowDimId>::ElementResidualVector res(1);
         res = 0.0;
@@ -349,7 +357,7 @@ public:
         {
             const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
 
-            auto it = map.find(bulkElemIdx); assert(it != map.end()); if (it == map.end()) DUNE_THROW(Dune::InvalidStateException, "as9d");
+            auto it = map.find(bulkElemIdx); assert(it != map.end());
             const auto stencilSize = it->second.couplingStencil.size();
             bulkContext_.lowDimFvGeometries.reserve(stencilSize);
             bulkContext_.lowDimVolVars.reserve(stencilSize);
@@ -448,7 +456,7 @@ public:
             const auto& couplingStencil = map.find(bulkContext_.elementIdx)->second.couplingStencil;
             auto it = std::find(couplingStencil.begin(), couplingStencil.end(), dofIdxGlobalJ);
 
-            assert(it != couplingStencil.end()); if (it == couplingStencil.end()) DUNE_THROW(Dune::InvalidStateException, "asoid");
+            assert(it != couplingStencil.end());
             const auto idxInContext = std::distance(couplingStencil.begin(), it);
             const auto& lowDimScv = bulkContext_.lowDimFvGeometries[idxInContext].scv(dofIdxGlobalJ);
             const auto elemSol = elementSolution(elementJ, this->curSol()[lowDimId], lowDimGridGeom);
@@ -540,7 +548,7 @@ public:
             const auto& couplingStencil = bulkMap.find(bulkContext_.elementIdx)->second.couplingStencil;
             auto it = std::find(couplingStencil.begin(), couplingStencil.end(), lowDimContext_.elementIdx);
 
-            assert(it != couplingStencil.end()); if (it == couplingStencil.end()) DUNE_THROW(Dune::InvalidStateException, "q90u");
+            assert(it != couplingStencil.end());
             const auto idxInContext = std::distance(couplingStencil.begin(), it);
             const auto& lowDimScv = bulkContext_.lowDimFvGeometries[idxInContext].scv(lowDimContext_.elementIdx);
             const auto lowDimElement = lowDimGridGeom.element(lowDimContext_.elementIdx);
@@ -621,12 +629,12 @@ private:
     {
         const auto bulkElemIdx = problem<bulkId>().fvGridGeometry().elementMapper().index(elementI);
 
-        assert(bulkContext_.isSet); if (!bulkContext_.isSet) DUNE_THROW(Dune::InvalidStateException, "aslkidj");
-        assert(bulkElemIsCoupled_[bulkElemIdx]); if (!bulkElemIsCoupled_[bulkElemIdx]) DUNE_THROW(Dune::InvalidStateException, "aslkidj");
+        assert(bulkContext_.isSet);
+        assert(bulkElemIsCoupled_[bulkElemIdx]);
 
         NumEqVector<bulkId> coupledFluxes(0.0);
         const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
-        const auto& couplingScvfs = map.find(bulkElemIdx)->second.getCoupledScvfs(globalJ);
+        const auto& couplingScvfs = map.find(bulkElemIdx)->second.couplingScvfs.at(globalJ);
 
         for (const auto& scvfIdx : couplingScvfs)
             coupledFluxes += localResidual.evalFlux(problem<bulkId>(),

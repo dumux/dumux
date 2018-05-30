@@ -44,7 +44,7 @@
 #include <dumux/multidomain/traits.hh>
 
 #include <dumux/multidomain/facet/gridcreator.hh>
-#include <dumux/multidomain/facet/cellcentered/tpfa/couplingmapper.hh>
+#include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/couplingmanager.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
@@ -64,7 +64,7 @@ private:
     using BulkFVG = typename GET_PROP_TYPE(TTAG(OnePBulkTpfa), FVGridGeometry);
     using FacetFVG = typename GET_PROP_TYPE(TTAG(OnePFacetTpfa), FVGridGeometry);
     using EdgeFVG = typename GET_PROP_TYPE(TTAG(OnePEdgeTpfa), FVGridGeometry);
-    using CouplingMapper = CCTpfaFacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>;
+    using CouplingMapper = FacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>;
 public:
     using type = CCTpfaFacetCouplingThreeDomainManager<Traits, CouplingMapper>;
 };
@@ -77,7 +77,7 @@ private:
     using BulkFVG = typename GET_PROP_TYPE(TTAG(OnePBulkTpfa), FVGridGeometry);
     using FacetFVG = typename GET_PROP_TYPE(TTAG(OnePFacetTpfa), FVGridGeometry);
     using EdgeFVG = typename GET_PROP_TYPE(TTAG(OnePEdgeTpfa), FVGridGeometry);
-    using CouplingMapper = CCTpfaFacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>;
+    using CouplingMapper = FacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>;
 public:
     using type = CCTpfaFacetCouplingThreeDomainManager<Traits, CouplingMapper>;
 };
@@ -90,7 +90,7 @@ private:
     using BulkFVG = typename GET_PROP_TYPE(TTAG(OnePBulkTpfa), FVGridGeometry);
     using FacetFVG = typename GET_PROP_TYPE(TTAG(OnePFacetTpfa), FVGridGeometry);
     using EdgeFVG = typename GET_PROP_TYPE(TTAG(OnePEdgeTpfa), FVGridGeometry);
-    using CouplingMapper = CCTpfaFacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>;
+    using CouplingMapper = FacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>;
 public:
     using type = CCTpfaFacetCouplingThreeDomainManager<Traits, CouplingMapper>;
 };
@@ -176,7 +176,7 @@ int main(int argc, char** argv) try
     edgeProblem->applyInitialSolution(x[edgeId]);
 
     // the coupling mapper
-    using CouplingMapper = CCTpfaFacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry, EdgeFVGridGeometry>;
+    using CouplingMapper = FacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry, EdgeFVGridGeometry>;
     auto couplingMapper = std::make_shared<CouplingMapper>();
     couplingMapper->update(*bulkFvGridGeometry, *facetFvGridGeometry, *edgeFvGridGeometry, gridCreator);
 

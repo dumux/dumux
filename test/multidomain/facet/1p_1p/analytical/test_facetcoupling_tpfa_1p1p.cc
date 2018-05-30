@@ -43,7 +43,7 @@
 #include <dumux/multidomain/traits.hh>
 
 #include <dumux/multidomain/facet/gridcreator.hh>
-#include <dumux/multidomain/facet/cellcentered/tpfa/couplingmapper.hh>
+#include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/couplingmanager.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
@@ -61,7 +61,7 @@ private:
     using Traits = MultiDomainTraits<TTAG(OnePBulkTpfa), TTAG(OnePLowDimTpfa)>;
     using BulkFVG = typename GET_PROP_TYPE(TTAG(OnePBulkTpfa), FVGridGeometry);
     using LowDimFVG = typename GET_PROP_TYPE(TTAG(OnePLowDimTpfa), FVGridGeometry);
-    using CouplingMapper = CCTpfaFacetCouplingMapper<BulkFVG, LowDimFVG>;
+    using CouplingMapper = FacetCouplingMapper<BulkFVG, LowDimFVG>;
 public:
     using type = CCTpfaFacetCouplingManager<Traits, CouplingMapper>;
 };
@@ -73,7 +73,7 @@ private:
     using Traits = MultiDomainTraits<TTAG(OnePBulkTpfa), TTAG(OnePLowDimTpfa)>;
     using BulkFVG = typename GET_PROP_TYPE(TTAG(OnePBulkTpfa), FVGridGeometry);
     using LowDimFVG = typename GET_PROP_TYPE(TTAG(OnePLowDimTpfa), FVGridGeometry);
-    using CouplingMapper = CCTpfaFacetCouplingMapper<BulkFVG, LowDimFVG>;
+    using CouplingMapper = FacetCouplingMapper<BulkFVG, LowDimFVG>;
 public:
     using type = CCTpfaFacetCouplingManager<Traits, CouplingMapper>;
 };
@@ -147,7 +147,7 @@ int main(int argc, char** argv) try
     lowDimProblem->applyInitialSolution(x[lowDimId]);
 
     // the coupling mapper
-    using CouplingMapper = CCTpfaFacetCouplingMapper<BulkFVGridGeometry, LowDimFVGridGeometry>;
+    using CouplingMapper = FacetCouplingMapper<BulkFVGridGeometry, LowDimFVGridGeometry>;
     auto couplingMapper = std::make_shared<CouplingMapper>();
     couplingMapper->update(*bulkFvGridGeometry, *lowDimFvGridGeometry, gridCreator);
 
