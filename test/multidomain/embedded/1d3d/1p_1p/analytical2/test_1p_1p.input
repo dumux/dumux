@@ -1,0 +1,46 @@
+[MixedDimension]
+NumCircleSegments = 100
+
+[Vessel.Grid]
+LowerLeft = 0 0 0
+UpperRight = 0 0 1e-4
+Cells = 21
+
+[Tissue.Grid]
+#File = ./grids/cylinder.msh
+#Refinement = 10
+LowerLeft = -1e-4 -1e-4 0
+UpperRight = 1e-4 1e-4 1e-4
+Cells = 21 21 21
+
+[Problem]
+Name = test_1p1p_embedded
+NormIntegrationOrder = 2
+NormExcludeInnerBulk = true
+IntegrationOrder = 2
+EnableGravity = false
+Lp = 1e-12
+
+[Component]
+LiquidKinematicViscosity = 1e-6 # [m^2/s]
+LiquidDensity = 1e3 # [kg/m^3]
+
+[SpatialParams]
+PermeabilityVessel = 1e-8 # [m^2]
+PermeabilityTissue = 1e-18 # [m^2]
+Radius = 40e-6 # [m]
+
+[Vtk]
+AddVelocity = false
+
+[BoundaryConditions1D]
+PressureInput = 2000
+DeltaPressure = 0
+
+[Newton]
+MaxRelativeShift = 1e-7
+MaxSteps = 10
+
+[LinearSolver]
+MaxIterations = 20000
+ResidualReduction = 1e-20
