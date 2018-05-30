@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief The two-phase porousmediumflow problem for exercise 1
+ * \brief The two-phase nonisothermal porousmediumflow problem for exercise 1
  */
 
 #ifndef DUMUX_EX1_INJECTION_PROBLEM_2PNI_HH
@@ -95,12 +95,6 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    enum {
-        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx, // water transport equation index
-        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::N2Idx, // nitrogen transport equation index
-        energyEqIdx = Indices::energyEqIdx,
-    };
-
 public:
     InjectionProblem2PNI(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -114,6 +108,8 @@ public:
                 /*numP=*/300);
 
         // name of the problem and output file
+        // getParam<TYPE>("GROUPNAME.PARAMNAME") reads and sets parameter PARAMNAME
+        // of type TYPE given in the group GROUPNAME from the input file
         name_ = getParam<std::string>("Problem.Name");
         // depth of the aquifer, units: m
         aquiferDepth_ = getParam<Scalar>("Problem.AquiferDepth");
@@ -192,9 +188,9 @@ public:
         {
             // inject nitrogen. negative values mean injection
             // units kg/(s*m^2)
-            values[contiNEqIdx] = -1e-4;
-            values[contiWEqIdx] = 0.0;
-            values[energyEqIdx] = 0.0;
+            values[Indices::conti0EqIdx + FluidSystem::N2Idx] = -1e-4;
+            values[Indices::conti0EqIdx + FluidSystem::H2OIdx] = 0.0;
+            values[Indices::energyEqIdx] = 0.0;
         }
 
         return values;

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief The two-phase porousmediumflow problem for exercise 1
+ * \brief The two-phase nonisothermal porousmediumflow problem for exercise 1
  */
 
 #ifndef DUMUX_EX1_INJECTION_PROBLEM_2PNI_HH
