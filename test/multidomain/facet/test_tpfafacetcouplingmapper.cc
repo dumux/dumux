@@ -33,7 +33,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/multidomain/facet/gridcreator.hh>
-#include <dumux/multidomain/facet/cellcentered/tpfa/couplingmapper.hh>
+#include <dumux/multidomain/facet/couplingmapper.hh>
 
 #ifndef BULKGRIDTYPE // default to ug grid if not provided by CMake
 #define BULKGRIDTYPE Dune::UGGrid<3>
@@ -81,9 +81,9 @@ int main (int argc, char *argv[]) try
     edgeFvGeometry.update();
 
     // instantiate and update mappers for all domain combinations
-    Dumux::CCTpfaFacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry> bulkFacetMapper;
-    Dumux::CCTpfaFacetCouplingTwoDomainMapper<1, FacetFVGridGeometry, EdgeFVGridGeometry> facetEdgeMapper;
-    Dumux::CCTpfaFacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry, EdgeFVGridGeometry> hierarchyMapper;
+    Dumux::FacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry> bulkFacetMapper;
+    Dumux::FacetCouplingMapperImplementation<1, FacetFVGridGeometry, EdgeFVGridGeometry, FacetFVGridGeometry::discMethod> facetEdgeMapper;
+    Dumux::FacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry, EdgeFVGridGeometry> hierarchyMapper;
 
     bulkFacetMapper.update(bulkFvGeometry, facetFvGeometry, gridCreator);
     facetEdgeMapper.update(facetFvGeometry, edgeFvGeometry, gridCreator);
@@ -117,7 +117,7 @@ int main (int argc, char *argv[]) try
             for (unsigned int i = 0; i < cStencilSize; ++i)
             {
                 const auto lowDimIdx = entry.second.couplingStencil[i];
-                const auto bulkScvfIdx = entry.second.couplingScvfs[i][0];
+                const auto bulkScvfIdx = entry.second.couplingScvfs.at(lowDimIdx)[0];
                 const auto lowDimGeom = facetFvGeometry.element(lowDimIdx).geometry();
                 const auto& bulkScvf = bulkFvGeometry.scvf(bulkScvfIdx);
                 if (!checkEquality(lowDimGeom.center(), bulkScvf.center(), lowDimGeom.volume()*1e-8))
@@ -180,7 +180,7 @@ int main (int argc, char *argv[]) try
             for (unsigned int i = 0; i < cStencilSize; ++i)
             {
                 const auto lowDimIdx = entry.second.couplingStencil[i];
-                const auto bulkScvfIdx = entry.second.couplingScvfs[i][0];
+                const auto bulkScvfIdx = entry.second.couplingScvfs.at(lowDimIdx)[0];
                 const auto lowDimGeom = edgeFvGeometry.element(lowDimIdx).geometry();
                 const auto& bulkScvf = facetFvGeometry.scvf(bulkScvfIdx);
                 if (!checkEquality(lowDimGeom.center(), bulkScvf.center(), lowDimGeom.volume()*1e-8))

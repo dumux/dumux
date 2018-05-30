@@ -33,7 +33,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/multidomain/facet/gridcreator.hh>
-#include <dumux/multidomain/facet/cellcentered/tpfa/couplingmapper.hh>
+#include <dumux/multidomain/facet/couplingmapper.hh>
 
 #ifndef BULKGRIDTYPE // default to ug grid if not provided by CMake
 #define BULKGRIDTYPE Dune::UGGrid<2>
@@ -72,7 +72,7 @@ int main (int argc, char *argv[]) try
     facetFvGeometry.update();
 
     // instantiate and update mapper for all domain combinations
-    Dumux::CCTpfaFacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry> mapper;
+    Dumux::FacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry> mapper;
     mapper.update(bulkFvGeometry, facetFvGeometry, gridCreator);
 
     constexpr auto bulkDomainId = Dune::index_constant<0>();
@@ -93,7 +93,7 @@ int main (int argc, char *argv[]) try
             DUNE_THROW(Dune::InvalidStateException, "Coupling stencil size is " << cStencilSize << " instead of 1");
 
         const auto lowDimIdx = entry.second.couplingStencil[0];
-        const auto bulkScvfIdx = entry.second.couplingScvfs[0][0];
+        const auto bulkScvfIdx = entry.second.couplingScvfs.at(lowDimIdx)[0];
         const auto lowDimGeom = facetFvGeometry.element(lowDimIdx).geometry();
         const auto& bulkScvf = bulkFvGeometry.scvf(bulkScvfIdx);
         if (!checkEquality(lowDimGeom.center(), bulkScvf.center(), lowDimGeom.volume()*1e-8))
