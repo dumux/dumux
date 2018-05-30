@@ -97,11 +97,6 @@ class Injection2p2cProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    enum {
-        contiWEqIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx, // water transport equation index
-        contiNEqIdx = Indices::conti0EqIdx + FluidSystem::N2Idx, // nitrogen transport equation index
-    };
-
 public:
     Injection2p2cProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -115,6 +110,8 @@ public:
                 /*numP=*/300);
 
         // name of the problem and output file
+        // getParam<TYPE>("GROUPNAME.PARAMNAME") reads and sets parameter PARAMNAME
+        // of type TYPE given in the group GROUPNAME from the input file
         name_ = getParam<std::string>("Problem.Name");
         // depth of the aquifer, units: m
         aquiferDepth_ = getParam<Scalar>("Problem.AquiferDepth");
@@ -205,8 +202,8 @@ public:
 
             // inject nitrogen. negative values mean injection
             // convert from units kg/(s*m^2) to mole/(s*m^2)
-            values[contiNEqIdx] = totalAreaSpecificInflow_/FluidSystem::molarMass(FluidSystem::N2Idx);
-            values[contiWEqIdx] = 0.0;
+            values[Indices::conti0EqIdx + FluidSystem::N2Idx] = totalAreaSpecificInflow_/FluidSystem::molarMass(FluidSystem::N2Idx);
+            values[Indices::conti0EqIdx + FluidSystem::H2OIdx] = 0.0;
         }
 
         return values;

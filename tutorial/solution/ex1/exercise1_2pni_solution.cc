@@ -45,6 +45,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 
+// The problem file, where setup-specific boundary and initial conditions are defined.
 #include "injection2pniproblem.hh"
 
 ////////////////////////
