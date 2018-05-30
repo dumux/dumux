@@ -32,7 +32,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 // TODO: dumux-course-task
 // Inlcude your own material law
-#include "mymateriallaw.hh"
 
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/plotmateriallaw.hh>

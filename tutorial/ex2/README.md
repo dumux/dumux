@@ -69,17 +69,13 @@ Note: `MyMaterialLaw` uses the `BrooksCoreyParams` class as parameter input. You
 const auto pe = params.pe();
 ```
 
-The type (i.e. C++ type) of the material law is set in the file `injection2p2cspatialparams.hh` by using the DuMuX property system
+The type (i.e. C++ type) of the material law is set in the file `injection2p2cspatialparams.hh` by declaring the following alias in the public section of the spatial parameters class:
 
 ```c++
-SET_PROP(InjectionSpatialParams, MaterialLaw)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
-};
+    using MaterialLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
 ```
 
-* Make DuMuX use your own material law by including the header `mymateriallaw.hh` and changing the alias `type`. This will make sure that your material law is used everywhere else in the code.
+* Make DuMuX use your own material law by including the header `mymateriallaw.hh` and changing the alias `MaterialLaw`. This will make sure that your material law is used everywhere else in the code.
 
 Note: Also use the wrapper class `EffToAbsLaw`. It takes care of converting absolute to effective saturations considering residual saturations. `MyMaterialLaw`
 as other material laws (like Brooks-Corey, VanGenuchten, ...) in DuMuX only deals with effective saturations.

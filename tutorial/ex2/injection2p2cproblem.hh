@@ -62,7 +62,7 @@ SET_TYPE_PROP(Injection2p2cTypeTag, SpatialParams,
 // Set fluid configuration
 SET_TYPE_PROP(Injection2p2cTypeTag,
               FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true /*useComplexRelations*/>);
+              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false /*useComplexRelations*/>);
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(Injection2p2cTypeTag, UseMoles, true);
@@ -165,8 +165,8 @@ public:
      */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-         BoundaryTypes bcTypes;
-        if (globalPos[dimWorld-1] < eps_)
+        BoundaryTypes bcTypes;
+        if (globalPos[0] < eps_)
             bcTypes.setAllDirichlet();
 
         // and Neuman boundary conditions everywhere else
@@ -210,8 +210,8 @@ public:
         {
             // set the Neumann values for the Nitrogen component balance
             // convert from units kg/(s*m^2) to mole/(s*m^2)
-            values[Indices::conti0EqIdx + FluidSystem::H2OIdx] = -totalAreaSpecificInflow_/FluidSystem::molarMass(FluidSystem::N2Idx);
-            values[Indices::conti0EqIdx + FluidSystem::N2Idx] = 0.0;
+            values[Indices::conti0EqIdx + FluidSystem::N2Idx] = -totalAreaSpecificInflow_/FluidSystem::molarMass(FluidSystem::N2Idx);
+            values[Indices::conti0EqIdx + FluidSystem::H2OIdx] = 0.0;
         }
 
         return values;
