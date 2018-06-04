@@ -37,10 +37,10 @@ namespace Dumux {
  * \todo TODO: Scalar type should be extracted from VolumeVariables!
  * \todo TODO: This shouldn't depend on discretization and grid!!
  */
-template <class Scalar, class Indices, class FVGridGeometry, ElectroChemistryModel electroChemistryModel>
-class ElectroChemistryNI : public ElectroChemistry<Scalar, Indices, FVGridGeometry, electroChemistryModel>
+template <class Scalar, class Indices, class FluidSystem, class FVGridGeometry, ElectroChemistryModel electroChemistryModel>
+class ElectroChemistryNI : public ElectroChemistry<Scalar, Indices, FluidSystem, FVGridGeometry, electroChemistryModel>
 {
-    using ParentType = ElectroChemistry<Scalar, Indices, FVGridGeometry, electroChemistryModel>;
+    using ParentType = ElectroChemistry<Scalar, Indices, FluidSystem, FVGridGeometry, electroChemistryModel>;
     using Constant = Constants<Scalar>;
 
     enum {
