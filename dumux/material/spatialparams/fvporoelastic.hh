@@ -23,6 +23,8 @@
 #ifndef DUMUX_GEOMECHANICS_POROELASTIC_FV_SPATIAL_PARAMS_HH
 #define DUMUX_GEOMECHANICS_POROELASTIC_FV_SPATIAL_PARAMS_HH
 
+#include <memory>
+
 #include <dumux/common/typetraits/isvalid.hh>
 
 namespace Dumux {

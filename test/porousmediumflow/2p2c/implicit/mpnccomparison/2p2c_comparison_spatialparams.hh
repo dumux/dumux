@@ -25,6 +25,7 @@
 #ifndef DUMUX_MPNC_COMPARISON_SPATIAL_PARAMS_HH
 #define DUMUX_MPNC_COMPARISON_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>

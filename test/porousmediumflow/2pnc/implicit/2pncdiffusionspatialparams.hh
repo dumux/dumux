@@ -26,6 +26,7 @@
 #ifndef DUMUX_TWOPNC_DIFFUSION_SPATIAL_PARAMS_HH
 #define DUMUX_TWOPNC_DIFFUSION_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>

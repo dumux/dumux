@@ -29,6 +29,8 @@
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/liquid.hh>
 
+#include "myincompressiblecomponent.hh"
+
 namespace Dumux
 {
 /*!

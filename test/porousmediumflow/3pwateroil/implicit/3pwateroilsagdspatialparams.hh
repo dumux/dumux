@@ -25,6 +25,7 @@
 #ifndef DUMUX_SAGD_SPATIAL_PARAMS_HH
 #define DUMUX_SAGD_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 
 #include <dumux/porousmediumflow/3pwateroil/indices.hh>

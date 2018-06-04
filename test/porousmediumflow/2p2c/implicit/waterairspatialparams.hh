@@ -28,6 +28,7 @@
 #include <dumux/io/ploteffectivediffusivitymodel.hh>
 #include <dumux/io/plotmateriallaw.hh>
 #include <dumux/io/plotthermalconductivitymodel.hh>
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>

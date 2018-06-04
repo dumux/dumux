@@ -29,6 +29,8 @@
 #ifndef DUMUX_NONEQUILIBRIUM_VOLUME_VARIABLES_HH
 #define DUMUX_NONEQUILIBRIUM_VOLUME_VARIABLES_HH
 
+#include <cassert>
+
 #include <dumux/common/dimensionlessnumbers.hh>
 
 namespace Dumux {
