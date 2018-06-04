@@ -24,6 +24,8 @@
 #ifndef DUMUX_2P1C_VOLUME_VARIABLES_HH
 #define DUMUX_2P1C_VOLUME_VARIABLES_HH
 
+#include <array>
+
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/valgrind.hh>

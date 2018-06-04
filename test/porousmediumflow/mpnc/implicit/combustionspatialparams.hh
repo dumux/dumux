@@ -30,6 +30,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/heatpipelaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 
 namespace Dumux {

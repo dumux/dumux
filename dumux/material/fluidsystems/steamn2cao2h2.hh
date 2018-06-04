@@ -34,6 +34,8 @@
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/components/n2.hh>
 #include <dumux/material/components/h2o.hh>
+#include <dumux/material/components/cao.hh>
+#include <dumux/material/components/cao2h2.hh>
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 

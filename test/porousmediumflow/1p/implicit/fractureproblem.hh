@@ -26,6 +26,10 @@
 #ifndef DUMUX_ONEP_FRACTURE_TEST_PROBLEM_HH
 #define DUMUX_ONEP_FRACTURE_TEST_PROBLEM_HH
 
+#if HAVE_DUNE_FOAMGRID
+#include <dune/foamgrid/foamgrid.hh>
+#endif
+
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/porousmediumflow/1p/model.hh>
@@ -53,7 +57,9 @@ SET_BOOL_PROP(FractureTypeTag, EnableGridVolumeVariablesCache, true);
 SET_BOOL_PROP(FractureTypeTag, EnableGridFluxVariablesCache, true);
 
 //! The grid type
+#if HAVE_DUNE_FOAMGRID
 SET_TYPE_PROP(FractureTypeTag, Grid, Dune::FoamGrid<2, 3>);
+#endif
 
 // Set the problem property
 SET_TYPE_PROP(FractureTypeTag, Problem, Dumux::FractureProblem<TypeTag>);

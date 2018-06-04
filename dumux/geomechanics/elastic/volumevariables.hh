@@ -25,6 +25,8 @@
 #ifndef DUMUX_ELASTIC_VOLUME_VARIABLES_HH
 #define DUMUX_ELASTIC_VOLUME_VARIABLES_HH
 
+#include <type_traits>
+#include <dune/common/exceptions.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
 namespace Dumux {

@@ -25,6 +25,8 @@
 #ifndef DUMUX_RICHARDSNC_VOLUME_VARIABLES_HH
 #define DUMUX_RICHARDSNC_VOLUME_VARIABLES_HH
 
+#include <array>
+
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>

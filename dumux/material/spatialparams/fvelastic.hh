@@ -23,6 +23,10 @@
 #ifndef DUMUX_GEOMECHANICS_ELASTIC_FV_SPATIAL_PARAMS_HH
 #define DUMUX_GEOMECHANICS_ELASTIC_FV_SPATIAL_PARAMS_HH
 
+#include <memory>
+
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/typetraits/isvalid.hh>
 
 namespace Dumux {

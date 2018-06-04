@@ -29,6 +29,7 @@
 #define DUMUX_CHECK_SOLIDSYSTEM_HH
 
 #include <type_traits>
+#include <iostream>
 
 #include <dune/common/classname.hh>
 #include <dune/common/unused.hh>

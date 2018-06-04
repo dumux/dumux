@@ -26,6 +26,7 @@
 
 #include <dune/common/version.hh>
 #include <dune/common/reservedvector.hh>
+#include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>

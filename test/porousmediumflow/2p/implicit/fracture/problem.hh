@@ -25,6 +25,10 @@
 #ifndef DUMUX_TWOP_FRACTURE_TEST_PROBLEM_HH
 #define DUMUX_TWOP_FRACTURE_TEST_PROBLEM_HH
 
+#if HAVE_DUNE_FOAMGRID
+#include <dune/foamgrid/foamgrid.hh>
+#endif
+
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/trichloroethene.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
@@ -51,7 +55,9 @@ NEW_TYPE_TAG(FractureCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FractureTypeTag))
 NEW_TYPE_TAG(FractureCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, FractureTypeTag));
 
 // set the grid property
+#if HAVE_DUNE_FOAMGRID
 SET_TYPE_PROP(FractureTypeTag, Grid, Dune::FoamGrid<2, 3>);
+#endif
 
 // Set the problem property
 SET_TYPE_PROP(FractureTypeTag, Problem, Dumux::FractureProblem<TypeTag>);

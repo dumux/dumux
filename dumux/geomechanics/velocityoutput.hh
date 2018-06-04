@@ -23,6 +23,10 @@
 #ifndef DUMUX_GEOMECHANICS_VELOCITYOUTPUT_HH
 #define DUMUX_GEOMECHANICS_VELOCITYOUTPUT_HH
 
+#include <string>
+
+#include <dune/common/exceptions.hh>
+
 namespace Dumux {
 
 /*!

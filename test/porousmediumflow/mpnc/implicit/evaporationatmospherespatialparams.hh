@@ -25,6 +25,7 @@
 #ifndef DUMUX_EVAPORATION_ATMOSPHERE_SPATIALPARAMS_HH
 #define DUMUX_EVAPORATION_ATMOSPHERE_SPATIALPARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>

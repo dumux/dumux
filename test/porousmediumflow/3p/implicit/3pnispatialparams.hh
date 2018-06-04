@@ -24,6 +24,7 @@
 #ifndef DUMUX_THREEPNI_SPATIAL_PARAMS_HH
 #define DUMUX_THREEPNI_SPATIAL_PARAMS_HH
 
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>

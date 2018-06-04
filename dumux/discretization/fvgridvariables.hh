@@ -26,6 +26,7 @@
 
 #include <type_traits>
 #include <memory>
+#include <cassert>
 
 namespace Dumux {
 

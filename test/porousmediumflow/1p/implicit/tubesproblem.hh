@@ -28,6 +28,10 @@
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 #include <dune/geometry/quadraturerules.hh>
 
+#if HAVE_DUNE_FOAMGRID
+#include <dune/foamgrid/foamgrid.hh>
+#endif
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/methods.hh>
@@ -51,7 +55,9 @@ NEW_TYPE_TAG(TubesTestCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, TubesTestTypeTag
 NEW_TYPE_TAG(TubesTestBoxTypeTag, INHERITS_FROM(BoxModel, TubesTestTypeTag));
 
 // Set the grid type
+#if HAVE_DUNE_FOAMGRID
 SET_TYPE_PROP(TubesTestTypeTag, Grid, Dune::FoamGrid<1, 3>);
+#endif
 
 // Set the problem property
 SET_TYPE_PROP(TubesTestTypeTag, Problem, TubesTestProblem<TypeTag>);
