@@ -29,7 +29,6 @@
 #include <dune/geometry/type.hh>
 
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/optional.hh>
 
 #include <typeinfo>

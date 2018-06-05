@@ -26,7 +26,6 @@
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 

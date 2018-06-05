@@ -32,7 +32,6 @@
 #include <dune/istl/umfpack.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/typetraits/matrix.hh>
 #include <dumux/linear/solver.hh>
 

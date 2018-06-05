@@ -27,7 +27,6 @@
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
 #include <type_traits>
 #include <algorithm>

@@ -24,8 +24,6 @@
 #ifndef DUMUX_FREEFLOW_NI_OUTPUT_FIELDS_HH
 #define DUMUX_FREEFLOW_NI_OUTPUT_FIELDS_HH
 
-#include <dumux/common/properties.hh>
-
 namespace Dumux
 {
 

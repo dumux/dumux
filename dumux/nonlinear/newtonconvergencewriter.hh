@@ -27,7 +27,6 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
 namespace Dumux

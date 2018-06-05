@@ -26,7 +26,6 @@
 
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/entitymap.hh>
 #include <dumux/common/geometry/boundingboxtree.hh>
 #include <dumux/common/geometry/geometricentityset.hh>

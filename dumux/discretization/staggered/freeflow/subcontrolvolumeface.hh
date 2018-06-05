@@ -30,7 +30,6 @@
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
-#include <dumux/common/properties.hh>
 
 #include <typeinfo>
 

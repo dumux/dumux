@@ -25,7 +25,6 @@
 #ifndef DUMUX_FREEFLOW_VOLUME_VARIABLES_HH
 #define DUMUX_FREEFLOW_VOLUME_VARIABLES_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 
 namespace Dumux {
