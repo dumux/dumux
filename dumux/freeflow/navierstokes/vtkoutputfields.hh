@@ -25,7 +25,6 @@
 #define DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
 
 #include <dune/common/fvector.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 

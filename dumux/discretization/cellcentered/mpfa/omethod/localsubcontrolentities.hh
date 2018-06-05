@@ -25,7 +25,6 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_SUBCONTROLENTITIES_HH
 
 #include <dune/common/fvector.hh>
-#include <dumux/common/properties.hh>
 
 namespace Dumux
 {

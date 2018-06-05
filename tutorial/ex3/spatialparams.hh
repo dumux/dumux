@@ -57,7 +57,7 @@ class ExerciseThreeSpatialParams
 public:
     // export permeability type
     using PermeabilityType = Dune::FieldMatrix<Scalar, dim, dim>;
-    // get material law from property system
+
     using MaterialLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
     using MaterialLawParams = typename MaterialLaw::Params;
 

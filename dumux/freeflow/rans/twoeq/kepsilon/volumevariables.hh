@@ -25,7 +25,6 @@
 #ifndef DUMUX_KEPSILON_VOLUME_VARIABLES_HH
 #define DUMUX_KEPSILON_VOLUME_VARIABLES_HH
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/freeflow/rans/volumevariables.hh>

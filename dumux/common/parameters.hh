@@ -19,9 +19,7 @@
 /*!
  * \file
  * \ingroup Common
- * \brief The infrastructure to retrieve run-time parameters from
- *        Dune::ParameterTrees with the defaul value taken from the
- *        property system.
+ * \brief The infrastructure to retrieve run-time parameters from Dune::ParameterTrees.
  */
 #ifndef DUMUX_PARAMETERS_HH
 #define DUMUX_PARAMETERS_HH
