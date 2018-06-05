@@ -1,0 +1,36 @@
+[TimeLoop]
+DtInitial = 1e-5 # [s]
+TEnd = 30 # [s]
+MaxTimeStepSize = 2.5 # [s]
+
+[Grid]
+Positions0 = -80.0 -4.0 0.0 50.0
+Positions1 = 0.0 0.5 1.0 5.0 9.0
+Cells0 = 39 20 60
+Cells1 = 14 14 21 21
+Grading0 = -1.04 -1.2 1.10
+Grading1 = 1.2 -1.2 1.25 -1.25
+StepY = 1.0
+StepX = 0.0
+
+[Problem]
+Name = backward_facing_step
+InletVelocity = 44.2 # [m/s]
+EnableGravity = false
+EnableInertiaTerms = true
+
+[Component]
+LiquidKinematicViscosity = 1.228e-3
+LiquidDensity = 1.0
+
+[Newton]
+TargetSteps = 8
+MaxRelativeShift = 1e-8
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
+
+[Vtk]
+WriteFaceData = false
+AddProcessRank = false

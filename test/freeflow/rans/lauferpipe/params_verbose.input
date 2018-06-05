@@ -1,0 +1,40 @@
+[TimeLoop]
+DtInitial = 1e-2 # [s]
+TEnd = 100 # [s]
+Initialization = 1.0 # [s]
+
+[Grid]
+Verbosity = true
+Positions0 = 0.0 10.0
+Positions1 = 0.0 0.12345 0.2469
+Cells0 = 25
+Cells1 = 25 25
+Grading1 = 1.2 -1.2
+
+[Output]
+PlotLawOfTheWall = true
+PlotVelocityProfile = true
+
+[Problem]
+Name = pipe_laufer
+InletVelocity = 2.5 # [m/s]
+EnableGravity = false
+SandGrainRoughness = 0.0 # [m] # not implemented for EddyViscosityModel = 3
+
+[RANS]
+EddyViscosityModel = "baldwinLomax"
+UseStoredEddyViscosity = false
+
+[KEpsilon]
+YPlusThreshold = 50. # should be large (30-60) for fine grids
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
+TargetSteps = 5
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false
