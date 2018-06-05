@@ -1,0 +1,34 @@
+[TimeLoop]
+TEnd = 2e10 # s
+DtInitial = 5e9 # s
+
+[Darcy.Grid]
+UpperRight = 2.0 2.0
+Cells = 20 20
+
+[Stokes.Grid]
+LowerLeft = 0.0 2.0
+UpperRight = 2.0 4.0
+Cells = 20 20
+
+[Stokes.Problem]
+Name = stokes
+Velocity = 0.0
+
+[Darcy.Problem]
+Name = darcy
+Pressure = 1.0e5
+
+[SpatialParams]
+AlphaBeaversJoseph = 1.0
+Permeability = 1e-10 # m^2
+Porosity = 1.0
+Tortuosity = 1.0
+
+[Problem]
+Name = test_stokes1p2cdarcy1p2cvertical_diffusion
+EnableGravity = false
+OnlyDiffusion = true
+
+[Vtk]
+AddVelocity = 1
