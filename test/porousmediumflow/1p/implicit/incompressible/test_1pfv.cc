@@ -26,6 +26,9 @@
 #include <ctime>
 #include <iostream>
 
+// Support for quad precision has to be included before any other Dune module:
+#include <dumux/common/quad.hh>
+
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
