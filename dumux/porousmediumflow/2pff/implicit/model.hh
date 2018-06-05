@@ -43,7 +43,7 @@ struct TwoPFractionalFlowModelTraits
     static constexpr TwoPFormulation priVarFormulation()
     { return formulation; }
 
-    static constexpr int numEq() { return 1; } // vt constant
+    static constexpr int numEq() { return 2; } // vt as variable
     static constexpr int numPhases() { return 2; }
     static constexpr int numComponents() { return 2; }
 

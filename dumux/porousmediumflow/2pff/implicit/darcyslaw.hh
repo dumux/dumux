@@ -31,6 +31,7 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
+#include <math.h>
 
 #include <dumux/discretization/cellcentered/tpfa/darcyslaw.hh>
 
@@ -104,7 +105,42 @@ public:
 
             // Get the total velocity from the input file
             using VelocityVector = Dune::FieldVector<Scalar, GridView::dimensionworld>;
-            static const VelocityVector v_t = getParamFromGroup<VelocityVector>(problem.paramGroup(), "Problem.TotalVelocity");
+//             static const VelocityVector v_t = getParamFromGroup<VelocityVector>(problem.paramGroup(), "Problem.TotalVelocity");
+
+            if (eqIdx == transportEqIdx)
+            {
+                // viscous Flu
+            //TODO: calculate the velocity (no more constant)
+
+
+            Scalar WeightedDp, WeightedViscousDp, WeightedGravityDp, WeightedCapillaryDp, AverageDp = 0;
+            Scalar Beltaij = 0;
+
+
+
+             const auto pInside = insideVolVars.pressure(phaseIdx);
+             const auto pOutside = outsideVolVars.pressure(phaseIdx);
+
+             const auto xInside = insideScv.center();
+             const auto xOutside = scvf.boundary() ? scvf.ipGlobal()
+                                                      : fvGeometry.scv(scvf.outsideScvIdx()).center();
+
+             const auto g = problem.gravityAtPos(xInside);
+
+            Scalar AverageDp = (pOutside - pInside) + 0.5*g*(insideVolVars.density(0)*(xInside - xOutside) + insideVolVars.density(1)*(xInside - xOutside));
+
+
+            constexpr double pi() { return std::atan(1)*4; };
+            Scalar Beltaij = 0.5 + 1/pi*std::atan(Gammaij*AverageDp);
+            const auto mobW_WA = Beltaij*insideVolVars.mobility(wPhaseIdx) + (1-Beltaij)*outsideVolVars.mobility(wPhaseIdx);
+            const auto mobN_WA = Beltaij*insideVolVars.mobility(nPhaseIdx) + (1-Beltaij)*outsideVolVars.mobility(nPhaseIdx);
+            //TODO:calculate Gammaij
+
+
+
+
+
+            Scalar VelocityVektor v_t = fluxVarsCache.advectionTij()*((mobW_WA+mobN_WA)*(pInside - pOutside)+(mobW_WA*insideVolVars.density(0)*(xInside - xOutside)+mobN_WA*insideVolVars.density(1)*(xInside - xOutside)));
 
             //////////////////////////////////////////////////////////////
             // The viscous flux before upwinding is the total velocity
