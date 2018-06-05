@@ -26,11 +26,11 @@
 #define DUMUX_FV_SPATIAL_PARAMS_ONE_P_HH
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/fmatrix.hh>
+
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/typetraits/isvalid.hh>
-
-#include <dune/common/fmatrix.hh>
 
 namespace Dumux {
 

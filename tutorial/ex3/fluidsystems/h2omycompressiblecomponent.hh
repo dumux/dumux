@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A fluid system with water and a ficitious component, which is to be
+ * \brief A fluid system with water and a fictitious component, which is to be
  *        implemented in tutorial exercise 3a, as phases and components. This
  *        fluid system is to be implemented in exercise 3b.
  */
@@ -31,7 +31,7 @@
 
 #include <dumux/material/fluidsystems/base.hh>
 
-// the ficitious component that was created in exercise 3a
+// the fictitious component that was created in exercise 3a
 #include <tutorial/ex3/components/mycompressiblecomponent.hh>
 
 // the binary coefficients corresponding to this fluid system
@@ -44,7 +44,7 @@ namespace FluidSystems
 
 /*!
  * \brief A compositional fluid consisting of two liquid phases,
- *        which are water and a ficitious component from tutorial exercise 3a.
+ *        which are water and a fictitious component from tutorial exercise 3a.
  */
 template <class Scalar,
           class H2OType = Dumux::Components::TabulatedComponent<Dumux::Components::H2O<Scalar> > >

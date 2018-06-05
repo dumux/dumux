@@ -294,7 +294,7 @@ public:
      * \brief Evaluate the analytical solution.
      *
      * \param values The dirichlet values for the primary variables
-     * \param time The time at wich the solution should be evaluated
+     * \param time The time at which the solution should be evaluated
      * \param globalPos The position for which the Dirichlet value is set
      *
      * For this method, the \a values parameter stores primary variables.

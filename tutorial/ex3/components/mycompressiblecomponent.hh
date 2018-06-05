@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Components
- * \brief A ficitious component to be implemented in exercise 3.
+ * \brief A fictitious component to be implemented in exercise 3.
  */
 #ifndef DUMUX_MYCOMPRESSIBLECOMPONENT_HH
 #define DUMUX_MYCOMPRESSIBLECOMPONENT_HH
@@ -33,7 +33,7 @@ namespace Dumux
 {
 /*!
  * \ingroup Components
- * \brief A ficitious component to be implemented in exercise 3.
+ * \brief A fictitious component to be implemented in exercise 3.
  *
  * \tparam Scalar The type used for scalar values
  */

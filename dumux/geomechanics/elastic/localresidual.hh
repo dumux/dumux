@@ -26,6 +26,7 @@
 #ifndef DUMUX_GEOMECHANICS_ELASTIC_LOCAL_RESIDUAL_HH
 #define DUMUX_GEOMECHANICS_ELASTIC_LOCAL_RESIDUAL_HH
 
+#include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 

@@ -25,6 +25,7 @@
 #ifndef DUMUX_RICHARDSNC_VOLUME_VARIABLES_HH
 #define DUMUX_RICHARDSNC_VOLUME_VARIABLES_HH
 
+#include <algorithm>
 #include <array>
 
 #include <dumux/porousmediumflow/volumevariables.hh>
