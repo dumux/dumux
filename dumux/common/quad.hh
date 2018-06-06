@@ -55,22 +55,26 @@ class numeric_limits<Dumux::quad>
 public:
     static constexpr bool is_specialized = true;
 
-    static constexpr Dumux::quad min() throw()
+    static constexpr Dumux::quad min() noexcept
     { return FLT128_MIN; }
-    static constexpr Dumux::quad max() throw()
+    static constexpr Dumux::quad max() noexcept
     { return FLT128_MAX; }
+    static constexpr Dumux::quad lowest() noexcept
+    { return -FLT128_MAX; }
 
     // number of bits in mantissa
-    static constexpr int  digits = FLT128_MANT_DIG;
+    static constexpr int digits = FLT128_MANT_DIG;
     // number of decimal digits
-    static constexpr int  digits10 = FLT128_DIG;
+    static constexpr int digits10 = FLT128_DIG;
+    static constexpr int max_digits10 = FLT128_MANT_DIG;
+
     static constexpr bool is_signed = true;
     static constexpr bool is_integer = false;
     static constexpr bool is_exact = false;
     static constexpr int radix = 0;
-    static constexpr Dumux::quad epsilon() throw()
+    static constexpr Dumux::quad epsilon() noexcept
     { return FLT128_EPSILON; }
-    static constexpr Dumux::quad round_error() throw()
+    static constexpr Dumux::quad round_error() noexcept
     { return 0.5; }
 
     static constexpr int min_exponent = FLT128_MIN_EXP;
@@ -83,13 +87,13 @@ public:
     static constexpr bool has_signaling_NaN = true;
     static constexpr float_denorm_style has_denorm = denorm_present;
     static constexpr bool has_denorm_loss = false;
-    static constexpr Dumux::quad infinity() throw()
+    static constexpr Dumux::quad infinity() noexcept
     { return __builtin_huge_valq(); };
-    static constexpr Dumux::quad quiet_NaN() throw()
+    static constexpr Dumux::quad quiet_NaN() noexcept
     { return __builtin_nan(""); }
-    static constexpr Dumux::quad signaling_NaN() throw()
+    static constexpr Dumux::quad signaling_NaN() noexcept
     { return __builtin_nans(""); }
-    static constexpr Dumux::quad denorm_min() throw()
+    static constexpr Dumux::quad denorm_min() noexcept
     { return FLT128_DENORM_MIN; }
 
     static constexpr bool is_iec559 = true;
