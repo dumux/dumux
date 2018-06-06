@@ -43,8 +43,12 @@ using quad = __float128;
 
 // Dune's desired way of enabling their algebraic operations for
 // extended-precision data types, see dune/common/typetraits.hh.
+namespace Dune {
+
 template <>
-struct Dune::IsNumber<Dumux::quad> : std::true_type {};
+struct IsNumber<Dumux::quad> : std::true_type {};
+
+} // namespace Dune
 
 namespace std {
 
