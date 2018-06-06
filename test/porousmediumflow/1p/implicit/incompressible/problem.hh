@@ -77,7 +77,7 @@ SET_BOOL_PROP(OnePIncompressible, EnableFVGridGeometryCache, false);
 // define a TypeTag for a quad precision test
 #if HAVE_QUAD
 NEW_TYPE_TAG(OnePIncompressibleTpfaQuad, INHERITS_FROM(OnePIncompressibleTpfa));
-SET_TYPE_PROP(OnePIncompressibleTpfaQuad, Scalar, quad);
+SET_TYPE_PROP(OnePIncompressibleTpfaQuad, Scalar, Quad);
 #endif
 } // end namespace Properties
 /*!

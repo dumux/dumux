@@ -15,12 +15,12 @@ dune_add_test(NAME test_1p_incompressible_tpfa_quad
               SOURCES test_1pfv.cc
               CMAKE_GUARD HAVE_QUAD
               COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfaQuad NUMDIFFMETHOD=DiffMethod::analytic
+              LINK_LIBRARIES ${QUADMATH_LIBRARIES}
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/1ptestcctpfaquad-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_incompressible_tpfa_quad test_1p.input -Problem.Name 1ptestcctpfaquad")
-target_link_libraries(test_1p_incompressible_tpfa_quad ${QUADMATH_LIBRARIES})
 
 # using mpfa and analytical Jacobian
 dune_add_test(NAME test_1p_incompressible_mpfa

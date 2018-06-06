@@ -37,7 +37,7 @@ extern "C" {
 
 namespace Dumux {
 
-using quad = __float128;
+using Quad = __float128;
 
 } // namespace Dumux
 
@@ -46,7 +46,7 @@ using quad = __float128;
 namespace Dune {
 
 template <>
-struct IsNumber<Dumux::quad> : std::true_type {};
+struct IsNumber<Dumux::Quad> : std::true_type {};
 
 } // namespace Dune
 
@@ -54,16 +54,16 @@ namespace std {
 
 // provide the numeric limits for the quad precision type
 template <>
-class numeric_limits<Dumux::quad>
+class numeric_limits<Dumux::Quad>
 {
 public:
     static constexpr bool is_specialized = true;
 
-    static constexpr Dumux::quad min() noexcept
+    static constexpr Dumux::Quad min() noexcept
     { return FLT128_MIN; }
-    static constexpr Dumux::quad max() noexcept
+    static constexpr Dumux::Quad max() noexcept
     { return FLT128_MAX; }
-    static constexpr Dumux::quad lowest() noexcept
+    static constexpr Dumux::Quad lowest() noexcept
     { return -FLT128_MAX; }
 
     // number of bits in mantissa
@@ -76,9 +76,9 @@ public:
     static constexpr bool is_integer = false;
     static constexpr bool is_exact = false;
     static constexpr int radix = 0;
-    static constexpr Dumux::quad epsilon() noexcept
+    static constexpr Dumux::Quad epsilon() noexcept
     { return FLT128_EPSILON; }
-    static constexpr Dumux::quad round_error() noexcept
+    static constexpr Dumux::Quad round_error() noexcept
     { return 0.5; }
 
     static constexpr int min_exponent = FLT128_MIN_EXP;
@@ -91,13 +91,13 @@ public:
     static constexpr bool has_signaling_NaN = true;
     static constexpr float_denorm_style has_denorm = denorm_present;
     static constexpr bool has_denorm_loss = false;
-    static constexpr Dumux::quad infinity() noexcept
+    static constexpr Dumux::Quad infinity() noexcept
     { return __builtin_huge_valq(); };
-    static constexpr Dumux::quad quiet_NaN() noexcept
+    static constexpr Dumux::Quad quiet_NaN() noexcept
     { return __builtin_nan(""); }
-    static constexpr Dumux::quad signaling_NaN() noexcept
+    static constexpr Dumux::Quad signaling_NaN() noexcept
     { return __builtin_nans(""); }
-    static constexpr Dumux::quad denorm_min() noexcept
+    static constexpr Dumux::Quad denorm_min() noexcept
     { return FLT128_DENORM_MIN; }
 
     static constexpr bool is_iec559 = true;
@@ -116,12 +116,12 @@ public:
 // is used for the lookup. Putting these functions into any other namespace yields compiler errors.
 namespace std {
 
-inline ostream& operator<<(ostream& os, const Dumux::quad &val)
+inline ostream& operator<<(ostream& os, const Dumux::Quad &val)
 {
     return (os << double(val));
 }
 
-inline istream& operator>>(istream& is, Dumux::quad &val)
+inline istream& operator>>(istream& is, Dumux::Quad &val)
 {
     double tmp;
     istream &ret = (is >> tmp);
@@ -129,59 +129,59 @@ inline istream& operator>>(istream& is, Dumux::quad &val)
     return ret;
 }
 
-inline Dumux::quad abs(Dumux::quad val)
+inline Dumux::Quad abs(Dumux::Quad val)
 { return (val < 0)?-val:val; }
 
-inline Dumux::quad floor(Dumux::quad val)
+inline Dumux::Quad floor(Dumux::Quad val)
 { return floorq(val); }
 
-inline Dumux::quad ceil(Dumux::quad val)
+inline Dumux::Quad ceil(Dumux::Quad val)
 { return ceilq(val); }
 
-inline Dumux::quad max(Dumux::quad a, Dumux::quad b)
+inline Dumux::Quad max(Dumux::Quad a, Dumux::Quad b)
 { return (a>b)?a:b; }
 
-inline Dumux::quad min(Dumux::quad a, Dumux::quad b)
+inline Dumux::Quad min(Dumux::Quad a, Dumux::Quad b)
 { return (a<b)?a:b; }
 
-inline Dumux::quad sqrt(Dumux::quad val)
+inline Dumux::Quad sqrt(Dumux::Quad val)
 { return sqrtq(val); }
 
 template <class ExpType>
-inline Dumux::quad pow(Dumux::quad base, ExpType exp)
+inline Dumux::Quad pow(Dumux::Quad base, ExpType exp)
 { return powq(base, exp); }
 
-inline Dumux::quad exp(Dumux::quad val)
+inline Dumux::Quad exp(Dumux::Quad val)
 { return expq(val); }
 
-inline Dumux::quad log(Dumux::quad val)
+inline Dumux::Quad log(Dumux::Quad val)
 { return logq(val); }
 
-inline Dumux::quad sin(Dumux::quad val)
+inline Dumux::Quad sin(Dumux::Quad val)
 { return sinq(val); }
 
-inline Dumux::quad cos(Dumux::quad val)
+inline Dumux::Quad cos(Dumux::Quad val)
 { return cosq(val); }
 
-inline Dumux::quad tan(Dumux::quad val)
+inline Dumux::Quad tan(Dumux::Quad val)
 { return tanq(val); }
 
-inline Dumux::quad atan(Dumux::quad val)
+inline Dumux::Quad atan(Dumux::Quad val)
 { return atanq(val); }
 
-inline Dumux::quad atan2(Dumux::quad a, Dumux::quad b)
+inline Dumux::Quad atan2(Dumux::Quad a, Dumux::Quad b)
 { return atan2q(a, b); }
 
-inline bool signbit(Dumux::quad val)
+inline bool signbit(Dumux::Quad val)
 { return signbitq(val); }
 
-inline bool isfinite(Dumux::quad val)
+inline bool isfinite(Dumux::Quad val)
 { return !isnanq(val) && !isinfq(val); }
 
-inline bool isnan(Dumux::quad val)
+inline bool isnan(Dumux::Quad val)
 { return isnanq(val); }
 
-inline bool isinf(Dumux::quad val)
+inline bool isinf(Dumux::Quad val)
 { return isinfq(val); }
 
 } // namespace std
