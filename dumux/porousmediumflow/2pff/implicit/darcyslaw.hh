@@ -113,8 +113,8 @@ public:
             //TODO: calculate the velocity (no more constant)
 
 
-            Scalar WeightedDp, WeightedViscousDp, WeightedGravityDp, WeightedCapillaryDp, AverageDp = 0;
-            Scalar Beltaij = 0;
+            Scalar WeightedGravityDp, WeightedCapillaryDp, AverageDp = 0;
+            Scalar Beltaij,Gammaij = 0;
 
 
 
@@ -126,21 +126,65 @@ public:
                                                       : fvGeometry.scv(scvf.outsideScvIdx()).center();
 
              const auto g = problem.gravityAtPos(xInside);
+                             const auto rho = [&](int phaseIdx)
+                {
+                    // boundaries
+                    if (scvf.boundary())
+                        return insideVolVars.density(phaseIdx);
 
-            Scalar AverageDp = (pOutside - pInside) + 0.5*g*(insideVolVars.density(0)*(xInside - xOutside) + insideVolVars.density(1)*(xInside - xOutside));
+                    // inner faces with two neighboring elements
+                    else
+                        return (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
+                };
 
+                // ask for the gravitational acceleration in the inside neighbor
+                const auto xInside = insideScv.center();
+                const auto gInside = problem.gravityAtPos(xInside);
+                const auto xOutside = scvf.boundary() ? scvf.ipGlobal()
+                                                      : fvGeometry.scv(scvf.outsideScvIdx()).center();
+                const auto gOutside = problem.gravityAtPos(xOutside);
 
+                // Sum rou*g*gradz
+            Scalar Gravitywphasepotential= (xInside*gInside - xOutside*gOutside)*rho(wPhaseIdx);
+            Scalar Gravitynphasepotential= (xInside*gInside - xOutside*gOutside)*rho(nPhaseIdx);
+            Scalar Gravityphasepotential = Gravitywphasepotential+Gravitynphasepotential;
+                // Average potential gradient at the interface
+
+            Scalar AverageDp = (pOutside - pInside) + 0.5*Gravityphasepotential;
+                //Calculate the coefficient Gammaij
+            //1.Calculate the max|Gm,ij-0.5(g1,ij+g2,ij)|
+
+            Scalar maxpart = std::max{Gravitywphasepotential-0.5*Gravityphasepotential, Gravitynphasepotential-0.5*Gravityphasepotential};
+
+            //in our case wenn S=0.5 we get e= 0.5, Sigma(suplambda)=2
             constexpr double pi() { return std::atan(1)*4; };
+            //avoid the issue maxpart very small
+            Scalar Gammaij = std::min{10e6, pi*0.5/(2*maxpart)};
+
+
+                //Calculate the coefficient Beltaij
             Scalar Beltaij = 0.5 + 1/pi*std::atan(Gammaij*AverageDp);
+
+            //Calculate the weighter mobility of each phase
             const auto mobW_WA = Beltaij*insideVolVars.mobility(wPhaseIdx) + (1-Beltaij)*outsideVolVars.mobility(wPhaseIdx);
             const auto mobN_WA = Beltaij*insideVolVars.mobility(nPhaseIdx) + (1-Beltaij)*outsideVolVars.mobility(nPhaseIdx);
-            //TODO:calculate Gammaij
+            const auto mobT_WA = mobW_WA + mobN_WA;
+
+            // the gravitational part of discretization of velocity
+            Scalar WeightedGravityDp = mobW_WA*Gravitywphasepotential + mobN_WA*Gravitynphasepotential;
+
+            // the capillary part of discretization of velocity
+            // ! we first ignore the discontinuity of Pc and diffrent mobility relations
+            Scalar WeighterCapillaryMobility = 0;
+            Scalar WeightedCapillaryMobility = 2* (insideVolVars.mobility(nPhaseIdx)*outsideVolVars.mobility(nPhaseIdx))/(insideVolVars.mobility(nPhaseIdx) + outsideVolVars.mobility(nPhaseIdx) );
+            // the capillary part of the discretization of velocity
 
 
+            const auto pcInside = insideVolVars.capillaryPressure();
+            const auto pcOutside = outsideVolVars.capillaryPressure();
+            Scalar WeightedCapillaryDp = WeightedCapillaryMobility*(pcOutside - pcInside);
+            Scalar VelocityVektor v_t = fluxVarsCache.advectionTij()*(mobT_WA*(pInside - pOutside)+ WeightedGravityDp + WeightedCapillaryDp);
 
-
-
-            Scalar VelocityVektor v_t = fluxVarsCache.advectionTij()*((mobW_WA+mobN_WA)*(pInside - pOutside)+(mobW_WA*insideVolVars.density(0)*(xInside - xOutside)+mobN_WA*insideVolVars.density(1)*(xInside - xOutside)));
 
             //////////////////////////////////////////////////////////////
             // The viscous flux before upwinding is the total velocity
