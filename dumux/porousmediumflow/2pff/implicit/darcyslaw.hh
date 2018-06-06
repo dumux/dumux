@@ -125,7 +125,7 @@ public:
              const auto xOutside = scvf.boundary() ? scvf.ipGlobal()
                                                       : fvGeometry.scv(scvf.outsideScvIdx()).center();
 
-             const auto g = problem.gravityAtPos(xInside);
+
                              const auto rho = [&](int phaseIdx)
                 {
                     // boundaries

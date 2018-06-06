@@ -128,39 +128,7 @@ public:
 
                 const auto& materialLaws = fluxVars.problem().spatialParams().materialLawParamsAtPos(scv.center());
 
-                // compute D_max
-                // TODO use the real maximum of D or a approximation
-
-
-//naehrungsformel
-/*Scalar Sw = 0.0 ;
-                Scalar Swmax = 0.37+0.2*log10 (insideVolVars.viscosity(wPhaseIdx)/insideVolVars.viscosity(nPhaseIdx));
-                if (S_max < Swmax)
-                {
-                     Sw = S_max ;
-                }
-                else
-                {
-                    if (S_min > Swmax)
-                    {
-                         Sw =S_min;
-                    }
-                    else
-                    {
-                         Sw = Swmax;
-                    }
-                }
-
-                    Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
-                    Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
-                    Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
-                    D_max =  -(mobW*mobN)/(mobW + mobN)*dPc_dSw;
-
-*/
-
-
-//numerische Methode
-///////////////////////////////////////////////
+// compute D_max
                  unsigned int numIntervals = 10;
                  for(int k=0; k <= numIntervals; k++)
                  {
@@ -171,33 +139,9 @@ public:
                      D_max = std::max(D_max, -(mobW*mobN)/(mobW + mobN)*dPc_dSw);
 
                  }
-                ///////////////////////////////////////////////
 
 
 
-//Mittelwert of Sw_max and Sw_min
-/*                   Scalar Sw = (insideVolVars.saturation(wPhaseIdx) + outsideVolVars.saturation(wPhaseIdx))/2.0;
-                    Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
-                    Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
-                    Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
-                    D_max =  -(mobW*mobN)/(mobW + mobN)*dPc_dSw;
-
-*/
-
-//Exact sw_max
-//                Scalar Sw = 0.0 ;
-//                if (S_max < 0.5782)
-//                {
-//                        Sw = S_max ;
-//                }
-//                else
-//                {
-//                    Sw = (  S_min > 0.5782) ? S_min :  0.5782;
-//                }
-//                Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
-//                Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
-//                Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
-//                D_max =  -(mobW*mobN)/(mobW + mobN)*dPc_dSw;
 
 
                 return viscousFlux
@@ -211,19 +155,95 @@ public:
         } // end hybrid upwinding
 
         // we use phase potential upwinding as the default
+
+
+        //The phase potential upwinding upwind the mobility according to the sign of total phase potential, not the sign of single flux
+        //Here the code is totally same as hybrid upwinding there should be a correction, discussion needed...
         else
         {
             const auto& insideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()];
             const auto& outsideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().outsideScvIdx()];
 
+            //Calculate the phase potential diffrences for both phases
+
+        std::array<Scalar, 2> Phasepotentialdifference(const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolumeFace& scvf,
+                       int phaseIdx,
+                       const ElementFluxVarsCache& elemFluxVarsCache)
+    {
+        enum
+        {
+        wPhaseIdx = 0,
+        nPhaseIdx =1
+        };
+
+        std::array<Scalar, 2> Phasepotentialdifferences;
+
+        static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
+
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+
+        // Get the inside and outside volume variables
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+
+        if (enableGravity)
+        {
+            // do averaging for the density over all neighboring elements
+            const auto rhow = scvf.boundary() ? outsideVolVars.density(wPhaseIdx)
+                                             : (insideVolVars.density(wPhaseIdx) + outsideVolVars.density(wPhaseIdx))*0.5;
+            const auto rhon = scvf.boundary() ? outsideVolVars.density(nPhaseIdx)
+                                             : (insideVolVars.density(nPhaseIdx) + outsideVolVars.density(nPhaseIdx))*0.5;
+
+            // Obtain inside and outside pressures
+            const auto pwInside = insideVolVars.pressure(wPhaseIdx);
+            const auto pwOutside = outsideVolVars.pressure(wPhaseIdx);
+            const auto pnInside = insideVolVars.pressure(nPhaseIdx);
+            const auto pnOutside = outsideVolVars.pressure(nPhaseIdx);
+
+            const auto& g = problem.gravityAtPos(scvf.ipGlobal());
+            const auto xInside = insideScv.center();
+            const auto xOutside = scvf.boundary() ? scvf.ipGlobal()
+                                                      : fvGeometry.scv(scvf.outsideScvIdx()).center();
+
+            Phasepotentialdifferences[wPhaseIdx] = (pwInside - pwOutside) + rhow*g*(xInside-xOutside);
+            Phasepotentialdifferences[nPhaseIdx] = (pnInside - pnOutside) + rhon*g*(xInside-xOutside);
+        }
+        else
+        {
+            // Obtain inside and outside pressures
+            const auto pwInside = insideVolVars.pressure(wPhaseIdx);
+            const auto pwOutside = outsideVolVars.pressure(wPhaseIdx);
+            const auto pnInside = insideVolVars.pressure(nPhaseIdx);
+            const auto pnOutside = outsideVolVars.pressure(nPhaseIdx);
+
+             Phasepotentialdifferences[wPhaseIdx] = (pwInside - pwOutside);
+             Phasepotentialdifferences[nPhaseIdx] = (pnInside - pnOutside);
+        }
+        return Phasepotentialdifferences;
+    }
+
+    //upwind according to the sign of Phasepotentialdifference
+                const auto mobW_V = std::signbit(Phasepotentialdifference[wPhaseIdx]) ? outsideVolVars.mobility(wPhaseIdx)
+                                                                       : insideVolVars.mobility(wPhaseIdx);
+                const auto mobN_V = std::signbit(Phasepotentialdifference[nPhaseIdx]) ? outsideVolVars.mobility(nPhaseIdx)
+                                                                       : insideVolVars.mobility(nPhaseIdx);
+                const auto mobT_V = std::max(mobW_V + mobN_V, 1.0e-30);
+
+
+
             if (eqIdx == transportEqIdx)
             {
                 // viscous Flux
-                const auto mobW_V = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
-                                                                       : insideVolVars.mobility(wPhaseIdx);
-                const auto mobN_V = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
-                                                                       : insideVolVars.mobility(nPhaseIdx);
-                const auto mobT_V = std::max(mobW_V + mobN_V, 1.0e-30);
+//                 const auto mobW_V = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
+//                                                                        : insideVolVars.mobility(wPhaseIdx);
+//                 const auto mobN_V = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
+//                                                                        : insideVolVars.mobility(nPhaseIdx);
+//                 const auto mobT_V = std::max(mobW_V + mobN_V, 1.0e-30);
 
                 const Scalar viscousFlux = mobW_V/mobT_V*flux[viscousFluxIdx];
 
@@ -244,23 +264,23 @@ public:
                             return (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
                     };
 
-                    if(rho(nPhaseIdx) - rho(wPhaseIdx) < 0)
-                    {
-                        const auto mobW_G = std::signbit(flux[gravityFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
-                                                                               : insideVolVars.mobility(wPhaseIdx);
-                        const auto mobN_G = std::signbit(flux[gravityFluxIdx]) ? insideVolVars.mobility(nPhaseIdx)
-                                                                               : outsideVolVars.mobility(nPhaseIdx);
-                        const auto mobT_G = std::max(mobW_G + mobN_G, 1.0e-30);
+//                     if(rho(nPhaseIdx) - rho(wPhaseIdx) < 0)
+//                     {
+//                         const auto mobW_G = std::signbit(flux[gravityFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
+//                                                                                : insideVolVars.mobility(wPhaseIdx);
+//                         const auto mobN_G = std::signbit(flux[gravityFluxIdx]) ? insideVolVars.mobility(nPhaseIdx)
+//                                                                                : outsideVolVars.mobility(nPhaseIdx);
+//                         const auto mobT_G = std::max(mobW_G + mobN_G, 1.0e-30);
 
-                        gravFlux = mobW_G*mobN_G/mobT_G * flux[gravityFluxIdx];
-                    }
-                    else
-                    {
-                        const auto mobW_G = std::signbit(flux[gravityFluxIdx]) ? insideVolVars.mobility(wPhaseIdx)
-                                                                               : outsideVolVars.mobility(wPhaseIdx);
-                        const auto mobN_G = std::signbit(flux[gravityFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
-                                                                               : insideVolVars.mobility(nPhaseIdx);
-                        const auto mobT_G = std::max(mobW_G + mobN_G, 1.0e-30);
+//                         gravFlux = mobW_G*mobN_G/mobT_G * flux[gravityFluxIdx];
+//                     }
+//                     else
+//                     {
+//                         const auto mobW_G = std::signbit(flux[gravityFluxIdx]) ? insideVolVars.mobility(wPhaseIdx)
+//                                                                                : outsideVolVars.mobility(wPhaseIdx);
+//                         const auto mobN_G = std::signbit(flux[gravityFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
+//                                                                                : insideVolVars.mobility(nPhaseIdx);
+//                         const auto mobT_G = std::max(mobW_G + mobN_G, 1.0e-30);
 
                         gravFlux = mobW_G*mobN_G/mobT_G * flux[gravityFluxIdx];
                     }
@@ -268,11 +288,11 @@ public:
                 }
 
                 // capillary flux
-                const auto mobW_C = std::signbit(flux[capillaryFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
-                                                                         : insideVolVars.mobility(wPhaseIdx);
-                const auto mobN_C = std::signbit(flux[capillaryFluxIdx]) ? insideVolVars.mobility(nPhaseIdx)
-                                                                         : outsideVolVars.mobility(nPhaseIdx);
-                const auto mobT_C = std::max(mobW_C + mobN_C, 1.0e-30);
+//                 const auto mobW_C = std::signbit(flux[capillaryFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
+//                                                                          : insideVolVars.mobility(wPhaseIdx);
+//                 const auto mobN_C = std::signbit(flux[capillaryFluxIdx]) ? insideVolVars.mobility(nPhaseIdx)
+//                                                                          : outsideVolVars.mobility(nPhaseIdx);
+//                 const auto mobT_C = std::max(mobW_C + mobN_C, 1.0e-30);
 
                 const Scalar capillaryFlux = mobW_C*mobN_C/mobT_C*flux[capillaryFluxIdx];
 
