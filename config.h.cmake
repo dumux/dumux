@@ -64,6 +64,9 @@
 /* Define the path to pvpython */
 #define PVPYTHON_EXECUTABLE "${PVPYTHON_EXECUTABLE}"
 
+/* Define to 1 if quadmath was found */
+#cmakedefine HAVE_QUAD 1
+
 /* end dumux
    Everything below here will be overwritten
 */

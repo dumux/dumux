@@ -74,6 +74,11 @@ SET_BOOL_PROP(OnePIncompressible, EnableGridVolumeVariablesCache, false);
 SET_BOOL_PROP(OnePIncompressible, EnableGridFluxVariablesCache, false);
 SET_BOOL_PROP(OnePIncompressible, EnableFVGridGeometryCache, false);
 
+// define a TypeTag for a quad precision test
+#if HAVE_QUAD
+NEW_TYPE_TAG(OnePIncompressibleTpfaQuad, INHERITS_FROM(OnePIncompressibleTpfa));
+SET_TYPE_PROP(OnePIncompressibleTpfaQuad, Scalar, Quad);
+#endif
 } // end namespace Properties
 /*!
  * \ingroup OnePTests

@@ -33,34 +33,52 @@ extern "C" {
 #include <quadmath.h>
 }
 
-using quad = __float128;
+#include <dune/common/typetraits.hh>
 
-namespace std
-{
+namespace Dumux {
+
+using Quad = __float128;
+
+} // namespace Dumux
+
+// Dune's desired way of enabling their algebraic operations for
+// extended-precision data types, see dune/common/typetraits.hh.
+namespace Dune {
+
+template <>
+struct IsNumber<Dumux::Quad> : std::true_type {};
+
+} // namespace Dune
+
+namespace std {
 
 // provide the numeric limits for the quad precision type
 template <>
-class numeric_limits<quad>
+class numeric_limits<Dumux::Quad>
 {
 public:
     static constexpr bool is_specialized = true;
 
-    static constexpr quad min() throw()
+    static constexpr Dumux::Quad min() noexcept
     { return FLT128_MIN; }
-    static constexpr quad max() throw()
+    static constexpr Dumux::Quad max() noexcept
     { return FLT128_MAX; }
+    static constexpr Dumux::Quad lowest() noexcept
+    { return -FLT128_MAX; }
 
     // number of bits in mantissa
-    static constexpr int  digits = FLT128_MANT_DIG;
+    static constexpr int digits = FLT128_MANT_DIG;
     // number of decimal digits
-    static constexpr int  digits10 = FLT128_DIG;
+    static constexpr int digits10 = FLT128_DIG;
+    static constexpr int max_digits10 = FLT128_MANT_DIG;
+
     static constexpr bool is_signed = true;
     static constexpr bool is_integer = false;
     static constexpr bool is_exact = false;
     static constexpr int radix = 0;
-    static constexpr quad epsilon() throw()
+    static constexpr Dumux::Quad epsilon() noexcept
     { return FLT128_EPSILON; }
-    static constexpr quad round_error() throw()
+    static constexpr Dumux::Quad round_error() noexcept
     { return 0.5; }
 
     static constexpr int min_exponent = FLT128_MIN_EXP;
@@ -73,13 +91,13 @@ public:
     static constexpr bool has_signaling_NaN = true;
     static constexpr float_denorm_style has_denorm = denorm_present;
     static constexpr bool has_denorm_loss = false;
-    static constexpr quad infinity() throw()
+    static constexpr Dumux::Quad infinity() noexcept
     { return __builtin_huge_valq(); };
-    static constexpr quad quiet_NaN() throw()
+    static constexpr Dumux::Quad quiet_NaN() noexcept
     { return __builtin_nan(""); }
-    static constexpr quad signaling_NaN() throw()
+    static constexpr Dumux::Quad signaling_NaN() noexcept
     { return __builtin_nans(""); }
-    static constexpr quad denorm_min() throw()
+    static constexpr Dumux::Quad denorm_min() noexcept
     { return FLT128_DENORM_MIN; }
 
     static constexpr bool is_iec559 = true;
@@ -91,131 +109,81 @@ public:
     static constexpr float_round_style round_style = round_to_nearest;
 };
 
-inline std::ostream& operator<<(std::ostream& os, const quad &val)
+} // namespace std
+
+// Putting the following definitions in the namespace std yields undefined
+// behavior. Unfortunately, ADL doesn't work for aliases (Quad) because the underlying type
+// is used for the lookup. Putting these functions into any other namespace yields compiler errors.
+namespace std {
+
+inline ostream& operator<<(ostream& os, const Dumux::Quad &val)
 {
     return (os << double(val));
 }
 
-inline std::istream& operator>>(std::istream& is, quad &val)
+inline istream& operator>>(istream& is, Dumux::Quad &val)
 {
     double tmp;
-    std::istream &ret = (is >> tmp);
+    istream &ret = (is >> tmp);
     val = tmp;
     return ret;
 }
 
-inline quad abs(quad val)
+inline Dumux::Quad abs(Dumux::Quad val)
 { return (val < 0)?-val:val; }
 
-inline quad floor(quad val)
+inline Dumux::Quad floor(Dumux::Quad val)
 { return floorq(val); }
 
-inline quad ceil(quad val)
+inline Dumux::Quad ceil(Dumux::Quad val)
 { return ceilq(val); }
 
-inline quad max(quad a, quad b)
+inline Dumux::Quad max(Dumux::Quad a, Dumux::Quad b)
 { return (a>b)?a:b; }
 
-inline quad min(quad a, quad b)
+inline Dumux::Quad min(Dumux::Quad a, Dumux::Quad b)
 { return (a<b)?a:b; }
 
-inline quad sqrt(quad val)
+inline Dumux::Quad sqrt(Dumux::Quad val)
 { return sqrtq(val); }
 
 template <class ExpType>
-inline quad pow(quad base, ExpType exp)
+inline Dumux::Quad pow(Dumux::Quad base, ExpType exp)
 { return powq(base, exp); }
 
-inline quad exp(quad val)
+inline Dumux::Quad exp(Dumux::Quad val)
 { return expq(val); }
 
-inline quad log(quad val)
+inline Dumux::Quad log(Dumux::Quad val)
 { return logq(val); }
 
-inline quad sin(quad val)
+inline Dumux::Quad sin(Dumux::Quad val)
 { return sinq(val); }
 
-inline quad cos(quad val)
+inline Dumux::Quad cos(Dumux::Quad val)
 { return cosq(val); }
 
-inline quad tan(quad val)
+inline Dumux::Quad tan(Dumux::Quad val)
 { return tanq(val); }
 
-inline quad atan(quad val)
+inline Dumux::Quad atan(Dumux::Quad val)
 { return atanq(val); }
 
-inline quad atan2(quad a, quad b)
+inline Dumux::Quad atan2(Dumux::Quad a, Dumux::Quad b)
 { return atan2q(a, b); }
 
-inline bool isfinite(quad val)
+inline bool signbit(Dumux::Quad val)
+{ return signbitq(val); }
+
+inline bool isfinite(Dumux::Quad val)
 { return !isnanq(val) && !isinfq(val); }
 
-inline bool isnan(quad val)
+inline bool isnan(Dumux::Quad val)
 { return isnanq(val); }
 
-inline bool isinf(quad val)
+inline bool isinf(Dumux::Quad val)
 { return isinfq(val); }
 
 } // namespace std
-
-// this is a hack so that Dune's classname.hh does not get
-// included. this is required because GCC 4.6 and earlier does not
-// generate a type_info structure for __float128 which causes the
-// linker to fail.
-#define DUNE_CLASSNAME_HH
-
-#include <cstdlib>
-#include <string>
-#include <typeinfo>
-
-#if defined(__GNUC__) && ! defined(__clang__)
-#include <cxxabi.h>
-#endif // #ifdef __GNUC__
-
-namespace Dune
-{
-template <class T>
-class ClassNameHelper_
-{ public:
-    static std::string name()
-    {
-        std::string className = typeid( T ).name();
-#if defined(__GNUC__) && ! defined(__clang__)
-        int status;
-        char *demangled = abi::__cxa_demangle( className.c_str(), 0, 0, &status );
-        if( demangled )
-        {
-          className = demangled;
-          std::free( demangled );
-        }
-#endif // #ifdef __GNUC__
-        return className;
-    }
-};
-
-#if HAVE_QUAD
-// specialize for quad precision floating point values to avoid
-// needing a type_info structure
-template <>
-class ClassNameHelper_<__float128>
-{ public:
-    static std::string name()
-    { return "quad"; }
-};
-#endif
-
-template <class T>
-std::string className()
-{
-    return ClassNameHelper_<T>::name();
-}
-
-template <class T>
-std::string className(const T &t)
-{
-    return ClassNameHelper_<T>::name();
-}
-
-}
 
 #endif // DUMUX_QUAD_HH
