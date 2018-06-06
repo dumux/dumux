@@ -69,6 +69,9 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
     static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
+    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+    static constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
+
 public:
     /*!
      * \brief Constructor
@@ -174,24 +177,24 @@ public:
 
     //! Applys the initial cell center solution
     void applyInitialCellCenterSolution(SolutionVector& sol,
-                                         const SubControlVolume& scv,
-                                         const PrimaryVariables& initSol) const
+                                        const SubControlVolume& scv,
+                                        const PrimaryVariables& initSol) const
     {
-        constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-        constexpr auto numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq();
-        constexpr auto offset = numEq - numEqCellCenter;
+        // while the container within the actual solution vector holds numEqCellCenter
+        // elements, we need to specify an offset to get the correct entry of the initial solution
+        static constexpr auto offset = PrimaryVariables::dimension - numEqCellCenter;
 
-        for(auto&& i : priVarIndices_(cellCenterIdx))
-            sol[cellCenterIdx][scv.dofIndex()][i] = initSol[i + offset];
+        for(int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
+            sol[cellCenterIdx][scv.dofIndex()][pvIdx] = initSol[pvIdx + offset];
     }
 
     //! Applys the initial face solution
     void applyInitialFaceSolution(SolutionVector& sol,
-                                   const SubControlVolumeFace& scvf,
-                                   const PrimaryVariables& initSol) const
+                                  const SubControlVolumeFace& scvf,
+                                  const PrimaryVariables& initSol) const
     {
-        for(auto&& i : priVarIndices_(faceIdx))
-            sol[faceIdx][scvf.dofIndex()][i] = initSol[i];
+        for(int pvIdx = 0; pvIdx < numEqFace; ++pvIdx)
+            sol[faceIdx][scvf.dofIndex()][pvIdx] = initSol[pvIdx];
     }
 
 protected:
@@ -202,23 +205,6 @@ protected:
     //! \copydoc asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
-
-    //! Helper function that returns an iterable range of primary variable indices.
-    //! Specialization for cell center dofs.
-    static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::CellCenterIdx)
-    {
-        constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-        return Dune::range(0, numEqCellCenter);
-    }
-
-    //! Helper function that returns an iterable range of primary variable indices.
-    //! Specialization for face dofs.
-    static auto priVarIndices_(typename FVGridGeometry::DofTypeIndices::FaceIdx)
-    {
-        constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
-        return Dune::range(0, numEqFace);
-    }
-
 };
 
 } // end namespace Dumux
