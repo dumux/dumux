@@ -136,7 +136,7 @@ public:
                     for (int i = 0; i < numCorners; ++i)
                     {
                         const auto vIdxLocal = bulkRefElem.subEntity(is.indexInInside(), 1, i, bulkDim);
-                        facetIndices[vIdxLocal] = bulkFvGridGeometry.vertexMapper().index(lowDimElement.template subEntity<lowDimDim>(vIdxLocal));
+                        facetIndices[i] = bulkFvGridGeometry.vertexMapper().vertexIndex(bulkElement.template subEntity<bulkDim>(vIdxLocal));
                     }
 
                     std::sort(facetIndices.begin(), facetIndices.end());
@@ -159,15 +159,12 @@ public:
                 std::vector<BulkIndexType> embeddedScvfIndices(numElementCorners);
                 for (const auto& scvf : scvfs(fvGeometry))
                 {
-                    if (scvf.facetIndexInElement() == coupledFacetIndex)
+                    if (scvf.interiorBoundary() && scvf.facetIndexInElement() == coupledFacetIndex)
                     {
-                        if (!scvf.interiorBoundary())
-                            DUNE_THROW(Dune::InvalidStateException, "Scvf on interior boundary seems to not have been marked as such!");
-
                         // we want to order the set of scvfs lying on the lower-dimensional element such that the i-th scvf
                         // coincides with the i-th low dim element corner. This will help later  to identify which scvf fluxes
                         // enter which scv of the low dim element if the lower-dimensional domain uses the box scheme
-                        const auto vIdxLocal = bulkRefElem.subEntity(coupledFacetIndex, scvf.indexInElementFacet(), bulkDim);
+                        const auto vIdxLocal = bulkRefElem.subEntity(coupledFacetIndex, 1, scvf.indexInElementFacet(), bulkDim);
                         const auto vIdxGlobal = bulkFvGridGeometry.vertexMapper().vertexIndex(bulkElement, vIdxLocal, bulkDim);
                         const auto it = std::find(unsortedElemCorners.begin(), unsortedElemCorners.end(), vIdxGlobal);
                         assert(it != unsortedElemCorners.end());
@@ -184,22 +181,22 @@ public:
                 // add each dof in the low dim element to coupling stencil of the bulk element
                 auto& bulkData = this->couplingMap_(bulkDomainId, lowDimDomainId)[bulkElemIdx];
                 const auto lowDimElementDofs = LowDimFVG::discMethod == DiscretizationMethod::cctpfa
-                                               ? std::vector<LowDimIndexType>( {lowDimElemIdx} )
+                                               ? std::vector<LowDimIndexType>({lowDimElemIdx})
                                                : this->extractNodalDofs_(lowDimElement, lowDimFvGridGeometry);
 
                 for (auto lowDimDofIdx : lowDimElementDofs)
                 {
-                    bulkData.couplingStencil.push_back( lowDimDofIdx );
+                    bulkData.couplingStencil.push_back(lowDimDofIdx);
                     auto& couplingScvfs = bulkData.couplingScvfs[lowDimDofIdx];
                     couplingScvfs.insert(couplingScvfs.end(), embeddedScvfIndices.begin(), embeddedScvfIndices.end());
                 }
 
                 // add embedment and the bulk cell dofs to coupling stencil of low dim element
-                lowDimData.embedments.emplace_back( bulkElemIdx, std::move(embeddedScvfIndices) );
+                lowDimData.embedments.emplace_back(bulkElemIdx, std::move(embeddedScvfIndices));
 
                 const auto bulkElementDofs = this->extractNodalDofs_(bulkElement, bulkFvGridGeometry);
                 for (auto bulkDofIdx : bulkElementDofs)
-                    lowDimData.couplingStencil.push_back( bulkDofIdx );
+                    lowDimData.couplingStencil.push_back(bulkDofIdx);
             }
         };
 

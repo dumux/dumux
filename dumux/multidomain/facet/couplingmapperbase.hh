@@ -106,7 +106,7 @@ class FacetCouplingMapperBase
         std::vector< Embedment > embedments;
     };
 
-    //! export data structures used for the coupling maps
+    //! data structures used for the coupling maps
     using BulkCouplingMap = std::unordered_map<BulkIndexType, BulkCouplingData>;
     using LowDimCouplingMap = std::unordered_map<LowDimIndexType, LowDimCouplingData>;
 
