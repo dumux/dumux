@@ -31,7 +31,7 @@
 #include <dumux/io/vtkfunction.hh>
 #include <dumux/multidomain/facet/gridcreator.hh>
 #include <dumux/multidomain/facet/gridvertexadapter.hh>
-#include <dumux/multidomain/facet/box/vertexmapper.hh>
+#include <dumux/multidomain/facet/vertexmapper.hh>
 
 #ifndef BULKGRIDTYPE // default to alu grid if not provided by CMake
 #define BULKGRIDTYPE Dune::ALUGrid<3, 3, Dune::simplex, Dune::nonconforming>
