@@ -35,6 +35,8 @@
 #include "newtonconvergencewriter.hh"
 #include "newtonmethod.hh"
 
+#include <dune/istl/io.hh>
+
 namespace Dumux
 {
 template <class TypeTag>
@@ -395,10 +397,36 @@ public:
                            SolutionVector &b)
     {
         try {
+            if (problem_().coupled() == true && problem_().getIteration() > GET_RUNTIME_PARAM(TypeTag, Scalar, Newton.FirstEvalOriginalRhsIteration))
+            {
+//                 std::ofstream file_b;
+//                 std::string outname_b = "b.txt";
+//                 file_b.open(outname_b, std::ios::out);
+//                 if (file_b.fail())
+//                     throw std::ios_base::failure(std::strerror(errno));
+//                 for (int i = 0; i < b.size(); i++)
+//                 {
+//                         file_b << b[i] <<std::endl;
+//                 }
+//                 Scalar temp = shiftTolerance_;
+//                 setMaxRelativeShift(GET_RUNTIME_PARAM(TypeTag, Scalar, Newton.MaxRelativeShiftEvalOriginalRhs));
                 problem_().setEvalOriginalRhs(true);
                 auto res = model_().globalResidual(b);
                 std::cout << "global residual is " << res << std::endl;
                 problem_().setEvalOriginalRhs(false);
+//                 setMaxRelativeShift(temp);
+
+//                 std::ofstream file_b_after;
+//                 std::string outname_b_after = "b_after.txt";
+//                 file_b_after.open(outname_b_after, std::ios::out);
+//                 if (file_b_after.fail())
+//                     throw std::ios_base::failure(std::strerror(errno));
+//                 for (int i = 0; i < b.size(); i++)
+//                 {
+//                         file_b_after << b[i] <<std::endl;
+//                 }
+            }
+
             if (numSteps_ == 0)
             {
                 Scalar norm2 = b.two_norm2();
@@ -409,7 +437,20 @@ public:
                 initialResidual_ = sqrt(norm2);
             }
 
+//             std::ofstream file2;
+//             std::string outname2 = "bOutput.txt";
+//             file2.open(outname2, std::ios::out);
+//             if (file2.fail())
+//                 throw std::ios_base::failure(std::strerror(errno));
+// //             for (int i = 0; i < b.base().size(); i++)
+// //                 file2 << b.base()[i] << std::endl;
+//             printvector(file2, b, "b", "row", 5, 1, 5);
+//
+//             Dune::writeMatrixToMatlab(A, "matrix.txt");
+
             int converged = linearSolver_.solve(A, x, b);
+
+
 
             // make sure all processes converged
             int convergedRemote = converged;

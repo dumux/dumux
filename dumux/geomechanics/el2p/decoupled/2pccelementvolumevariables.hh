@@ -20,8 +20,8 @@
  * \file
  * \brief Volume variables gathered on an element
  */
-#ifndef DUMUX_DECOUPLED_TWOP_ELEMENT_VOLUME_VARIABLES_HH
-#define DUMUX_DECOUPLED_TWOP_ELEMENT_VOLUME_VARIABLES_HH
+#ifndef DUMUX_DECOUPLED_TWOP_CC_ELEMENT_VOLUME_VARIABLES_HH
+#define DUMUX_DECOUPLED_TWOP_CC_ELEMENT_VOLUME_VARIABLES_HH
 
 #include <dumux/implicit/box/elementvolumevariables.hh>
 #include <dumux/implicit/cellcentered/elementvolumevariables.hh>
@@ -100,73 +100,6 @@ public:
     }
 
     /*!
-     * \brief Construct the volume variables for all of vertices of an element.
-     *
-     * \param problem The problem which needs to be simulated.
-     * \param element The DUNE Codim<0> entity for which the volume variables ought to be calculated
-     * \param fvGeometry The finite volume geometry of the element
-     * \param oldSol Tells whether the model's previous or current solution should be used.
-     */
-
-//     void update(const SolutionVector &globalSol,
-//                 const Problem &problem,
-//                 const Element &element,
-//                 const FVElementGeometry &fvGeometry,
-//                 const bool oldSol)
-//     {
-//         if(isBox)
-//         {
-//             const VertexMapper &vertexMapper = problem.vertexMapper();
-//             // we assert that the i-th shape function is
-//             // associated to the i-th vertex of the element.
-//             int numVertices = element.subEntities(dofCodim);
-//             this->resize(numVertices);
-//             for (int scvIdx = 0; scvIdx < numVertices; scvIdx++) {
-//                 const PrimaryVariables &priVars
-//                     = globalSol[vertexMapper.subIndex(element, scvIdx, dofCodim)];
-//
-//                 // reset evaluation point to zero
-//                 (*this)[scvIdx].setEvalPoint(0);
-//
-//                 (*this)[scvIdx].update(priVars,
-//                                 problem,
-//                                 element,
-//                                 fvGeometry,
-//                                 scvIdx,
-//                                 oldSol);
-//             }
-//
-//             this->updateEffPorosity(problem, element, fvGeometry, oldSol);
-//         }
-//         else
-//         {
-//             int numNeighbors = fvGeometry.numNeighbors;
-//             this->resize(numNeighbors);
-//
-//             for (int i = 0; i < numNeighbors; i++)
-//             {
-//                 const Element& neighbor = fvGeometry.neighbors[i];
-//
-//                 const PrimaryVariables &solI
-//                         = globalSol[problem.elementMapper().index(neighbor)];
-//
-//                 FVElementGeometry neighborFVGeom;
-//                 neighborFVGeom.updateInner(neighbor);
-//
-//                 (*this)[i].update(solI,
-//                                     problem,
-//                                     neighbor,
-//                                     neighborFVGeom,
-//                                     /*scvIdx=*/0,
-//                                     oldSol);
-//
-//                 this->updateEffPorosity(problem, element, fvGeometry, oldSol);
-//             }
-//         }
-//     }
-
-
-    /*!
      * \brief Construct the volume variables for all of vertices of an
      *        element given a solution vector computed by PDELab.
      *
@@ -216,14 +149,8 @@ public:
     {
         int eIdx = problem.model().elementMapper().index(element);
 
-        int numScv = isBox?
-        fvGeometry.numScv:
-        fvGeometry.numNeighbors;
+        int numScv = fvGeometry.numScv;
 
-//         std::cout << "elemVolVars: numScv = " << numScv << std::endl;
-
-        typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
-        typedef typename LocalFiniteElementCache::FiniteElementType LocalFiniteElement;
 
         for (int scvIdx = 0; scvIdx < numScv; scvIdx++)
         (*this)[scvIdx].effPorosity_ = (*this)[scvIdx].initialPorosity();
@@ -240,10 +167,7 @@ public:
 //             std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
 //                         localFiniteElement.localBasis().evaluateFunction(scvCenter, shapeVal);
 
-            const Element& neighbor = fvGeometry.neighbors[scvIdx];
-
-            FVElementGeometry neighborFVGeom;
-            neighborFVGeom.updateInner(neighbor);
+//             const Element& neighbor = fvGeometry.neighbors[scvIdx];
 
             Scalar pWCurrentIteration =  0.0;
             Scalar pNCurrentIteration =  0.0;
@@ -257,75 +181,20 @@ public:
 
             // drained bulk modulus
             Scalar B = 0.0;
-            B = problem.spatialParams().lameParams(neighbor, neighborFVGeom, scvIdx)[1];
-            Scalar poreCompressibility = problem.spatialParams().lameParams(neighbor, neighborFVGeom, scvIdx)[3];
-//                B = problem.getBNodeWiseAveraged(neighbor, fvGeometry, scvIdx);
+            B = problem.spatialParams().lameParams(element, fvGeometry, scvIdx)[1];
+            Scalar poreCompressibility = problem.spatialParams().lameParams(element, fvGeometry, scvIdx)[2];
 
-//             if (eIdx == 211)
-//                 std::cout << "pw[" << eIdx << "][" << scvIdx << "] = " << (*this)[scvIdx].pressure(wPhaseIdx) << std::endl;
+            pWCurrentIteration +=  (*this)[scvIdx].pressure(wPhaseIdx);
+            pNCurrentIteration +=  (*this)[scvIdx].pressure(nPhaseIdx);
+            sWCurrentIteration +=  (*this)[scvIdx].saturation(wPhaseIdx);
+            sNCurrentIteration +=  (*this)[scvIdx].saturation(nPhaseIdx);
 
-//             std::cout << "problem.getpWOldIteration_(element, fvGeometry," << scvIdx << ") at element " << eIdx << " = " << problem.getpWOldIteration_(element, fvGeometry, scvIdx) << std::endl;
-//             std::cout << "(*this)[" << scvIdx << "].pressure(wPhaseIdx) = " << (*this)[scvIdx].pressure(wPhaseIdx) << std::endl;
+            pWOldIteration +=  problem.getpWOldIteration_(element, fvGeometry, 0);
+            pNOldIteration +=  problem.getpNOldIteration_(element, fvGeometry, 0);
+            sWOldIteration +=  problem.getsWOldIteration_(element, fvGeometry, 0);
+            sNOldIteration +=  problem.getsNOldIteration_(element, fvGeometry, 0);
 
-//             for (int j = 0; j < shapeVal.size(); ++j)
-//             {
-// //                 B += problem.getBNodeWiseAveraged(element, fvGeometry, j) * shapeVal[j];
-// //                B += shapeVal[j]/problem.getBNodeWiseAveraged(element, fvGeometry, j);
-//                 pWCurrentIteration +=  (*this)[j].pressure(wPhaseIdx) * shapeVal[j];
-//                 pNCurrentIteration +=  (*this)[j].pressure(nPhaseIdx) * shapeVal[j];
-//                 sWCurrentIteration +=  (*this)[j].saturation(wPhaseIdx) * shapeVal[j];
-//                 sNCurrentIteration +=  (*this)[j].saturation(nPhaseIdx) * shapeVal[j];
-//
-//                 // for fixed stress
-//                 pWOldIteration +=  problem.getpWOldIteration_(element, fvGeometry, j) * shapeVal[j];
-//                 pNOldIteration +=  problem.getpNOldIteration_(element, fvGeometry, j) * shapeVal[j];
-//                 sWOldIteration +=  problem.getsWOldIteration_(element, fvGeometry, j) * shapeVal[j];
-//                 sNOldIteration +=  problem.getsNOldIteration_(element, fvGeometry, j) * shapeVal[j];
-
-//                 // for pore compressibility
-//                 pWOldIteration +=  problem.getpInitPerScv_(element, fvGeometry, j) * shapeVal[j];
-//                 sWOldIteration =  1.0;
-
-
-                pWCurrentIteration +=  (*this)[scvIdx].pressure(wPhaseIdx);
-                pNCurrentIteration +=  (*this)[scvIdx].pressure(nPhaseIdx);
-                sWCurrentIteration +=  (*this)[scvIdx].saturation(wPhaseIdx);
-                sNCurrentIteration +=  (*this)[scvIdx].saturation(nPhaseIdx);
-
-                pWOldIteration +=  problem.getpWOldIteration_(neighbor, neighborFVGeom, 0);
-                pNOldIteration +=  problem.getpNOldIteration_(neighbor, neighborFVGeom, 0);
-                sWOldIteration +=  problem.getsWOldIteration_(neighbor, neighborFVGeom, 0);
-                sNOldIteration +=  problem.getsNOldIteration_(neighbor, neighborFVGeom, 0);
-//             }
-
-
-//             B = 1.0 / B;
-
-//                 if (eIdx == 0)
-//                 {
-//                     std::cout << "scvCenter_[" << eIdx << "][" << scvIdx << "] = " << scvCenter[0] << " " << scvCenter[1] << std::endl;
-//
-//                     for (int j = 0; j < shapeVal.size(); ++j)
-//                     {
-//                         std::cout << "elemVolVarsTranspProblem[" << j << "] = " << (*this)[j].pressure(wPhaseIdx) << std::endl;
-//                         std::cout << "shapeVal[" << j << "] = " << shapeVal[j] << std::endl;
-//                     }
-//                 }
-
-//             Scalar deltaVolumetricStrainOldIteration = 0.0;
-
-            (*this)[scvIdx].deltaVolumetricStrainOldIteration_ = problem.getDeltaVolumetricStrainOldIteration(neighbor, neighborFVGeom, scvIdx);
-
-//             Scalar eps = 1e-6;
-//             if(problem.coupled() == true)
-//             if ((scvCenterGlobal[0] > 500 - eps) && (scvCenterGlobal[0] < 1500 + eps) &&
-//                 (scvCenterGlobal[1] > 500 - eps) && (scvCenterGlobal[1] < 1500 + eps)
-//             )
-//             {
-//                 std::cout.precision(15);
-//                 std::cout << "pWCurrentIteration[" << eIdx << "][" << scvIdx << "] = " << pWCurrentIteration << std::endl;
-//                 std::cout << "deltaVolumetricStrainOldIteration[" << eIdx << "][" << scvIdx << "] = " << deltaVolumetricStrainOldIteration << std::endl;
-//             }
+            (*this)[scvIdx].deltaVolumetricStrainOldIteration_ = problem.getDeltaVolumetricStrainOldIteration(element, fvGeometry, scvIdx);
 
             Scalar effPressureCurrentIteration = pWCurrentIteration *  sWCurrentIteration +
                                                     pNCurrentIteration *  sNCurrentIteration;
@@ -333,74 +202,34 @@ public:
             Scalar effPressureOldIteration = pWOldIteration *  sWOldIteration +
                                                     pNOldIteration *  sNOldIteration;
 
-
-            Scalar pressureDifference = effPressureCurrentIteration - effPressureOldIteration;
-
-
-            if( (eIdx == 210) || (eIdx == 211))
-            {
-//             if (std::abs(pressureDifference/effPressureCurrentIteration) > 1.0e-5)
-//             {
-// //                 std::cout.precision(15);
-//                 std::cout << "pWCurrentIteration[" << eIdx << "][" << scvIdx << "] = " << pWCurrentIteration << std::endl;
-//                 std::cout << "effPressureCurrentIteration[" << eIdx << "][" << scvIdx << "] = " << effPressureCurrentIteration << std::endl;
-//                 std::cout << "effPressureOldIteration[" << eIdx << "][" << scvIdx << "] = " << effPressureOldIteration << std::endl;
-
-//                 std::cout << "B[" << eIdx << "][" << scvIdx << "] = " << B << std::endl;
-//
-//                 std::cout << "deltaVolumetricStrainOldIteration[" << eIdx << "][" << scvIdx << "] = " << deltaVolumetricStrainOldIteration << std::endl;
-//             }
-            }
-
-            // for fixed-stress
-//             (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_ = 1.0/B * (effPressureCurrentIteration -   effPressureOldIteration) + (*this)[scvIdx].deltaVolumetricStrainOldIteration_;
             // for pore compressibility
-//             (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_ = poreCompressibility * (effPressureCurrentIteration -   effPressureOldIteration);
-
-//             if( eIdx == 211)
-//             {
-//                 std::cout << "pWOldIteration    [" << eIdx << "][" << scvIdx << "] = " << pWOldIteration << std::endl;
-//                 std::cout << "pWCurrentIteration[" << eIdx << "][" << scvIdx << "] = " << pWCurrentIteration << std::endl;
-//             }
-//
-//             std::cout << "deltaVolumetricStrainCurrentIteration = " << deltaVolumetricStrainCurrentIteration << std::endl;
-//             std::cout << "deltaVolumetricStrainOldIteration = " << deltaVolumetricStrainOldIteration << std::endl;
+            if (GET_RUNTIME_PARAM(TypeTag, bool,PoreCompressibility.UsePoreCompressibility))
+                (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_ = (*this)[scvIdx].initialPorosity() * poreCompressibility * (effPressureCurrentIteration - effPressureOldIteration);
+            // for fixed-stress
+            else
+                (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_ = 1.0/B * (effPressureCurrentIteration -   effPressureOldIteration) + (*this)[scvIdx].deltaVolumetricStrainOldIteration_;
 
             if(problem.coupled() == true)
             {
                 if (isOldSol == true)
                 {
-//                     Scalar deltaVolumetricStrainOldTimestep = 1.0/B * (effPressureOldIteration -   effPressureOldIteration) + deltaVolumetricStrainOldIteration;
-//                     (*this)[scvIdx].effPorosity_ = 1 - (1 - (*this)[scvIdx].initialPorosity() )*exp( -(deltaVolumetricStrainOldTimestep));
-                    (*this)[scvIdx].effPorosity_ =  problem.getEffPorosityOldTimestep(neighbor, neighborFVGeom, 0);
-
-//                     if( ((scvCenterGlobal[0] > -0.5) && (scvCenterGlobal[0] < 50)) &&
-//                     ((scvCenterGlobal[1] > -0.1) && (scvCenterGlobal[1] < 50)) )
-//                     {
-//                         std::cout << "effPorosityOld_[" << eIdx << "][" << scvIdx << "] = " << (*this)[scvIdx].effPorosity_ << std::endl;
-//                     }
-
+                    (*this)[scvIdx].effPorosity_ =  problem.getEffPorosityOldTimestep(element, fvGeometry, 0);
                 }
                 else
                 {
-                    (*this)[scvIdx].effPorosity_ = (*this)[scvIdx].initialPorosity() * (1.0 + poreCompressibility * pressureDifference);
-//                     (*this)[scvIdx].effPorosity_ = problem.getEffPorosityOldTimestep(element, fvGeometry, scvIdx)/(1.0 - poreCompressibility * pressureDifference);
                     //                     (*this)[scvIdx].effPorosity_ = 1 - (1 - (*this)[scvIdx].initialPorosity() )*exp( -((*this)[scvIdx].deltaVolumetricStrainCurrentIteration_));
-//                     (*this)[scvIdx].effPorosity_ = ((*this)[scvIdx].initialPorosity() + deltaVolumetricStrainCurrentIteration)/(1.0 + deltaVolumetricStrainCurrentIteration);
-                }
-            }
+                    (*this)[scvIdx].effPorosity_ = ((*this)[scvIdx].initialPorosity() + (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_)/*/(1.0 + (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_)*/;
 
-            if( (eIdx == 210) || (eIdx == 211) || (eIdx == 190) || (eIdx == 209) || (eIdx == 230))
-//                     if( ((scvCenterGlobal[0] > -0.5) && (scvCenterGlobal[0] < 50)) &&
-//                     ((scvCenterGlobal[1] > -0.1) && (scvCenterGlobal[1] < 50)) )
-            {
-//                         std::cout << "pWCurrentIteration[" << eIdx << "][" << scvIdx << "] = " << pWCurrentIteration << std::endl;
-//                         std::cout << "pWOldIteration[" << eIdx << "][" << scvIdx << "] = " << pWOldIteration << std::endl;
+//                     if (eIdx == 2925)
+//                     {
+//                         std::cout << "effPressureCurrentIteration[" << eIdx << "][" << scvIdx << "] = " << effPressureCurrentIteration << std::endl;
 //
-// //                         std::cout << "deltaVolumetricStrainOldIteration[" << eIdx << "][" << scvIdx << "] = " << deltaVolumetricStrainOldIteration << std::endl;
-//                         std::cout << "deltaVolumetricStrainCurrentIteration[" << eIdx << "][" << scvIdx << "] = " << (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_ << std::endl;
+//                         std::cout << "effPressureInit[" << eIdx << "][" << scvIdx << "] = " << effPressureInit << std::endl;
 //
-//                 std::cout << "effPorosity_[" << eIdx << "][" << scvIdx << "] = " << (*this)[scvIdx].effPorosity_ << std::endl;
+//                         std::cout << "deltaVolumetricStrainCurrentIteration_[" << eIdx << "][" << scvIdx << "] = " << (*this)[scvIdx].deltaVolumetricStrainCurrentIteration_ << std::endl;
+//                         std::cout << "effPorosityNew_[" << eIdx << "][" << scvIdx << "] = " << (*this)[scvIdx].effPorosity_ << std::endl;
+//                     }
+                }
             }
         }
     }

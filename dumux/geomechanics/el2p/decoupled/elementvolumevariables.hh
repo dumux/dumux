@@ -240,26 +240,26 @@ public:
                 (*this)[scvIdx].volumetricStrain += uGradient[coordDir][coordDir];
             }
 
-            // calculate the effective porosity
+//             // calculate the effective porosity
             if(problem.coupled() == true)
             {
-//                     if ((*this)[scvIdx].divU < -(*this)[scvIdx].initialPorosity())
-//                     {
-//                         (*this)[scvIdx].effPorosity = (*this)[scvIdx].initialPorosity();
-//                         std::cout<<"volume change too large"<<std::endl;
-//
-//                     }
-//                 else
-//                     // this equation would be correct if the bulk volume could change (Vol_new = Vol_   *(1+div u)), however, we
-//                     // have a constant bulk volume therefore we should apply phi_eff = phi_init + div u
-//                     // but this causes convergence problems. Since div u is very small here the chosen relation is
-//                     // assumed to be a good approximation
-//                      (*this)[scvIdx].effPorosity = ((*this)[scvIdx].initialPorosity() + (*this)[scvIdx].divU)/(1.0 + (*this)[scvIdx].divU);
-// //                      std::cout << "effPorosity is " << (*this)[scvIdx].effPorosity << std::endl;
-//
+// //                     if ((*this)[scvIdx].divU < -(*this)[scvIdx].initialPorosity())
+// //                     {
+// //                         (*this)[scvIdx].effPorosity = (*this)[scvIdx].initialPorosity();
+// //                         std::cout<<"volume change too large"<<std::endl;
+// //
+// //                     }
+// //                 else
+// //                     // this equation would be correct if the bulk volume could change (Vol_new = Vol_   *(1+div u)), however, we
+// //                     // have a constant bulk volume therefore we should apply phi_eff = phi_init + div u
+// //                     // but this causes convergence problems. Since div u is very small here the chosen relation is
+// //                     // assumed to be a good approximation
+// //                      (*this)[scvIdx].effPorosity = ((*this)[scvIdx].initialPorosity() + (*this)[scvIdx].divU)/(1.0 + (*this)[scvIdx].divU);
+// // //                      std::cout << "effPorosity is " << (*this)[scvIdx].effPorosity << std::endl;
+// //
                     (*this)[scvIdx].effPorosity = ((*this)[scvIdx].initialPorosity() + (*this)[scvIdx].volumetricStrain)/*/(1.0 + (*this)[scvIdx].volumetricStrain)*/;
-                    // Alternative after Cappa & Rutquist (2011)
-//                    (*this)[scvIdx].effPorosity = 1 - (1 - (*this)[scvIdx].initialPorosity() )*exp( -((*this)[scvIdx].volumetricStrain) );
+//                     // Alternative after Cappa & Rutquist (2011)
+// //                    (*this)[scvIdx].effPorosity = 1 - (1 - (*this)[scvIdx].initialPorosity() )*exp( -((*this)[scvIdx].volumetricStrain) );
 //                    std::cout << "effPorosity[" << scvIdx << "] is " << (*this)[scvIdx].effPorosity << std::endl;
             }
             else

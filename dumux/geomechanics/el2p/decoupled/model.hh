@@ -455,16 +455,9 @@ public:
                     uGradient[coordDir].axpy(values[scalarDispLFS.localIndex(i)],vShapeGradient[i]);
             }
 
-            const Dune::FieldVector<Scalar,4> lameParams = this->problem_().spatialParams().lameParams(element, fvGeometry, 0);
-            //Young's modulus of the spring for the pure elastic model
-            E[eIdx] = lameParams[0];
-            //bulk modulus for both the pure elastic and the viscoelastic model
-            B[eIdx] = lameParams[1];
-
-            nu[eIdx] = lameParams[2];
-
-            Scalar lambda = 3.0*B[eIdx]*((3.0*B[eIdx]-E[eIdx])/(9.0*B[eIdx]-E[eIdx]));
-            Scalar mu = ((3.0*B[eIdx]*E[eIdx])/(9.0*B[eIdx]-E[eIdx]));
+            const Dune::FieldVector<Scalar, 3> lameParams =    this->problem_().spatialParams().lameParams(element,fvGeometry, 0);
+            const Scalar lambda = lameParams[0];
+            const Scalar mu = lameParams[1];
 
             // calculate strain tensor
             Dune::FieldMatrix<RF, dim, dim> epsilon;

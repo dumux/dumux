@@ -183,8 +183,8 @@ public:
 //             Keff_i *= exp(exp_i);
 //             Keff_j *= exp(exp_j);
 
-            Keff_i *= factor_i;
-            Keff_j *= factor_j;
+//             Keff_i *= factor_i;
+//             Keff_j *= factor_j;
 
             spatialParams.meanK(Keff_,
                                 Keff_i,
@@ -218,8 +218,8 @@ public:
 
             Keff_j = spatialParams.intrinsicPermeability(elementJ, fvGeometryJ, this->face().j);
 
-            Keff_i *= factor_i;
-            Keff_j *= factor_j;
+//             Keff_i *= factor_i;
+//             Keff_j *= factor_j;
 
             spatialParams.meanK(Keff_,
                                 Keff_i,
@@ -297,6 +297,18 @@ public:
             this->velocity_[phaseIdx] = this->kGradP_[phaseIdx];
             this->velocity_[phaseIdx] *= - ( this->mobilityUpwindWeight_*upVolVars.mobility(phaseIdx)
                     + (1.0 - this->mobilityUpwindWeight_)*downVolVars.mobility(phaseIdx)) ;
+
+//             int eIdx = problem.model().elementMapper().index(element);
+//             if ((problem.coupled() == true) && (eIdx == 2925))
+//             {
+// //                 std::cout << "upVolVars.mobility(phaseIdx) = " << this->upVolVars.mobility(phaseIdx) << std::endl;
+// //                 std::cout << std::endl;
+//                 std::cout << "upVolVars.kr(" << phaseIdx << ") at " << this->upstreamIdx_[phaseIdx] << " = " << upVolVars.mobility(phaseIdx) * upVolVars.fluidState().viscosity(phaseIdx) << std::endl;
+//                 std::cout << std::endl;
+//
+//                 std::cout << "saturation(" << phaseIdx << ") at " << upVolVars.fluidState().saturation(phaseIdx) << std::endl;
+//                 std::cout << std::endl;
+//             }
 
             // set the volume flux
             this->volumeFlux_[phaseIdx] = this->velocity_[phaseIdx] * this->face().normal;

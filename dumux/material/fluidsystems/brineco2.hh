@@ -39,7 +39,8 @@
 
 namespace Dumux
 {
-#include <dumux/material/components/co2tables.inc>
+// #include <dumux/material/components/co2tables.inc>
+#include <dumux/material/components/co2tablesAntonio.inc>
 
 namespace FluidSystems{
 /*!
@@ -301,12 +302,15 @@ public:
         Scalar result = 0;
 
         if (phaseIdx == wPhaseIdx)
-            result = Brine::liquidViscosity(temperature, pressure);
+//             result = Brine::liquidViscosity(temperature, pressure);
+            result= -6.3844e-8* (pressure/1.0e6) + 8.9044e-4;
         else
             result = CO2::gasViscosity(temperature, pressure);
 
         Valgrind::CheckDefined(result);
+
         return result;
+//         return 0.00089;
     }
 
     using Base::fugacityCoefficient;
@@ -621,28 +625,61 @@ private:
                                  Scalar xlH2O,
                                  Scalar xlCO2)
     {
-        Valgrind::CheckDefined(T);
-        Valgrind::CheckDefined(pl);
-        Valgrind::CheckDefined(xlH2O);
-        Valgrind::CheckDefined(xlCO2);
+//         Valgrind::CheckDefined(T);
+//         Valgrind::CheckDefined(pl);
+//         Valgrind::CheckDefined(xlH2O);
+//         Valgrind::CheckDefined(xlCO2);
+//
+//         if(T < 273.15) {
+//             DUNE_THROW(NumericalProblem,
+//                        "Liquid density for Brine and CO2 is only "
+//                        "defined above 273.15K (is" << T << ")");
+//         }
+//         if(pl >= 2.5e8) {
+//             DUNE_THROW(NumericalProblem,
+//                        "Liquid density for Brine and CO2 is only "
+//                        "defined below 250MPa (is" << pl << ")");
+//         }
+//
+//         Scalar rho_brine = Brine::liquidDensity(T, pl);
+//         Scalar rho_pure = H2O::liquidDensity(T, pl);
+//         Scalar rho_lCO2 = liquidDensityWaterCO2_(T, pl, xlH2O, xlCO2);
+//         Scalar contribCO2 = rho_lCO2 - rho_pure;
 
-        if(T < 273.15) {
-            DUNE_THROW(NumericalProblem,
-                       "Liquid density for Brine and CO2 is only "
-                       "defined above 273.15K (is" << T << ")");
-        }
-        if(pl >= 2.5e8) {
-            DUNE_THROW(NumericalProblem,
-                       "Liquid density for Brine and CO2 is only "
-                       "defined below 250MPa (is" << pl << ")");
-        }
+//         return rho_brine + contribCO2;
 
-        Scalar rho_brine = Brine::liquidDensity(T, pl);
-        Scalar rho_pure = H2O::liquidDensity(T, pl);
-        Scalar rho_lCO2 = liquidDensityWaterCO2_(T, pl, xlH2O, xlCO2);
-        Scalar contribCO2 = rho_lCO2 - rho_pure;
+        pl = pl/1.0e6;
 
-        return rho_brine + contribCO2;
+        Scalar rho_brine =   1.0389e-6*pl*pl*pl
+                    - 4.8476e-4*pl*pl
+                    + 4.4842e-1*pl
+                    + 997.12;
+
+        return rho_brine;
+
+        // Data from https://webbook.nist.gov/chemistry/fluid/
+        Scalar rho_0 = 997.0474354081;
+        Scalar p_0   = 1.0e5;
+        Scalar E     = 2.15e9;
+
+//         Scalar rho_0 = 1018.4;
+//         Scalar p_0   = 5.0e7;
+//         Scalar E     = 2.15e9;
+
+//         Scalar rho_0 = 1037.8716475609;
+//         Scalar p_0   = 1.0e8;
+//         Scalar E     = 2.15e9;
+
+//         Scalar rho_0 = 1079.6;
+//         Scalar p_0   = 2.25e8;
+//         Scalar E     = 2.15e9;
+
+
+//         Scalar rho_0 = 1101.0;
+//         Scalar p_0   = 3.0e8;
+//         Scalar E     = 2.15e9;
+
+//         return rho_0 / (1.0 - (pl - p_0)/E );
     }
 
     static Scalar liquidDensityWaterCO2_(Scalar temperature,

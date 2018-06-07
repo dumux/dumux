@@ -105,19 +105,22 @@ public:
         initialPorosity_ = problem.spatialParams().porosity(element,
                                                      fvGeometry,
                                                      scvIdx);
+        effPorosity_ = initialPorosity_;
 
-        // porosity
-//         if (isOldSol == true)
+//         if(problem.coupled() == true)
 //         {
-//             effPorosity_ = problem.getEffPorosityOldTimestep(element,
-//                                                      fvGeometry,
-//                                                      scvIdx);
-//         }
-//         else
-//         {
-//             effPorosity_ = problem.getEffPorosity(element,
-//                                                      fvGeometry,
-//                                                      scvIdx);
+//             if (isOldSol == true)
+//             {
+//                 effPorosity_ = problem.getEffPorosityOldTimestep(element,
+//                                                         fvGeometry,
+//                                                         scvIdx);
+//             }
+//             else
+//             {
+//                 effPorosity_ = problem.getEffPorosity(element,
+//                                                         fvGeometry,
+//                                                         scvIdx);
+//             }
 //         }
 
 //         Scalar idx = problem.elementMapper().index(element);

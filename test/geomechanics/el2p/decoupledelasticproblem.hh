@@ -32,7 +32,8 @@
 #include <dumux/geomechanics/el2p/amgbackend.hh>
 
 #include "co2tables.hh"
-#include "decoupledelasticspatialparams.hh"
+// #include "decoupled2pspatialparams.hh"
+#include "decoupled2pAntoniospatialparams.hh"
 
 namespace Dumux
 {
@@ -45,7 +46,7 @@ template<class TypeTag, int dim>
 class InitialDisplacement;
 
 namespace Properties {
-NEW_TYPE_TAG(El2P_TestProblem, INHERITS_FROM(BoxModel, BoxElasticTwoP, El2PSpatialParams));
+NEW_TYPE_TAG(El2P_TestProblem, INHERITS_FROM(BoxModel, BoxElasticTwoP, TwoPAntonioSpatialParams));
 NEW_PROP_TAG(InitialDisplacement); //!< The initial displacement function
 
 // Set the grid type
@@ -86,7 +87,8 @@ SET_TYPE_PROP(El2P_TestProblem, CO2Table, CO2Tables);
 SET_SCALAR_PROP(El2P_TestProblem, ProblemSalinity, 0);
 
 // Set the soil properties
-SET_TYPE_PROP(El2P_TestProblem, SpatialParams, El2PSpatialParams<TypeTag>);
+SET_TYPE_PROP(El2P_TestProblem, SpatialParams, TwoPAntonioSpatialParams<TypeTag>);
+// SET_TYPE_PROP(El2P_TestProblem, SpatialParams, TwoPSpatialParams<TypeTag>);
 
 // Set the initial displacement function
 SET_PROP(El2P_TestProblem, InitialDisplacement)
@@ -100,7 +102,7 @@ public:
 };
 
 
-SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxRelativeShift, 1e-4);
+SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxRelativeShift, 1e-6);
 SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxSteps, 30);
 // SET_SCALAR_PROP(El2P_TestProblem, NewtonUseLineSearch, true);
 
@@ -350,7 +352,7 @@ public:
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     {
         Scalar T;
-        T = 283.15 + (depthBOR_ - globalPos[dim-1]) * 0.025;
+        T = 298.15 /*+ (depthBOR_ - globalPos[dim-1]) * 0.025*/;
 
         return T;
     };
@@ -440,33 +442,11 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
         }
 
         // The solid displacement at the bottom is fixed in y.
-        // The pressure is set to the initial pressure.
-        if(globalPos[1] < eps_)
+        // Bottom: x = 0, y = -1000
+        if(globalPos[1] < this->bBoxMin()[1] + eps_)
         {
             values.setDirichlet(Indices::u(1));
-//             values.setDirichlet(pressureIdx, contiWEqIdx);
-//             values.setDirichlet(saturationIdx, contiNEqIdx);
         }
-
-        // The pressure on top is set to the initial pressure.
-        // The solid displacement is fixed in y
-        if(globalPos[1] > this->bBoxMax()[1]-eps_)
-        {
-//             values.setDirichlet(pressureIdx, contiWEqIdx);
-//             values.setDirichlet(saturationIdx, contiNEqIdx);
-        }
-
-//         // The pressure on the front is fixed in y
-//         if(globalPos[1] < eps_)
-//         {
-//             values.setDirichlet(Indices::u(1));
-//         }
-//
-//         // The pressure on the back is fixed in y
-//         if(globalPos[1] > this->bBoxMax()[1]-eps_)
-//         {
-//             values.setDirichlet(Indices::u(1));
-//         }
      }
 
     /*!
@@ -559,7 +539,11 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
 
     void preTimeStep()
     {
-//         this->spatialParams().setEpisode(this->timeManager().episodeIndex());
+        this->spatialParams().setEpisode(this->timeManager().episodeIndex());
+        this->timeManager().startNextEpisode(episodeLength_);
+        std::cout << "el: episodeLength_ is " << episodeLength_ << "\n";
+        this->timeManager().setTimeStepSize(episodeLength_);
+        std::cout << "el: TimeStepSize_ " << this->timeManager().timeStepSize() << "\n";
     }
 
     void postTimeStep()
@@ -579,39 +563,16 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
         // is replaced by an empty function here to avoid uPrev_ during iterations
     }
 
-        /*!
+    /*!
      * \brief Define length of next episode
      */
     void episodeEnd()
     {
-//         Scalar oldTimeStep = this->timeManager().timeStepSize();
-//         //calls suggestTimeStepSize function, which returns the new suggested TimeStepSize for no failure
-//         //and the failureTimeStepSize for anyFailure = true
-//         double newTimeStepSize = this->newtonController().suggestTimeStepSize(oldTimeStep);
-//         std::cout << "elastic: newTimeStepSize is " << newTimeStepSize << "\n";
-        if( (this->timeManager().time() + this->timeManager().timeStepSize() > tInitEnd_ + eps_)
-            && ( this->timeManager().episodeIndex() < 2) )
-        {
-            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
-        }
-
-        if( this->timeManager().episodeIndex() >= 2)
-        {
-            episodeLength_ = episodeLength_ * 2.0;
-        }
-        if( this->timeManager().episodeIndex() == 10)
-            episodeLength_ = 389.0;
-        if( this->timeManager().episodeIndex() == 12)
-            episodeLength_ = 122.0;
-        if( this->timeManager().episodeIndex() == 16)
-            episodeLength_ = 92.0;
-        if( this->timeManager().episodeIndex() == 21)
-            episodeLength_ = 840;
-        if( this->timeManager().episodeIndex() == 23)
-            episodeLength_ = 1820;
-        if( this->timeManager().episodeIndex() == 24)
-            episodeLength_ = 100;
+        std::cout << "Episode control is excerted by the main problem coupling the subproblems" << std::endl;
     }
+
+    void setEpisodeLength(Scalar episodeLength)
+    {episodeLength_ = episodeLength; }
 
     /*!
        * \brief Get the non-wetting saturation of an element in the transport problem.
@@ -739,7 +700,8 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
                 const FVElementGeometry &fvGeometry,
                 int scvIdx) const
     {
-        if(this->timeManager().time() + this->timeManager().timeStepSize() < tInitEnd_ + eps_)
+        Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
+        if((tInitEnd_ - time) < eps_)
         {
             return this->spatialParams().porosity(element, fvGeometry, scvIdx);
         }

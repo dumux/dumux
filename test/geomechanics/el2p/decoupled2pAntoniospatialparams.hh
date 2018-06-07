@@ -22,12 +22,12 @@
  * \brief The spatial parameters for the El2P_TestProblem which uses the
  *        linear elastic two-phase model
  */
-#ifndef DUMUX_TWOPSPARAMETERS_HH
-#define DUMUX_TWOPSPARAMETERS_HH
+#ifndef DUMUX_TWOPANTONIOSPARAMETERS_HH
+#define DUMUX_TWOPANTONIOSPARAMETERS_HH
 
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 // #include <dumux/geomechanics/viscoel2p/model.hh>
@@ -37,24 +37,24 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class TwoPSpatialParams;
+class TwoPAntonioSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(TwoPSpatialParams);
+NEW_TYPE_TAG(TwoPAntonioSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TwoPSpatialParams, SpatialParams, Dumux::TwoPSpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPAntonioSpatialParams, SpatialParams, Dumux::TwoPAntonioSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_PROP(TwoPSpatialParams, MaterialLaw)
+SET_PROP(TwoPAntonioSpatialParams, MaterialLaw)
 {
 private:
     // define the material law which is parameterized by effective
     // saturations
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedBrooksCorey<Scalar> EffectiveLaw;
+    typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
 public:
     // define the material law parameterized by absolute saturations
     typedef EffToAbsLaw<EffectiveLaw> type;
@@ -66,7 +66,7 @@ public:
  *        linear elastic two-phase model
  */
 template<class TypeTag>
-class TwoPSpatialParams : public ImplicitSpatialParams<TypeTag>
+class TwoPAntonioSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     typedef ImplicitSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
@@ -90,7 +90,7 @@ public:
     typedef typename MaterialLaw::Params MaterialLawParams;
 
 
-    TwoPSpatialParams(const GridView &gridView)
+    TwoPAntonioSpatialParams(const GridView &gridView)
     : ParentType(gridView)
     {
         // episode index
@@ -112,7 +112,7 @@ public:
         phi_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.Phi);
 
         // rock density [kg/m^3]
-        rockDensity_ = 2700.0;
+        rockDensity_ = 2260.0;
 
         // Young's modulus of the pure elastic model (= only a spring)
         Ematrix_ = GET_RUNTIME_PARAM(TypeTag, Scalar,ElasticParameters.Ematrix);
@@ -144,24 +144,26 @@ public:
         // viscosity_= 1.0285e15;//2.0187e11;
         deltaT_ = GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.DeltaT); // stress drop is defined with respect to a certain timelength deltaT [s], which is set here
         deltaSigma_=  GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.DeltaSigma);
-ABC
+
         // given Van Genuchten m
         m_ = 0.457;
-        // Brooks Corey lambda
-        BrooksCoreyLambda_ = m_ / (1 - m_) * (1 - pow(0.5,1/m_));
+
+        n_ = 1.0 / (1.0 - m_);
+
+        alpha_ = 1.0 / (19.9e3);
 
         // residual saturations
-        MaterialParams_.setSwr(0.3);
-        MaterialParams_.setSnr(0.09);
+        MaterialParams_.setSwr(0.30);
+        MaterialParams_.setSnr(0.05);
 
-        // parameters for the Brooks Corey law
-        MaterialParams_.setPe(1.99e4);
-        MaterialParams_.setLambda(BrooksCoreyLambda_);
+        MaterialParams_.setVgAlpha(alpha_);
+        MaterialParams_.setVgn(n_);
 
+        MaterialParams_.setKrwHighSw(0.99);
 
      }
 
-    ~TwoPSpatialParams()
+    ~TwoPAntonioSpatialParams()
     {}
 
     /*!
@@ -191,7 +193,7 @@ ABC
     {
         GlobalPosition center = element.geometry().center();
 
-        if (isInFault_(center))
+        if (isInFault_(center, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
         {
             return phi_;
         }
@@ -212,7 +214,7 @@ ABC
      */
     double porosity(const GlobalPosition& globalPos) const
     {
-        if (isInFault_(globalPos))
+        if (isInFault_(globalPos, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
         {
                 return phi_;
         }
@@ -241,13 +243,13 @@ ABC
                                        const FVElementGeometry &fvGeometry,
                                        int scvIdx) const
     {
-        if(episode_ <= 0)
+        if(episode_ <= 1)
             return Kinit_; // intrinsic permeability applied during initialization
         else
         {
             GlobalPosition center = element.geometry().center();
 
-            if (isInFault_(center))
+            if (isInFault_(center, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
             {
                 return KFault_;
             }
@@ -263,11 +265,11 @@ ABC
 
     const DimMatrix intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        if(episode_ <= 0)
+        if(episode_ <= 1)
             return Kinit_; // intrinsic permeability applied during initialization
         else
         {
-            if (isInFault_(globalPos))
+            if (isInFault_(globalPos, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
             {
                 return KFault_;
             }
@@ -317,20 +319,29 @@ ABC
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    const Dune::FieldVector<Scalar,2> lameParams(const Element &element,
+    const Dune::FieldVector<Scalar,3> lameParams(const Element &element,
                                            const FVElementGeometry &fvGeometry,
                                            int scvIdx) const
     {
         // Lame parameters
-        Dune::FieldVector<Scalar, 2> param;
+        Dune::FieldVector<Scalar, 3> param;
 
         GlobalPosition center = element.geometry().center();
 
-        if (isInFault_(center))
+        if (isInFault_(center, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
         {
 //             std::cout << "I am here!" << std::endl;
             param[0] = lambdaFault_;
             param[1] = muFault_;
+            param[2] = poreCompFault_;
+        }
+        else if (isInFault_(center, xFaultBottom2_, yFaultBottom2_, xFaultTop2_, yFaultTop2_))
+        {
+//             std::cout << "I am here!" << std::endl;
+            param[0] = lambdaFault_ * 0.5;
+            param[1] = muFault_ * 0.5;
+            param[2] = poreCompFault_ * 0.5;
+
         }
 //             else if (xCoord > 487.5 && xCoord < 512.5 &&
 //                      yCoord > 987.5   && yCoord < 1012.5)
@@ -342,6 +353,7 @@ ABC
         {
             param[0] = lambdaMatrix_;
             param[1] = muMatrix_;
+            param[2] = poreCompMatrix_;
         }
 //         }
 
@@ -365,7 +377,7 @@ ABC
 
         GlobalPosition center = element.geometry().center();
 
-        if (isInFault_(center))
+        if (isInFault_(center, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
         {
 
             failureCurveParams[0] = frictionAngleFault_;
@@ -415,32 +427,55 @@ ABC
     }
 
 private:
-    bool isInFault_(const GlobalPosition &globalPos) const
+    bool isInFault_(const GlobalPosition &globalPos,
+                    const Scalar xFaultBottom,
+                    const Scalar yFaultBottom,
+                    const Scalar xFaultTop,
+                    const Scalar yFaultTop) const
     {
+        // x-Values of cell centers at the bottom: 320.3, 322.8, 325.3, 327.8
+        // x-Values of cell centers at the top:    672.2, 674.7, 677.2, 679.7
+
         Scalar xCoord = globalPos[0];
         Scalar yCoord = globalPos[1];
 
-        Scalar xCenterFault = 500.0;
-        Scalar yCenterFault = 1000.0;
+//         Scalar xFaultTop =  674.7;
+//         Scalar yFaultTop =  1000.0;
+//
+//         Scalar xFaultBottom =  322.8;
+//         Scalar yFaultBottom = -1000.0;
 
-        Scalar xFaultDistanceCenterToBothTips = 87.5; // x-distance in m to both tips of the fault
+        Scalar tanAngle = (yFaultTop - yFaultBottom) / (xFaultTop - xFaultBottom);
 
-        Scalar yFaultBottom = yCenterFault - tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
-        Scalar yFaultTop = yCenterFault + tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
+        Scalar deltaXBottom = xCoord - xFaultBottom;
+        Scalar deltaYBottom = yCoord - yFaultBottom;
 
-        Scalar deltaX = xCenterFault - xCoord;
+        Scalar deltaXTop = xFaultTop - xCoord;
+        Scalar deltaYTop = yFaultTop - yCoord;
 
-        if (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
-            yCoord < yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX + spatialTolarance_ &&
-            yCoord > yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX - spatialTolarance_ &&
-//                 yCoord < 50 &&
-//                 yCoord > 40 &&
-            yCoord > yFaultBottom &&
-            yCoord < yFaultTop)
+        if (deltaYBottom < tanAngle * deltaXBottom + spatialTolarance_ &&
+            deltaYBottom > tanAngle * deltaXBottom - spatialTolarance_ &&
+//             yCoord <  20 &&
+//             yCoord > -20 &&
+            deltaYBottom > yFaultBottom &&
+            deltaYBottom < yFaultTop)
+        {
             return true;
+        }
+        else if (deltaYTop < tanAngle * deltaXTop + spatialTolarance_ &&
+            deltaYTop > tanAngle * deltaXTop - spatialTolarance_ &&
+//             yCoord <  20 &&
+//             yCoord > -20 &&
+            deltaYTop > yFaultBottom &&
+            deltaYTop < yFaultTop)
+        {
+            return true;
+        }
         else
             return false;
     }
+
+
 
     Scalar spatialTolarance_;
     Dune::FieldMatrix<Scalar,dim,dim> KFault_, KMatrix_, Kinit_;
@@ -460,11 +495,25 @@ private:
     //Scalar viscosity_;
     Scalar deltaT_;
     Scalar deltaSigma_;
-    Scalar BrooksCoreyLambda_, m_;
+    Scalar BrooksCoreyLambda_, m_, alpha_, n_;
     MaterialLawParams MaterialParams_;
     static constexpr Scalar eps_ = 3e-6;
     int episode_;
     bool anyFailure_;
+
+    // x-Values of cell centers at the bottom: 320.3, 322.8, 325.3, 327.8
+    // x-Values of cell centers at the top:    672.2, 674.7, 677.2, 679.7
+    Scalar xFaultTop_ =  674.7;
+    Scalar yFaultTop_ =  1000.0;
+
+    Scalar xFaultTop2_ =  677.2;
+    Scalar yFaultTop2_ =  1000.0;
+
+    Scalar xFaultBottom_ =  322.8;
+    Scalar yFaultBottom_ = -1000.0;
+
+    Scalar xFaultBottom2_ =  325.3;
+    Scalar yFaultBottom2_ = -1000.0;
 
 };
 }

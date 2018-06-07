@@ -113,14 +113,14 @@ public:
 
         int eIdx = this->problem_().model().elementMapper().index(this->element_());
 
-//         if ( (this->problem_().coupled() == true) && (eIdx == 221) )
+//         if ( (this->problem_().coupled() == true) && (eIdx == 1) )
 //         {
-//             std::cout.precision(15);
+// //             std::cout.precision(15);
 //             std::cout << "usePrevSol = " << usePrevSol << std::endl;
-//             std::cout << "volVars.saturation(wPhaseIdx) = " << volVars.saturation(wPhaseIdx) << std::endl;
-//             std::cout << "volVars.density(wPhaseIdx) = " << volVars.density(wPhaseIdx) << std::endl;
+// //             std::cout << "volVars.saturation(wPhaseIdx) = " << volVars.saturation(wPhaseIdx) << std::endl;
+// //             std::cout << "volVars.density(wPhaseIdx) = " << volVars.density(wPhaseIdx) << std::endl;
 //             std::cout << "volVars.effPorosity() = " << volVars.effPorosity() << std::endl;
-//             std::cout << "storage[contiWEqIdx] at [" << scvIdx << "] = " << storage[contiWEqIdx] << std::endl;
+//             std::cout << "storage[contiWEqIdx] at [" << eIdx << "] = " << storage[contiWEqIdx] << std::endl;
 //         }
     }
 
@@ -219,41 +219,37 @@ public:
 //             std::cout << "dn.density(phaseIdx) = " << dn.density(phaseIdx) << std::endl;
 //             std::cout.precision(20);
 
-            if (this->problem_().coupled() == true && phaseIdx == 0) {
-                if (!fluxVars.onBoundary())
-                {
-                    Dune::FieldVector<Scalar,4> lameParams = this->problem_().spatialParams().lameParams(this->element_(), this->fvGeometry_(), 0);
-
-                    Scalar E = lameParams[0];
-                    //bulk modulus for both the pure elastic and the viscoelastic model
-                    Scalar B = lameParams[1];
-
-                    Scalar lambda = 3.0*B*((3.0*B-E)/(9.0*B-E));
-                    Scalar mu = ((3.0*B*E)/(9.0*B-E));
-
-                    Scalar dt = this->problem_().timeManager().timeStepSize();
-                    Scalar beta = GET_RUNTIME_PARAM(TypeTag, Scalar, Damping.Beta);
-
-                    Scalar currentGradP = fluxVars.potentialGrad(phaseIdx)* fluxVars.face().normal;
-                    Scalar oldGradP = fluxVarsOld.potentialGrad(phaseIdx)* fluxVarsOld.face().normal;
-                    Scalar dGradP = currentGradP - oldGradP;
-
-                    Scalar stabilizationTerm = dGradP;
-                    stabilizationTerm *= fluxVars.face().area * fluxVars.face().area;
-                    stabilizationTerm /= beta * (lambda + 2.0 * mu);
-
-                    stabilizationTerm /= dt;
-
-//                     std::cout << "potentialGrad_(" << phaseIdx << ")      = " << fluxVars.potentialGrad(phaseIdx) << std::endl;
-//                     std::cout << "stabilizationTerm of " << phaseIdx << " = " << fluxVars.potentialGrad(phaseIdx) << std::endl;
-
-
-//                     for (int coordDir = 0; coordDir < dim; ++coordDir)
-//                             tmp[coordDir] = fluxVars.potentialGrad(phaseIdx)[coordDir] / dt;
-
-//                     flux[eqIdx] -= stabilizationTerm;
-                }
-            }
+//             if (this->problem_().coupled() == true && phaseIdx == 0) {
+//                 if (!fluxVars.onBoundary())
+//                 {
+//                     Dune::FieldVector<Scalar,3> lameParams = this->problem_().spatialParams().lameParams(this->element_(), this->fvGeometry_(), 0);
+//
+//                     Scalar lambda = lameParams[0];
+//                     Scalar mu = lameParams[1];
+//
+//                     Scalar dt = this->problem_().timeManager().timeStepSize();
+//                     Scalar beta = GET_RUNTIME_PARAM(TypeTag, Scalar, Damping.Beta);
+//
+//                     Scalar currentGradP = fluxVars.potentialGrad(phaseIdx)* fluxVars.face().normal;
+//                     Scalar oldGradP = fluxVarsOld.potentialGrad(phaseIdx)* fluxVarsOld.face().normal;
+//                     Scalar dGradP = currentGradP - oldGradP;
+//
+//                     Scalar stabilizationTerm = dGradP;
+//                     stabilizationTerm *= fluxVars.face().area * fluxVars.face().area;
+//                     stabilizationTerm /= beta * (lambda + 2.0 * mu);
+//
+// //                     stabilizationTerm /= dt;
+//
+// //                     std::cout << "potentialGrad_(" << phaseIdx << ")      = " << fluxVars.potentialGrad(phaseIdx) << std::endl;
+// //                     std::cout << "stabilizationTerm of " << phaseIdx << " = " << fluxVars.potentialGrad(phaseIdx) << std::endl;
+//
+//
+// //                     for (int coordDir = 0; coordDir < dim; ++coordDir)
+// //                             tmp[coordDir] = fluxVars.potentialGrad(phaseIdx)[coordDir] / dt;
+//
+// //                     flux[eqIdx] -= stabilizationTerm;
+//                 }
+//             }
         }
     }
 

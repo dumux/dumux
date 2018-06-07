@@ -21,6 +21,9 @@
  *
  * \brief test for the one-phase box model
  */
+
+#define PROBLEM_IS_CC 0
+
 #include "config.h"
 
 //#include "gorgaschem2ptranspproblem.hh"

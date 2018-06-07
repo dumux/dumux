@@ -246,7 +246,9 @@ public:
      * if the end time is reached.
      */
     bool finished() const
-    { return finished_ || time() >= endTime(); }
+    {
+        return finished_ || time() >= endTime();
+    }
 
     /*!
      * \brief Returns true if the simulation is finished after the
@@ -261,6 +263,7 @@ public:
      */
     Scalar maxTimeStepSize() const
     {
+//         std::cout << "finished: " << finished() << ", episodeLength() = " << episodeLength() << ", episodeMaxTimeStepSize() = " << episodeMaxTimeStepSize() << ", problem_->maxTimeStepSize() = " << problem_->maxTimeStepSize() << ", endTime() = " << endTime() << ", time() = " << time() << std::endl;
         if (finished())
             return 0.0;
 
@@ -422,24 +425,24 @@ public:
                 //define what to do at the end of an episode in the problem
                 problem_->episodeEnd();
 
-                //check if a time step size was explicitly defined in problem->episodeEnd()
-                if (Dune::FloatCmp::eq<Scalar>(dt, timeStepSize()))
-                {
-                    // set the initial time step size of a an episode to the last real time step size before the episode
-                    using std::max;
-                    Scalar nextDt = max(previousTimeStepSize_, timeStepSize());
-                    previousTimeStepSize_ = nextDt;
-                    setTimeStepSize(nextDt);
-                }
+//                 //check if a time step size was explicitly defined in problem->episodeEnd()
+//                 if (Dune::FloatCmp::eq<Scalar>(dt, timeStepSize()))
+//                 {
+//                     // set the initial time step size of a an episode to the last real time step size before the episode
+//                     using std::max;
+//                     Scalar nextDt = max(previousTimeStepSize_, timeStepSize());
+//                     previousTimeStepSize_ = nextDt;
+//                     setTimeStepSize(nextDt);
+//                 }
             }
-            else
-            {
-                // notify the problem that the time step is done and ask it
-                // for a suggestion for the next time step size
-                // set the time step size for the next step
-                previousTimeStepSize_ = timeStepSize();
-                setTimeStepSize(problem_->nextTimeStepSize(dt));
-            }
+//             else
+//             {
+//                 // notify the problem that the time step is done and ask it
+//                 // for a suggestion for the next time step size
+//                 // set the time step size for the next step
+//                 previousTimeStepSize_ = timeStepSize();
+//                 setTimeStepSize(problem_->nextTimeStepSize(dt));
+//             }
         }
 
         if (verbose_) {

@@ -148,23 +148,9 @@ public:
         FVElementGeometry fvGeometry;
         fvGeometry.update(model_.problem().gridView(), eg.entity());
         // retrieve lame parameters for calculation of effective stresses
-        const Dune::FieldVector<Scalar,4> lameParams = model_.problem().spatialParams().lameParams(eg.entity(), fvGeometry, 0);
-
-        Scalar E = lameParams[0];
-        //bulk modulus for both the pure elastic and the viscoelastic model
-        Scalar B = lameParams[1];
-        Scalar nu = lameParams[2];
-
-        Scalar lambda = 3.0*B*((3.0*B-E)/(9.0*B-E));
-        Scalar mu = ((3.0*B*E)/(9.0*B-E));
-
-        Dune::FieldMatrix<Scalar, 3, 3> fullElasticTensor2D;
-
-        // Assemble full elastic tensor (2D)
-        fullElasticTensor2D[0][0] = E / (1 - nu*nu),             fullElasticTensor2D[0][1] = nu * E / (1 - nu*nu),   fullElasticTensor2D[0][2] = 0.0;
-        fullElasticTensor2D[1][0] = nu * E / (1 - nu*nu), fullElasticTensor2D[1][1] = E / (1 - nu*nu),               fullElasticTensor2D[1][2] = 0.0;
-        fullElasticTensor2D[2][0] = 0.0,                                              fullElasticTensor2D[2][1] = 0.0,                                                fullElasticTensor2D[2][2] = 2 * mu;
-
+        const Dune::FieldVector<Scalar,3> lameParams = model_.problem().spatialParams().lameParams(eg.entity(), fvGeometry, 0);
+        Scalar lambda = lameParams[0];
+        Scalar mu = lameParams[1];
         // retrieve materialParams for calculate of capillary pressure
         const MaterialLawParams& materialParams = model_.problem().spatialParams().materialLawParams(eg.entity(), fvGeometry, 0);
 
@@ -237,34 +223,14 @@ public:
              for(int i = 0; i < dim; ++i)
                 traceEpsilon += epsilon[i][i];
 
-            // calculate the effective stress tensor effStress
-            Dune::FieldMatrix<RF,dim,dim> deltaEffStress(0.0);
-            for(int i = 0; i < dim; ++i)
-            {
-                if (dim == 3)
-                {
-                    // normal stresses
-                    deltaEffStress[i][i] = lambda * traceEpsilon + 2.0*mu*epsilon[i][i];
-                    // shear stresses
-                    for(int j = 0; j < dim; ++j)
-                    {
-                        if (i != j)
-                        {
-                            // muShear_[eIdx][0][0] = C44 -> relates tau_yz with Gamma_yz | [i][j] = [1][2] or [2][1]
-                            // muShear_[eIdx][1][1] = C55 -> relates tau_xz with Gamma_xz | [i][j] = [0][2] or [2][0]
-                            // muShear_[eIdx][2][2] = C66 -> relates tau_xy with Gamma_xy | [i][j] = [0][1] or [1][0]
-                            deltaEffStress[i][j] = 2.0 * mu * epsilon[i][j];
-                        }
-                    }
-                }
-                if (dim == 2)
-                {
-                    deltaEffStress[0][0] = fullElasticTensor2D[0][0] * epsilon[0][0] + fullElasticTensor2D[0][1] * epsilon[1][1] + fullElasticTensor2D[0][2] * epsilon[0][1];
-                    deltaEffStress[1][1] = fullElasticTensor2D[1][0] * epsilon[0][0] + fullElasticTensor2D[1][1] * epsilon[1][1] + fullElasticTensor2D[1][2] * epsilon[0][1];
-                    deltaEffStress[0][1] = fullElasticTensor2D[2][0] * epsilon[0][0] + fullElasticTensor2D[2][1] * epsilon[1][1] + fullElasticTensor2D[2][2] * epsilon[0][1];
-                    deltaEffStress[1][0] = deltaEffStress[0][1];
-                }
-            }
+             // calculate the effective stress tensor deltaEffStress
+             Dune::FieldMatrix<RF,dim,dim> deltaEffStress(0.0);
+             for(int i = 0; i < dim; ++i)
+             {
+                deltaEffStress[i][i] = lambda*traceEpsilon;
+                for(int j = 0; j < dim; ++j)
+                    deltaEffStress[i][j] += 2.0*mu*epsilon[i][j];
+             }
 
             // retrieve the shape functions for interpolating the primary variables at the
             // current quadrature point

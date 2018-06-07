@@ -212,13 +212,13 @@ public:
             result2 = gridView_().comm().sum(result2);
 
         // add up the residuals on the process borders
-        if (isBox && gridView_().comm().size() > 1) {
-            VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
-                sumHandle(residual, vertexMapper());
-            gridView_().communicate(sumHandle,
-                                    Dune::InteriorBorder_InteriorBorder_Interface,
-                                    Dune::ForwardCommunication);
-        }
+//         if (isBox && gridView_().comm().size() > 1) {
+//             VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
+//                 sumHandle(residual, vertexMapper());
+//             gridView_().communicate(sumHandle,
+//                                     Dune::InteriorBorder_InteriorBorder_Interface,
+//                                     Dune::ForwardCommunication);
+//         }
 
         using std::sqrt;
         return sqrt(result2);
@@ -889,20 +889,20 @@ protected:
 
         // add up the primary variables and the volumes of the boxes
         // which cross process borders
-        if (isBox && gridView_().comm().size() > 1) {
-            VertexHandleSum<Dune::FieldVector<Scalar, 1>,
-                Dune::BlockVector<Dune::FieldVector<Scalar, 1> >,
-                VertexMapper> sumVolumeHandle(boxVolume_, vertexMapper());
-            gridView_().communicate(sumVolumeHandle,
-                                    Dune::InteriorBorder_InteriorBorder_Interface,
-                                    Dune::ForwardCommunication);
-
-            VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
-                sumPVHandle(uCur_->base(), vertexMapper());
-            gridView_().communicate(sumPVHandle,
-                                    Dune::InteriorBorder_InteriorBorder_Interface,
-                                    Dune::ForwardCommunication);
-        }
+//         if (isBox && gridView_().comm().size() > 1) {
+//             VertexHandleSum<Dune::FieldVector<Scalar, 1>,
+//                 Dune::BlockVector<Dune::FieldVector<Scalar, 1> >,
+//                 VertexMapper> sumVolumeHandle(boxVolume_, vertexMapper());
+//             gridView_().communicate(sumVolumeHandle,
+//                                     Dune::InteriorBorder_InteriorBorder_Interface,
+//                                     Dune::ForwardCommunication);
+//
+//             VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
+//                 sumPVHandle(uCur_->base(), vertexMapper());
+//             gridView_().communicate(sumPVHandle,
+//                                     Dune::InteriorBorder_InteriorBorder_Interface,
+//                                     Dune::ForwardCommunication);
+//         }
 
         if (isBox)
         {

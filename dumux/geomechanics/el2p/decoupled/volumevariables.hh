@@ -85,15 +85,11 @@ public:
         effFluidDensity_ = this->density(wPhaseIdx) * this->saturation(wPhaseIdx)
                         + this->density(nPhaseIdx) * this->saturation(nPhaseIdx);
 
-        const Dune::FieldVector<Scalar, 4> &lameParams =
+        const Dune::FieldVector<Scalar, 3> &lameParams =
                 problem.spatialParams().lameParams(element, fvGeometry, scvIdx);
 
-        Scalar E = lameParams[0];
-        //bulk modulus for both the pure elastic and the viscoelastic model
-        Scalar B = lameParams[1];
-
-        Scalar lambda_ = 3.0*B*((3.0*B-E)/(9.0*B-E));
-        Scalar mu_ = ((3.0*B*E)/(9.0*B-E));
+        lambda_ = lameParams[0];
+        mu_ = lameParams[1];
 
         rockDensity_ = problem.spatialParams().rockDensity(element, scvIdx);
 

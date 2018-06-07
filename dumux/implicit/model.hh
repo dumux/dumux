@@ -127,6 +127,45 @@ public:
         // initial solution.
         uPrev_ = uCur_;
         uLastIter_ = uCur_;
+
+
+//         SolutionVector b(curSol());
+//         SolutionVector x(curSol());
+//         std::ifstream inputfile("xOutput.txt");
+//         if (inputfile.fail())
+//             throw std::ios_base::failure(std::strerror(errno));
+//
+//
+//         std::string line;
+//         std::vector<std::string> xOutput;
+//         while (std::getline(inputfile, line))
+//         {
+//             xOutput.push_back(line);
+//         }
+//
+//         std::cout << "Evaluating the original residual" << std::endl;
+//
+//         SolutionVector temp = x;
+//
+// //                 std::cout << "x.size() =" << x.size() << std::endl;
+// //                 std::cout << "xOutput.size() =" << xOutput.size() << std::endl;
+// //                 std::cout << "x[0].size() =" << x[0].size() << std::endl;
+//
+//         for (int i = 0; i < x.size(); i++)
+//         {
+//             for (int j = 0; j < x[i].size(); j++)
+//             {
+//                 x[i][j] = std::stod(xOutput[i*2+j]);
+//             }
+//         }
+//
+//         uCur_ = x;
+//         problem_().setCoupled(true);
+//         problem_().setEvalOriginalRhs(true);
+//
+//         this->globalResidual(b, x);
+
+//                 x = temp;
     }
 
     void setHints(const Element &element,
@@ -209,6 +248,7 @@ public:
                           const SolutionVector &u)
     {
         SolutionVector tmp(curSol());
+
         curSol() = u;
         Scalar res = globalResidual(residual);
         curSol() = tmp;
@@ -243,8 +283,24 @@ public:
             }
         }
 
+        std::ofstream file2;
+        std::string outname2 = "residual.txt";
+        file2.open(outname2, std::ios::out);
+        if (file2.fail())
+            throw std::ios_base::failure(std::strerror(errno));
+        for (int i = 0; i < residual.size(); i++)
+        {
+//             std::cout << "residual.size() = " << residual.size() << std::endl;
+            for (int j = 0; j < residual[i].size(); j++)
+            {
+//                 std::cout << "residual.size()[" << i << "] = " << residual[i].size() << std::endl;
+                file2 << residual[i][j] <<std::endl;
+            }
+        }
+
         // calculate the square norm of the residual
         Scalar result2 = residual.two_norm2();
+//         std::cout << "result2 = " << result2 << std::endl;
         if (gridView_().comm().size() > 1)
             result2 = gridView_().comm().sum(result2);
 
@@ -258,6 +314,7 @@ public:
         }
         using std::sqrt;
         return sqrt(result2);
+
     }
 
     /*!

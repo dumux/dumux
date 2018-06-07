@@ -309,7 +309,6 @@ private:
         for (int i=0; i < numVerticesLocal; ++ i) {
             int globI = this->vertexMapper_().subIndex(element, i, dim);
 
-
             // update the right hand side
             this->residual_[globI] += this->model_().localJacobian().residual(i);
             for (int j = 0; j < this->residual_[globI].dimension; ++j) {
@@ -351,7 +350,6 @@ private:
 
         for (int i = 0; i < numVerticesLocal; ++ i) {
             int globI = this->vertexMapper_().subIndex(element, i, dim);
-
 
             // update the right hand side
             this->residual_[globI] += this->model_().localResidual().residual(i);

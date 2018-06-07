@@ -33,6 +33,7 @@
 #include <dumux/geomechanics/el2p/decoupled/2plocalresidual.hh>
 #include <dumux/geomechanics/el2p/decoupled/2pvolumevariables.hh>
 #include <dumux/geomechanics/el2p/decoupled/2pelementvolumevariables.hh>
+#include <dumux/geomechanics/el2p/decoupled/2pccelementvolumevariables.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/implicit/cellcentered/propertydefaults.hh>
 #include <dumux/porousmediumflow/2p/implicit/gridadaptindicator.hh>
@@ -41,7 +42,10 @@
 #include <dumux/material/fluidsystems/brineco2.hh>
 #include <test/geomechanics/el2p/co2tables.hh>
 
-#include "decoupled2pspatialparams.hh"
+#include "decoupled2pAntoniospatialparams.hh"
+// #include "decoupled2pspatialparams.hh"
+
+#include <dumux/porousmediumflow/implicit/cpdarcyfluxvariables.hh>
 
 namespace Dumux
 {
@@ -55,11 +59,15 @@ class InitialPressSat;
 
 //////////
 // Specify the properties for the lens problem
-//////////
+//////////s
 namespace Properties
 {
-// NEW_TYPE_TAG(TwoP_TestProblem, INHERITS_FROM(CCTwoP, TwoPSpatialParams));
-NEW_TYPE_TAG(TwoP_TestProblem, INHERITS_FROM(BoxTwoP, TwoPSpatialParams));
+
+#if PROBLEM_IS_CC==1
+NEW_TYPE_TAG(TwoP_TestProblem, INHERITS_FROM(CCTwoP, TwoPAntonioSpatialParams));
+#else
+NEW_TYPE_TAG(TwoP_TestProblem, INHERITS_FROM(BoxTwoP, TwoPAntonioSpatialParams));
+#endif
 NEW_PROP_TAG(InitialPressSat);
 
 NEW_PROP_TAG(BaseProblem);
@@ -77,11 +85,11 @@ SET_PROP(TwoP_TestProblem, FluidSystem)
 };
 
 // Set the CO2 table to be used; in this case not the the default table
-SET_TYPE_PROP(TwoP_TestProblem, CO2Table, Dumux::ViscoEl2P::CO2Tables);
+SET_TYPE_PROP(TwoP_TestProblem, CO2Table, Dumux::ViscoEl2P::CO2TablesAntonio);
 // Set the salinity mass fraction of the brine in the reservoir
 SET_SCALAR_PROP(TwoP_TestProblem, ProblemSalinity, 0);
 
-// // Set the wetting phase
+// Set the wetting phase
 // SET_PROP(TwoP_TestProblem, WettingPhase)
 // {
 // private:
@@ -132,8 +140,14 @@ SET_BOOL_PROP(TwoP_TestProblem, ProblemEnableGravity, true);
 // SET_TYPE_PROP(TwoP_TestProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
 SET_TYPE_PROP(TwoP_TestProblem, LinearSolver, SuperLUBackend<TypeTag> );
 
-// use the TwoPFluxVariables instead of the ImplicitDarcyFluxVariables
+// for better TPFA for CC use  CpDarcyFluxVariable
+// Box uses DecoupledTwoPFluxVariables, which also includes the option of Keff
+#if PROBLEM_IS_CC==1
+SET_TYPE_PROP(TwoP_TestProblem, FluxVariables, CpDarcyFluxVariables<TypeTag>);
+#else
 SET_TYPE_PROP(TwoP_TestProblem, FluxVariables, DecoupledTwoPFluxVariables<TypeTag>);
+#endif
+
 
 // use the decoupled 2p model
 SET_TYPE_PROP(TwoP_TestProblem, Model, DecoupledTwoPModel<TypeTag>);
@@ -142,7 +156,11 @@ SET_TYPE_PROP(TwoP_TestProblem, Model, DecoupledTwoPModel<TypeTag>);
 SET_TYPE_PROP(TwoP_TestProblem, VolumeVariables, DecoupledTwoPVolumeVariables<TypeTag>);
 
 // use the decoupled 2p element volume variables
+#if PROBLEM_IS_CC==1
+SET_TYPE_PROP(TwoP_TestProblem, ElementVolumeVariables, DecoupledTwoPCCElementVolumeVariables<TypeTag>);
+#else
 SET_TYPE_PROP(TwoP_TestProblem, ElementVolumeVariables, DecoupledTwoPElementVolumeVariables<TypeTag>);
+#endif
 
 // Use the modified decoupled 2p local jacobian operator for the 2p model
 SET_TYPE_PROP(TwoP_TestProblem,
@@ -221,6 +239,8 @@ class TwoP_TestProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
             contiNEqIdx = Indices::contiNEqIdx
     };
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
@@ -268,12 +288,12 @@ public:
         std::cout << "TwoP_TestProblem: Initializing the fluid system for the 2p model\n";
 
         // initialize the tables of the fluid system
-        FluidSystem::init(/*Tmin=*/273,
-                          /*Tmax=*/400,
-                          /*nT=*/120,
-                          /*pmin=*/1e5,
-                          /*pmax=*/1e8,
-                          /*np=*/200);
+//         FluidSystem::init(/*Tmin=*/273,
+//                           /*Tmax=*/400,
+//                           /*nT=*/120,
+//                           /*pmin=*/1e5,
+//                           /*pmax=*/1e8,
+//                           /*np=*/200);
 
 //         // resize the pressure field vector with the number of vertices
 //         pInit_.resize(gridView.size(dim));
@@ -289,9 +309,6 @@ public:
         // (usually the coupling is switched off for the initialization run)
         coupled_ = false;
 
-        // set initial episode length equal to length of initialization period
-        tInitEnd_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.TInitEnd);
-        this->timeManager().startNextEpisode(tInitEnd_);
         // transfer the episode index to spatial parameters
         // (during intialization episode hydraulic different parameters might be applied)
         this->spatialParams().setEpisode(this->timeManager().episodeIndex());
@@ -393,7 +410,7 @@ public:
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     {
         Scalar T;
-        T = 283.15 + (depthBOR_ - globalPos[dim-1]) * 0.025;
+        T = 308.15 /*+ (depthBOR_ - globalPos[dim-1]) * 0.025*/;
 
         return T;
     };
@@ -479,32 +496,27 @@ public:
     {
         values.setAllNeumann();
 
-        // The solid displacement at the bottom is fixed in y.
-        // The pressure is set to the initial pressure.
-//         if (this->timeManager().time() + this->timeManager().timeStepSize() < 3600 + eps_)
-//         {
-//             std::cout << "Dirichlet" << std::endl;
+        // The pressure and saturation at the bottom are fixed
+        // Bottom: x = 0, y = -1000
+        if(globalPos[1] < this->bBoxMin()[1] + eps_)
+        {
+            values.setDirichlet(pressureIdx, contiWEqIdx);
+            values.setDirichlet(saturationIdx, contiNEqIdx);
+        }
 
-            if(globalPos[1] < eps_)
-            {
-                values.setDirichlet(pressureIdx, contiWEqIdx);
-                values.setDirichlet(saturationIdx, contiNEqIdx);
-            }
+        // The pressure and saturation on the right (x = 2000) are fixed
+        if(globalPos[0] > this->bBoxMax()[0]-eps_)
+        {
+            values.setDirichlet(pressureIdx, contiWEqIdx);
+            values.setDirichlet(saturationIdx, contiNEqIdx);
+        }
 
-            if(globalPos[0] > this->bBoxMax()[0]-eps_)
-            {
-                values.setDirichlet(pressureIdx, contiWEqIdx);
-                values.setDirichlet(saturationIdx, contiNEqIdx);
-            }
-
-            // The pressure on top is set to the initial pressure.
-            // The solid displacement is fixed in y
-            if(globalPos[1] > this->bBoxMax()[1]-eps_)
-            {
-                values.setDirichlet(pressureIdx, contiWEqIdx);
-                values.setDirichlet(saturationIdx, contiNEqIdx);
-            }
-//         }
+        // The pressure and saturation on the top (y=1000) are fixed
+        if(globalPos[1] > this->bBoxMax()[1]-eps_)
+        {
+            values.setDirichlet(pressureIdx, contiWEqIdx);
+            values.setDirichlet(saturationIdx, contiNEqIdx);
+        }
     }
 
     /*!
@@ -539,8 +551,6 @@ public:
     {
         values[pressureIdx] =  1.0e5 + (depthBOR_ - globalPos[1]) * brineDensity_ * 9.81;
         values[saturationIdx] = 0.0;
-
-//         std::cout << "values[pressureIdx] at" << globalPos << "] = " << values[pressureIdx] << std::endl;
     }
 
     /*!
@@ -557,8 +567,7 @@ public:
     void neumannAtPos(PrimaryVariables &values,
                       const GlobalPosition &globalPos) const
     {
-        values[pressureIdx] = 0;
-        values[saturationIdx] = 0;
+        values = 0.0;
     }
     // \}
 
@@ -596,8 +605,10 @@ public:
             const FVElementGeometry &fvGeometry,
             int scvIdx) const
     {
-//         const GlobalPosition globalPos = element.geometry().center();
-        const GlobalPosition globalPos = element.geometry().corner(scvIdx);
+        GlobalPosition globalPos = element.geometry().center();
+
+        if (isBox)
+            globalPos = element.geometry().corner(scvIdx);
 
         sourceAtPos(values, globalPos);
     }
@@ -620,9 +631,16 @@ public:
                     (globalPos[1] > GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.YminSource2) - eps_) &&
                     (globalPos[1] < GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.YmaxSource2) + eps_)) )
                 {
-                    values[pressureIdx] = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.Rate);
-                    values[saturationIdx] = 0.0;
-
+                    if(GET_RUNTIME_PARAM(TypeTag, bool, Injection.Nonwetting))
+                    {
+                        values[pressureIdx] = 0.0;
+                        values[saturationIdx] = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.Rate);
+                    }
+                    else
+                    {
+                        values[pressureIdx] = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.Rate);
+                        values[saturationIdx] = 0.0;
+                    }
 //                     std::cout << "Injection: globalPos = " << globalPos[0] << " " << globalPos[1] << std::endl;
                 }
             }
@@ -671,46 +689,16 @@ public:
         // is replaced by an empty function here to avoid uPrev_ during iterations
     }
 
-        /*!
+    /*!
      * \brief Define length of next episode
      */
     void episodeEnd()
     {
-//         Scalar oldTimeStep = this->timeManager().timeStepSize();
-        //calls suggestTimeStepSize function, which returns the new suggested TimeStepSize for no failure
-        //and the failureTimeStepSize for anyFailure = true
-//         double newTimeStepSize = this->newtonController().suggestTimeStepSize(oldTimeStep);
-//         std::cout << "2p: newTimeStepSize is " << newTimeStepSize << "\n";
-        if( (this->timeManager().time() + this->timeManager().timeStepSize() > tInitEnd_ + eps_)
-            && ( this->timeManager().episodeIndex() < 2) )
-        {
-            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
-        }
-//         if(this->timeManager().time() > 26400.0 - eps_)
-//         {
-//             episodeLength_ = 3600.0;
-//        }
-//         if(this->timeManager().time() > 10800 - eps_)
-//         {
-//             episodeLength_ = 1200.0;
-//         }
-        if( this->timeManager().episodeIndex() >= 2)
-        {
-            episodeLength_ = episodeLength_ * 2.0;
-        }
-        if( this->timeManager().episodeIndex() == 10)
-            episodeLength_ = 389.0;
-        if( this->timeManager().episodeIndex() == 12)
-            episodeLength_ = 122.0;
-        if( this->timeManager().episodeIndex() == 16)
-            episodeLength_ = 92.0;
-        if( this->timeManager().episodeIndex() == 21)
-            episodeLength_ = 840;
-        if( this->timeManager().episodeIndex() == 23)
-            episodeLength_ = 1820;
-        if( this->timeManager().episodeIndex() == 24)
-            episodeLength_ = 100;
+        std::cout << "Episode control is excerted by the main problem coupling the subproblems" << std::endl;
     }
+
+    void setEpisodeLength(Scalar episodeLength)
+    {episodeLength_ = episodeLength; }
 
     /*!
        * \brief Get the effective porosity of an element in the transport problem.
@@ -797,6 +785,74 @@ public:
     std::vector<std::vector<Scalar>> &setDeltaVolumetricStrainFullyCoupled()
     { return deltaVolumetricStrainFullyCoupled_; }
 
+/////////////////////////////////////////////////////////////////////////////////
+    /*!
+       * \brief Get pW of a scv for the previous iteration.
+    */
+    Scalar getpWInit_(const Element &element,
+                const FVElementGeometry &fvGeometry,
+                int scvIdx) const
+    {
+        int eIdx = this->model().elementMapper().index(element);
+        return pWInit_[eIdx][scvIdx];
+    }
+
+    /*!
+     * \brief Set pW of a scv for the previous iteration.
+     */
+    std::vector<std::vector<Scalar>> &setpWInit_()
+    { return pWInit_; }
+
+    /*!
+       * \brief Get pN of a scv for the previous iteration.
+    */
+    Scalar getpNInit_(const Element &element,
+                const FVElementGeometry &fvGeometry,
+                int scvIdx) const
+    {
+        int eIdx = this->model().elementMapper().index(element);
+        return pNInit_[eIdx][scvIdx];
+    }
+
+    /*!
+     * \brief Set pN of a scv for the previous iteration.
+     */
+    std::vector<std::vector<Scalar>> &setpNInit_()
+    { return pNInit_; }
+
+    /*!
+       * \brief Get sW of a scv for the previous iteration.
+    */
+    Scalar getsWInit_(const Element &element,
+                const FVElementGeometry &fvGeometry,
+                int scvIdx) const
+    {
+        int eIdx = this->model().elementMapper().index(element);
+        return sWInit_[eIdx][scvIdx];
+    }
+
+    /*!
+     * \brief Set sW of a scv for the previous iteration.
+     */
+    std::vector<std::vector<Scalar>> &setsWInit_()
+    { return sWInit_; }
+    /*!
+       * \brief Get sN of a scv for the previous iteration.
+    */
+    Scalar getsNInit_(const Element &element,
+                const FVElementGeometry &fvGeometry,
+                int scvIdx) const
+    {
+        int eIdx = this->model().elementMapper().index(element);
+        return sNInit_[eIdx][scvIdx];
+    }
+
+    /*!
+     * \brief Set sN of a scv for the previous iteration.
+     */
+    std::vector<std::vector<Scalar>> &setsNInit_()
+    { return sNInit_; }
+/////////////////////////////////////////////////////////////////////////////////
     /*!
        * \brief Get pW of a scv for the previous iteration.
     */
@@ -863,6 +919,7 @@ public:
      */
     std::vector<std::vector<Scalar>> &setsNOldIteration_()
     { return sNOldIteration_; }
+
     /*!
        * \brief Get the effective Porosity of an element for the last iteration.
     */
@@ -879,47 +936,6 @@ public:
      */
     std::vector<std::vector<Scalar>> &setEffPermeability()
     { return effPermeabilityVector_; }
-
-   /*!
-    * \brief Get the node average bulk modulus
-    */
-    Scalar getBNodeWiseAveraged(const Element &element,
-                const FVElementGeometry &fvGeometry,
-                int scvIdx) const
-    {
-        int dofIdx = this->model().vertexMapper().subIndex(element, scvIdx, dim);
-        return BNodeWiseAveraged_[dofIdx];
-    }
-
-    /*!
-     * \brief Set the node average bulk modulus
-     */
-    std::vector<Scalar> &setBNodeWiseAveraged()
-    { return BNodeWiseAveraged_; }
-
-    DimVector getdU(const Element &element,
-                const FVElementGeometry &fvGeometry,
-                int scvIdx) const
-    {
-        //set the initial value for the 0th timestep to zero.
-        if (this->timeManager().time() < tInitEnd_ + eps_)
-        {
-            DimVector zeroes(0.0);
-            return zeroes;
-        }
-        else
-        {
-            int eIdx = this->model().elementMapper().index(element);
-            return dUVector_[eIdx][scvIdx];
-        }
-    }
-
-    /*!
-     * \brief Get the solidity vector of the transport problem.
-     */
-    std::vector<std::vector<DimVector>> &setdU()
-    { return dUVector_; }
-
 
    /*!
     * \brief Get the iteration number
@@ -959,6 +975,7 @@ private:
     static constexpr Scalar eps_ = 3e-6;
     Scalar depthBOR_;
     static constexpr Scalar brineDensity_ = 1000;
+//     Scalar brineDensity_;
     Scalar episodeLength_;
 
 //     std::vector<Scalar> pInit_;
@@ -967,9 +984,11 @@ private:
     VertexMapper vertexMapper_;
     std::vector<std::vector<Scalar>> effPorosityVector_, effPorosityVectorOldTimestep_, effPorosityVectorOldIteration_, effPermeabilityVector_, deltaVolumetricStrainOldIteration_, deltaVolumetricStrainFullyCoupled_;
     std::vector<std::vector<Scalar>> pWOldIteration_, pNOldIteration_, sWOldIteration_,sNOldIteration_;
+
+    std::vector<std::vector<Scalar>> pWInit_, pNInit_, sWInit_,sNInit_;
+
     std::vector<std::vector<DimVector>> dUVector_;
         std::vector<Scalar> BNodeWiseAveraged_;
-    Scalar tInitEnd_;
     int iteration_;
     bool evalOriginalRhs_, evalGlobalResidual_;
 public:

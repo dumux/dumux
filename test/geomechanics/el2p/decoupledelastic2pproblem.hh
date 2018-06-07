@@ -228,6 +228,8 @@ public:
      */
     void init()
     {
+        ParentType::init();
+
         // create the required scalar and vector fields
         unsigned numVert = gridView_.size(dim);
         unsigned numElements = gridView_.size(0);
@@ -267,33 +269,32 @@ public:
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {
-                for (int eIdx = 0; eIdx < numElements; ++eIdx)
+                int eIdx = TranspProblem().model().elementMapper().index(element);
+
+                fvGeometryTranspProblem.update(gridView_, element);
+
+                int numScv = fvGeometryTranspProblem.numScv;
+
+                effPorosityVector_[eIdx].resize(numScv);
+                effPermeabilityVector_[eIdx].resize(numScv);
+
+                volumetricStrain_[eIdx].resize(numScv);
+                deltaVolumetricStrainOldIteration_[eIdx].resize(numScv);;
+
+                pwVector_[eIdx].resize(numScv);
+                pnVector_[eIdx].resize(numScv);
+                pcVector_[eIdx].resize(numScv);
+                SwVector_[eIdx].resize(numScv);
+                SnVector_[eIdx].resize(numScv);
+                rhonVector_[eIdx].resize(numScv);
+                rhowVector_[eIdx].resize(numScv);
+
+                for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
                 {
-                    fvGeometryTranspProblem.update(gridView_, element);
-
-                    int numScv = fvGeometryTranspProblem.numScv;
-
-                    effPorosityVector_[eIdx].resize(numScv);
-                    effPermeabilityVector_[eIdx].resize(numScv);
-
-                    volumetricStrain_[eIdx].resize(numScv);
-                    deltaVolumetricStrainOldIteration_[eIdx].resize(numScv);;
-
-                    pwVector_[eIdx].resize(numScv);
-                    pnVector_[eIdx].resize(numScv);
-                    pcVector_[eIdx].resize(numScv);
-                    SwVector_[eIdx].resize(numScv);
-                    SnVector_[eIdx].resize(numScv);
-                    rhonVector_[eIdx].resize(numScv);
-                    rhowVector_[eIdx].resize(numScv);
-
-                    for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
-                    {
-                        volumetricStrain_[eIdx][scvIdx] = 0.0;
-                        deltaVolumetricStrainOldIteration_[eIdx][scvIdx] = 0.0;
+                    volumetricStrain_[eIdx][scvIdx] = 0.0;
+                    deltaVolumetricStrainOldIteration_[eIdx][scvIdx] = 0.0;
 //                         DimVector zeroes(0.0);
 //                         dUVector_[eIdx][scvIdx] = zeroes;
-                    }
                 }
             }
         }
@@ -319,9 +320,8 @@ public:
 
         MechanicsProblem().setEffPorosity() = effPorosityVector_;
         MechanicsProblem().setEffPermeability() = effPermeabilityVector_;
-        TranspProblem().setBNodeWiseAveraged() = BNodeWiseAveraged_;
 
-//         this->setOutput(true);
+        this->setOutput(true);
 
 //         for (int vIdxGlobal = 0; vIdxGlobal < numVert; ++vIdxGlobal)
 //         {
@@ -333,8 +333,6 @@ public:
         updateParamsMassBalance();
 
         std::cout << "************************************" << std::endl;*/
-
-        ParentType::init();
 
         std::cout << "initialisation done" << std::endl;
     }
@@ -355,16 +353,14 @@ public:
 
                 Scalar time = ParentType::timeManager_.time() + ParentType::timeManager_.timeStepSize();
 
-                if(time > tInitEnd_ + eps_)
+                if((time - tInitEnd_) > eps_)
                 {
                     numIterations_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.NumIterations);
                 }
 
                 for (int iterator = 1; iterator < (numIterations_ + 1); iterator++)
                 {
-
-
-                    if( (time < tInitEnd_ + eps_) && (iterator == 1) )
+                    if( ((time - tInitEnd_) < eps_) && (iterator == 1) )
                     {
                         initializePoroPerm();
                     }
@@ -391,14 +387,18 @@ public:
 
                     std::cout << "updateParamsMomentumBalance" << std::endl;
 
-                    runMechanics();
+                    // When the pore compressibility is used,there is no need to run the mechanics
+                    if (!(GET_RUNTIME_PARAM(TypeTag, bool, PoreCompressibility.UsePoreCompressibility)))
+                    {
+                        runMechanics();
 
-                    // et timestep size to 0 - see above
-                    MechanicsProblem().timeManager().setTimeStepSize(0.0);
+                        // et timestep size to 0 - see above
+                        MechanicsProblem().timeManager().setTimeStepSize(0.0);
 
-                    std::cout << "Ran mechanics" << std::endl;
+                        std::cout << "Ran mechanics" << std::endl;
 
-                    updateParamsMassBalance();
+                        updateParamsMassBalance();
+                    }
 
                     std::cout
                     << "----------------------------- \n"
@@ -417,7 +417,7 @@ public:
 //                     printvector(file2, b, "b", "row", 5, 1, 5);
 
                     // After last iteration of the initialization
-                    if((time > tInitEnd_ - eps_) && (time < tInitEnd_ + eps_) && (iterator == numIterations_) )
+                    if( (std::abs(time - tInitEnd_) < eps_) && (iterator == numIterations_) )
                     {
                         TranspProblem().setCoupled(true);
                         MechanicsProblem().setCoupled(true);
@@ -438,7 +438,7 @@ public:
 //                         }
                     }
 
-                    unsigned numVert = gridView_.size(dim);
+                    unsigned numVert = gridView_.size(0);
 
                     std::vector<Scalar> relDiffPw;
                     relDiffPw.resize(numVert);
@@ -452,17 +452,16 @@ public:
 
                     std::cout << "Max relDiffPw is " << *biggest
                               << " at position " << std::distance(std::begin(relDiffPw), biggest) << std::endl;
-//                     std::cout << "Max relDiffPw is " << relDiffPw[242] << " at position 242" << std::endl;
-//                     std::cout << "pwCurrent     is " << TranspProblem().model().curSol()[242][0] << " at position 242" << std::endl;
-//                     std::cout << "pwLastIter    is " <<  lastSol_[242][0] << " at position 242" << std::endl;
+//                     std::cout << "Max relDiffPw is " << relDiffPw[2925] << " at position 2925" << std::endl;
+//                     std::cout << "pwCurrent     is " << TranspProblem().model().curSol()[2925][0] << " at position 2925" << std::endl;
+//                     std::cout << "pwLastIter    is " <<  lastSol_[2925][0] << " at position 2925" << std::endl;
 
                     // finish timestep if initialization is done and change between iteration sufficiently small
                     Scalar maxRelDiffPw = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.MaxRelDiffPw);
                     Scalar maxAbsoluteGlobalResidual = GET_RUNTIME_PARAM(TypeTag, Scalar, Newton.MaxAbsoluteGlobalResidual);
-//                     if((time > tInitEnd_ + eps_) && (*biggest < maxRelDiffPw) || (iterator == numIterations_))
-                    if(
-                        ( (time > tInitEnd_ + eps_) && (res_ < maxAbsoluteGlobalResidual) && iterator > 1)
-                        || (iterator == numIterations_) )
+//                     if( ( ((time - tInitEnd_) > eps_) && (res_ < maxAbsoluteGlobalResidual) && iterator > 1)
+                    if((time > tInitEnd_ + eps_) && (*biggest < maxRelDiffPw) || (iterator == numIterations_))
+//                         || (iterator == numIterations_) )
                         break;
 //                     TranspProblem().setEvalOriginalRhs(true);
 
@@ -576,7 +575,6 @@ public:
 
         TranspProblem().setEffPorosity() = effPorosityVector_;
         TranspProblem().setEffPermeability() = effPermeabilityVector_;
-        TranspProblem().setBNodeWiseAveraged() = BNodeWiseAveraged_;
 
         MechanicsProblem().setEffPorosity() = effPorosityVector_;
         MechanicsProblem().setEffPermeability() = effPermeabilityVector_;
@@ -602,7 +600,7 @@ public:
                 fvGeometryTranspProblem.update(gridView_, element);
                 elemVolVarsTranspProblem.update(TranspProblem(), element, fvGeometryTranspProblem, false);
 
-                int numScv = fvGeometryTranspProblem.numScv;;
+                int numScv = fvGeometryTranspProblem.numScv;
 
                 typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
                 typedef typename LocalFiniteElementCache::FiniteElementType LocalFiniteElement;
@@ -925,39 +923,83 @@ public:
         //and the failureTimeStepSize for anyFailure = true
         double newTimeStepSize = TranspProblem().newtonController().suggestTimeStepSize(oldTimeStep);
         std::cout << "el2p: newTimeStepSize is " << newTimeStepSize << "\n";
-        if( (ParentType::timeManager_.time() + ParentType::timeManager_.timeStepSize() > tInitEnd_ + eps_) &&
-            ( ParentType::timeManager_.episodeIndex() < 2) )
+        Scalar time = ParentType::timeManager_.time() + ParentType::timeManager_.timeStepSize();
+
+        if(ParentType::timeManager_.episodeIndex()  <= 2)
         {
             episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
         }
 
-        if(ParentType::timeManager_.time() > 12000 - eps_)
-        {
-            episodeLength_ = 100.0;
-        }
+//         if( ParentType::timeManager_.episodeIndex() >= 2 && ParentType::timeManager_.episodeIndex() < 9)
+//         {
+//             episodeLength_ = episodeLength_ * 2.0;
+//         }
+//
+//         if( ParentType::timeManager_.episodeIndex() == 12)
+//             episodeLength_ = 327600;
 
-        if( ParentType::timeManager_.episodeIndex() >= 2)
+        if( ParentType::timeManager_.episodeIndex() >= 3 && ParentType::timeManager_.episodeIndex() < 20)
         {
             episodeLength_ = episodeLength_ * 2.0;
         }
-        if( ParentType::timeManager_.episodeIndex() == 10)
-            episodeLength_ = 389.0;
-        if( ParentType::timeManager_.episodeIndex() == 12)
-            episodeLength_ = 122.0;
-        if( ParentType::timeManager_.episodeIndex() == 16)
-            episodeLength_ = 92.0;
-        if( ParentType::timeManager_.episodeIndex() == 21)
-            episodeLength_ = 840;
-        if( ParentType::timeManager_.episodeIndex() == 23)
-            episodeLength_ = 1820;
-        if( ParentType::timeManager_.episodeIndex() == 24)
-            episodeLength_ = 100;
 
-        std::cout << "el2p: episodeLength_ is " << episodeLength_ << "\n";
+        if( ParentType::timeManager_.episodeIndex() == 5)
+            episodeLength_ = 604800;
+        if( ParentType::timeManager_.episodeIndex() == 7)
+            episodeLength_ = 86400;
+        if( ParentType::timeManager_.episodeIndex() == 11)
+            episodeLength_ = 518400;
+        if( ParentType::timeManager_.episodeIndex() == 14)
+            episodeLength_ = 345600;
+        if( ParentType::timeManager_.episodeIndex() == 18)
+            episodeLength_ = 2937600;
+        if( ParentType::timeManager_.episodeIndex() == 20)
+            episodeLength_ = 9676800;
+        if( ParentType::timeManager_.episodeIndex() == 21)
+            episodeLength_ = 12096000;
+        if( ParentType::timeManager_.episodeIndex() == 22)
+            episodeLength_ = 17280000;
+        if( ParentType::timeManager_.episodeIndex() == 24)
+            episodeLength_ = 25920000;
+
+
+//         if( ParentType::timeManager_.episodeIndex() >= 2 && ParentType::timeManager_.episodeIndex() < 13)
+//         {
+//             episodeLength_ = episodeLength_ * 2.0;
+//         }
+//
+//         if( ParentType::timeManager_.episodeIndex() == 13)
+//             episodeLength_ = 1026000;
+//
+//         if( ParentType::timeManager_.episodeIndex() == 14)
+//         {
+//             episodeLength_ = 15768000;
+//         }
+
+//         if( ParentType::timeManager_.episodeIndex() == 10)
+//             episodeLength_ = 389.0;
+//         if( ParentType::timeManager_.episodeIndex() == 12)
+//             episodeLength_ = 122.0;
+//         if( ParentType::timeManager_.episodeIndex() == 16)
+//             episodeLength_ = 92.0;
+//         if( ParentType::timeManager_.episodeIndex() == 21)
+//             episodeLength_ = 840;
+//         if( ParentType::timeManager_.episodeIndex() == 23)
+//             episodeLength_ = 1820;
+//         if( ParentType::timeManager_.episodeIndex() == 24)
+//             episodeLength_ = 100;
+
+//         if( ((ParentType::timeManager_.time() - 47304000) > eps_) )
+// //         {
+//             episodeLength_ = 15768000;
+//         }
 
         ParentType::timeManager_.startNextEpisode(episodeLength_);
         ParentType::timeManager_.setTimeStepSize(episodeLength_);
         std::cout << "el2p: TimeStepSize_ " <<  ParentType::timeManager_.timeStepSize() << "\n";
+
+        TranspProblem().setEpisodeLength(episodeLength_);
+        MechanicsProblem().setEpisodeLength(episodeLength_);
 
     }
 
