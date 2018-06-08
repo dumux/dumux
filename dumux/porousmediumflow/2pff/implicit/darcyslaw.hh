@@ -113,20 +113,11 @@ public:
             //TODO: calculate the velocity (no more constant)
 
 
-            Scalar WeightedGravityDp, WeightedCapillaryDp, AverageDp = 0;
-            Scalar Beltaij,Gammaij = 0;
+             const auto pnInside = insideVolVars.pressure(nPhaseIdx);
+             const auto pnOutside = outsideVolVars.pressure(nPhaseIdx);
 
 
-
-             const auto pInside = insideVolVars.pressure(phaseIdx);
-             const auto pOutside = outsideVolVars.pressure(phaseIdx);
-
-             const auto xInside = insideScv.center();
-             const auto xOutside = scvf.boundary() ? scvf.ipGlobal()
-                                                      : fvGeometry.scv(scvf.outsideScvIdx()).center();
-
-
-                             const auto rho = [&](int phaseIdx)
+             const auto rho = [&](int phaseIdx)
                 {
                     // boundaries
                     if (scvf.boundary())
@@ -150,22 +141,22 @@ public:
             Scalar Gravityphasepotential = Gravitywphasepotential+Gravitynphasepotential;
                 // Average potential gradient at the interface
 
-            Scalar AverageDp = (pOutside - pInside) + 0.5*Gravityphasepotential;
+            Scalar AverageDp = (pnOutside - pnInside) + 0.5*Gravityphasepotential;
                 //Calculate the coefficient Gammaij
             //1.Calculate the max|Gm,ij-0.5(g1,ij+g2,ij)|
 
-            Scalar maxpart = std::max{Gravitywphasepotential-0.5*Gravityphasepotential, Gravitynphasepotential-0.5*Gravityphasepotential};
+            Scalar maxpart = std::max((Gravitywphasepotential-0.5*Gravityphasepotential), (Gravitynphasepotential-0.5*Gravityphasepotential));
 
             //in our case wenn S=0.5 we get e= 0.5, Sigma(suplambda)=2
-            constexpr double pi() { return std::atan(1)*4; };
+            constexpr double pi = std::atan(1)*4 ;
             //avoid the issue maxpart very small
-            Scalar Gammaij = std::min{10e6, pi*0.5/(2*maxpart)};
+            Scalar Gammaij = std::min(10e6, pi*0.5/(2*maxpart));
 
 
                 //Calculate the coefficient Beltaij
             Scalar Beltaij = 0.5 + 1/pi*std::atan(Gammaij*AverageDp);
 
-            //Calculate the weighter mobility of each phase
+            //Calculate the weighted mobility of each phase
             const auto mobW_WA = Beltaij*insideVolVars.mobility(wPhaseIdx) + (1-Beltaij)*outsideVolVars.mobility(wPhaseIdx);
             const auto mobN_WA = Beltaij*insideVolVars.mobility(nPhaseIdx) + (1-Beltaij)*outsideVolVars.mobility(nPhaseIdx);
             const auto mobT_WA = mobW_WA + mobN_WA;
@@ -183,7 +174,8 @@ public:
             const auto pcInside = insideVolVars.capillaryPressure();
             const auto pcOutside = outsideVolVars.capillaryPressure();
             Scalar WeightedCapillaryDp = WeightedCapillaryMobility*(pcOutside - pcInside);
-            Scalar VelocityVektor v_t = fluxVarsCache.advectionTij()*(mobT_WA*(pInside - pOutside)+ WeightedGravityDp + WeightedCapillaryDp);
+
+            static VelocityVector v_t = fluxVarsCache.advectionTij()*(mobT_WA*(pnInside - pnOutside)+ WeightedGravityDp + WeightedCapillaryDp);
 
 
             //////////////////////////////////////////////////////////////
@@ -252,6 +244,6 @@ public:
     }
 };
 
-} // end namespace Dumux
+}; // end namespace Dumux
 
 #endif

@@ -24,9 +24,12 @@
 #define DUMUX_TWOP_FRACFLOW_UPWINDSCHEME_HH
 
 #include <type_traits>
+
 #include <dune/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/discretization/cellcentered/tpfa/darcyslaw.hh>
 #include <math.h>
+
 
 namespace Dumux {
 
@@ -161,38 +164,23 @@ public:
         //Here the code is totally same as hybrid upwinding there should be a correction, discussion needed...
         else
         {
+
             const auto& insideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()];
             const auto& outsideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().outsideScvIdx()];
 
+
+
             //Calculate the phase potential diffrences for both phases
 
-        std::array<Scalar, 2> Phasepotentialdifference(const Problem& problem,
-                       const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolumeFace& scvf,
-                       int phaseIdx,
-                       const ElementFluxVarsCache& elemFluxVarsCache)
-    {
-        enum
-        {
-        wPhaseIdx = 0,
-        nPhaseIdx =1
-        };
 
-        std::array<Scalar, 2> Phasepotentialdifferences;
 
-        static const bool enableGravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
 
-        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-
-        // Get the inside and outside volume variables
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
-        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-
+Scalar wPhasepotentialdifference,nPhasepotentialdifference =0;
         if (enableGravity)
         {
+            const auto& scvf = fluxVars.scvFace();
+            const auto& insideScv = fluxVars.fvGeometry.scv(scvf.insideScvIdx());
+
             // do averaging for the density over all neighboring elements
             const auto rhow = scvf.boundary() ? outsideVolVars.density(wPhaseIdx)
                                              : (insideVolVars.density(wPhaseIdx) + outsideVolVars.density(wPhaseIdx))*0.5;
@@ -205,13 +193,14 @@ public:
             const auto pnInside = insideVolVars.pressure(nPhaseIdx);
             const auto pnOutside = outsideVolVars.pressure(nPhaseIdx);
 
-            const auto& g = problem.gravityAtPos(scvf.ipGlobal());
+            const auto& g = gravityAtPos(scvf.ipGlobal());
             const auto xInside = insideScv.center();
             const auto xOutside = scvf.boundary() ? scvf.ipGlobal()
-                                                      : fvGeometry.scv(scvf.outsideScvIdx()).center();
+                                                      : fluxVars.fvGeometry.scv(scvf.outsideScvIdx()).center();
 
-            Phasepotentialdifferences[wPhaseIdx] = (pwInside - pwOutside) + rhow*g*(xInside-xOutside);
-            Phasepotentialdifferences[nPhaseIdx] = (pnInside - pnOutside) + rhon*g*(xInside-xOutside);
+            wPhasepotentialdifference = (pwInside - pwOutside) + rhow*g*(xInside-xOutside);
+            nPhasepotentialdifference = (pnInside - pnOutside) + rhon*g*(xInside-xOutside);
+
         }
         else
         {
@@ -220,19 +209,19 @@ public:
             const auto pwOutside = outsideVolVars.pressure(wPhaseIdx);
             const auto pnInside = insideVolVars.pressure(nPhaseIdx);
             const auto pnOutside = outsideVolVars.pressure(nPhaseIdx);
+            wPhasepotentialdifference = (pwInside - pwOutside);
+            nPhasepotentialdifference = (pnInside - pnOutside);
 
-             Phasepotentialdifferences[wPhaseIdx] = (pwInside - pwOutside);
-             Phasepotentialdifferences[nPhaseIdx] = (pnInside - pnOutside);
         }
-        return Phasepotentialdifferences;
-    }
+
+
 
     //upwind according to the sign of Phasepotentialdifference
-                const auto mobW_V = std::signbit(Phasepotentialdifference[wPhaseIdx]) ? outsideVolVars.mobility(wPhaseIdx)
+                const auto mobW = std::signbit(wPhasepotentialdifference) ? outsideVolVars.mobility(wPhaseIdx)
                                                                        : insideVolVars.mobility(wPhaseIdx);
-                const auto mobN_V = std::signbit(Phasepotentialdifference[nPhaseIdx]) ? outsideVolVars.mobility(nPhaseIdx)
+                const auto mobN = std::signbit(nPhasepotentialdifference) ? outsideVolVars.mobility(nPhaseIdx)
                                                                        : insideVolVars.mobility(nPhaseIdx);
-                const auto mobT_V = std::max(mobW_V + mobN_V, 1.0e-30);
+                const auto mobT= std::max(mobW + mobN, 1.0e-30);
 
 
 
@@ -245,24 +234,25 @@ public:
 //                                                                        : insideVolVars.mobility(nPhaseIdx);
 //                 const auto mobT_V = std::max(mobW_V + mobN_V, 1.0e-30);
 
-                const Scalar viscousFlux = mobW_V/mobT_V*flux[viscousFluxIdx];
+//                 const Scalar viscousFlux = mobW_V/mobT_V*flux[viscousFluxIdx];
+                const Scalar viscousFlux = mobW/mobT*flux[viscousFluxIdx];
 
                 // Calculate gravity flux
                 Scalar gravFlux = 0.0;
-                if (enableGravity)
-                {
-                    const auto& scvf = fluxVars.scvFace();
-                    // do averaging for the density over all neighboring elements
-                    const auto rho = [&](int phaseIdx)
-                    {
-                        // boundaries
-                        if (scvf.boundary())
-                            return insideVolVars.density(phaseIdx);
-
-                        // inner faces with two neighboring elements
-                        else
-                            return (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
-                    };
+//                 if (enableGravity)
+//                 {
+//                     const auto& scvf = fluxVars.scvFace();
+//                     // do averaging for the density over all neighboring elements
+//                     const auto rho = [&](int phaseIdx)
+//                     {
+//                         // boundaries
+//                         if (scvf.boundary())
+//                             return insideVolVars.density(phaseIdx);
+//
+//                         // inner faces with two neighboring elements
+//                         else
+//                             return (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
+//                     };
 
 //                     if(rho(nPhaseIdx) - rho(wPhaseIdx) < 0)
 //                     {
@@ -282,10 +272,11 @@ public:
 //                                                                                : insideVolVars.mobility(nPhaseIdx);
 //                         const auto mobT_G = std::max(mobW_G + mobN_G, 1.0e-30);
 
-                        gravFlux = mobW_G*mobN_G/mobT_G * flux[gravityFluxIdx];
-                    }
+//                         gravFlux = mobW_G*mobN_G/mobT_G * flux[gravityFluxIdx];
+                gravFlux = mobW*mobN/mobT * flux[gravityFluxIdx];
+//                     }
 
-                }
+//                 }
 
                 // capillary flux
 //                 const auto mobW_C = std::signbit(flux[capillaryFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
@@ -294,7 +285,8 @@ public:
 //                                                                          : outsideVolVars.mobility(nPhaseIdx);
 //                 const auto mobT_C = std::max(mobW_C + mobN_C, 1.0e-30);
 
-                const Scalar capillaryFlux = mobW_C*mobN_C/mobT_C*flux[capillaryFluxIdx];
+//                 const Scalar capillaryFlux = mobW_C*mobN_C/mobT_C*flux[capillaryFluxIdx];
+                const Scalar capillaryFlux = mobW*mobN/mobT*flux[capillaryFluxIdx];
 
                 return    viscousFlux
                         + capillaryFlux
@@ -312,7 +304,7 @@ public:
                 DUNE_THROW(Dune::InvalidStateException, "Unknown equation index!");
             }
         } // end phase potential upwinding
-    }
+    };
 };
 
 } // end namespace Dumux
