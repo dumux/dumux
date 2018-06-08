@@ -108,6 +108,10 @@ public:
         FacetEdgeMapper::update(facetFvGridGeometry, edgeFvGridGeometry, gridCreator);
     }
 
+    //! Pull up the parents' access operators to allow for individual updates
+    using BulkFacetMapper::update;
+    using FacetEdgeMapper::update;
+
     //! Pull up the parents' access operators
     using BulkFacetMapper::couplingMap;
     using FacetEdgeMapper::couplingMap;
