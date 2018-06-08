@@ -47,7 +47,7 @@ namespace Dumux {
  */
 template<std::size_t idOffset, class BulkFVG, class LowDimFVG>
 class FacetCouplingMapperImplementation<idOffset, BulkFVG, LowDimFVG, DiscretizationMethod::box>
-      : public FacetCouplingMapperBase<idOffset, BulkFVG, LowDimFVG>
+: public virtual FacetCouplingMapperBase<idOffset, BulkFVG, LowDimFVG>
 {
     using ParentType = FacetCouplingMapperBase<idOffset, BulkFVG, LowDimFVG>;
     using LowDimElement = typename LowDimFVG::GridView::template Codim<0>::Entity;
