@@ -17,35 +17,53 @@ dune_add_test(NAME test_facetgridcreator_ug
               COMMAND ./test_facetgridcreator_ug
               CMD_ARGS test_gridcreator.input)
 
-dune_add_test(NAME test_tpfafacetcouplingmapper_alu
-             CMAKE_GUARD dune-foamgrid_FOUND
-             CMAKE_GUARD dune-alugrid_FOUND
-             COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::ALUGrid<3,3,Dune::simplex,Dune::conforming>
-             SOURCES test_tpfafacetcouplingmapper.cc
-             COMMAND ./test_tpfafacetcouplingmapper_alu
-             CMD_ARGS test_gridcreator.input)
+dune_add_test(NAME test_facetcouplingmapper_tpfa_alu
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMAKE_GUARD dune-alugrid_FOUND
+              COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::ALUGrid<3,3,Dune::simplex,Dune::conforming>
+              SOURCES test_facetcouplingmapper.cc
+              COMMAND ./test_facetcouplingmapper_tpfa_alu
+              CMD_ARGS test_gridcreator.input)
 
-dune_add_test(NAME test_tpfafacetcouplingmapper_ug
+dune_add_test(NAME test_facetcouplingmapper_tpfa_ug
              CMAKE_GUARD dune-foamgrid_FOUND
              CMAKE_GUARD dune-uggrid_FOUND
              COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::UGGrid<3>
-             SOURCES test_tpfafacetcouplingmapper.cc
-             COMMAND ./test_tpfafacetcouplingmapper_ug
+             SOURCES test_facetcouplingmapper.cc
+             COMMAND ./test_facetcouplingmapper_tpfa_ug
              CMD_ARGS test_gridcreator.input)
 
-dune_add_test(NAME test_tpfafacetcouplingmapper_boundary_alu
+dune_add_test(NAME test_facetcouplingmapper_box_alu
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMAKE_GUARD dune-alugrid_FOUND
+              COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::ALUGrid<3,3,Dune::simplex,Dune::conforming>
+              COMPILE_DEFINITIONS USEBOXINBULK=true
+              SOURCES test_facetcouplingmapper.cc
+              COMMAND ./test_facetcouplingmapper_box_alu
+              CMD_ARGS test_gridcreator.input)
+
+dune_add_test(NAME test_facetcouplingmapper_box_ug
+              CMAKE_GUARD dune-foamgrid_FOUND
+              CMAKE_GUARD dune-uggrid_FOUND
+              COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::UGGrid<3>
+              COMPILE_DEFINITIONS USEBOXINBULK=true
+              SOURCES test_facetcouplingmapper.cc
+              COMMAND ./test_facetcouplingmapper_box_ug
+              CMD_ARGS test_gridcreator.input)
+
+dune_add_test(NAME test_facetcouplingmapper_tpfa_boundary_alu
               CMAKE_GUARD dune-foamgrid_FOUND
               CMAKE_GUARD dune-alugrid_FOUND
               COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>
-              SOURCES test_tpfafacetcouplingmapper_boundary.cc
-              COMMAND ./test_tpfafacetcouplingmapper_boundary_alu)
+              SOURCES test_facetcouplingmapper_boundary.cc
+              COMMAND ./test_facetcouplingmapper_tpfa_boundary_alu)
 
-dune_add_test(NAME test_tpfafacetcouplingmapper_boundary_ug
+dune_add_test(NAME test_facetcouplingmapper_tpfa_boundary_ug
               CMAKE_GUARD dune-foamgrid_FOUND
               CMAKE_GUARD dune-uggrid_FOUND
               COMPILE_DEFINITIONS BULKGRIDTYPE=Dune::UGGrid<2>
-              SOURCES test_tpfafacetcouplingmapper_boundary.cc
-              COMMAND ./test_tpfafacetcouplingmapper_boundary_ug)
+              SOURCES test_facetcouplingmapper_boundary.cc
+              COMMAND ./test_facetcouplingmapper_tpfa_boundary_ug)
 
 dune_add_test(NAME test_vertexmapper_alu_3d
               CMAKE_GUARD dune-foamgrid_FOUND
