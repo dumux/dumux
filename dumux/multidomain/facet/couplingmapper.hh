@@ -73,8 +73,8 @@ class FacetCouplingMapper<BulkFVG, LowDimFVG>
  */
 template<class BulkFVG, class FacetFVG, class EdgeFVG>
 class FacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>
-: public FacetCouplingMapperImplementation<0, BulkFVG, FacetFVG, BulkFVG::discMethod>,
-  public FacetCouplingMapperImplementation<1, FacetFVG, EdgeFVG, FacetFVG::discMethod>
+: public FacetCouplingMapperImplementation<0, BulkFVG, FacetFVG, BulkFVG::discMethod>
+, public FacetCouplingMapperImplementation<1, FacetFVG, EdgeFVG, FacetFVG::discMethod>
 {
     using BulkFacetMapper = FacetCouplingMapperImplementation<0, BulkFVG, FacetFVG, BulkFVG::discMethod>;
     using FacetEdgeMapper = FacetCouplingMapperImplementation<1, FacetFVG, EdgeFVG, FacetFVG::discMethod>;
