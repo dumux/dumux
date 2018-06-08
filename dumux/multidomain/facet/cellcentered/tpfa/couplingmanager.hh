@@ -22,7 +22,6 @@
  * \ingroup MixedDimensionFacet
  * \copydoc Dumux::CCTpfaFacetCouplingManager
  */
-
 #ifndef DUMUX_CCTPFA_FACETCOUPLING_MANAGER_HH
 #define DUMUX_CCTPFA_FACETCOUPLING_MANAGER_HH
 
@@ -561,6 +560,9 @@ public:
         }
     }
 
+    //! pull up empty update function to be used for low-dim domain
+    using ParentType::updateCoupledVariables;
+
     /*!
      * \brief Update the transmissibilities in the bulk domain after the coupling context changed
      * \note Specialization of the function for deactivated grid-wide volume variables caching
@@ -592,17 +594,6 @@ public:
         elemVolVars.bind(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), this->curSol()[bulkId]);
         fluxVarsCache.update(bulkLocalAssembler.element(), bulkLocalAssembler.fvGeometry(), elemVolVars);
     }
-
-    /*!
-     * \brief In the low dim domain the local views do not depend on coupling data.
-     *        However, the overload has to be provided to avoid ambiguity.
-     */
-    template< class LowDimLocalAssembler, class UpdatableElementVolVars, class UpdatableFluxVarCache >
-    void updateCoupledVariables(LowDimIdType domainI,
-                                const LowDimLocalAssembler& lowDimLocalAssembler,
-                                UpdatableElementVolVars& elemVolVars,
-                                UpdatableFluxVarCache& fluxVarsCache)
-    { /*do nothing here*/ }
 
     //! Return a const reference to one of the problems
     template<std::size_t id, std::enable_if_t<(id == bulkId || id == lowDimId), int> = 0>
@@ -888,30 +879,6 @@ public:
     //! Return a reference to edge problem
     template<std::size_t id, std::enable_if_t<(id == edgeId), int> = 0>
     Problem<id>& problem() { return FacetEdgeManager::template problem<id>(); }
-
-    /*!
-     * \brief We have to provide the overload of this function in order to avoid
-     *        ambiguity due to the inheritance of two classes. Models using facet
-     *        coupling together with the cell-centered tpfa scheme have no extended
-     *        jacobian pattern.
-     */
-    template<std::size_t id, class JacobianPattern>
-    void extendJacobianPattern(Dune::index_constant<id> domainI, JacobianPattern& pattern) const
-    {}
-
-    /*!
-     * \brief We have to provide the overload of this function in order to avoid
-     *        ambiguity due to the inheritance of two classes. Models using facet
-     *        coupling together with the cell-centered tpfa scheme have no extended
-     *        jacobian pattern and thus no additional derivatives.
-     */
-    template<std::size_t i, class LocalAssemblerI, class JacobianMatrixDiagBlock, class GridVariables>
-    void evalAdditionalDomainDerivatives(Dune::index_constant<i> domainI,
-                                         const LocalAssemblerI& localAssemblerI,
-                                         const typename LocalAssemblerI::LocalResidual::ElementResidualVector& origResiduals,
-                                         JacobianMatrixDiagBlock& A,
-                                         GridVariables& gridVariables)
-    {}
 };
 
 } // end namespace Dumux
