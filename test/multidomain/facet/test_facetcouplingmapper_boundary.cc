@@ -93,7 +93,7 @@ int main (int argc, char *argv[]) try
             DUNE_THROW(Dune::InvalidStateException, "Coupling stencil size is " << cStencilSize << " instead of 1");
 
         const auto lowDimIdx = entry.second.couplingStencil[0];
-        const auto bulkScvfIdx = entry.second.couplingScvfs.at(lowDimIdx)[0];
+        const auto bulkScvfIdx = entry.second.dofToCouplingScvfMap.at(lowDimIdx)[0];
         const auto lowDimGeom = facetFvGeometry.element(lowDimIdx).geometry();
         const auto& bulkScvf = bulkFvGeometry.scvf(bulkScvfIdx);
         if (!checkEquality(lowDimGeom.center(), bulkScvf.center(), lowDimGeom.volume()*1e-8))

@@ -175,7 +175,7 @@ public:
         for (const auto& entry : bulkMap)
         {
             bulkElemIsCoupled_[entry.first] = true;
-            for (const auto& couplingEntry : entry.second.couplingScvfs)
+            for (const auto& couplingEntry : entry.second.dofToCouplingScvfMap)
                 for (const auto& scvfIdx : couplingEntry.second)
                     bulkScvfIsCoupled_[scvfIdx] = true;
         }
@@ -237,11 +237,11 @@ public:
         const auto& couplingData = map.find(scvf.insideScvIdx())->second;
 
         // search the low dim element idx this scvf couples to
-        auto it = std::find_if( couplingData.couplingScvfs.begin(),
-                                couplingData.couplingScvfs.end(),
+        auto it = std::find_if( couplingData.dofToCouplingScvfMap.begin(),
+                                couplingData.dofToCouplingScvfMap.end(),
                                 [&scvf] (auto& dataPair) { return dataPair.second[0] == scvf.index(); } );
 
-        assert(it != couplingData.couplingScvfs.end());
+        assert(it != couplingData.dofToCouplingScvfMap.end());
         const auto lowDimElemIdx = it->first;
 
         const auto& s = map.find(bulkContext_.elementIdx)->second.couplingStencil;
@@ -625,7 +625,7 @@ private:
 
         NumEqVector<bulkId> coupledFluxes(0.0);
         const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
-        const auto& couplingScvfs = map.find(bulkElemIdx)->second.couplingScvfs.at(globalJ);
+        const auto& couplingScvfs = map.find(bulkElemIdx)->second.dofToCouplingScvfMap.at(globalJ);
 
         for (const auto& scvfIdx : couplingScvfs)
             coupledFluxes += localResidual.evalFlux(problem<bulkId>(),
