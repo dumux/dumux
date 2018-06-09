@@ -134,8 +134,12 @@ public:
                 for (auto dofIdx : lowDimElementDofs)
                 {
                     bulkData.couplingStencil.push_back( dofIdx );
-                    bulkData.couplingScvfs[dofIdx].push_back( embeddedScvfIdx );
+                    bulkData.dofToCouplingScvfMap[dofIdx].push_back( embeddedScvfIdx );
                 }
+
+                // add info on which scvfs coincide with which low dim element
+                bulkData.couplingElementStencil.push_back(lowDimElemIdx);
+                bulkData.elementToScvfMap[lowDimElemIdx].push_back( embeddedScvfIdx );
 
                 // add embedment (coupling stencil will be done below)
                 lowDimData.embedments.emplace_back( bulkElemIdx, std::vector<BulkIndexType>({embeddedScvfIdx}) );
@@ -147,6 +151,20 @@ public:
 
         // let the parent do the update subject to the execution policy defined above
         ParentType::update_(bulkFvGridGeometry, lowDimFvGridGeometry, gridCreator, addEmbedmentPolicy);
+
+        // coupling stencils might not be unique if box is used in lowdim domain
+        if (LowDimFVG::discMethod == DiscretizationMethod::box)
+        {
+            auto makeStencilUnique = [] (auto& data)
+            {
+                auto& cs = data.second.couplingStencil;
+                std::sort(cs.begin(), cs.end());
+                cs.erase( std::unique(cs.begin(), cs.end()), cs.end() );
+            };
+
+            auto& bulkCouplingData = this->couplingMap_(bulkDomainId, lowDimDomainId);
+            std::for_each(bulkCouplingData.begin(), bulkCouplingData.end(), makeStencilUnique);
+        }
     }
 };
 

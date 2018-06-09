@@ -59,13 +59,17 @@ typename Geometry::ctype averageCornerDistance(const Geometry& geometry)
     return avgDistance;
 }
 
-//! tests whether two positions are equal
-template<typename Pos1, typename Pos2>
-bool checkEquality(const Pos1& p1, const Pos2& p2, typename Pos1::value_type eps)
+//! checks if an scvf lies on a low dim element geometry
+template<class Scvf, class LowDimGeom>
+void checkScvfEmbedment(const Scvf& scvf, const LowDimGeom& lowDimGeom)
 {
-    const auto d = p1-p2;
+    // scalar product of scvf center minus low dim element center and normal should be zero!
+    const auto d = lowDimGeom.center()-scvf.center();
+    const auto sp = d*scvf.unitOuterNormal();
+
     using std::abs;
-    return std::all_of(d.begin(), d.end(), [eps] (auto coord) { return abs(coord) < eps; });
+    if ( !(abs(sp) < lowDimGeom.volume()*1e-15) || d.two_norm() > averageCornerDistance(lowDimGeom) )
+        DUNE_THROW(Dune::InvalidStateException, "Scvf does not coincide with low dim element");
 }
 
 // update a tpfa finite volume grid geometry
@@ -161,18 +165,32 @@ int main (int argc, char *argv[]) try
             auto fvElementGeometry = localView(bulkFvGeometry);
             fvElementGeometry.bind(bulkElement);
 
-            // check scvf conformity with low dim elements for tpfa (for box the stencil are vertex indices)
-            if (BulkFVGridGeometry::discMethod == Dumux::DiscretizationMethod::cctpfa)
+            // check scvf conformity with low dim elements
+            for (const auto& elemToScvfs : entry.second.elementToScvfMap)
             {
-                for (unsigned int i = 0; i < cStencilSize; ++i)
+                const auto lowDimElemIdx = elemToScvfs.first;
+                const auto lowDimElement = facetFvGeometry.element(lowDimElemIdx);
+                const auto lowDimGeom = lowDimElement.geometry();
+
+                // check correctness of the map
+                for (auto scvfIdx : elemToScvfs.second)
+                    checkScvfEmbedment(fvElementGeometry.scvf(scvfIdx), lowDimGeom);
+
+                // check correctness of the map using dof indices
+                const auto lowDimElemDofIndices = [&] ()
                 {
-                    const auto lowDimIdx = entry.second.couplingStencil[i];
-                    const auto bulkScvfIdx = entry.second.couplingScvfs.at(lowDimIdx)[0];
-                    const auto lowDimGeom = facetFvGeometry.element(lowDimIdx).geometry();
-                    const auto& bulkScvf = fvElementGeometry.scvf(bulkScvfIdx);
-                    if (!checkEquality(lowDimGeom.center(), bulkScvf.center(), lowDimGeom.volume()*1e-8))
-                        DUNE_THROW(Dune::InvalidStateException, "Scvf does not coincide with low dim element");
-                }
+                    std::vector< typename FacetGridView::IndexSet::IndexType > dofIndices;
+                    if (FacetFVGridGeometry::discMethod == Dumux::DiscretizationMethod::cctpfa)
+                        dofIndices.push_back(lowDimElemIdx);
+                    else
+                        for (int i = 0; i < lowDimGeom.corners(); ++i)
+                            dofIndices.push_back( facetFvGeometry.vertexMapper().subIndex(lowDimElement, i, FacetGridView::dimension) );
+                    return dofIndices;
+                } ();
+
+                for (auto lowDimDofIdx : lowDimElemDofIndices)
+                    for (auto scvfIdx : entry.second.dofToCouplingScvfMap.at(lowDimDofIdx))
+                        checkScvfEmbedment(fvElementGeometry.scvf(scvfIdx), lowDimGeom);
             }
         }
 
@@ -212,14 +230,7 @@ int main (int argc, char *argv[]) try
                     const auto& bulkScvf = fvElementGeometry.scvf(scvfIdx);
                     if (fvElementGeometry.scv(bulkScvf.insideScvIdx()).elementIndex() != embedment.first)
                         DUNE_THROW(Dune::InvalidStateException, "Element index in which the scvf is embedded in does not match with bulk element idx.");
-
-                    // scalar product of scvf center minus low dim element center and normal should be zero!
-                    const auto d = lowDimGeom.center()-bulkScvf.center();
-                    const auto sp = d*bulkScvf.unitOuterNormal();
-
-                    using std::abs;
-                    if ( !(abs(sp) < lowDimGeom.volume()*1e-15) || d.two_norm() > averageCornerDistance(lowDimGeom) )
-                        DUNE_THROW(Dune::InvalidStateException, "Scvf does not coincide with low dim element");
+                    checkScvfEmbedment(fvElementGeometry.scvf(scvfIdx), lowDimGeom);
                 }
             }
         }
@@ -245,25 +256,14 @@ int main (int argc, char *argv[]) try
             if (cStencilSize != 1)
                 DUNE_THROW(Dune::InvalidStateException, "Coupling stencil size is " << cStencilSize << " instead of 1");
 
+            // we know the edge domain uses tpfa, so coupling stencil = element stencil
             for (unsigned int i = 0; i < cStencilSize; ++i)
             {
                 const auto lowDimIdx = entry.second.couplingStencil[i];
                 const auto lowDimGeom = edgeFvGeometry.element(lowDimIdx).geometry();
 
-                for (auto scvfIdx : entry.second.couplingScvfs.at(lowDimIdx))
-                {
-                    const auto& facetScvf = fvElementGeometry.scvf(scvfIdx);
-                    if (facetScvf.insideScvIdx() != entry.first)
-                        DUNE_THROW(Dune::InvalidStateException, "Scvf insideScvIdx() does not match with bulk element idx");
-
-                    // scalar product of scvf center with low dim element center and normal should be zero!
-                    const auto d = lowDimGeom.center()-facetScvf.center();
-                    const auto sp = d*facetScvf.unitOuterNormal();
-
-                    using std::abs;
-                    if ( !(abs(sp) < lowDimGeom.volume()*1e-15) || d.two_norm() > averageCornerDistance(lowDimGeom) )
-                        DUNE_THROW(Dune::InvalidStateException, "Scvf does not coincide with low dim element");
-                }
+                for (auto scvfIdx : entry.second.dofToCouplingScvfMap.at(lowDimIdx))
+                    checkScvfEmbedment(fvElementGeometry.scvf(scvfIdx), lowDimGeom);
             }
         }
     }
@@ -299,14 +299,7 @@ int main (int argc, char *argv[]) try
                     const auto& facetScvf = fvElementGeometry.scvf(scvfIdx);
                     if (facetScvf.insideScvIdx() != embedment.first)
                         DUNE_THROW(Dune::InvalidStateException, "Scvf insideScvIdx() does not match with bulk idx from embedment");
-
-                    // scalar product of scvf center with low dim element center and normal should be zero!
-                    const auto d = lowDimGeom.center()-facetScvf.center();
-                    const auto sp = d*facetScvf.unitOuterNormal();
-
-                    using std::abs;
-                    if ( !(abs(sp) < lowDimGeom.volume()*1e-15) || d.two_norm() > averageCornerDistance(lowDimGeom) )
-                        DUNE_THROW(Dune::InvalidStateException, "Scvf does not coincide with low dim element");
+                    checkScvfEmbedment(facetScvf, lowDimGeom);
                 }
             }
         }

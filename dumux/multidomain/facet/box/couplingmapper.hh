@@ -187,9 +187,14 @@ public:
                 for (auto lowDimDofIdx : lowDimElementDofs)
                 {
                     bulkData.couplingStencil.push_back(lowDimDofIdx);
-                    auto& couplingScvfs = bulkData.couplingScvfs[lowDimDofIdx];
+                    auto& couplingScvfs = bulkData.dofToCouplingScvfMap[lowDimDofIdx];
                     couplingScvfs.insert(couplingScvfs.end(), embeddedScvfIndices.begin(), embeddedScvfIndices.end());
                 }
+
+                // add info on which scvfs coincide with which low dim element
+                bulkData.couplingElementStencil.push_back(lowDimElemIdx);
+                auto& elemToScvfMap = bulkData.elementToScvfMap[lowDimElemIdx];
+                elemToScvfMap.insert(elemToScvfMap.end(), embeddedScvfIndices.begin(), embeddedScvfIndices.end());
 
                 // add embedment and the bulk cell dofs to coupling stencil of low dim element
                 lowDimData.embedments.emplace_back(bulkElemIdx, std::move(embeddedScvfIndices));
@@ -203,7 +208,7 @@ public:
         // let the parent do the update subject to the execution policy defined above
         ParentType::update_(bulkFvGridGeometry, lowDimFvGridGeometry, gridCreator, addEmbedmentPolicy);
 
-        // stencils might not be unique with the policy above
+        // coupling stencils might not be unique with the policy above
         auto makeStencilUnique = [] (auto& data)
         {
             auto& cs = data.second.couplingStencil;
@@ -211,10 +216,15 @@ public:
             cs.erase( std::unique(cs.begin(), cs.end()), cs.end() );
         };
 
-        auto& bulkCouplingData = this->couplingMap_(bulkDomainId, lowDimDomainId);
         auto& lowDimCouplingData = this->couplingMap_(lowDimDomainId, bulkDomainId);
-        std::for_each(bulkCouplingData.begin(), bulkCouplingData.end(), makeStencilUnique);
         std::for_each(lowDimCouplingData.begin(), lowDimCouplingData.end(), makeStencilUnique);
+
+        // bulk coupling stencil is only non-unique if box is used
+        if (LowDimFVG::discMethod == DiscretizationMethod::box)
+        {
+            auto& bulkCouplingData = this->couplingMap_(bulkDomainId, lowDimDomainId);
+            std::for_each(bulkCouplingData.begin(), bulkCouplingData.end(), makeStencilUnique);
+        }
     }
 };
 

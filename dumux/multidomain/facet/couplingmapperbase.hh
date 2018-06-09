@@ -88,8 +88,14 @@ class FacetCouplingMapperBase
         //! dof indices of the lower-dimensional domain coupled to this element
         std::vector< LowDimIndexType > couplingStencil;
 
+        //! indices of the elements in the stencil of this bulk element
+        std::vector< LowDimIndexType > couplingElementStencil;
+
         //! For each dof in coupling stencil, we store a list of scvfs whose fluxes depend on it
-        std::unordered_map< LowDimIndexType, std::vector<BulkIndexType> > couplingScvfs;
+        std::unordered_map< LowDimIndexType, std::vector<BulkIndexType> > dofToCouplingScvfMap;
+
+        //! For each embedded low dim element, we store the scvfs that coincide with it
+        std::unordered_map< LowDimIndexType, std::vector<BulkIndexType> > elementToScvfMap;
     };
 
     /*!
@@ -110,7 +116,7 @@ class FacetCouplingMapperBase
     using BulkCouplingMap = std::unordered_map<BulkIndexType, BulkCouplingData>;
     using LowDimCouplingMap = std::unordered_map<LowDimIndexType, LowDimCouplingData>;
 
-    //! Couping stencil types to facilitate type export below
+    //! Coupling stencil types to facilitate type export below
     using LowDimStencil = std::vector<LowDimIndexType>;
     using BulkStencil = std::vector<BulkIndexType>;
 
