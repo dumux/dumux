@@ -63,7 +63,8 @@ class FractionalFlowCCTpfaDarcysLaw
     };
 
     enum {
-        transportEqIdx = 0
+        transportEqIdx = 0,
+        totalvelocityEqIdx = 1
     };
 
 public:

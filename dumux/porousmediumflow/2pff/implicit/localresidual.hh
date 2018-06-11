@@ -44,6 +44,7 @@ class TwoPFractionalFlowLocalResidual
     // first index for the mass balance
     enum {
            transportEqIdx = 0,
+           totalvelocityEqIdx = 1,
            wPhaseIdx = 0,
            nPhaseIdx = 1
     };
@@ -73,6 +74,7 @@ public:
         storage[transportEqIdx] = volVars.porosity()
                                   // * volVars.density(wPhaseIdx)
                                   * volVars.saturation(wPhaseIdx);
+        storage[totalvelocityEqIdx] = 0;
 
         //! The energy storage in the fluid phase with index phaseIdx
         // EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, wPhaseIdx);
@@ -106,6 +108,7 @@ public:
         // this is just a dummy we do upwinding internally in the upwind scheme class
         auto upwindTermTransport = [](const auto& volVars, const int phaseIdx = 0){ return 0.0; };
         flux[transportEqIdx] = fluxVars.advectiveFlux(transportEqIdx, upwindTermTransport);
+        flux[totalvelocityEqIdx] = fluxVars.advetiveFlux(totalvelocityEqIdx,upwindTermTransport) +fluxVars.advectiveFlux(transportEqIdx, upwindTermTransport);
 
         //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
         // EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, wPhaseIdx);
