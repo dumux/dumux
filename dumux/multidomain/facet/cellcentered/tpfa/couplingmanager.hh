@@ -26,12 +26,51 @@
 #define DUMUX_CCTPFA_FACETCOUPLING_MANAGER_HH
 
 #include <algorithm>
+#include <cassert>
 
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
 #include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/evalsolution.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 
 namespace Dumux {
+
+/*!
+ * \brief Free function that allows the creation of a volume variables object
+ *        interpolated to a given position within an element. This is the standard
+ *        implementation which simply interpolates the solution to the given position
+ *        and then performs a volume variables update with the interpolated solution.
+ *
+ * \note This assumes element-wise constant parameters for the computation of secondary
+ *       variables. For heteregeneous parameter distributions a default implementation
+ *       cannot be defined and an adequate overload of this function has to be provided!
+ * \note For cell-centered schemes this is an unnecessary overhead because all variables
+ *       are constant within the cells and a volume variables update can usually be realized
+ *       more efficiently. This function is mainly to be used for the box scheme!
+ */
+template<class VolumeVariables, class Problem, class SolutionVector, class FVGeometry>
+void makeInterpolatedVolVars(VolumeVariables& volVars,
+                             const Problem& problem,
+                             const SolutionVector& sol,
+                             const FVGeometry& fvGeometry,
+                             const typename FVGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+                             const typename FVGeometry::FVGridGeometry::GridView::template Codim<0>::Entity::Geometry& elemGeom,
+                             const typename FVGeometry::FVGridGeometry::GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate& pos)
+{
+    // interpolate solution and set it for each entry in element solution
+    auto elemSol = elementSolution(element, sol, fvGeometry.fvGridGeometry());
+    const auto centerSol = evalSolution(element, elemGeom, fvGeometry.fvGridGeometry(), elemSol, pos);
+    for (int i = 0; i < fvGeometry.numScv(); ++i)
+        elemSol[i] = centerSol;
+
+    // Update volume variables with the interpolated solution. Note that this standard
+    // implementation only works for element-wise constant parameters as we simply use
+    // the first element scv for the vol var update. For heterogeneities within the element
+    // or more complex models (e.g. 2p with interface solver) a corresponding overload
+    // of this function has to be provided!
+    volVars.update(elemSol, problem, element, *scvs(fvGeometry).begin());
+}
 
 //! Forward declaration of the manager coupling three domains
 template<class MDTraits, class CouplingMapper>
@@ -236,15 +275,19 @@ public:
         const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
         const auto& couplingData = map.find(scvf.insideScvIdx())->second;
 
-        // search the low dim element idx this scvf couples to
-        auto it = std::find_if( couplingData.dofToCouplingScvfMap.begin(),
-                                couplingData.dofToCouplingScvfMap.end(),
-                                [&scvf] (auto& dataPair) { return dataPair.second[0] == scvf.index(); } );
+        // search the low dim element idx this scvf is embedded in
+        auto it = std::find_if( couplingData.elementToScvfMap.begin(),
+                                couplingData.elementToScvfMap.end(),
+                                [&scvf] (auto& dataPair)
+                                {
+                                    const auto& scvfs = dataPair.second;
+                                    return std::find(scvfs.begin(), scvfs.end(), scvf.index()) != scvfs.end();
+                                } );
 
-        assert(it != couplingData.dofToCouplingScvfMap.end());
+        assert(it != couplingData.elementToScvfMap.end());
         const auto lowDimElemIdx = it->first;
 
-        const auto& s = map.find(bulkContext_.elementIdx)->second.couplingStencil;
+        const auto& s = map.find(bulkContext_.elementIdx)->second.couplingElementStencil;
         const auto& idxInContext = std::distance( s.begin(), std::find(s.begin(), s.end(), lowDimElemIdx) );
         assert(std::find(s.begin(), s.end(), lowDimElemIdx) != s.end());
         return bulkContext_.lowDimVolVars[idxInContext];
@@ -263,14 +306,21 @@ public:
                          LowDimIdType,
                          IndexType<lowDimId> dofIdxGlobalJ)
     {
+        const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
+
+        assert(bulkContext_.isSet);
+        assert(bulkElemIsCoupled_[bulkContext_.elementIdx]);
+        assert(map.find(bulkContext_.elementIdx) != map.end());
+        assert(bulkContext_.elementIdx == problem<bulkId>().fvGridGeometry().elementMapper().index(bulkLocalAssembler.element()));
+
         typename LocalResidual<bulkId>::ElementResidualVector res(1);
         res = 0.0;
-        res[0] = evalFluxToFacetElement_(bulkLocalAssembler.element(),
-                                         bulkLocalAssembler.fvGeometry(),
-                                         bulkLocalAssembler.curElemVolVars(),
-                                         bulkLocalAssembler.elemFluxVarsCache(),
-                                         bulkLocalAssembler.localResidual(),
-                                         dofIdxGlobalJ);
+        res[0] = evalBulkFluxes_(bulkLocalAssembler.element(),
+                                 bulkLocalAssembler.fvGeometry(),
+                                 bulkLocalAssembler.curElemVolVars(),
+                                 bulkLocalAssembler.elemFluxVarsCache(),
+                                 bulkLocalAssembler.localResidual(),
+                                 map.find(bulkContext_.elementIdx)->second.dofToCouplingScvfMap.at(dofIdxGlobalJ));
         return res;
     }
 
@@ -291,18 +341,19 @@ public:
         assert(lowDimContext_.isSet);
         assert(problem<lowDimId>().fvGridGeometry().elementMapper().index(lowDimLocalAssembler.element()) == lowDimContext_.elementIdx);
 
-        // since we use cc schemes: dof index = element index
-        // TODO: if xi != 1.0, we have to compute all fluxes
-        const auto elementJ = problem<bulkId>().fvGridGeometry().element(dofIdxGlobalJ);
-        typename LocalResidual<lowDimId>::ElementResidualVector res(1);
+        // evaluate sources for the first scv
+        // the sources are element-wise & scv-independent since we use tpfa in bulk domain
+        const auto source = evalSourcesFromBulk(lowDimLocalAssembler.element(),
+                                                lowDimLocalAssembler.fvGeometry(),
+                                                lowDimLocalAssembler.curElemVolVars(),
+                                                *scvs(lowDimLocalAssembler.fvGeometry()).begin());
+
+        // fill element residual vector with the sources
+        typename LocalResidual<lowDimId>::ElementResidualVector res(lowDimLocalAssembler.fvGeometry().numScv());
         res = 0.0;
-        res[0] = evalFluxToFacetElement_(elementJ,
-                                         *lowDimContext_.bulkFvGeometry,
-                                         *lowDimContext_.bulkElemVolVars,
-                                         *lowDimContext_.bulkElemFluxVarsCache,
-                                         *lowDimContext_.bulkLocalResidual,
-                                         lowDimContext_.elementIdx);
-        res[0] *= -1.0;
+        for (const auto& scv : scvs(lowDimLocalAssembler.fvGeometry()))
+             res[scv.localDofIndex()] -= source;
+
         return res;
     }
 
@@ -324,14 +375,18 @@ public:
         // make sure this is called for the element for which the context was set
         assert(lowDimContext_.isSet);
         assert(problem<lowDimId>().fvGridGeometry().elementMapper().index(element) == lowDimContext_.elementIdx);
-
+        const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
         for (const auto& embedment : it->second.embedments)
-            sources += evalFluxToFacetElement_(problem<bulkId>().fvGridGeometry().element(embedment.first),
-                                               *lowDimContext_.bulkFvGeometry,
-                                               *lowDimContext_.bulkElemVolVars,
-                                               *lowDimContext_.bulkElemFluxVarsCache,
-                                               *lowDimContext_.bulkLocalResidual,
-                                               lowDimContext_.elementIdx);
+            sources += evalBulkFluxes_(problem<bulkId>().fvGridGeometry().element(embedment.first),
+                                       *lowDimContext_.bulkFvGeometry,
+                                       *lowDimContext_.bulkElemVolVars,
+                                       *lowDimContext_.bulkElemFluxVarsCache,
+                                       *lowDimContext_.bulkLocalResidual,
+                                       bulkMap.find(embedment.first)->second.elementToScvfMap.at(lowDimContext_.elementIdx));
+
+        // if lowdim domain uses box, we distribute the sources equally among the scvs
+        if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+            sources /= fvGeometry.numScv();
 
         return sources;
     }
@@ -357,21 +412,34 @@ public:
             const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
 
             auto it = map.find(bulkElemIdx); assert(it != map.end());
-            const auto stencilSize = it->second.couplingStencil.size();
-            bulkContext_.lowDimFvGeometries.reserve(stencilSize);
-            bulkContext_.lowDimVolVars.reserve(stencilSize);
+            const auto& elementStencil = it->second.couplingElementStencil;
+            bulkContext_.lowDimFvGeometries.reserve(elementStencil.size());
+            bulkContext_.lowDimVolVars.reserve(elementStencil.size());
 
-            for (const auto lowDimIdx : it->second.couplingStencil)
+            for (const auto lowDimElemIdx : elementStencil)
             {
+                const auto& ldSol = this->curSol()[lowDimId];
+                const auto& ldProblem = problem<lowDimId>();
                 const auto& ldGridGeometry = problem<lowDimId>().fvGridGeometry();
 
-                const auto elemJ = ldGridGeometry.element(lowDimIdx);
+                const auto elemJ = ldGridGeometry.element(lowDimElemIdx);
                 auto fvGeom = localView(ldGridGeometry);
                 fvGeom.bindElement(elemJ);
 
-                const auto elemSol = elementSolution(elemJ, this->curSol()[lowDimId], ldGridGeometry);
                 VolumeVariables<lowDimId> volVars;
-                volVars.update(elemSol, problem<lowDimId>(), elemJ, fvGeom.scv(lowDimIdx));
+
+                // if low dim domain uses the box scheme, we have to create interpolated vol vars
+                if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+                {
+                    const auto elemGeom = elemJ.geometry();
+                    makeInterpolatedVolVars(volVars, ldProblem, ldSol, fvGeom, elemJ, elemGeom, elemGeom.center());
+                }
+                // if low dim domain uses a cc scheme we can directly update the vol vars
+                else
+                    volVars.update( elementSolution(elemJ, ldSol, ldGridGeometry),
+                                    ldProblem,
+                                    elemJ,
+                                    fvGeom.scv(lowDimElemIdx) );
 
                 bulkContext_.isSet = true;
                 bulkContext_.lowDimFvGeometries.emplace_back( std::move(fvGeom) );
@@ -408,7 +476,7 @@ public:
         {
             // first bind the low dim context for the first neighboring bulk element
             const auto& bulkGridGeom = problem<bulkId>().fvGridGeometry();
-            const auto bulkElem = bulkGridGeom.element(it->second.couplingStencil[0]);
+            const auto bulkElem = bulkGridGeom.element(it->second.embedments[0].first);
             bindCouplingContext(bulkId, bulkElem, assembler);
 
             // then simply bind the local views of that first neighbor
@@ -446,20 +514,59 @@ public:
         // skip the rest if context is empty
         if (bulkContext_.isSet)
         {
-            // since we use cc schemes: dof index = element index
-            const auto& lowDimGridGeom = problem<lowDimId>().fvGridGeometry();
-            const auto elementJ = lowDimGridGeom.element(dofIdxGlobalJ);
-
-            // update vol vars in context
             const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
-            const auto& couplingStencil = map.find(bulkContext_.elementIdx)->second.couplingStencil;
-            auto it = std::find(couplingStencil.begin(), couplingStencil.end(), dofIdxGlobalJ);
+            const auto& couplingElemStencil = map.find(bulkContext_.elementIdx)->second.couplingElementStencil;
+            const auto& ldSol = this->curSol()[lowDimId];
+            const auto& ldProblem = problem<lowDimId>();
+            const auto& ldGridGeometry = problem<lowDimId>().fvGridGeometry();
 
-            assert(it != couplingStencil.end());
-            const auto idxInContext = std::distance(couplingStencil.begin(), it);
-            const auto& lowDimScv = bulkContext_.lowDimFvGeometries[idxInContext].scv(dofIdxGlobalJ);
-            const auto elemSol = elementSolution(elementJ, this->curSol()[lowDimId], lowDimGridGeom);
-            bulkContext_.lowDimVolVars[idxInContext].update(elemSol, problem<lowDimId>(), elementJ, lowDimScv);
+            // find the low-dim elements in coupling stencil, where this dof is contained in
+            const auto couplingElements = [&] ()
+            {
+                if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+                {
+                    std::vector< Element<lowDimId> > lowDimElems;
+                    std::for_each( couplingElemStencil.begin(), couplingElemStencil.end(),
+                                   [&] (auto lowDimElemIdx)
+                                   {
+                                       auto element = ldGridGeometry.element(lowDimElemIdx);
+                                       for (unsigned int i = 0; i < element.geometry().corners(); ++i)
+                                       {
+                                           const auto dofIdx = ldGridGeometry.vertexMapper().subIndex(element, i, GridView<lowDimId>::dimension);
+                                           if (dofIdxGlobalJ == dofIdx) { lowDimElems.emplace_back( std::move(element) ); break; }
+                                       }
+                                   } );
+                    return lowDimElems;
+                }
+                // dof index = element index for cc schemes
+                else
+                    return std::vector<Element<lowDimId>>( {ldGridGeometry.element(dofIdxGlobalJ)} );
+            } ();
+
+            // update all necessary vol vars in context
+            for (const auto& element : couplingElements)
+            {
+                // find index in coupling context
+                const auto eIdxGlobal = ldGridGeometry.elementMapper().index(element);
+                auto it = std::find(couplingElemStencil.begin(), couplingElemStencil.end(), eIdxGlobal);
+                const auto idxInContext = std::distance(couplingElemStencil.begin(), it);
+                assert(it != couplingElemStencil.end());
+
+                auto& volVars = bulkContext_.lowDimVolVars[idxInContext];
+                const auto& fvGeom = bulkContext_.lowDimFvGeometries[idxInContext];
+                // if low dim domain uses the box scheme, we have to create interpolated vol vars
+                if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+                {
+                    const auto elemGeom = element.geometry();
+                    makeInterpolatedVolVars(volVars, ldProblem, ldSol, fvGeom, element, elemGeom, elemGeom.center());
+                }
+                // if low dim domain uses a cc scheme we can directly update the vol vars
+                else
+                    volVars.update( elementSolution(element, ldSol, ldGridGeometry),
+                                    ldProblem,
+                                    element,
+                                    fvGeom.scv(eIdxGlobal) );
+            }
         }
     }
 
@@ -498,7 +605,7 @@ public:
         // skip the rest if context is empty
         if (lowDimContext_.isSet)
         {
-            // since we use cc schemes: dof index = element index
+            // since we use cc scheme in bulk domain: dof index = element index
             const auto& bulkGridGeom = problem<bulkId>().fvGridGeometry();
             const auto elementJ = bulkGridGeom.element(dofIdxGlobalJ);
 
@@ -537,24 +644,37 @@ public:
         // skip the rest if context is empty
         if (lowDimContext_.isSet)
         {
-            const auto& lowDimGridGeom = problem<lowDimId>().fvGridGeometry();
+            const auto& ldSol = this->curSol()[lowDimId];
+            const auto& ldProblem = problem<lowDimId>();
+            const auto& ldGridGeometry = problem<lowDimId>().fvGridGeometry();
 
             assert(bulkContext_.isSet);
-            assert(lowDimContext_.elementIdx == lowDimGridGeom.elementMapper().index(lowDimLocalAssembler.element()));
+            assert(lowDimContext_.elementIdx == ldGridGeometry.elementMapper().index(lowDimLocalAssembler.element()));
 
             // update the corresponding vol vars in the bulk context
             const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
-            const auto& couplingStencil = bulkMap.find(bulkContext_.elementIdx)->second.couplingStencil;
-            auto it = std::find(couplingStencil.begin(), couplingStencil.end(), lowDimContext_.elementIdx);
+            const auto& couplingElementStencil = bulkMap.find(bulkContext_.elementIdx)->second.couplingElementStencil;
+            auto it = std::find(couplingElementStencil.begin(), couplingElementStencil.end(), lowDimContext_.elementIdx);
+            assert(it != couplingElementStencil.end());
+            const auto idxInContext = std::distance(couplingElementStencil.begin(), it);
 
-            assert(it != couplingStencil.end());
-            const auto idxInContext = std::distance(couplingStencil.begin(), it);
-            const auto& lowDimScv = bulkContext_.lowDimFvGeometries[idxInContext].scv(lowDimContext_.elementIdx);
-            const auto lowDimElement = lowDimGridGeom.element(lowDimContext_.elementIdx);
-            const auto elemSol = elementSolution(lowDimElement, this->curSol()[lowDimId], lowDimGridGeom);
-            bulkContext_.lowDimVolVars[idxInContext].update(elemSol, problem<lowDimId>(), lowDimElement, lowDimScv);
+            auto& volVars = bulkContext_.lowDimVolVars[idxInContext];
+            const auto& fvGeom = bulkContext_.lowDimFvGeometries[idxInContext];
+            const auto& element = lowDimLocalAssembler.element();
+            // if low dim domain uses the box scheme, we have to create interpolated vol vars
+            if (FVGridGeometry<lowDimId>::discMethod == DiscretizationMethod::box)
+            {
+                const auto elemGeom = element.geometry();
+                makeInterpolatedVolVars(volVars, ldProblem, ldSol, fvGeom, element, elemGeom, elemGeom.center());
+            }
+            // if low dim domain uses a cc scheme we can directly update the vol vars
+            else
+                volVars.update( elementSolution(element, ldSol, ldGridGeometry),
+                                ldProblem,
+                                element,
+                                fvGeom.scv(lowDimContext_.elementIdx) );
 
-            // update the element flux variables cache (tij depend on low dim values)
+            // update the element flux variables cache (tij depend on low dim values in context)
             const auto contextElem = problem<bulkId>().fvGridGeometry().element(bulkContext_.elementIdx);
             lowDimContext_.bulkElemFluxVarsCache->update(contextElem, *lowDimContext_.bulkFvGeometry, *lowDimContext_.bulkElemVolVars);
         }
@@ -611,30 +731,23 @@ public:
 
 private:
     //! evaluates the bulk-facet exchange fluxes for a given facet element
-    NumEqVector<bulkId> evalFluxToFacetElement_(const Element<bulkId>& elementI,
-                                                const FVElementGeometry<bulkId>& fvGeometry,
-                                                const ElementVolumeVariables<bulkId>& elemVolVars,
-                                                const ElementFluxVariablesCache<bulkId>& elemFluxVarsCache,
-                                                const LocalResidual<bulkId>& localResidual,
-                                                IndexType<lowDimId> globalJ) const
+    template<class BulkScvfIndices>
+    NumEqVector<bulkId> evalBulkFluxes_(const Element<bulkId>& elementI,
+                                        const FVElementGeometry<bulkId>& fvGeometry,
+                                        const ElementVolumeVariables<bulkId>& elemVolVars,
+                                        const ElementFluxVariablesCache<bulkId>& elemFluxVarsCache,
+                                        const LocalResidual<bulkId>& localResidual,
+                                        const BulkScvfIndices& scvfIndices) const
     {
-        const auto bulkElemIdx = problem<bulkId>().fvGridGeometry().elementMapper().index(elementI);
-
-        assert(bulkContext_.isSet);
-        assert(bulkElemIsCoupled_[bulkElemIdx]);
 
         NumEqVector<bulkId> coupledFluxes(0.0);
-        const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
-        const auto& couplingScvfs = map.find(bulkElemIdx)->second.dofToCouplingScvfMap.at(globalJ);
-
-        for (const auto& scvfIdx : couplingScvfs)
+        for (const auto& scvfIdx : scvfIndices)
             coupledFluxes += localResidual.evalFlux(problem<bulkId>(),
                                                     elementI,
                                                     fvGeometry,
                                                     elemVolVars,
                                                     elemFluxVarsCache,
                                                     fvGeometry.scvf(scvfIdx));
-
         return coupledFluxes;
     }
 
