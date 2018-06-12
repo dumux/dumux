@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \copydoc Dumux::FacetCouplingDarcysLawImplementation
+ * \copydoc Dumux::CCTpfaFacetCouplingDarcysLaw
  */
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FACET_COUPLING_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_FACET_COUPLING_DARCYS_LAW_HH
