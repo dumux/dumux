@@ -36,11 +36,9 @@ namespace Dumux {
  * \note This can be used e.g. to contruct a bounding box volume hierarchy of a grid
  * It defines the minimum requirement for such a set
  */
-template <class GridView, int codim = 0>
+template <class GridView, int codim = 0, class Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>>
 class GridViewGeometricEntitySet
 {
-    using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-
 public:
     using Entity = typename GridView::template Codim<codim>::Entity;
 

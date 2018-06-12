@@ -46,7 +46,7 @@ template<class Impl, class GV, class Traits>
 class BaseFVGridGeometry
 {
     using ElementMap = EntityMap<GV, 0>;
-    using ElementSet = GridViewGeometricEntitySet<GV, 0>;
+    using ElementSet = GridViewGeometricEntitySet<GV, 0, typename Traits::ElementMapper>;
     using BoundingBoxTree = Dumux::BoundingBoxTree<ElementSet>;
 
     static const int dim = GV::dimension;
