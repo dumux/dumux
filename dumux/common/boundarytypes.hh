@@ -70,7 +70,6 @@ public:
           boundaryInfo_[eqIdx].isOutflow = false;
           boundaryInfo_[eqIdx].isCouplingDirichlet = false;
           boundaryInfo_[eqIdx].isCouplingNeumann = false;
-          boundaryInfo_[eqIdx].isCouplingMortar = false;
 
           eq2pvIdx_[eqIdx] = eqIdx;
           pv2eqIdx_[eqIdx] = eqIdx;
@@ -142,14 +141,6 @@ public:
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             setCouplingNeumann(eqIdx);
     }
-    /*!
-     * \brief Set all boundary conditions to mortar coupling.
-     */
-    void setAllCouplingMortar()
-    {
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-            setCouplingDirichlet(eqIdx);
-    }
 
     /*!
      * \brief Set a Neumann boundary condition for a single a single
@@ -207,6 +198,7 @@ public:
         resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = true;
         boundaryInfo_[eqIdx].isCouplingDirichlet = true;
+        boundaryInfo_[eqIdx].isDirichlet = true;
     }
 
     /*!
@@ -218,17 +210,7 @@ public:
         resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = true;
         boundaryInfo_[eqIdx].isCouplingNeumann = true;
-    }
-
-    /*!
-     * \brief Set a boundary condition for a single equation to
-     *        a mortar coupling condition.
-     */
-    void setCouplingMortar(int eqIdx)
-    {
-        resetEq(eqIdx);
-        boundaryInfo_[eqIdx].visited = true;
-        boundaryInfo_[eqIdx].isCouplingMortar = true;
+        boundaryInfo_[eqIdx].isNeumann = true;
     }
 
     /*!
@@ -377,29 +359,6 @@ public:
 
     /*!
      * \brief Returns true if an equation is used to specify a
-     *        Mortar coupling condition.
-     *
-     * \param eqIdx The index of the equation
-     */
-    bool isCouplingMortar(unsigned eqIdx) const
-    {
-        return boundaryInfo_[eqIdx].isCouplingMortar;
-    }
-
-    /*!
-     * \brief Returns true if some equation is used to specify an
-     *        Mortar coupling condition.
-     */
-    bool hasCouplingMortar() const
-    {
-        for (int i = 0; i < numEq; ++i)
-            if (boundaryInfo_[i].isCouplingMortar)
-                return true;
-        return false;
-    }
-
-    /*!
-     * \brief Returns true if an equation is used to specify a
      *        coupling condition.
      *
      * \param eqIdx The index of the equation
@@ -407,8 +366,7 @@ public:
     bool isCoupling(unsigned eqIdx) const
     {
         return boundaryInfo_[eqIdx].isCouplingDirichlet
-               || boundaryInfo_[eqIdx].isCouplingNeumann
-               || boundaryInfo_[eqIdx].isCouplingMortar;
+               || boundaryInfo_[eqIdx].isCouplingNeumann;
     }
 
     /*!
@@ -454,7 +412,6 @@ protected:
         bool isOutflow : 1;
         bool isCouplingDirichlet : 1;
         bool isCouplingNeumann : 1;
-        bool isCouplingMortar : 1;
     };
 
     std::array<BoundaryInfo, numEq> boundaryInfo_;
