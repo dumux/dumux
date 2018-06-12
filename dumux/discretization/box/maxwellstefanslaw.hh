@@ -92,20 +92,15 @@ public:
 
         // evaluate gradX at integration point and interpolate density
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& jacInvT = fluxVarsCache.jacInvT();
-        const auto& shapeJacobian = fluxVarsCache.shapeJacobian();
         const auto& shapeValues = fluxVarsCache.shapeValues();
 
         Scalar rho(0.0);
-        std::vector<GlobalPosition> gradN(fvGeometry.numScv());
         for (auto&& scv : scvs(fvGeometry))
         {
             const auto& volVars = elemVolVars[scv];
 
             // density interpolation
             rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
-            // the ansatz function gradient
-            jacInvT.mv(shapeJacobian[scv.localDofIndex()][0], gradN[scv.indexInElement()]);
 
             //interpolate the mole fraction for the diffusion matrix
             for (int compIdx = 0; compIdx < numComponents; compIdx++)
@@ -114,7 +109,7 @@ public:
             }
         }
 
-         reducedDiffusionMatrix = setupMSMatrix_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, moleFrac);
+        reducedDiffusionMatrix = setupMSMatrix_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, moleFrac);
 
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
@@ -124,7 +119,7 @@ public:
                 const auto& volVars = elemVolVars[scv];
 
                 // the mole/mass fraction gradient
-                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), gradN[scv.indexInElement()]);
+                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), fluxVarsCache.gradN(scv.indexInElement()));
             }
 
            normalX[compIdx] = gradX *scvf.unitOuterNormal();
@@ -132,11 +127,10 @@ public:
          reducedDiffusionMatrix.solve(reducedFlux,normalX);
          reducedFlux *= -1.0*rho*scvf.area();
 
-
         for (int compIdx = 0; compIdx < numComponents-1; compIdx++)
         {
-                componentFlux[compIdx] = reducedFlux[compIdx];
-                componentFlux[numComponents-1] -= reducedFlux[compIdx];
+            componentFlux[compIdx] = reducedFlux[compIdx];
+            componentFlux[numComponents-1] -= reducedFlux[compIdx];
         }
         return componentFlux ;
     }
@@ -144,12 +138,12 @@ public:
 private:
 
     static ReducedComponentMatrix setupMSMatrix_(const Problem& problem,
-                                                const Element& element,
-                                                const FVElementGeometry& fvGeometry,
-                                                const ElementVolumeVariables& elemVolVars,
-                                                const SubControlVolumeFace& scvf,
-                                                const int phaseIdx,
-                                                const ComponentFluxVector moleFrac)
+                                                 const Element& element,
+                                                 const FVElementGeometry& fvGeometry,
+                                                 const ElementVolumeVariables& elemVolVars,
+                                                 const SubControlVolumeFace& scvf,
+                                                 const int phaseIdx,
+                                                 const ComponentFluxVector moleFrac)
     {
         ReducedComponentMatrix reducedDiffusionMatrix(0.0);
 
