@@ -41,14 +41,13 @@ namespace Vtk {
  *  \tparam GridView The Dune grid view type
  *  \tparam F The field type (either vector of scalars or vectors)
  */
-template <typename GridView, typename F>
+template <typename GridView, typename Mapper, typename F>
 struct VectorP0VTKFunction : Dune::VTKFunction<GridView>
 {
     enum { dim = GridView::dimension };
     using ctype = typename GridView::ctype;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 public:
 
     //! return number of components
@@ -95,14 +94,13 @@ private:
  *  \tparam GridView The Dune grid view type
  *  \tparam F The field type (either vector of scalars or vectors)
  */
-template <typename GridView, typename F>
+template <typename GridView, typename Mapper, typename F>
 struct VectorP1VTKFunction : Dune::VTKFunction<GridView>
 {
     enum { dim = GridView::dimension };
     using ctype = typename GridView::ctype;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 public:
 
     //! return number of components
@@ -159,14 +157,13 @@ private:
  *  \tparam GridView The Dune grid view type
  *  \tparam F The field type (either vector of scalars or vectors)
  */
-template <typename GridView, typename F>
+template <typename GridView, typename Mapper, typename F>
 struct VectorP1NonConformingVTKFunction : Dune::VTKFunction<GridView>
 {
     enum { dim = GridView::dimension };
     using ctype = typename GridView::ctype;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 public:
 
     //! return number of components
@@ -243,12 +240,12 @@ public:
         if (codim == GridView::dimension)
         {
             if (dm == Dune::VTK::conforming)
-                field_ = std::make_shared< VectorP1VTKFunction<GridView, F> >(gridView, mapper, f, name, numComp);
+                field_ = std::make_shared< VectorP1VTKFunction<GridView, Mapper, F> >(gridView, mapper, f, name, numComp);
             else
-                field_ = std::make_shared< VectorP1NonConformingVTKFunction<GridView, F> >(gridView, mapper, f, name, numComp);
+                field_ = std::make_shared< VectorP1NonConformingVTKFunction<GridView, Mapper, F> >(gridView, mapper, f, name, numComp);
         }
         else if (codim == 0)
-            field_ = std::make_shared< VectorP0VTKFunction<GridView, F> >(gridView, mapper, f, name, numComp);
+            field_ = std::make_shared< VectorP0VTKFunction<GridView, Mapper, F> >(gridView, mapper, f, name, numComp);
         else
             DUNE_THROW(Dune::NotImplemented, "Only element or vertex quantities allowed.");
     }
