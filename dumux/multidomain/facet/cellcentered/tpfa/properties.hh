@@ -47,7 +47,7 @@ namespace Properties {
 NEW_TYPE_TAG(CCTpfaFacetCouplingModel, INHERITS_FROM(CCTpfaModel));
 
 //! Use the tpfa facet coupling-specific Darcy's law
-SET_TYPE_PROP(CCTpfaFacetCouplingModel, AdvectionType, FacetCouplingCCTpfaDarcysLaw<TypeTag>);
+SET_TYPE_PROP(CCTpfaFacetCouplingModel, AdvectionType, CCTpfaFacetCouplingDarcysLaw<TypeTag>);
 
 //! Use the cc local residual for models with facet coupling
 SET_TYPE_PROP(CCTpfaFacetCouplingModel, BaseLocalResidual, CCFacetCouplingLocalResidual<TypeTag>);
