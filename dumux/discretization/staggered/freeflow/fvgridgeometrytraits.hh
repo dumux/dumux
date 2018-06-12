@@ -40,8 +40,9 @@ namespace Dumux {
  * \ingroup StaggeredDiscretization
  * \brief Default traits for the finite volume grid geometry.
  */
-template<class GridView>
-struct StaggeredFreeFlowDefaultFVGridGeometryTraits : public DefaultMapperTraits<GridView>
+template<class GridView, class MapperTraits = DefaultMapperTraits<GridView>>
+struct StaggeredFreeFlowDefaultFVGridGeometryTraits
+: public MapperTraits
 {
     using SubControlVolume = CCSubControlVolume<GridView>;
     using SubControlVolumeFace = FreeFlowStaggeredSubControlVolumeFace<GridView>;
