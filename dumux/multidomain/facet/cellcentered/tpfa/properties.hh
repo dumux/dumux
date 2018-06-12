@@ -50,7 +50,7 @@ NEW_TYPE_TAG(CCTpfaFacetCouplingModel, INHERITS_FROM(CCTpfaModel));
 SET_TYPE_PROP(CCTpfaFacetCouplingModel, AdvectionType, FacetCouplingCCTpfaDarcysLaw<TypeTag>);
 
 //! Use the cc local residual for models with facet coupling
-SET_TYPE_PROP(CCTpfaFacetCouplingModel, BaseLocalResidual, FacetCouplingCCLocalResidual<TypeTag>);
+SET_TYPE_PROP(CCTpfaFacetCouplingModel, BaseLocalResidual, CCFacetCouplingLocalResidual<TypeTag>);
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
 SET_TYPE_PROP(CCTpfaFacetCouplingModel, FluxVariables, PorousMediumFluxVariables<TypeTag, CCFacetCouplingUpwindScheme<TypeTag>>);
