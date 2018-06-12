@@ -32,6 +32,7 @@
 #include <dune/foamgrid/foamgrid.hh>
 #endif
 
+#include <dumux/common/reorderingdofmapper.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/methods.hh>
@@ -58,6 +59,35 @@ NEW_TYPE_TAG(TubesTestBoxTypeTag, INHERITS_FROM(BoxModel, TubesTestTypeTag));
 #if HAVE_DUNE_FOAMGRID
 SET_TYPE_PROP(TubesTestTypeTag, Grid, Dune::FoamGrid<1, 3>);
 #endif
+
+// if we have pt scotch use the reordering dof mapper to optimally sort the dofs (cc)
+SET_PROP(TubesTestCCTpfaTypeTag, FVGridGeometry)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
+    using ElementMapper = ReorderingDofMapper<GridView>;
+    using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+    using MapperTraits = DefaultMapperTraits<GridView, ElementMapper, VertexMapper>;
+public:
+    using type = CCTpfaFVGridGeometry<GridView, enableCache, CCTpfaDefaultGridGeometryTraits<GridView, MapperTraits>>;
+};
+
+// if we have pt scotch use the reordering dof mapper to optimally sort the dofs (box)
+SET_PROP(TubesTestBoxTypeTag, FVGridGeometry)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+    using VertexMapper = ReorderingDofMapper<GridView>;
+    using MapperTraits = DefaultMapperTraits<GridView, ElementMapper, VertexMapper>;
+public:
+    using type = BoxFVGridGeometry<Scalar, GridView, enableCache, BoxDefaultGridGeometryTraits<GridView, MapperTraits>>;
+};
 
 // Set the problem property
 SET_TYPE_PROP(TubesTestTypeTag, Problem, TubesTestProblem<TypeTag>);
