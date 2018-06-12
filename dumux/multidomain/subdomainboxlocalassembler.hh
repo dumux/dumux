@@ -118,7 +118,7 @@ public:
         const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jacRow[domainId], *std::get<domainId>(gridVariables));
 
         for (const auto& scv : scvs(this->fvGeometry()))
-            res[scv.dofIndex()] += residual[scv.indexInElement()];
+            res[scv.dofIndex()] += residual[scv.localDofIndex()];
 
         auto applyDirichlet = [&] (const auto& scvI,
                                    const auto& dirichletValues,
@@ -126,12 +126,11 @@ public:
                                    const auto pvIdx)
         {
             res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+
             for (const auto& scvJ : scvs(this->fvGeometry()))
-            {
                 jacRow[domainId][scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
-                if (scvI.indexInElement() == scvJ.indexInElement())
-                    jacRow[domainId][scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
-            }
+
+            jacRow[domainId][scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
         };
 
         // for the coupling blocks
@@ -170,7 +169,7 @@ public:
         const auto residual = this->asImp_().assembleResidualImpl();
 
         for (const auto& scv : scvs(this->fvGeometry()))
-            res[scv.dofIndex()] += residual[scv.indexInElement()];
+            res[scv.dofIndex()] += residual[scv.localDofIndex()];
     }
 
     ElementResidualVector evalLocalSourceResidual(const Element& element, const ElementVolumeVariables& elemVolVars) const
@@ -185,7 +184,7 @@ public:
             const auto& curVolVars = elemVolVars[scv];
             auto source = this->localResidual().computeSource(problem(), element, this->fvGeometry(), elemVolVars, scv);
             source *= -scv.volume()*curVolVars.extrusionFactor();
-            residual[scv.indexInElement()] = std::move(source);
+            residual[scv.localDofIndex()] = std::move(source);
         }
 
         return residual;
@@ -209,7 +208,7 @@ public:
         {
             for (const auto& scvI : scvs(this->fvGeometry()))
             {
-                const auto bcTypes = this->elemBcTypes()[scvI.indexInElement()];
+                const auto bcTypes = this->elemBcTypes()[scvI.localDofIndex()];
                 if (bcTypes.hasDirichlet())
                 {
                     const auto dirichletValues = this->problem().dirichlet(this->element(), scvI);
@@ -376,7 +375,7 @@ public:
                 auto evalResiduals = [&](Scalar priVar)
                 {
                     // update the volume variables and compute element residual
-                    const auto localDofIndex = scv.indexInElement();
+                    const auto localDofIndex = scv.localDofIndex();
                     elemSol[localDofIndex][pvIdx] = priVar;
                     curVolVars.update(elemSol, this->problem(), element, scv);
                     this->couplingManager().updateCouplingContext(domainI, *this, domainI, scv.dofIndex(), elemSol[localDofIndex], pvIdx);
@@ -386,8 +385,8 @@ public:
                 // derive the residuals numerically
                 static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
                 static const NumericEpsilon<Scalar, numEq> eps_{this->problem().paramGroup()};
-                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.indexInElement()][pvIdx], partialDerivs, origResiduals,
-                                                          eps_(elemSol[scv.indexInElement()][pvIdx], pvIdx), numDiffMethod);
+                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.localDofIndex()][pvIdx], partialDerivs, origResiduals,
+                                                          eps_(elemSol[scv.localDofIndex()][pvIdx], pvIdx), numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
                 for (auto&& scvJ : scvs(fvGeometry))
@@ -398,7 +397,7 @@ public:
                           // the residual of equation 'eqIdx' at dof 'i'
                           // depending on the primary variable 'pvIdx' at dof
                           // 'col'.
-                          A[scvJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
+                          A[scvJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[scvJ.localDofIndex()][eqIdx];
                       }
                 }
 
@@ -406,8 +405,8 @@ public:
                 curVolVars = origVolVars;
 
                 // restore the original element solution and coupling context
-                elemSol[scv.indexInElement()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
-                this->couplingManager().updateCouplingContext(domainI, *this, domainI, scv.dofIndex(), elemSol[scv.indexInElement()], pvIdx);
+                elemSol[scv.localDofIndex()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
+                this->couplingManager().updateCouplingContext(domainI, *this, domainI, scv.dofIndex(), elemSol[scv.localDofIndex()], pvIdx);
             }
         }
 
@@ -505,8 +504,10 @@ public:
                         // set the derived value only once (i.e. overwrite existing values).
                         // For other dofs, add the contribution of the partial derivative.
                         const auto bcTypes = this->elemBcTypes()[scv.localDofIndex()];
-                        if (bcTypes.isDirichlet(eqIdx))
+                        if (bcTypes.isCouplingDirichlet(eqIdx))
                             A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = partialDerivs[scv.localDofIndex()][eqIdx];
+                        else if (bcTypes.isDirichlet(eqIdx))
+                            A[scv.dofIndex()][globalJ][eqIdx][pvIdx] = 0.0;
                         else
                             A[scv.dofIndex()][globalJ][eqIdx][pvIdx] += partialDerivs[scv.localDofIndex()][eqIdx];
                     }
