@@ -28,11 +28,13 @@
 
 namespace Dumux {
 
-template <class GridView>
+template <class GridView,
+          class EM = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>,
+          class VM = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>>
 struct DefaultMapperTraits
 {
-    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
-    using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+    using ElementMapper = EM;
+    using VertexMapper = VM;
 };
 
 } // namespace Dumux
