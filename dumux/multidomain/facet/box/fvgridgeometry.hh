@@ -182,8 +182,8 @@ public:
         scvfs_.clear();
         scvs_.resize(numElements);
         scvfs_.resize(numElements);
-        boundaryDofIndices_.resize(numDof, false);
-        interiorBoundaryDofIndices_.resize(numDof, false);
+        boundaryDofIndices_.assign(numDof, false);
+        interiorBoundaryDofIndices_.assign(numDof, false);
 
         // Build the SCV and SCV faces
         numScv_ = 0;
@@ -416,8 +416,8 @@ public:
         numBoundaryScvf_ = 0;
 
         const auto numDof = numDofs();
-        boundaryDofIndices_.resize(numDof, false);
-        interiorBoundaryDofIndices_.resize(numDof, false);
+        boundaryDofIndices_.assign(numDof, false);
+        interiorBoundaryDofIndices_.assign(numDof, false);
         for (const auto& element : elements(this->gridView()))
         {
             numScv_ += element.subEntities(dim);
