@@ -120,8 +120,8 @@ public:
             const auto insideScvIdx = scvf.insideScvIdx();
             const auto& insideScv = fvGeometry.scv(insideScvIdx);
             const Scalar omegai = calculateOmega_(scvf,
-                                                insideScv,
-                                                insideVolVars.extrusionFactor());
+                                                  insideScv,
+                                                  insideVolVars.extrusionFactor());
 
             //now we have to do the tpfa: J_i = J_j which leads to: tij(xi -xj) = -rho Bi^-1 omegai(x*-xi) with x* = (omegai Bi^-1 + omegaj Bj^-1)^-1 (xi omegai Bi^-1 + xj omegaj Bj^-1) with i inside and j outside
             reducedDiffusionMatrixInside = setupMSMatrix_(problem, element, fvGeometry, insideVolVars, insideScv, phaseIdx);
@@ -132,8 +132,6 @@ public:
                 moleFracOutside -= moleFracInside;
                 reducedDiffusionMatrixInside.solve(reducedFlux, moleFracOutside);
                 reducedFlux *= omegai;
-
-
             }
             else //we need outside cells as well if we are not on the boundary
             {
@@ -146,12 +144,12 @@ public:
                 if (dim == dimWorld)
                     // assume the normal vector from outside is anti parallel so we save flipping a vector
                     omegaj = -1.0*calculateOmega_(scvf,
-                                            outsideScv,
-                                            outsideVolVars.extrusionFactor());
+                                                  outsideScv,
+                                                  outsideVolVars.extrusionFactor());
                 else
                     omegaj = calculateOmega_(fvGeometry.flipScvf(scvf.index()),
-                                            outsideScv,
-                                            outsideVolVars.extrusionFactor());
+                                             outsideScv,
+                                             outsideVolVars.extrusionFactor());
 
                 reducedDiffusionMatrixInside.invert();
                 reducedDiffusionMatrixOutside.invert();
@@ -204,11 +202,11 @@ private:
     }
 
     static ReducedComponentMatrix setupMSMatrix_(const Problem& problem,
-                                                const Element& element,
-                                                const FVElementGeometry& fvGeometry,
-                                                const VolumeVariables& volVars,
-                                                const SubControlVolume& scv,
-                                                const int phaseIdx)
+                                                 const Element& element,
+                                                 const FVElementGeometry& fvGeometry,
+                                                 const VolumeVariables& volVars,
+                                                 const SubControlVolume& scv,
+                                                 const int phaseIdx)
     {
         ReducedComponentMatrix reducedDiffusionMatrix(0.0);
 
@@ -219,33 +217,25 @@ private:
         for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)
         {
             const auto xi = volVars.moleFraction(phaseIdx, compIIdx);
-
-            //calculate diffusivity for i,numComponents
             Scalar tin = getDiffusionCoefficient(phaseIdx, compIIdx, numComponents-1, problem, element, volVars, scv);
             tin = EffDiffModel::effectiveDiffusivity(volVars.porosity(), volVars.saturation(phaseIdx), tin);
-            //set the entrys of the diffusion matrix of the diagonal
+
+            // set the entries of the diffusion matrix of the diagonal
             reducedDiffusionMatrix[compIIdx][compIIdx] += xi/tin;
-            for (int compkIdx = 0; compkIdx < numComponents; compkIdx++)
-            {
-                if (compkIdx == compIIdx)
-                            continue;
 
-                const auto xk = volVars.moleFraction(phaseIdx, compkIdx);
-                Scalar tik = getDiffusionCoefficient(phaseIdx, compIIdx, compkIdx, problem, element, volVars, scv);
-                tik = EffDiffModel::effectiveDiffusivity(volVars.porosity(), volVars.saturation(phaseIdx), tik);
-                reducedDiffusionMatrix[compIIdx][compIIdx] += xk/tik;
-            }
-
-            // now set the rest of the entries (off-diagonal)
-            for (int compJIdx = 0; compJIdx < numComponents-1; compJIdx++)
+            // now set the rest of the entries (off-diagonal and additional entries for diagonal)
+            for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
             {
-                //we don't want to calculate e.g. water in water diffusion
-                if (compIIdx == compJIdx)
+                // we don't want to calculate e.g. water in water diffusion
+                if (compJIdx == compIIdx)
                     continue;
-                //calculate diffusivity for compIIdx, compJIdx
+
+                const auto xj = volVars.moleFraction(phaseIdx, compJIdx);
                 Scalar tij = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, volVars, scv);
                 tij = EffDiffModel::effectiveDiffusivity(volVars.porosity(), volVars.saturation(phaseIdx), tij);
-                reducedDiffusionMatrix[compIIdx][compJIdx] +=xi*(1/tin - 1/tij);
+                reducedDiffusionMatrix[compIIdx][compIIdx] += xj/tij;
+                if (compJIdx < numComponents-1)
+                    reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(1/tin - 1/tij);
             }
         }
         return reducedDiffusionMatrix;

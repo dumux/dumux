@@ -231,7 +231,8 @@ private:
                 const auto xj = volVars.moleFraction(compJIdx);
                 const Scalar tij = volVars.effectiveDiffusivity(compIIdx, compJIdx);
                 reducedDiffusionMatrix[compIIdx][compIIdx] += xj/tij;
-                reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(1/tin - 1/tij);
+                if (compJIdx < numComponents-1)
+                    reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(1/tin - 1/tij);
             }
         }
         return reducedDiffusionMatrix;
