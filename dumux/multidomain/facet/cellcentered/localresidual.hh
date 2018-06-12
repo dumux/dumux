@@ -44,7 +44,7 @@ namespace Dumux {
  *        as we need to additionally check if a boundary face couples to a facet element.
  */
 template<class TypeTag>
-class FacetCouplingCCLocalResidual : public CCLocalResidual<TypeTag>
+class CCFacetCouplingLocalResidual : public CCLocalResidual<TypeTag>
 {
     using ParentType = CCLocalResidual<TypeTag>;
 
