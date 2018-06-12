@@ -41,7 +41,7 @@ namespace Dumux {
 
 //! Forward declaration of the implementation
 template<class TypeTag, bool isNetwork>
-class FacetCouplingCCTpfaDarcysLawImpl;
+class CCTpfaFacetCouplingDarcysLawImpl;
 
 /*!
  * \ingroup MixedDimensionFacet
@@ -50,7 +50,7 @@ class FacetCouplingCCTpfaDarcysLawImpl;
  *       for the two cases can be found below.
  */
 template<class TypeTag, bool isNetwork>
-class FacetCouplingTpfaDarcysLawCache;
+class CCTpfaFacetCouplingDarcysLawCache;
 
 /*!
  * \ingroup MixedDimension
@@ -60,8 +60,8 @@ class FacetCouplingTpfaDarcysLawCache;
  *        domain elements with a lower-dimensional domain living on these facets.
  */
 template<class TypeTag>
-using FacetCouplingCCTpfaDarcysLaw =
-      FacetCouplingCCTpfaDarcysLawImpl< TypeTag, ( int(GET_PROP_TYPE(TypeTag, GridView)::dimension) <
+using CCTpfaFacetCouplingDarcysLaw =
+      CCTpfaFacetCouplingDarcysLawImpl< TypeTag, ( int(GET_PROP_TYPE(TypeTag, GridView)::dimension) <
                                                    int(GET_PROP_TYPE(TypeTag, GridView)::dimensionworld) ) >;
 
 /*!
@@ -69,7 +69,7 @@ using FacetCouplingCCTpfaDarcysLaw =
  * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for non-network grids.
  */
 template<class TypeTag>
-class FacetCouplingTpfaDarcysLawCache<TypeTag, /*isNetwork*/false>
+class CCTpfaFacetCouplingDarcysLawCache<TypeTag, /*isNetwork*/false>
 {
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -130,7 +130,7 @@ private:
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim=dimWorld
  */
 template<class TypeTag>
-class FacetCouplingCCTpfaDarcysLawImpl<TypeTag, /*isNetwork*/false>
+class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
 {
     using TpfaDarcysLaw = DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
 
@@ -154,7 +154,7 @@ class FacetCouplingCCTpfaDarcysLawImpl<TypeTag, /*isNetwork*/false>
     //! export the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
     //! export the type for the corresponding cache
-    using Cache = FacetCouplingTpfaDarcysLawCache<TypeTag, /*isNetwork*/false>;
+    using Cache = CCTpfaFacetCouplingDarcysLawCache<TypeTag, /*isNetwork*/false>;
     //! export the type used to store transmissibilities
     using TijContainer = typename Cache::AdvectionTransmissibilityContainer;
 
@@ -293,7 +293,7 @@ class FacetCouplingCCTpfaDarcysLawImpl<TypeTag, /*isNetwork*/false>
  * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for network grids
  */
 template<class TypeTag>
-class FacetCouplingTpfaDarcysLawCache<TypeTag, /*isNetwork*/true>
+class CCTpfaFacetCouplingDarcysLawCache<TypeTag, /*isNetwork*/true>
 {
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -354,7 +354,7 @@ private:
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim<dimWorld
  */
 template<class TypeTag>
-class FacetCouplingCCTpfaDarcysLawImpl<TypeTag, /*isNetwork*/true>
+class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/true>
 {
     using TpfaDarcysLaw = DarcysLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
 
@@ -378,7 +378,7 @@ class FacetCouplingCCTpfaDarcysLawImpl<TypeTag, /*isNetwork*/true>
     //! state the discretization method this implementation belongs to
     static const DiscretizationMethod discMethod = DiscretizationMethod::cctpfa;
     //! state the type for the corresponding cache
-    using Cache = FacetCouplingTpfaDarcysLawCache<TypeTag, /*isNetwork*/true>;
+    using Cache = CCTpfaFacetCouplingDarcysLawCache<TypeTag, /*isNetwork*/true>;
     //! export the type used to store transmissibilities
     using TijContainer = typename Cache::AdvectionTransmissibilityContainer;
 
