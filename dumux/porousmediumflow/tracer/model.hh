@@ -52,7 +52,7 @@
 #define DUMUX_TRACER_MODEL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/discretization/stationaryvelocityfield.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 #include <dumux/porousmediumflow/properties.hh>
@@ -71,13 +71,13 @@ namespace Dumux {
  * \tparam nComp the number of components to be considered.
  * \tparam useMol whether mole or mass balances are used
  */
-template<int nComp, bool useMol>
+template< int nComp, bool useMol>
 struct TracerModelTraits
 {
     using Indices = TracerIndices;
 
     static constexpr int numEq() { return nComp; }
-    static constexpr int numPhases() { return 1; }
+    static constexpr int numPhases() { return 2; }
     static constexpr int numComponents() { return nComp; }
 
     static constexpr bool enableAdvection() { return true; }

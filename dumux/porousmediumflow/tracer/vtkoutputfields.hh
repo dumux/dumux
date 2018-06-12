@@ -42,17 +42,19 @@ public:
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
         // register standardized vtk output fields
-        for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
+        for (int phaseIdx = 0; phaseIdx < VolumeVariables::numPhases(); ++phaseIdx)
         {
-            vtk.addVolumeVariable( [compIdx](const auto& v){  return v.moleFraction(0, compIdx); },
-                                   "x^" + std::string(FluidSystem::componentName(compIdx)));
-            vtk.addVolumeVariable( [compIdx](const auto& v){  return v.massFraction(0, compIdx); },
-                                   "X^" + std::string(FluidSystem::componentName(compIdx)));
+            for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
+            {
+                vtk.addVolumeVariable( [phaseIdx, compIdx](const auto& v){  return v.moleFraction(phaseIdx, compIdx); },
+                        "x_" + std::string(FluidSystem::phaseName(phaseIdx) + "^" + FluidSystem::componentName(compIdx)));
+                vtk.addVolumeVariable( [phaseIdx, compIdx](const auto& v){  return v.massFraction(phaseIdx, compIdx); },
+                        "X_" + std::string(FluidSystem::phaseName(phaseIdx) + "^" + FluidSystem::componentName(compIdx)));
+            }
+            vtk.addVolumeVariable( [](const auto& v){ return v.density(); }, "rho");
         }
-        vtk.addVolumeVariable( [](const auto& v){ return v.density(); }, "rho");
-    }
-};
+    };
 
-} // end namespace Dumux
+}; // end namespace Dumux
 
 #endif
