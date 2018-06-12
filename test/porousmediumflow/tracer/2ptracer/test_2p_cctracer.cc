@@ -239,7 +239,7 @@ int main(int argc, char** argv) try
     using ModelTraits = typename GET_PROP_TYPE(TwoPTypeTag, ModelTraits);
     static const int numPhases = ModelTraits::numPhases();
     using ScvfVector  = std::vector<Scalar>;
-    using FieldVector = std::vector<ScvfVector, numPhases>;
+    using FieldVector = std::vector<Dune::FieldVector<ScvfVector, numPhases>>;
     ScvfVector phaseFlux;
     FieldVector volumeFlux;
 

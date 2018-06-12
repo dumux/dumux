@@ -58,7 +58,7 @@ class TwoPTracerTestSpatialParams
 
     static const int numPhases = ModelTraits::numPhases();
     using ScvfVector  = std::vector<Scalar>;
-    using FieldVector = std::vector<ScvfVector, numPhases>;
+    using FieldVector = std::vector<Dune::FieldVector<ScvfVector, numPhases>>;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimWorld>;

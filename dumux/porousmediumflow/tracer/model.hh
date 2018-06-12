@@ -71,7 +71,7 @@ namespace Dumux {
  * \tparam nComp the number of components to be considered.
  * \tparam useMol whether mole or mass balances are used
  */
-template< int nComp, bool useMol>
+template<int nComp, bool useMol>
 struct TracerModelTraits
 {
     using Indices = TracerIndices;

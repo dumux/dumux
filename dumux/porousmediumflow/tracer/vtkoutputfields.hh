@@ -53,8 +53,9 @@ public:
             }
             vtk.addVolumeVariable( [](const auto& v){ return v.density(); }, "rho");
         }
-    };
+    }
+};
 
-}; // end namespace Dumux
+} // end namespace Dumux
 
 #endif

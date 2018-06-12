@@ -202,7 +202,8 @@ public:
             else
                 initialValues = 1e-9*FluidSystem::molarMass(0)/this->spatialParams().fluidMolarMass(globalPos);
         }
-        return initialValues; }
+        return initialValues;
+    }
 
     // \}
 
