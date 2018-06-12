@@ -148,7 +148,7 @@ public:
         scvs_.resize(numElements);
         scvfs_.resize(numElements);
 
-        boundaryDofIndices_.resize(numDofs(), false);
+        boundaryDofIndices_.assign(numDofs(), false);
 
         numScv_ = 0;
         numScvf_ = 0;
@@ -345,7 +345,7 @@ public:
     {
         ParentType::update();
 
-        boundaryDofIndices_.resize(numDofs(), false);
+        boundaryDofIndices_.assign(numDofs(), false);
 
         // save global data on the grid's scvs and scvfs
         // TODO do we need those information?
