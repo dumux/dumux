@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Discretization
+ * \ingroup MixedDimension
+ * \ingroup MixedDimensionFacet
  * \brief Modified upwind scheme for models using cell-centered schemes
  *        with coupling across element facets.
  */
@@ -32,22 +33,22 @@
 namespace Dumux {
 
 /*!
- * \ingroup Discretization
+ * \ingroup MixedDimension
+ * \ingroup MixedDimensionFacet
  * \brief The upwind scheme used for the advective fluxes.
+ *        This is a modified scheme for models involving coupling
+ *        with a lower-dimensional domain across the element facets.
  */
-template<class TypeTag>
+template<class FVGridGeometry>
 class CCFacetCouplingUpwindScheme
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-
+    using GridView = typename FVGridGeometry::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
     // For surface and network grids (dim < dimWorld) we have to do a special upwind scheme
-    template<class FluxVariables, class UpwindTermFunction, int d = dim, int dw = dimWorld>
+    template<class FluxVariables, class UpwindTermFunction, class Scalar, int d = dim, int dw = dimWorld>
     static typename std::enable_if<(d < dw), Scalar>::type
     apply(const FluxVariables& fluxVars,
           const UpwindTermFunction& upwindTerm,
@@ -64,7 +65,6 @@ public:
         const auto& cm = fluxVars.problem().couplingManager();
         if (cm.isCoupled(fluxVars.element(), scvf))
         {
-            // upwind scheme
             const auto& outsideVolVars = cm.getLowDimVolVars(fluxVars.element(), scvf);
             if (std::signbit(flux))
                 return flux*(upwindWeight*upwindTerm(outsideVolVars)
@@ -97,6 +97,7 @@ public:
                     const auto outsideElement = fvGeometry.fvGridGeometry().element(outsideScvIdx);
                     const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
 
+                    using AdvectionType = typename FluxVariables::AdvectionType;
                     const auto outsideFlux = AdvectionType::flux(fluxVars.problem(),
                                                                  outsideElement,
                                                                  fvGeometry,
@@ -128,7 +129,6 @@ public:
             // non-branching points and boundaries
             else
             {
-                // upwind scheme
                 const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
                 if (std::signbit(flux))
                     return flux*(upwindWeight*upwindTerm(outsideVolVars)
@@ -141,7 +141,7 @@ public:
     }
 
     // For grids with dim == dimWorld we use a simple upwinding scheme
-    template<class FluxVariables, class UpwindTermFunction, int d = dim, int dw = dimWorld>
+    template<class FluxVariables, class UpwindTermFunction, class Scalar, int d = dim, int dw = dimWorld>
     static typename std::enable_if<(d == dw), Scalar>::type
     apply(const FluxVariables& fluxVars,
           const UpwindTermFunction& upwindTerm,

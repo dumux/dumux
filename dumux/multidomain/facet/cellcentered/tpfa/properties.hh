@@ -53,7 +53,9 @@ SET_TYPE_PROP(CCTpfaFacetCouplingModel, AdvectionType, CCTpfaFacetCouplingDarcys
 SET_TYPE_PROP(CCTpfaFacetCouplingModel, BaseLocalResidual, CCFacetCouplingLocalResidual<TypeTag>);
 
 //! Per default, use the porous medium flow flux variables with the modified upwind scheme
-SET_TYPE_PROP(CCTpfaFacetCouplingModel, FluxVariables, PorousMediumFluxVariables<TypeTag, CCFacetCouplingUpwindScheme<TypeTag>>);
+SET_TYPE_PROP(CCTpfaFacetCouplingModel,
+              FluxVariables,
+              PorousMediumFluxVariables<TypeTag, CCFacetCouplingUpwindScheme<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)>>);
 
 } // namespace Properties
 } // namespace Dumux
