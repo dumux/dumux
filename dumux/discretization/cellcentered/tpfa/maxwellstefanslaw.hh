@@ -234,7 +234,8 @@ private:
                 Scalar tij = getDiffusionCoefficient(phaseIdx, compIIdx, compJIdx, problem, element, volVars, scv);
                 tij = EffDiffModel::effectiveDiffusivity(volVars.porosity(), volVars.saturation(phaseIdx), tij);
                 reducedDiffusionMatrix[compIIdx][compIIdx] += xj/tij;
-                reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(1/tin - 1/tij);
+                if (compJIdx < numComponents-1)
+                    reducedDiffusionMatrix[compIIdx][compJIdx] += xi*(1/tin - 1/tij);
             }
         }
         return reducedDiffusionMatrix;

@@ -180,7 +180,7 @@ private:
             reducedDiffusionMatrix[compIIdx][compIIdx] += xi/tin;
 
             // now set the rest of the entries (off-diagonal and additional entries for diagonal)
-            for (int compJIdx = 0; compJIdx < numComponents-1; compJIdx++)
+            for (int compJIdx = 0; compJIdx < numComponents; compJIdx++)
             {
                 //we don't want to calculate e.g. water in water diffusion
                 if (compIIdx == compJIdx)
@@ -201,7 +201,8 @@ private:
                 const auto tij = problem.spatialParams().harmonicMean(tijInside, tijOutside, scvf.unitOuterNormal());
 
                 reducedDiffusionMatrix[compIIdx][compIIdx] += xj/tij;
-                reducedDiffusionMatrix[compIIdx][compJIdx] +=xi*(1/tin - 1/tij);
+                if (compJIdx < numComponents-1)
+                    reducedDiffusionMatrix[compIIdx][compJIdx] +=xi*(1/tin - 1/tij);
             }
         }
         return reducedDiffusionMatrix;
