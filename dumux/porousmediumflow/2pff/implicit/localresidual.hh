@@ -108,7 +108,7 @@ public:
         // this is just a dummy we do upwinding internally in the upwind scheme class
         auto upwindTermTransport = [](const auto& volVars, const int phaseIdx = 0){ return 0.0; };
         flux[transportEqIdx] = fluxVars.advectiveFlux(transportEqIdx, upwindTermTransport);
-        flux[totalvelocityEqIdx] = fluxVars.advetiveFlux(totalvelocityEqIdx,upwindTermTransport) +fluxVars.advectiveFlux(transportEqIdx, upwindTermTransport);
+        flux[totalvelocityEqIdx] = fluxVars.advectiveFlux(totalvelocityEqIdx,upwindTermTransport);
 
         //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
         // EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, wPhaseIdx);

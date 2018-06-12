@@ -98,7 +98,7 @@ public:
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-        if (eqIdx == transportEqIdx)
+        if (eqIdx == transportEqIdx || eqIdx == totalvelocityEqIdx)
         {
             //////////////////////////////////////////////////////////////
             // we return three separate fluxes: the viscous, gravity and capillary flux
@@ -108,8 +108,6 @@ public:
             using VelocityVector = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 //             static const VelocityVector v_t = getParamFromGroup<VelocityVector>(problem.paramGroup(), "Problem.TotalVelocity");
 
-            if (eqIdx == transportEqIdx)
-            {
                 // viscous Flu
             //TODO: calculate the velocity (no more constant)
 
@@ -176,13 +174,13 @@ public:
             const auto pcOutside = outsideVolVars.capillaryPressure();
             Scalar WeightedCapillaryDp = WeightedCapillaryMobility*(pcOutside - pcInside);
 
-            static VelocityVector v_t = fluxVarsCache.advectionTij()*(mobT_WA*(pnInside - pnOutside)+ WeightedGravityDp + WeightedCapillaryDp);
+            fluxes[viscousFluxIdx] = fluxVarsCache.advectionTij()*(mobT_WA*(pnInside - pnOutside)+ WeightedGravityDp + WeightedCapillaryDp);
 
 
             //////////////////////////////////////////////////////////////
             // The viscous flux before upwinding is the total velocity
             //////////////////////////////////////////////////////////////
-            fluxes[viscousFluxIdx] = (v_t*scvf.unitOuterNormal())*scvf.area(); // TODO extrusion factor
+            //fluxes[viscousFluxIdx] = (v_t*scvf.unitOuterNormal())*scvf.area(); // TODO extrusion factor
 
             //////////////////////////////////////////////////////////////
             // Compute the capillary flux before upwinding
@@ -245,6 +243,6 @@ public:
     }
 };
 
-}; // end namespace Dumux
+} // end namespace Dumux
 
 #endif

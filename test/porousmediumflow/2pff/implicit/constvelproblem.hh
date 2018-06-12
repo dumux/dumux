@@ -98,8 +98,11 @@ class ConstVelProblem : public PorousMediumFlowProblem<TypeTag>
 
     enum {
         // equation indices
+        pressureIdx = Indices::pressureIdx,
+        saturationIdx = Indices::saturationIdx,
+
         transportEqIdx = 0,
-        saturationIdx = 0,
+        totalvelocityEqIdx = 1,
 
         // phase indices
         wPhaseIdx = FluidSystem::phase0Idx,
@@ -158,13 +161,14 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-//        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos) || onLowerBoundary_(globalPos)) {
-//            values.setAllNeumann();
-//        }
-//        else {
-//            values.setAllDirichlet();
-//        }
-        values.setAllNeumann();
+        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos) || onLowerBoundary_(globalPos)) {
+            values.setAllNeumann();
+        }
+        else
+        {
+            values.setAllDirichlet();
+        }
+//        values.setAllNeumann();
         return values;
     }
 
@@ -179,7 +183,8 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[saturationIdx] = 0.9;
+        values[saturationIdx] = 0.0;
+        values[pressureIdx] = 1.0e5;
         return values;
     }
 
@@ -190,28 +195,35 @@ public:
                           const SubControlVolumeFace& scvf) const
     {
         NeumannFluxes values(0.0);
-        // const auto globalPos = scvf.ipGlobal();
-        //
-        // static const GlobalPosition v_t = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, Problem, TotalVelocity);
-        //
-        // if(onLowerBoundary_(globalPos))
-        // {
-        //     //we assume constant saturation at the lower boundary
-        //     const auto& volVars = elemVolvars[scvf.insideScvIdx()];
-        //
-        //     Scalar mobW = volVars.mobility(wPhaseIdx);
-        //     Scalar mobN = volVars.mobility(nPhaseIdx);
-        //     Scalar mobT = mobW + mobN;
-        //     auto K = this->spatialParams().permeabilityAtPos(globalPos);
-        //
-        //     Scalar densityW = volVars.density(wPhaseIdx);
-        //     Scalar densityN = volVars.density(nPhaseIdx);
-        //
-        //     //ToDo use fluxVars for calculation
-        //     Scalar fracW = mobW/mobT;
-        //     Scalar velW = fracW*(v_t*scvf.unitOuterNormal()) + fracW*mobN*K*(densityN-densityW)*this->gravity()[dimWorld-1];
-        //     values[transportEqIdx] = velW;
-        // }
+
+         const auto globalPos = scvf.ipGlobal();
+
+         static const GlobalPosition v_t = getParam<GlobalPosition>("Problem.TotalVelocity");
+         if(onLowerBoundary_(globalPos))
+         {
+             //we assume constant saturation at the lower boundary
+             const auto& volVars = elemVolvars[scvf.insideScvIdx()];
+
+             Scalar mobW = volVars.mobility(wPhaseIdx);
+             Scalar mobN = volVars.mobility(nPhaseIdx);
+             Scalar mobT = mobW + mobN;
+             auto K = this->spatialParams().permeabilityAtPos(globalPos);
+
+             Scalar densityW = volVars.density(wPhaseIdx);
+             Scalar densityN = volVars.density(nPhaseIdx);
+
+             //ToDo use fluxVars for calculation
+             Scalar fracW = mobW/mobT;
+             Scalar fracN = mobN/mobT;
+             Scalar fluxW = fracW*(v_t*scvf.unitOuterNormal()) + fracW*mobN*K*(densityN-densityW)*this->gravity()[dimWorld-1];
+             Scalar fluxN = fracN*(v_t*scvf.unitOuterNormal()) - fracN*mobW*K*(densityN-densityW)*this->gravity()[dimWorld-1];
+             fluxW *= scvf.area();
+             fluxN *= scvf.area();
+
+             values[transportEqIdx] = fluxW;
+             values[totalvelocityEqIdx] = fluxW + fluxN;
+         }
+
         return values;
     }
     // \}
@@ -232,6 +244,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
+        values[pressureIdx] = 1.0e5;
         if(globalPos[1] > 0.65*this->fvGridGeometry().bBoxMax()[1] + eps_)
             values[saturationIdx] = initSaturations_[0];
         else
@@ -244,22 +257,22 @@ private:
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] < this->bBoxMin()[0] + eps_;
+        return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;
     }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] > this->bBoxMax()[0] - eps_;
+        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
     }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] < this->bBoxMin()[1] + eps_;
+        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_;
     }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->bBoxMax()[1] - eps_;
+        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
     }
 
     Scalar temperature_;
