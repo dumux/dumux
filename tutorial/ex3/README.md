@@ -32,19 +32,26 @@ To see more components, fluidsystems and binarycoefficients implementations, hav
 
 ### 2. Implement a new component
 
-In the following the basic steps required to set the desired fluid system are outlined. Here, this is done in the __problem file__, i.e. for this part of the exercise the code shown below is taken from the `2pproblem.hh` file.
+In the following, the basic steps required to set the desired fluid system are outlined. Here, this is done in the __problem file__, i.e. for this part of the exercise the code shown below is taken from the `2pproblem.hh` file.
 
-In this part of the exercise we will consider a system consisting of two immiscible phases. Therefore, the _TypeTag_ for this problem derives from the _BoxTwoP_ _TypeTag_ (for a cell-centered scheme, you would derive from _CCTwoP_). In order to be able to derive from this _TypeTag_, The declaration of the _BoxTwoP_ _TypeTag_ is found in the file `dumux/porousmediumflow/2p/implicit/model.hh`, which has been included in line 28:
+In this part of the exercise we will consider a system consisting of two immiscible phases. Therefore, the _TypeTag_ for this problem (`ExerciseThreeBoxTwoPTypeTag`) derives from a base _TypeTag_ (`ExerciseThreeTwoPTypeTag`) that itself derives from the `TwoP` _TypeTag_ (immiscible two-phase model properties).
+
+```c++
+NEW_TYPE_TAG(ExerciseThreeTwoPTypeTag, INHERITS_FROM(TwoP));
+```
+
+In order to be able to derive from this _TypeTag_, the declaration of the `TwoP` _TypeTag_ has to be included. It can be found in the `2p/model.hh` header:
 
 ```c++
 // The numerical model
-#include <dumux/porousmediumflow/2p/implicit/model.hh>
+#include <dumux/porousmediumflow/2p/model.hh>
 ```
 
- Additionally we derive from the _ExerciseThreeSpatialParams_ _TypeTag_ in order to set all the types related to the spatial parameters also for our new _TypeTag_ _ExerciseThreeProblem_. In this case, only one property is set for _ExerciseThreeSpatialParams_ (see lines 43 to 60 in `spatialparams.hh`). Alternatively, we could have defined this also here in the problem without defining a new type tag for the spatial parameters. However, in case you want to define several properties related to the spatial parameters it is good practice to define a separate _TypeTag_ and derive from this, as it is done here.
+Additionally, the _TypeTag_ for this problem (`ExerciseThreeBoxTwoPTypeTag`) derives from the `BoxModel` _TypeTag_, to specify properties of the discretization scheme. For a cell-centered scheme, you could derive from `CCTpfaModel` or `CCMpfaModel` instead. Again the corresponding header has to be included
 
 ```c++
-NEW_TYPE_TAG(ExerciseThreeTypeTag, INHERITS_FROM(BoxTwoP, ExerciseThreeSpatialParams));
+// The discretization
+#include <dumux/discretization/box/properties.hh>
 ```
 
 As wetting phase we want to use water and we want to precompute tables on which the properties are then interpolated in order to save computational time. Thus, in a first step we have to include the following headers:
@@ -71,36 +78,36 @@ As mentioned above, we want to simulate two non-mixing components. The respectiv
 This fluid system expects __phases__ as input and so far we have only included the components, which contain data on the pure component for all physical states. Thus, we need to include
 
 ```c++
-// We will only have liquid phases Here
+// We will only have liquid phases here
 #include <dumux/material/fluidsystems/1pliquid.hh>
 ```
 
-which creates a _liquid phase_ from a given component. Finally, using all of the included classes we set the the fluid system property by choosing a liquid phase consisting of the incompressible fictitious component as non-wetting phase and tabulated water as the wetting phase in the immiscible fluid system:
+which creates a _liquid phase_ from a given component. Finally, using all of the included classes we set the fluid system property by choosing that the non-wetting phase is a one-phase liquid (OnePLiquid) consisting of the incompressible fictitious component and that the wetting-phase consists of tabulated water in the immiscible fluid system:
 
 
 ```c++
 // we use the immiscible fluid system here
-SET_PROP(ExerciseThreeTypeTag, FluidSystem)
+SET_PROP(ExerciseThreeTwoPTypeTag, FluidSystem)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Components::TabulatedComponent<Components::H2O<Scalar>> TabulatedH2O;
-    typedef typename FluidSystems::OnePLiquid<Scalar, TabulatedH2O> WettingPhase;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using TabulatedH2O = Components::TabulatedComponent<Components::H2O<Scalar>>;
+    using WettingPhase = typename FluidSystems::OnePLiquid<Scalar, TabulatedH2O>;
     /*!
      * Uncomment first line and comment second line for using the incompressible component
      * Uncomment second line and comment first line for using the compressible component
      */
-    typedef typename FluidSystems::OnePLiquid<Scalar, MyIncompressibleComponent<Scalar> > NonWettingPhase;
-    // typedef typename FluidSystems::OnePLiquid<Scalar, MyCompressibleComponent<Scalar> > NonWettingPhase;
+    using NonWettingPhase = typename FluidSystems::OnePLiquid<Scalar, MyIncompressibleComponent<Scalar> >;
+    // using NonWettingPhase = typename FluidSystems::OnePLiquid<Scalar, MyCompressibleComponent<Scalar> >;
 
 public:
-    typedef typename FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonWettingPhase> type;
+    using type = typename FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonWettingPhase>;
 };
 ```
 
 ### 2.1. Incompressible component
 
-Open the file `myincompressiblecomponent.hh`. You can see in line 40 that a component should always derive from the _Base_ class (see `dumux/material/components/base.hh`), which defines the interface of a _DuMuX_ component with all possibly required functions to be overloaded by the actual implementation. Additionally it is required for liquids to derive from the _Liquid_ class (see `dumux/material/components/liquid.hh`), for gases to derive from the _Gas_ class (see `dumux/material/components/gas.hh`) and for solids to derive from the _Solid_ class (see `dumux/material/components/solid.hh`).
+Open the file `myincompressiblecomponent.hh`. You can see in line 42 that a component should always derive from the _Base_ class (see `dumux/material/components/base.hh`), which defines the interface of a _DuMuX_ component with possibly required functions to be overloaded by the actual implementation. Additionally it is required for liquids to derive from the _Liquid_ class (see `dumux/material/components/liquid.hh`), for gases to derive from the _Gas_ class (see `dumux/material/components/gas.hh`) and for solids to derive from the _Solid_ class (see `dumux/material/components/solid.hh`), with functions specific to liquid, gas or solid.
 
 ```c++
 /*!
@@ -110,7 +117,9 @@ Open the file `myincompressiblecomponent.hh`. You can see in line 40 that a comp
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class MyIncompressibleComponent : public Component<Scalar, MyIncompressibleComponent<Scalar> >
+class MyIncompressibleComponent
+: public Components::Base<Scalar, MyIncompressibleComponent<Scalar> >
+, public Components::Liquid<Scalar, MyIncompressibleComponent<Scalar> >
 ```
 
 __Task__:
@@ -125,30 +134,15 @@ Implement an incompressible component into the file `myincompressiblecomponent.h
 
 In order to do so, have a look at the files `dumux/material/components/base.hh` and `dumux/material/components/liquid.hh` to see how the interfaces are defined and overload them accordingly.
 
-In order to execute the program, change to the build-directory
+In order to execute the program, change to the build directory and compile and execute the program by typing
 
 ```bash
 cd build-cmake/tutorial/ex3
-```
-
-Uncomment the line for the corresponding executable in the `CMakeLists.txt` file:
-
-```cmake
-dune_add_test(NAME exercise3_a
-              SOURCES exercise3.cc
-              COMPILE_DEFINITIONS TYPETAG=ExerciseThreeBoxTwoPTypeTag
-              CMD_ARGS exercise3_a.input)
-```
-
-Now you can compile and execute the program by typing
-
-```bash
-make
 make exercise3_a
 ./exercise3_a exercise3_a.input
 ```
 
-The saturation distribution at the final simulation time should look like this:
+The saturation distribution of the nonwetting phase at the final simulation time should look like this:
 
 ![](../extradoc/exercise3_a_solution.png)
 
@@ -158,13 +152,13 @@ We now want to implement a pressure-dependent density for our component. Open th
 
 $`\displaystyle \rho_{MyComp} = \rho_{min} + \frac{ \rho_{max} - \rho_{min} }{ 1 + \rho_{min}*e^{-1.0*k*(\rho_{max} - \rho_{min})*p} } `$
 
-where $`p`$ is the pressure and $`\rho_{min} = 1440 `$, $`\rho_{max} = 1480 `$ and $`k = 5 \cdot 10^{-7} `$. Also, make sure the header is included in the `2pproblem.hh` file by uncommenting line 42. Furthermore, the new component has to be set as the non-wetting phase in the fluid system, i.e. comment line 81 and uncomment line 82. The non-wetting density distribution at the final simulation time should look like this:
+where $`p`$ is the pressure and $`\rho_{min} = 1440 `$, $`\rho_{max} = 1480 `$ and $`k = 5 \cdot 10^{-7} `$. Also, make sure the header is included in the `2pproblem.hh` file by uncommenting line 45. Furthermore, the new component has to be set as the non-wetting phase in the fluid system, i.e. comment line 90 and uncomment line 91. The non-wetting density distribution at the final simulation time should look like this:
 
 ![](../extradoc/exercise3_a_solution2.png)
 
 ### 3. Implement a new fluid system
 
-The problem file for this part of the exercise is `2p2cproblem.hh`. We now want to implement a new fluid system consisting of two liquid phases, which are water and the previously implemented compressible component. We will consider compositional effects, which is why we now have to derive our _TypeTag_ from the _BoxTwoPTwoC_ _TypeTag_:
+The problem file for this part of the exercise is `2p2cproblem.hh`. We now want to implement a new fluid system consisting of two liquid phases, which are water and the previously implemented compressible component. We will consider compositional effects, which is why we now have to derive our _TypeTag_ (`ExerciseThreeBoxTwoPTwoCTypeTag`) from a _TypeTag_ (`ExerciseThreeTwoPTwoCTypeTag`) that derives from the `TwoPTwoC` model _TypeTag_:
 
 ```c++
 // The numerical model
@@ -173,7 +167,8 @@ The problem file for this part of the exercise is `2p2cproblem.hh`. We now want 
 
 ```c++
 // Create a new type tag for the problem
-NEW_TYPE_TAG(ExerciseThreeTypeTag, INHERITS_FROM(BoxTwoPTwoC, ExerciseThreeSpatialParams));
+NEW_TYPE_TAG(ExerciseThreeTwoPTwoCTypeTag, INHERITS_FROM(TwoPTwoC));
+NEW_TYPE_TAG(ExerciseThreeBoxTwoPTwoCTypeTag, INHERITS_FROM(BoxModel, ExerciseThreeTwoPTwoCTypeTag));
 ```
 
 The new fluid system is to be implemented in the file `fluidsystems/h2omycompressiblecomponent.hh`. This is already included in the problem and the fluid system property is set accordingly.
@@ -185,12 +180,12 @@ The new fluid system is to be implemented in the file `fluidsystems/h2omycompres
 
 ```c++
 // The fluid system property
-SET_PROP(ExerciseThreeTypeTag, FluidSystem)
+SET_PROP(ExerciseThreeTwoPTwoCTypeTag, FluidSystem)
 {
 private:
-   typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-   typedef FluidSystems::H2OMyCompressibleComponent<TypeTag, Scalar> type;
+    using type = FluidSystems::H2OMyCompressibleComponent<Scalar>;
 };
 ```
 
@@ -206,31 +201,16 @@ In the `fluidsystems/h2omycompressiblecomponent.hh` file, your implemented compo
 
 __Task__:
 
-Under the assumption that one molecule of _MyCompressibleComponent_ displaces exactly one molecule of water, the water phase density can be expressed as follows:
+Under the assumption that one molecule of `MyCompressibleComponent` displaces exactly one molecule of water, the water phase density can be expressed as follows:
 
 $` \rho_{w} = \frac{ \rho_{w, pure} }{ M_{H_2O} }*(M_{H_2O}*x_{H_2O} + M_{MyComponent}*x_{MyComponent}) `$
 
-Implement this dependency in the _density()_ method in the fluid system. In order to compile and execute the program, uncomment the line for the corresponding executable in the `CMakeLists.txt` file
-
-```cmake
-dune_add_test(NAME exercise3_b
-              SOURCES exercise3.cc
-              COMPILE_DEFINITIONS TYPETAG=ExerciseThreeBoxTwoPTwoCTypeTag
-              CMD_ARGS exercise3_b.input)
-```
-
-Then, change to the build-directory
+Implement this dependency in the `density()` method in the fluid system. In order to compile and execute the program run
 
 ```bash
 cd build-cmake/tutorial/ex3
-```
-
-and type
-
-```bash
-make
 make exercise3_b
 ./exercise3_b exercise3_b.input
 ```
 
-You will observe an error message and an abortion of the program. This is due to the fact that in order for the constraint solver and other mechanisms in the two-phase two-component model to work, two additional functionalities in the component have to be implemented. The model has to know whether or not the liquid pure component is compressible and it needs the vapour pressure. As in the previous exercise, check the `dumux/material/components/base.hh` and `dumux/material/components/liquid.hh` files for these two functions and implement them into `mycompressiblecomponent.hh`. For the vapour pressure, use a value of $`3900`$  Pa.
+You will observe an error message and an abortion of the program. This is due to the fact that in order for the constraint solver and other mechanisms in the two-phase two-component model to work, an additional functionality in the component has to be implemented. The model has to know the vapour pressure. As in the previous exercise, check the `dumux/material/components/base.hh` file for this function and implement it into `mycompressiblecomponent.hh`. For the vapour pressure, use a value of $`3900`$  Pa.

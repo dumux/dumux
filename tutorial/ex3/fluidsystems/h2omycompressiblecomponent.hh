@@ -219,8 +219,8 @@ public:
 
             // Scalar rholH2O = H2O::liquidDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
             // Scalar clH2O = rholH2O/H2O::molarMass();
-            // Scalar x_H2O = fluidState.moleFraction phase0Idx, H2OIdx);
-            // Scalar x_myComp = fluidState.moleFraction phase0Idx, NAPLIdx);
+            // Scalar x_H2O = fluidState.moleFraction (phase0Idx, H2OIdx);
+            // Scalar x_myComp = fluidState.moleFraction (phase0Idx, NAPLIdx);
 
             /*!
              * TODO: implement the composition-dependent water density from the exercise sheet.

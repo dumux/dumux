@@ -44,7 +44,7 @@
 #include "components/myincompressiblecomponent.hh"
 // #include "components/mycompressiblecomponent.hh"
 
-// We will only have liquid phases Here
+// We will only have liquid phases here
 #include <dumux/material/fluidsystems/1pliquid.hh>
 
 // The two-phase immiscible fluid system
