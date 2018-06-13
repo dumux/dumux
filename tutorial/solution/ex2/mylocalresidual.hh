@@ -26,7 +26,6 @@
 #define DUMUX_MY_COMPOSITIONAL_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/common/parameters.hh>
 
 namespace Dumux
 {
