@@ -82,11 +82,13 @@ public:
 
     void addBulkInterpolation(std::size_t eIdx)
     {
+        assert(!bulkIsBox);
         bulkElementIdx_ = eIdx;
     }
 
     void addLowDimInterpolation(std::size_t eIdx)
     {
+        assert(!lowDimIsBox);
         lowDimElementIdx_ = eIdx;
     }
 
@@ -96,8 +98,8 @@ public:
         if (bulkIsBox)
         {
             for (std::size_t i = 0; i < bulkCornerIndices_.size(); ++i)
-                for (std::size_t priVarIdx = 0; priVarIdx < bulkPriVars_.size(); ++priVarIdx)
-                    bulkPriVars_[priVarIdx] += sol[bulkCornerIndices_[i]][priVarIdx]*bulkShapeValues_[i];
+                for (std::size_t priVarIdx = 0; priVarIdx < bulkPriVars.size(); ++priVarIdx)
+                    bulkPriVars[priVarIdx] += sol[bulkCornerIndices_[i]][priVarIdx]*bulkShapeValues_[i];
         }
         else
         {
@@ -112,8 +114,8 @@ public:
         if (lowDimIsBox)
         {
             for (std::size_t i = 0; i < lowDimCornerIndices_.size(); ++i)
-                for (std::size_t priVarIdx = 0; priVarIdx < lowDimPriVars_.size(); ++priVarIdx)
-                    lowDimPriVars_[priVarIdx] += sol[lowDimCornerIndices_[i]][priVarIdx]*lowDimShapeValues_[i];
+                for (std::size_t priVarIdx = 0; priVarIdx < lowDimPriVars.size(); ++priVarIdx)
+                    lowDimPriVars[priVarIdx] += sol[lowDimCornerIndices_[i]][priVarIdx]*lowDimShapeValues_[i];
         }
         else
         {
@@ -131,8 +133,6 @@ public:
 private:
     ShapeValues bulkShapeValues_, lowDimShapeValues_;
     std::vector<std::size_t> bulkCornerIndices_, lowDimCornerIndices_;
-    BulkPrimaryVariables bulkPriVars_;
-    LowDimPrimaryVariables lowDimPriVars_;
     std::size_t lowDimElementIdx_;
     std::size_t bulkElementIdx_;
 };
