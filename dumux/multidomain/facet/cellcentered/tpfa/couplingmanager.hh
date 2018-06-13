@@ -254,7 +254,6 @@ public:
 
         assert(it != couplingData.elementToScvfMap.end());
         const auto lowDimElemIdx = it->first;
-
         const auto& s = map.find(bulkContext_.elementIdx)->second.couplingElementStencil;
         const auto& idxInContext = std::distance( s.begin(), std::find(s.begin(), s.end(), lowDimElemIdx) );
         assert(std::find(s.begin(), s.end(), lowDimElemIdx) != s.end());
@@ -458,9 +457,9 @@ public:
             bulkElemFluxVarsCache.bind(bulkElem, bulkFvGeom, bulkElemVolVars);
 
             lowDimContext_.isSet = true;
-            lowDimContext_.bulkFvGeometry = std::make_unique< FVElementGeometry<bulkId> >(bulkFvGeom);
-            lowDimContext_.bulkElemVolVars = std::make_unique< ElementVolumeVariables<bulkId> >(bulkElemVolVars);
-            lowDimContext_.bulkElemFluxVarsCache = std::make_unique< ElementFluxVariablesCache<bulkId> >(bulkElemFluxVarsCache);
+            lowDimContext_.bulkFvGeometry = std::make_unique< FVElementGeometry<bulkId> >( std::move(bulkFvGeom) );
+            lowDimContext_.bulkElemVolVars = std::make_unique< ElementVolumeVariables<bulkId> >( std::move(bulkElemVolVars) );
+            lowDimContext_.bulkElemFluxVarsCache = std::make_unique< ElementFluxVariablesCache<bulkId> >( std::move(bulkElemFluxVarsCache) );
             lowDimContext_.bulkLocalResidual = std::make_unique< LocalResidual<bulkId> >(assembler.localResidual(bulkId));
         }
     }
@@ -583,7 +582,7 @@ public:
             const auto elemSol = elementSolution(elementJ, this->curSol()[bulkId], bulkGridGeom);
             (*lowDimContext_.bulkElemVolVars)[dofIdxGlobalJ].update(elemSol, problem<bulkId>(), elementJ, scv);
 
-            // update the element flux variables cache (tij depend on low dim values)
+            // update the element flux variables cache (tij might be solution-dependent)
             if (dofIdxGlobalJ == bulkContext_.elementIdx)
                 lowDimContext_.bulkElemFluxVarsCache->update( elementJ, *lowDimContext_.bulkFvGeometry, *lowDimContext_.bulkElemVolVars);
             else
