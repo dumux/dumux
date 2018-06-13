@@ -216,11 +216,19 @@ public:
     }
 
     /*!
-     * \brief returns true if a bulk scvf coincides with a facet element.
+     * \brief returns true if a bulk scvf flux depends on data in the facet domain.
      */
     bool isCoupled(const Element<bulkId>& element,
                    const SubControlVolumeFace<bulkId>& scvf) const
     { return bulkScvfIsCoupled_[scvf.index()]; }
+
+    /*!
+     * \brief returns true if a bulk scvf coincides with a facet element.
+     * \note for tpfa, this is always true for coupled scvfs
+     */
+    bool isOnInteriorBoundary(const Element<bulkId>& element,
+                              const SubControlVolumeFace<bulkId>& scvf) const
+    { return isCoupled(element, scvf); }
 
     /*!
      * \brief returns the vol vars of a lower-dimensional element coinciding with a bulk scvf.
@@ -325,6 +333,9 @@ public:
                                               const ElementVolumeVariables<lowDimId>& elemVolVars,
                                               const SubControlVolume<lowDimId>& scv)
     {
+        // make sure the this is called for the element of the context
+        assert(problem<lowDimId>().fvGridGeometry().elementMapper().index(element) == lowDimContext_.elementIdx);
+
         NumEqVector<lowDimId> sources(0.0);
 
         const auto& map = couplingMapperPtr_->couplingMap(lowDimId, bulkId);
@@ -332,9 +343,7 @@ public:
         if (it == map.end())
             return sources;
 
-        // make sure this is called for the element for which the context was set
         assert(lowDimContext_.isSet);
-        assert(problem<lowDimId>().fvGridGeometry().elementMapper().index(element) == lowDimContext_.elementIdx);
         const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
         for (const auto& embedment : it->second.embedments)
             sources += evalBulkFluxes_(problem<bulkId>().fvGridGeometry().element(embedment.first),

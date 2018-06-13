@@ -57,6 +57,8 @@ class CCFacetCouplingLocalResidual : public CCLocalResidual<TypeTag>
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
 
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+
 public:
     //! pull up the parent's constructor
     using ParentType::ParentType;
@@ -66,15 +68,15 @@ public:
     //! evaluate the flux residual for a sub control volume face
     using ParentType::evalFlux;
     template< class Problem >
-    ElementResidualVector evalFlux(const Problem& problem,
-                                   const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const ElementVolumeVariables& elemVolVars,
-                                   const ElementFluxVariablesCache& elemFluxVarsCache,
-                                   const SubControlVolumeFace& scvf) const
+    NumEqVector evalFlux(const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const ElementFluxVariablesCache& elemFluxVarsCache,
+                         const SubControlVolumeFace& scvf) const
     {
         // Even if scvf.boundary=true, compute flux on interior boundaries
-        if (problem.couplingManager().isCoupled(element, scvf))
+        if (problem.couplingManager().isOnInteriorBoundary(element, scvf))
             return this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         else
             return ParentType::evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
