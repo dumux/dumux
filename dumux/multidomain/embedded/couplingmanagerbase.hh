@@ -87,10 +87,11 @@ class EmbeddedCouplingManagerBase
     // the sub domain type tags
     template<std::size_t id> using PointSource = typename PSTraits::template PointSource<id>;
     template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
-    template<std::size_t id> using GridView = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridView);
     template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
     template<std::size_t id> using PrimaryVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, PrimaryVariables);
     template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
+    template<std::size_t id> using ElementMapper = typename FVGridGeometry<id>::ElementMapper;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
 
     enum {
@@ -105,7 +106,7 @@ class EmbeddedCouplingManagerBase
 
     using CouplingStencil = std::vector<std::size_t>;
     using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
-    using GlueType = MixedDimensionGlue<GridView<bulkIdx>, GridView<lowDimIdx>>;
+    using GlueType = MixedDimensionGlue<GridView<bulkIdx>, GridView<lowDimIdx>, ElementMapper<bulkIdx>, ElementMapper<lowDimIdx>>;
 
 public:
     //! export the point source traits
@@ -374,19 +375,21 @@ public:
 
 protected:
 
-    //! computes the bulk vertex indices per element for the box method
-    void preComputeBulkVertexIndices()
+    //! computes the vertex indices per element for the box method
+    template<std::size_t id>
+    void preComputeVertexIndices(Dune::index_constant<id> domainIdx)
     {
         // fill helper structure for box discretization
-        if (isBox<bulkIdx>())
+        if (isBox<domainIdx>())
         {
-            bulkVertexIndices_.resize(gridView(bulkIdx).size(0));
-            for (const auto& element : elements(gridView(bulkIdx)))
+            this->vertexIndices(domainIdx).resize(gridView(domainIdx).size(0));
+            for (const auto& element : elements(gridView(domainIdx)))
             {
-                const auto eIdx = problem(bulkIdx).fvGridGeometry().elementMapper().index(element);
-                bulkVertexIndices_[eIdx].resize(element.subEntities(bulkDim));
-                for (int i = 0; i < element.subEntities(bulkDim); ++i)
-                    bulkVertexIndices_[eIdx][i] = problem(bulkIdx).fvGridGeometry().vertexMapper().subIndex(element, i, bulkDim);
+                constexpr int dim = GridView<domainIdx>::dimension;
+                const auto eIdx = problem(domainIdx).fvGridGeometry().elementMapper().index(element);
+                this->vertexIndices(domainIdx, eIdx).resize(element.subEntities(dim));
+                for (int i = 0; i < element.subEntities(dim); ++i)
+                    this->vertexIndices(domainIdx, eIdx)[i] = problem(domainIdx).fvGridGeometry().vertexMapper().subIndex(element, i, dim);
             }
         }
     }
@@ -422,9 +425,15 @@ protected:
     CouplingStencils& couplingStencils(Dune::index_constant<i> dom)
     { return (i == 0) ? bulkCouplingStencils_ : lowDimCouplingStencils_; }
 
-    //! Return a reference to the bulk vertex indices
-    const std::vector<std::size_t>& bulkVertexIndices(std::size_t eIdx)
-    { return bulkVertexIndices_[eIdx]; }
+    //! Return a reference to the vertex indices
+    template<std::size_t i>
+    std::vector<std::size_t>& vertexIndices(Dune::index_constant<i> dom, std::size_t eIdx)
+    { return (i == 0) ? bulkVertexIndices_[eIdx] : lowDimVertexIndices_[eIdx]; }
+
+    //! Return a reference to the vertex indices container
+    template<std::size_t i>
+    std::vector<std::vector<std::size_t>>& vertexIndices(Dune::index_constant<i> dom)
+    { return (i == 0) ? bulkVertexIndices_ : lowDimVertexIndices_; }
 
     //! Return a reference to an empty stencil
     const CouplingStencil& emptyStencil() const
@@ -468,6 +477,7 @@ private:
 
     //! Stencil data
     std::vector<std::vector<std::size_t>> bulkVertexIndices_;
+    std::vector<std::vector<std::size_t>> lowDimVertexIndices_;
     CouplingStencils bulkCouplingStencils_;
     CouplingStencils lowDimCouplingStencils_;
     CouplingStencil emptyStencil_;
