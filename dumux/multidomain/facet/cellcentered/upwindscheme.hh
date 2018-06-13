@@ -63,7 +63,7 @@ public:
 
         // check if this is an interior boundary
         const auto& cm = fluxVars.problem().couplingManager();
-        if (cm.isCoupled(fluxVars.element(), scvf))
+        if (cm.isOnInteriorBoundary(fluxVars.element(), scvf))
         {
             const auto& outsideVolVars = cm.getLowDimVolVars(fluxVars.element(), scvf);
             if (std::signbit(flux))
@@ -155,7 +155,7 @@ public:
 
         // check if this is an interior boundary
         const auto& cm = fluxVars.problem().couplingManager();
-        if (cm.isCoupled(fluxVars.element(), scvf))
+        if (cm.isOnInteriorBoundary(fluxVars.element(), scvf))
         {
             // upwind scheme
             const auto& outsideVolVars = cm.getLowDimVolVars(fluxVars.element(), scvf);

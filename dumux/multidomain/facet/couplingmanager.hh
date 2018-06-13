@@ -203,6 +203,9 @@ public:
     using BulkFacetManager::isCoupled;
     using FacetEdgeManager::isCoupled;
 
+    using BulkFacetManager::isOnInteriorBoundary;
+    using FacetEdgeManager::isOnInteriorBoundary;
+
     using BulkFacetManager::getLowDimVolVars;
     using FacetEdgeManager::getLowDimVolVars;
 
