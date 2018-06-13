@@ -44,39 +44,29 @@
 
 #include <dumux/multidomain/facet/gridcreator.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
-#include <dumux/multidomain/facet/cellcentered/tpfa/couplingmanager.hh>
+#include <dumux/multidomain/facet/couplingmanager.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+
+// obtain/define some types to be used below in the property definitions and in main
+class TestTraits
+{
+    using BulkFVGridGeometry = typename GET_PROP_TYPE(TTAG(OnePBulkTpfa), FVGridGeometry);
+    using LowDimFVGridGeometry = typename GET_PROP_TYPE(TTAG(OnePLowDimTpfa), FVGridGeometry);
+public:
+    using MDTraits = Dumux::MultiDomainTraits<TTAG(OnePBulkTpfa), TTAG(OnePLowDimTpfa)>;
+    using CouplingMapper = Dumux::FacetCouplingMapper<BulkFVGridGeometry, LowDimFVGridGeometry>;
+    using CouplingManager = Dumux::FacetCouplingManager<MDTraits, CouplingMapper>;
+};
 
 // set the coupling manager property in the sub-problems
 namespace Dumux {
 namespace Properties {
 
 NEW_PROP_TAG(CouplingManager);
+SET_TYPE_PROP(OnePBulkTpfa, CouplingManager, typename TestTraits::CouplingManager);
+SET_TYPE_PROP(OnePLowDimTpfa, CouplingManager, typename TestTraits::CouplingManager);
 
-SET_PROP(OnePLowDimTpfa, CouplingManager)
-{
-private:
-    // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTAG(OnePBulkTpfa), TTAG(OnePLowDimTpfa)>;
-    using BulkFVG = typename GET_PROP_TYPE(TTAG(OnePBulkTpfa), FVGridGeometry);
-    using LowDimFVG = typename GET_PROP_TYPE(TTAG(OnePLowDimTpfa), FVGridGeometry);
-    using CouplingMapper = FacetCouplingMapper<BulkFVG, LowDimFVG>;
-public:
-    using type = CCTpfaFacetCouplingManager<Traits, CouplingMapper>;
-};
-
-SET_PROP(OnePBulkTpfa, CouplingManager)
-{
-private:
-    // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTAG(OnePBulkTpfa), TTAG(OnePLowDimTpfa)>;
-    using BulkFVG = typename GET_PROP_TYPE(TTAG(OnePBulkTpfa), FVGridGeometry);
-    using LowDimFVG = typename GET_PROP_TYPE(TTAG(OnePLowDimTpfa), FVGridGeometry);
-    using CouplingMapper = FacetCouplingMapper<BulkFVG, LowDimFVG>;
-public:
-    using type = CCTpfaFacetCouplingManager<Traits, CouplingMapper>;
-};
 } // end namespace Properties
 } // end namespace Dumux
 
@@ -135,24 +125,23 @@ int main(int argc, char** argv) try
     auto lowDimProblem = std::make_shared<LowDimProblem>(lowDimFvGridGeometry, lowDimSpatialParams, "LowDim");
 
     // the solution vector
-    using Traits = MultiDomainTraits<BulkProblemTypeTag, LowDimProblemTypeTag>;
-    using SolutionVector = typename Traits::SolutionVector;
+    using MDTraits = typename TestTraits::MDTraits;
+    using SolutionVector = typename MDTraits::SolutionVector;
     SolutionVector x;
 
-    static const auto bulkId = Traits::template DomainIdx<0>();
-    static const auto lowDimId = Traits::template DomainIdx<1>();
+    static const auto bulkId = typename MDTraits::template DomainIdx<0>();
+    static const auto lowDimId = typename MDTraits::template DomainIdx<1>();
     x[bulkId].resize(bulkFvGridGeometry->numDofs());
     x[lowDimId].resize(lowDimFvGridGeometry->numDofs());
     bulkProblem->applyInitialSolution(x[bulkId]);
     lowDimProblem->applyInitialSolution(x[lowDimId]);
 
     // the coupling mapper
-    using CouplingMapper = FacetCouplingMapper<BulkFVGridGeometry, LowDimFVGridGeometry>;
-    auto couplingMapper = std::make_shared<CouplingMapper>();
+    auto couplingMapper = std::make_shared<typename TestTraits::CouplingMapper>();
     couplingMapper->update(*bulkFvGridGeometry, *lowDimFvGridGeometry, gridCreator);
 
     // the coupling manager
-    using CouplingManager = CCTpfaFacetCouplingManager<Traits, CouplingMapper>;
+    using CouplingManager = typename TestTraits::CouplingManager;
     auto couplingManager = std::make_shared<CouplingManager>();
     couplingManager->init(bulkProblem, lowDimProblem, couplingMapper, x);
 
@@ -181,7 +170,7 @@ int main(int argc, char** argv) try
     lowDimVtkWriter.write(0.0);
 
     // the assembler
-    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
+    using Assembler = MultiDomainFVAssembler<MDTraits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
     auto assembler = std::make_shared<Assembler>( std::make_tuple(bulkProblem, lowDimProblem),
                                                   std::make_tuple(bulkFvGridGeometry, lowDimFvGridGeometry),
                                                   std::make_tuple(bulkGridVariables, lowDimGridVariables),
