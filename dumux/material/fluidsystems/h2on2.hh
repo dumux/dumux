@@ -460,6 +460,7 @@ public:
                 }
                 muResult += fluidState.moleFraction(phaseIdx, i)/sumx * mu[i] / divisor;
             }
+
             return muResult;
         }
     }
@@ -641,6 +642,44 @@ public:
                 * N2::gasEnthalpy(T, p);
             return hH2O + hN2;
         }
+    }
+
+    /*!
+    * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in the specified phase
+    * \param fluidState The fluid state
+    * \param phaseIdx The index of the phase
+    * \param componentIdx The index of the component
+    */
+    template <class FluidState>
+    static Scalar componentEnthalpy(const FluidState &fluidState,
+                                    int phaseIdx,
+                                    int componentIdx)
+    {
+        Scalar T = fluidState.temperature(gasPhaseIdx);
+        Scalar p = fluidState.pressure(gasPhaseIdx);
+        Valgrind::CheckDefined(T);
+        Valgrind::CheckDefined(p);
+
+        if (phaseIdx == liquidPhaseIdx)
+        {
+            if (componentIdx == H2OIdx)
+                return H2O::liquidEnthalpy(T, p);
+            else if (componentIdx == N2Idx)
+                DUNE_THROW(Dune::NotImplemented, "Component enthalpy of nitrogen in liquid phase");
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
+        }
+        else if (phaseIdx == gasPhaseIdx)
+        {
+            if (componentIdx == H2OIdx)
+                return H2O::gasEnthalpy(T, p);
+            else if (componentIdx == N2Idx)
+                return N2::gasEnthalpy(T, p);
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << componentIdx);
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
     using Base::thermalConductivity;
