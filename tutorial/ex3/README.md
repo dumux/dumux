@@ -34,20 +34,25 @@ To see more components, fluidsystems and binarycoefficients implementations, hav
 
 In the following, the basic steps required to set the desired fluid system are outlined. Here, this is done in the __problem file__, i.e. for this part of the exercise the code shown below is taken from the `2pproblem.hh` file.
 
-In this part of the exercise we will consider a system consisting of two immiscible phases. Therefore, the _TypeTag_ for this problem (_ExerciseThreeBoxTwoPTypeTag_) derives from something (_ExerciseThreeTwoPTypeTag_) that derives from the _TwoP_ _TypeTag_.
+In this part of the exercise we will consider a system consisting of two immiscible phases. Therefore, the _TypeTag_ for this problem (`ExerciseThreeBoxTwoPTypeTag`) derives from a base _TypeTag_ (`ExerciseThreeTwoPTypeTag`) that itself derives from the `TwoP` _TypeTag_ (immiscible two-phase model properties).
 
 ```c++
 NEW_TYPE_TAG(ExerciseThreeTwoPTypeTag, INHERITS_FROM(TwoP));
 ```
 
-In order to be able to derive from this _TypeTag_, The declaration of the _TwoP_ _TypeTag_ is found in the file `dumux/porousmediumflow/2p/model.hh`, which has been included in line 28:
+In order to be able to derive from this _TypeTag_, the declaration of the `TwoP` _TypeTag_ has to be included. It can be found in the `2p/model.hh` header:
 
 ```c++
 // The numerical model
 #include <dumux/porousmediumflow/2p/model.hh>
 ```
 
-Additionally, the TypeTag_ for this problem (_ExerciseThreeBoxTwoPTypeTag_) derives from the _BoxModel_ _TypeTag_, to specify the discretization scheme. For a cell-centered scheme, you would derive from _CCTpfaModel_ or _CCMpfaModel_.
+Additionally, the _TypeTag_ for this problem (`ExerciseThreeBoxTwoPTypeTag`) derives from the `BoxModel` _TypeTag_, to specify properties of the discretization scheme. For a cell-centered scheme, you could derive from `CCTpfaModel` or `CCMpfaModel` instead. Again the corresponding header has to be included
+
+```c++
+// The discretization
+#include <dumux/discretization/box/properties.hh>
+```
 
 As wetting phase we want to use water and we want to precompute tables on which the properties are then interpolated in order to save computational time. Thus, in a first step we have to include the following headers:
 
@@ -129,26 +134,10 @@ Implement an incompressible component into the file `myincompressiblecomponent.h
 
 In order to do so, have a look at the files `dumux/material/components/base.hh` and `dumux/material/components/liquid.hh` to see how the interfaces are defined and overload them accordingly.
 
-In order to execute the program, change to the build-directory
+In order to execute the program, change to the build directory and compile and execute the program by typing
 
 ```bash
 cd build-cmake/tutorial/ex3
-```
-
-Uncomment the line for the corresponding executable in the `CMakeLists.txt` file:
-
-```cmake
-dune_add_test(NAME exercise3_a
-              SOURCES exercise3.cc
-              COMPILE_DEFINITIONS TYPETAG=ExerciseThreeBoxTwoPTypeTag
-              COMPILE_ONLY # for testing purposes, ignore for the exercise
-              CMD_ARGS exercise3_a.input)
-```
-
-Now you can compile and execute the program by typing
-
-```bash
-make
 make exercise3_a
 ./exercise3_a exercise3_a.input
 ```
@@ -169,7 +158,7 @@ where $`p`$ is the pressure and $`\rho_{min} = 1440 `$, $`\rho_{max} = 1480 `$ a
 
 ### 3. Implement a new fluid system
 
-The problem file for this part of the exercise is `2p2cproblem.hh`. We now want to implement a new fluid system consisting of two liquid phases, which are water and the previously implemented compressible component. We will consider compositional effects, which is why we now have to derive our _TypeTag_ (_ExerciseThreeBoxTwoPTwoCTypeTag_) from a _TypeTag_ (_ExerciseThreeTwoPTwoCTypeTag_) that derives from the _TwoPTwoC_ _TypeTag_:
+The problem file for this part of the exercise is `2p2cproblem.hh`. We now want to implement a new fluid system consisting of two liquid phases, which are water and the previously implemented compressible component. We will consider compositional effects, which is why we now have to derive our _TypeTag_ (`ExerciseThreeBoxTwoPTwoCTypeTag`) from a _TypeTag_ (`ExerciseThreeTwoPTwoCTypeTag`) that derives from the `TwoPTwoC` model _TypeTag_:
 
 ```c++
 // The numerical model
@@ -212,29 +201,14 @@ In the `fluidsystems/h2omycompressiblecomponent.hh` file, your implemented compo
 
 __Task__:
 
-Under the assumption that one molecule of _MyCompressibleComponent_ displaces exactly one molecule of water, the water phase density can be expressed as follows:
+Under the assumption that one molecule of `MyCompressibleComponent` displaces exactly one molecule of water, the water phase density can be expressed as follows:
 
 $` \rho_{w} = \frac{ \rho_{w, pure} }{ M_{H_2O} }*(M_{H_2O}*x_{H_2O} + M_{MyComponent}*x_{MyComponent}) `$
 
-Implement this dependency in the _density()_ method in the fluid system. In order to compile and execute the program, uncomment the line for the corresponding executable in the `CMakeLists.txt` file
-
-```cmake
-dune_add_test(NAME exercise3_b
-              SOURCES exercise3.cc
-              COMPILE_DEFINITIONS TYPETAG=ExerciseThreeBoxTwoPTwoCTypeTag
-              CMD_ARGS exercise3_b.input)
-```
-
-Then, change to the build-directory
+Implement this dependency in the `density()` method in the fluid system. In order to compile and execute the program run
 
 ```bash
 cd build-cmake/tutorial/ex3
-```
-
-and type
-
-```bash
-make
 make exercise3_b
 ./exercise3_b exercise3_b.input
 ```
