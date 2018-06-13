@@ -232,8 +232,9 @@ public:
      */
     void computePointSourceData(std::size_t order = 1, bool verbose = false)
     {
-        // precompute the bulk vertex indices for efficiency
-        this->preComputeBulkVertexIndices();
+        // precompute the vertex indices for efficiency
+        this->preComputeVertexIndices(bulkIdx);
+        this->preComputeVertexIndices(lowDimIdx);
 
         // Initialize the bulk bounding box tree
         const auto& bulkTree = this->problem(bulkIdx).fvGridGeometry().boundingBoxTree();
@@ -309,11 +310,11 @@ public:
                         if (!static_cast<bool>(circleCornerIndices.count(bulkElementIdx)))
                         {
                             const auto bulkElement = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx);
-                            circleCornerIndices[bulkElementIdx] = this->bulkVertexIndices(bulkElementIdx);
+                            circleCornerIndices[bulkElementIdx] = this->vertexIndices(bulkIdx, bulkElementIdx);
 
                             // evaluate shape functions at the integration point
                             const auto bulkGeometry = bulkElement.geometry();
-                            this->getShapeValues_(this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, circlePoints[k], circleShapeValues[bulkElementIdx]);
+                            this->getShapeValues_(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, circlePoints[k], circleShapeValues[bulkElementIdx]);
                         }
                     }
                 }
@@ -350,13 +351,33 @@ public:
                     // pre compute additional data used for the evaluation of
                     // the actual solution dependent source term
                     PointSourceData psData;
-                    psData.addLowDimInterpolation(lowDimElementIdx);
-                    psData.addBulkInterpolation(bulkElementIdx);
+
+                    if (isBox<lowDimIdx>())
+                    {
+                        ShapeValues shapeValues;
+                        this->getShapeValues_(lowDimIdx, this->problem(lowDimIdx).fvGridGeometry(), lowDimGeometry, globalPos, shapeValues);
+                        psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
+                    }
+                    else
+                    {
+                        psData.addLowDimInterpolation(lowDimElementIdx);
+                    }
+
                     // add data needed to compute integral over the circle
                     if (isBox<bulkIdx>())
+                    {
                         psData.addCircleInterpolation(circleCornerIndices, circleShapeValues, circleIpWeight, circleStencil);
+
+                        const auto bulkGeometry = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx).geometry();
+                        ShapeValues shapeValues;
+                        this->getShapeValues_(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, globalPos, shapeValues);
+                        psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
+                    }
                     else
+                    {
                         psData.addCircleInterpolation(circleIpWeight, circleStencil);
+                        psData.addBulkInterpolation(bulkElementIdx);
+                    }
 
                     // publish point source data in the global vector
                     this->pointSourceData().push_back(psData);
@@ -365,8 +386,8 @@ public:
                     if (isBox<lowDimIdx>())
                     {
                         this->couplingStencils(bulkIdx)[bulkElementIdx].insert(this->couplingStencils(bulkIdx)[bulkElementIdx].end(),
-                                                                               this->bulkVertexIndices(bulkElementIdx).begin(),
-                                                                               this->bulkVertexIndices(bulkElementIdx).end());
+                                                                               this->vertexIndices(lowDimIdx, lowDimElementIdx).begin(),
+                                                                               this->vertexIndices(lowDimIdx, lowDimElementIdx).end());
 
                     }
                     else
@@ -403,7 +424,7 @@ public:
             // remove the vertices element (box)
             if (isBox<bulkIdx>())
             {
-                const auto& indices = this->bulkVertexIndices(stencil.first);
+                const auto& indices = this->vertexIndices(bulkIdx, stencil.first);
                 stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
                                                    [&](auto i){ return std::find(indices.begin(), indices.end(), i) != indices.end(); }),
                                      stencil.second.end());
@@ -553,17 +574,17 @@ private:
     }
 
     //! compute the shape function for a given point and geometry
-    template<class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod == DiscretizationMethod::box, int> = 0>
-    void getShapeValues_(const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
+    template<std::size_t i, class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod == DiscretizationMethod::box, int> = 0>
+    void getShapeValues_(Dune::index_constant<i> domainI, const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
     {
         const auto ipLocal = geo.local(globalPos);
-        const auto& localBasis = this->problem(bulkIdx).fvGridGeometry().feCache().get(geo.type()).localBasis();
+        const auto& localBasis = this->problem(domainI).fvGridGeometry().feCache().get(geo.type()).localBasis();
         localBasis.evaluateFunction(ipLocal, shapeValues);
     }
 
     //! compute the shape function for a given point and geometry
-    template<class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod != DiscretizationMethod::box, int> = 0>
-    void getShapeValues_(const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
+    template<std::size_t i, class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod != DiscretizationMethod::box, int> = 0>
+    void getShapeValues_(Dune::index_constant<i> domainI, const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
     {
         DUNE_THROW(Dune::InvalidStateException, "Shape values requested for other discretization than box!");
     }
