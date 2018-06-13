@@ -37,12 +37,12 @@ namespace Dumux {
  * \brief Base class for the coupling mapper that sets up and stores
  *        the coupling maps between two domains of dimension d and (d-1).
  *
- * \tparam idOffset Offset added to the mapper-local domain ids for
- *                  the access to the grid quantities in grid creator
  * \tparam BulkFVG the d-dimensional finite-volume grid geometry
  * \tparam LowDimFVG the (d-1)-dimensional finite-volume grid geometry
+ * \tparam idOffset Offset added to the mapper-local domain ids for
+ *                  the access to the grid quantities in grid creator
  */
-template<std::size_t idOffset, class BulkFVG, class LowDimFVG>
+template<class BulkFVG, class LowDimFVG, std::size_t idOffset>
 class FacetCouplingMapperBase
 {
     using BulkGridView = typename BulkFVG::GridView;
