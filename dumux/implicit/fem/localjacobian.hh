@@ -102,14 +102,14 @@ public:
                   SolutionVector& residual)
     {
 
-std::cout << "Wir sind in femLocalJacobian" << std::endl;
+//std::cout << "Wir sind in femLocalJacobian" << std::endl;
 
         // prepare the element solutions etc...
         const auto& curSol = this->model_().curSol();
         const auto& prevSol = this->model_().prevSol();
 
-//                printvector(std::cout, curSol, "LocJacCurSol", "");
-//                printvector(std::cout, prevSol, "LocJacPrevSol", "");
+        //                printvector(std::cout, curSol, "LocJacCurSol", "");
+        //                printvector(std::cout, prevSol, "LocJacPrevSol", "");
 
 
         // prepare the current and previous element solutions
@@ -129,23 +129,23 @@ std::cout << "Wir sind in femLocalJacobian" << std::endl;
             prevElemSol[i] = prevSol[dofIdxGlobal];
         }
 
-//                printvector(std::cout, curElemSol, "LocJacCurElemSol", "");
-//                printvector(std::cout, prevElemSol, "LocJacPrevElemSol", "");
+        //                printvector(std::cout, curElemSol, "LocJacCurElemSol", "");
+        //                printvector(std::cout, prevElemSol, "LocJacPrevElemSol", "");
 
-        std::cout << "locJac nach localResidual().eval()" << std::endl;
+//std::cout << "locJac nach localResidual().eval()" << std::endl;
 
         // calculate the actual element residual
         this->localResidual().eval(element, localView, localIndexSet, curElemSol, prevElemSol);
         this->residual_ = this->localResidual().residual();
 
-//std::cout << "locJac nach localResidual().eval()" << std::endl;
+            //std::cout << "locJac nach localResidual().eval()" << std::endl;
 
-    //printvector(std::cout, residual, "locResLocJacobian","");
+        //printvector(std::cout, residual, "locResLocJacobian","");
 
         // TODO: WHAT IS THIS?
         // this->model_().updatePVWeights(fvGeometry);
 
-std::cout << "locJacMark: " << std::endl;
+//std::cout << "locJacMark: " << std::endl;
 
         // calculation of the derivatives
         for (unsigned int i = 0; i < numLocalDofs; ++i)
@@ -157,13 +157,13 @@ std::cout << "locJacMark: " << std::endl;
             residual[dofIdxGlobal] += this->residual(i);
 
 
-//            printvector(std::cout, residual, "LocJacRes", "");
+                //            printvector(std::cout, residual, "LocJacRes", "");
 
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
             {
-std::cout << "numLocalDof: " << i << "    numEq: " << pvIdx <<  std::endl;
+//std::cout << "locJac - numLocalDof: " << i << "    numEq: " << pvIdx <<  std::endl;
                 evalPartialDerivative_(matrix,
                                        element,
                                        localView,
@@ -174,7 +174,7 @@ std::cout << "numLocalDof: " << i << "    numEq: " << pvIdx <<  std::endl;
                                        pvIdx);
 
 
-//                printvector(std::cout, curElemSol, "curElemSol", "");
+                    //                printvector(std::cout, curElemSol, "curElemSol", "");
 
                 // restore the original state of the primary variables
                 curElemSol[i][pvIdx] = curSol[dofIdxGlobal][pvIdx];
@@ -245,9 +245,9 @@ protected:
         Scalar eps = this->numericEpsilon(curElemSol[localDofIdx][pvIdx]);
         Scalar delta = 0;
 
-//        std::cout << "LocJacEps: " << eps << std::endl;
+        //        std::cout << "LocJacEps: " << eps << std::endl;
 
-//printmatrix(std::cout, matrix, "LocJacVorAsssembleMatrix", "", 7, 0);
+        //printmatrix(std::cout, matrix, "LocJacVorAsssembleMatrix", "", 7, 0);
 
 
         // calculate the residual with the forward deflected primary variables
@@ -256,14 +256,14 @@ protected:
             // we are not using backward differences, i.e. we need to
             // calculate f(x + \epsilon)
 
-printvector(std::cout, curElemSol, "curElemSolVorEpsVorwaerts", "");
+//printvector(std::cout, curElemSol, "curElemSolVorEpsVorwaerts", "");
 
 
             // deflect primary variables
             curElemSol[localDofIdx][pvIdx] += eps;
             delta += eps;
 
-//printvector(std::cout, curElemSol, "LocJacCurElemSolnachEpsVorwaerts", "");
+                 //printvector(std::cout, curElemSol, "LocJacCurElemSolnachEpsVorwaerts", "");
 
 
             // calculate the deflected residual
@@ -272,7 +272,7 @@ printvector(std::cout, curElemSol, "curElemSolVorEpsVorwaerts", "");
             // store the residual
             partialDeriv = this->localResidual().residual();
 
-//   printvector(std::cout, partialDeriv, "LocJacPartialDerivVorwaerts", "");
+//printvector(std::cout, partialDeriv, "LocJacPartialDerivVorwaerts", "");
         }
         else
         {
@@ -281,7 +281,7 @@ printvector(std::cout, curElemSol, "curElemSolVorEpsVorwaerts", "");
             // (already calculated) residual f(x)
             partialDeriv = this->residual_;
 
-//   printvector(std::cout, partialDeriv, "LocJacPartialDerivElse1", "");
+//printvector(std::cout, partialDeriv, "LocJacPartialDerivElse1", "");
         }
 
         if (numericDifferenceMethod_ <= 0)
@@ -290,14 +290,14 @@ printvector(std::cout, curElemSol, "curElemSolVorEpsVorwaerts", "");
             // need to calculate f(x - \epsilon)
 
 
-//    printvector(std::cout, curElemSol, "curElemSolVorEpsRueck", "");
+                 //    printvector(std::cout, curElemSol, "curElemSolVorEpsRueck", "");
 
 
             // deflect the primary variables
             curElemSol[localDofIdx][pvIdx] -= delta + eps;
             delta += eps;
 
-//printvector(std::cout, curElemSol, "locJacCurElemSolnachEpsRueck", "");
+                //printvector(std::cout, curElemSol, "locJacCurElemSolnachEpsRueck", "");
 
 
             // calculate the deflected residual
@@ -306,7 +306,7 @@ printvector(std::cout, curElemSol, "curElemSolVorEpsVorwaerts", "");
             // subtract the residual from the derivative storage
             partialDeriv -= this->localResidual().residual();
 
-//    printvector(std::cout, partialDeriv, "partialDerivRueck", "");
+//printvector(std::cout, partialDeriv, "partialDerivRueck", "");
         }
         else
         {
@@ -315,7 +315,7 @@ printvector(std::cout, curElemSol, "curElemSolVorEpsVorwaerts", "");
             // (already calculated) residual f(x)
             partialDeriv -= this->residual_;
 
-//    printvector(std::cout, partialDeriv, "partialDerivElse2", "");
+//printvector(std::cout, partialDeriv, "partialDerivElse2", "");
         }
 
 //printvector(std::cout, partialDeriv, "LocJacPartialDeriv", "");
@@ -325,21 +325,21 @@ printvector(std::cout, curElemSol, "curElemSolVorEpsVorwaerts", "");
         // deflections between the two function evaluation
         partialDeriv /= delta;
 
-printvector(std::cout, this->residual_, "LocJacPartialthis->residual_", "");
-printvector(std::cout, partialDeriv, "LocJacPartialDeriv/delta", "");
+//printvector(std::cout, this->residual_, "LocJacPartialthis->residual_", "");
+//printvector(std::cout, partialDeriv, "LocJacPartialDeriv/delta", "");
 
 
         //printmatrix(std::cout, matrix, "matrix", "");
         //std::cout << "delta: " << delta << std::endl;
         //std::cout << "eps: " << eps << std::endl;
 
-//        std::cout << std::endl;
+        //        std::cout << std::endl;
 
         // update the global stiffness matrix with the current partial derivatives
         for (unsigned int i = 0; i < numLocalDofs; ++i)
             this->updateGlobalJacobian_(matrix, localIndexSet.index(i), dofIdxGlobal, pvIdx, partialDeriv[i]);
 
-printmatrix(std::cout, matrix, "locJacMatrix", "", 7, 0);
+//printmatrix(std::cout, matrix, "locJacMatrix", "", 7, 0);
 
     }
 

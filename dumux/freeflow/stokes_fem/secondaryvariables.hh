@@ -91,30 +91,30 @@ public:
                 const Element& element,
                 const IpData& ipData)
     {
-std::cout << "Wir sind in secVarsUpdate" << std::endl;
-//copied secondaryvariablesbase from fem
-// interpolate primary variables
-//printvector(std::cout, elemSol, "secVarsElemSol","");
+//std::cout << "Wir sind in secVarsUpdate" << std::endl;
+        //copied secondaryvariablesbase from fem
+        // interpolate primary variables
+        //printvector(std::cout, elemSol, "secVarsElemSol","");
 
     ParentType::update(elemSol, problem, element, ipData);
 
 
-//printvector(std::cout, ParentType::priVars(), "ParentType::priVars(): ", "");
+        //printvector(std::cout, ParentType::priVars(), "ParentType::priVars(): ", "");
 
     completeFluidState(ParentType::priVars(), problem, element, fluidState_);
     for (int dimIdx=0; dimIdx<dim; ++dimIdx)
         velocity_[dimIdx] = ParentType::priVars()[Indices::momentum(dimIdx)];
 
-// printvector(std::cout, ParentType::priVars(), "ParentType::priVars(): ", "");
+       // printvector(std::cout, ParentType::priVars(), "ParentType::priVars(): ", "");
 
-//        printvector(std::cout, velocity_, "SecondaryVarsVelocity_: ", "");
-//        std::cout << "secVarspressure: " << ParentType::priVars()[pressureIdx] << std::endl;
-//        std::cout << "pressure: " << pressure() << std::endl;
-//        std::cout << "temperature: " << temperature() << std::endl;
-//        std::cout << "secVarsdensity: " << density() << std::endl;
-//        std::cout << "dynamicViscosity: " << dynamicViscosity() << std::endl;
-////        std::cout << "extrusionFactor(): " << ParentType::extrusionFactor() << std::endl;
-//        printvector(std::cout, elemSol, "elemSol: ", "");
+        //        printvector(std::cout, velocity_, "SecondaryVarsVelocity_: ", "");
+        //        std::cout << "secVarspressure: " << ParentType::priVars()[pressureIdx] << std::endl;
+        //        std::cout << "pressure: " << pressure() << std::endl;
+        //        std::cout << "temperature: " << temperature() << std::endl;
+        //        std::cout << "secVarsdensity: " << density() << std::endl;
+        //        std::cout << "dynamicViscosity: " << dynamicViscosity() << std::endl;
+        ////        std::cout << "extrusionFactor(): " << ParentType::extrusionFactor() << std::endl;
+        //        printvector(std::cout, elemSol, "elemSol: ", "");
     }
 
     /*!
@@ -222,6 +222,31 @@ std::cout << "Wir sind in secVarsUpdate" << std::endl;
      */
     const DimVector &velocity() const
     { return velocity_; }
+
+
+    Scalar penaltyEps() const
+    {
+        return 1e-3;
+    }
+
+
+    Scalar penaltyEpsTimesP(DimVector velocity) const
+    { Scalar k = 1000;
+      Scalar normU(0.0);
+
+      for(int i=0; i<dim; i++){
+          normU += velocity[i]*velocity[i];
+//std::cout << "secVarsNormU: " << normU << std::endl;
+      }
+      normU = sqrt(normU);
+//std::cout << "secVarsSqrtNormU: " << normU << std::endl;
+
+      Scalar epsP = (k*normU);
+
+//std::cout << "secVarsEps: " << epsP << std::endl;
+
+      return epsP;
+    }
 
 
 protected:

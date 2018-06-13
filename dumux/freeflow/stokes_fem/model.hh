@@ -161,6 +161,8 @@ public:
     auto& vy = *writer.allocateManagedBuffer(numVert);
     auto& vz = *writer.allocateManagedBuffer(numVert);
 
+    auto& velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVert);
+
     auto& p = *writer.allocateManagedBuffer(numVert);
 
     //      auto& p = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
@@ -179,6 +181,8 @@ public:
     auto localView = this->feBasis().localView();
     auto localIndexSet = this->feBasis().localIndexSet();
 
+
+
     for (const auto& element : elements(this->gridView_(), Dune::Partitions::interior))
     {
         auto eIdx = this->problem_().model().elementMapper().index(element);
@@ -196,7 +200,17 @@ public:
         // loop over dofs inside the element and store solution at vertices
         // TODO HOW TO INCLUDE SUBSAMPLING
         const auto numLocalDofs = fe.localBasis().size();
+
+        // obtain element geometry
+        auto eg = element.geometry();
+        // evaluate shape function data and secondary variables at the cell center
+        IpData ipData(eg, eg.local(eg.center()), fe.localBasis());
+        SecondaryVariables secVars;
+
         ElementSolution elemSol(numLocalDofs);
+
+        secVars.update(elemSol, this->problem_(), element, ipData);
+
         for (unsigned int i = 0; i < numLocalDofs; ++i)
         {
             // only proceed for vertex dofs
@@ -205,27 +219,35 @@ public:
 
             const auto dofIdxGlobal = localIndexSet.index(i);
 
+
+
             const auto dofSol = sol[dofIdxGlobal];
             vx[dofIdxGlobal] = dofSol[Indices::v(0)];
-            if (dim >= 2)
+            velocity[dofIdxGlobal][Indices::v(0)] = dofSol[Indices::v(0)];
+            if (dim >= 2){
                vy[dofIdxGlobal] = dofSol[Indices::v(1)];
-            if (dim >= 3)
+               velocity[dofIdxGlobal][Indices::v(1)] = dofSol[Indices::v(1)];
+            }
+            if (dim >= 3){
                vz[dofIdxGlobal] = dofSol[Indices::v(2)];
+               velocity[dofIdxGlobal][Indices::v(2)] = dofSol[Indices::v(2)];
+            }
 
+            // final velocity
+          //  velocity[dofIdxGlobal] = secVars.velocity();
+
+            // compute the stress tensor and add to container
+            p[dofIdxGlobal] = dofSol[dim];
 
             elemSol[i] = std::move(dofSol);
         }
 
-        // obtain element geometry
-        auto eg = element.geometry();
 
-        // evaluate shape function data and secondary variables at the cell center
-        IpData ipData(eg, eg.local(eg.center()), fe.localBasis());
-        SecondaryVariables secVars;
-        secVars.update(elemSol, this->problem_(), element, ipData);
 
-        // compute the stress tensor and add to container
-        p = secVars.pressure();
+
+
+
+
     }
 
 
@@ -236,6 +258,9 @@ public:
         writer.attachDofData(vz, "vz", true);
 
     writer.attachDofData(p, "p", true);
+
+    writer.attachVertexData(velocity, "v", dim);
+
 
 /*        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VelocityField;

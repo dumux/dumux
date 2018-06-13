@@ -203,7 +203,7 @@ public:
                                    const ElementSolutionVector& elemSol) const
     {
         PrimaryVariables source(0);
-//        std::cout<<"fem/locres:computeSource wird aufgerufen"<<std::endl;
+//std::cout<<"fem/locres:computeSource wird aufgerufen"<<std::endl;
         // add contributions from volume flux sources
         source += this->problem().source(element, ipData, secVars);
 
@@ -297,8 +297,8 @@ protected:
             // Scale by determinant of the transformation and integration weight
             storage *= it->weight() * geometry.integrationElement(it->position());
 
-//std::cout << "hello" << std::endl;
-//printvector(std::cout, storage, "storage","");
+        //std::cout << "hello" << std::endl;
+        //printvector(std::cout, storage, "storage","");
 
             // add to container
             result += storage;
@@ -323,24 +323,26 @@ int count = 0;
         // loop over quadrature points
         for (auto it = rule.begin(); it != rule.end(); ++it)
         {   count++;
-std::cout << "femLocResItRuleCounter" << count << std::endl;
+//std::cout << "femLocResItRuleCounter" << count << std::endl;
             // Obtain and store shape function values and gradients at the current quad point
             IpData ipData(geometry, it->position(), localBasis);
 
             // calculate secondary variables for the previous and the current solution at the ip
             SecondaryVariables curSecVars, prevSecVars;
 
-std::cout << "femLocRes vor curSecVars und prevSecVars.update()" << std::endl;
-//printvector(std::cout, curElemSol, "femLocalResCurElemSol","");
-//printvector(std::cout, prevElemSol, "femLocalResPrevElemSol","");
+//std::cout << "femLocRes vor curSecVars und prevSecVars.update()" << std::endl;
+        //printvector(std::cout, curElemSol, "femLocalResCurElemSol","");
+        //printvector(std::cout, prevElemSol, "femLocalResPrevElemSol","");
 
-std::cout << "femLocResCurElemSol: " << std::endl;
+//std::cout << "femLocResCurElemSol: " << std::endl;
             curSecVars.update(curElemSol, problem(), element, ipData);
-std::cout << "femLocResPrevElemSol: " << std::endl;
+//std::cout << "femLocResPrevElemSol: " << std::endl;
             prevSecVars.update(prevElemSol, problem(), element, ipData);
 
-         //   printvector(std::cout, curElemSol, "curElemSol", "");
-         //   printvector(std::cout, prevElemSol, "prevElemSol", "");
+//printvector(std::cout, curElemSol, "curElemSol", "");
+//    printvector(std::cout, curSecVars.velocity(), "curSecVarsVelocity", "");
+//    std::cout << "end" << std::endl;
+//printvector(std::cout, prevElemSol, "prevElemSol", "");
 
             // evaluate storage term contribution
             PrimaryVariables storage = asImp_().computeStorage(element, ipData, curSecVars, curElemSol);
@@ -349,6 +351,7 @@ std::cout << "femLocResPrevElemSol: " << std::endl;
             // evaluate source term contribution
             PrimaryVariables source = asImp_().computeSource(element, ipData, curSecVars, curElemSol);
 
+
             // evaluate flux term contribution
             FluxTermType flux = asImp_().computeFlux(element, ipData, curSecVars, curElemSol);
 
@@ -356,21 +359,23 @@ std::cout << "femLocResPrevElemSol: " << std::endl;
             PrimaryVariables stabTerms = asImp_().computeStabilizationTerms(element, ipData, curSecVars, curElemSol);
 
 
+//std::cout <<  "femLocResCurSecVarsPressure: " << curSecVars.pressure() << std::endl;
+//std::cout <<  "femLocResPrevSecVarsPressure: " << prevSecVars.pressure() << std::endl;
 
-//            printvector(std::cout, storage, "storage", "");
-//            printvector(std::cout, prevStorage, "prevStorage", "");
-//            printvector(std::cout, source, "sourceresidual", "");
-//            printmatrix(std::cout, flux, "flux", "");
+//printvector(std::cout, storage, "femLocResStorage", "");
+//printvector(std::cout, prevStorage, "femLocResPrevStorage", "");
+//printvector(std::cout, source, "femLocResSourceresidual", "");
+//printmatrix(std::cout, flux, "femLocResFlux", "");
 
       //      std::cout << "dim = " << dim << std::endl;
       //      std::cout << "dimWorld = " << dimWorld << std::endl;
 
             //TODO: extrusionfactor zugriff
             // scale terms by extrusion factors
-//            storage *= problem().extrusionFactorAtPos(element.geometry().center());
-//            prevStorage *= problem().extrusionFactorAtPos(element.geometry().center());
-//            source *= problem().extrusionFactorAtPos(element.geometry().center());
-//            flux *= problem().extrusionFactorAtPos(element.geometry().center());
+        //            storage *= problem().extrusionFactorAtPos(element.geometry().center());
+        //            prevStorage *= problem().extrusionFactorAtPos(element.geometry().center());
+        //            source *= problem().extrusionFactorAtPos(element.geometry().center());
+        //            flux *= problem().extrusionFactorAtPos(element.geometry().center());
 
             storage *= curSecVars.extrusionFactor();
             prevStorage *= curSecVars.extrusionFactor();
@@ -381,13 +386,17 @@ std::cout << "femLocResPrevElemSol: " << std::endl;
       //      std::cout << "prevSecVars.extrusionfactor: " << prevSecVars.extrusionFactor() << std::endl;
 
 
-//            printvector(std::cout, storage, "storage", "");
-//            printvector(std::cout, prevStorage, "prevStorage", "");
-//            printvector(std::cout, source, "sourceresidual", "");
-//            printmatrix(std::cout, flux, "flux", "");
+        //            printvector(std::cout, storage, "storage", "");
+        //            printvector(std::cout, prevStorage, "prevStorage", "");
+        //            printvector(std::cout, source, "sourceresidual", "");
+        //            printmatrix(std::cout, flux, "flux", "");
 
             // calculate time derivative
             storage -= prevStorage;
+
+//printvector(std::cout, storage, "femLocResStorageDiff", "");
+
+
             storage /= problem().timeManager().timeStepSize();
 
    //         std::cout << "sind in evalVolume in fem/locres" <<std::endl;
@@ -399,22 +408,25 @@ std::cout << "femLocResPrevElemSol: " << std::endl;
             {
                 for (unsigned int i = 0; i < numLocalDofs; ++i)
                 {
-//    std::cout <<"Index i: "<< i << "    Index eqIdx: " << eqIdx <<std::endl;
-//	std::cout <<"LocResstorage[eqIdx]: "<< storage[eqIdx] <<std::endl;
-//	std::cout <<"LocRessource[eqIdx]: "<< source[eqIdx] <<std::endl;
-//	std::cout <<"LocResflux[eqIdx]: "<< flux[eqIdx] <<std::endl;
-//	printmatrix(std::cout, flux, "flux", "");
-//	std::cout <<"stabTerms[eqIdx]: "<< stabTerms[eqIdx] <<std::endl;
-//	std::cout <<"FemLocResqWeight: "<< qWeight <<std::endl;
+        //    std::cout <<"Index i: "<< i << "    Index eqIdx: " << eqIdx <<std::endl;
+        //  std::cout <<"LocResstorage[eqIdx]: "<< storage[eqIdx] <<std::endl;
+        //  std::cout <<"LocRessource[eqIdx]: "<< source[eqIdx] <<std::endl;
+        //  std::cout <<"LocResflux[eqIdx]: "<< flux[eqIdx] <<std::endl;
+        //  printmatrix(std::cout, flux, "flux", "");
+        //  std::cout <<"stabTerms[eqIdx]: "<< stabTerms[eqIdx] <<std::endl;
+        //  std::cout <<"FemLocResqWeight: "<< qWeight <<std::endl;
                     residual_[i][eqIdx] += (storage[eqIdx] - source[eqIdx])*ipData.shapeValues(i)*qWeight;
+                if(eqIdx==2){residual_[i][eqIdx] -= (curSecVars.penaltyEps()*curSecVars.pressure()*ipData.shapeValues(i))*qWeight;}
+//              if(eqIdx==2){residual_[i][eqIdx] -= (curSecVars.penaltyEpsTimesP(curSecVars.velocity()))*ipData.shapeValues(i)*qWeight;}
+
                     residual_[i][eqIdx] -= (flux[eqIdx]*ipData.shapeGradients(i))*qWeight;
                     residual_[i][eqIdx] += stabTerms[eqIdx];
-//  printvector(std::cout, residual_, "LocResresidual", "");
-//std::cout << "FemLocResipData.shapeValues(i): " << ipData.shapeValues(i) << std::endl;
+        //  printvector(std::cout, residual_, "LocResresidual", "");
+        //std::cout << "FemLocResipData.shapeValues(i): " << ipData.shapeValues(i) << std::endl;
                 }
             }
 
-//printvector(std::cout, residual_, "FemLocResresidual", "");
+                //printvector(std::cout, residual_, "FemLocResresidual", "");
         }
     }
 

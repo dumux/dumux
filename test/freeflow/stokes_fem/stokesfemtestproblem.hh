@@ -298,7 +298,36 @@ public:
         }
 
 
+    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
+            {
+                PrimaryVariables neumannPrim(0.0);
+                Scalar x = globalPos[0];
+                Scalar y = globalPos[1];
 
+                if(onLeftBoundary_(globalPos)){
+
+            }
+
+
+                if(onRightBoundary_(globalPos)){
+                    neumannPrim[velocityXIdx] = 0.05;
+                    neumannPrim[velocityYIdx] = 0;
+                    neumannPrim[pressureIdx] = -0.5;
+                }
+
+
+                if(onUpperBoundary_(globalPos)){
+                    neumannPrim[pressureIdx] = 0;
+                }
+
+
+                if(onLowerBoundary_(globalPos)){
+                    neumannPrim[pressureIdx] = 0;
+                }
+
+                //return analyticalSolution(globalPos);
+                return neumannPrim;
+            }
 
 
 

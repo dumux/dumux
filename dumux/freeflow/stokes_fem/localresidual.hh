@@ -135,18 +135,21 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     for (int dir = 0; dir < dim; ++dir)
         storage[Indices::momentum(dir)] *= secVars.velocity()[dir];
 
-//        PrimaryVariables storage(0.0);
-//
-//		for (int dir = 0; dir < dim; ++dir)
-//        storage[Indices::momentum(dir)] = secVars.velocity()[dir];
-//
-//		storage *= secVars.density();
+
+//std::cout <<  "myLocResCurSecVarsPressure: " << secVars.pressure() << std::endl;
+
+        //        PrimaryVariables storage(0.0);
+        //
+        //        for (int dir = 0; dir < dim; ++dir)
+        //        storage[Indices::momentum(dir)] = secVars.velocity()[dir];
+        //
+        //        storage *= secVars.density();
 
 
-//std::cout << "MyLocResdensityStorage: " << secVars.density() << std::endl;
-//std::cout << "pressureStorage: " << secVars.pressure() << std::endl;
-//printvector(std::cout, secVars.velocity(), "MyLocResStorageVelocity: ","");
-//printvector(std::cout, secVars.velocity(), "MyLocResStorageVelocity: ","");
+        //std::cout << "MyLocResdensityStorage: " << secVars.density() << std::endl;
+        //std::cout << "pressureStorage: " << secVars.pressure() << std::endl;
+        //printvector(std::cout, secVars.velocity(), "MyLocResStorageVelocity: ","");
+        //printvector(std::cout, secVars.velocity(), "MyLocResStorageVelocity: ","");
 //printvector(std::cout, storage, "MyLocStorage: ","");
 
 
@@ -177,9 +180,13 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     StressTensor gradV(0.0);
     for (int dir = 0; dir < dim; ++dir){
         for (unsigned int i = 0; i < elemSol.size(); ++i){
+    //std::cout << "myLocRes i: " << i << std::endl;
+    //printvector(std::cout, ipData.shapeGradients(i), "myLocResShapeGradients(i)", "");
+
             gradV[dir].axpy(elemSol[i][Indices::momentum(dir)], ipData.shapeGradients(i));
         }
     }
+
 
     StressTensor gradSym(0.0);
     for(int i=0; i<dim; i++){
@@ -192,24 +199,60 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     sigma = gradSym;
     sigma *= secVars.dynamicViscosity();
 
-//std::cout << secVars.pressure() << std::endl;
 
+
+        //std::cout << secVars.pressure() << std::endl;
+
+//printmatrix(std::cout, sigma, "MyLocResSigmaPrePressure", "");
+
+/********************
     for(int i=0; i<dim; i++){
         sigma[i][i] -= secVars.pressure();
     }
+*********************/
 
+    Scalar divV(0.0);
+    for (int dir = 0; dir < dim; ++dir){
+        for (unsigned int i = 0; i < elemSol.size(); ++i){
+    //std::cout << "myLocRes i: " << i << std::endl;
+    //printvector(std::cout, ipData.shapeGradients(i), "myLocResShapeGradients(i)", "");
 
-//		//add advective term
-//		StressTensor advTerm(0.0);
-//		for (int dir = 0; dir < dim; ++dir){
-//			for (unsigned int i = 0; i < elemSol.size(); ++i){
-//				advTerm[dir].axpy(elemSol[i][Indices::momentum(dir)]*elemSol[i][Indices::momentum(dir)], ipData.shapeValues(i));
-//			}
-//		}
+            divV += ipData.shapeGradients(i)[dir]*elemSol[i][Indices::momentum(dir)];
+        }
+    }
+
+    //arithmetisches Mittel aus 4 DOFs?
+    divV /= 4;
+
+    Scalar eps = secVars.penaltyEps();
+//    Scalar eps = secVars.penaltyEpsTimesP(secVars.velocity());
+//    eps = eps / abs(secVars.pressure());
 //
-//		advTerm *= secVars.density();
+//std::cout << "myLocResPressure:" << abs(secVars.pressure()) << std::endl;
+//
+//std::cout << "myLocResEps:" << eps << std::endl;
 
-//printmatrix(std::cout, flux, "fluxVor", "");
+    divV /= eps;
+
+    for(int i=0; i<dim; i++){
+        sigma[i][i] += divV;
+    }
+
+
+//printmatrix(std::cout, sigma, "MyLocResSigmaPostPressure", "");
+
+
+        //      //add advective term
+        //      StressTensor advTerm(0.0);
+        //      for (int dir = 0; dir < dim; ++dir){
+        //          for (unsigned int i = 0; i < elemSol.size(); ++i){
+        //              advTerm[dir].axpy(elemSol[i][Indices::momentum(dir)]*elemSol[i][Indices::momentum(dir)], ipData.shapeValues(i));
+        //          }
+        //       }
+        //
+        //       advTerm *= secVars.density();
+
+        //printmatrix(std::cout, flux, "fluxVor", "");
 
     for(int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; ++momentumIdx)
     {
@@ -223,9 +266,35 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
 
         //mass Balance
+        //TODO: update secVars
+        //   PrimaryVariables myPriVars_(0.0);
+        //            for (unsigned int i = 0; i < elemSol.size(); ++i)
+        //            {
+        //    //std::cout << "secVarsBaseElemSolSizeCounter_i: " << i << std::endl;
+        //                PrimaryVariables tmp(elemSol[i]);
+        //
+        //                tmp *= ipData.shapeValues()[i];
+        //                myPriVars_ += tmp;
+        //
+        //    //printvector(std::cout, priVars_, "secVarsBasePriVars_","");
+        //            }
+        //
+        //            // set the extrusion factor
+        //     //       extrusionFactor_ = problem.extrusionFactor(element, myPriVars_);
+        //
+        //            DimVector velocityU(0.0);
+        //
+        //            for (int dir = 0; dir < dim; ++dir)
+        //                 velocityU[Indices::momentum(dir)] = myPriVars_[dir];
 
 
-    auto velocityU = secVars.velocity();
+
+
+   auto velocityU = secVars.velocity();
+//   velocityU[0] = flux[0][0];
+//   velocityU[1] = flux[1][1];
+
+
 
 //printvector(std::cout, velocityU, "MyLocResFluxVelocityU: ","");
 
@@ -237,10 +306,10 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
          flux[dim][col]= velocityU[col];
     }
 
-//printmatrix(std::cout, flux, "MyLocResflux", "");
+        //printmatrix(std::cout, flux, "MyLocResflux", "");
 
-//flux *= -1;    //weil in implicit/fem/localresidual: ... -flux
-//printmatrix(std::cout, flux, "fluxNachMass", "");
+        //flux *= -1;    //weil in implicit/fem/localresidual: ... -flux
+        //printmatrix(std::cout, flux, "fluxNachMass", "");
 
 
     return flux;
@@ -264,11 +333,11 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     const ElementSolution& elemSol)
     {
     PrimaryVariables source(0.0);
-//    source = problem.sourceAtPos(ipData.ipGlobal());
+        //    source = problem.sourceAtPos(ipData.ipGlobal());
 
     source += ParentType::computeSource(element, ipData, secVars, elemSol);
 
-//printvector(std::cout, source, "MyLocRessourceEnd: ","");
+        //printvector(std::cout, source, "MyLocRessourceEnd: ","");
     return source;
     }
 
