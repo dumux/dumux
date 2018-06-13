@@ -30,13 +30,13 @@
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 #include <dumux/material/components/cao2h2.hh>
 #include <dumux/material/solidsystems/compositionalsolidphase.hh>
 
 #include "thermochemspatialparams.hh"
 #include "thermochemreaction.hh"
-#include "steamn2.hh"
 #include "modifiedcao.hh"
 
 
@@ -54,11 +54,15 @@ SET_TYPE_PROP(ThermoChemTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ThermoChemTypeTag, Problem, ThermoChemProblem<TypeTag>);
 // Set fluid configuration
+
 SET_PROP(ThermoChemTypeTag, FluidSystem)
 { /*private:*/
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::SteamN2<Scalar>;
+    using type = FluidSystems::H2ON2<Scalar>;
 };
+
+// set phase index (gas)
+SET_INT_PROP(ThermoChemTypeTag, PhaseIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::gasPhaseIdx);
 
 SET_PROP(ThermoChemTypeTag, SolidSystem)
 {
@@ -146,6 +150,12 @@ public:
         : ParentType(fvGridGeometry)
     {
         name_      = getParam<std::string>("Problem.Name");
+        FluidSystem::init(/*tempMin=*/473.15,
+                          /*tempMax=*/623.0,
+                          /*numTemptempSteps=*/25,
+                          /*startPressure=*/0,
+                          /*endPressure=*/9e6,
+                          /*pressureSteps=*/200);
 
         // obtain BCs
         boundaryPressure_ = getParam<Scalar>("Problem.BoundaryPressure");
