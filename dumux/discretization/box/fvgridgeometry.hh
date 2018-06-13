@@ -45,9 +45,9 @@ namespace Dumux {
  *        Defines the scv and scvf types and the mapper types
  * \tparam the grid view type
  */
-template<class GridView>
+template<class GridView, class MapperTraits = DefaultMapperTraits<GridView>>
 struct BoxDefaultGridGeometryTraits
-: public DefaultMapperTraits<GridView>
+: public MapperTraits
 {
     using SubControlVolume = BoxSubControlVolume<GridView>;
     using SubControlVolumeFace = BoxSubControlVolumeFace<GridView>;

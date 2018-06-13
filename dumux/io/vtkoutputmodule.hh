@@ -358,7 +358,8 @@ private:
             if (isBox)
             {
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                    sequenceWriter_.addVertexData( volVarScalarData[i], volVarScalarDataInfo_[i].name );
+                    sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), volVarScalarData[i],
+                                                         volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/dim).get() );
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
                     sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), volVarVectorData[i],
                                                          volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/dim).get() );
@@ -366,7 +367,8 @@ private:
             else
             {
                 for (std::size_t i = 0; i < volVarScalarDataInfo_.size(); ++i)
-                    sequenceWriter_.addCellData( volVarScalarData[i], volVarScalarDataInfo_[i].name );
+                    sequenceWriter_.addCellData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), volVarScalarData[i],
+                                                       volVarScalarDataInfo_[i].name, /*numComp*/1, /*codim*/0).get() );
                 for (std::size_t i = 0; i < volVarVectorDataInfo_.size(); ++i)
                     sequenceWriter_.addCellData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), volVarVectorData[i],
                                                        volVarVectorDataInfo_[i].name, /*numComp*/dimWorld, /*codim*/0).get() );
