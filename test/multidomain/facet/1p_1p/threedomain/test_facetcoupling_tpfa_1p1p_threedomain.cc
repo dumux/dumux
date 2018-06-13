@@ -45,55 +45,31 @@
 
 #include <dumux/multidomain/facet/gridcreator.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
-#include <dumux/multidomain/facet/cellcentered/tpfa/couplingmanager.hh>
+#include <dumux/multidomain/facet/couplingmanager.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 
+// obtain/define some types to be used below in the property definitions and in main
+class TestTraits
+{
+    using BulkFVG = typename GET_PROP_TYPE(TTAG(OnePBulkTpfa), FVGridGeometry);
+    using FacetFVG = typename GET_PROP_TYPE(TTAG(OnePFacetTpfa), FVGridGeometry);
+    using EdgeFVG = typename GET_PROP_TYPE(TTAG(OnePEdgeTpfa), FVGridGeometry);
+public:
+    using MDTraits = Dumux::MultiDomainTraits<TTAG(OnePBulkTpfa), TTAG(OnePFacetTpfa), TTAG(OnePEdgeTpfa)>;
+    using CouplingMapper = Dumux::FacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>;
+    using CouplingManager = Dumux::FacetCouplingManager<MDTraits, CouplingMapper>;
+};
+
 // set the coupling manager property in the sub-problems
 namespace Dumux {
-
 namespace Properties {
 
 NEW_PROP_TAG(CouplingManager);
+SET_TYPE_PROP(OnePBulkTpfa, CouplingManager, typename TestTraits::CouplingManager);
+SET_TYPE_PROP(OnePFacetTpfa, CouplingManager, typename TestTraits::CouplingManager);
+SET_TYPE_PROP(OnePEdgeTpfa, CouplingManager, typename TestTraits::CouplingManager);
 
-SET_PROP(OnePEdgeTpfa, CouplingManager)
-{
-private:
-    // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTAG(OnePBulkTpfa), TTAG(OnePFacetTpfa), TTAG(OnePEdgeTpfa)>;
-    using BulkFVG = typename GET_PROP_TYPE(TTAG(OnePBulkTpfa), FVGridGeometry);
-    using FacetFVG = typename GET_PROP_TYPE(TTAG(OnePFacetTpfa), FVGridGeometry);
-    using EdgeFVG = typename GET_PROP_TYPE(TTAG(OnePEdgeTpfa), FVGridGeometry);
-    using CouplingMapper = FacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>;
-public:
-    using type = CCTpfaFacetCouplingThreeDomainManager<Traits, CouplingMapper>;
-};
-
-SET_PROP(OnePFacetTpfa, CouplingManager)
-{
-private:
-    // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTAG(OnePBulkTpfa), TTAG(OnePFacetTpfa), TTAG(OnePEdgeTpfa)>;
-    using BulkFVG = typename GET_PROP_TYPE(TTAG(OnePBulkTpfa), FVGridGeometry);
-    using FacetFVG = typename GET_PROP_TYPE(TTAG(OnePFacetTpfa), FVGridGeometry);
-    using EdgeFVG = typename GET_PROP_TYPE(TTAG(OnePEdgeTpfa), FVGridGeometry);
-    using CouplingMapper = FacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>;
-public:
-    using type = CCTpfaFacetCouplingThreeDomainManager<Traits, CouplingMapper>;
-};
-
-SET_PROP(OnePBulkTpfa, CouplingManager)
-{
-private:
-    // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTAG(OnePBulkTpfa), TTAG(OnePFacetTpfa), TTAG(OnePEdgeTpfa)>;
-    using BulkFVG = typename GET_PROP_TYPE(TTAG(OnePBulkTpfa), FVGridGeometry);
-    using FacetFVG = typename GET_PROP_TYPE(TTAG(OnePFacetTpfa), FVGridGeometry);
-    using EdgeFVG = typename GET_PROP_TYPE(TTAG(OnePEdgeTpfa), FVGridGeometry);
-    using CouplingMapper = FacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>;
-public:
-    using type = CCTpfaFacetCouplingThreeDomainManager<Traits, CouplingMapper>;
-};
 } // end namespace Properties
 } // end namespace Dumux
 
@@ -161,7 +137,7 @@ int main(int argc, char** argv) try
     auto edgeProblem = std::make_shared<EdgeProblem>(edgeFvGridGeometry, edgeSpatialParams, "Edge");
 
     // the solution vector
-    using Traits = MultiDomainTraits<BulkProblemTypeTag, FacetProblemTypeTag, EdgeProblemTypeTag>;
+    using Traits = typename TestTraits::MDTraits;
     using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
 
@@ -176,12 +152,12 @@ int main(int argc, char** argv) try
     edgeProblem->applyInitialSolution(x[edgeId]);
 
     // the coupling mapper
-    using CouplingMapper = FacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry, EdgeFVGridGeometry>;
+    using CouplingMapper = typename TestTraits::CouplingMapper;
     auto couplingMapper = std::make_shared<CouplingMapper>();
     couplingMapper->update(*bulkFvGridGeometry, *facetFvGridGeometry, *edgeFvGridGeometry, gridCreator);
 
     // the coupling manager
-    using CouplingManager = CCTpfaFacetCouplingThreeDomainManager<Traits, CouplingMapper>;
+    using CouplingManager = typename TestTraits::CouplingManager;
     auto couplingManager = std::make_shared<CouplingManager>();
     couplingManager->init(bulkProblem, facetProblem, edgeProblem, couplingMapper, x);
 
