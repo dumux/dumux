@@ -10,7 +10,7 @@
           0.981775 0.981775 0.981775 0.981775 0.981775 0.981775
         </DataArray>
         <DataArray type="Float32" Name="mu" NumberOfComponents="1" format="ascii">
-          2.37923e-05 2.37923e-05 2.37923e-05 2.37923e-05 2.37923e-05 2.37923e-05
+          2.44123e-05 2.44123e-05 2.44123e-05 2.44123e-05 2.44123e-05 2.44123e-05
         </DataArray>
         <DataArray type="Float32" Name="delp" NumberOfComponents="1" format="ascii">
           100000 100000 100000 100000 100000 100000

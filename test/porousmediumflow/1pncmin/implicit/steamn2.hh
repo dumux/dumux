@@ -319,10 +319,14 @@ public:
             N2::molarMass()
         };
 
+        Scalar x[numComponents] = {
+            fluidState.moleFraction(phaseIdx, H2OIdx),
+            fluidState.moleFraction(phaseIdx, N2Idx)
+        };
+
         Scalar sumx = 0.0;
         for (int compIdx = 0; compIdx < 2; ++compIdx)
             sumx += fluidState.moleFraction(phaseIdx, compIdx);
-
         sumx = std::max(1e-10, sumx);
 
         for (int i = 0; i < numComponents; ++i) {
@@ -331,9 +335,9 @@ public:
                 Scalar phiIJ = 1 + sqrt(mu[i]/mu[j]) * pow(M[j]/M[i], 1/4.0);
                 phiIJ *= phiIJ;
                 phiIJ /= sqrt(8*(1 + M[i]/M[j]));
-                divisor += fluidState.moleFraction(phaseIdx, j)/sumx * phiIJ;
+                divisor += x[j]/sumx * phiIJ;
             }
-            muResult += fluidState.moleFraction(phaseIdx, i)/sumx * mu[i] / divisor;
+            muResult += x[i]/sumx * mu[i] / divisor;
         }
         return muResult;
     }
