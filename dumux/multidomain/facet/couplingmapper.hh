@@ -28,8 +28,26 @@
 
 namespace Dumux {
 
-//! Forward declaration of the discretization method-specific implementation between two domains
-template<std::size_t idOffset, class BulkFVG, class LowDimFVG, DiscretizationMethod bulkDM>
+/*!
+ * \ingroup MixedDimension
+ * \ingroup MixedDimensionFacet
+ * \brief Implementation for the coupling mapper that sets up and stores
+ *        the coupling maps between two domains of dimension d and (d-1).
+ *        The implementations are specific to the discretization method
+ *        used in the bulk domain, which is extracted automatically from
+ *        the bulk grid geometry. Implementations for the different methods
+ *        have to be provided and included at the end of this file.
+ *
+ * \tparam BulkFVG the d-dimensional finite-volume grid geometry
+ * \tparam LowDimFVG the (d-1)-dimensional finite-volume grid geometry
+ * \tparam idOffset Offset added to the mapper-local domain ids for
+ *                  the access to the grid quantities in grid creator
+ * \tparam bulkDM Discretization method used in the bulk domain
+ */
+template< class BulkFVG,
+          class LowDimFVG,
+          std::size_t idOffset = 0,
+          DiscretizationMethod bulkDM = BulkFVG::discMethod >
 class FacetCouplingMapperImplementation;
 
 /*!
@@ -59,7 +77,7 @@ template<class... FVG> class FacetCouplingMapper;
  */
 template<class BulkFVG, class LowDimFVG>
 class FacetCouplingMapper<BulkFVG, LowDimFVG>
-: public FacetCouplingMapperImplementation<0, BulkFVG, LowDimFVG, BulkFVG::discMethod> {};
+: public FacetCouplingMapperImplementation<BulkFVG, LowDimFVG> {};
 
 /*!
  * \ingroup MixedDimension
@@ -73,11 +91,11 @@ class FacetCouplingMapper<BulkFVG, LowDimFVG>
  */
 template<class BulkFVG, class FacetFVG, class EdgeFVG>
 class FacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>
-: public FacetCouplingMapperImplementation<0, BulkFVG, FacetFVG, BulkFVG::discMethod>
-, public FacetCouplingMapperImplementation<1, FacetFVG, EdgeFVG, FacetFVG::discMethod>
+: public FacetCouplingMapperImplementation<BulkFVG, FacetFVG>
+, public FacetCouplingMapperImplementation<FacetFVG, EdgeFVG, /*idOffset*/1>
 {
-    using BulkFacetMapper = FacetCouplingMapperImplementation<0, BulkFVG, FacetFVG, BulkFVG::discMethod>;
-    using FacetEdgeMapper = FacetCouplingMapperImplementation<1, FacetFVG, EdgeFVG, FacetFVG::discMethod>;
+    using BulkFacetMapper = FacetCouplingMapperImplementation<BulkFVG, FacetFVG>;
+    using FacetEdgeMapper = FacetCouplingMapperImplementation<FacetFVG, EdgeFVG, /*idOffset*/1>;
 
 public:
     //! Export the coupling stencil type for the provided domain index

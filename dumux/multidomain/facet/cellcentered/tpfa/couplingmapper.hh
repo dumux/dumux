@@ -39,16 +39,16 @@ namespace Dumux {
  *        This specialization is for the bulk domain using the cell-centered
  *        scheme with two-point flux approximation.
  *
- * \tparam idOffset Offset added to the mapper-local domain ids for
- *                  the access to the grid quantities in grid creator
  * \tparam BulkFVG The d-dimensional finite-volume grid geometry
  * \tparam LowDimFVG The (d-1)-dimensional finite-volume grid geometry
+ * \tparam idOffset Offset added to the mapper-local domain ids for
+ *                  the access to the grid quantities in grid creator
  */
-template<std::size_t idOffset, class BulkFVG, class LowDimFVG>
-class FacetCouplingMapperImplementation<idOffset, BulkFVG, LowDimFVG, DiscretizationMethod::cctpfa>
-: public virtual FacetCouplingMapperBase<idOffset, BulkFVG, LowDimFVG>
+template<class BulkFVG, class LowDimFVG, std::size_t idOffset>
+class FacetCouplingMapperImplementation<BulkFVG, LowDimFVG, idOffset, DiscretizationMethod::cctpfa>
+: public virtual FacetCouplingMapperBase<BulkFVG, LowDimFVG, idOffset>
 {
-    using ParentType = FacetCouplingMapperBase<idOffset, BulkFVG, LowDimFVG>;
+    using ParentType = FacetCouplingMapperBase<BulkFVG, LowDimFVG, idOffset>;
     using LowDimElement = typename LowDimFVG::GridView::template Codim<0>::Entity;
 
     // convenience definitions of domain ids
