@@ -44,7 +44,7 @@
 namespace Dumux {
 
 // forward declaration
-template<class BulkGridView, class LowDimGridView>
+template<class BulkGridView, class LowDimGridView, class BulkMapper, class LowDimMapper>
 class MixedDimensionGlue;
 
 /*!
@@ -52,9 +52,9 @@ class MixedDimensionGlue;
  * \brief Range generator to iterate with range-based for loops over all intersections
  *        as follows: for (const auto& is : intersections(glue)) { ... }
  */
-template<class BulkGridView, class LowDimGridView>
-Dune::IteratorRange<typename MixedDimensionGlue<BulkGridView, LowDimGridView>::Intersections::const_iterator>
-intersections(const MixedDimensionGlue<BulkGridView, LowDimGridView>& glue)
+template<class BulkGridView, class LowDimGridView, class BulkMapper, class LowDimMapper>
+Dune::IteratorRange<typename MixedDimensionGlue<BulkGridView, LowDimGridView, BulkMapper, LowDimMapper>::Intersections::const_iterator>
+intersections(const MixedDimensionGlue<BulkGridView, LowDimGridView, BulkMapper, LowDimMapper>& glue)
 { return {glue.ibegin(), glue.iend()}; }
 
 namespace Glue {
@@ -64,16 +64,16 @@ namespace Glue {
  * \brief An intersection object representing an intersection
  *        between two grid entites of different grids
  */
-template<class BulkGridView, class LowDimGridView>
+template<class BulkGridView, class LowDimGridView, class BulkMapper, class LowDimMapper>
 class Intersection
 {
     using BulkElement = typename BulkGridView::template Codim<0>::Entity;
     using LowDimElement = typename LowDimGridView::template Codim<0>::Entity;
 
-    using BulkEntitySet = GridViewGeometricEntitySet<BulkGridView, 0>;
+    using BulkEntitySet = GridViewGeometricEntitySet<BulkGridView, 0, BulkMapper>;
     using BulkTree = BoundingBoxTree<BulkEntitySet>;
 
-    using LowDimEntitySet = GridViewGeometricEntitySet<LowDimGridView, 0>;
+    using LowDimEntitySet = GridViewGeometricEntitySet<LowDimGridView, 0, LowDimMapper>;
     using LowDimTree = BoundingBoxTree<LowDimEntitySet>;
 
     enum {
@@ -137,13 +137,15 @@ private:
  *        Point sources on each integration point are computed by an AABB tree.
  *        Both domain are assumed to be discretized using a cc finite volume scheme.
  */
-template<class BulkGridView, class LowDimGridView>
+template<class BulkGridView, class LowDimGridView,
+         class BulkMapper = Dune::MultipleCodimMultipleGeomTypeMapper<BulkGridView>,
+         class LowDimMapper = Dune::MultipleCodimMultipleGeomTypeMapper<LowDimGridView>>
 class MixedDimensionGlue
 {
-    using BulkEntitySet = GridViewGeometricEntitySet<BulkGridView, 0>;
+    using BulkEntitySet = GridViewGeometricEntitySet<BulkGridView, 0, BulkMapper>;
     using BulkTree = BoundingBoxTree<BulkEntitySet>;
 
-    using LowDimEntitySet = GridViewGeometricEntitySet<LowDimGridView, 0>;
+    using LowDimEntitySet = GridViewGeometricEntitySet<LowDimGridView, 0, LowDimMapper>;
     using LowDimTree = BoundingBoxTree<LowDimEntitySet>;
 
     using Scalar = typename BulkGridView::ctype;
@@ -152,7 +154,7 @@ class MixedDimensionGlue
 
 public:
     // export intersection container type
-    using Intersections = std::vector<Glue::Intersection<BulkGridView, LowDimGridView>>;
+    using Intersections = std::vector<Glue::Intersection<BulkGridView, LowDimGridView, BulkMapper, LowDimMapper>>;
 
 
     /*!
