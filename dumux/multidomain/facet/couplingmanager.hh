@@ -350,6 +350,7 @@ public:
 } // end namespace Dumux
 
 // Here, we have to include all available implementations
+#include <dumux/multidomain/facet/box/couplingmanager.hh>
 #include <dumux/multidomain/facet/cellcentered/tpfa/couplingmanager.hh>
 
 #endif
