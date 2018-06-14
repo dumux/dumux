@@ -39,6 +39,7 @@ namespace Vtk {
 /*! \brief a VTK function that supports both scalar and vector values for each element
  *
  *  \tparam GridView The Dune grid view type
+ *  \tparam Mapper The type used for mapping elements to indices in the field
  *  \tparam F The field type (either vector of scalars or vectors)
  */
 template <typename GridView, typename Mapper, typename F>
@@ -92,6 +93,7 @@ private:
 /*! \brief a VTK function that supports both scalar and vector values for each vertex
  *
  *  \tparam GridView The Dune grid view type
+ *  \tparam Mapper The type used for mapping vertices to indices in the field
  *  \tparam F The field type (either vector of scalars or vectors)
  */
 template <typename GridView, typename Mapper, typename F>
@@ -128,7 +130,7 @@ public:
     VectorP1VTKFunction(const GridView& gridView, const Mapper& mapper, const F& field, const std::string& name, int nComps)
     : field_(field), name_(name), nComps_(nComps), mapper_(mapper)
     {
-        if (field.size()!=(unsigned int)( gridView.size(/*codim*/dim)) )
+        if (field.size()!=(unsigned int)( mapper.size() ))
             DUNE_THROW(Dune::IOError, "VectorP1VTKFunction: size mismatch");
     }
 private:
@@ -152,9 +154,14 @@ private:
     const Mapper& mapper_;
 };
 
-/*! \brief a VTK function that supports both scalar and vector values for each vertex
+/*! \brief A VTK function that supports both scalar and vector values for each vertex.
+ *         This expects the data to be organized by a two-dimensional field storing for
+ *         each element the element-local nodal values. This can be used for the output
+ *         of fields that are non-conforming due to e.g. constitutive relationships and
+ *         where no extra degrees of freedom exist to disply the discontinuities.
  *
  *  \tparam GridView The Dune grid view type
+ *  \tparam Mapper The type used for mapping elements to indices in the field
  *  \tparam F The field type (either vector of scalars or vectors)
  */
 template <typename GridView, typename Mapper, typename F>

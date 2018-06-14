@@ -85,7 +85,6 @@ class VtkOutputModule
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
-    static constexpr int dofCodim = isBox ? dim : 0;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; };
     struct VolVarVectorDataInfo { std::function<VolVarsVector(const VV&)> get; std::string name; };
@@ -169,18 +168,18 @@ public:
         // Deduce the number of components from the given vector type
         const auto nComp = getNumberOfComponents_(v);
 
-        const auto numElements = gridGeom_.gridView().size(0);
-        const auto numVertices = gridGeom_.gridView().size(dim);
+        const auto numElemDofs = gridGeom_.elementMapper().size();
+        const auto numVertexDofs = gridGeom_.vertexMapper().size();
 
         // Automatically deduce the field type ...
         if(fieldType == FieldType::automatic)
         {
-            if(numElements == numVertices)
+            if(numElemDofs == numVertexDofs)
                 DUNE_THROW(Dune::InvalidStateException, "Automatic deduction of FieldType failed. Please explicitly specify FieldType::element or FieldType::vertex.");
 
-            if(v.size() == numElements)
+            if(v.size() == numElemDofs)
                 fieldType = FieldType::element;
-            else if(v.size() == numVertices)
+            else if(v.size() == numVertexDofs)
                 fieldType = FieldType::vertex;
             else
                 DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
@@ -189,11 +188,11 @@ public:
         else
         {
             if(fieldType == FieldType::element)
-                if(v.size() != numElements)
+                if(v.size() != numElemDofs)
                     DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
 
             if(fieldType == FieldType::vertex)
-                if(v.size() != numVertices)
+                if(v.size() != numVertexDofs)
                     DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
         }
 
@@ -280,7 +279,7 @@ private:
             || addProcessRank)
         {
             const auto numCells = gridGeom_.gridView().size(0);
-            const auto numDofs = numDofs_();
+            const auto numDofs = gridGeom_.numDofs();
 
             // get fields for all volume variables
             if (!volVarScalarDataInfo_.empty())
@@ -453,7 +452,7 @@ private:
             || addProcessRank)
         {
             const auto numCells = gridGeom_.gridView().size(0);
-            const auto numDofs = numDofs_();
+            const auto numDofs = gridGeom_.numDofs();
 
             // get fields for all volume variables
             if (!volVarScalarDataInfo_.empty())
@@ -594,9 +593,6 @@ private:
     //! Deduces the number of components of the value type of a vector of values
     template<class Vector, typename std::enable_if_t<!IsIndexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
     std::size_t getNumberOfComponents_(const Vector& v) { return 1; }
-
-    //! return the number of dofs
-    std::size_t numDofs_() const { return gridGeom_.gridView().size(dofCodim); }
 
     const Problem& problem_;
     const FVGridGeometry& gridGeom_;
