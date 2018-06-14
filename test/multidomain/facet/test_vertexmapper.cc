@@ -151,9 +151,9 @@ int main (int argc, char *argv[]) try
     }
 
     // nonconforming vectorial vtk function
-    using VTKFunction = Dumux::Vtk::VectorP1NonConformingVTKFunction< typename BulkGrid::LeafGridView,
-                                                                      Dumux::EnrichedVertexDofMapper<typename BulkGrid::LeafGridView>,
-                                                                      std::vector< Displacement > >;
+    using VTKFunction = Dumux::Vtk::VectorP1VTKFunction< typename BulkGrid::LeafGridView,
+                                                         Dumux::EnrichedVertexDofMapper<typename BulkGrid::LeafGridView>,
+                                                         std::vector< Displacement > >;
     auto displacementFunction = std::make_shared< VTKFunction >(bulkGridView, mapper, displacement, "displacement", BulkGrid::dimensionworld);
 
     // write .vtk file for the bulk grid
