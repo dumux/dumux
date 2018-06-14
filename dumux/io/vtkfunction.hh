@@ -130,7 +130,7 @@ public:
     VectorP1VTKFunction(const GridView& gridView, const Mapper& mapper, const F& field, const std::string& name, int nComps)
     : field_(field), name_(name), nComps_(nComps), mapper_(mapper)
     {
-        if (field.size()!=(unsigned int)( gridView.size(/*codim*/dim)) )
+        if (field.size()!=(unsigned int)( mapper.size() ))
             DUNE_THROW(Dune::IOError, "VectorP1VTKFunction: size mismatch");
     }
 private:
