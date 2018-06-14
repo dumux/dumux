@@ -41,7 +41,7 @@ namespace Dumux {
  * \tparam bulkId The grid id of the d-dimensional grid within the hierarchy
  * \tparam facetId The grid if of the (d-1)-dimensional grid within the hierarchy
  */
-template<class GridCreator, int bulkId, int facetId>
+template<class GridCreator, int bulkId = 0, int facetId = 1>
 class FacetGridVertexAdapter
 {
     using FacetGrid = typename GridCreator::template Grid<facetId>;
