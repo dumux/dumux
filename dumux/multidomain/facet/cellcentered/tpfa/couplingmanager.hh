@@ -573,6 +573,8 @@ public:
         // skip the rest if context is empty
         if (lowDimContext_.isSet)
         {
+            assert(lowDimContext_.elementIdx == problem<lowDimId>().fvGridGeometry().elementMapper().index(lowDimLocalAssembler.element()));
+
             // since we use cc scheme in bulk domain: dof index = element index
             const auto& bulkGridGeom = problem<bulkId>().fvGridGeometry();
             const auto elementJ = bulkGridGeom.element(dofIdxGlobalJ);
