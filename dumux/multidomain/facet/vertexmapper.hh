@@ -63,7 +63,6 @@ class EnrichedVertexDofMapper
     MCMGMapper vertexMapper_;                 //! unmodified vertex mapper
     std::vector< std::vector<IT> > indexMap_; //! contains the new dof indices
     std::vector< bool > isEnriched_;          //! keeps track which vertices are enriched
-    bool hasBeenEnriched_;                    //! keeps track of enrichment having been performed
 
 public:
     //! export the underlying grid view type
@@ -91,7 +90,6 @@ public:
     //! map nodal subentity of codim 0 entity to the grid dof
     IndexType subIndex(const Element& e, unsigned int i, unsigned int codim) const
     {
-        assert(hasBeenEnriched_);
         assert(codim == dim && "Only element corners can be mapped by this mapper");
         return indexMap_[elementMapper_.index(e)][i];
     }
@@ -133,7 +131,6 @@ public:
     void update()
     {
         initialize_();
-        hasBeenEnriched_ = false;
     }
 
     /*!
@@ -172,7 +169,6 @@ public:
                                                                           facetGridView,
                                                                           facetGridVertexAdapter);
 
-        hasBeenEnriched_ = true;
         if (verbose)
             std::cout << "Vertex dof enrichment took " << watch.elapsed() << " seconds." << std::endl;
     }
