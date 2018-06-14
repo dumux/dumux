@@ -156,17 +156,17 @@ public:
 
     //! Returns the maps of the embedded entities
     const typename Traits::EmbeddedEntityMap& embeddedEntityMap(std::size_t id) const
-    { assert(id < numGrids); return embeddedEntityMaps_[id]; }
+    { assert(id < Traits::numGrids); return embeddedEntityMaps_[id]; }
 
     typename Traits::EmbeddedEntityMap& embeddedEntityMap(std::size_t id)
-    { assert(id < numGrids); return embeddedEntityMaps_[id]; }
+    { assert(id < Traits::numGrids); return embeddedEntityMaps_[id]; }
 
     //! Returns the maps of the embedments
     const typename Traits::EmbedmentMap& embedmentMap(std::size_t id) const
-    { assert(id < numGrids); return embedmentMaps_[id]; }
+    { assert(id < Traits::numGrids); return embedmentMaps_[id]; }
 
     typename Traits::EmbedmentMap& embedmentMap(std::size_t id)
-    { assert(id < numGrids); return embedmentMaps_[id]; }
+    { assert(id < Traits::numGrids); return embedmentMaps_[id]; }
 
     //! Returns map from low dim vertex index to bulk vertex index (insertion indices)
     const std::vector<typename Traits::IndexType>& lowDimVertexIndices(std::size_t id) const
