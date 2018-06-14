@@ -85,7 +85,6 @@ class VtkOutputModule
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
-    static constexpr int dofCodim = isBox ? dim : 0;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; };
     struct VolVarVectorDataInfo { std::function<VolVarsVector(const VV&)> get; std::string name; };
@@ -280,7 +279,7 @@ private:
             || addProcessRank)
         {
             const auto numCells = gridGeom_.gridView().size(0);
-            const auto numDofs = numDofs_();
+            const auto numDofs = gridGeom_.numDofs();
 
             // get fields for all volume variables
             if (!volVarScalarDataInfo_.empty())
@@ -453,7 +452,7 @@ private:
             || addProcessRank)
         {
             const auto numCells = gridGeom_.gridView().size(0);
-            const auto numDofs = numDofs_();
+            const auto numDofs = gridGeom_.numDofs();
 
             // get fields for all volume variables
             if (!volVarScalarDataInfo_.empty())
@@ -594,9 +593,6 @@ private:
     //! Deduces the number of components of the value type of a vector of values
     template<class Vector, typename std::enable_if_t<!IsIndexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
     std::size_t getNumberOfComponents_(const Vector& v) { return 1; }
-
-    //! return the number of dofs
-    std::size_t numDofs_() const { return gridGeom_.gridView().size(dofCodim); }
 
     const Problem& problem_;
     const FVGridGeometry& gridGeom_;
