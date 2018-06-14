@@ -22,9 +22,9 @@
  * \ingroup MixedDimensionFacet
  * \brief Properties (and default properties) for all models using cell-centered
  *        finite volume scheme with TPFA together with coupling across the grid element facets
- * \note If n is the dimension of the lowest grid to be considered in the hierarchy, all grids
- *       with the dimension m > n must inherit from these properties to use a cell-centered finite
- *       volume scheme with TPFA and coupling across the facets
+ * \note If n is the dimension of the lowest grid to be considered in the hierarchy,
+ *       all problem type tags for the grids with the dimension m > n must inherit
+ *       from these or other facet coupling properties (e.g. BoxFacetCouplingModel).
  */
 
 #ifndef DUMUX_FACETCOUPLING_CC_TPFA_PROPERTIES_HH
