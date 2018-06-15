@@ -125,7 +125,7 @@ public:
         // here, we know that the flow problem uses cell-centered finite volumes,
         // thus, we simply take the volume variables of the element and return the density
         const auto& context = couplingManager().poroMechanicsCouplingContext();
-        return (*context.pmFlowElemVolVars)[scv].density();
+        return (*context.pmFlowElemVolVars)[scv.elementIndex()].density();
     }
 
     /*!
