@@ -45,14 +45,14 @@ namespace Dumux {
 
 namespace Properties {
 
-//! Type tag for the cell-centered tpfa scheme with coupling to
+//! Type tag for the box scheme with coupling to
 //! another sub-domain living on the grid facets.
 NEW_TYPE_TAG(BoxFacetCouplingModel, INHERITS_FROM(BoxModel));
 
-//! Use the cc local residual for models with facet coupling
+//! Use the box local residual for models with facet coupling
 SET_TYPE_PROP(BoxFacetCouplingModel, BaseLocalResidual, BoxFacetCouplingLocalResidual<TypeTag>);
 
-//! Use the tpfa facet coupling-specific Darcy's law
+//! Use the box facet coupling-specific Darcy's law
 SET_TYPE_PROP(BoxFacetCouplingModel,
               AdvectionType,
               BoxFacetCouplingDarcysLaw< typename GET_PROP_TYPE(TypeTag, Scalar),
