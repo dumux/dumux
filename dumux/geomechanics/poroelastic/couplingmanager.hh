@@ -34,7 +34,6 @@
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/evalgradients.hh>
 #include <dumux/multidomain/couplingmanager.hh>
-#include <dumux/common/timeloop.hh>
 
 namespace Dumux {
 
