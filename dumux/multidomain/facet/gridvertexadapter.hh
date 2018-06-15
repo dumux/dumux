@@ -140,7 +140,14 @@ public:
      *        the d-dimensional domain
      */
     bool isEmbedded(const FacetGridElement& e) const
-    { return gridCreatorPtr_->template embedmentEntityIndices<facetId>(e).size() > 0; }
+    { return numEmbedments(e) > 0; }
+
+    /*!
+     * \brief Returns the number of d-dimensional elements in which the
+     *        given (d-1)-dimensional element is embedded in
+     */
+    std::size_t numEmbedments(const FacetGridElement& e) const
+    { return gridCreatorPtr_->template embedmentEntityIndices<facetId>(e).size(); }
 
 private:
     //! Determine the map from the insertion idx of the highest-dimensional grid to bulk insertion index

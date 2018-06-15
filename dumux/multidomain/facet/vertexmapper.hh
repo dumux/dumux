@@ -236,8 +236,8 @@ private:
                     return vertexIndices;
                 };
 
-                // all nodes around non-embedded elements must not be enriched
-                if (!facetGridVertexAdapter.isEmbedded(facetElement))
+                // if a facet element has only one (or zero) embedments we do not need to enrich
+                if (facetGridVertexAdapter.numEmbedments(facetElement) < 2)
                 {
                     const auto vertexIndices = getCornerIndices(facetIs);
                     std::for_each( vertexIndices.begin(),
