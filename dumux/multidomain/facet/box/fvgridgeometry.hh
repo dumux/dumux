@@ -274,8 +274,8 @@ public:
 
                         // Mark vertices to be on domain and/or interior boundary
                         const auto dofIndex = this->vertexMapper().subIndex(element, vIndicesLocal[isScvfLocalIdx], dim);
-                        boundaryDofIndices_[ dofIndex ] = boundary;
-                        interiorBoundaryDofIndices_[ dofIndex ] = isOnFacet;
+                        if (boundary) boundaryDofIndices_[ dofIndex ] = boundary;
+                        if (isOnFacet) interiorBoundaryDofIndices_[ dofIndex ] = isOnFacet;
 
                         // increment local counter
                         scvfLocalIdx++;
@@ -455,8 +455,8 @@ public:
                     for (int i = 0; i < numFaceCorners; ++i)
                     {
                         const auto dofIndex = this->vertexMapper().subIndex(element, vIndicesLocal[i], dim);
-                        boundaryDofIndices_[ dofIndex ] = boundary;
-                        interiorBoundaryDofIndices_[ dofIndex ] = isOnFacet;
+                        if (boundary) boundaryDofIndices_[ dofIndex ] = true;
+                        if (isOnFacet) interiorBoundaryDofIndices_[ dofIndex ] = true;
                     }
                 }
             }
