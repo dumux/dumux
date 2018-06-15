@@ -25,32 +25,23 @@
 #define DUMUX_CPGRID_CREATOR_HH
 
 #if HAVE_OPM_GRID
-#include <dune/grid/CpGrid.hpp>
+#include <opm/grid/CpGrid.hpp>
 #include <opm/parser/eclipse/Parser/Parser.hpp>
 #include <opm/parser/eclipse/Parser/ParseContext.hpp>
 #include <opm/parser/eclipse/Deck/Deck.hpp>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
 namespace Dumux
 {
 
-namespace Properties
-{
-NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(Grid);
-}
-
 /*!
  * \ingroup InputOutput
  * \brief A grid creator that reads Petrel files and generates a CpGrid.
  */
-template <class TypeTag>
 class CpGridCreator
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using Grid = Dune::CpGrid;
     using GridPointer = std::shared_ptr<Grid>;
     using Deck = Opm::Deck;
 
@@ -62,8 +53,9 @@ public:
     {
         auto fileName = getParam<std::string>("Grid.File");
 
-        deck() = Opm::Parser().parseFile(fileName);
-        Opm::EclipseGrid ecl_grid(deck());
+        static auto deckLocal = Opm::Parser().parseFile(fileName);
+        Opm::EclipseGrid ecl_grid(deckLocal);
+        deck() = deckLocal;
 
         gridPtr() = std::make_shared<Grid>(*(new Grid()));
         gridPtr()->processEclipseFormat(ecl_grid, false, false);
@@ -102,7 +94,8 @@ public:
      */
     static void loadBalance()
     {
-        gridPtr()->loadBalance();
+        if (gridPtr()->comm().size() > 1)
+            gridPtr()->loadBalance();
     }
 };
 }

@@ -1,0 +1,10 @@
+diff --git a/opm-grid-prereqs.cmake b/opm-grid-prereqs.cmake
+index 2ad0d86..032ac19 100644
+--- a/opm-grid-prereqs.cmake
++++ b/opm-grid-prereqs.cmake
+@@ -34,4 +34,5 @@ set (opm-grid_DEPS
+   "ecl REQUIRED"
+   )
+ 
++include(OpmPackage)
+ find_package_deps(opm-grid)
