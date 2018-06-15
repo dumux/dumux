@@ -154,7 +154,9 @@ int main(int argc, char** argv) try
     Dune::VTKWriter<typename OnePFVGridGeometry::GridView> onePVtkWriter(onePFvGridGeometry->gridView());
     Dune::VTKWriter<typename PoroMechFVGridGeometry::GridView> poroMechVtkWriter(poroMechFvGridGeometry->gridView());
 
-    using VTKFunction = Dumux::Vtk::VectorP1VTKFunction< typename PoroMechFVGridGeometry::GridView, decltype(x[poroMechId]) >;
+    using VTKFunction = Dumux::Vtk::VectorP1VTKFunction< typename PoroMechFVGridGeometry::GridView,
+                                                         typename PoroMechFVGridGeometry::VertexMapper,
+                                                         decltype(x[poroMechId]) >;
     auto displacementFunction = std::make_shared<VTKFunction>( poroMechFvGridGeometry->gridView(), poroMechFvGridGeometry->vertexMapper(),
                                                                x[poroMechId], "u", PoroMechFVGridGeometry::GridView::dimensionworld );
 
