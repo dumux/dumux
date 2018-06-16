@@ -102,7 +102,7 @@ public:
     , fvGridGeometry_(fvGridGeometry)
     , gridVariables_(gridVariables)
     , timeLoop_(timeLoop)
-    , isStationaryProblem_(false)
+    , isStationaryProblem_(!timeLoop)
     {}
 
     /*!
