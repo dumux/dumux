@@ -54,6 +54,8 @@ namespace Dumux
  * the problem behaves in a specific way. It is characterized by
  * the (simulation) time it starts, its length and a consecutive
  * index starting at 0.
+ *
+ * \note Time and time step sizes are in units of seconds
  */
 template<class Scalar>
 class TimeLoopBase
@@ -405,6 +407,9 @@ public:
         deltaPeriodicCheckPoint_ = interval;
         if (this->verbose())
             std::cout << "Enabled periodic check points every " << interval << " seconds." << std::endl;
+
+        // make sure we respect this check point on the next time step
+        setTimeStepSize(this->timeStepSize());
     }
 
     //! Whether now is a time checkpoint
@@ -412,8 +417,48 @@ public:
     bool isCheckPoint() const
     { return isCheckPoint_; }
 
-    //! Adds a checkPoint to the queue
+    /*!
+     * \brief add a checkpoint to the queue
+     * \note checkpoints have to be provided in ascending order
+     * \param t the check point (in seconds)
+     */
     void setCheckPoint(Scalar t)
+    {
+        // set the check point
+        setCheckPoint_(t);
+
+        // make sure we respect this check point on the next time step
+        setTimeStepSize(this->timeStepSize());
+    }
+
+    /*!
+     * \brief add checkpoints to the queue from a vector of time points
+     * \note checkpoints have to be provided in ascending order
+     * \param checkPoints the vector of check points
+     */
+    void setCheckPoint(const std::vector<Scalar>& checkPoints)
+    { setCheckPoint(checkPoints.begin(), checkPoints.end()); }
+
+    /*!
+     * \brief add checkpoints to the queue from a container from the first iterator to the last iterator
+     * \note checkpoints have to be provided in ascending order
+     * \param first iterator to the first element to be inserted
+     * \param last iterator to the one-after-last element to be inserted
+     */
+    template<class ForwardIterator>
+    void setCheckPoint(ForwardIterator first, ForwardIterator last)
+    {
+        // set the check points
+        for (; first != last; ++first)
+            setCheckPoint_(*first);
+
+        // make sure we respect this check point on the next time step
+        setTimeStepSize(this->timeStepSize());
+    }
+
+private:
+    //! Adds a check point to the queue
+    void setCheckPoint_(Scalar t)
     {
         if (!checkPoints_.empty())
         {
@@ -430,32 +475,6 @@ public:
             checkPoints_.push(t);
     }
 
-    //! Adds check points to the queue
-    //! \param tList list of check points ascending in time
-    void setCheckPoint(std::initializer_list<Scalar>&& tList)
-    {
-        if (!checkPoints_.empty())
-        {
-            for (auto&& t : tList)
-            {
-                if (t < checkPoints_.back())
-                {
-                    if (this->verbose())
-                        std::cerr << "--- Couldn't insert checkpoint as it is earlier than the last check point in the queue.\n"
-                                  << "--- Checkpoints can only be inserted in ascending order." << std::endl;
-                }
-                else
-                    checkPoints_.emplace(t);
-            }
-        }
-        else
-        {
-            for (auto&& t : tList)
-                checkPoints_.emplace(t);
-        }
-    }
-
-private:
      /*!
      * \brief Aligns dt to the next check point
      */
