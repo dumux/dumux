@@ -279,14 +279,18 @@ public:
     Scalar exactSolution(const GlobalPosition &globalPos) const
     {
         Dune::FieldVector<double, 2> xy({globalPos[0], globalPos[1]});
-        return -1.0*(1+globalPos[2])/(2*M_PI)*std::log(xy.two_norm());
 
-        // use this instead if you are using the coupling manager with circle sources
-        // auto R = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Radius);
-        // if (xy.two_norm() > R)
-        //     return -1.0*(1+globalPos[2])/(2*M_PI)*std::log(xy.two_norm());
-        // else
-        //    return -1.0*(1+globalPos[2])/(2*M_PI)*std::log(R);
+        if (CouplingManager::couplingMode == EmbeddedCouplingMode::cylindersources)
+        {
+            const auto R = getParam<Scalar>("SpatialParams.Radius");
+            if (xy.two_norm() > R)
+                return -1.0*(1+globalPos[2])/(2*M_PI)*std::log(xy.two_norm());
+            else
+               return -1.0*(1+globalPos[2])/(2*M_PI)*std::log(R);
+
+        }
+        else
+            return -1.0*(1+globalPos[2])/(2*M_PI)*std::log(xy.two_norm());
     }
 
     //! Called after every time step
@@ -329,9 +333,6 @@ public:
     //! Get the coupling manager
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
-
-    const std::vector<std::size_t>& getAdditionalDofDependencies(std::size_t dofGlobalIdx) const
-    { return couplingManager().getAdditionalDofDependencies(dofGlobalIdx); }
 
 private:
     std::vector<Scalar> exactPressure_;

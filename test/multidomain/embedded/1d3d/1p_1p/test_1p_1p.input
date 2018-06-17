@@ -1,11 +1,11 @@
 [MixedDimension]
 NumCircleSegments = 100
+IntegrationOrder = 3
 
 [TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 1 # [s]
 MaxTimeStepSize = 1
-MaxTimeStepDivisions = 2
 
 [Vessel.Grid]
 LowerLeft = 0 0 0
@@ -23,7 +23,6 @@ Cells = 40 40 40
 Name = test_1p1p_embedded
 NormIntegrationOrder = 2
 NormExcludeInnerBulk = true
-IntegrationOrder = 2
 EnableGravity = false
 
 [Component]
@@ -32,7 +31,7 @@ LiquidDensity = 1 # [kg/m^3]
 
 [SpatialParams]
 PermeabilityTissue = 1 # [m^2]
-Radius = 0.01 # [m]
+Radius = 0.3 # [m]
 
 [Vtk]
 AddVelocity = false
@@ -47,6 +46,3 @@ MaxSteps = 10
 
 [LinearSolver]
 ResidualReduction = 1e-20
-
-[Assembly]
-Invert = true

@@ -50,25 +50,27 @@
 #include "tissueproblem.hh"
 #include "l2norm.hh"
 
+// default to tpfa for both domains
+#ifndef BULKTYPETAG
+#define BULKTYPETAG=TissueCCTypeTag
+#endif
+#ifndef LOWDIMTYPETAG
+#define LOWDIMTYPETAG=BloodFlowCCTypeTag
+#endif
+
 namespace Dumux {
 namespace Properties {
 
-SET_PROP(TissueCCTypeTag, CouplingManager)
-{
-    using Traits = MultiDomainTraits<TypeTag, TTAG(BloodFlowCCTypeTag)>;
-    using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
-};
+template<class Traits>
+using TheCouplingManager = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::cylindersources>;
 
-SET_PROP(BloodFlowCCTypeTag, CouplingManager)
-{
-    using Traits = MultiDomainTraits<TTAG(TissueCCTypeTag), TypeTag>;
-    using type = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::average>;
-};
+SET_TYPE_PROP(BULKTYPETAG, CouplingManager, TheCouplingManager<MultiDomainTraits<TypeTag, TTAG(LOWDIMTYPETAG)>>);
+SET_TYPE_PROP(BULKTYPETAG, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<0>);
+SET_TYPE_PROP(BULKTYPETAG, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<0>);
 
-SET_TYPE_PROP(TissueCCTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<0>);
-SET_TYPE_PROP(BloodFlowCCTypeTag, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<1>);
-SET_TYPE_PROP(TissueCCTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<0>);
-SET_TYPE_PROP(BloodFlowCCTypeTag, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<1>);
+SET_TYPE_PROP(LOWDIMTYPETAG, CouplingManager, TheCouplingManager<MultiDomainTraits<TTAG(BULKTYPETAG), TypeTag>>);
+SET_TYPE_PROP(LOWDIMTYPETAG, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<1>);
+SET_TYPE_PROP(LOWDIMTYPETAG, PointSourceHelper, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSourceHelper<1>);
 
 } // end namespace Properties
 } // end namespace Dumux
@@ -88,8 +90,8 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // Define the sub problem type tags
-    using BulkTypeTag = TTAG(TissueCCTypeTag);
-    using LowDimTypeTag = TTAG(BloodFlowCCTypeTag);
+    using BulkTypeTag = TTAG(BULKTYPETAG);
+    using LowDimTypeTag = TTAG(LOWDIMTYPETAG);
 
     // try to create a grid (from the given grid file or the input file)
     // for both sub-domains
