@@ -65,8 +65,9 @@ public:
     VectorP0VTKFunction(const GridView& gridView, const Mapper& mapper, const F& field, const std::string& name, int nComps)
     : field_(field), name_(name), nComps_(nComps), mapper_(mapper)
     {
-        if (field.size()!=(unsigned int)( gridView.size(/*codim*/0)) )
-            DUNE_THROW(Dune::IOError, "VectorP0VTKFunction: size mismatch");
+        if (field.size()!=(unsigned int)(mapper.size()))
+            DUNE_THROW(Dune::IOError, "VectorP0VTKFunction: size mismatch between field "
+                                       << name << " (" << field.size() << ") and mapper (" << mapper.size() << ")");
     }
 
 private:
@@ -131,7 +132,8 @@ public:
     : field_(field), name_(name), nComps_(nComps), mapper_(mapper)
     {
         if (field.size()!=(unsigned int)( mapper.size() ))
-            DUNE_THROW(Dune::IOError, "VectorP1VTKFunction: size mismatch");
+            DUNE_THROW(Dune::IOError, "VectorP1VTKFunction: size mismatch between field "
+                                      << name << " (" << field.size() << ") and mapper (" << mapper.size() << ")");
     }
 private:
 
@@ -198,8 +200,9 @@ public:
     VectorP1NonConformingVTKFunction(const GridView& gridView, const Mapper& mapper, const F& field, const std::string& name, int nComps)
     : field_(field), name_(name), nComps_(nComps), mapper_(mapper)
     {
-        if (field.size()!=(unsigned int)( gridView.size(/*codim*/0)) )
-            DUNE_THROW(Dune::IOError, "VectorP1NonConformingVTKFunction: size mismatch");
+        if (field.size()!=(unsigned int)(mapper.size()))
+            DUNE_THROW(Dune::IOError, "VectorP1NonConformingVTKFunction: size mismatch between field "
+                                      << name << " (" << field.size() << ") and mapper (" << mapper.size() << ")");
     }
 private:
 
