@@ -130,7 +130,7 @@ public:
     void addFaceField(const std::vector<DimVector>& v, const std::string& name)
     {
         if (v.size() == this->gridGeom_.gridView().size(1))
-                faceFieldVectorDataInfo_.emplace_back(v, name);
+            faceFieldVectorDataInfo_.emplace_back(v, name);
         else
             DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
     }

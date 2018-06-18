@@ -85,6 +85,7 @@ class VtkOutputModule
     using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
 
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
+    static constexpr int dofCodim = isBox ? dim : 0;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VV&)> get; std::string name; };
     struct VolVarVectorDataInfo { std::function<VolVarsVector(const VV&)> get; std::string name; };
@@ -128,15 +129,6 @@ public:
     //! Methods to conveniently add primary and secondary variables upon initialization
     //! Do not call these methods after initialization i.e. _not_ within the time loop
     //////////////////////////////////////////////////////////////////////////////////////////////
-
-    //! Output a scalar volume variable
-    //! \param name The name of the vtk field
-    //! \param f A function taking a VolumeVariables object and returning the desired scalar
-    DUNE_DEPRECATED_MSG("Will be removed after next release. Please use addVolumeVariable(function, name) instead!")
-    void addSecondaryVariable(const std::string& name, std::function<Scalar(const VolumeVariables&)>&& f)
-    {
-        volVarScalarDataInfo_.push_back(VolVarScalarDataInfo{f, name});
-    }
 
     //! Output a scalar volume variable
     //! \param name The name of the vtk field
@@ -279,7 +271,7 @@ private:
             || addProcessRank)
         {
             const auto numCells = gridGeom_.gridView().size(0);
-            const auto numDofs = gridGeom_.numDofs();
+            const auto numDofs = numDofs_();
 
             // get fields for all volume variables
             if (!volVarScalarDataInfo_.empty())
@@ -452,7 +444,7 @@ private:
             || addProcessRank)
         {
             const auto numCells = gridGeom_.gridView().size(0);
-            const auto numDofs = gridGeom_.numDofs();
+            const auto numDofs = numDofs_();
 
             // get fields for all volume variables
             if (!volVarScalarDataInfo_.empty())
@@ -593,6 +585,9 @@ private:
     //! Deduces the number of components of the value type of a vector of values
     template<class Vector, typename std::enable_if_t<!IsIndexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
     std::size_t getNumberOfComponents_(const Vector& v) { return 1; }
+
+    //! return the number of dofs
+    std::size_t numDofs_() const { return gridGeom_.gridView().size(dofCodim); }
 
     const Problem& problem_;
     const FVGridGeometry& gridGeom_;
