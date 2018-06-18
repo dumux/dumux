@@ -35,6 +35,8 @@
 #include <dumux/multidomain/embedded/pointsourcedata.hh>
 #include <dumux/multidomain/embedded/integrationpointsource.hh>
 #include <dumux/multidomain/embedded/couplingmanagerbase.hh>
+#include <dumux/multidomain/embedded/circlepoints.hh>
+#include <dumux/multidomain/embedded/extendedsourcestencil.hh>
 
 namespace Dumux {
 
@@ -65,71 +67,6 @@ public:
     //! export the point source data type
     using PointSourceData = PointSourceDataCircleAverage<MDTraits>;
 };
-
-namespace EmbeddedCoupling {
-
-/*!
- * \ingroup EmbeddedCoupling
- * \brief returns a vector of points on a circle
- * \param center the circle center
- * \param normal the normal to the circle plane
- * \param radius the circle radius
- * \param numPoints the number of points
- */
-template<class GlobalPosition>
-std::vector<GlobalPosition> circlePoints(const GlobalPosition& center,
-                                         const GlobalPosition& normal,
-                                         const typename GlobalPosition::value_type radius,
-                                         const std::size_t numPoints = 20)
-{
-    using std::abs; using std::sin; using std::cos;
-    using ctype = typename GlobalPosition::value_type;
-
-    constexpr ctype eps = 1.5e-7;
-    static_assert(GlobalPosition::dimension == 3, "Only implemented for world dimension 3");
-
-    std::vector<GlobalPosition> points(numPoints);
-
-    // make sure n is a unit vector
-    auto n = normal;
-    n /= n.two_norm();
-
-    // caculate a vector u perpendicular to n
-    GlobalPosition u;
-    if (abs(n[0]) < eps && abs(n[1]) < eps)
-        if (abs(n[2]) < eps)
-            DUNE_THROW(Dune::MathError, "The normal vector has to be non-zero!");
-        else
-            u = {0, 1, 0};
-    else
-        u = {-n[1], n[0], 0};
-
-    u *= radius/u.two_norm();
-
-    // the circle parameterization is p(t) = r*cos(t)*u + r*sin(t)*(n x u) + c
-    auto tangent = crossProduct(u, n);
-    tangent *= radius/tangent.two_norm();
-
-    // the parameter with an offset
-    ctype t = 0 + 0.1;
-    // insert the vertices
-    for (std::size_t i = 0; i < numPoints; ++i)
-    {
-        points[i] = GlobalPosition({u[0]*cos(t) + tangent[0]*sin(t) + center[0],
-                                    u[1]*cos(t) + tangent[1]*sin(t) + center[1],
-                                    u[2]*cos(t) + tangent[2]*sin(t) + center[2]});
-
-        t += 2*M_PI/numPoints;
-
-        // periodic t
-        if(t > 2*M_PI)
-            t -= 2*M_PI;
-    }
-
-    return points;
-}
-
-} // end namespace EmbeddedCoupling
 
 /*!
  * \ingroup EmbeddedCoupling
@@ -273,13 +210,14 @@ class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::average>
     static constexpr bool isBox()
     { return FVGridGeometry<id>::discMethod == DiscretizationMethod::box; }
 
+
+public:
     enum {
         bulkDim = GridView<bulkIdx>::dimension,
         lowDimDim = GridView<lowDimIdx>::dimension,
         dimWorld = GridView<bulkIdx>::dimensionworld
     };
 
-public:
     static constexpr EmbeddedCouplingMode couplingMode = EmbeddedCouplingMode::average;
 
     using ParentType::ParentType;
@@ -290,6 +228,18 @@ public:
     {
         ParentType::init(bulkProblem, lowDimProblem, curSol);
         computeLowDimVolumeFractions();
+    }
+
+    /*!
+     * \brief extend the jacobian pattern of the diagonal block of domain i
+     *        by those entries that are not already in the uncoupled pattern
+     * \note Such additional dependencies can arise from the coupling, e.g. if a coupling source
+     *       term depends on a non-local average of a quantity of the same domain
+     */
+    template<std::size_t id, class JacobianPattern>
+    void extendJacobianPattern(Dune::index_constant<id> domainI, JacobianPattern& pattern) const
+    {
+        extendedSourceStencil_.extendJacobianPattern(*this, domainI, pattern);
     }
 
     /*!
@@ -306,88 +256,7 @@ public:
                                          JacobianMatrixDiagBlock& A,
                                          GridVariables& gridVariables)
     {
-        constexpr auto numEq = GET_PROP_TYPE(SubDomainTypeTag<i>, ModelTraits)::numEq();
-        const auto& elementI = localAssemblerI.element();
-
-        // only do something if we have an extended stencil
-        if (extendedSourceStencil_(domainI, elementI).empty())
-            return;
-
-        // compute the undeflected residual (source only!)
-        const auto origResidual = localAssemblerI.evalLocalSourceResidual(elementI);
-
-        // compute derivate for all additional dofs in the circle stencil
-        for (const auto dofIndex : extendedSourceStencil_(domainI, elementI))
-        {
-            auto partialDerivs = origResidual;
-            const auto origPriVars = this->curSol()[domainI][dofIndex];
-
-            // calculate derivatives w.r.t to the privars at the dof at hand
-            for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
-            {
-                // reset partial derivatives
-                partialDerivs = 0.0;
-
-                auto evalResiduals = [&](Scalar priVar)
-                {
-                    // update the coupling context (solution vector and recompute element residual)
-                    auto priVars = origPriVars;
-                    priVars[pvIdx] = priVar;
-                    this->updateCouplingContext(domainI, localAssemblerI, domainI, dofIndex, priVars, pvIdx);
-                    return localAssemblerI.evalLocalSourceResidual(elementI);
-                };
-
-                // derive the residuals numerically
-                static const int numDiffMethod = getParam<int>("Assembly.NumericDifferenceMethod");
-                NumericDifferentiation::partialDerivative(evalResiduals, this->curSol()[domainI][dofIndex][pvIdx],
-                                                          partialDerivs, origResidual, numDiffMethod);
-
-                // update the global stiffness matrix with the current partial derivatives
-                for (auto&& scvJ : scvs(localAssemblerI.fvGeometry()))
-                {
-                    for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                    {
-                        // A[i][col][eqIdx][pvIdx] is the rate of change of
-                        // the residual of equation 'eqIdx' at dof 'i'
-                        // depending on the primary variable 'pvIdx' at dof
-                        // 'col'.
-                        A[scvJ.dofIndex()][dofIndex][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
-                    }
-                }
-
-                // restore the original coupling context
-                this->updateCouplingContext(domainI, localAssemblerI, domainI, dofIndex, origPriVars, pvIdx);
-            }
-        }
-    }
-
-    /*!
-     * \brief extend the jacobian pattern of the diagonal block of domain i
-     *        by those entries that are not already in the uncoupled pattern
-     * \note Such additional dependencies can arise from the coupling, e.g. if a coupling source
-     *       term depends on a non-local average of a quantity of the same domain
-     */
-    template<std::size_t id, class JacobianPattern>
-    void extendJacobianPattern(Dune::index_constant<id> domainI, JacobianPattern& pattern) const
-    {
-        // add additional dof dependencies
-        for (const auto& element : elements(this->gridView(domainI)))
-        {
-            const auto& dofs = this->extendedSourceStencil_(domainI, element);
-
-            if (isBox<domainI>())
-            {
-                for (int i = 0; i < element.subEntities(GridView<domainI>::dimension); ++i)
-                    for (const auto globalJ : dofs)
-                        pattern.add(this->problem(domainI).fvGridGeometry().vertexMapper().subIndex(element, i, GridView<domainI>::dimension), globalJ);
-            }
-            else
-            {
-                const auto globalI = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
-                for (const auto globalJ : dofs)
-                    pattern.add(globalI, globalJ);
-            }
-        }
+        extendedSourceStencil_.evalAdditionalDomainDerivatives(*this, domainI, localAssemblerI, this->curSol(), A, gridVariables);
     }
 
     /* \brief Compute integration point point sources and associated data
@@ -401,10 +270,6 @@ public:
      */
     void computePointSourceData(std::size_t order = 1, bool verbose = false)
     {
-        // precompute the vertex indices for efficiency
-        this->preComputeVertexIndices(bulkIdx);
-        this->preComputeVertexIndices(lowDimIdx);
-
         // Initialize the bulk bounding box tree
         const auto& bulkTree = this->problem(bulkIdx).fvGridGeometry().boundingBoxTree();
 
@@ -416,7 +281,11 @@ public:
         // clear all internal members like pointsource vectors and stencils
         // initializes the point source id counter
         this->clear();
-        bulkCircleStencils_.clear();
+        extendedSourceStencil_.stencil().clear();
+
+        // precompute the vertex indices for efficiency
+        this->preComputeVertexIndices(bulkIdx);
+        this->preComputeVertexIndices(lowDimIdx);
 
         // iterate over all lowdim elements
         const auto& lowDimProblem = this->problem(lowDimIdx);
@@ -483,7 +352,7 @@ public:
 
                             // evaluate shape functions at the integration point
                             const auto bulkGeometry = bulkElement.geometry();
-                            this->getShapeValues_(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, circlePoints[k], circleShapeValues[bulkElementIdx]);
+                            this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, circlePoints[k], circleShapeValues[bulkElementIdx]);
                         }
                     }
                 }
@@ -524,7 +393,7 @@ public:
                     if (isBox<lowDimIdx>())
                     {
                         ShapeValues shapeValues;
-                        this->getShapeValues_(lowDimIdx, this->problem(lowDimIdx).fvGridGeometry(), lowDimGeometry, globalPos, shapeValues);
+                        this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).fvGridGeometry(), lowDimGeometry, globalPos, shapeValues);
                         psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                     }
                     else
@@ -539,7 +408,7 @@ public:
 
                         const auto bulkGeometry = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx).geometry();
                         ShapeValues shapeValues;
-                        this->getShapeValues_(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, globalPos, shapeValues);
+                        this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, globalPos, shapeValues);
                         psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
                     }
                     else
@@ -570,14 +439,14 @@ public:
                         // we insert all vertices and make it unique later
                         for (const auto& vertices : circleCornerIndices)
                         {
-                            bulkCircleStencils_[bulkElementIdx].insert(bulkCircleStencils_[bulkElementIdx].end(),
+                            extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
                                                                        vertices.second.begin(), vertices.second.end());
 
                         }
                     }
                     else
                     {
-                        bulkCircleStencils_[bulkElementIdx].insert(bulkCircleStencils_[bulkElementIdx].end(),
+                        extendedSourceStencil_.stencil()[bulkElementIdx].insert(extendedSourceStencil_.stencil()[bulkElementIdx].end(),
                                                                    circleStencil.begin(), circleStencil.end());
                     }
                 }
@@ -585,7 +454,7 @@ public:
         }
 
         // make the circle stencil unique (for source derivatives)
-        for (auto&& stencil : bulkCircleStencils_)
+        for (auto&& stencil : extendedSourceStencil_.stencil())
         {
             std::sort(stencil.second.begin(), stencil.second.end());
             stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
@@ -677,41 +546,11 @@ public:
     // \}
 
 private:
-    //! the extended source stencil for the bulk domain due to the source average
-    const std::vector<std::size_t>& extendedSourceStencil_(Dune::index_constant<0> bulkDomain, const Element<0>& bulkElement) const
-    {
-        const auto bulkElementIdx = this->problem(bulkIdx).fvGridGeometry().elementMapper().index(bulkElement);
-        if (bulkCircleStencils_.count(bulkElementIdx))
-            return bulkCircleStencils_.at(bulkElementIdx);
-        else
-            return this->emptyStencil();
-    }
-
-    //! the extended source stencil for the low dim domain is empty
-    const std::vector<std::size_t>& extendedSourceStencil_(Dune::index_constant<1> bulkDomain, const Element<1>& lowDimElement) const
-    { return this->emptyStencil(); }
-
-    //! compute the shape function for a given point and geometry
-    template<std::size_t i, class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod == DiscretizationMethod::box, int> = 0>
-    void getShapeValues_(Dune::index_constant<i> domainI, const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
-    {
-        const auto ipLocal = geo.local(globalPos);
-        const auto& localBasis = this->problem(domainI).fvGridGeometry().feCache().get(geo.type()).localBasis();
-        localBasis.evaluateFunction(ipLocal, shapeValues);
-    }
-
-    //! compute the shape function for a given point and geometry
-    template<std::size_t i, class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod != DiscretizationMethod::box, int> = 0>
-    void getShapeValues_(Dune::index_constant<i> domainI, const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
-    {
-        DUNE_THROW(Dune::InvalidStateException, "Shape values requested for other discretization than box!");
-    }
+    //! the extended source stencil object
+    EmbeddedCoupling::ExtendedSourceStencil<ThisType> extendedSourceStencil_;
 
     //! vector for the volume fraction of the lowdim domain in the bulk domain cells
     std::vector<Scalar> lowDimVolumeInBulkElement_;
-
-    //! the additional stencil for the average operator
-    typename ParentType::CouplingStencils bulkCircleStencils_;
 };
 
 
@@ -777,10 +616,6 @@ public:
      */
     void computePointSourceData(std::size_t order = 1, bool verbose = false)
     {
-        // precompute the vertex indices for efficiency
-        this->preComputeVertexIndices(bulkIdx);
-        this->preComputeVertexIndices(lowDimIdx);
-
         // Initialize the bulk bounding box tree
         const auto& bulkTree = this->problem(bulkIdx).fvGridGeometry().boundingBoxTree();
 
@@ -792,6 +627,10 @@ public:
         // clear all internal members like pointsource vectors and stencils
         // initializes the point source id counter
         this->clear();
+
+        // precompute the vertex indices for efficiency
+        this->preComputeVertexIndices(bulkIdx);
+        this->preComputeVertexIndices(lowDimIdx);
 
         // iterate over all lowdim elements
         const auto& lowDimProblem = this->problem(lowDimIdx);
@@ -858,7 +697,7 @@ public:
                         {
                             using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                             ShapeValues shapeValues;
-                            this->getShapeValues_(lowDimIdx, this->problem(lowDimIdx).fvGridGeometry(), lowDimGeometry, globalPos, shapeValues);
+                            this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).fvGridGeometry(), lowDimGeometry, globalPos, shapeValues);
                             psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
                         }
                         else
@@ -872,7 +711,7 @@ public:
                             using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
                             const auto bulkGeometry = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx).geometry();
                             ShapeValues shapeValues;
-                            this->getShapeValues_(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, circlePos, shapeValues);
+                            this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, circlePos, shapeValues);
                             psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
                         }
                         else
@@ -985,24 +824,413 @@ public:
     // \}
 
 private:
-    //! compute the shape function for a given point and geometry
-    template<std::size_t i, class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod == DiscretizationMethod::box, int> = 0>
-    void getShapeValues_(Dune::index_constant<i> domainI, const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
-    {
-        const auto ipLocal = geo.local(globalPos);
-        const auto& localBasis = this->problem(domainI).fvGridGeometry().feCache().get(geo.type()).localBasis();
-        localBasis.evaluateFunction(ipLocal, shapeValues);
-    }
-
-    //! compute the shape function for a given point and geometry
-    template<std::size_t i, class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod != DiscretizationMethod::box, int> = 0>
-    void getShapeValues_(Dune::index_constant<i> domainI, const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
-    {
-        DUNE_THROW(Dune::InvalidStateException, "Shape values requested for other discretization than box!");
-    }
 
     //! vector for the volume fraction of the lowdim domain in the bulk domain cells
     std::vector<Scalar> lowDimVolumeInBulkElement_;
+};
+
+
+/*!
+ * \ingroup EmbeddedCoupling
+ * \brief Manages the coupling between bulk elements and lower dimensional elements
+ *        Point sources on each integration point are computed by an AABB tree.
+ * \note Specialization for coupling method using a distributed kernel source with 3d quantities evaluated on the line
+ * \note the kernel per point source is isotropic and it's integral over the domain is one
+ */
+template<class MDTraits>
+class EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::kernel>
+: public EmbeddedCouplingManagerBase<MDTraits, EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::kernel>>
+{
+    using ThisType = EmbeddedCouplingManager1d3d<MDTraits, EmbeddedCouplingMode::kernel>;
+    using ParentType = EmbeddedCouplingManagerBase<MDTraits, ThisType>;
+    using Scalar = typename MDTraits::Scalar;
+    using SolutionVector = typename MDTraits::SolutionVector;
+    using PointSourceData = typename ParentType::PointSourceTraits::PointSourceData;
+
+    static constexpr auto bulkIdx = typename MDTraits::template DomainIdx<0>();
+    static constexpr auto lowDimIdx = typename MDTraits::template DomainIdx<1>();
+
+    // the sub domain type aliases
+    template<std::size_t id> using SubDomainTypeTag = typename MDTraits::template SubDomainTypeTag<id>;
+    template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
+    template<std::size_t id> using FVGridGeometry = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry);
+    template<std::size_t id> using GridView = typename FVGridGeometry<id>::GridView;
+    template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
+
+    using GlobalPosition = typename Element<bulkIdx>::Geometry::GlobalCoordinate;
+
+    template<std::size_t id>
+    static constexpr bool isBox()
+    { return FVGridGeometry<id>::discMethod == DiscretizationMethod::box; }
+
+    enum {
+        bulkDim = GridView<bulkIdx>::dimension,
+        lowDimDim = GridView<lowDimIdx>::dimension,
+        dimWorld = GridView<bulkIdx>::dimensionworld
+    };
+public:
+    static constexpr EmbeddedCouplingMode couplingMode = EmbeddedCouplingMode::kernel;
+
+    using ParentType::ParentType;
+
+    void init(std::shared_ptr<Problem<bulkIdx>> bulkProblem,
+              std::shared_ptr<Problem<lowDimIdx>> lowDimProblem,
+              const SolutionVector& curSol)
+    {
+        ParentType::init(bulkProblem, lowDimProblem, curSol);
+        computeLowDimVolumeFractions();
+    }
+
+    /*!
+     * \brief extend the jacobian pattern of the diagonal block of domain i
+     *        by those entries that are not already in the uncoupled pattern
+     * \note Such additional dependencies can arise from the coupling, e.g. if a coupling source
+     *       term depends on a non-local average of a quantity of the same domain
+     */
+    template<std::size_t id, class JacobianPattern>
+    void extendJacobianPattern(Dune::index_constant<id> domainI, JacobianPattern& pattern) const
+    {
+        extendedSourceStencil_.extendJacobianPattern(*this, domainI, pattern);
+    }
+
+    /*!
+     * \brief evaluate additional derivatives of the element residual of a domain with respect
+     *        to dofs in the same domain that are not in the regular stencil (per default this is not the case)
+     * \note Such additional dependencies can arise from the coupling, e.g. if a coupling source
+     *       term depends on a non-local average of a quantity of the same domain
+     * \note This is the same for box and cc
+     */
+    template<std::size_t i, class LocalAssemblerI, class JacobianMatrixDiagBlock, class GridVariables>
+    void evalAdditionalDomainDerivatives(Dune::index_constant<i> domainI,
+                                         const LocalAssemblerI& localAssemblerI,
+                                         const typename LocalAssemblerI::LocalResidual::ElementResidualVector&,
+                                         JacobianMatrixDiagBlock& A,
+                                         GridVariables& gridVariables)
+    {
+        extendedSourceStencil_.evalAdditionalDomainDerivatives(*this, domainI, localAssemblerI, this->curSol(), A, gridVariables);
+    }
+
+    /* \brief Compute integration point point sources and associated data
+     *
+     * This method uses grid glue to intersect the given grids. Over each intersection
+     * we later need to integrate a source term. This method places point sources
+     * at each quadrature point and provides the point source with the necessary
+     * information to compute integrals (quadrature weight and integration element)
+     * \param order The order of the quadrature rule for integration of sources over an intersection
+     * \param verbose If the point source computation is verbose
+     */
+    void computePointSourceData(std::size_t order = 1, bool verbose = false)
+    {
+        // initilize the maps
+        // do some logging and profiling
+        Dune::Timer watch;
+        std::cout << "Initializing the point sources..." << std::endl;
+
+        // clear all internal members like pointsource vectors and stencils
+        // initializes the point source id counter
+        this->clear();
+        bulkSourceIds_.clear();
+        bulkSourceWeights_.clear();
+        extendedSourceStencil_.stencil().clear();
+
+        // precompute the vertex indices for efficiency for the box method
+        this->preComputeVertexIndices(bulkIdx);
+        this->preComputeVertexIndices(lowDimIdx);
+
+        const auto& bulkFvGridGeometry = this->problem(bulkIdx).fvGridGeometry();
+        const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).fvGridGeometry();
+
+        bulkSourceIds_.resize(this->gridView(bulkIdx).size(0));
+        bulkSourceWeights_.resize(this->gridView(bulkIdx).size(0));
+
+        // intersect the bounding box trees
+        this->glueGrids();
+
+        this->pointSourceData().reserve(this->glue().size());
+        this->averageDistanceToBulkCell().reserve(this->glue().size());
+        const Scalar kernelWidth = getParam<Scalar>("MixedDimension.KernelWidth");
+        for (const auto& is : intersections(this->glue()))
+        {
+            // all inside elements are identical...
+            const auto& inside = is.inside(0);
+            // get the intersection geometry for integrating over it
+            const auto intersectionGeometry = is.geometry();
+
+            // get the Gaussian quadrature rule for the local intersection
+            const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(intersectionGeometry.type(), order);
+            const std::size_t lowDimElementIdx = lowDimFvGridGeometry.elementMapper().index(inside);
+
+            // iterate over all quadrature points and place a source
+            // for 1d: make a new point source
+            // for 3d: make a new kernel volume source
+            for (auto&& qp : quad)
+            {
+                // compute the coupling stencils
+                for (std::size_t outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
+                {
+                    const auto& outside = is.outside(outsideIdx);
+                    const std::size_t bulkElementIdx = bulkFvGridGeometry.elementMapper().index(outside);
+
+                    // each quadrature point will be a point source for the sub problem
+                    const auto globalPos = intersectionGeometry.global(qp.position());
+                    const auto id = this->idCounter_++;
+                    const auto qpweight = qp.weight();
+                    const auto ie = intersectionGeometry.integrationElement(qp.position());
+                    this->pointSources(lowDimIdx).emplace_back(globalPos, id, qpweight, ie, std::vector<std::size_t>({lowDimElementIdx}));
+                    this->pointSources(lowDimIdx).back().setEmbeddings(is.neighbor(0));
+                    computeBulkSource(globalPos, kernelWidth, id, lowDimElementIdx, bulkElementIdx, qpweight*ie/is.neighbor(0));
+
+                    // pre compute additional data used for the evaluation of
+                    // the actual solution dependent source term
+                    PointSourceData psData;
+
+                    if (isBox<lowDimIdx>())
+                    {
+                        using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
+                        const auto lowDimGeometry = this->problem(lowDimIdx).fvGridGeometry().element(lowDimElementIdx).geometry();
+                        ShapeValues shapeValues;
+                        this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).fvGridGeometry(), lowDimGeometry, globalPos, shapeValues);
+                        psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
+                    }
+                    else
+                    {
+                        psData.addLowDimInterpolation(lowDimElementIdx);
+                    }
+
+                    // add data needed to compute integral over the circle
+                    if (isBox<bulkIdx>())
+                    {
+                        using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
+                        const auto bulkGeometry = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx).geometry();
+                        ShapeValues shapeValues;
+                        this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, globalPos, shapeValues);
+                        psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
+                    }
+                    else
+                    {
+                        psData.addBulkInterpolation(bulkElementIdx);
+                    }
+
+                    // publish point source data in the global vector
+                    this->pointSourceData().emplace_back(std::move(psData));
+
+                    // compute average distance to bulk cell
+                    this->averageDistanceToBulkCell().push_back(this->computeDistance(outside.geometry(), globalPos));
+
+                    // export the lowdim coupling stencil
+                    // we insert all vertices / elements and make it unique later
+                    if (isBox<bulkIdx>())
+                    {
+                        const auto& vertices = this->vertexIndices(bulkIdx, bulkElementIdx);
+                        this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
+                                                                                   vertices.begin(), vertices.end());
+                    }
+                    else
+                    {
+                        this->couplingStencils(lowDimIdx)[lowDimElementIdx].push_back(bulkElementIdx);
+                    }
+                }
+            }
+        }
+
+        // make extra stencils unique
+        for (auto&& stencil : extendedSourceStencil_.stencil())
+        {
+            std::sort(stencil.second.begin(), stencil.second.end());
+            stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
+
+            // remove the vertices element (box)
+            if (isBox<bulkIdx>())
+            {
+                const auto& indices = this->vertexIndices(bulkIdx, stencil.first);
+                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
+                                                   [&](auto i){ return std::find(indices.begin(), indices.end(), i) != indices.end(); }),
+                                     stencil.second.end());
+            }
+            // remove the own element (cell-centered)
+            else
+            {
+                stencil.second.erase(std::remove_if(stencil.second.begin(), stencil.second.end(),
+                                                   [&](auto i){ return i == stencil.first; }),
+                                     stencil.second.end());
+            }
+        }
+
+        // make stencils unique
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::index_constant<2>{}), [&](const auto domainIdx)
+        {
+            for (auto&& stencil : this->couplingStencils(domainIdx))
+            {
+                std::sort(stencil.second.begin(), stencil.second.end());
+                stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
+            }
+        });
+
+        if (!this->pointSources(bulkIdx).empty())
+            DUNE_THROW(Dune::InvalidStateException, "Kernel method shouldn't have point sources in the bulk domain but only volume sources!");
+
+        std::cout << "took " << watch.elapsed() << " seconds." << std::endl;
+    }
+
+    //! Compute the low dim volume fraction in the bulk domain cells
+    void computeLowDimVolumeFractions()
+    {
+        // resize the storage vector
+        lowDimVolumeInBulkElement_.resize(this->gridView(bulkIdx).size(0));
+
+        // compute the low dim volume fractions
+        for (const auto& is : intersections(this->glue()))
+        {
+            // all inside elements are identical...
+            const auto& inside = is.inside(0);
+            const auto intersectionGeometry = is.geometry();
+            const std::size_t lowDimElementIdx = this->problem(lowDimIdx).fvGridGeometry().elementMapper().index(inside);
+
+            // compute the volume the low-dim domain occupies in the bulk domain if it were full-dimensional
+            const auto radius = this->problem(lowDimIdx).spatialParams().radius(lowDimElementIdx);
+            for (std::size_t outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
+            {
+                const auto& outside = is.outside(outsideIdx);
+                const std::size_t bulkElementIdx = this->problem(bulkIdx).fvGridGeometry().elementMapper().index(outside);
+                lowDimVolumeInBulkElement_[bulkElementIdx] += intersectionGeometry.volume()*M_PI*radius*radius;
+            }
+        }
+    }
+
+    /*!
+     * \brief Methods to be accessed by the subproblems
+     */
+    // \{
+
+    //! Return a reference to the bulk problem
+    Scalar radius(std::size_t id) const
+    {
+        const auto& data = this->pointSourceData()[id];
+        return this->problem(lowDimIdx).spatialParams().radius(data.lowDimElementIdx());
+    }
+
+    //! The volume the lower dimensional domain occupies in the bulk domain element
+    // For one-dimensional low dim domain we assume radial tubes
+    Scalar lowDimVolume(const Element<bulkIdx>& element) const
+    {
+        const auto eIdx = this->problem(bulkIdx).fvGridGeometry().elementMapper().index(element);
+        return lowDimVolumeInBulkElement_[eIdx];
+    }
+
+    //! The volume fraction the lower dimensional domain occupies in the bulk domain element
+    // For one-dimensional low dim domain we assume radial tubes
+    Scalar lowDimVolumeFraction(const Element<bulkIdx>& element) const
+    {
+        const auto totalVolume = element.geometry().volume();
+        return lowDimVolume(element) / totalVolume;
+    }
+
+    //! return all source ids for a bulk elements
+    const std::vector<std::size_t> bulkSourceIds(std::size_t eIdx) const
+    { return bulkSourceIds_[eIdx]; }
+
+    //! return all source ids for a bulk elements
+    const std::vector<Scalar> bulkSourceWeights(std::size_t eIdx) const
+    { return bulkSourceWeights_[eIdx]; }
+
+    // \}
+
+private:
+    //! TODO: How to optimize this?
+    void computeBulkSource(const GlobalPosition& globalPos, const Scalar kernelWidth,
+                           std::size_t id, std::size_t lowDimElementIdx, std::size_t coupledBulkElementIdx,
+                           Scalar pointSourceWeight)
+    {
+        // make sure it is mass conservative
+        // i.e. the point source in the 1d domain needs to have the exact same integral as the distributed
+        // kernel source integral in the 3d domain. Correct the integration formula by balancing the error
+        // with the element that has the highest weight
+        Scalar checkSum = 0.0;
+        Scalar maxWeight = 0.0;
+        std::size_t maxWeightPos = 0;
+        std::size_t maxWeightBulkIdx = 0;
+
+        for (const auto& element : elements(this->gridView(bulkIdx)))
+        {
+            Scalar weight = 0.0;
+            const auto geometry = element.geometry();
+            const auto& quad = Dune::QuadratureRules<Scalar, bulkDim>::rule(geometry.type(), 8);
+            for (auto&& qp : quad)
+            {
+                const auto qpweight = qp.weight();
+                const auto ie = geometry.integrationElement(qp.position());
+                weight += evalKernel(globalPos, geometry.global(qp.position()), kernelWidth)*qpweight*ie;
+            }
+
+            if (weight > 1e-8)
+            {
+                const auto bulkElementIdx = this->problem(bulkIdx).fvGridGeometry().elementMapper().index(element);
+                bulkSourceIds_[bulkElementIdx].push_back(id);
+                bulkSourceWeights_[bulkElementIdx].push_back(weight*pointSourceWeight);
+
+                if (weight > maxWeight)
+                {
+                    maxWeight = weight;
+                    maxWeightPos = bulkSourceIds_[bulkElementIdx].size()-1;
+                    maxWeightBulkIdx = bulkElementIdx;
+                }
+
+                // add lowDim dofs that the source is related to to the bulk stencil
+                if (isBox<lowDimIdx>())
+                {
+                    const auto& vertices = this->vertexIndices(lowDimIdx, lowDimElementIdx);
+                    this->couplingStencils(bulkIdx)[bulkElementIdx].insert(this->couplingStencils(bulkIdx)[bulkElementIdx].end(),
+                                                                           vertices.begin(), vertices.end());
+
+                }
+                else
+                {
+                    this->couplingStencils(bulkIdx)[bulkElementIdx].push_back(lowDimElementIdx);
+                }
+
+                // tpfa
+                extendedSourceStencil_.stencil()[bulkElementIdx].push_back(coupledBulkElementIdx);
+
+                // compute check sum -> should sum up to 1.0 to be mass conservative
+                checkSum += weight;
+            }
+        }
+
+        // balance the quadrature rule error with the element that has the highest weight.
+        const auto diff = 1.0 - checkSum;
+        bulkSourceWeights_[maxWeightBulkIdx][maxWeightPos] += diff*pointSourceWeight;
+    }
+
+    //! an isotropic cubic kernel with derivatives 0 at r=origin and r=width and domain integral 1
+    inline Scalar evalKernel(const GlobalPosition& origin,
+                             const GlobalPosition& pos,
+                             const Scalar width) const noexcept
+    {
+        const auto r = (pos-origin).two_norm();
+        const auto r2 = r*r;
+        const auto r3 = r2*r;
+
+        if (r > width)
+            return 0.0;
+
+        const Scalar w2 = width*width;
+        const Scalar w3 = w2*width;
+        const Scalar k = 15.0/(4*M_PI*w3);
+        const Scalar a = 2.0/w3;
+        const Scalar b = 3.0/w2;
+
+        return k*(a*r3 - b*r2 + 1.0);
+    }
+
+    //! the extended source stencil object for kernel coupling
+    EmbeddedCoupling::ExtendedSourceStencil<ThisType> extendedSourceStencil_;
+    //! vector for the volume fraction of the lowdim domain in the bulk domain cells
+    std::vector<Scalar> lowDimVolumeInBulkElement_;
+    //! kernel sources to integrate for each bulk element
+    std::vector<std::vector<std::size_t>> bulkSourceIds_;
+    //! the integral of the kernel for each point source / integration point, i.e. weight for the source
+    std::vector<std::vector<Scalar>> bulkSourceWeights_;
 };
 
 } // end namespace Dumux

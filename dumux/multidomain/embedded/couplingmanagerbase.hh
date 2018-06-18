@@ -109,6 +109,8 @@ class EmbeddedCouplingManagerBase
     using GlueType = MixedDimensionGlue<GridView<bulkIdx>, GridView<lowDimIdx>, ElementMapper<bulkIdx>, ElementMapper<lowDimIdx>>;
 
 public:
+    //! export traits
+    using MultiDomainTraits = MDTraits;
     //! export the point source traits
     using PointSourceTraits = PSTraits;
     //! export stencil types
@@ -213,6 +215,7 @@ public:
         for (const auto& scv : scvs(fvGeometry))
         {
             auto couplingSource = problem(domainI).scvPointSources(element, fvGeometry, curElemVolVars, scv);
+            couplingSource += problem(domainI).source(element, fvGeometry, curElemVolVars, scv);
             couplingSource *= -scv.volume()*curElemVolVars[scv].extrusionFactor();
             residual[scv.indexInElement()] = couplingSource;
         }
@@ -232,8 +235,6 @@ public:
      */
     void computePointSourceData(std::size_t order = 1, bool verbose = false)
     {
-        static_assert(FVGridGeometry<bulkIdx>::discMethod == DiscretizationMethod::cctpfa, "Currently only works for tpfa discretization!");
-
         // initilize the maps
         // do some logging and profiling
         Dune::Timer watch;
@@ -243,16 +244,19 @@ public:
         // initializes the point source id counter
         clear();
 
+        // precompute the vertex indices for efficiency for the box method
+        this->preComputeVertexIndices(bulkIdx);
+        this->preComputeVertexIndices(lowDimIdx);
+
         const auto& bulkFvGridGeometry = problem(bulkIdx).fvGridGeometry();
         const auto& lowDimFvGridGeometry = problem(lowDimIdx).fvGridGeometry();
 
         // intersect the bounding box trees
-        glue_->build(bulkFvGridGeometry.boundingBoxTree(),
-                     lowDimFvGridGeometry.boundingBoxTree());
+        glueGrids();
 
-        pointSourceData_.reserve(glue_->size());
-        averageDistanceToBulkCC_.reserve(glue_->size());
-        for (const auto& is : intersections(*glue_))
+        pointSourceData_.reserve(this->glue().size());
+        averageDistanceToBulkCell_.reserve(this->glue().size());
+        for (const auto& is : intersections(this->glue()))
         {
             // all inside elements are identical...
             const auto& inside = is.inside(0);
@@ -285,17 +289,66 @@ public:
                     // pre compute additional data used for the evaluation of
                     // the actual solution dependent source term
                     PointSourceData psData;
-                    psData.addLowDimInterpolation(lowDimElementIdx);
-                    psData.addBulkInterpolation(bulkElementIdx);
+
+                    if (isBox<lowDimIdx>())
+                    {
+                        using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
+                        const auto lowDimGeometry = this->problem(lowDimIdx).fvGridGeometry().element(lowDimElementIdx).geometry();
+                        ShapeValues shapeValues;
+                        this->getShapeValues(lowDimIdx, this->problem(lowDimIdx).fvGridGeometry(), lowDimGeometry, globalPos, shapeValues);
+                        psData.addLowDimInterpolation(shapeValues, this->vertexIndices(lowDimIdx, lowDimElementIdx), lowDimElementIdx);
+                    }
+                    else
+                    {
+                        psData.addLowDimInterpolation(lowDimElementIdx);
+                    }
+
+                    // add data needed to compute integral over the circle
+                    if (isBox<bulkIdx>())
+                    {
+                        using ShapeValues = std::vector<Dune::FieldVector<Scalar, 1> >;
+                        const auto bulkGeometry = this->problem(bulkIdx).fvGridGeometry().element(bulkElementIdx).geometry();
+                        ShapeValues shapeValues;
+                        this->getShapeValues(bulkIdx, this->problem(bulkIdx).fvGridGeometry(), bulkGeometry, globalPos, shapeValues);
+                        psData.addBulkInterpolation(shapeValues, this->vertexIndices(bulkIdx, bulkElementIdx), bulkElementIdx);
+                    }
+                    else
+                    {
+                        psData.addBulkInterpolation(bulkElementIdx);
+                    }
 
                     // publish point source data in the global vector
-                    pointSourceData_.emplace_back(std::move(psData));
-                    averageDistanceToBulkCC_.push_back(computeDistance_(outside.geometry(), globalPos));
+                    this->pointSourceData().emplace_back(std::move(psData));
 
-                    // compute the coupling stencils
-                    bulkCouplingStencils_[bulkElementIdx].push_back(lowDimElementIdx);
-                    // add this bulk element to the low dim coupling stencil
-                    lowDimCouplingStencils_[lowDimElementIdx].push_back(bulkElementIdx);
+                    // compute average distance to bulk cell
+                    averageDistanceToBulkCell_.push_back(computeDistance(outside.geometry(), globalPos));
+
+                    // export the lowdim coupling stencil
+                    // we insert all vertices / elements and make it unique later
+                    if (isBox<bulkIdx>())
+                    {
+                        const auto& vertices = this->vertexIndices(bulkIdx, bulkElementIdx);
+                        this->couplingStencils(lowDimIdx)[lowDimElementIdx].insert(this->couplingStencils(lowDimIdx)[lowDimElementIdx].end(),
+                                                                                   vertices.begin(), vertices.end());
+                    }
+                    else
+                    {
+                        this->couplingStencils(lowDimIdx)[lowDimElementIdx].push_back(bulkElementIdx);
+                    }
+
+                    // export the bulk coupling stencil
+                    // we insert all vertices / elements and make it unique later
+                    if (isBox<lowDimIdx>())
+                    {
+                        const auto& vertices = this->vertexIndices(lowDimIdx, lowDimElementIdx);
+                        this->couplingStencils(bulkIdx)[bulkElementIdx].insert(this->couplingStencils(bulkIdx)[bulkElementIdx].end(),
+                                                                               vertices.begin(), vertices.end());
+
+                    }
+                    else
+                    {
+                        this->couplingStencils(bulkIdx)[bulkElementIdx].push_back(lowDimElementIdx);
+                    }
                 }
             }
         }
@@ -349,7 +402,7 @@ public:
 
     //! return the average distance to the coupled bulk cell center
     Scalar averageDistance(std::size_t id) const
-    { return averageDistanceToBulkCC_[id]; }
+    { return averageDistanceToBulkCell_[id]; }
 
     //! Return reference to bulk point sources
     const std::vector<PointSource<bulkIdx>>& bulkPointSources() const
@@ -373,6 +426,10 @@ public:
     const std::vector<PointSourceData>& pointSourceData() const
     { return pointSourceData_; }
 
+    //! Return a reference to an empty stencil
+    const CouplingStencil& emptyStencil() const
+    { return emptyStencil_; }
+
 protected:
 
     //! computes the vertex indices per element for the box method
@@ -394,6 +451,22 @@ protected:
         }
     }
 
+    //! compute the shape function for a given point and geometry
+    template<std::size_t i, class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod == DiscretizationMethod::box, int> = 0>
+    void getShapeValues(Dune::index_constant<i> domainI, const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
+    {
+        const auto ipLocal = geo.local(globalPos);
+        const auto& localBasis = this->problem(domainI).fvGridGeometry().feCache().get(geo.type()).localBasis();
+        localBasis.evaluateFunction(ipLocal, shapeValues);
+    }
+
+    //! compute the shape function for a given point and geometry
+    template<std::size_t i, class FVGG, class Geometry, class ShapeValues, typename std::enable_if_t<FVGG::discMethod != DiscretizationMethod::box, int> = 0>
+    void getShapeValues(Dune::index_constant<i> domainI, const FVGG& fvGridGeometry, const Geometry& geo, const GlobalPosition& globalPos, ShapeValues& shapeValues)
+    {
+        DUNE_THROW(Dune::InvalidStateException, "Shape values requested for other discretization than box!");
+    }
+
     //! Clear all internal data members
     void clear()
     {
@@ -402,8 +475,35 @@ protected:
         pointSourceData_.clear();
         bulkCouplingStencils_.clear();
         lowDimCouplingStencils_.clear();
+        bulkVertexIndices_.clear();
+        lowDimVertexIndices_.clear();
+        averageDistanceToBulkCell_.clear();
 
         idCounter_ = 0;
+    }
+
+    //! compute the intersections between the two grids
+    void glueGrids()
+    {
+        const auto& bulkFvGridGeometry = problem(bulkIdx).fvGridGeometry();
+        const auto& lowDimFvGridGeometry = problem(lowDimIdx).fvGridGeometry();
+
+        // intersect the bounding box trees
+        glue_->build(bulkFvGridGeometry.boundingBoxTree(),
+                     lowDimFvGridGeometry.boundingBoxTree());
+    }
+
+    template<class Geometry, class GlobalPosition>
+    Scalar computeDistance(const Geometry& geometry, const GlobalPosition& p)
+    {
+        Scalar avgDist = 0.0;
+        const auto& quad = Dune::QuadratureRules<Scalar, bulkDim>::rule(geometry.type(), 5);
+        for (auto&& qp : quad)
+        {
+            const auto globalPos = geometry.global(qp.position());
+            avgDist += (globalPos-p).two_norm()*qp.weight();
+        }
+        return avgDist;
     }
 
     //! Return a reference to the bulk problem
@@ -414,6 +514,10 @@ protected:
     //! Return reference to point source data vector member
     std::vector<PointSourceData>& pointSourceData()
     { return pointSourceData_; }
+
+    //! Return reference to average distances to bulk cell
+    std::vector<Scalar>& averageDistanceToBulkCell()
+    { return averageDistanceToBulkCell_; }
 
     //! Return the point source if domain i
     template<std::size_t i>
@@ -435,10 +539,6 @@ protected:
     std::vector<std::vector<std::size_t>>& vertexIndices(Dune::index_constant<i> dom)
     { return (i == 0) ? bulkVertexIndices_ : lowDimVertexIndices_; }
 
-    //! Return a reference to an empty stencil
-    const CouplingStencil& emptyStencil() const
-    { return emptyStencil_; }
-
     const GlueType& glue() const
     { return *glue_; }
 
@@ -455,25 +555,12 @@ protected:
 
 private:
 
-    template<class Geometry, class GlobalPosition>
-    Scalar computeDistance_(const Geometry& geometry, const GlobalPosition& p)
-    {
-        Scalar avgDist = 0.0;
-        const auto& quad = Dune::QuadratureRules<Scalar, bulkDim>::rule(geometry.type(), 5);
-        for (auto&& qp : quad)
-        {
-            const auto globalPos = geometry.global(qp.position());
-            avgDist += (globalPos-p).two_norm()*qp.weight();
-        }
-        return avgDist;
-    }
-
     std::tuple<std::shared_ptr<Problem<0>>, std::shared_ptr<Problem<1>>> problemTuple_;
 
     //! the point source in both domains
     std::tuple<std::vector<PointSource<bulkIdx>>, std::vector<PointSource<lowDimIdx>>> pointSources_;
     mutable std::vector<PointSourceData> pointSourceData_;
-    std::vector<Scalar> averageDistanceToBulkCC_;
+    std::vector<Scalar> averageDistanceToBulkCell_;
 
     //! Stencil data
     std::vector<std::vector<std::size_t>> bulkVertexIndices_;
