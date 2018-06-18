@@ -20,8 +20,8 @@
  * \ingroup MixedDimensionFacet
  * \copydoc Dumux::FacetCouplingMapperBase
  */
-#ifndef DUMUX_FACETCOUPLING_COUPLING_MAPPER_BASE_HH
-#define DUMUX_FACETCOUPLING_COUPLING_MAPPER_BASE_HH
+#ifndef DUMUX_FACETCOUPLING_MAPPER_BASE_HH
+#define DUMUX_FACETCOUPLING_MAPPER_BASE_HH
 
 #include <vector>
 #include <unordered_map>
@@ -39,10 +39,13 @@ namespace Dumux {
  *
  * \tparam BulkFVG the d-dimensional finite-volume grid geometry
  * \tparam LowDimFVG the (d-1)-dimensional finite-volume grid geometry
- * \tparam idOffset Offset added to the mapper-local domain ids for
- *                  the access to the grid quantities in grid creator
+ * \tparam bulkDomainId The domain id of the bulk problem
+ * \tparam lowDimDomainId The domain id of the lower-dimensional problem
  */
-template<class BulkFVG, class LowDimFVG, std::size_t idOffset>
+template< class BulkFVG,
+          class LowDimFVG,
+          std::size_t bulkId,
+          std::size_t lowDimId>
 class FacetCouplingMapperBase
 {
     using BulkGridView = typename BulkFVG::GridView;
@@ -56,10 +59,6 @@ class FacetCouplingMapperBase
     static constexpr int bulkDim = BulkGridView::dimension;
     static constexpr int lowDimDim = LowDimGridView::dimension;
     static_assert(bulkDim == lowDimDim+1, "Lower-dimensional geometry is not of codim 1 w.r.t. bulk geometry!");
-
-    // domain ids of the two domains
-    static constexpr std::size_t bulkId = idOffset;
-    static constexpr std::size_t lowDimId = idOffset+1;
 
     // discretization method of the bulk domain
     static constexpr auto bulkDiscMethod = BulkFVG::discMethod;

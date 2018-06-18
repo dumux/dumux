@@ -129,8 +129,8 @@ int main (int argc, char *argv[]) try
 
     // instantiate and update mappers for all domain combinations
     Dumux::FacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry> bulkFacetMapper;
-    Dumux::FacetCouplingMapperImplementation<FacetFVGridGeometry, EdgeFVGridGeometry, /*idOffset*/1> facetEdgeMapper;
-    Dumux::FacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry, EdgeFVGridGeometry> hierarchyMapper;
+    Dumux::FacetCouplingMapper<FacetFVGridGeometry, EdgeFVGridGeometry, /*bulkDomainId*/1, /*edgeDomainId*/2> facetEdgeMapper;
+    Dumux::FacetCouplingThreeDomainMapper<BulkFVGridGeometry, FacetFVGridGeometry, EdgeFVGridGeometry> hierarchyMapper;
 
     bulkFacetMapper.update(bulkFvGeometry, facetFvGeometry, gridCreator);
     facetEdgeMapper.update(facetFvGeometry, edgeFvGeometry, gridCreator);

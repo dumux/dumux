@@ -57,7 +57,7 @@ class TestTraits
     using EdgeFVG = typename GET_PROP_TYPE(TTAG(OnePEdgeTpfa), FVGridGeometry);
 public:
     using MDTraits = Dumux::MultiDomainTraits<TTAG(OnePBulkTpfa), TTAG(OnePFacetTpfa), TTAG(OnePEdgeTpfa)>;
-    using CouplingMapper = Dumux::FacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>;
+    using CouplingMapper = Dumux::FacetCouplingThreeDomainMapper<BulkFVG, FacetFVG, EdgeFVG>;
     using CouplingManager = Dumux::FacetCouplingThreeDomainManager<MDTraits, CouplingMapper>;
 };
 

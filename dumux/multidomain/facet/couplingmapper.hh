@@ -20,8 +20,8 @@
  * \ingroup MixedDimensionFacet
  * \copydoc Dumux::FacetCouplingMapper
  */
-#ifndef DUMUX_FACETCOUPLING_COUPLING_MAPPER_HH
-#define DUMUX_FACETCOUPLING_COUPLING_MAPPER_HH
+#ifndef DUMUX_FACETCOUPLING_MAPPER_HH
+#define DUMUX_FACETCOUPLING_MAPPER_HH
 
 #include <dune/common/indices.hh>
 #include <dumux/discretization/methods.hh>
@@ -40,44 +40,16 @@ namespace Dumux {
  *
  * \tparam BulkFVG the d-dimensional finite-volume grid geometry
  * \tparam LowDimFVG the (d-1)-dimensional finite-volume grid geometry
- * \tparam idOffset Offset added to the mapper-local domain ids for
- *                  the access to the grid quantities in grid creator
+ * \tparam bulkDomainId The domain id of the bulk problem
+ * \tparam lowDimDomainId The domain id of the lower-dimensional problem
  * \tparam bulkDM Discretization method used in the bulk domain
  */
 template< class BulkFVG,
           class LowDimFVG,
-          std::size_t idOffset = 0,
+          std::size_t bulkDomainId = 0,
+          std::size_t lowDimDomainId = 1,
           DiscretizationMethod bulkDM = BulkFVG::discMethod >
-class FacetCouplingMapperImplementation;
-
-/*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
- * \brief Class that sets up and stores the coupling maps between an arbitrary
- *        number of sub-domains. These are assumed to be ordered by increasing
- *        codimension. Specializations for the cases of two and three sub-domains
- *        are provided below.
- *
- * \tparam FVG The finite volume grid geometries of the different dimensions
- */
-template<class... FVG> class FacetCouplingMapper;
-
-/*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
- * \brief Class that sets up and stores the coupling maps between two domains
- *        of dimension d and (d-1) in models where the coupling occurs across
- *        the facets of the d-dimensional domain.
- *
- * \note The implemetations are specialized depending on the discretization
- *       method in the bulk domain. We simply inherit from this one here.
- *
- * \tparam BulkFVG The d-dimensional finite-volume grid geometry
- * \tparam LowDimFVG The (d-1)-dimensional finite-volume grid geometry
- */
-template<class BulkFVG, class LowDimFVG>
-class FacetCouplingMapper<BulkFVG, LowDimFVG>
-: public FacetCouplingMapperImplementation<BulkFVG, LowDimFVG> {};
+class FacetCouplingMapper;
 
 /*!
  * \ingroup MixedDimension
@@ -89,24 +61,29 @@ class FacetCouplingMapper<BulkFVG, LowDimFVG>
  * \tparam FacetFVG The (d-1)-dimensional finite-volume grid geometry
  * \tparam EdgeFVG The (d-2)-dimensional finite-volume grid geometry
  */
-template<class BulkFVG, class FacetFVG, class EdgeFVG>
-class FacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>
-: public FacetCouplingMapperImplementation<BulkFVG, FacetFVG>
-, public FacetCouplingMapperImplementation<FacetFVG, EdgeFVG, /*idOffset*/1>
+template< class BulkFVG, class FacetFVG, class EdgeFVG,
+          std::size_t bulkDomainId = 0,
+          std::size_t facetDomainId = 1,
+          std::size_t edgeDomainId = 2 >
+class FacetCouplingThreeDomainMapper
+: public FacetCouplingMapper<BulkFVG, FacetFVG, bulkDomainId, facetDomainId>
+, public FacetCouplingMapper<FacetFVG, EdgeFVG, facetDomainId, edgeDomainId>
 {
-    using BulkFacetMapper = FacetCouplingMapperImplementation<BulkFVG, FacetFVG>;
-    using FacetEdgeMapper = FacetCouplingMapperImplementation<FacetFVG, EdgeFVG, /*idOffset*/1>;
+    using BulkFacetMapper = FacetCouplingMapper<BulkFVG, FacetFVG, bulkDomainId, facetDomainId>;
+    using FacetEdgeMapper = FacetCouplingMapper<FacetFVG, EdgeFVG, facetDomainId, edgeDomainId>;
 
 public:
     //! Export the coupling stencil type for the provided domain index
     template<std::size_t i>
-    using Stencil = typename std::conditional< (i < 2), typename BulkFacetMapper::template Stencil<i>,
-                                                        typename FacetEdgeMapper::template Stencil<i> >::type;
+    using Stencil = typename std::conditional< (i == edgeDomainId),
+                                               typename FacetEdgeMapper::template Stencil<i>,
+                                               typename BulkFacetMapper::template Stencil<i> >::type;
 
     //! Export the coupling map type for the provided domain indices
     template<std::size_t i, std::size_t j>
-    using CouplingMap = typename std::conditional< (i < 2 && j < 2), typename BulkFacetMapper::template CouplingMap<i,j>,
-                                                                     typename FacetEdgeMapper::template CouplingMap<i,j> >::type;
+    using CouplingMap = typename std::conditional< (i != edgeDomainId && j != edgeDomainId),
+                                                   typename BulkFacetMapper::template CouplingMap<i,j>,
+                                                   typename FacetEdgeMapper::template CouplingMap<i,j> >::type;
 
     /*!
      * \brief Update coupling maps.
