@@ -2,11 +2,14 @@ add_subdirectory("sequential")
 
 #install headers
 install(FILES
-adaptionhelper.hh
+boxmaterialinterfaceparams.hh
+formulation.hh
 gridadaptindicator.hh
-indices.hh
+griddatatransfer.hh
 incompressiblelocalresidual.hh
+indices.hh
 model.hh
+saturationreconstruction.hh
 volumevariables.hh
 vtkoutputfields.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p)

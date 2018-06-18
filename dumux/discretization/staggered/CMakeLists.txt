@@ -1,17 +1,15 @@
 add_subdirectory("freeflow")
 
 install(FILES
-connectivitymap.hh
 elementfacevariables.hh
-elementfluxvariables.hh
-elementvolumevariables.hh
+elementfluxvariablescache.hh
+elementsolution.hh
 facesolution.hh
 fvelementgeometry.hh
 fvgridgeometry.hh
-globalfacevariables.hh
-gridfluxvariables.hh
+gridfacevariables.hh
+gridfluxvariablescache.hh
 gridvariables.hh
-gridvolumevariables.hh
 properties.hh
 subcontrolvolumeface.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/staggered)

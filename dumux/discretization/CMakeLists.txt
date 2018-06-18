@@ -16,7 +16,6 @@ fvgridvariables.hh
 fvproperties.hh
 methods.hh
 scvandscvfiterators.hh
-scvoperator.hh
 stationaryvelocityfield.hh
 subcontrolvolumebase.hh
 subcontrolvolumefacebase.hh

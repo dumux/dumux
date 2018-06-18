@@ -1,4 +1,4 @@
 install(FILES
   inertsolidphase.hh
-  compositionalsolidstate.hh
+  compositionalsolidphase.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/solidsystems)
