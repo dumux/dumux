@@ -132,15 +132,6 @@ public:
     //! Output a scalar volume variable
     //! \param name The name of the vtk field
     //! \param f A function taking a VolumeVariables object and returning the desired scalar
-    DUNE_DEPRECATED_MSG("Will be removed after next release. Please use addVolumeVariable(function, name) instead!")
-    void addSecondaryVariable(const std::string& name, std::function<Scalar(const VolumeVariables&)>&& f)
-    {
-        volVarScalarDataInfo_.push_back(VolVarScalarDataInfo{f, name});
-    }
-
-    //! Output a scalar volume variable
-    //! \param name The name of the vtk field
-    //! \param f A function taking a VolumeVariables object and returning the desired scalar
     void addVolumeVariable(std::function<Scalar(const VolumeVariables&)>&& f, const std::string& name)
     {
         volVarScalarDataInfo_.push_back(VolVarScalarDataInfo{f, name});
