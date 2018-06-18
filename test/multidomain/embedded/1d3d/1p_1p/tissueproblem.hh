@@ -96,6 +96,7 @@ class TissueProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -114,6 +115,7 @@ public:
     {
         //read parameters from input file
         name_ = getParam<std::string>("Problem.Name") + "_3d";
+        sourceFactor_ = getParam<Scalar>("MixedDimension.SourceFactor", 1.0);
 
         exactPressure_.resize(this->fvGridGeometry().numDofs());
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
@@ -235,9 +237,73 @@ public:
         // calculate the source
         const Scalar radius = this->couplingManager().radius(source.id());
         const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
-        const Scalar sourceValue = beta*(pressure1D - pressure3D);
+        const Scalar sourceValue = beta*(pressure1D - pressure3D)*sourceFactor_;
         source = sourceValue*source.quadratureWeight()*source.integrationElement();
     }
+
+    /*!
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
+     *
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scv The sub control volume
+     *
+     * For this method, the return parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
+     */
+    template<class ElementVolumeVariables,
+             bool enable = (CouplingManager::couplingMode == EmbeddedCouplingMode::kernel),
+             std::enable_if_t<enable, int> = 0>
+    NumEqVector source(const Element &element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
+    {
+        NumEqVector source(0.0);
+
+        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto& sourceIds = this->couplingManager().bulkSourceIds(eIdx);
+        const auto& sourceWeights = this->couplingManager().bulkSourceWeights(eIdx);
+
+        for (int i = 0; i < sourceIds.size(); ++i)
+        {
+            const auto id = sourceIds[i];
+            const auto weight = sourceWeights[i];
+
+            const Scalar radius = this->couplingManager().radius(id);
+            const Scalar pressure3D = this->couplingManager().bulkPriVars(id)[Indices::pressureIdx];
+            const Scalar pressure1D = this->couplingManager().lowDimPriVars(id)[Indices::pressureIdx];
+
+            // calculate the source
+            const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
+            const Scalar sourceValue = beta*(pressure1D - pressure3D)*sourceFactor_;
+
+            source[Indices::conti0EqIdx] += sourceValue*weight;
+        }
+
+        const auto volume = scv.volume()*elemVolVars[scv].extrusionFactor();
+        source[Indices::conti0EqIdx] /= volume;
+
+        return source;
+    }
+
+    //! other methods
+    template<class ElementVolumeVariables,
+             bool enable = (CouplingManager::couplingMode == EmbeddedCouplingMode::kernel),
+             std::enable_if_t<!enable, int> = 0>
+    NumEqVector source(const Element &element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
+    { return NumEqVector(0.0); }
 
     //! evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
     //! we only need to evaluate the part of the residual that will be influence by the low dim DOF
@@ -280,7 +346,8 @@ public:
     {
         Dune::FieldVector<double, 2> xy({globalPos[0], globalPos[1]});
 
-        if (CouplingManager::couplingMode == EmbeddedCouplingMode::cylindersources)
+        if (CouplingManager::couplingMode == EmbeddedCouplingMode::cylindersources
+            || CouplingManager::couplingMode == EmbeddedCouplingMode::kernel)
         {
             const auto R = getParam<Scalar>("SpatialParams.Radius");
             if (xy.two_norm() > R)
@@ -309,6 +376,7 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto pointSources = this->scvPointSources(element, fvGeometry, elemVolVars, scv);
+                pointSources += this->source(element, fvGeometry, elemVolVars, scv);
                 pointSources *= scv.volume()*elemVolVars[scv].extrusionFactor();
                 source += pointSources;
             }
@@ -339,6 +407,7 @@ private:
 
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
+    Scalar sourceFactor_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
 };
