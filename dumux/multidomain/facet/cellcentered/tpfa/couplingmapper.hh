@@ -41,21 +41,21 @@ namespace Dumux {
  *
  * \tparam BulkFVG The d-dimensional finite-volume grid geometry
  * \tparam LowDimFVG The (d-1)-dimensional finite-volume grid geometry
- * \tparam bulkDomainId The domain id of the bulk problem
- * \tparam lowDimDomainId The domain id of the lower-dimensional problem
+ * \tparam bulkId The domain id of the bulk problem
+ * \tparam lowDimId The domain id of the lower-dimensional problem
  */
-template<class BulkFVG, class LowDimFVG, std::size_t bulkDomainId, std::size_t lowDimDomainId>
-class FacetCouplingMapper<BulkFVG, LowDimFVG, bulkDomainId, lowDimDomainId, DiscretizationMethod::cctpfa>
-: public virtual FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkDomainId, lowDimDomainId>
+template<class BulkFVG, class LowDimFVG, std::size_t bulkId, std::size_t lowDimId>
+class FacetCouplingMapper<BulkFVG, LowDimFVG, bulkId, lowDimId, DiscretizationMethod::cctpfa>
+: public virtual FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkId, lowDimId>
 {
-    using ParentType = FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkDomainId, lowDimDomainId>;
+    using ParentType = FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkId, lowDimId>;
     using LowDimElement = typename LowDimFVG::GridView::template Codim<0>::Entity;
 
-    // convenience definitions of domain ids
-    static constexpr auto bulkId = Dune::index_constant< bulkDomainId >();
-    static constexpr auto lowDimId = Dune::index_constant< lowDimDomainId >();
-
 public:
+    //! export domain ids
+    static constexpr auto bulkDomainId = Dune::index_constant< bulkId >();
+    static constexpr auto facetDomainId = Dune::index_constant< lowDimId >();
+
     /*!
      * \brief Update coupling maps. This is the standard
      *        interface required by any mapper implementation.
@@ -79,7 +79,7 @@ public:
             using BulkIndexType = typename BulkFVG::GridView::IndexSet::IndexType;
 
             const auto lowDimElemIdx = lowDimFvGridGeometry.elementMapper().index(lowDimElement);
-            auto& lowDimData = this->couplingMap_(lowDimId, bulkId)[lowDimElemIdx];
+            auto& lowDimData = this->couplingMap_(facetDomainId, bulkDomainId)[lowDimElemIdx];
 
             // find the scvfs in the embedments coinciding with the low dim element
             // since the bulk domain uses tpfa, there is always only going to be one scvf
@@ -126,7 +126,7 @@ public:
                     DUNE_THROW(Dune::InvalidStateException, "Could not find coupling scvf in embedment");
 
                 // add each dof in the low dim element to coupling stencil of the bulk element
-                auto& bulkData = this->couplingMap_(bulkId, lowDimId)[bulkElemIdx];
+                auto& bulkData = this->couplingMap_(bulkDomainId, facetDomainId)[bulkElemIdx];
                 const auto lowDimElementDofs = LowDimFVG::discMethod == DiscretizationMethod::cctpfa
                                                ? std::vector<LowDimIndexType>( {lowDimElemIdx} )
                                                : this->extractNodalDofs_(lowDimElement, lowDimFvGridGeometry);
@@ -162,7 +162,7 @@ public:
                 cs.erase( std::unique(cs.begin(), cs.end()), cs.end() );
             };
 
-            auto& bulkCouplingData = this->couplingMap_(bulkId, lowDimId);
+            auto& bulkCouplingData = this->couplingMap_(bulkDomainId, facetDomainId);
             std::for_each(bulkCouplingData.begin(), bulkCouplingData.end(), makeStencilUnique);
         }
     }

@@ -62,26 +62,31 @@ class FacetCouplingMapper;
  * \tparam EdgeFVG The (d-2)-dimensional finite-volume grid geometry
  */
 template< class BulkFVG, class FacetFVG, class EdgeFVG,
-          std::size_t bulkDomainId = 0,
-          std::size_t facetDomainId = 1,
-          std::size_t edgeDomainId = 2 >
+          std::size_t bulkId = 0,
+          std::size_t facetId = 1,
+          std::size_t edgeId = 2 >
 class FacetCouplingThreeDomainMapper
-: public FacetCouplingMapper<BulkFVG, FacetFVG, bulkDomainId, facetDomainId>
-, public FacetCouplingMapper<FacetFVG, EdgeFVG, facetDomainId, edgeDomainId>
+: public FacetCouplingMapper<BulkFVG, FacetFVG, bulkId, facetId>
+, public FacetCouplingMapper<FacetFVG, EdgeFVG, facetId, edgeId>
 {
-    using BulkFacetMapper = FacetCouplingMapper<BulkFVG, FacetFVG, bulkDomainId, facetDomainId>;
-    using FacetEdgeMapper = FacetCouplingMapper<FacetFVG, EdgeFVG, facetDomainId, edgeDomainId>;
+    using BulkFacetMapper = FacetCouplingMapper<BulkFVG, FacetFVG, bulkId, facetId>;
+    using FacetEdgeMapper = FacetCouplingMapper<FacetFVG, EdgeFVG, facetId, edgeId>;
 
 public:
+    //! export domain ids
+    static constexpr auto bulkDomainId = Dune::index_constant< bulkId >();
+    static constexpr auto facetDomainId = Dune::index_constant< facetId >();
+    static constexpr auto edgeDomainId = Dune::index_constant< edgeId >();
+
     //! Export the coupling stencil type for the provided domain index
     template<std::size_t i>
-    using Stencil = typename std::conditional< (i == edgeDomainId),
+    using Stencil = typename std::conditional< (i == edgeId),
                                                typename FacetEdgeMapper::template Stencil<i>,
                                                typename BulkFacetMapper::template Stencil<i> >::type;
 
     //! Export the coupling map type for the provided domain indices
     template<std::size_t i, std::size_t j>
-    using CouplingMap = typename std::conditional< (i != edgeDomainId && j != edgeDomainId),
+    using CouplingMap = typename std::conditional< (i != edgeId && j != edgeId),
                                                    typename BulkFacetMapper::template CouplingMap<i,j>,
                                                    typename FacetEdgeMapper::template CouplingMap<i,j> >::type;
 

@@ -42,19 +42,15 @@ namespace Dumux {
  *
  * \tparam BulkFVG The d-dimensional finite-volume grid geometry
  * \tparam LowDimFVG The (d-1)-dimensional finite-volume grid geometry
- * \tparam bulkDomainId The domain id of the bulk problem
- * \tparam lowDimDomainId The domain id of the lower-dimensional problem
+ * \tparam bulkId The domain id of the bulk problem
+ * \tparam lowDimId The domain id of the lower-dimensional problem
  */
-template<class BulkFVG, class LowDimFVG, std::size_t bulkDomainId, std::size_t lowDimDomainId>
-class FacetCouplingMapper<BulkFVG, LowDimFVG, bulkDomainId, lowDimDomainId, DiscretizationMethod::box>
-: public virtual FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkDomainId, lowDimDomainId>
+template<class BulkFVG, class LowDimFVG, std::size_t bulkId, std::size_t lowDimId>
+class FacetCouplingMapper<BulkFVG, LowDimFVG, bulkId, lowDimId, DiscretizationMethod::box>
+: public virtual FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkId, lowDimId>
 {
-    using ParentType = FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkDomainId, lowDimDomainId>;
+    using ParentType = FacetCouplingMapperBase<BulkFVG, LowDimFVG, bulkId, lowDimId>;
     using LowDimElement = typename LowDimFVG::GridView::template Codim<0>::Entity;
-
-    // convenience definitions of domain ids
-    static constexpr auto bulkId = Dune::index_constant< bulkDomainId >();
-    static constexpr auto lowDimId = Dune::index_constant< lowDimDomainId >();
 
     // dimensions of the two grids
     using BulkGridView = typename BulkFVG::GridView;
@@ -63,6 +59,10 @@ class FacetCouplingMapper<BulkFVG, LowDimFVG, bulkDomainId, lowDimDomainId, Disc
     static constexpr int lowDimDim = LowDimGridView::dimension;
 
 public:
+    //! export domain ids
+    static constexpr auto bulkDomainId = Dune::index_constant< bulkId >();
+    static constexpr auto facetDomainId = Dune::index_constant< lowDimId >();
+
     /*!
      * \brief Update coupling maps. This is the standard
      *        interface required by any mapper implementation.
@@ -77,7 +77,7 @@ public:
                 const GridCreator& gridCreator)
     {
         // forward to update function with instantiated vertex adapter
-        using VertexAdapter = FacetGridVertexAdapter<GridCreator, bulkDomainId, lowDimDomainId>;
+        using VertexAdapter = FacetGridVertexAdapter<GridCreator, bulkDomainId, facetDomainId>;
         update(bulkFvGridGeometry, lowDimFvGridGeometry, gridCreator, VertexAdapter{gridCreator});
     }
     /*!
@@ -108,7 +108,7 @@ public:
             using BulkReferenceElements = Dune::ReferenceElements<typename BulkGridView::ctype, bulkDim>;
 
             const auto lowDimElemIdx = lowDimFvGridGeometry.elementMapper().index(lowDimElement);
-            auto& lowDimData = this->couplingMap_(lowDimId, bulkId)[lowDimElemIdx];
+            auto& lowDimData = this->couplingMap_(facetDomainId, bulkDomainId)[lowDimElemIdx];
 
             // determine corner indices (in bulk grid indices)
             const auto& eg = lowDimElement.geometry();
@@ -179,7 +179,7 @@ public:
                     DUNE_THROW(Dune::InvalidStateException, "Could not find all coupling scvfs in the bulk element");
 
                 // add each dof in the low dim element to coupling stencil of the bulk element
-                auto& bulkData = this->couplingMap_(bulkId, lowDimId)[bulkElemIdx];
+                auto& bulkData = this->couplingMap_(bulkDomainId, facetDomainId)[bulkElemIdx];
                 const auto lowDimElementDofs = LowDimFVG::discMethod == DiscretizationMethod::cctpfa
                                                ? std::vector<LowDimIndexType>({lowDimElemIdx})
                                                : this->extractNodalDofs_(lowDimElement, lowDimFvGridGeometry);
@@ -216,13 +216,13 @@ public:
             cs.erase( std::unique(cs.begin(), cs.end()), cs.end() );
         };
 
-        auto& lowDimCouplingData = this->couplingMap_(lowDimId, bulkId);
+        auto& lowDimCouplingData = this->couplingMap_(facetDomainId, bulkDomainId);
         std::for_each(lowDimCouplingData.begin(), lowDimCouplingData.end(), makeStencilUnique);
 
         // bulk coupling stencil is only non-unique if box is used
         if (LowDimFVG::discMethod == DiscretizationMethod::box)
         {
-            auto& bulkCouplingData = this->couplingMap_(bulkId, lowDimId);
+            auto& bulkCouplingData = this->couplingMap_(bulkDomainId, facetDomainId);
             std::for_each(bulkCouplingData.begin(), bulkCouplingData.end(), makeStencilUnique);
         }
     }
