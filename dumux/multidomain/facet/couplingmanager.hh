@@ -75,52 +75,21 @@ void makeInterpolatedVolVars(VolumeVariables& volVars,
  *        and (d-1) for models considering coupling across the bulk domain element facets.
  *        The implementations are specificto the discretization method used in the bulk
  *        domain, which is extracted automatically from the grid geometry corresponding
- *        to the provided id offset. Implementations for the different methods  have to be
- *        provided and included at the end of this file.
+ *        to the provided bulk domain id. Implementations for the different methods have
+ *        to be provided and included at the end of this file.
  *
  * \tparam MDTraits The multidomain traits containing the types on all sub-domains
  * \tparam CouplingMapper Class containing maps on the coupling between dofs of different grids
- * \tparam idOffset Offset added to the mapper-local domain ids for
- *                  the access to the grid quantities in grid creator
+ * \tparam bulkDomainId The domain id of the bulk problem
+ * \tparam lowDimDomainId The domain id of the lower-dimensional problem
  * \tparam bulkDM Discretization method used in the bulk domain
  */
 template< class MDTraits,
           class CouplingMapper,
-          std::size_t idOffset = 0,
-          DiscretizationMethod bulkDM = GET_PROP_TYPE(typename MDTraits::template SubDomainTypeTag<idOffset>, FVGridGeometry)::discMethod >
-class FacetCouplingManagerImplementation;
-
-/*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
- * \brief Class that handles the coupling between an arbitrary number of sub domains
- *        in models where the coupling between d-dimensional  and (d-1)-dimensional
- *        domains occurs across the facets of the d-dimensional domain. The number
- *        of sub-domains involved is deduced from the provided multidomain traits
- *        class and specializations for the cases of two and three domains are provided below.
- *
- * \tparam MDTraits The multidomain traits containing the types on all sub-domains
- * \tparam CouplingMapper Class containing maps on the coupling between dofs of different grids
- */
-template< class MDTraits,
-          class CouplingMapper,
-          std::size_t numSubDomains = MDTraits::numSubDomains >
+          std::size_t bulkDomainId = 0,
+          std::size_t lowDimDomainId = 1,
+          DiscretizationMethod bulkDM = GET_PROP_TYPE(typename MDTraits::template SubDomainTypeTag<bulkDomainId>, FVGridGeometry)::discMethod >
 class FacetCouplingManager;
-
-/*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
- * \brief Class that handles the coupling between two sub-domains in models where
- *        the coupling between the two occurs across the facets of the higher-
- *        dimensional domain. Here, we simply inherit from the discretization
- *        method-specific implementation.
- *
- * \tparam MDTraits The multidomain traits containing the types on all sub-domains
- * \tparam CouplingMapper Class containing maps on the coupling between dofs of different grids
- */
-template< class MDTraits, class CouplingMapper >
-class FacetCouplingManager<MDTraits, CouplingMapper, /*numSubDomains*/2>
-: public FacetCouplingManagerImplementation<MDTraits, CouplingMapper> {};
 
 /*!
  * \ingroup MixedDimension
@@ -131,19 +100,26 @@ class FacetCouplingManager<MDTraits, CouplingMapper, /*numSubDomains*/2>
  *
  * \tparam MDTraits The multidomain traits containing the types on all sub-domains
  * \tparam CouplingMapper Class containing maps on the coupling between dofs of different grids
+ * \tparam bulkDomainId The domain id of the d-dimensional bulk problem
+ * \tparam facetDomainId The domain id of the (d-1)-dimensional problem living on the bulk grid facets
+ * \tparam facetDomainId The domain id of the (d-2)-dimensional problem living on the bulk grid edges
  */
-template< class MDTraits, class CouplingMapper >
-class FacetCouplingManager<MDTraits, CouplingMapper, /*numSubDomains*/3>
-: public FacetCouplingManagerImplementation<MDTraits, CouplingMapper>
-, public FacetCouplingManagerImplementation<MDTraits, CouplingMapper, /*idOffset*/1>
+template< class MDTraits,
+          class CouplingMapper,
+          std::size_t bulkDomainId = 0,
+          std::size_t facetDomainId = 1,
+          std::size_t edgeDomainId = 2 >
+class FacetCouplingThreeDomainManager
+: public FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, facetDomainId>
+, public FacetCouplingManager<MDTraits, CouplingMapper, facetDomainId, edgeDomainId>
 {
-    using BulkFacetManager = FacetCouplingManagerImplementation<MDTraits, CouplingMapper>;
-    using FacetEdgeManager = FacetCouplingManagerImplementation<MDTraits, CouplingMapper, /*idOffset*/1>;
+    using BulkFacetManager = FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, facetDomainId>;
+    using FacetEdgeManager = FacetCouplingManager<MDTraits, CouplingMapper, facetDomainId, edgeDomainId>;
 
     // convenience aliases and instances of the domain ids
-    using BulkIdType = typename MDTraits::template DomainIdx<0>;
-    using FacetIdType = typename MDTraits::template DomainIdx<1>;
-    using EdgeIdType = typename MDTraits::template DomainIdx<2>;
+    using BulkIdType = typename MDTraits::template DomainIdx<bulkDomainId>;
+    using FacetIdType = typename MDTraits::template DomainIdx<facetDomainId>;
+    using EdgeIdType = typename MDTraits::template DomainIdx<edgeDomainId>;
     static constexpr auto bulkId = BulkIdType();
     static constexpr auto facetId = FacetIdType();
     static constexpr auto edgeId = EdgeIdType();
@@ -167,10 +143,9 @@ class FacetCouplingManager<MDTraits, CouplingMapper, /*numSubDomains*/3>
     template<std::size_t id> using ElementFluxVariablesCache = typename GridVariables<id>::GridFluxVariablesCache::LocalView;
 
 public:
-
     //! types used for coupling stencils
     template<std::size_t i, std::size_t j>
-    using CouplingStencilType = typename std::conditional< (j > 1),
+    using CouplingStencilType = typename std::conditional< (j == edgeDomainId),
                                                             typename FacetEdgeManager::template CouplingStencilType<i, j>,
                                                             typename BulkFacetManager::template CouplingStencilType<i, j> >::type;
 
