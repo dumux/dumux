@@ -109,6 +109,7 @@ public:
         name_ = getParam<std::string>("Problem.Name") + "_1d";
         p_in_ = getParam<Scalar>("BoundaryConditions1D.PressureInput");
         delta_p_ = getParam<Scalar>("BoundaryConditions1D.DeltaPressure");
+        sourceFactor_ = getParam<Scalar>("MixedDimension.SourceFactor", 1.0);
         exactPressure_.resize(this->fvGridGeometry().numDofs());
 
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
@@ -243,13 +244,13 @@ public:
     {
         // compute source at every integration point
         // const auto& bulkVolVars = this->couplingManager().bulkVolVars(source.id());
-        const Scalar pressure1D = elemVolVars[scv].pressure();
+        const Scalar pressure1D = this->couplingManager().lowDimPriVars(source.id())[Indices::pressureIdx];
         const Scalar pressure3D = this->couplingManager().bulkPriVars(source.id())[Indices::pressureIdx];
 
         // calculate the source
         const Scalar radius = this->couplingManager().radius(source.id());
         const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
-        const Scalar sourceValue = beta*(pressure3D - pressure1D);//*bulkVolVars.density();
+        const Scalar sourceValue = beta*(pressure3D - pressure1D)*sourceFactor_;//*bulkVolVars.density();
 
         source = sourceValue*source.quadratureWeight()*source.integrationElement();
     }
@@ -342,6 +343,7 @@ private:
 
     Scalar p_in_;
     Scalar delta_p_;
+    Scalar sourceFactor_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
 };

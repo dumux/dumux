@@ -1,6 +1,8 @@
 [MixedDimension]
 NumCircleSegments = 100
-IntegrationOrder = 3
+IntegrationOrder = 2
+KernelWidth = 0.1
+SourceFactor = 1.0
 
 [TimeLoop]
 DtInitial = 1 # [s]
@@ -31,10 +33,7 @@ LiquidDensity = 1 # [kg/m^3]
 
 [SpatialParams]
 PermeabilityTissue = 1 # [m^2]
-Radius = 0.3 # [m]
-
-[Vtk]
-AddVelocity = false
+Radius = 0.01 # [m]
 
 [BoundaryConditions1D]
 PressureInput = 2.0
@@ -46,3 +45,7 @@ MaxSteps = 10
 
 [LinearSolver]
 ResidualReduction = 1e-20
+
+[Assembly.NumericDifference]
+PriVarMagnitude = 1e5
+BaseEpsilon = 1e5
