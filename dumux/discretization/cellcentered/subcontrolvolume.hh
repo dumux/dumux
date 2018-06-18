@@ -67,18 +67,17 @@ class CCSubControlVolume
 
     // In the following, the correct parameter type for the geometry passed to
     // the constructor below is determined. It depends upon whether the
-    // `geometry()` method of the `Element` returns a copy or a const reference.
+    // `geometry()` method of the `Element` returns a copy or a reference.
     // In the first case, the correct type is `Geometry&&`, while it is
     // `Geometry` for the second case. Although returning by copy is prescribed
     // by the Dune interface, the grid implementation CpGrid uses a const
     // reference as of Opm 2018.04. Once this is fixed, the parameter type can
-    // be hardcoded to `Geometry&&`.
+    // be hardcoded to `Geometry&&` again.
     using Element = typename GV::template Codim<0>::Entity;
-    using GeometryRT = typename std::result_of<decltype(&Element::geometry)(Element)>::type;
+    using GeometryRT = decltype(std::declval<Element>().geometry());
     using GeometryRTWithoutRef = typename std::remove_reference<GeometryRT>::type;
     static constexpr bool grtIsReference = !std::is_same<GeometryRT, GeometryRTWithoutRef>::value;
-    static constexpr bool grtIsConst = std::is_const<GeometryRTWithoutRef>::value;
-    using GeometryParamType = std::conditional_t<grtIsReference && grtIsConst, Geometry, Geometry&&>;
+    using GeometryParamType = std::conditional_t<grtIsReference, Geometry, Geometry&&>;
 public:
     //! export the type used for global coordinates
     using GlobalPosition = typename T::GlobalPosition;
