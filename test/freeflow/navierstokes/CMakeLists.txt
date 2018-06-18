@@ -1,6 +1,6 @@
 add_input_file_links()
 dune_symlink_to_source_files(FILES convergence.sh)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 add_executable(test_closedsystem EXCLUDE_FROM_ALL test_closedsystem.cc)
 
 dune_add_test(NAME test_navierstokes_liddrivencavity_re1
