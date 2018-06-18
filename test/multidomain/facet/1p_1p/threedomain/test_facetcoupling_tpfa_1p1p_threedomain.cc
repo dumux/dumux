@@ -58,7 +58,7 @@ class TestTraits
 public:
     using MDTraits = Dumux::MultiDomainTraits<TTAG(OnePBulkTpfa), TTAG(OnePFacetTpfa), TTAG(OnePEdgeTpfa)>;
     using CouplingMapper = Dumux::FacetCouplingMapper<BulkFVG, FacetFVG, EdgeFVG>;
-    using CouplingManager = Dumux::FacetCouplingManager<MDTraits, CouplingMapper>;
+    using CouplingManager = Dumux::FacetCouplingThreeDomainManager<MDTraits, CouplingMapper>;
 };
 
 // set the coupling manager property in the sub-problems

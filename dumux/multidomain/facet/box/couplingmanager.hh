@@ -20,7 +20,7 @@
  * \file
  * \ingroup MixedDimension
  * \ingroup MixedDimensionFacet
- * \copydoc Dumux::FacetCouplingManagerImplementation
+ * \copydoc Dumux::FacetCouplingManager
  */
 #ifndef DUMUX_BOX_FACETCOUPLING_MANAGER_HH
 #define DUMUX_BOX_FACETCOUPLING_MANAGER_HH
@@ -44,21 +44,18 @@ namespace Dumux {
  *
  * \tparam MDTraits The multidomain traits containing the types on all sub-domains
  * \tparam CouplingMapper Class containing maps on the coupling between dofs of different grids
- * \tparam idOffset The offset to be used for the domain ids. This is used to specify
- *                  which of the present grids on the hierarchy are to be managed by this
- *                  class. For instance, if a bulk, a facet and an edge grid is present and
- *                  you want to use this coupling manager for the coupling between the facet
- *                  and the edge grid, you should provide an offet of 1.
+ * \tparam bulkDomainId The domain id of the bulk problem
+ * \tparam lowDimDomainId The domain id of the lower-dimensional problem
  */
-template<class MDTraits, class CouplingMapper, std::size_t idOffset>
-class FacetCouplingManagerImplementation<MDTraits, CouplingMapper, idOffset, DiscretizationMethod::box>
+template<class MDTraits, class CouplingMapper, std::size_t bulkDomainId, std::size_t lowDimDomainId>
+class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainId, DiscretizationMethod::box>
 : public virtual CouplingManager< MDTraits >
 {
     using ParentType = CouplingManager< MDTraits >;
 
     // convenience aliases and instances of the two domain ids
-    using BulkIdType = typename MDTraits::template DomainIdx<idOffset+0>;
-    using LowDimIdType = typename MDTraits::template DomainIdx<idOffset+1>;
+    using BulkIdType = typename MDTraits::template DomainIdx<bulkDomainId>;
+    using LowDimIdType = typename MDTraits::template DomainIdx<lowDimDomainId>;
     static constexpr auto bulkId = BulkIdType();
     static constexpr auto lowDimId = LowDimIdType();
 
@@ -674,17 +671,17 @@ public:
 
     //! Return a const reference to one of the problems
     template<std::size_t id, std::enable_if_t<(id == bulkId || id == lowDimId), int> = 0>
-    const Problem<id>& problem() const { return *std::get<id-idOffset>(problemTuple_); }
+    const Problem<id>& problem() const { return *std::get<(id == bulkId ? 0 : 1)>(problemTuple_); }
 
     //! Return a reference to one of the problems
     template<std::size_t id, std::enable_if_t<(id == bulkId || id == lowDimId), int> = 0>
-    Problem<id>& problem() { return *std::get<id-idOffset>(problemTuple_); }
+    Problem<id>& problem() { return *std::get<(id == bulkId ? 0 : 1)>(problemTuple_); }
 
     //! Empty stencil to be returned for elements that aren't coupled
     template<std::size_t id, std::enable_if_t<(id == bulkId || id == lowDimId), int> = 0>
     const typename CouplingMapper::template Stencil<id>&
     getEmptyStencil(Dune::index_constant<id>) const
-    { return std::get<id-idOffset>(emptyStencilTuple_); }
+    { return std::get<(id == bulkId ? 0 : 1)>(emptyStencilTuple_); }
 
 private:
     //! evaluates the bulk-facet exchange fluxes for a given facet element
