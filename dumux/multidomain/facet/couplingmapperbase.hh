@@ -39,8 +39,8 @@ namespace Dumux {
  *
  * \tparam BulkFVG the d-dimensional finite-volume grid geometry
  * \tparam LowDimFVG the (d-1)-dimensional finite-volume grid geometry
- * \tparam bulkDomainId The domain id of the bulk problem
- * \tparam lowDimDomainId The domain id of the lower-dimensional problem
+ * \tparam bulkId The index of the bulk grid within the hierarchy of grids
+ * \tparam lowDimId The index of the facet grid within the hierarchy of grids
  */
 template< class BulkFVG,
           class LowDimFVG,
@@ -119,14 +119,27 @@ class FacetCouplingMapperBase
     using LowDimStencil = std::vector<LowDimIndexType>;
     using BulkStencil = std::vector<BulkIndexType>;
 
+    //! The grid id type
+    template<std::size_t id>
+    using GridIdType = Dune::index_constant<id>;
+
 public:
-    //! Export the stencil type for the provided domain index
+    //! Export grid ids
+    static constexpr auto bulkGridId = GridIdType<bulkId>();
+    static constexpr auto facetGridId = GridIdType<lowDimId>();
+
+    //! Export the stencil type for the provided grid index
     template<std::size_t id>
     using Stencil = typename std::conditional<id == bulkId, BulkStencil, LowDimStencil>::type;
 
     //! Export the coupling map type
     template<std::size_t i, std::size_t j>
     using CouplingMap = typename std::conditional<i == bulkId, BulkCouplingMap, LowDimCouplingMap>::type;
+
+    //! Allow retrievment of grid id for a given grid dimension
+    template<int dim>
+    static constexpr GridIdType< (dim == bulkDim ? bulkId : lowDimId) > gridId()
+    { return GridIdType< (dim == bulkDim ? bulkId : lowDimId) >(); }
 
     /*!
      * \brief Update coupling maps. This is the standard interface
@@ -139,13 +152,11 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Implementation does not provide an update() function."); }
 
     //! returns coupling data for bulk -> lowDim
-    const BulkCouplingMap& couplingMap(Dune::index_constant<bulkId> bulkDomainId,
-                                       Dune::index_constant<lowDimId> lowDimDomainId) const
+    const BulkCouplingMap& couplingMap(GridIdType<bulkId>, GridIdType<lowDimId>) const
     { return bulkCouplingData_; }
 
     //! returns coupling data for lowDim -> bulk
-    const LowDimCouplingMap& couplingMap(Dune::index_constant<lowDimId> lowDimDomainId,
-                                         Dune::index_constant<bulkId> bulkDomainId) const
+    const LowDimCouplingMap& couplingMap(GridIdType<lowDimId>, GridIdType<bulkId>) const
     { return lowDimCouplingData_; }
 
 protected:
@@ -210,13 +221,11 @@ protected:
     }
 
     //! returns non-const coupling data for bulk -> lowDim
-    BulkCouplingMap& couplingMap_(Dune::index_constant<bulkId> bulkDomainId,
-                                  Dune::index_constant<lowDimId> lowDimDomainId)
+    BulkCouplingMap& couplingMap_(GridIdType<bulkId>, GridIdType<lowDimId>)
     { return bulkCouplingData_; }
 
     //! returns non-const coupling data for lowDim -> bulk
-    LowDimCouplingMap& couplingMap_(Dune::index_constant<lowDimId> lowDimDomainId,
-                                    Dune::index_constant<bulkId> bulkDomainId)
+    LowDimCouplingMap& couplingMap_(GridIdType<lowDimId>, GridIdType<bulkId>)
     { return lowDimCouplingData_; }
 
 private:

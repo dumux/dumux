@@ -40,14 +40,14 @@ namespace Dumux {
  *
  * \tparam BulkFVG the d-dimensional finite-volume grid geometry
  * \tparam LowDimFVG the (d-1)-dimensional finite-volume grid geometry
- * \tparam bulkDomainId The domain id of the bulk problem
- * \tparam lowDimDomainId The domain id of the lower-dimensional problem
+ * \tparam bulkId The index of the bulk grid within the hierarchy of grids
+ * \tparam lowDimId The index of the facet grid within the hierarchy of grids
  * \tparam bulkDM Discretization method used in the bulk domain
  */
 template< class BulkFVG,
           class LowDimFVG,
-          std::size_t bulkDomainId = 0,
-          std::size_t lowDimDomainId = 1,
+          std::size_t bulkId = 0,
+          std::size_t lowDimId = 1,
           DiscretizationMethod bulkDM = BulkFVG::discMethod >
 class FacetCouplingMapper;
 
@@ -60,6 +60,9 @@ class FacetCouplingMapper;
  * \tparam BulkFVG The d-dimensional finite-volume grid geometry
  * \tparam FacetFVG The (d-1)-dimensional finite-volume grid geometry
  * \tparam EdgeFVG The (d-2)-dimensional finite-volume grid geometry
+ * \tparam bulkId The index of the bulk grid within the hierarchy of grids
+ * \tparam facetId The index of the facet grid within the hierarchy of grids
+ * \tparam edgeId The index of the edge grid within the hierarchy of grids
  */
 template< class BulkFVG, class FacetFVG, class EdgeFVG,
           std::size_t bulkId = 0,
@@ -72,11 +75,20 @@ class FacetCouplingThreeDomainMapper
     using BulkFacetMapper = FacetCouplingMapper<BulkFVG, FacetFVG, bulkId, facetId>;
     using FacetEdgeMapper = FacetCouplingMapper<FacetFVG, EdgeFVG, facetId, edgeId>;
 
+    // grid dimensions
+    static constexpr int bulkDim = BulkFVG::GridView::dimension;
+    static constexpr int facetDim = FacetFVG::GridView::dimension;
+    static constexpr int edgeDim = EdgeFVG::GridView::dimension;
+
+    //! The grid id type
+    template<std::size_t id>
+    using GridIdType = Dune::index_constant<id>;
+
 public:
     //! export domain ids
-    static constexpr auto bulkDomainId = Dune::index_constant< bulkId >();
-    static constexpr auto facetDomainId = Dune::index_constant< facetId >();
-    static constexpr auto edgeDomainId = Dune::index_constant< edgeId >();
+    static constexpr auto bulkGridId = Dune::index_constant< bulkId >();
+    static constexpr auto facetGridId = Dune::index_constant< facetId >();
+    static constexpr auto edgeGridId = Dune::index_constant< edgeId >();
 
     //! Export the coupling stencil type for the provided domain index
     template<std::size_t i>
@@ -89,6 +101,11 @@ public:
     using CouplingMap = typename std::conditional< (i != edgeId && j != edgeId),
                                                    typename BulkFacetMapper::template CouplingMap<i,j>,
                                                    typename FacetEdgeMapper::template CouplingMap<i,j> >::type;
+
+    //! Allow retrievment of grid id for a given grid dimension
+    template<int dim>
+    static constexpr GridIdType< ( dim == bulkDim ? bulkId : (dim == facetDim ? facetId : edgeId) ) > gridId()
+    { return GridIdType< ( dim == bulkDim ? bulkId : (dim == facetDim ? facetId : edgeId) ) >(); }
 
     /*!
      * \brief Update coupling maps.
