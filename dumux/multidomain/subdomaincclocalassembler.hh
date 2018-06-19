@@ -121,7 +121,7 @@ public:
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& i)
         {
-            if (i != domainId)
+            if (i != id)
                 this->assembleJacobianCoupling(i, jacRow, res[globalI], gridVariables);
         });
     }
