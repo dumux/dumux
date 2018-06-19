@@ -84,6 +84,12 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     template<std::size_t id> using GridFluxVariablesCache = typename GridVariables<id>::GridFluxVariablesCache;
     template<std::size_t id> using ElementFluxVariablesCache = typename GridFluxVariablesCache<id>::LocalView;
 
+    // extract corresponding grid ids from the mapper
+    static constexpr int bulkDim = GridView<bulkDomainId>::dimension;
+    static constexpr int lowDimDim = GridView<lowDimDomainId>::dimension;
+    static constexpr auto bulkGridId = CouplingMapper::template gridId<bulkDim>();
+    static constexpr auto lowDimGridId = CouplingMapper::template gridId<lowDimDim>();
+
     /*!
      * \brief The coupling context of the bulk domain. Contains all data of the lower-
      *        dimensional domain which is required for the computation of a bulk element
@@ -121,7 +127,6 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
         // For dim == dimworld in bulk domain, we know there is always going
         // to be two bulk neighbors for a lower-dimensional element. Choose
         // the container type depending on this
-        static constexpr int bulkDim = GridView<bulkId>::dimension;
         static constexpr int bulkDimWorld = GridView<bulkId>::dimensionworld;
         static constexpr bool bulkIsSurfaceGrid = bulkDim != bulkDimWorld;
 
@@ -169,7 +174,7 @@ public:
 
     //! types used for coupling stencils
     template<std::size_t i, std::size_t j = (i == bulkId) ? lowDimId : bulkId>
-    using CouplingStencilType = typename CouplingMapper::template Stencil<j>;
+    using CouplingStencilType = typename CouplingMapper::template Stencil< CouplingMapper::template gridId<GridView<j>::dimension>() >;
 
     //! the type of the solution vector
     using SolutionVector = typename MDTraits::SolutionVector;
@@ -196,7 +201,7 @@ public:
         ParentType::updateSolution(curSol);
 
         // determine all bulk elements that couple to low dim elements
-        const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
+        const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
         bulkElemIsCoupled_.resize(bulkProblem->fvGridGeometry().gridView().size(0), false);
         std::for_each( bulkMap.begin(),
                        bulkMap.end(),
@@ -214,7 +219,7 @@ public:
 
         if (bulkElemIsCoupled_[eIdx])
         {
-            const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
+            const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
             auto it = map.find(eIdx);
             assert(it != map.end());
             return it->second.couplingStencil;
@@ -232,7 +237,7 @@ public:
     {
         const auto eIdx = problem<lowDimId>().fvGridGeometry().elementMapper().index(element);
 
-        const auto& map = couplingMapperPtr_->couplingMap(lowDimId, bulkId);
+        const auto& map = couplingMapperPtr_->couplingMap(lowDimGridId, bulkGridId);
         auto it = map.find(eIdx);
         if (it != map.end()) return it->second.couplingStencil;
         else return getEmptyStencil(bulkId);
@@ -264,7 +269,7 @@ public:
         assert(bulkContext_.isSet);
         assert(bulkElemIsCoupled_[eIdx]);
 
-        const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
+        const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
         const auto& couplingData = map.find(eIdx)->second;
 
         // search the low dim element idx this scvf is embedded in
@@ -305,7 +310,7 @@ public:
                          LowDimIdType,
                          IndexType<lowDimId> dofIdxGlobalJ)
     {
-        const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
+        const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
 
         assert(bulkContext_.isSet);
         assert(bulkElemIsCoupled_[bulkContext_.elementIdx]);
@@ -364,13 +369,13 @@ public:
         assert(problem<lowDimId>().fvGridGeometry().elementMapper().index(element) == lowDimContext_.elementIdx);
 
         NumEqVector<lowDimId> sources(0.0);
-        const auto& map = couplingMapperPtr_->couplingMap(lowDimId, bulkId);
+        const auto& map = couplingMapperPtr_->couplingMap(lowDimGridId, bulkGridId);
         auto it = map.find(lowDimContext_.elementIdx);
         if (it == map.end())
             return sources;
 
         assert(lowDimContext_.isSet);
-        const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
+        const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
         for (unsigned int i = 0; i < it->second.embedments.size(); ++i)
         {
             const auto& embedment = it->second.embedments[i];
@@ -413,7 +418,7 @@ public:
         // if element is coupled, actually set the context
         if (bulkElemIsCoupled_[bulkElemIdx])
         {
-            const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
+            const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
 
             auto it = map.find(bulkElemIdx); assert(it != map.end());
             const auto& elementStencil = it->second.couplingElementStencil;
@@ -458,7 +463,7 @@ public:
         const auto lowDimElemIdx = problem<lowDimId>().fvGridGeometry().elementMapper().index(element);
         lowDimContext_.elementIdx = lowDimElemIdx;
 
-        const auto& map = couplingMapperPtr_->couplingMap(lowDimId, bulkId);
+        const auto& map = couplingMapperPtr_->couplingMap(lowDimGridId, bulkGridId);
         auto it = map.find(lowDimElemIdx);
 
         // if element is coupled, actually set the context
@@ -516,7 +521,7 @@ public:
         // skip the rest if context is empty
         if (bulkContext_.isSet)
         {
-            const auto& map = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
+            const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
             const auto& couplingElemStencil = map.find(bulkContext_.elementIdx)->second.couplingElementStencil;
             const auto& ldGridGeometry = problem<lowDimId>().fvGridGeometry();
 
@@ -532,7 +537,7 @@ public:
                                        auto element = ldGridGeometry.element(lowDimElemIdx);
                                        for (unsigned int i = 0; i < element.geometry().corners(); ++i)
                                        {
-                                           const auto dofIdx = ldGridGeometry.vertexMapper().subIndex(element, i, GridView<lowDimId>::dimension);
+                                           const auto dofIdx = ldGridGeometry.vertexMapper().subIndex(element, i, lowDimDim);
                                            if (dofIdxGlobalJ == dofIdx) { lowDimElems.emplace_back( std::move(element) ); break; }
                                        }
                                    } );
@@ -598,7 +603,7 @@ public:
         {
             assert(lowDimContext_.elementIdx == problem<lowDimId>().fvGridGeometry().elementMapper().index(lowDimLocalAssembler.element()));
 
-            const auto& map = couplingMapperPtr_->couplingMap(lowDimId, bulkId);
+            const auto& map = couplingMapperPtr_->couplingMap(lowDimGridId, bulkGridId);
             auto it = map.find(lowDimContext_.elementIdx);
 
             assert(it != map.end());
@@ -610,7 +615,6 @@ public:
             unsigned int embedmentIdx = 0;
             for (const auto& embedment : embedments)
             {
-                static constexpr int bulkDim = GridView<bulkId>::dimension;
                 const auto elementJ = bulkGridGeometry.element(embedment.first);
 
                 for (unsigned int i = 0; i < elementJ.subEntities(bulkDim); ++i)
@@ -654,7 +658,7 @@ public:
             assert(lowDimContext_.elementIdx == problem<lowDimId>().fvGridGeometry().elementMapper().index(lowDimLocalAssembler.element()));
 
             // update the corresponding vol vars in the bulk context
-            const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
+            const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
             const auto& couplingElementStencil = bulkMap.find(bulkContext_.elementIdx)->second.couplingElementStencil;
             auto it = std::find(couplingElementStencil.begin(), couplingElementStencil.end(), lowDimContext_.elementIdx);
             assert(it != couplingElementStencil.end());

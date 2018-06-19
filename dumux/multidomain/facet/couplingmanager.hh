@@ -86,8 +86,8 @@ void makeInterpolatedVolVars(VolumeVariables& volVars,
  */
 template< class MDTraits,
           class CouplingMapper,
-          std::size_t bulkDomainId = CouplingMapper::bulkDomainId,
-          std::size_t lowDimDomainId = CouplingMapper::facetDomainId,
+          std::size_t bulkDomainId = 0,
+          std::size_t lowDimDomainId = 1,
           DiscretizationMethod bulkDM = GET_PROP_TYPE(typename MDTraits::template SubDomainTypeTag<bulkDomainId>, FVGridGeometry)::discMethod >
 class FacetCouplingManager;
 
@@ -106,9 +106,9 @@ class FacetCouplingManager;
  */
 template< class MDTraits,
           class CouplingMapper,
-          std::size_t bulkDomainId = CouplingMapper::bulkDomainId,
-          std::size_t facetDomainId = CouplingMapper::facetDomainId,
-          std::size_t edgeDomainId = CouplingMapper::edgeDomainId >
+          std::size_t bulkDomainId = 0,
+          std::size_t facetDomainId = 1,
+          std::size_t edgeDomainId = 2 >
 class FacetCouplingThreeDomainManager
 : public FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, facetDomainId>
 , public FacetCouplingManager<MDTraits, CouplingMapper, facetDomainId, edgeDomainId>
