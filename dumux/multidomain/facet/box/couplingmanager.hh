@@ -651,7 +651,7 @@ public:
         if (lowDimContext_.isSet)
         {
             assert(bulkContext_.isSet);
-            assert(lowDimContext_.elementIdx == ldGridGeometry.elementMapper().index(lowDimLocalAssembler.element()));
+            assert(lowDimContext_.elementIdx == problem<lowDimId>().fvGridGeometry().elementMapper().index(lowDimLocalAssembler.element()));
 
             // update the corresponding vol vars in the bulk context
             const auto& bulkMap = couplingMapperPtr_->couplingMap(bulkId, lowDimId);
