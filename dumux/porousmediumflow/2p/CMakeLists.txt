@@ -1,6 +1,5 @@
-add_subdirectory("sequential")
+add_subdirectory(sequential)
 
-#install headers
 install(FILES
 boxmaterialinterfaceparams.hh
 formulation.hh

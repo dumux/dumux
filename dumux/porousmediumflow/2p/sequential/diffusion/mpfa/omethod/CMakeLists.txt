@@ -1,5 +1,3 @@
-
-#install headers
 install(FILES
 2dpressure.hh
 2dpressureproperties.hh

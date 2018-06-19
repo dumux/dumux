@@ -1,7 +1,6 @@
-add_subdirectory("twoeq")
-add_subdirectory("zeroeq")
+add_subdirectory(twoeq)
+add_subdirectory(zeroeq)
 
-#install headers
 install(FILES
 model.hh
 problem.hh

@@ -1,5 +1,5 @@
-add_subdirectory("elastic")
-add_subdirectory("poroelastic")
+add_subdirectory(elastic)
+add_subdirectory(poroelastic)
 
 install(FILES
 fvproblem.hh

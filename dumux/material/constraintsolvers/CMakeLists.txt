@@ -1,5 +1,3 @@
-
-#install headers
 install(FILES
 compositionalflash.hh
 compositionfromfugacities.hh

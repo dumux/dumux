@@ -1,11 +1,10 @@
-add_subdirectory("1p")
-add_subdirectory("2p")
-add_subdirectory("2pia")
-add_subdirectory("3p")
-add_subdirectory("mp")
-add_subdirectory("mineralization")
+add_subdirectory(1p)
+add_subdirectory(2p)
+add_subdirectory(2pia)
+add_subdirectory(3p)
+add_subdirectory(mineralization)
+add_subdirectory(mp)
 
-#install headers
 install(FILES
 diffusivityconstanttortuosity.hh
 diffusivitymillingtonquirk.hh

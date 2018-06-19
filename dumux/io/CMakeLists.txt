@@ -1,13 +1,22 @@
 install(FILES
-  adaptivegridrestart.hh
-  container.hh
-  cpgridcreator.hh
-  gnuplotinterface.hh
-  gridcreator.hh
-  ploteffectivediffusivitymodel.hh
-  plotmateriallaw.hh
-  plotmateriallaw3p.hh
-  plotthermalconductivitymodel.hh
-  restart.hh
-  vtknestedfunction.hh
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/io)
+adaptivegridrestart.hh
+cakegridcreator.hh
+container.hh
+cpgridcreator.hh
+defaultvtkoutputfields.hh
+gnuplotinterface.hh
+gridcreator.hh
+ploteffectivediffusivitymodel.hh
+plotmateriallaw.hh
+plotmateriallaw3p.hh
+plotthermalconductivitymodel.hh
+pointcloudvtkwriter.hh
+restart.hh
+staggeredvtkoutputmodule.hh
+subgridgridcreator.hh
+vtkfunction.hh
+vtkmultiwriter.hh
+vtknestedfunction.hh
+vtkoutputmodule.hh
+vtksequencewriter.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/io)

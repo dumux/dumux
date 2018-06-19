@@ -1,5 +1,3 @@
-
-#install headers
 install(FILES
 efftoabslaw.hh
 efftoabslawparams.hh

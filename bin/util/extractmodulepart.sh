@@ -174,7 +174,7 @@ while test "$LAST_REQUIRED_HEADERS" != "$REQUIRED_HEADERS"; do
         cd $(dirname $INCLUDED_HEADER_WITH_PATH)
         HEADER_FULL_PATH=$(pwd)
         HEADER_RELATIVE_PATH=${HEADER_FULL_PATH#$MODULE_FULL_PATH}
-        HEADER_RELATIVE_PATH=$(echo $HEADER_RELATIVE_PATH | sed 's/^.//') 
+        HEADER_RELATIVE_PATH=$(echo $HEADER_RELATIVE_PATH | sed 's/^.//')
         INCLUDED_HEADER_WITH_PATH="${HEADER_RELATIVE_PATH}/${INCLUDED_BASE_NAME}"
         cd $MODULE_FULL_PATH
         echo "$INCLUDED_HEADER_WITH_PATH" >> tmp_header_file
@@ -193,7 +193,7 @@ rm -f tmp_header_file
 echo ""
 echo -n "Number of required headers: "
 echo "$REQUIRED_HEADERS" | wc -w
-for HEADER in $REQUIRED_HEADERS; do 
+for HEADER in $REQUIRED_HEADERS; do
   echo $HEADER
   rsync -R $HEADER ../$MODULE_NAME
 done

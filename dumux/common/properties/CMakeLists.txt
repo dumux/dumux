@@ -1,5 +1,3 @@
-
-#install headers
 install(FILES
 grid.hh
 model.hh

@@ -1,5 +1,3 @@
-
-#install headers
 install(FILES
 effectivesoliddensity.hh
 effectivesolidheatcapacity.hh
