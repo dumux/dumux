@@ -1,38 +1,48 @@
-# Create files CMakeLists.txt for the current folder and all subfolders.
-# Should be run from the folder `dumux` that contains the header files, namely,
-# one level below the top dumux folder:
-# python ../bin/create_cmakelists.py.
+#!/usr/bin/env python
 
-# Import the os module, for the os.walk function
+"""
+Create files CMakeLists.txt for the given folder and all subfolders,
+including the add_subdirectory(...) and install(...) commands.
+Defaults to the folder `dumux` that contains the header files,
+if no folder was specified.
+"""
+
 import os
+import argparse
 
-# Set the directory you want to start from
-rootDir = '.'
+parser = argparse.ArgumentParser()
+parser.add_argument('folder', type=str, nargs='?', help='the folder to create CMakeLists.txt\'s for', default=None)
+args = vars(parser.parse_args())
+
+# default to the dumux folder (relative path to the location of this script)
+if args['folder'] is None:
+    rootDir = os.path.dirname(os.path.abspath(__file__)) + "/../../dumux"
+else:
+    rootDir = args['folder']
+
 for folderName, subFolders, files in os.walk(rootDir):
     subFolders = sorted(subFolders)
     files = sorted(files)
 
-    cmakelists = open(folderName + "/CMakeLists.txt", "w")
+    with open(folderName + "/CMakeLists.txt", "w") as cmakelists:
 
-    for subFolder in subFolders:
-        cmakelists.write("add_subdirectory(\"%s\")\n" % subFolder)
+        for subFolder in subFolders:
+            cmakelists.write("add_subdirectory({})\n".format(subFolder))
 
-    headersExist = False
-    for fileName in files:
-        if fileName != "CMakeLists.txt":
-            headersExist = True
-            break
-
-    if headersExist:
-        if subFolders:
-            cmakelists.write("\n")
-
-        cmakelists.write("install(FILES\n")
-
+        headersExist = False
         for fileName in files:
             if fileName != "CMakeLists.txt":
-                cmakelists.write("%s\n" % fileName)
+                headersExist = True
+                break
 
-        cmakelists.write("DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/%s)\n" % folderName[2:])
+        if headersExist:
+            if subFolders:
+                cmakelists.write("\n")
 
-    cmakelists.close()
+            cmakelists.write("install(FILES\n")
+
+            for fileName in files:
+                if fileName != "CMakeLists.txt":
+                    cmakelists.write("{}\n".format(fileName))
+
+            cmakelists.write("DESTINATION ${{CMAKE_INSTALL_INCLUDEDIR}}/dumux/{})\n".format(folderName.replace(rootDir + '/', '')))
