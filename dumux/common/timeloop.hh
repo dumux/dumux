@@ -29,6 +29,7 @@
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/timer.hh>
+#include <dune/common/parallel/collectivecommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
 #include <dumux/common/parameters.hh>
@@ -275,7 +276,7 @@ public:
     /*!
      * \brief Print final status and stops tracking the time.
      */
-    template <class Communicator>
+    template< class Communicator = Dune::CollectiveCommunication<typename Dune::MPIHelper::MPICommunicator> >
     void finalize(const Communicator& comm = Dune::MPIHelper::getCollectiveCommunication())
     {
         timer_.stop();
