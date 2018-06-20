@@ -84,6 +84,14 @@ class FacetCouplingManager<MDTraits, CouplingMapper, bulkDomainId, lowDimDomainI
     template<std::size_t id> using GridFluxVariablesCache = typename GridVariables<id>::GridFluxVariablesCache;
     template<std::size_t id> using ElementFluxVariablesCache = typename GridFluxVariablesCache<id>::LocalView;
 
+    // this currently does not work for some grid-wide caches being active
+    static_assert(!GET_PROP_VALUE(SubDomainTypeTag<bulkId>, EnableGridFluxVariablesCache),
+                  "Grid flux variables caching currently not supported in the bulk domain of cc-facet coupling models");
+    static_assert(!GET_PROP_VALUE(SubDomainTypeTag<lowDimId>, EnableGridVolumeVariablesCache),
+                  "Grid volume variables caching currently not supported in the lower-dimensional domain of cc-facet coupling models");
+    static_assert(!GET_PROP_VALUE(SubDomainTypeTag<bulkId>, EnableGridVolumeVariablesCache),
+                  "Grid volume variables caching currently not supported in the bulk domain of cc-facet coupling models");
+
     // extract corresponding grid ids from the mapper
     static constexpr int bulkDim = GridView<bulkDomainId>::dimension;
     static constexpr int lowDimDim = GridView<lowDimDomainId>::dimension;
