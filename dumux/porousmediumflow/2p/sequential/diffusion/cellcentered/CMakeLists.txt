@@ -1,11 +1,9 @@
-
-#install headers
 install(FILES
-pressureadaptive.hh
 pressure.hh
-pressurepropertiesadaptive.hh
+pressureadaptive.hh
 pressureproperties.hh
+pressurepropertiesadaptive.hh
 pressurevelocity.hh
-velocityadaptive.hh
 velocity.hh
+velocityadaptive.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p/sequential/diffusion/cellcentered)

@@ -1,8 +1,8 @@
-add_subdirectory("iapws")
+add_subdirectory(iapws)
 
-#install headers
 install(FILES
 air.hh
+base.hh
 benzene.hh
 brine.hh
 cao.hh
@@ -11,17 +11,21 @@ ch4.hh
 co2.hh
 co2tablereader.hh
 co2tables.inc
+componenttraits.hh
 constant.hh
+gas.hh
 granite.hh
 h2.hh
 h2o.hh
 heavyoil.hh
+liquid.hh
 mesitylene.hh
 n2.hh
 nacl.hh
 o2.hh
 simpleco2.hh
 simpleh2o.hh
+solid.hh
 tabulatedcomponent.hh
 trichloroethene.hh
 xylene.hh

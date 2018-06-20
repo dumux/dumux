@@ -1,4 +1,3 @@
-#install headers
 install(FILES
 amgbackend.hh
 amgparallelhelpers.hh

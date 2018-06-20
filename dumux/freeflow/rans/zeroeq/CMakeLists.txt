@@ -1,4 +1,3 @@
-#install headers
 install(FILES
 model.hh
 problem.hh

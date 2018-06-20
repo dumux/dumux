@@ -1,15 +1,13 @@
-
-#install headers
 install(FILES
-croperatoradaptive.hh
 croperator.hh
+croperatoradaptive.hh
 localstiffness.hh
-mimeticadaptive.hh
 mimetic.hh
-operatoradaptive.hh
+mimeticadaptive.hh
 operator.hh
-pressureadaptive.hh
+operatoradaptive.hh
 pressure.hh
-pressurepropertiesadaptive.hh
+pressureadaptive.hh
 pressureproperties.hh
+pressurepropertiesadaptive.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p/sequential/diffusion/mimetic)

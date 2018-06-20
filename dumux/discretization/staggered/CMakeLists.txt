@@ -1,4 +1,4 @@
-add_subdirectory("freeflow")
+add_subdirectory(freeflow)
 
 install(FILES
 elementfacevariables.hh

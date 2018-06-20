@@ -1,6 +1,5 @@
-#install headers
 install(FILES
-updatesolidvolumefractions.hh
-inertsolidstate.hh
 compositionalsolidstate.hh
+inertsolidstate.hh
+updatesolidvolumefractions.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/solidstates)

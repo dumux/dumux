@@ -1,5 +1,3 @@
-
-#install headers
 install(FILES
 indices.hh
 model.hh

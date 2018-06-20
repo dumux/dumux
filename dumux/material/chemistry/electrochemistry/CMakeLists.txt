@@ -1,5 +1,3 @@
-
-#install headers
 install(FILES
 electrochemistry.hh
 electrochemistryni.hh

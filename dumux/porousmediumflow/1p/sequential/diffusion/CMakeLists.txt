@@ -1,6 +1,5 @@
-add_subdirectory("cellcentered")
+add_subdirectory(cellcentered)
 
-#install headers
 install(FILES
 problem.hh
 properties.hh

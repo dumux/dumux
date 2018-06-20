@@ -1,5 +1,3 @@
-
-#install headers
 install(FILES
 2padapter.hh
 2poftadapter.hh

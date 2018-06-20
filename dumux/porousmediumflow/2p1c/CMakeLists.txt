@@ -1,5 +1,3 @@
-
-#install headers
 install(FILES
 darcyslaw.hh
 indices.hh

@@ -1,8 +1,8 @@
-
-#install headers
 install(FILES
 fv.hh
 fv1p.hh
+fvelastic.hh
+fvporoelastic.hh
 gstatrandomfield.hh
 sequentialfv.hh
 sequentialfv1p.hh

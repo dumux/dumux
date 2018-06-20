@@ -1,5 +1,3 @@
-
-#install headers
 install(FILES
 brookscorey.hh
 brookscoreyparams.hh

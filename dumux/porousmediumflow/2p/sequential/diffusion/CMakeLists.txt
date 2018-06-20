@@ -1,8 +1,7 @@
-add_subdirectory("cellcentered")
-add_subdirectory("mpfa")
-add_subdirectory("mimetic")
+add_subdirectory(cellcentered)
+add_subdirectory(mimetic)
+add_subdirectory(mpfa)
 
-#install headers
 install(FILES
 problem.hh
 properties.hh

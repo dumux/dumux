@@ -1,1 +1,1 @@
-add_subdirectory("electrochemistry")
+add_subdirectory(electrochemistry)
