@@ -1,4 +1,3 @@
-#install headers
 install(FILES
 couplingmanager.hh
 couplingmapper.hh

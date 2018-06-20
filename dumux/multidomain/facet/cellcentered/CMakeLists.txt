@@ -1,6 +1,5 @@
 add_subdirectory(tpfa)
 
-#install headers
 install(FILES
 localresidual.hh
 upwindscheme.hh

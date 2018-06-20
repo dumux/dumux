@@ -1,4 +1,12 @@
-#install headers
 install(FILES
-vertexmapper.hh
+couplingmanager.hh
+couplingmapper.hh
+darcyslaw.hh
+elementboundarytypes.hh
+fvelementgeometry.hh
+fvgridgeometry.hh
+localresidual.hh
+properties.hh
+subcontrolvolumeface.hh
+upwindscheme.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/facet/box)
