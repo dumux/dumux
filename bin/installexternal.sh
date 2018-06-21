@@ -53,17 +53,12 @@ installAluGrid()
     fi
 }
 
-installErt()
+installEcl()
 {
     cd $TOPDIR
 
-    checkLocationForDuneModules ert
-    if test $CORRECT_LOCATION_FOR_DUNE_MODULES == "n"; then
-        return
-    fi
-
-    if [ ! -e ert ]; then
-        git clone -b release/2017.04 https://github.com/Ensembles/ert.git
+    if [ ! -e libecl ]; then
+        git clone -b 2018.04 https://github.com/Statoil/libecl.git
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -71,21 +66,20 @@ installErt()
     fi
 
     if  test "$CLEANUP" == "y"; then
-        rm -rf ert
+        rm -rf libecl
         return
     fi
 
-    # building ert
-    echo "Building ert"
-    cd $TOPDIR/ert
+    # building libecl
+    echo "Building libecl"
+    cd $TOPDIR/libecl
     mkdir build
     cd build
     cmake ..
     make
 
     # show additional information
-    echo "Ert has been built in directory ert/build."
-    echo "Do not change this directory otherwise opm will not find ert!"
+    echo "Ecl has been built in directory libecl/build."
 
     cd $TOPDIR
 }
@@ -294,27 +288,15 @@ installOPM()
     fi
 
     if [ ! -e opm-common ]; then
-        git clone -b release/2017.04 https://github.com/OPM/opm-common
-    fi
-
-    if [ ! -e opm-core ]; then
-        git clone -b release/2017.04 https://github.com/OPM/opm-core
+        git clone -b release/2018.04 https://github.com/OPM/opm-common
     fi
 
     if [ ! -e opm-material ]; then
-        git clone -b release/2017.04 https://github.com/OPM/opm-material
-    fi
-
-    if [ ! -e opm-parser ]; then
-        git clone -b release/2017.04 https://github.com/OPM/opm-parser
+        git clone -b release/2018.04 https://github.com/OPM/opm-material
     fi
 
     if [ ! -e opm-grid ]; then
-        git clone -b release/2017.04 https://github.com/OPM/opm-grid
-    fi
-
-    if [ ! -e opm-output ]; then
-        git clone -b release/2017.04 https://github.com/OPM/opm-output
+        git clone -b release/2018.04 https://github.com/OPM/opm-grid
     fi
     
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -323,43 +305,26 @@ installOPM()
 
     if  test "$CLEANUP" == "y"; then
         rm -rf opm-common
-        rm -rf opm-core
         rm -rf opm-material
-        rm -rf opm-parser
         rm -rf opm-grid
-        rm -rf opm-output
         return
     fi
 
     # apply patches
     echo "Applying patch for opm-common"
     cd $TOPDIR/opm-common
-    patch -p1 < $TOPDIR/dumux/patches/opm-common-2017.04.patch
-
-    echo "Applying patch for opm-core"
-    cd $TOPDIR/opm-core
-    patch -p1 < $TOPDIR/dumux/patches/opm-core-2017.04.patch
-
-    echo "Applying patch for opm-parser"
-    cd $TOPDIR/opm-parser
-    patch -p1 < $TOPDIR/dumux/patches/opm-parser-2017.04.patch
+    patch -p1 < $TOPDIR/dumux/patches/opm-common-2018.04.patch
 
     echo "Applying patch for opm-grid"
     cd $TOPDIR/opm-grid
-    patch -p1 < $TOPDIR/dumux/patches/opm-grid-2017.04.patch
+    patch -p1 < $TOPDIR/dumux/patches/opm-grid-2018.04.patch
 
     # show additional information
     echo "In addition, it might be necessary to set manually some"
     echo "CMake variables in the CMAKE_FLAGS section of the .opts-file:"
     echo "  -DOPM_COMMON_ROOT=/path/to/opm-common \\"
-    echo "  -Dopm-grid_PREFIX=/path/to/opm-grid \\"
-    echo "  -Dopm-common_PREFIX=/path/to/opm-common \\"
-    echo "  -Dopm-core_PREFIX=/path/to/opm-core \\"
-    echo "  -Dopm-material_PREFIX=/path/to/opm-material \\"
-    echo "  -Dopm-parser_PREFIX=/path/to/opm-parser \\"
-    echo "  -Dopm-output_PREFIX=/path/to/opm-output \\"
+    echo "  -Decl_DIR=/path/to/libecl/build \\"
     echo "  -DUSE_MPI=ON \\"
-    echo "  -DHAVE_OPM_GRID=1 \\"
 
     cd $TOPDIR
 }
@@ -476,7 +441,7 @@ usage()
     echo "Where PACKAGES is one or more of the following"
     echo "  all              Install everything and the kitchen sink."
     echo "  alugrid          Download dune-alugrid."
-    echo "  ert              Download and build ert."
+    echo "  ecl              Download and build ecl."
     echo "  foamgrid         Download dune-foamgrid."
     echo "  glpk             Download and install glpk."
     echo "  gstat            Download and install gstat."
@@ -544,7 +509,7 @@ for TMP in "$@"; do
             SOMETHING_DONE="y"
             createExternalDirectory
             installAluGrid
-            installErt
+            installEcl
             installFoamGrid
             installGLPK
             installGStat
@@ -561,9 +526,9 @@ for TMP in "$@"; do
             SOMETHING_DONE="y"
             installAluGrid
             ;;
-        ert)
+        ecl)
             SOMETHING_DONE="y"
-            installErt
+            installEcl
             ;;
         foamgrid|dune-foamgrid)
             SOMETHING_DONE="y"
