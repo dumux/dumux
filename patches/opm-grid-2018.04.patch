@@ -1,25 +1,3 @@
-diff --git a/dune.module b/dune.module
-index 9c81972..a711c48 100644
---- a/dune.module
-+++ b/dune.module
-@@ -10,5 +10,5 @@ Label: 2018.04
- Maintainer: atgeirr@sintef.no
- MaintainerName: Atgeirr F. Rasmussen
- Url: http://opm-project.org
--Depends: dune-common (>= 2.4) dune-geometry (>= 2.4) dune-grid (>= 2.4)
--Suggests: dune-istl (>= 2.4) opm-common
-+Depends: opm-common dune-common (>= 2.4) dune-geometry (>= 2.4) dune-grid (>= 2.4)
-+Suggests: dune-istl (>= 2.4)
-diff --git a/opm-grid-prereqs.cmake b/opm-grid-prereqs.cmake
-index 2ad0d86..032ac19 100644
---- a/opm-grid-prereqs.cmake
-+++ b/opm-grid-prereqs.cmake
-@@ -34,4 +34,5 @@ set (opm-grid_DEPS
-   "ecl REQUIRED"
-   )
- 
-+include(OpmPackage)
- find_package_deps(opm-grid)
 diff --git a/opm/grid/common/p2pcommunicator.hh b/opm/grid/common/p2pcommunicator.hh
 index 1b4b327..55a2b2f 100644
 --- a/opm/grid/common/p2pcommunicator.hh

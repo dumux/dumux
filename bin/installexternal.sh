@@ -291,21 +291,16 @@ installOPM()
         git clone -b release/2018.04 https://github.com/OPM/opm-common
     fi
 
-    if [ ! -e opm-material ]; then
-        git clone -b release/2018.04 https://github.com/OPM/opm-material
-    fi
-
     if [ ! -e opm-grid ]; then
         git clone -b release/2018.04 https://github.com/OPM/opm-grid
     fi
-    
+
     if  test "$DOWNLOAD_ONLY" == "y"; then
         return
     fi
 
     if  test "$CLEANUP" == "y"; then
         rm -rf opm-common
-        rm -rf opm-material
         rm -rf opm-grid
         return
     fi
