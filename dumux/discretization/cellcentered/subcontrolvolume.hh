@@ -75,8 +75,7 @@ class CCSubControlVolume
     // be hardcoded to `Geometry&&` again.
     using Element = typename GV::template Codim<0>::Entity;
     using GeometryRT = decltype(std::declval<Element>().geometry());
-    using GeometryRTWithoutRef = typename std::remove_reference<GeometryRT>::type;
-    static constexpr bool grtIsReference = !std::is_same<GeometryRT, GeometryRTWithoutRef>::value;
+    static constexpr bool grtIsReference = std::is_lvalue_reference<GeometryRT>::value;
     using GeometryParamType = std::conditional_t<grtIsReference, Geometry, Geometry&&>;
 public:
     //! export the type used for global coordinates
