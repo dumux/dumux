@@ -200,27 +200,19 @@ public:
 
     //! \brief Returns the \$f \alpha \$f value
     const Scalar alpha() const
-    {
-        return 0.520;
-    }
+    { return 0.520; }
 
     //! \brief Returns the \$f \sigma_k \$f constant
     const Scalar sigmaK() const
-    {
-        return 0.60;
-    }
+    { return 0.60; }
 
     //! \brief Returns the \$f \sigma_{\omega} \$f constant
     const Scalar sigmaOmega() const
-    {
-        return 0.50;
-    }
+    { return 0.50; }
 
     //! \brief Returns the \$f \beta_k \$f constant
     const Scalar betaK() const
-    {
-        return 0.09;
-    }
+    { return 0.09; }
 
     //! \brief Returns the \$f \beta_\omega \$f constant
     const Scalar betaOmega() const
@@ -244,8 +236,8 @@ public:
     }
 
 protected:
-    Dune::FieldVector<Scalar,2> dofPosition_;
     Scalar betaOmega_;
+    Dune::FieldVector<Scalar, Traits::ModelTraits::dim()> dofPosition_;
     Scalar eddyDiffusivity_;
     Scalar dynamicEddyViscosity_;
     Scalar dissipation_;

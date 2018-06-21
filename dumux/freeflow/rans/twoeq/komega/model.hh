@@ -90,7 +90,7 @@ namespace Properties {
  * \brief Traits for the k-omega model
  */
 template<int dimension>
-struct KOmegaModelTraits
+struct KOmegaModelTraits : RANSModelTraits<dimension>
 {
     //! The dimension of the model
     static constexpr int dim() { return dimension; }
@@ -99,20 +99,8 @@ struct KOmegaModelTraits
     //! one mass balance equation and two turbulent transport equations
     static constexpr int numEq() { return dim()+1+2; }
 
-    //! The number of phases is always 1
-    static constexpr int numPhases() { return 1; }
-
     //! The number of components
     static constexpr int numComponents() { return 1; }
-
-    //! Enable advection
-    static constexpr bool enableAdvection() { return true; }
-
-    //! The one-phase model has no molecular diffusion
-    static constexpr bool enableMolecularDiffusion() { return true; }
-
-    //! The model is isothermal
-    static constexpr bool enableEnergyBalance() { return false; }
 
     //! The indices
     using Indices = KOmegaIndices<dim(), numComponents()>;
@@ -128,7 +116,7 @@ struct KOmegaModelTraits
 //! The type tag for the single-phase, isothermal k-omega model
 NEW_TYPE_TAG(KOmega, INHERITS_FROM(RANS));
 
-//!< states some specifics of the isothermal k-omega model
+//! states some specifics of the isothermal k-omega model
 SET_PROP(KOmega, ModelTraits)
 {
 private:
@@ -139,10 +127,22 @@ public:
 };
 
 //! The flux variables
-SET_TYPE_PROP(KOmega, FluxVariables, KOmegaFluxVariables<TypeTag>);
+SET_PROP(KOmega, FluxVariables)
+{
+private:
+    using BaseFluxVariables = NavierStokesFluxVariables<TypeTag>;
+public:
+    using type = KOmegaFluxVariables<TypeTag, BaseFluxVariables>;
+};
 
 //! The local residual
-SET_TYPE_PROP(KOmega, LocalResidual, KOmegaResidual<TypeTag>);
+SET_PROP(KOmega, LocalResidual)
+{
+private:
+    using BaseLocalResidual = NavierStokesResidual<TypeTag>;
+public:
+    using type = KOmegaResidual<TypeTag, BaseLocalResidual>;
+};
 
 //! Set the volume variables property
 SET_PROP(KOmega, VolumeVariables)
@@ -176,6 +176,17 @@ public:
 //! The type tag for the single-phase, non-isothermal k-omega 2-Eq. model
 NEW_TYPE_TAG(KOmegaNI, INHERITS_FROM(RANSNI));
 
+//! The model traits of the non-isothermal model
+SET_PROP(KOmegaNI, ModelTraits)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
+    static constexpr int dim = GridView::dimension;
+    using IsothermalTraits = KOmegaModelTraits<dim>;
+public:
+    using type = FreeflowNIModelTraits<IsothermalTraits>;
+};
+
 //! Set the volume variables property
 SET_PROP(KOmegaNI, VolumeVariables)
 {
@@ -189,6 +200,17 @@ private:
     using NSVolVars = NavierStokesVolumeVariables<Traits>;
 public:
     using type = KOmegaVolumeVariables<Traits, NSVolVars>;
+};
+
+//! The specific non-isothermal vtk output fields
+SET_PROP(KOmegaNI, VtkOutputFields)
+{
+private:
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using IsothermalFields = KOmegaVtkOutputFields<FVGridGeometry>;
+public:
+    using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
 };
 
 // \}

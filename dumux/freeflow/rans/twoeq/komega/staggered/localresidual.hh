@@ -32,20 +32,18 @@
 namespace Dumux {
 
 // forward declaration
-template<class TypeTag,  DiscretizationMethod discMethod>
+template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
 class KOmegaResidualImpl;
 
 /*!
   * \ingroup KOmegaModel
   * \brief Element-wise calculation of the residual for k-omega models using the staggered discretization
  */
-template<class TypeTag>
-class KOmegaResidualImpl<TypeTag, DiscretizationMethod::staggered>
-: public NavierStokesResidual<TypeTag>
+template<class TypeTag, class BaseLocalResidual>
+class KOmegaResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
+: public BaseLocalResidual
 {
-    using ParentType = NavierStokesResidual<TypeTag>;
-    friend class StaggeredLocalResidual<TypeTag>;
-    friend ParentType;
+    using ParentType = BaseLocalResidual;
 
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
@@ -71,6 +69,9 @@ class KOmegaResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
+    static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
+    static constexpr int dissipationEqIdx = Indices::dissipationEqIdx - ModelTraits::dim();
+
 public:
     using ParentType::ParentType;
 
@@ -81,8 +82,6 @@ public:
     {
         CellCenterPrimaryVariables storage = ParentType::computeStorageForCellCenter(problem, scv, volVars);
 
-        static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
-        static constexpr int dissipationEqIdx = Indices::dissipationEqIdx - ModelTraits::dim();
         storage[turbulentKineticEnergyEqIdx] = volVars.turbulentKineticEnergy();
         storage[dissipationEqIdx] = volVars.dissipation();
 
@@ -101,9 +100,6 @@ public:
 
         const auto& volVars = elemVolVars[scv];
 
-        static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
-        static constexpr int dissipationEqIdx = Indices::dissipationEqIdx - ModelTraits::dim();
-
         // production
         Scalar productionTerm = 2.0 * volVars.kinematicEddyViscosity()* volVars.stressTensorScalarProduct();
         if (ModelTraits::enableKOmegaProductionLimiter())
@@ -116,11 +112,11 @@ public:
 
         // destruction
         source[turbulentKineticEnergyEqIdx] -= volVars.betaK() * volVars.turbulentKineticEnergy() * volVars.dissipation();
-        source[dissipationEqIdx] -=  problem.betaOmega() * volVars.dissipation() * volVars.dissipation();
+        source[dissipationEqIdx] -=  volVars.betaOmega() * volVars.dissipation() * volVars.dissipation();
 
         return source;
     }
 };
-} // end namespace Dumux
+}
 
 #endif

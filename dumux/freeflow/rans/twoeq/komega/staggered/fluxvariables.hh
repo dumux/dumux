@@ -35,24 +35,28 @@ namespace Dumux
 {
 
 // forward declaration
-template<class TypeTag, DiscretizationMethod discMethod>
+template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
 class KOmegaFluxVariablesImpl;
 
 /*!
   * \ingroup KOmegaModel
   * \brief The flux variables class for the k-omega model using the staggered grid discretization.
  */
-template<class TypeTag>
-class KOmegaFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
-: public NavierStokesFluxVariables<TypeTag>
+template<class TypeTag, class BaseFluxVariables>
+class KOmegaFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
+: public BaseFluxVariables
 {
-    using ParentType = NavierStokesFluxVariables<TypeTag>;
+    using ParentType = BaseFluxVariables;
+
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using VolumeVariables = typename GridVolumeVariables::VolumeVariables;
+
     using GridFluxVariablesCache = typename GridVariables::GridFluxVariablesCache;
     using FluxVariablesCache = typename GridFluxVariablesCache::FluxVariablesCache;
+
     using GridFaceVariables = typename GridVariables::GridFaceVariables;
     using ElementFaceVariables = typename GridFaceVariables::LocalView;
     using FaceVariables = typename GridFaceVariables::FaceVariables;
@@ -66,31 +70,27 @@ class KOmegaFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    enum {
-        turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx,
-        dissipationEqIdx = Indices::dissipationEqIdx,
-    };
+
+    static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
+    static constexpr int dissipationEqIdx = Indices::dissipationEqIdx - ModelTraits::dim();
 
 public:
 
     /*!
     * \brief Computes the flux for the cell center residual.
     */
-    CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
-                                                        const Element &element,
-                                                        const FVElementGeometry& fvGeometry,
-                                                        const ElementVolumeVariables& elemVolVars,
-                                                        const ElementFaceVariables& elemFaceVars,
-                                                        const SubControlVolumeFace &scvf,
-                                                        const FluxVariablesCache& fluxVarsCache)
+    CellCenterPrimaryVariables computeMassFlux(const Problem& problem,
+                                               const Element &element,
+                                               const FVElementGeometry& fvGeometry,
+                                               const ElementVolumeVariables& elemVolVars,
+                                               const ElementFaceVariables& elemFaceVars,
+                                               const SubControlVolumeFace &scvf,
+                                               const FluxVariablesCache& fluxVarsCache)
     {
-        CellCenterPrimaryVariables flux = ParentType::computeFluxForCellCenter(problem, element, fvGeometry,
-                                                                               elemVolVars, elemFaceVars, scvf, fluxVarsCache);
+        CellCenterPrimaryVariables flux = ParentType::computeMassFlux(problem, element, fvGeometry,
+                                                                      elemVolVars, elemFaceVars, scvf, fluxVarsCache);
 
         // calculate advective flux
-        const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-        const bool isOutflowK = scvf.boundary() && bcTypes.isOutflow(turbulentKineticEnergyEqIdx);
-        const bool isOutflowOmega = scvf.boundary() && bcTypes.isOutflow(dissipationEqIdx);
         auto upwindTermK = [](const auto& volVars)
         {
             return volVars.turbulentKineticEnergy();
@@ -100,12 +100,12 @@ public:
             return volVars.dissipation();
         };
 
-        flux[turbulentKineticEnergyEqIdx - ModelTraits::dim()]
-            = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermK, isOutflowK);
-        flux[dissipationEqIdx - ModelTraits::dim()]
-            = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermOmega, isOutflowOmega);
-        Dune::dverb << " k_adv " << ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermK, isOutflowK);
-        Dune::dverb << " w_adv " << ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTermOmega, isOutflowOmega);
+        flux[turbulentKineticEnergyEqIdx]
+            = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermK);
+        flux[dissipationEqIdx]
+            = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermOmega);
+        Dune::dverb << " k_adv " << ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermK);
+        Dune::dverb << " w_adv " << ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermOmega);
 
         // calculate diffusive flux
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
@@ -146,9 +146,11 @@ public:
             distance = (outsideScv.dofPosition() - insideScv.dofPosition()).two_norm();
         }
 
-        if (!isOutflowK)
+        const auto bcTypes = problem.boundaryTypes(element, scvf);
+        if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
+                                  || bcTypes.isSymmetry())))
         {
-            flux[turbulentKineticEnergyEqIdx - ModelTraits::dim()]
+            flux[turbulentKineticEnergyEqIdx]
                 += coeff_k / distance
                    * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
                    * scvf.area();
@@ -156,9 +158,10 @@ public:
                                                  * (insideVolVars.turbulentKineticEnergy() - outsideVolVars.turbulentKineticEnergy())
                                                  * scvf.area();
         }
-        if (!isOutflowOmega)
+        if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::dissipationEqIdx)
+                                  || bcTypes.isSymmetry())))
         {
-            flux[dissipationEqIdx - ModelTraits::dim()]
+            flux[dissipationEqIdx]
                 += coeff_w / distance
                    * (insideVolVars.dissipation() - outsideVolVars.dissipation())
                    * scvf.area();
