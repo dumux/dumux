@@ -10,3 +10,9 @@
   patch -p1 <../dumux/patches/opm-common-2018.04.patch
   patch -p1 <../dumux/patches/opm-grid-2018.04.patch
   Currently, Dumux is supposed to be compatible with the Opm 2018.04 release.
+  In addition, it might be necessary to set manually some
+  CMake variables in the CMAKE_FLAGS section of the .opts-file:
+    -DOPM_COMMON_ROOT=/path/to/opm-common \
+    -Decl_DIR=/path/to/libecl/build \
+    -DUSE_MPI=ON \
+
