@@ -137,6 +137,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using Scalar = typename GridVariables::Scalar;
     using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using VolumeVariables = typename ElementVolumeVariables::VolumeVariables;
     using ElementFluxVarsCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using FluxVariablesCache = typename ElementFluxVarsCache::FluxVariablesCache;
 
@@ -149,6 +150,17 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using IndexType = typename GridView::IndexSet::IndexType;
+
+    //! Compute the transmissibility associated with the facet element
+    template<class FacetVolVars>
+    static Scalar computeFacetTransmissibility_(const VolumeVariables& insideVolVars,
+                                                const FacetVolVars& facetVolVars,
+                                                const SubControlVolumeFace& scvf)
+    {
+        return 2.0*scvf.area()*insideVolVars.extrusionFactor()
+                              /facetVolVars.extrusionFactor()
+                              *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
+    }
 
   public:
     //! export the discretization method this implementation belongs to
@@ -168,24 +180,51 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
-        static const Scalar gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
-        if (gravity)
-            DUNE_THROW(Dune::NotImplemented, "gravity for darcys law with facet coupling");
-
-        if (!problem.couplingManager().isCoupled(element, scvf))
+        if (!problem.couplingManager().isOnInteriorBoundary(element, scvf))
             return TpfaDarcysLaw::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarsCache);
 
         // Obtain inside and fracture pressures
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
         const auto pInside = insideVolVars.pressure(phaseIdx);
-        const auto pFacet = problem.couplingManager().getLowDimVolVars(element, scvf).pressure(phaseIdx);
+        const auto pFacet = facetVolVars.pressure(phaseIdx);
 
-        // return flux
+        // compute and return flux
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        return scvf.boundary() ? fluxVarsCache.advectionTijInside()*pInside + fluxVarsCache.advectionTijFacet()*pFacet
-                               : fluxVarsCache.advectionTijInside()*pInside
-                                 + fluxVarsCache.advectionTijOutside()*elemVolVars[scvf.outsideScvIdx()].pressure(phaseIdx)
-                                 + fluxVarsCache.advectionTijFacet()*pFacet;
+        Scalar flux = fluxVarsCache.advectionTijInside()*pInside + fluxVarsCache.advectionTijFacet()*pFacet;
+
+        // maybe add gravitational acceleration
+        static const Scalar gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
+        if (gravity)
+        {
+            // this is inconsistent for xi != 1
+            static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
+            if (xi != 1.0)
+                DUNE_THROW(Dune::NotImplemented, "Gravitational acceleration for facet coupling and xi != 1.0");
+
+            // compute alpha := n^T*K*g
+            const auto& g = problem.gravityAtPos(scvf.ipGlobal());
+            const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
+
+            // for the density, use arithmetic average
+            const auto rho = 0.5*(insideVolVars.density(phaseIdx) + facetVolVars.density(phaseIdx));
+            flux += rho*scvf.area()*alpha_inside;
+
+            // maybe add K-weighted gravitational contribution
+            if (!scvf.boundary())
+            {
+                const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+                const auto wFacet = computeFacetTransmissibility_(insideVolVars, facetVolVars, scvf);
+                const auto alpha_outside = vtmv(scvf.unitOuterNormal(), outsideVolVars.permeability(), g)*outsideVolVars.extrusionFactor();
+
+                flux += rho*fluxVarsCache.advectionTijInside()/wFacet*(alpha_inside - alpha_outside);
+            }
+
+            return flux;
+        }
+        else
+            return scvf.boundary() ? flux
+                                   : flux + fluxVarsCache.advectionTijOutside()*elemVolVars[scvf.outsideScvIdx()].pressure(phaseIdx);
     }
 
     // The flux variables cache has to be bound to an element prior to flux calculations
@@ -213,11 +252,13 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
         static const Scalar xi = getParamFromGroup<Scalar>(problem.paramGroup(), "FacetCoupling.Xi", 1.0);
         static const Scalar oneMinusXi = 1.0 - xi;
 
-        const auto area = scvf.area();
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        const auto wIn = area*computeTpfaTransmissibility(scvf, insideScv, insideVolVars.permeability(), insideVolVars.extrusionFactor());
+        const auto wIn = scvf.area()*computeTpfaTransmissibility(scvf,
+                                                                 insideScv,
+                                                                 insideVolVars.permeability(),
+                                                                 insideVolVars.extrusionFactor());
 
         // proceed depending on the interior BC types used
         const auto iBcTypes = problem.interiorBoundaryTypes(element, scvf);
@@ -226,9 +267,7 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
         if (iBcTypes.hasOnlyNeumann())
         {
             const auto& facetVolVars = problem.couplingManager().getLowDimVolVars(element, scvf);
-            const auto wFacet = 2.0*area*insideVolVars.extrusionFactor()
-                                        /facetVolVars.extrusionFactor()
-                                        *vtmv(scvf.unitOuterNormal(), facetVolVars.permeability(), scvf.unitOuterNormal());
+            const auto wFacet = computeFacetTransmissibility_(insideVolVars, facetVolVars, scvf);
 
             // The fluxes across this face and the outside face can be expressed in matrix form:
             // \f$\mathbf{C} \bar{\mathbf{u}} + \mathbf{D} \mathbf{u} + \mathbf{E} \mathbf{u}_\gamma\f$,
@@ -240,10 +279,10 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
             {
                 const auto outsideScvIdx = scvf.outsideScvIdx();
                 const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-                const auto wOut = -1.0*area*computeTpfaTransmissibility(scvf,
-                                                                        fvGeometry.scv(outsideScvIdx),
-                                                                        outsideVolVars.permeability(),
-                                                                        outsideVolVars.extrusionFactor());
+                const auto wOut = -1.0*scvf.area()*computeTpfaTransmissibility(scvf,
+                                                                               fvGeometry.scv(outsideScvIdx),
+                                                                               outsideVolVars.permeability(),
+                                                                               outsideVolVars.extrusionFactor());
                 const Scalar xiWIn = xi*wIn;
                 const Scalar xiWOut = xi*wOut;
                 const Scalar oneMinusXiWIn = oneMinusXi*wIn;
@@ -394,9 +433,9 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/true>
     {
         static const Scalar gravity = getParamFromGroup<bool>(problem.paramGroup(), "Problem.EnableGravity");
         if (gravity)
-            DUNE_THROW(Dune::NotImplemented, "gravity for darcys law with facet coupling");
+            DUNE_THROW(Dune::NotImplemented, "gravity for darcys law with facet coupling on surface grids");
 
-        if (!problem.couplingManager().isCoupled(element, scvf))
+        if (!problem.couplingManager().isOnInteriorBoundary(element, scvf))
             return TpfaDarcysLaw::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarsCache);
 
         // Obtain inside and fracture pressures
