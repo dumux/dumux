@@ -34,13 +34,11 @@ namespace Dumux {
  * \brief The common indices for the isothermal KOmega model.
  *
  * \tparam dimension The dimension of the problem
+ * \tparam numComponents The number of considered transported components
  */
-template <int dimension>
+template<int dimension, int numComponents>
 struct KOmegaIndices : public NavierStokesIndices<dimension>
 {
-private:
-    using ParentType = NavierStokesIndices<dimension>;
-
 public:
     static constexpr auto turbulentKineticEnergyEqIdx = dimension + numComponents;
     static constexpr auto turbulentKineticEnergyIdx = turbulentKineticEnergyEqIdx;

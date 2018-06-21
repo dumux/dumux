@@ -73,13 +73,13 @@ class KOmegaProblem : public RANSProblem<TypeTag>
 public:
     KOmegaProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
-        kOmegaModel_ = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "KOmega.Model", 0);
+        kOmegaModel_ = getParamFromGroup<int>(this->paramGroup(), "KOmega.Model", 0);
         if (kOmegaModel_ != KOmegaModels::wilcox08
             && kOmegaModel_ != KOmegaModels::wilcox88)
         {
             DUNE_THROW(Dune::NotImplemented, "This k-omega model is not implemented: " << kOmegaModel_);
         }
-        useStoredEddyViscosity_ = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "RANS.UseStoredEddyViscosity", true);
+        useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", true);
     }
 
     /*!
@@ -124,8 +124,7 @@ public:
                 // NOTE: then update the volVars
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
-                volVars.calculateEddyViscosity();
-                storedKinematicEddyViscosity_[elementID] = volVars.kinematicEddyViscosity();
+                storedDynamicEddyViscosity_[elementID] = volVars.calculateEddyViscosity();
             }
         }
     }
@@ -133,12 +132,12 @@ public:
     //! \brief Returns the \$f \beta_{\omega} \$f constant
     const Scalar betaOmega() const
     {
-          if(kOmegaModel_ == KOmegaModels::wilcox88)
-              return 0.0750;
-          else if (kOmegaModel_ == KOmegaModels::wilcox08)
-              return 0.0708;
-          else
-              DUNE_THROW(Dune::NotImplemented, "This Model is not implemented.");
+        if(kOmegaModel_ == KOmegaModels::wilcox88)
+            return 0.0750;
+        else if (kOmegaModel_ == KOmegaModels::wilcox08)
+            return 0.0708;
+        else
+            DUNE_THROW(Dune::NotImplemented, "This Model is not implemented.");
     }
 
     /*!

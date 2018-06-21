@@ -34,42 +34,30 @@
 
 namespace Dumux
 {
-<<<<<<< HEAD
-
-// forward declaration
-template <class TypeTag, bool enableEnergyBalance>
-class KOmegaVolumeVariablesImplementation;
-
-/*!
- * \ingroup KOmegaEqModel
- * \brief Volume variables for the single-phase k-omega 2-Eq model
- *        The class is specialized for isothermal and non-isothermal models.
- */
-template <class TypeTag>
-using KOmegaVolumeVariables = KOmegaVolumeVariablesImplementation<TypeTag, GET_PROP_TYPE(TypeTag, ModelTraits)::enableEnergyBalance()>;
-=======
->>>>>>> f6e896abb... First set of K-omega classes
 
 /*!
  * \ingroup KOmegaEqModel
  * \brief Volume variables for the isothermal single-phase k-omega 2-Eq model.
  */
-template <class TypeTag>
-class KOmegaVolumeVariablesImplementation<TypeTag, false>
-: virtual public RANSVolumeVariablesImplementation<TypeTag, false>
+template <class Traits, class NSVolumeVariables>
+class KOmegaVolumeVariables
+:  public RANSVolumeVariables< Traits, KOmegaVolumeVariables<Traits, NSVolumeVariables> >
+,  public NSVolumeVariables
 {
-    using ParentType = RANSVolumeVariablesImplementation<TypeTag, false>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
+    using ThisType = KOmegaVolumeVariables<Traits, NSVolumeVariables>;
+    using RANSParentType = RANSVolumeVariables<Traits, ThisType>;
+    using NavierStokesParentType = NSVolumeVariables;
+
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+
+    static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
+    static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
 
 public:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    //! export the underlying fluid system
+    using FluidSystem = typename Traits::FluidSystem;
+    //! export the indices type
+    using Indices = typename Traits::ModelTraits::Indices;
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -79,13 +67,13 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution>
+    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
     void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::update(elemSol, problem, element, scv);
+        NavierStokesParentType::update(elemSol, problem, element, scv);
         updateRANSProperties(elemSol, problem, element, scv);
     }
 
@@ -99,46 +87,80 @@ public:
      * \param element An element which contains part of the control volume
      * \param scv The sub-control volume
      */
-    template<class ElementSolution>
+    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
     void updateRANSProperties(const ElementSolution &elemSol,
                               const Problem &problem,
                               const Element &element,
                               const SubControlVolume& scv)
     {
-        ParentType::updateRANSProperties(elemSol, problem, element, scv);
+        RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
         kOmegaModel_ = problem.kOmegaModel();
         betaOmega_ = problem.betaOmega();
         turbulentKineticEnergy_ = elemSol[0][Indices::turbulentKineticEnergyIdx];
         dissipation_ = elemSol[0][Indices::dissipationIdx];
-        storedDissipation_ = problem.storedDissipation_[ParentType::elementID()];
-        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[ParentType::elementID()];
-        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[ParentType::elementID()];
+        storedDissipation_ = problem.storedDissipation_[RANSParentType::elementID()];
+        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementID()];
+        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementID()];
         dofPosition_ = scv.dofPosition();
         if (problem.useStoredEddyViscosity_)
-            ParentType::setKinematicEddyViscosity(problem.storedKinematicEddyViscosity_[ParentType::elementID()]);
+            dynamicEddyViscosity_ = problem.storedDynamicEddyViscosity_[RANSParentType::elementID()];
         else
-            calculateEddyViscosity();
+            dynamicEddyViscosity_ = calculateEddyViscosity();
+        calculateEddyDiffusivity(problem);
     }
 
     /*!
      * \brief Calculate and set the dynamic eddy viscosity.
      */
-    void calculateEddyViscosity()
+    Scalar calculateEddyViscosity()
     {
         using std::sqrt;
         using std::max;
-        Scalar kinematicEddyViscosity = 0.0;
         if(kOmegaModel_ == KOmegaModels::wilcox88)
-            kinematicEddyViscosity = turbulentKineticEnergy() / dissipation();
-        else if (kOmegaModel_ == KOmegaModels::wilcox08)
-          {
-            Scalar limitiedDissipation = (7.0 / 8.0) * std::sqrt( 2.0 * stressTensorScalarProduct() * stressTensorScalarProduct() / betaK() );
-            Scalar Wbar = std::max(dissipation(), limitiedDissipation);
-            kinematicEddyViscosity = turbulentKineticEnergy() / Wbar;
-          }
-        else
-              DUNE_THROW(Dune::NotImplemented, "This model is not implemented.");
-        ParentType::setKinematicEddyViscosity(kinematicEddyViscosity);
+            return turbulentKineticEnergy() / dissipation() * NavierStokesParentType::density();
+        else // KOmegaModels::wilcox08
+        {
+            Scalar limitiedDissipation = (7.0 / 8.0) * sqrt( 2.0 * stressTensorScalarProduct() * stressTensorScalarProduct() / betaK() );
+            Scalar Wbar = max(dissipation(), limitiedDissipation);
+            return turbulentKineticEnergy() / Wbar * NavierStokesParentType::density();
+        }
+    }
+
+    /*!
+     * \brief Return the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow
+     */
+    Scalar dynamicEddyViscosity() const
+    { return dynamicEddyViscosity_; }
+
+    /*!
+     * \brief Return the effective dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
+     *        control volume.
+     */
+    Scalar effectiveViscosity() const
+    { return NavierStokesParentType::viscosity() + dynamicEddyViscosity(); }
+
+    /*!
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
+     *        of the fluid-flow in the sub-control volume.
+     */
+    template<bool eB = enableEnergyBalance, typename std::enable_if_t<eB, int> = 0>
+    Scalar effectiveThermalConductivity() const
+    {
+        return NavierStokesParentType::thermalConductivity()
+               + RANSParentType::eddyThermalConductivity();
+    }
+
+    /*!
+     * \brief Calculates the eddy diffusivity \f$\mathrm{[m^2/s]}\f$ based
+     *        on the kinematic eddy viscosity and the turbulent schmidt number
+     */
+    template<class Problem>
+    void calculateEddyDiffusivity(const Problem& problem)
+    {
+        static const auto turbulentSchmidtNumber
+            = getParamFromGroup<Scalar>(problem.paramGroup(),
+                                        "RANS.TurbulentSchmidtNumber", 1.0);
+        eddyDiffusivity_ = RANSParentType::kinematicEddyViscosity() / turbulentSchmidtNumber;
     }
 
     /*!
@@ -228,16 +250,38 @@ public:
         else
             DUNE_THROW(Dune::NotImplemented, "This Model is not implemented.");
     }
-public:
-    Scalar betaOmega_;
+
+    //! \brief Returns the \$f \beta_\omega \$f constant
+    const Scalar betaOmega() const
+    { return betaOmega_; }
+
+    /*!
+     * \brief Returns the eddy diffusivity \f$\mathrm{[m^2/s]}\f$
+     */
+    Scalar eddyDiffusivity() const
+    { return eddyDiffusivity_; }
+
+     /*!
+     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+     *
+     * \param compIIdx the index of the component which diffusive
+     * \param compJIdx the index of the component with respect to which compIIdx diffuses
+     */
+    Scalar effectiveDiffusivity(int compIIdx, int compJIdx = fluidSystemPhaseIdx) const
+    {
+        return NavierStokesParentType::diffusionCoefficient(compIIdx, compJIdx) + eddyDiffusivity();
+    }
 
 protected:
     Dune::FieldVector<Scalar,2> dofPosition_;
     int kOmegaModel_;
-    Scalar turbulentKineticEnergy_;
+    Scalar betaOmega_;
+    Scalar dynamicEddyViscosity_;
+    Scalar eddyDiffusivity_;
     Scalar dissipation_;
-    Scalar storedTurbulentKineticEnergy_;
+    Scalar turbulentKineticEnergy_;
     Scalar storedDissipation_;
+    Scalar storedTurbulentKineticEnergy_;
     Scalar stressTensorScalarProduct_;
 };
 

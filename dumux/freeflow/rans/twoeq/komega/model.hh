@@ -75,7 +75,7 @@ struct KOmegaModelTraits
     static constexpr bool enableEnergyBalance() { return false; }
 
     //! The indices
-    using Indices = KOmegaIndices<dim()>;
+    using Indices = KOmegaIndices<dim(), numComponents()>;
 
     //! The model includes a limiter to the production term
     static constexpr bool enableKOmegaProductionLimiter() { return true; }
@@ -104,8 +104,20 @@ SET_TYPE_PROP(KOmega, FluxVariables, KOmegaFluxVariables<TypeTag>);
 //! The local residual
 SET_TYPE_PROP(KOmega, LocalResidual, KOmegaResidual<TypeTag>);
 
-//! The volume variables
-SET_TYPE_PROP(KOmega, VolumeVariables, KOmegaVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(KOmega, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
+    using NSVolVars = NavierStokesVolumeVariables<Traits>;
+public:
+    using type = KOmegaVolumeVariables<Traits, NSVolVars>;
+};
 
 //! The specific vtk output fields
 SET_PROP(KOmega, VtkOutputFields)
@@ -124,8 +136,20 @@ public:
 //! The type tag for the single-phase, non-isothermal k-omega 2-Eq. model
 NEW_TYPE_TAG(KOmegaNI, INHERITS_FROM(RANSNI));
 
-//! The volume variables
-SET_TYPE_PROP(KOmegaNI, VolumeVariables, KOmegaVolumeVariables<TypeTag>);
+//! Set the volume variables property
+SET_PROP(KOmegaNI, VolumeVariables)
+{
+private:
+    using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
+    using NSVolVars = NavierStokesVolumeVariables<Traits>;
+public:
+    using type = KOmegaVolumeVariables<Traits, NSVolVars>;
+};
 
 // \}
 }
