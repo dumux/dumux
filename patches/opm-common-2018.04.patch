@@ -1,0 +1,32 @@
+diff --git a/cmake/Modules/OpmProject.cmake b/cmake/Modules/OpmProject.cmake
+index 51d572df..68feda08 100644
+--- a/cmake/Modules/OpmProject.cmake
++++ b/cmake/Modules/OpmProject.cmake
+@@ -76,6 +76,7 @@ function (opm_cmake_config name)
+   set (template_dir "${OPM_MACROS_ROOT}/cmake/Templates")
+ 
+   # write configuration file to locate library
++  set(DUNE_PREFIX ${PROJECT_SOURCE_DIR})
+   set(OPM_PROJECT_EXTRA_CODE ${OPM_PROJECT_EXTRA_CODE_INTREE})
+   set(PREREQ_LOCATION "${PROJECT_SOURCE_DIR}")
+   configure_cmake_file (${name} "config" "")
+@@ -123,6 +124,7 @@ function (opm_cmake_config name)
+   # of the build directory (using the same input template)
+   set(OPM_PROJECT_EXTRA_CODE ${OPM_PROJECT_EXTRA_CODE_INSTALLED})
+   set(PREREQ_LOCATION "${CMAKE_INSTALL_PREFIX}/share/opm/cmake/Modules")
++  set(DUNE_PREFIX ${CMAKE_INSTALL_PREFIX})
+   configure_cmake_file (${name} "install" "")
+   configure_vars (
+ 	FILE CMAKE "${PROJECT_BINARY_DIR}/${${name}_NAME}-install.cmake"
+diff --git a/cmake/Templates/opm-project-config.cmake.in b/cmake/Templates/opm-project-config.cmake.in
+index 421708a8..a783043d 100644
+--- a/cmake/Templates/opm-project-config.cmake.in
++++ b/cmake/Templates/opm-project-config.cmake.in
+@@ -24,6 +24,7 @@ if(NOT @opm-project_NAME@_FOUND)
+   set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" @PREREQ_LOCATION@)
+   include(@opm-project_NAME@-prereqs)
+   # propagate these properties from one build system to the other
++  set (@opm-project_NAME@_PREFIX "@DUNE_PREFIX@")
+   set (@opm-project_NAME@_VERSION "@opm-project_VERSION@")
+   set (@opm-project_NAME@_DEFINITIONS "@opm-project_DEFINITIONS@")
+   set (@opm-project_NAME@_INCLUDE_DIRS "@opm-project_INCLUDE_DIRS@")

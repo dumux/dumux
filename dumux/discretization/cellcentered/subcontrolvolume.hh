@@ -65,6 +65,18 @@ class CCSubControlVolume
     using LocalIndexType = typename T::LocalIndexType;
     using Scalar = typename T::Scalar;
 
+    // In the following, the correct parameter type for the geometry passed to
+    // the constructor below is determined. It depends upon whether the
+    // `geometry()` method of the `Element` returns a copy or a reference.
+    // In the first case, the correct type is `Geometry&&`, while it is
+    // `Geometry` for the second case. Although returning by copy is prescribed
+    // by the Dune interface, the grid implementation CpGrid uses a const
+    // reference as of Opm 2018.04. Once this is fixed, the parameter type can
+    // be hardcoded to `Geometry&&` again.
+    using Element = typename GV::template Codim<0>::Entity;
+    using GeometryRT = decltype(std::declval<Element>().geometry());
+    static constexpr bool grtIsReference = std::is_lvalue_reference<GeometryRT>::value;
+    using GeometryParamType = std::conditional_t<grtIsReference, Geometry, Geometry&&>;
 public:
     //! export the type used for global coordinates
     using GlobalPosition = typename T::GlobalPosition;
@@ -73,8 +85,8 @@ public:
 
     CCSubControlVolume() = default;
 
-    // the contructor in the cc case
-    CCSubControlVolume(Geometry&& geometry,
+    // See the explanation above for deriving `GeometryParamType`.
+    CCSubControlVolume(GeometryParamType geometry,
                        GridIndexType elementIndex)
     : ParentType()
     , geometry_(std::move(geometry))

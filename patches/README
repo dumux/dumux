@@ -5,14 +5,14 @@
   patch -p1 <../dumux/patches/istl-2.4.1.patch
 
 - If opm-grid has to be used for, e.g., employing the CpGridCreator,
-  and Opm is compiled from source, it might be necessary to patch opm-parser and opm-common:
-  patch -p1 <../dumux/patches/opm-parser-2017.10.patch
-  patch -p1 <../dumux/patches/opm-common-2017.10.patch
-  In addition, it might be necessary to set manually some CMake variables in the
-  CMAKE_FLAGS section of the .opts-file:
-    -DOPM_COMMON_ROOT=/path/to/opm-common/ \
-    -Dopm-grid_PREFIX=/path/to/opm-grid \
-    -Dopm-common_PREFIX=/path/to/opm-common \
-    -Dopm-parser_PREFIX=/path/to/opm-parser \
-    -DHAVE_OPM_GRID=1 \
-  Currently, Dumux is supposed to be compatible with the Opm 2017.04 and 2017.10 releases.
+  and Opm is compiled from source, it is necessary to patch opm-common and
+  opm-grid, namely, to execute in the corresponding folders:
+  patch -p1 <../dumux/patches/opm-common-2018.04.patch
+  patch -p1 <../dumux/patches/opm-grid-2018.04.patch
+  Currently, Dumux is supposed to be compatible with the Opm 2018.04 release.
+  In addition, it might be necessary to set manually some
+  CMake variables in the CMAKE_FLAGS section of the .opts-file:
+    -DOPM_COMMON_ROOT=/path/to/opm-common \
+    -Decl_DIR=/path/to/libecl/build \
+    -DUSE_MPI=ON \
+
