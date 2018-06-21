@@ -24,8 +24,48 @@
  *
  * \copydoc RANSModel
  *
- * These models calculate the eddy viscosity with two additional PDEs,
- * one for the turbulentKineticEnergy (k) and a second for the dissipation (omega).
+ * Two additional PDEs, one for the turbulentKineticEnergy (k) and a second for the dissipation (omega)
+ * are used to calculate the eddy viscosity for this model.
+ * The model is taken from Wilcox, 2008 \cite Wilcox2008a.
+ *
+ * Turbulent Kinetic Energy balance:
+ * \f[
+ * \frac{\partial \left( k \right)}{\partial t}
+ * + \nabla \cdot \left( \mathbf{v} k \right)
+ * - \nabla \cdot \left[ \left( \nu +  \sigma_\textrm{k} \nu_\textrm{t} \right) \nabla k \right]
+ * - P
+ * + \beta_k^{*} k \omega
+ * = 0
+ * \f]
+ * with \f$ P = 2 \nu_\textrm{t} \mathbf{S} \cdot \mathbf{S} \f$
+ * and \f$ S_{ij} = \frac{1}{2} \left[ \frac{\partial}{\partial x_i} v_j + \frac{\partial}{\partial x_j} v_i \right] \f$
+ * based on \f$ a_{ij} \cdot b_{ij} = \sum_{i,j} a_{ij} b_{ij} \f$.
+ *
+ * Dissipation balance:
+ * \f[
+ * \frac{\partial \left( \omega \right)}{\partial t}
+ * + \nabla \cdot \left( \mathbf{v} \omega \right)
+ * - \nabla \cdot \left[ \left( \nu + \sigma_{\omega} \nu_\textrm{t} \right) \nabla \omega \right]
+ * - \alpha \frac{\omega}{k} P
+ * + \beta_{\omega} \omega^2
+ * - \frac{\sigma_d}{\omega} \nabla k \nabla \omega
+ * = 0
+ * \f]
+ *
+ * The kinematic eddy viscosity \f$ \nu_\textrm{t} \f$ is calculated as follows:
+ * \f[ \nu_\textrm{t} = \frac{k}{\tilde{\omega}} \f]
+ *
+ * With a limited dissipation:
+ * \f[ \tilde{\omega} = \textrm{max} \left\{ \omega, 0.875 \sqrt{\frac{P}{\nu_\textrm{t} \beta_\textrm{k}}} \right\} \f]
+ *
+ * And a cross-diffusion coefficient \f$ \sigma_\textrm{d} \f$
+ * \f[
+ *   \sigma_\text{d} =
+ *   \begin{cases}
+ *     0     & \mbox{, if } \; \nabla k \cdot \nabla \omega \le 0 \\
+ *     0.125 & \mbox{, if } \; \nabla k \cdot \nabla \omega >   0
+ *   \end{cases}.
+ * \f]
  */
 
 #ifndef DUMUX_KOMEGA_MODEL_HH

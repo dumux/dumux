@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup KOmega TwoEq Model
- * \copydoc Dumux::KOmegaKOmegaResidual
+ * \ingroup KOmegaModel
+ * \copydoc Dumux::KOmegaResidual
  */
 #ifndef DUMUX_KOMEGA_LOCAL_RESIDUAL_HH
 #define DUMUX_KOMEGA_LOCAL_RESIDUAL_HH
@@ -37,7 +37,7 @@ template<class TypeTag, DiscretizationMethod discMethod>
 class KOmegaResidualImpl;
 
 /*!
- * \ingroup KOmega TwoEq Model
+ * \ingroup KOmegaModel
  * \brief The local residual class for the k-omega model.
           This is a convenience alias for the actual,
           discretization-specific local residual.

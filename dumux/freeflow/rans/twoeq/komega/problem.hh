@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup KOmega TwoEq Model
- * \copydoc Dumux::KomegaProblem
+ * \ingroup KOmegaModel
+ * \copydoc Dumux::KOmegaProblem
  */
 #ifndef DUMUX_KOMEGA_PROBLEM_HH
 #define DUMUX_KOMEGA_PROBLEM_HH
@@ -37,7 +37,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup KOmega TwoEq Model
+ * \ingroup KOmegaModel
  * \brief K-Omega turbulence model problem base class.
  *
  * This implements the 2-equation k-omega turbulence model developed in Wilcox08 and Wilcox88
