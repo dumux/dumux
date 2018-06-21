@@ -124,10 +124,10 @@ class PipeLauferProblem : public ZeroEqProblem<TypeTag>
 
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
-
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
     static const unsigned int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);

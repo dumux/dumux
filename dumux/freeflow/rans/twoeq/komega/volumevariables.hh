@@ -198,10 +198,6 @@ public:
         return stressTensorScalarProduct_;
     }
 
-    /**
-     *  \brief Here is a list of the background coefficients that are called in the Komega Model
-     */
-
     //! \brief Returns the \$f \alpha \$f value
     const Scalar alpha() const
     {
@@ -250,8 +246,8 @@ public:
 protected:
     Dune::FieldVector<Scalar,2> dofPosition_;
     Scalar betaOmega_;
-    Scalar dynamicEddyViscosity_;
     Scalar eddyDiffusivity_;
+    Scalar dynamicEddyViscosity_;
     Scalar dissipation_;
     Scalar turbulentKineticEnergy_;
     Scalar storedDissipation_;

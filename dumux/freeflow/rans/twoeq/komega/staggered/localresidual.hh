@@ -70,7 +70,6 @@ class KOmegaResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
 
 public:
     using ParentType::ParentType;
@@ -105,7 +104,7 @@ public:
         static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
         static constexpr int dissipationEqIdx = Indices::dissipationEqIdx - ModelTraits::dim();
 
-    // production
+        // production
         Scalar productionTerm = 2.0 * volVars.kinematicEddyViscosity()* volVars.stressTensorScalarProduct();
         if (ModelTraits::enableKOmegaProductionLimiter())
         {
@@ -115,7 +114,7 @@ public:
         source[turbulentKineticEnergyEqIdx] += productionTerm;
         source[dissipationEqIdx] += volVars.alpha() * ( volVars.dissipation() / volVars.turbulentKineticEnergy() ) * productionTerm;
 
-    // destruction
+        // destruction
         source[turbulentKineticEnergyEqIdx] -= volVars.betaK() * volVars.turbulentKineticEnergy() * volVars.dissipation();
         source[dissipationEqIdx] -=  problem.betaOmega() * volVars.dissipation() * volVars.dissipation();
 

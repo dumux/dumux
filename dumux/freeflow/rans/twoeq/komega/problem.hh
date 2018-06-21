@@ -84,8 +84,8 @@ public:
 
         // update size and initial values of the global vectors
         storedDissipation_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedDynamicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
         storedTurbulentKineticEnergy_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        storedDynamicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
     }
 
     /*!
@@ -128,8 +128,8 @@ public:
 
 public:
     std::vector<Scalar> storedDissipation_;
-    std::vector<Scalar> storedDynamicEddyViscosity_;
     std::vector<Scalar> storedTurbulentKineticEnergy_;
+    std::vector<Scalar> storedDynamicEddyViscosity_;
     bool useStoredEddyViscosity_;
 
 private:
