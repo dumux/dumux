@@ -47,6 +47,7 @@ class KOmegaVolumeVariables
     using NavierStokesParentType = NSVolumeVariables;
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
+    using ModelTraits = typename Traits::ModelTraits;
 
     static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
     static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
@@ -101,23 +102,29 @@ public:
         if (problem.useStoredEddyViscosity_)
             dynamicEddyViscosity_ = problem.storedDynamicEddyViscosity_[RANSParentType::elementID()];
         else
-            dynamicEddyViscosity_ = calculateEddyViscosity();
+            dynamicEddyViscosity_ = calculateEddyViscosity(problem);
         calculateEddyDiffusivity(problem);
     }
 
     /*!
      * \brief Returns the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$.
      */
-    Scalar calculateEddyViscosity()
+    template<class Problem>
+    Scalar calculateEddyViscosity(const Problem& problem)
     {
         using std::sqrt;
         using std::max;
 
-        //! Use the Dissipation limiter proposed in wilcox08
-        Scalar limitiedDissipation = (7.0 / 8.0) * sqrt( 2.0 * stressTensorScalarProduct()
-                                     * stressTensorScalarProduct() / betaK() );
-        Scalar Wbar = max(dissipation(), limitiedDissipation);
-        return turbulentKineticEnergy() / Wbar * NavierStokesParentType::density();
+        // use the Dissipation limiter proposed in wilcox2008
+        Scalar limitiedDissipation = std::numeric_limits<Scalar>::min();
+        static const auto enableKOmegaDissipationLimiter
+            = getParamFromGroup<bool>(problem.paramGroup(), "KOmega.EnableDissipationLimiter", true);
+        if (enableKOmegaDissipationLimiter)
+        {
+            limitiedDissipation = (7.0 / 8.0) * sqrt(2.0 * stressTensorScalarProduct() / betaK());
+        }
+        return turbulentKineticEnergy() / max(dissipation(), limitiedDissipation)
+               * NavierStokesParentType::density();
     }
 
     /*!

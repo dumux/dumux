@@ -104,9 +104,6 @@ struct KOmegaModelTraits : RANSModelTraits<dimension>
 
     //! The indices
     using Indices = KOmegaIndices<dim(), numComponents()>;
-
-    //! The model includes a limiter to the production term
-    static constexpr bool enableKOmegaProductionLimiter() { return true; }
 };
 
 ///////////////////////////////////////////////////////////////////////////

@@ -115,7 +115,7 @@ public:
                 // NOTE: then update the volVars
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
-                storedDynamicEddyViscosity_[elementID] = volVars.calculateEddyViscosity();
+                storedDynamicEddyViscosity_[elementID] = volVars.calculateEddyViscosity(*this);
             }
         }
     }

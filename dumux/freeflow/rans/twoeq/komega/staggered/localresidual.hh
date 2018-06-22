@@ -103,11 +103,13 @@ public:
         const auto& volVars = elemVolVars[scv];
 
         // production
+        static const auto enableKOmegaProductionLimiter
+            = getParamFromGroup<bool>(problem.paramGroup(), "KOmega.EnableProductionLimiter", false);
         Scalar productionTerm = 2.0 * volVars.kinematicEddyViscosity() * volVars.stressTensorScalarProduct();
-        if (ModelTraits::enableKOmegaProductionLimiter())
+        if (enableKOmegaProductionLimiter)
         {
-          Scalar productionAlternative = 20.0 * volVars.betaK() * volVars.turbulentKineticEnergy() * volVars.dissipation();
-          productionTerm = min(productionTerm, productionAlternative);
+            Scalar productionAlternative = 20.0 * volVars.betaK() * volVars.turbulentKineticEnergy() * volVars.dissipation();
+            productionTerm = min(productionTerm, productionAlternative);
         }
         source[turbulentKineticEnergyEqIdx] += productionTerm;
         source[dissipationEqIdx] += volVars.alpha() * volVars.dissipation() / volVars.turbulentKineticEnergy() * productionTerm;
