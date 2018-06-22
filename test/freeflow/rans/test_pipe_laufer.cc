@@ -274,7 +274,7 @@ int main(int argc, char** argv) try
             gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($28/0.2456) w l lc 7");
 #elif KOMEGA
             gnuplot_velocityProfile.addFileToPlot("pdelab-komega.csv", "u 5:($29/0.2456) w l lw 2 t 'PDELab k-omega'");
-            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($32/0.2456) w l lc 7");
+            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($30/0.2456) w l lc 7");
 #else
             gnuplot_velocityProfile.addFileToPlot("pdelab-zeroeq.csv", "u 5:($26/0.2456) w l lw 2 t 'PDELab 0-Eq.'");
             gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($24/0.2456) w l lc 7");

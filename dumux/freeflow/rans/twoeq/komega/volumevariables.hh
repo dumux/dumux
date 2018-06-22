@@ -98,7 +98,6 @@ public:
         storedDissipation_ = problem.storedDissipation_[RANSParentType::elementID()];
         storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementID()];
         stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementID()];
-        dofPosition_ = scv.dofPosition();
         if (problem.useStoredEddyViscosity_)
             dynamicEddyViscosity_ = problem.storedDynamicEddyViscosity_[RANSParentType::elementID()];
         else
@@ -200,15 +199,15 @@ public:
 
     //! \brief Returns the \$f \alpha \$f value
     const Scalar alpha() const
-    { return 0.520; }
+    { return 0.52; }
 
     //! \brief Returns the \$f \sigma_k \$f constant
     const Scalar sigmaK() const
-    { return 0.60; }
+    { return 0.6; }
 
     //! \brief Returns the \$f \sigma_{\omega} \$f constant
     const Scalar sigmaOmega() const
-    { return 0.50; }
+    { return 0.5; }
 
     //! \brief Returns the \$f \beta_k \$f constant
     const Scalar betaK() const
@@ -237,7 +236,6 @@ public:
 
 protected:
     Scalar betaOmega_;
-    Dune::FieldVector<Scalar, Traits::ModelTraits::dim()> dofPosition_;
     Scalar eddyDiffusivity_;
     Scalar dynamicEddyViscosity_;
     Scalar dissipation_;

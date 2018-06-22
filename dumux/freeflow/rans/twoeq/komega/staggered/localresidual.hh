@@ -99,21 +99,22 @@ public:
         CellCenterPrimaryVariables source = ParentType::computeSourceForCellCenter(problem, element, fvGeometry,
                                                                                    elemVolVars, elemFaceVars, scv);
 
+        using std::min;
         const auto& volVars = elemVolVars[scv];
 
         // production
-        Scalar productionTerm = 2.0 * volVars.kinematicEddyViscosity()* volVars.stressTensorScalarProduct();
+        Scalar productionTerm = 2.0 * volVars.kinematicEddyViscosity() * volVars.stressTensorScalarProduct();
         if (ModelTraits::enableKOmegaProductionLimiter())
         {
           Scalar productionAlternative = 20.0 * volVars.betaK() * volVars.turbulentKineticEnergy() * volVars.dissipation();
-          productionTerm = std::min(productionTerm, productionAlternative);
+          productionTerm = min(productionTerm, productionAlternative);
         }
         source[turbulentKineticEnergyEqIdx] += productionTerm;
-        source[dissipationEqIdx] += volVars.alpha() * ( volVars.dissipation() / volVars.turbulentKineticEnergy() ) * productionTerm;
+        source[dissipationEqIdx] += volVars.alpha() * volVars.dissipation() / volVars.turbulentKineticEnergy() * productionTerm;
 
         // destruction
         source[turbulentKineticEnergyEqIdx] -= volVars.betaK() * volVars.turbulentKineticEnergy() * volVars.dissipation();
-        source[dissipationEqIdx] -=  volVars.betaOmega() * volVars.dissipation() * volVars.dissipation();
+        source[dissipationEqIdx] -= volVars.betaOmega() * volVars.dissipation() * volVars.dissipation();
 
         return source;
     }

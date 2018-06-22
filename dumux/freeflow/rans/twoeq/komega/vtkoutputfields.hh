@@ -51,10 +51,8 @@ public:
     template <class VtkOutputModule>
     static void add(VtkOutputModule& vtk)
     {
-        vtk.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "turbulentKineticEnergy");
-        vtk.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "dissipation");
-        vtk.addVolumeVariable([](const auto& v){ return v.stressTensorScalarProduct(); }, "stressTensorScalarProduct");
-        vtk.addVolumeVariable([](const auto& v){ return v.kinematicEddyViscosity(); }, "eddyViscosity");
+        vtk.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
+        vtk.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "omega");
         vtk.addVolumeVariable([](const auto& v){ return 2.0 * v.kinematicEddyViscosity() * v.stressTensorScalarProduct();}, "production_k");
         vtk.addVolumeVariable([](const auto& v){ return 2.0 * v.kinematicEddyViscosity() * v.stressTensorScalarProduct() * v.alpha() * ( v.dissipation() / v.turbulentKineticEnergy() ) ; }, "production_omega");
         vtk.addVolumeVariable([](const auto& v){ return v.betaK() * v.turbulentKineticEnergy() * v.dissipation() ;}, "destruction_k");
