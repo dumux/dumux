@@ -133,8 +133,9 @@ public:
         outsideCoeff_e *= outsideVolVars.extrusionFactor();
 
         // average and distance
-        Scalar coeff_k = (insideCoeff_k + outsideCoeff_k) * 0.5;
-        Scalar coeff_e = (insideCoeff_e + outsideCoeff_e) * 0.5;
+        // is more stable with simple/unweighted arithmetic mean
+        Scalar coeff_k = arithmeticMean(insideCoeff_k, outsideCoeff_k);
+        Scalar coeff_e = arithmeticMean(insideCoeff_e, outsideCoeff_e);
         Scalar distance = 0.0;
 
         // adapt boundary handling

@@ -128,8 +128,12 @@ public:
         outsideCoeff_e *= outsideVolVars.extrusionFactor();
 
         // average and distance
-        Scalar coeff_k = (insideCoeff_k + outsideCoeff_k) * 0.5;
-        Scalar coeff_e = (insideCoeff_e + outsideCoeff_e) * 0.5;
+        Scalar coeff_k = arithmeticMean(insideCoeff_k, outsideCoeff_k,
+                                        (insideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
+                                        (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm());
+        Scalar coeff_e = arithmeticMean(insideCoeff_e, outsideCoeff_e,
+                                        (insideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
+                                        (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm());
         Scalar distance = 0.0;
 
         // adapt boundary handling

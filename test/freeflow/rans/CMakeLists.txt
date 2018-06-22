@@ -28,7 +28,7 @@ dune_add_test(NAME test_pipe_laufer_lowrekepsilon
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/pipe_laufer_lowrekepsilon.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/pipe_laufer_reference-00064.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/pipe_laufer_reference-00066.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_pipe_laufer_lowrekepsilon test_pipe_laufer_reference.input")
 target_compile_definitions(test_pipe_laufer_lowrekepsilon PUBLIC "LOWREKEPSILON=1")
 
@@ -38,7 +38,7 @@ dune_add_test(NAME test_pipe_laufer_komega
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/pipe_laufer_komega.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/pipe_laufer_reference-00056.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/pipe_laufer_reference-00055.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_pipe_laufer_komega test_pipe_laufer_reference.input")
 target_compile_definitions(test_pipe_laufer_komega PUBLIC "KOMEGA=1")
 
