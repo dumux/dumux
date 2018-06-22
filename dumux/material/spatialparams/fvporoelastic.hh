@@ -39,7 +39,7 @@ struct hasLameParamsAtPos
     template<class SpatialParams>
     auto operator()(const SpatialParams& a)
     -> decltype(a.lameParamsAtPos(std::declval<GlobalPosition>()))
-    {};
+    {}
 };
 
 // helper struct detecting if the user-defined spatial params class has a inertVolumeFractionAtPos function
@@ -50,7 +50,7 @@ struct hasInertVolumeFractionAtPos
     template<class SpatialParams>
     auto operator()(const SpatialParams& a)
     -> decltype(a.template inertVolumeFractionAtPos<SolidSystem>(std::declval<GlobalPosition>(), 0))
-    {};
+    {}
 };
 
 // helper struct detecting if the user-defined spatial params class has a reactiveVolumeFractionAtPos function
@@ -61,7 +61,7 @@ struct hasReactiveVolumeFractionAtPos
     template<class SpatialParams>
     auto operator()(const SpatialParams& a)
     -> decltype(a.template reactiveVolumeFractionAtPos<SolidSystem>(std::declval<GlobalPosition>(), 0))
-    {};
+    {}
 };
 
 // helper struct detecting if the user-defined spatial params class has a porosityAtPos function
@@ -72,7 +72,7 @@ struct hasPorosityAtPos
     template<class SpatialParams>
     auto operator()(const SpatialParams& a)
     -> decltype(a.porosityAtPos(std::declval<GlobalPosition>()))
-    {};
+    {}
 };
 
 // helper struct detecting if the user-defined spatial params class has a biotCoefficientAtPos function
@@ -83,7 +83,7 @@ struct hasBiotCoeffAtPos
     template<class SpatialParams>
     auto operator()(const SpatialParams& a)
     -> decltype(a.biotCoefficientAtPos(std::declval<GlobalPosition>()))
-    {};
+    {}
 };
 
 } // end namespace Detail

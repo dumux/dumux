@@ -41,7 +41,7 @@ struct hasLameParamsAtPos
     template<class SpatialParams>
     auto operator()(const SpatialParams& a)
     -> decltype(a.lameParamsAtPos(std::declval<GlobalPosition>()))
-    {};
+    {}
 };
 
 } // end namespace Detail

@@ -44,7 +44,7 @@ struct hasPermeabilityAtPos
     template<class SpatialParams>
     auto operator()(const SpatialParams& a)
     -> decltype(a.permeabilityAtPos(std::declval<GlobalPosition>()))
-    {};
+    {}
 };
 
 template<class GlobalPosition, class SolidSystem>
@@ -53,7 +53,7 @@ struct hasInertVolumeFractionAtPos
     template<class SpatialParams>
     auto operator()(const SpatialParams& a)
     -> decltype(a.template inertVolumeFractionAtPos<SolidSystem>(std::declval<GlobalPosition>(), 0))
-    {};
+    {}
 };
 
 template<class GlobalPosition>
@@ -62,7 +62,7 @@ struct hasPorosityAtPos
     template<class SpatialParams>
     auto operator()(const SpatialParams& a)
     -> decltype(a.porosityAtPos(std::declval<GlobalPosition>()))
-    {};
+    {}
 };
 } // end namespace Detail
 #endif

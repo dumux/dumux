@@ -41,7 +41,7 @@ struct hasMaterialLawParamsAtPos
     template<class SpatialParams>
     auto operator()(const SpatialParams& a)
     -> decltype(a.materialLawParamsAtPos(std::declval<GlobalPosition>()))
-    {};
+    {}
 };
 } // end namespace Detail
 #endif

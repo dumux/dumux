@@ -38,7 +38,7 @@ struct hasEffFluidDensityAtPos
     template<class Problem>
     auto operator()(const Problem& a)
     -> decltype(a.effectiveFluidDensityAtPos(std::declval<GlobalPosition>()))
-    {};
+    {}
 };
 
 // helper struct detecting if the user-defined problem class has an effectivePorePressureAtPos function
@@ -49,7 +49,7 @@ struct hasEffPorePressureAtPos
     template<class Problem>
     auto operator()(const Problem& a)
     -> decltype(a.effectivePorePressureAtPos(std::declval<GlobalPosition>()))
-    {};
+    {}
 };
 
 } // end namespace Detail
