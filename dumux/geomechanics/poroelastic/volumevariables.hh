@@ -70,7 +70,6 @@ public:
     {
         priVars_ = elemSol[scv.localDofIndex()];
         extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
-        effectiveFluidDensity_ = problem.effectiveFluidDensity(element, scv, elemSol);
 
         //! set the volume fractions of the solid components
         updateSolidVolumeFractions_(elemSol, problem, element, scv);
@@ -89,10 +88,6 @@ public:
     //! Return the average porosity \f$\mathrm{[-]}\f$ within the scv.
     Scalar solidDensity() const
     { return solidState_.density(); }
-
-    //! Returns the effective fluid density within the scv in \f$\mathrm{[kg/m^3]}\f$
-    Scalar effectiveFluidDensity() const
-    { return effectiveFluidDensity_; }
 
     //! Return the average porosity \f$\mathrm{[-]}\f$ within the scv
     Scalar porosity() const
@@ -157,7 +152,6 @@ private:
     // data members
     Scalar divU_;
     Scalar extrusionFactor_;
-    Scalar effectiveFluidDensity_;
     PrimaryVariables priVars_;
     SolidState solidState_;
 };
