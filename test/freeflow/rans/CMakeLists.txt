@@ -32,7 +32,14 @@ dune_add_test(NAME test_pipe_laufer_lowrekepsilon
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_pipe_laufer_lowrekepsilon test_pipe_laufer_reference.input")
 target_compile_definitions(test_pipe_laufer_lowrekepsilon PUBLIC "LOWREKEPSILON=1")
 
-add_executable(test_pipe_laufer_komega EXCLUDE_FROM_ALL test_pipe_laufer.cc)
+dune_add_test(NAME test_pipe_laufer_komega
+              SOURCES test_pipe_laufer.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/pipe_laufer_komega.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/pipe_laufer_reference-00056.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_pipe_laufer_komega test_pipe_laufer_reference.input")
 target_compile_definitions(test_pipe_laufer_komega PUBLIC "KOMEGA=1")
 
 dune_add_test(NAME test_pipe_zeroeqni

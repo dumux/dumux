@@ -72,7 +72,7 @@ class KOmegaProblem : public RANSProblem<TypeTag>
 public:
     KOmegaProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {
-        useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", true);
+        useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);
     }
 
     /*!
