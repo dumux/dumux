@@ -83,9 +83,11 @@ public:
         ParentType::updateStaticWallProperties();
 
         // update size and initial values of the global vectors
-        storedDissipation_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
-        storedTurbulentKineticEnergy_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
         storedDynamicEddyViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        storedDissipation_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        storedDissipationGradient_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
+        storedTurbulentKineticEnergy_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        storedTurbulentKineticEnergyGradient_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
     }
 
     /*!
@@ -118,6 +120,28 @@ public:
                 storedDynamicEddyViscosity_[elementID] = volVars.calculateEddyViscosity(*this);
             }
         }
+
+        // calculate cell-centered gradients
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                unsigned backwardNeighbor = ParentType::neighborID_[elementID][dimIdx][0];
+                unsigned forwardNeighbor = ParentType::neighborID_[elementID][dimIdx][1];
+                storedTurbulentKineticEnergyGradient_[elementID][dimIdx]
+                    = (storedTurbulentKineticEnergy_[forwardNeighbor]
+                          - storedTurbulentKineticEnergy_[backwardNeighbor])
+                      / (ParentType::cellCenter_[forwardNeighbor][dimIdx]
+                          - ParentType::cellCenter_[backwardNeighbor][dimIdx]);
+                storedDissipationGradient_[elementID][dimIdx]
+                    = (storedDissipation_[forwardNeighbor]
+                          - storedDissipation_[backwardNeighbor])
+                      / (ParentType::cellCenter_[forwardNeighbor][dimIdx]
+                          - ParentType::cellCenter_[backwardNeighbor][dimIdx]);
+            }
+        }
     }
 
     //! \brief Returns the \$f \beta_{\omega} \$f constant
@@ -127,9 +151,11 @@ public:
     }
 
 public:
-    std::vector<Scalar> storedDissipation_;
-    std::vector<Scalar> storedTurbulentKineticEnergy_;
     std::vector<Scalar> storedDynamicEddyViscosity_;
+    std::vector<Scalar> storedDissipation_;
+    std::vector<DimVector> storedDissipationGradient_;
+    std::vector<Scalar> storedTurbulentKineticEnergy_;
+    std::vector<DimVector> storedTurbulentKineticEnergyGradient_;
     bool useStoredEddyViscosity_;
 
 private:

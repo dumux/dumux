@@ -46,8 +46,9 @@ class KOmegaVolumeVariables
     using RANSParentType = RANSVolumeVariables<Traits, ThisType>;
     using NavierStokesParentType = NSVolumeVariables;
 
-    using Scalar = typename Traits::PrimaryVariables::value_type;
     using ModelTraits = typename Traits::ModelTraits;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+    using DimVector = Dune::FieldVector<Scalar, Traits::ModelTraits::dim()>;
 
     static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
     static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
@@ -98,6 +99,8 @@ public:
         dissipation_ = elemSol[0][Indices::dissipationIdx];
         storedDissipation_ = problem.storedDissipation_[RANSParentType::elementID()];
         storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementID()];
+        storedDissipationGradient_ = problem.storedDissipationGradient_[RANSParentType::elementID()];
+        storedTurbulentKineticEnergyGradient_ = problem.storedTurbulentKineticEnergyGradient_[RANSParentType::elementID()];
         stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementID()];
         if (problem.useStoredEddyViscosity_)
             dynamicEddyViscosity_ = problem.storedDynamicEddyViscosity_[RANSParentType::elementID()];
@@ -197,6 +200,22 @@ public:
     }
 
     /*!
+     * \brief Returns the gradient of the turbulent kinetic energy \f$ m^2/s^2 \f$
+     */
+    DimVector storedTurbulentKineticEnergyGradient() const
+    {
+        return storedTurbulentKineticEnergyGradient_;
+    }
+
+    /*!
+     * \brief Returns the gradient of the effective dissipation \f$ m^2/s^3 \f$
+     */
+    DimVector storedDissipationGradient() const
+    {
+        return storedDissipationGradient_;
+    }
+
+    /*!
      * \brief Returns the scalar product of the stress tensor
      */
     Scalar stressTensorScalarProduct() const
@@ -248,7 +267,9 @@ protected:
     Scalar dissipation_;
     Scalar turbulentKineticEnergy_;
     Scalar storedDissipation_;
+    DimVector storedDissipationGradient_;
     Scalar storedTurbulentKineticEnergy_;
+    DimVector storedTurbulentKineticEnergyGradient_;
     Scalar stressTensorScalarProduct_;
 };
 

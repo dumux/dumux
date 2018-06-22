@@ -118,6 +118,14 @@ public:
         source[turbulentKineticEnergyEqIdx] -= volVars.betaK() * volVars.turbulentKineticEnergy() * volVars.dissipation();
         source[dissipationEqIdx] -= volVars.betaOmega() * volVars.dissipation() * volVars.dissipation();
 
+        // cross-diffusion term
+        Scalar gradientProduct = 0.0;
+        for (unsigned int i = 0; i < ModelTraits::dim(); ++i)
+            gradientProduct += volVars.storedTurbulentKineticEnergyGradient()[i]
+                               * volVars.storedDissipationGradient()[i];
+        if (gradientProduct > 0.0)
+            source[dissipationEqIdx] += 0.125 / volVars.dissipation() * gradientProduct;
+
         return source;
     }
 
