@@ -140,7 +140,7 @@ public:
             // Solve J*x = b
             x = 0;
             try { J.solve(x, b); }
-            catch (Dune::FMatrixError e)
+            catch (Dune::FMatrixError &e)
             { throw NumericalProblem(e.what()); }
 
             //std::cout << "original delta: " << x << "\n";
