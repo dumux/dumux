@@ -65,6 +65,7 @@ class KOmegaResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::stagg
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using CellCenterResidual = CellCenterPrimaryVariables;
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
@@ -115,6 +116,25 @@ public:
         source[dissipationEqIdx] -=  volVars.betaOmega() * volVars.dissipation() * volVars.dissipation();
 
         return source;
+    }
+
+    /*!
+     * \brief Sets a fixed Dirichlet value for a cell (such as for dissipation) at the boundary.
+     */
+    template<class BoundaryTypes>
+    void setFixedCell(CellCenterResidual& residual,
+                      const Problem& problem,
+                      const Element& element,
+                      const SubControlVolume& insideScv,
+                      const ElementVolumeVariables& elemVolVars,
+                      const BoundaryTypes& bcTypes) const
+    {
+        // set a fixed dissipation for cells adjacent to a wall
+        if(bcTypes.isDirichletCell(Indices::dissipationEqIdx))
+        {
+            const auto& insideVolVars = elemVolVars[insideScv];
+            residual[dissipationEqIdx] = insideVolVars.dissipation() - problem.dirichlet(element, insideScv)[Indices::dissipationEqIdx];
+        }
     }
 };
 }

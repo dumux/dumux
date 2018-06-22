@@ -153,8 +153,11 @@ public:
         Scalar diameter = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
         viscosityTilde_ = turbulenceProperties.viscosityTilde(inletVelocity_, diameter, kinematicViscosity);
         turbulentKineticEnergy_ = turbulenceProperties.turbulentKineticEnergy(inletVelocity_, diameter, kinematicViscosity);
+#if KOMEGA
+        dissipation_ = turbulenceProperties.dissipationRate(inletVelocity_, diameter, kinematicViscosity);
+#else
         dissipation_ = turbulenceProperties.dissipation(inletVelocity_, diameter, kinematicViscosity);
-        dissipationRate_ = turbulenceProperties.dissipationRate(inletVelocity_, diameter, kinematicViscosity);
+#endif
         std::cout << std::endl;
     }
 
@@ -235,14 +238,19 @@ public:
 #if LOWREKEPSILON || KEPSILON || KOMEGA
             values.setDirichlet(Indices::turbulentKineticEnergyIdx);
             values.setDirichlet(Indices::dissipationIdx);
+
+#if KOMEGA
+            // set a fixed dissipation (omega) in one cell
+            if (isOnWall(globalPos))
+                values.setDirichletCell(Indices::dissipationIdx);
+#endif
 #endif
         }
         return values;
     }
 
      /*!
-      * \brief Evaluate the boundary conditions for a dirichlet
-      *        control volume face.
+      * \brief Evaluate the boundary conditions for a dirichlet values at the boundary.
       *
       * \param element The finite element
       * \param scvf the sub control volume face
@@ -252,11 +260,6 @@ public:
     {
         const auto globalPos = scvf.ipGlobal();
         PrimaryVariables values(initialAtPos(globalPos));
-#if KOMEGA
-        unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-        const auto wallDistance = ParentType::wallDistance_[elementID];
-        values[Indices::dissipationEqIdx] =  6.0 * ParentType::kinematicViscosity_[elementID] / (ParentType::betaOmega() * std::pow(wallDistance, 2));
-#endif
 #if NONISOTHERMAL
         if (time() > 10.0)
         {
@@ -271,8 +274,7 @@ public:
     }
 
      /*!
-      * \brief Evaluate the boundary conditions for a dirichlet
-      *        control volume center.
+      * \brief Evaluate the boundary conditions for fixed values at cell centers
       *
       * \param element The finite element
       * \param scv the sub control volume
@@ -283,9 +285,11 @@ public:
         const auto globalPos = scv.center();
         PrimaryVariables values(initialAtPos(globalPos));
 #if KOMEGA
-//         unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-//         const auto wallDistance = ParentType::wallDistance_[elementID];
-//         values[Indices::dissipationEqIdx] =  6.0 * ParentType::kinematicViscosity_[elementID] / (ParentType::betaOmega() * std::pow(wallDistance, 2));
+        using std::pow;
+        unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+        const auto wallDistance = ParentType::wallDistance_[elementID];
+        values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementID]
+                                            / (ParentType::betaOmega() * pow(wallDistance, 2));
 #endif
         return values;
     }
@@ -314,24 +318,13 @@ public:
         }
 #endif
 
-#if LOWREKEPSILON || KEPSILON
+#if LOWREKEPSILON || KEPSILON || KOMEGA
         values[Indices::turbulentKineticEnergyEqIdx] = turbulentKineticEnergy_;
         values[Indices::dissipationEqIdx] = dissipation_;
         if (isOnWall(globalPos))
         {
             values[Indices::turbulentKineticEnergyEqIdx] = 0.0;
             values[Indices::dissipationEqIdx] = 0.0;
-        }
-#elif KOMEGA
-        if (time() < eps_ && startWithZeroVelocity_)
-        {
-            values[Indices::velocityXIdx] = 0.0;
-        }
-        values[Indices::turbulentKineticEnergyEqIdx] = turbulentKineticEnergy_;
-        values[Indices::dissipationEqIdx] = dissipation_;
-        if (isOnWall(globalPos))
-        {
-            values[Indices::turbulentKineticEnergyEqIdx] = 0.0;
         }
 #endif
 
@@ -370,7 +363,6 @@ private:
     Scalar viscosityTilde_;
     Scalar turbulentKineticEnergy_;
     Scalar dissipation_;
-    Scalar dissipationRate_;
     TimeLoopPtr timeLoop_;
 };
 } //end namespace
