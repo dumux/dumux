@@ -44,9 +44,6 @@ class PriVarSwitchNewtonSolver : public NewtonSolver<Assembler, LinearSolver>
     using ParentType = NewtonSolver<Assembler, LinearSolver>;
     using SolutionVector = typename Assembler::ResidualType;
 
-    static constexpr auto discMethod = Assembler::FVGridGeometry::discMethod;
-    static constexpr bool isBox = discMethod == DiscretizationMethod::box;
-
 public:
     using ParentType::ParentType;
 
@@ -98,20 +95,15 @@ public:
         switchedInLastIteration_ = priVarSwitch_->update(uCurrentIter, gridVariables,
                                                          problem, fvGridGeometry);
 
-        constexpr bool volVarCachingEnabled = std::decay_t<decltype(gridVariables.curGridVolVars())>::cachingEnabled;
-        constexpr bool fluxVarCachingEnabled = std::decay_t<decltype(gridVariables.gridFluxVarsCache())>::cachingEnabled;
         if(switchedInLastIteration_)
         {
             for (const auto& element : elements(fvGridGeometry.gridView()))
             {
                 // if the volume variables are cached globally, we need to update those where the primary variables have been switched
-                updateSwitchedVolVars_(std::integral_constant<bool, volVarCachingEnabled>(),
-                                       element, assembler, uCurrentIter, uLastIter);
+                priVarSwitch_->updateSwitchedVolVars(problem, element, fvGridGeometry, gridVariables, uCurrentIter);
 
                 // if the flux variables are cached globally, we need to update those where the primary variables have been switched
-                // (not needed for box discretization)
-                updateSwitchedFluxVarsCache_(std::integral_constant<bool, (fluxVarCachingEnabled && !isBox)>(),
-                                             element, assembler, uCurrentIter, uLastIter);
+                priVarSwitch_->updateSwitchedFluxVarsCache(problem, element, fvGridGeometry, gridVariables, uCurrentIter);
             }
         }
     }
@@ -131,75 +123,6 @@ public:
     }
 
 private:
-
-    /*!
-     * \brief Update the volume variables whose primary variables were
-              switched. Required when volume variables are cached globally.
-     */
-    template<class Element>
-    void updateSwitchedVolVars_(std::true_type,
-                                const Element& element,
-                                Assembler& assembler,
-                                const SolutionVector &uCurrentIter,
-                                const SolutionVector &uLastIter)
-    {
-        const auto& fvGridGeometry = assembler.fvGridGeometry();
-        const auto& problem = assembler.problem();
-        auto& gridVariables = assembler.gridVariables();
-
-        // make sure FVElementGeometry is bound to the element
-        auto fvGeometry = localView(fvGridGeometry);
-        fvGeometry.bindElement(element);
-
-        // update the secondary variables if global caching is enabled
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            const auto dofIdxGlobal = scv.dofIndex();
-            if (priVarSwitch_->wasSwitched(dofIdxGlobal))
-            {
-                const auto elemSol = elementSolution(element, uCurrentIter, fvGridGeometry);
-                auto& volVars = gridVariables.curGridVolVars().volVars(scv);
-                volVars.update(elemSol, problem, element, scv);
-            }
-        }
-    }
-
-    /*!
-     * \brief Update the fluxVars cache for dof whose primary variables were
-              switched. Required when flux variables are cached globally.
-     */
-     template<class Element>
-     void updateSwitchedFluxVarsCache_(std::true_type,
-                                       const Element& element,
-                                       Assembler& assembler,
-                                       const SolutionVector &uCurrentIter,
-                                       const SolutionVector &uLastIter)
-    {
-        const auto& fvGridGeometry = assembler.fvGridGeometry();
-        auto& gridVariables = assembler.gridVariables();
-
-        // update the flux variables if global caching is enabled
-        const auto dofIdxGlobal = fvGridGeometry.dofMapper().index(element);
-
-        if (priVarSwitch_->wasSwitched(dofIdxGlobal))
-        {
-            // make sure FVElementGeometry and the volume variables are bound
-            auto fvGeometry = localView(fvGridGeometry);
-            fvGeometry.bind(element);
-            auto curElemVolVars = localView(gridVariables.curGridVolVars());
-            curElemVolVars.bind(element, fvGeometry, uCurrentIter);
-            gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
-        }
-    }
-
-     //! brief Do nothing when volume variables are not cached globally.
-    template <typename... Args>
-    void updateSwitchedVolVars_(std::false_type, Args&&... args) const {}
-
-    //! brief Do nothing when flux variables are not cached globally.
-    template <typename... Args>
-    void updateSwitchedFluxVarsCache_(std::false_type, Args&&... args) const {}
-
     //! the class handling the primary variable switch
     std::unique_ptr<PrimaryVariableSwitch> priVarSwitch_;
     //! if we switched primary variables in the last iteration
