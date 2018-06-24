@@ -25,6 +25,7 @@
 #ifndef DUMUX_AMGPARALLELHELPERS_HH
 #define DUMUX_AMGPARALLELHELPERS_HH
 
+#include <dune/common/version.hh>
 #include <dune/geometry/dimension.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/partitionset.hh>
@@ -956,8 +957,13 @@ void ParallelISTLHelper<GridView, AmgTraits>::createIndexSetAndProjectForAMG(Mat
                 // This dof is managed by us.
                 attr = Dune::OwnerOverlapCopyAttributeSet::owner;
             }
+#if DUNE_VERSION_GTE(DUNE_ISTL, 2, 7)
+            else if ( *ghost==(1<<24) && ( comm.category() ==
+                                           static_cast<int>(Dune::SolverCategory::nonoverlapping)) )
+#else
             else if ( *ghost==(1<<24) && ( comm.getSolverCategory() ==
                                            static_cast<int>(Dune::SolverCategory::nonoverlapping)) )
+#endif
             {
                 //use attribute overlap for ghosts in novlp grids
                 attr = Dune::OwnerOverlapCopyAttributeSet::overlap;
