@@ -24,7 +24,7 @@ int main (int argc, char *argv[]) try
     if (!enableGravity) DUNE_THROW(Dune::InvalidStateException, "Gravity should be true!");
 
     // use some given parameters
-    const auto DUNE_UNUSED(cells) = getParam<std::array<int, 2>>("Grid.Cells", std::array<int, 2>{{1, 1}});
+    const auto DUNE_UNUSED cells = getParam<std::array<int, 2>>("Grid.Cells", std::array<int, 2>{{1, 1}});
     if (cells[0] != 100 || cells[1] != 100) DUNE_THROW(Dune::InvalidStateException, "Cells should be 100 100!");
 
     auto tEnd = getParam<double>("TimeLoop.TEnd");

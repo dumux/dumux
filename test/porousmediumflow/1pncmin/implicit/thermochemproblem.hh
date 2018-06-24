@@ -373,7 +373,6 @@ public:
                 const auto dofIdxGlobal = scv.dofIndex();
                 permeability_[dofIdxGlobal] = this->spatialParams().permeability(element, scv, elemSol);
                 porosity_[dofIdxGlobal] = volVars.porosity();
-                PrimaryVariables reactionRate;
                 reactionRate_[dofIdxGlobal] = rrate_.thermoChemReaction(volVars);
             }
         }
