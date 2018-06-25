@@ -93,7 +93,7 @@ public:
 
     //! Return the average porosity \f$\mathrm{[-]}\f$ within the scv
     Scalar porosity() const
-    { return solidState_.porosity()*divU_; }
+    { return solidState_.porosity(); }
 
     //! Returns the divergence of u within this scv
     Scalar divU() const

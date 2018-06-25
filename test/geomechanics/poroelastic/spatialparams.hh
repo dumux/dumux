@@ -25,6 +25,7 @@
 
 #include <dumux/geomechanics/lameparams.hh>
 #include <dumux/material/spatialparams/fvporoelastic.hh>
+#include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
 
 namespace Dumux {
 
@@ -63,8 +64,14 @@ public:
     { return lameParams_; }
 
     //! Return the porosity of the porous medium
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.3; }
+    template< class ElemSol >
+    Scalar porosity(const Element& element,
+                    const SubControlVolume& scv,
+                    const ElemSol& elemSol) const
+    {
+        PorosityDeformation<Scalar> poroLaw;
+        return poroLaw.evaluatePorosity(this->fvGridGeometry(), element, scv, elemSol, /*refPoro*/0.3);
+    }
 
     //! Return the biot coefficient of the porous medium
     Scalar biotCoefficientAtPos(const GlobalPosition& globalPos) const
