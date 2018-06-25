@@ -83,7 +83,7 @@ public:
         setSolidTemperature_(problem, elemSol);
         // update the density of the solid phase
         solidState_.setDensity(SolidSystem::density(solidState_));
-    };
+    }
 
     //! Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
     Scalar solidDensity() const

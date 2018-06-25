@@ -384,7 +384,7 @@ public:
 struct hasVertexColor
 {
     template<class Engine>
-    auto operator()(Engine&& e) -> decltype(e.vertexColor(0)) {};
+    auto operator()(Engine&& e) -> decltype(e.vertexColor(0)) {}
 };
 
 /*!

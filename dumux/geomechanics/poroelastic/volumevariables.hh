@@ -84,7 +84,7 @@ public:
         const auto gradU = evalGradients(element, element.geometry(), problem.fvGridGeometry(), elemSol, scv.center());
         for (int dir = 0; dir < Element::Geometry::mydimension; ++dir)
             divU_ += gradU[Indices::u(dir)][dir];
-    };
+    }
 
     //! Return the average porosity \f$\mathrm{[-]}\f$ within the scv.
     Scalar solidDensity() const

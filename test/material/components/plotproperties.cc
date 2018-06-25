@@ -67,16 +67,16 @@ struct AlwaysFalse<DisableStaticAssert> : public std::true_type {};
 }
 
 //! helper structs for detecting if a component has certain functions overloaded
-struct checkLiqDen { template<class C> auto operator()(C&& c) -> decltype(C::template liquidDensity<DisableStaticAssert>(0.0, 0.0)) {}; };
-struct checkLiqEnth { template<class C> auto operator()(C&& c) -> decltype(C::template liquidEnthalpy<DisableStaticAssert>(0.0, 0.0)) {}; };
-struct checkLiqHeatCap { template<class C> auto operator()(C&& c) -> decltype(C::template liquidHeatCapacity<DisableStaticAssert>(0.0, 0.0)) {}; };
-struct checkLiqVisc { template<class C> auto operator()(C&& c) -> decltype(C::template liquidViscosity<DisableStaticAssert>(0.0, 0.0)) {}; };
-struct checkLiqThermCond { template<class C> auto operator()(C&& c) -> decltype(C::template liquidThermalConductivity<DisableStaticAssert>(0.0, 0.0)) {}; };
-struct checkGasDen { template<class C> auto operator()(C&& c) -> decltype(C::template gasDensity<DisableStaticAssert>(0.0, 0.0)) {}; };
-struct checkGasEnth { template<class C> auto operator()(C&& c) -> decltype(C::template gasEnthalpy<DisableStaticAssert>(0.0, 0.0)) {}; };
-struct checkGasHeatCap { template<class C> auto operator()(C&& c) -> decltype(C::template gasHeatCapacity<DisableStaticAssert>(0.0, 0.0)) {}; };
-struct checkGasVisc { template<class C> auto operator()(C&& c) -> decltype(C::template gasViscosity<DisableStaticAssert>(0.0, 0.0)) {}; };
-struct checkGasThermCond { template<class C> auto operator()(C&& c) -> decltype(C::template gasThermalConductivity<DisableStaticAssert>(0.0, 0.0)) {}; };
+struct checkLiqDen { template<class C> auto operator()(C&& c) -> decltype(C::template liquidDensity<DisableStaticAssert>(0.0, 0.0)) {} };
+struct checkLiqEnth { template<class C> auto operator()(C&& c) -> decltype(C::template liquidEnthalpy<DisableStaticAssert>(0.0, 0.0)) {} };
+struct checkLiqHeatCap { template<class C> auto operator()(C&& c) -> decltype(C::template liquidHeatCapacity<DisableStaticAssert>(0.0, 0.0)) {} };
+struct checkLiqVisc { template<class C> auto operator()(C&& c) -> decltype(C::template liquidViscosity<DisableStaticAssert>(0.0, 0.0)) {} };
+struct checkLiqThermCond { template<class C> auto operator()(C&& c) -> decltype(C::template liquidThermalConductivity<DisableStaticAssert>(0.0, 0.0)) {} };
+struct checkGasDen { template<class C> auto operator()(C&& c) -> decltype(C::template gasDensity<DisableStaticAssert>(0.0, 0.0)) {} };
+struct checkGasEnth { template<class C> auto operator()(C&& c) -> decltype(C::template gasEnthalpy<DisableStaticAssert>(0.0, 0.0)) {} };
+struct checkGasHeatCap { template<class C> auto operator()(C&& c) -> decltype(C::template gasHeatCapacity<DisableStaticAssert>(0.0, 0.0)) {} };
+struct checkGasVisc { template<class C> auto operator()(C&& c) -> decltype(C::template gasViscosity<DisableStaticAssert>(0.0, 0.0)) {} };
+struct checkGasThermCond { template<class C> auto operator()(C&& c) -> decltype(C::template gasThermalConductivity<DisableStaticAssert>(0.0, 0.0)) {} };
 
 //! plot given values
 template<class Functor>

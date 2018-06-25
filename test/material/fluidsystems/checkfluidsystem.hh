@@ -359,7 +359,7 @@ int checkFluidState(const BaseFluidState &fs)
     try
     {
         val = fs.enthalpy(/*phaseIdx=*/0);
-    } catch (Dune::NotImplemented)
+    } catch (Dune::NotImplemented&)
     {
         collectedWarnings += "warning: fluidState.enthalpy() is not implemented\n";
     } catch (...)
@@ -369,7 +369,7 @@ int checkFluidState(const BaseFluidState &fs)
     try
     {
         val = fs.internalEnergy(/*phaseIdx=*/0);
-    } catch (Dune::NotImplemented)
+    } catch (Dune::NotImplemented&)
     {
         collectedWarnings += "warning: fluidState.internalEnergy() is not implemented\n";
     } catch (...)
@@ -555,7 +555,7 @@ int checkFluidSystem()
         try
         {
             val = FluidSystem::heatCapacity(fs, paramCache, phaseIdx);
-        } catch (Dune::NotImplemented)
+        } catch (Dune::NotImplemented&)
         {
             collectedWarnings += "warning: FluidSystem::heatCapacity() is not implemented\n";
         } catch (...)
@@ -565,7 +565,7 @@ int checkFluidSystem()
         try
         {
             val = FluidSystem::thermalConductivity(fs, paramCache, phaseIdx);
-        } catch (Dune::NotImplemented)
+        } catch (Dune::NotImplemented&)
         {
             collectedWarnings += "warning: FluidSystem::thermalConductivity() is not implemented\n";
         } catch (...)
@@ -579,7 +579,7 @@ int checkFluidSystem()
             try
             {
                 val = FluidSystem::fugacityCoefficient(fs, paramCache, phaseIdx, compIdx);
-            } catch (Dune::NotImplemented)
+            } catch (Dune::NotImplemented&)
             {
                 collectedWarnings += "warning: FluidSystem::fugacityCoefficient() is not implemented\n";
             } catch (...)
@@ -605,10 +605,10 @@ int checkFluidSystem()
                 try
                 {
                     val = FluidSystem::binaryDiffusionCoefficient(fs, paramCache, phaseIdx, compIdx, comp2Idx);
-                } catch (Dune::NotImplemented)
+                } catch (Dune::NotImplemented&)
                 {
                     collectedWarnings += "warning: FluidSystem::binaryDiffusionCoefficient() is not implemented\n";
-                } catch (Dune::InvalidStateException)
+                } catch (Dune::InvalidStateException&)
                 {
                     collectedWarnings += "warning: FluidSystem::binaryDiffusionCoefficient() gives invalid state exception\n";
                 } catch (...)

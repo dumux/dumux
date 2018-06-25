@@ -91,7 +91,7 @@ int checkSolidSystem()
     try
     {
         val = SolidSystem::heatCapacity(sst);
-    } catch (Dune::NotImplemented)
+    } catch (Dune::NotImplemented&)
     {
         collectedWarnings += "warning: SolidSystem::heatCapacity() is not implemented\n";
     } catch (...)
@@ -102,7 +102,7 @@ int checkSolidSystem()
     try
     {
         val = SolidSystem::thermalConductivity(sst);
-    } catch (Dune::NotImplemented)
+    } catch (Dune::NotImplemented&)
     {
         collectedWarnings += "warning: SolidSystem::thermalConductivity() is not implemented\n";
     } catch (...)
@@ -113,7 +113,7 @@ int checkSolidSystem()
     try
     {
         val = SolidSystem::density(sst);
-    } catch (Dune::Exception e)
+    } catch (Dune::Exception &e)
     {
         collectedErrors += "error: SolidSystem::density() throws exception!\n";
     }

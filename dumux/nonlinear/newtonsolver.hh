@@ -56,7 +56,7 @@ struct supportsPartialReassembly
     auto operator()(Assembler&& a)
     -> decltype(a.assembleJacobianAndResidual(std::declval<const typename Assembler::ResidualType&>(),
                                               std::declval<const PartialReassembler<Assembler>*>()))
-    {};
+    {}
 };
 
 /*!
