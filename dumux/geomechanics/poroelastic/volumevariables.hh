@@ -79,12 +79,6 @@ public:
         setSolidTemperature_(problem, elemSol);
         // update the density of the solid phase
         solidState_.setDensity(SolidSystem::density(solidState_));
-
-        // compute divergence of diplacement for this scv
-        divU_ = 0.0;
-        const auto gradU = evalGradients(element, element.geometry(), problem.fvGridGeometry(), elemSol, scv.center());
-        for (int dir = 0; dir < Element::Geometry::mydimension; ++dir)
-            divU_ += gradU[Indices::u(dir)][dir];
     }
 
     //! Return the average porosity \f$\mathrm{[-]}\f$ within the scv.
@@ -95,11 +89,7 @@ public:
     Scalar porosity() const
     { return solidState_.porosity(); }
 
-    //! Returns the divergence of u within this scv
-    Scalar divU() const
-    { return divU_; }
-
-    //! Returns the permeability within the scv in \f$[m]\f$.
+    //! Returns the permeability within the scv in \f$[m^2]\f$.
     Scalar displacement(unsigned int dir) const
     { return priVars_[ Indices::momentum(dir) ]; }
 
@@ -161,7 +151,6 @@ private:
     { solidState_.setTemperature(problem.temperature()); }
 
     // data members
-    Scalar divU_;
     Scalar extrusionFactor_;
     PrimaryVariables priVars_;
     SolidState solidState_;
