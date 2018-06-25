@@ -1,8 +1,3 @@
-[TimeLoop]
-DtInitial = 1 # [s]
-TEnd = 1 # [s]
-MaxTimeStepSize = 1
-
 [Fracture.Grid]
 File = fracture.msh
 
@@ -16,15 +11,20 @@ Name = test_embedded_fracture
 EnableGravity = false
 
 [Component]
-LiquidKinematicViscosity = 1 # [m^2/s]
-LiquidDensity = 1 # [kg/m^3]
+LiquidKinematicViscosity = 1e-6 # [m^2/s]
+LiquidDensity = 1000 # [kg/m^3]
 
 [Matrix.SpatialParams]
-Permeability = 1 # [m^2]
+Permeability = 1e-15 # [m^2]
 
 [Fracture.SpatialParams]
-Permeability = 1 # [m^2]
-Aperture = 0.01 # [m]
+Permeability = 1e-7 # [m^2]
+Aperture = 0.05 # [m]
 
-[Vtk]
-AddVelocity = false
+[LinearSolver]
+MaxIterations = 2000
+ResidualReduction = 1e-24
+
+[Assembly.NumericDifference]
+BaseEpsilon = 0.1e5
+PriVarMagnitude = 1e5

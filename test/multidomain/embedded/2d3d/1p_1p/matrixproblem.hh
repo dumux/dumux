@@ -160,23 +160,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        // values.setAllDirichlet();
         values.setAllNeumann();
-        return values;
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
-     *
-     * \param globalPos The position for which the bc type should be evaluated
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
-    {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 1e5 + 0.1e5*globalPos[0];
         return values;
     }
 
@@ -233,7 +217,9 @@ public:
         // calculate the source
         const Scalar meanDistance = this->couplingManager().averageDistance(source.id());
         static const Scalar matrixPerm = getParamFromGroup<Scalar>("Matrix", "SpatialParams.Permeability");
-        const Scalar sourceValue = (pressure1D - pressure3D)/meanDistance*matrixPerm;
+        static const Scalar rho = getParam<Scalar>("Component.LiquidDensity");
+        static const Scalar mu = getParam<Scalar>("Component.LiquidKinematicViscosity")*rho;
+        const Scalar sourceValue = rho*(pressure1D - pressure3D)/meanDistance*matrixPerm/mu;
         source = sourceValue*source.quadratureWeight()*source.integrationElement();
     }
 
@@ -246,7 +232,7 @@ public:
      * variables.
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    { return PrimaryVariables(0.0); }
+    { return PrimaryVariables({1e5}); }
 
     //! Called after every time step
     //! Output the total global exchange term
