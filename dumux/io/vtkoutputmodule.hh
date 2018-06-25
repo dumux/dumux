@@ -586,8 +586,8 @@ private:
     template<class Vector, typename std::enable_if_t<!IsIndexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
     std::size_t getNumberOfComponents_(const Vector& v) { return 1; }
 
-    //! return the number of dofs
-    std::size_t numDofs_() const { return gridGeom_.gridView().size(dofCodim); }
+    //! return the number of dofs, we only support vertex and cell data
+    std::size_t numDofs_() const { return dofCodim == dim ? gridGeom_.vertexMapper().size() : gridGeom_.elementMapper().size(); }
 
     const Problem& problem_;
     const FVGridGeometry& gridGeom_;
