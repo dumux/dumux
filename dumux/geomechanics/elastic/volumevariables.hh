@@ -52,6 +52,8 @@ class ElasticVolumeVariables
 public:
     //! export the type used for the primary variables
     using PrimaryVariables = typename Traits::PrimaryVariables;
+    //! export the type used for displacement vectors
+    using DisplacementVector = typename Traits::DisplacementVector;
     //! export the type encapsulating primary variable indices
     using Indices = typename ModelTraits::Indices;
     //! export type of solid state
@@ -89,9 +91,18 @@ public:
     Scalar solidDensity() const
     { return solidState_.density(); }
 
-    //! Returns the permeability within the control volume in \f$[m^2]\f$.
+    //! Returns the permeability within the control volume in \f$[m]\f$.
     Scalar displacement(unsigned int dir) const
     { return priVars_[ Indices::momentum(dir) ]; }
+
+    //! Returns the displacement vector within the scv in \f$[m]\f$.
+    DisplacementVector displacement() const
+    {
+        DisplacementVector d;
+        for (int dir = 0; dir < d.size(); ++dir)
+            d[dir] = displacement(dir);
+        return d;
+    }
 
     //! Return a component of primary variable vector for a given index
     Scalar priVar(const int pvIdx) const

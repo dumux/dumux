@@ -149,8 +149,7 @@ int main(int argc, char** argv) try
     VtkOutputModule vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter);
 
-    // also, add displacement and exact solution to the output
-    vtkWriter.addField(x, "u");
+    // also, add exact solution to the output
     SolutionVector xExact(fvGridGeometry->numDofs());
     for (const auto& v : vertices(leafGridView))
         xExact[ fvGridGeometry->vertexMapper().index(v) ] = problem->exactSolution(v.geometry().center());

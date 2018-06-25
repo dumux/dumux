@@ -36,6 +36,7 @@ public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.displacement(); }, "u");
         vtk.addVolumeVariable([](const auto& volVars){ return volVars.divU(); }, "divU");
         vtk.addVolumeVariable([](const auto& volVars){ return volVars.porosity(); }, "porosity");
     }
