@@ -26,6 +26,8 @@
 #ifndef DUMUX_GEOMECHANICS_POROELASTIC_MODEL_HH
 #define DUMUX_GEOMECHANICS_POROELASTIC_MODEL_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/geomechanics/elastic/indices.hh>
 #include <dumux/geomechanics/elastic/model.hh>
@@ -90,13 +92,15 @@ public:
 SET_PROP(PoroElastic, VolumeVariables)
 {
 private:
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using DV = Dune::FieldVector<typename PV::value_type, dim>;
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
 
     // we reuse the elastic volume variable traits here
-    using Traits = ElasticVolumeVariablesTraits<PV, MT, SST, SSY>;
+    using Traits = ElasticVolumeVariablesTraits<PV, DV, MT, SST, SSY>;
 public:
     using type = PoroElasticVolumeVariables<Traits>;
 };

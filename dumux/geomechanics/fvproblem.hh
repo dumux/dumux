@@ -82,33 +82,25 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Returns the effective fluid density
+     * \brief Returns the effective fluid density within an scv.
      * \note This is only enabled if the model considers fluid phases.
-     *       This is possibly solution dependent and is evaluated
-     *       for an integration point inside the element. Therefore,
-     *       a flux variables cache object is passed to this function
-     *       containing data on shape functions at the integration point.
      *
      * \param element The current element
-     * \param fvGeometry The local finite volume geometry
-     * \param elemVolVars Primary/Secondary variables inside the element
-     * \param FluxVarsCache Contains data on shape functions at the integration point
+     * \param scv The sub-control volume
      */
-    template< class ElemSol, int n = numFP, std::enable_if_t<(n > 0), int> = 0 >
+    template< int n = numFP, std::enable_if_t<(n > 0), int> = 0 >
     Scalar effectiveFluidDensity(const Element& element,
-                                 const SubControlVolume& scv,
-                                 const ElemSol& elemSol) const
+                                 const SubControlVolume& scv) const
     {
         static_assert(decltype(isValid(Detail::hasEffFluidDensityAtPos<GlobalPosition>())(this->asImp_()))::value," \n\n"
         "   Your problem class has to either implement\n\n"
         "         Scalar effectiveFluidDensityAtPos(const GlobalPosition& globalPos) const\n\n"
         "   or overload this function\n\n"
         "         template<class ElementSolution>\n"
-        "         Scalar effectiveFluidDensity(const Element& element,\n"
-        "                                      const SubControlVolume& scv,\n"
-        "                                      const ElementSolution& elemSol) const\n\n");
+        "         Scalar effectiveFluidDensity(const Element& element,\n\
+                                               const SubControlVolume& scv) const\n\n");
 
-        return this->asImp_().effectiveFluidDensityAtPos(element.geometry().center());
+        return this->asImp_().effectiveFluidDensityAtPos(scv.center());
     }
 
     /*!

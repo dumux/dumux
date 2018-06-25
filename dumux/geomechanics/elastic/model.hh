@@ -26,6 +26,8 @@
 #ifndef DUMUX_GEOMECHANICS_ELASTIC_MODEL_HH
 #define DUMUX_GEOMECHANICS_ELASTIC_MODEL_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
 
@@ -66,14 +68,16 @@ struct ElasticModelTraits
  * \brief Traits class for the volume variables of the elastic model.
  *
  * \tparam PV The type used for primary variables
+ * \tparam DV The type used for displacement vectors
  * \tparam MT The model traits
  * \tparam SST The solid state
  * \tparam SSY The solid system
  */
-template<class PV, class MT, class SST, class SSY>
+template<class PV, class DV, class MT, class SST, class SSY>
 struct ElasticVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
+    using DisplacementVector = DV;
     using ModelTraits = MT;
     using SolidState = SST;
     using SolidSystem = SSY;
@@ -95,11 +99,13 @@ SET_TYPE_PROP(Elastic, ModelTraits, ElasticModelTraits< GET_PROP_TYPE(TypeTag, G
 SET_PROP(Elastic, VolumeVariables)
 {
 private:
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using DV = Dune::FieldVector<typename PV::value_type, dim>;
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using SST = typename GET_PROP_TYPE(TypeTag, SolidState);
     using SSY = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using Traits = ElasticVolumeVariablesTraits<PV, MT, SST, SSY>;
+    using Traits = ElasticVolumeVariablesTraits<PV, DV, MT, SST, SSY>;
 public:
     using type = ElasticVolumeVariables<Traits>;
 };

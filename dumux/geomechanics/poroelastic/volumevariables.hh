@@ -46,6 +46,8 @@ class PoroElasticVolumeVariables
 public:
     //! export the type used for the primary variables
     using PrimaryVariables = typename Traits::PrimaryVariables;
+    //! export the type used for displacement vectors
+    using DisplacementVector = typename Traits::DisplacementVector;
     //! export the type encapsulating primary variable indices
     using Indices = typename ModelTraits::Indices;
     //! export type of solid state
@@ -70,7 +72,6 @@ public:
     {
         priVars_ = elemSol[scv.localDofIndex()];
         extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
-        effectiveFluidDensity_ = problem.effectiveFluidDensity(element, scv, elemSol);
 
         //! set the volume fractions of the solid components
         updateSolidVolumeFractions_(elemSol, problem, element, scv);
@@ -90,10 +91,6 @@ public:
     Scalar solidDensity() const
     { return solidState_.density(); }
 
-    //! Returns the effective fluid density within the scv in \f$\mathrm{[kg/m^3]}\f$
-    Scalar effectiveFluidDensity() const
-    { return effectiveFluidDensity_; }
-
     //! Return the average porosity \f$\mathrm{[-]}\f$ within the scv
     Scalar porosity() const
     { return solidState_.porosity()*divU_; }
@@ -102,9 +99,18 @@ public:
     Scalar divU() const
     { return divU_; }
 
-    //! Returns the permeability within the scv in \f$[m^2]\f$.
+    //! Returns the permeability within the scv in \f$[m]\f$.
     Scalar displacement(unsigned int dir) const
     { return priVars_[ Indices::momentum(dir) ]; }
+
+    //! Returns the displacement vector within the scv in \f$[m]\f$.
+    DisplacementVector displacement() const
+    {
+        DisplacementVector d;
+        for (int dir = 0; dir < d.size(); ++dir)
+            d[dir] = displacement(dir);
+        return d;
+    }
 
     //! Return a component of primary variable vector for a given index
     Scalar priVar(const int pvIdx) const
@@ -157,7 +163,6 @@ private:
     // data members
     Scalar divU_;
     Scalar extrusionFactor_;
-    Scalar effectiveFluidDensity_;
     PrimaryVariables priVars_;
     SolidState solidState_;
 };
