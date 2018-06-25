@@ -36,19 +36,40 @@ namespace Dumux
 {
 /*!
  * \ingroup Common
- * \brief Calculate the harmonic mean of two scalar values.
+ * \brief Calculate the (weighted) arithmetic mean of two scalar values.
  *
  * \param x The first input value
  * \param y The second input value
+ * \param wx The first weight
+ * \param wy The second weight
  */
 template <class Scalar>
-constexpr Scalar harmonicMean(Scalar x, Scalar y) noexcept
+constexpr Scalar arithmeticMean(Scalar x, Scalar y, Scalar wx = 1.0, Scalar wy = 1.0) noexcept
 {
-    static_assert(Dune::IsNumber<Scalar>::value, "The arguments x and y have to be numbers!");
+    static_assert(Dune::IsNumber<Scalar>::value, "The arguments x, y, wx, and wy have to be numbers!");
 
     if (x*y <= 0)
         return 0;
-    return (2*x*y)/(x + y);
+    return (x * wx + y * wy)/(wx + wy);
+}
+
+/*!
+ * \ingroup Common
+ * \brief Calculate the (weighted) harmonic mean of two scalar values.
+ *
+ * \param x The first input value
+ * \param y The second input value
+ * \param wx The first weight
+ * \param wy The second weight
+ */
+template <class Scalar>
+constexpr Scalar harmonicMean(Scalar x, Scalar y, Scalar wx = 1.0, Scalar wy = 1.0) noexcept
+{
+    static_assert(Dune::IsNumber<Scalar>::value, "The arguments x, y, wx, and wy have to be numbers!");
+
+    if (x*y <= 0)
+        return 0;
+    return (wx + wy) / (wx / x + wy / y);
 }
 
 /*!
