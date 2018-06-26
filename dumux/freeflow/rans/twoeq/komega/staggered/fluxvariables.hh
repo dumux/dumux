@@ -18,32 +18,32 @@
  *****************************************************************************/
  /*!
   * \file
-  * \ingroup LowReKEpsilonModel
-  * \copydoc Dumux::LowReKEpsilonFluxVariablesImpl
+  * \ingroup KOmegaModel
+  * \copydoc Dumux::KOmegaFluxVariablesImpl
   */
-#ifndef DUMUX_LOWREKEPSILON_STAGGERED_FLUXVARIABLES_HH
-#define DUMUX_LOWREKEPSILON_STAGGERED_FLUXVARIABLES_HH
+#ifndef DUMUX_KOMEGA_STAGGERED_FLUXVARIABLES_HH
+#define DUMUX_KOMEGA_STAGGERED_FLUXVARIABLES_HH
 
 #include <numeric>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/freeflow/navierstokes/fluxvariables.hh>
-#include <dumux/freeflow/rans/twoeq/lowrekepsilon/fluxvariables.hh>
+#include <dumux/freeflow/rans/twoeq/komega/fluxvariables.hh>
 
 namespace Dumux
 {
 
 // forward declaration
 template<class TypeTag, class BaseFluxVariables, DiscretizationMethod discMethod>
-class LowReKEpsilonFluxVariablesImpl;
+class KOmegaFluxVariablesImpl;
 
 /*!
- * \ingroup LowReKEpsilonModel
- * \brief The flux variables class for the low-Reynolds k-epsilon model using the staggered grid discretization.
+  * \ingroup KOmegaModel
+  * \brief The flux variables class for the k-omega model using the staggered grid discretization.
  */
 template<class TypeTag, class BaseFluxVariables>
-class LowReKEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
+class KOmegaFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod::staggered>
 : public BaseFluxVariables
 {
     using ParentType = BaseFluxVariables;
@@ -95,15 +95,15 @@ public:
         {
             return volVars.turbulentKineticEnergy();
         };
-        auto upwindTermEpsilon = [](const auto& volVars)
+        auto upwindTermOmega = [](const auto& volVars)
         {
-            return volVars.dissipationTilde();
+            return volVars.dissipation();
         };
 
         flux[turbulentKineticEnergyEqIdx]
             = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermK);
         flux[dissipationEqIdx]
-            = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermEpsilon);
+            = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTermOmega);
 
         // calculate diffusive flux
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
@@ -113,25 +113,24 @@ public:
 
         // effective diffusion coefficients
         Scalar insideCoeff_k = insideVolVars.kinematicViscosity()
-                               + insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaK();
+                                + ( insideVolVars.sigmaK() * insideVolVars.turbulentKineticEnergy() / insideVolVars.dissipation() );
         Scalar outsideCoeff_k = outsideVolVars.kinematicViscosity()
-                                + outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaK();
-        Scalar insideCoeff_e = insideVolVars.kinematicViscosity()
-                               + insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaEpsilon();
-        Scalar outsideCoeff_e = outsideVolVars.kinematicViscosity()
-                                + outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaEpsilon();
+                                + ( outsideVolVars.sigmaK() * outsideVolVars.turbulentKineticEnergy() / outsideVolVars.dissipation() );
+        Scalar insideCoeff_w = insideVolVars.kinematicViscosity()
+                                + ( insideVolVars.sigmaOmega() * insideVolVars.turbulentKineticEnergy() / insideVolVars.dissipation() );
+        Scalar outsideCoeff_w = outsideVolVars.kinematicViscosity()
+                                + ( outsideVolVars.sigmaOmega() * outsideVolVars.turbulentKineticEnergy() / outsideVolVars.dissipation() );
 
         // scale by extrusion factor
         insideCoeff_k *= insideVolVars.extrusionFactor();
         outsideCoeff_k *= outsideVolVars.extrusionFactor();
-        insideCoeff_e *= insideVolVars.extrusionFactor();
-        outsideCoeff_e *= outsideVolVars.extrusionFactor();
+        insideCoeff_w *= insideVolVars.extrusionFactor();
+        outsideCoeff_w *= outsideVolVars.extrusionFactor();
 
-        // average and distance
         Scalar coeff_k = arithmeticMean(insideCoeff_k, outsideCoeff_k,
                                         (insideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
                                         (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm());
-        Scalar coeff_e = arithmeticMean(insideCoeff_e, outsideCoeff_e,
+        Scalar coeff_w = arithmeticMean(insideCoeff_w, outsideCoeff_w,
                                         (insideScv.dofPosition() - scvf.ipGlobal()).two_norm(),
                                         (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm());
         Scalar distance = 0.0;
@@ -141,7 +140,7 @@ public:
         {
             distance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
             coeff_k = insideCoeff_k;
-            coeff_e = insideCoeff_e;
+            coeff_w = insideCoeff_w;
         }
         else
         {
@@ -161,8 +160,8 @@ public:
                                   || bcTypes.isSymmetry())))
         {
             flux[dissipationEqIdx]
-                += coeff_e / distance
-                   * (insideVolVars.dissipationTilde() - outsideVolVars.dissipationTilde())
+                += coeff_w / distance
+                   * (insideVolVars.dissipation() - outsideVolVars.dissipation())
                    * scvf.area();
         }
         return flux;

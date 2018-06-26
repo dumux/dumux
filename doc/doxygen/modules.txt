@@ -204,6 +204,12 @@
          */
         /*!
          * \ingroup TwoEqModel
+         * \defgroup KOmegaModel K-omega model
+         * \brief K-omega model
+         * \copydetails ./freeflow/rans/twoeq/komega/model.hh
+         */
+        /*!
+         * \ingroup TwoEqModel
          * \defgroup LowReKEpsilonModel Low-Re k-epsilon model
          * \brief Low-Re k-epsilon model
          * \copydetails ./freeflow/rans/twoeq/lowrekepsilon/model.hh
