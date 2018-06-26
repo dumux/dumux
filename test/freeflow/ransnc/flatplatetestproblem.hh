@@ -31,6 +31,9 @@
 #if LOWREKEPSILON
 #include <dumux/freeflow/compositional/lowrekepsilonncmodel.hh>
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/problem.hh>
+#elif KOMEGA
+#include <dumux/freeflow/compositional/komegancmodel.hh>
+#include <dumux/freeflow/rans/twoeq/komega/problem.hh>
 #else
 #include <dumux/freeflow/compositional/zeroeqncmodel.hh>
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
@@ -47,12 +50,16 @@ namespace Properties
 #if NONISOTHERMAL
   #if LOWREKEPSILON
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNCNI));
+  #elif KOMEGA
+  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNCNI));
   #else
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI));
   #endif
 #else
   #if LOWREKEPSILON
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNC));
+  #elif KOMEGA
+  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNC));
   #else
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC));
   #endif
@@ -99,6 +106,10 @@ template <class TypeTag>
 class FlatPlateNCTestProblem : public LowReKEpsilonProblem<TypeTag>
 {
     using ParentType = LowReKEpsilonProblem<TypeTag>;
+#elif KOMEGA
+class FlatPlateNCTestProblem : public KOmegaProblem<TypeTag>
+{
+    using ParentType = KOmegaProblem<TypeTag>;
 #else
 class FlatPlateNCTestProblem : public ZeroEqProblem<TypeTag>
 {
@@ -116,6 +127,9 @@ class FlatPlateNCTestProblem : public ZeroEqProblem<TypeTag>
 
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
@@ -140,6 +154,9 @@ public:
         Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, phaseIdx) / density;
         Scalar diameter = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
         turbulentKineticEnergy_ = turbulenceProperties.turbulentKineticEnergy(inletVelocity_, diameter, kinematicViscosity);
+#if KOMEGA
+        dissipation_ = turbulenceProperties.dissipationRate(inletVelocity_, diameter, kinematicViscosity);
+#else
         dissipation_ = turbulenceProperties.dissipation(inletVelocity_, diameter, kinematicViscosity);
 #endif
     }
@@ -198,7 +215,7 @@ public:
             values.setDirichlet(Indices::temperatureIdx);
 #endif
 
-#if LOWREKEPSILON
+#if LOWREKEPSILON || KOMEGA
             values.setDirichlet(Indices::turbulentKineticEnergyIdx);
             values.setDirichlet(Indices::dissipationIdx);
 #endif
@@ -212,7 +229,7 @@ public:
             values.setOutflow(Indices::energyBalanceIdx);
 #endif
 
-#if LOWREKEPSILON
+#if LOWREKEPSILON || KOMEGA
             values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
             values.setOutflow(Indices::dissipationEqIdx);
 #endif
@@ -230,6 +247,9 @@ public:
 #if LOWREKEPSILON
             values.setDirichlet(Indices::turbulentKineticEnergyEqIdx);
             values.setDirichlet(Indices::dissipationEqIdx);
+#elif KOMEGA
+            values.setDirichlet(Indices::turbulentKineticEnergyEqIdx);
+            values.setDirichletCell(Indices::dissipationIdx);
 #endif
         }
         else
@@ -240,13 +260,16 @@ public:
         return values;
     }
 
-   /*!
-     * \brief Evaluate the boundary conditions for a Dirichlet control volume.
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet values at the boundary.
      *
-     * \param globalPos The center of the finite volume which ought to be set.
+     * \param element The finite element
+     * \param scvf the sub control volume face
+     * \note used for cell-centered discretization schemes
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
+        const auto globalPos = scvf.ipGlobal();
         PrimaryVariables values = initialAtPos(globalPos);
 
         if (time() > 10.0)
@@ -265,6 +288,27 @@ public:
 #endif
         }
 
+        return values;
+    }
+
+     /*!
+      * \brief Evaluate the boundary conditions for fixed values at cell centers
+      *
+      * \param element The finite element
+      * \param scv the sub control volume
+      * \note used for cell-centered discretization schemes
+      */
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
+    {
+        const auto globalPos = scv.center();
+        PrimaryVariables values(initialAtPos(globalPos));
+#if KOMEGA
+        using std::pow;
+        unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+        const auto wallDistance = ParentType::wallDistance_[elementID];
+        values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementID]
+                                            / (ParentType::betaOmega() * pow(wallDistance, 2));
+#endif
         return values;
     }
 
@@ -295,7 +339,7 @@ public:
             values[Indices::velocityXIdx] =  inletVelocity_;
         values[Indices::velocityYIdx] = 0.0;
 
-#if LOWREKEPSILON
+#if LOWREKEPSILON || KOMEGA
         values[Indices::turbulentKineticEnergyEqIdx] = turbulentKineticEnergy_;
         values[Indices::dissipationEqIdx] = dissipation_;
         if (isOnWall(globalPos))
