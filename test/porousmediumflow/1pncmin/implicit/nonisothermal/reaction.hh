@@ -220,7 +220,7 @@ public:
             qMass =  rHydration;
         }
 
-        //charge or hydration
+        //charge or dehydration
         else if(T > Teq){
 
             Scalar krd = 0.05;
