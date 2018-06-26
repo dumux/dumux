@@ -39,10 +39,10 @@ dune_add_test(NAME test_gridcreator_gmsh_3d_alu_parallel
               TARGET test_gridcreator_gmsh_3d_alu
               CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_3d_alu -Problem.Name bifurcation_alu -Grid.Refine false"
-                       --files ${CMAKE_SOURCE_DIR}/test/references/bifurcation_alu-reference-parallel.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-bifurcation_alu-00000.vtu)
+              CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_3d_alu -Problem.Name bifurcation_alu_parallel -Grid.Refine false"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/bifurcation_alu-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-bifurcation_alu_parallel-00000.pvtu)
 
 add_executable(test_gridcreator_gmsh_3d_ug EXCLUDE_FROM_ALL test_gridcreator_gmsh_3d.cc)
 target_compile_definitions(test_gridcreator_gmsh_3d_ug PUBLIC GRIDTYPE=Dune::UGGrid<3>)
@@ -62,12 +62,12 @@ dune_add_test(NAME test_gridcreator_gmsh_3d_ug_parallel
               TARGET test_gridcreator_gmsh_3d_ug
               CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_3d_ug -Problem.Name bifurcation_ug"
-                       --files ${CMAKE_SOURCE_DIR}/test/references/bifurcation_ug-reference-parallel.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-bifurcation_ug-00000.vtu
-                               ${CMAKE_SOURCE_DIR}/test/references/bifurcation_ug-reference-refined-parallel.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-bifurcation_ug-00001.vtu)
+              CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_3d_ug -Problem.Name bifurcation_ug_parallel"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/bifurcation_ug-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-bifurcation_ug_parallel-00000.pvtu
+                               ${CMAKE_SOURCE_DIR}/test/references/bifurcation_ug-reference-refined.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-bifurcation_ug_parallel-00001.pvtu)
 
 add_executable(test_gridcreator_gmsh_e_markers_alu EXCLUDE_FROM_ALL test_gridcreator_gmsh_e_markers.cc)
 target_compile_definitions(test_gridcreator_gmsh_e_markers_alu PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>)
@@ -87,12 +87,10 @@ dune_add_test(NAME test_gridcreator_gmsh_e_markers_alu_parallel
               TARGET test_gridcreator_gmsh_e_markers_alu
               CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy
-                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_e_markers_alu -Problem.Name fracture_alu"
-                      --files ${CMAKE_SOURCE_DIR}/test/references/fracture_alu-reference-parallel.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-fracture_alu-00000.vtu
-                              ${CMAKE_SOURCE_DIR}/test/references/fracture_alu-reference-refined-parallel.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-fracture_alu-00001.vtu)
+              CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
+                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_e_markers_alu -Problem.Name fracture_alu_parallel"
+                      --files ${CMAKE_SOURCE_DIR}/test/references/fracture_alu-reference-refined.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-fracture_alu_parallel-00001.pvtu)
 
 add_executable(test_gridcreator_gmsh_e_markers_ug EXCLUDE_FROM_ALL test_gridcreator_gmsh_e_markers.cc)
 target_compile_definitions(test_gridcreator_gmsh_e_markers_ug PUBLIC GRIDTYPE=Dune::UGGrid<2>)
@@ -112,12 +110,10 @@ dune_add_test(NAME test_gridcreator_gmsh_e_markers_ug_parallel
               TARGET test_gridcreator_gmsh_e_markers_ug
               CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy
-                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_e_markers_ug -Problem.Name fracture_ug"
-                      --files ${CMAKE_SOURCE_DIR}/test/references/fracture_ug-reference-parallel.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-fracture_ug-00000.vtu
-                              ${CMAKE_SOURCE_DIR}/test/references/fracture_ug-reference-refined-parallel.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-fracture_ug-00001.vtu)
+              CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
+                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh_e_markers_ug -Problem.Name fracture_ug_parallel"
+                      --files ${CMAKE_SOURCE_DIR}/test/references/fracture_ug-reference-refined.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-fracture_ug_parallel-00001.pvtu)
 
 add_executable(test_gridcreator_dgf_e_markers_alu EXCLUDE_FROM_ALL test_gridcreator_dgf_e_markers.cc)
 target_compile_definitions(test_gridcreator_dgf_e_markers_alu PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>)
@@ -137,12 +133,10 @@ dune_add_test(NAME test_gridcreator_dgf_e_markers_alu_parallel
               TARGET test_gridcreator_dgf_e_markers_alu
               CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_dgf_e_markers_alu -Problem.Name co2_alu"
-                       --files ${CMAKE_SOURCE_DIR}/test/references/gridcreator-co2_alu-reference-parallel.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-co2_alu-00000.vtu
-                               ${CMAKE_SOURCE_DIR}/test/references/gridcreator-co2_alu-reference-parallel-refined.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-co2_alu-00001.vtu)
+              CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_dgf_e_markers_alu -Problem.Name co2_alu_parallel"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/gridcreator-co2_alu-reference-refined.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_alu_parallel-00001.pvtu)
 
 add_executable(test_gridcreator_dgf_e_markers_ug EXCLUDE_FROM_ALL test_gridcreator_dgf_e_markers.cc)
 target_compile_definitions(test_gridcreator_dgf_e_markers_ug PUBLIC GRIDTYPE=Dune::UGGrid<2>)
@@ -162,9 +156,7 @@ dune_add_test(NAME test_gridcreator_dgf_e_markers_ug_parallel
               TARGET test_gridcreator_dgf_e_markers_ug
               CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_dgf_e_markers_ug -Problem.Name co2_ug"
-                       --files ${CMAKE_SOURCE_DIR}/test/references/gridcreator-co2_ug-reference-parallel.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-co2_ug-00000.vtu
-                               ${CMAKE_SOURCE_DIR}/test/references/gridcreator-co2_ug-reference-parallel-refined.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0001-co2_ug-00001.vtu)
+              CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_dgf_e_markers_ug -Problem.Name co2_ug_parallel"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/gridcreator-co2_ug-reference-refined.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_ug_parallel-00001.pvtu)

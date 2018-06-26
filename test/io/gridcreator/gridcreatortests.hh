@@ -26,12 +26,78 @@
 
 #include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
+#include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk.hh>
+
 #include <dumux/io/gridcreator.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux {
+
+/*!
+ * \brief data handle for parallel communication which takes
+ *        the minimum non-zero values that are attached to vertices
+ */
+template <class GridView>
+class VertexHandleNonZeroMin
+    : public Dune::CommDataHandleIF< VertexHandleNonZeroMin<GridView>, int >
+{
+    using Container = std::vector<int>;
+
+public:
+    VertexHandleNonZeroMin(Container &container, const GridView &gridView)
+    : gridView_(gridView)
+    , container_(container)
+    {}
+
+    bool contains(int dim, int codim) const
+    {
+        // only communicate vertices
+        return codim == dim;
+    }
+
+    bool fixedsize(int dim, int codim) const
+    {
+        // for each vertex we communicate a single field vector which
+        // has a fixed size
+        return true;
+    }
+
+    template<class EntityType>
+    size_t size (const EntityType &e) const
+    {
+        // communicate a field type per entity
+        return 1;
+    }
+
+    template<class MessageBufferImp, class EntityType>
+    void gather(MessageBufferImp &buff, const EntityType &e) const
+    {
+        int vIdx = gridView_.indexSet().index(e);
+        buff.write(container_[vIdx]);
+    }
+
+    template<class MessageBufferImp, class EntityType>
+    void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
+    {
+        int vIdx = gridView_.indexSet().index(e);
+        int tmp;
+        buff.read(tmp);
+        using std::min;
+        if (tmp > 0)
+        {
+            if (container_[vIdx] == 0)
+                container_[vIdx] = tmp;
+            else
+                container_[vIdx] = min(container_[vIdx], tmp);
+        }
+    }
+
+private:
+    const GridView gridView_;
+    Container &container_;
+};
 
 template<class Grid>
 class GridCreatorTests
@@ -173,6 +239,18 @@ private:
                     }
                 }
             }
+        }
+
+        // In a parallel setting, it is possible that not all boundary vertices
+        // will be reached on each process by the procedure above that loops
+        // over the boundary intersections and their vertices. This mandates the
+        // following synchronization.
+        if (gridView.comm().size() > 1)
+        {
+            VertexHandleNonZeroMin<GridView> dataHandle(boundaryMarker, gridView);
+            gridView.communicate(dataHandle,
+                                 Dune::InteriorBorder_All_Interface,
+                                 Dune::ForwardCommunication);
         }
     }
 
