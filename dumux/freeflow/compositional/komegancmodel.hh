@@ -20,25 +20,25 @@
  * \file
  * \ingroup FreeflowNCModel
  *
- * \brief A single-phase, multi-component low-Re k-epsilon model
+ * \brief A single-phase, multi-component k-omega model
  *
  * \copydoc Dumux::FreeflowNCModel
  */
 
-#ifndef DUMUX_LOWREKEPSILON_NC_MODEL_HH
-#define DUMUX_LOWREKEPSILON_NC_MODEL_HH
+#ifndef DUMUX_KOMEGA_NC_MODEL_HH
+#define DUMUX_KOMEGA_NC_MODEL_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 #include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
-#include <dumux/freeflow/rans/twoeq/lowrekepsilon/model.hh>
+#include <dumux/freeflow/rans/twoeq/komega/model.hh>
 
 #include "vtkoutputfields.hh"
 
 namespace Dumux {
 
 ///////////////////////////////////////////////////////////////////////////
-// properties for the single-phase, multi-component low-Re k-epsilon model
+// properties for the single-phase, multi-component k-omega model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 
@@ -46,8 +46,8 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tags for the single-phase, multi-component isothermal low-Re k-epsilon model
-NEW_TYPE_TAG(LowReKEpsilonNC, INHERITS_FROM(NavierStokesNC));
+//! The type tags for the single-phase, multi-component isothermal k-omega model
+NEW_TYPE_TAG(KOmegaNC, INHERITS_FROM(NavierStokesNC));
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values
@@ -58,7 +58,7 @@ NEW_TYPE_TAG(LowReKEpsilonNC, INHERITS_FROM(NavierStokesNC));
  * \brief Traits for the low-Reynolds k-epsilon multi-component model
  */
 template<int dimension, int nComp, int phaseIdx, int replaceCompEqIdx, bool useMoles>
-struct LowReKEpsilonNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, phaseIdx, replaceCompEqIdx, useMoles>
+struct KOmegaNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, phaseIdx, replaceCompEqIdx, useMoles>
 {
     //! There are as many momentum balance equations as dimensions
     //! and as many balance equations as components.
@@ -68,11 +68,11 @@ struct LowReKEpsilonNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, 
     static constexpr bool usesTurbulenceModel() { return true; }
 
     //! the indices
-    using Indices = FreeflowNCIndices<dimension, numEq(), phaseIdx, replaceCompEqIdx, LowReKEpsilonIndices<dimension, nComp>>;
+    using Indices = FreeflowNCIndices<dimension, numEq(), phaseIdx, replaceCompEqIdx, KOmegaIndices<dimension, nComp>>;
 };
 
 //!< states some specifics of the isothermal multi-component low-Reynolds k-epsilon model
-SET_PROP(LowReKEpsilonNC, ModelTraits)
+SET_PROP(KOmegaNC, ModelTraits)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
@@ -83,11 +83,11 @@ private:
     static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 public:
-    using type = LowReKEpsilonNCModelTraits<dimension, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
+    using type = KOmegaNCModelTraits<dimension, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
 };
 
 //! Set the volume variables property
-SET_PROP(LowReKEpsilonNC, VolumeVariables)
+SET_PROP(KOmegaNC, VolumeVariables)
 {
 private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -98,49 +98,49 @@ private:
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
     using NCVolVars = FreeflowNCVolumeVariables<Traits>;
 public:
-    using type = LowReKEpsilonVolumeVariables<Traits, NCVolVars>;
+    using type = KOmegaVolumeVariables<Traits, NCVolVars>;
 };
 
 //! The local residual
-SET_PROP(LowReKEpsilonNC, LocalResidual)
+SET_PROP(KOmegaNC, LocalResidual)
 {
 private:
     using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
 public:
-    using type = LowReKEpsilonResidual<TypeTag, BaseLocalResidual>;
+    using type = KOmegaResidual<TypeTag, BaseLocalResidual>;
 };
 
 //! The flux variables
-SET_PROP(LowReKEpsilonNC, FluxVariables)
+SET_PROP(KOmegaNC, FluxVariables)
 {
 private:
     using BaseFluxVariables = FreeflowNCFluxVariables<TypeTag>;
 public:
-    using type = LowReKEpsilonFluxVariables<TypeTag, BaseFluxVariables>;
+    using type = KOmegaFluxVariables<TypeTag, BaseFluxVariables>;
 };
 
 //! The specific vtk output fields
-SET_PROP(LowReKEpsilonNC, VtkOutputFields)
+SET_PROP(KOmegaNC, VtkOutputFields)
 {
 private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    using SinglePhaseVtkOutputFields = LowReKEpsilonVtkOutputFields<FVGridGeometry>;
+    using SinglePhaseVtkOutputFields = KOmegaVtkOutputFields<FVGridGeometry>;
 public:
     using type = FreeflowNCVtkOutputFields<SinglePhaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem, phaseIdx>;
 };
 
 //////////////////////////////////////////////////////////////////////////
-// Property values for non-isothermal multi-component low-Re k-epsilon model
+// Property values for non-isothermal multi-component k-omega model
 //////////////////////////////////////////////////////////////////////////
 
-//! The type tags for the single-phase, multi-component non-isothermal low-Re k-epsilon models
-NEW_TYPE_TAG(LowReKEpsilonNCNI, INHERITS_FROM(NavierStokesNCNI));
+//! The type tags for the single-phase, multi-component non-isothermal k-omega models
+NEW_TYPE_TAG(KOmegaNCNI, INHERITS_FROM(NavierStokesNCNI));
 
 //! The model traits of the non-isothermal model
-SET_PROP(LowReKEpsilonNCNI, ModelTraits)
+SET_PROP(KOmegaNCNI, ModelTraits)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
@@ -150,13 +150,13 @@ private:
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    using IsothermalModelTraits = LowReKEpsilonNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
+    using IsothermalModelTraits = KOmegaNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
 public:
     using type = FreeflowNIModelTraits<IsothermalModelTraits>;
 };
 
 //! Set the volume variables property
-SET_PROP(LowReKEpsilonNCNI, VolumeVariables)
+SET_PROP(KOmegaNCNI, VolumeVariables)
 {
 private:
     using PV = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -167,36 +167,36 @@ private:
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
     using NCVolVars = FreeflowNCVolumeVariables<Traits>;
 public:
-    using type = LowReKEpsilonVolumeVariables<Traits, NCVolVars>;
+    using type = KOmegaVolumeVariables<Traits, NCVolVars>;
 };
 
 //! The local residual
-SET_PROP(LowReKEpsilonNCNI, LocalResidual)
+SET_PROP(KOmegaNCNI, LocalResidual)
 {
 private:
     using BaseLocalResidual = FreeflowNCResidual<TypeTag>;
 public:
-    using type = LowReKEpsilonResidual<TypeTag, BaseLocalResidual>;
+    using type = KOmegaResidual<TypeTag, BaseLocalResidual>;
 };
 
 //! The flux variables
-SET_PROP(LowReKEpsilonNCNI, FluxVariables)
+SET_PROP(KOmegaNCNI, FluxVariables)
 {
 private:
     using BaseFluxVariables = FreeflowNCFluxVariables<TypeTag>;
 public:
-    using type = LowReKEpsilonFluxVariables<TypeTag, BaseFluxVariables>;
+    using type = KOmegaFluxVariables<TypeTag, BaseFluxVariables>;
 };
 
 //! The specific vtk output fields
-SET_PROP(LowReKEpsilonNCNI, VtkOutputFields)
+SET_PROP(KOmegaNCNI, VtkOutputFields)
 {
 private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    using BaseVtkOutputFields = LowReKEpsilonVtkOutputFields<FVGridGeometry>;
+    using BaseVtkOutputFields = KOmegaVtkOutputFields<FVGridGeometry>;
     using NonIsothermalFields = FreeflowNonIsothermalVtkOutputFields<BaseVtkOutputFields, ModelTraits>;
 public:
     using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem, phaseIdx>;
