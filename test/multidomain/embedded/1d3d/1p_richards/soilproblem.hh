@@ -33,6 +33,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -46,7 +47,9 @@ class SoilProblem;
 
 namespace Properties {
 
-NEW_TYPE_TAG(SoilTypeTag, INHERITS_FROM(CCTpfaModel, Richards));
+NEW_TYPE_TAG(SoilTypeTag, INHERITS_FROM(Richards));
+NEW_TYPE_TAG(SoilCCTypeTag, INHERITS_FROM(CCTpfaModel, SoilTypeTag));
+NEW_TYPE_TAG(SoilBoxTypeTag, INHERITS_FROM(BoxModel, SoilTypeTag));
 
 // Set the grid type
 SET_TYPE_PROP(SoilTypeTag, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
@@ -148,20 +151,9 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        values.setAllDirichlet();
+        values.setAllNeumann();
         return values;
     }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
-     *
-     * \param globalPos The position for which the bc type should be evaluated
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
-    { return initialAtPos(globalPos); }
 
     // \}
 
