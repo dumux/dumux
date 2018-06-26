@@ -141,14 +141,6 @@ public:
         Scalar diameter = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
         turbulentKineticEnergy_ = turbulenceProperties.turbulentKineticEnergy(inletVelocity_, diameter, kinematicViscosity);
         dissipation_ = turbulenceProperties.dissipation(inletVelocity_, diameter, kinematicViscosity);
-#if LOWREKEPSILON
-        std::cout << Indices::momentumXBalanceIdx
-                  << Indices::momentumYBalanceIdx
-                  << Indices::conti0EqIdx
-                  << Indices::conti0EqIdx + 1
-                  << Indices::turbulentKineticEnergyEqIdx
-                  << Indices::dissipationEqIdx
-                  << std::endl;
 #endif
     }
 
@@ -165,7 +157,7 @@ public:
    /*!
      * \brief Return the temperature within the domain in [K].
      *
-     * This problem assumes a temperature of 10 degrees Celsius.
+     * The isothermal problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature() const
     { return 273.15 + 10; } // 10C

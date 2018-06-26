@@ -19,7 +19,9 @@ dune_add_test(NAME test_flatplate_zeroeq2cni
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_zeroeq2cni test_flatplate2cni.input")
 target_compile_definitions(test_flatplate_zeroeq2cni PUBLIC "NONISOTHERMAL=1")
 
-add_executable(test_flatplate_lowrekepsilon2c EXCLUDE_FROM_ALL test_flatplate.cc)
+dune_add_test(NAME test_flatplate_lowrekepsilon2c
+              SOURCES test_flatplate.cc
+              COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
 target_compile_definitions(test_flatplate_lowrekepsilon2c PUBLIC "LOWREKEPSILON=1")
 
 dune_add_test(NAME test_flatplate_lowrekepsilon2cni

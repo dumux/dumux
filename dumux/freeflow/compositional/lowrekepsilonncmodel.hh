@@ -20,7 +20,7 @@
  * \file
  * \ingroup FreeflowNCModel
  *
- * \brief A single-phase, multi-component Reynolds-Averaged Navier-Stokes 0-Eq. model
+ * \brief A single-phase, multi-component low-Re k-epsilon model
  *
  * \copydoc Dumux::FreeflowNCModel
  */
