@@ -106,13 +106,12 @@ public:
                                                                                    elemVolVars, elemFaceVars, scv);
 
         const auto& volVars = elemVolVars[scv];
-        unsigned int elementID = problem.fvGridGeometry().elementMapper().index(element);
         Scalar turbulentKineticEnergy = volVars.turbulentKineticEnergy();
         Scalar dissipation = volVars.dissipation();
 
         // production
         // turbulence production is equal to dissipation -> exclude both terms (according to local equilibrium hypothesis, see FLUENT)
-        if (!problem.isMatchingPoint(elementID))
+        if (!volVars.isMatchingPoint())
         {
             source[turbulentKineticEnergyEqIdx] += 2.0 * volVars.kinematicEddyViscosity()
                                                    * volVars.stressTensorScalarProduct();
@@ -124,7 +123,7 @@ public:
 
         // destruction
         // turbulence production is equal to dissipation -> exclude both terms (according to local equilibrium hypothesis, see FLUENT)
-        if (!problem.isMatchingPoint(elementID))
+        if (!volVars.isMatchingPoint())
         {
             source[turbulentKineticEnergyEqIdx] -= dissipation;
         }
@@ -158,14 +157,14 @@ protected:
             const auto& insideVolVars = elemVolVars[insideScv];
 
             // fixed value for the turbulent kinetic energy
-            if(problem.inNearWallRegion(elementID) && !problem.isMatchingPoint(elementID))
+            if (insideVolVars.inNearWallRegion() && !insideVolVars.isMatchingPoint())
             {
                 residual[Indices::turbulentKineticEnergyEqIdx - cellCenterOffset]
                     = insideVolVars.turbulentKineticEnergy() - problem.turbulentKineticEnergyWallFunction(elementID);
             }
 
             // fixed value for the dissipation
-            if(problem.inNearWallRegion(elementID) || problem.isMatchingPoint(elementID))
+            if (insideVolVars.inNearWallRegion() || insideVolVars.isMatchingPoint())
             {
                 residual[Indices::dissipationEqIdx - cellCenterOffset]
                     = insideVolVars.dissipation() - problem.dissipationWallFunction(elementID);
