@@ -57,12 +57,15 @@
 #ifndef LOWDIMTYPETAG
 #define LOWDIMTYPETAG=BloodFlowCCTypeTag
 #endif
+#ifndef COUPLINGMODE
+#define COUPLINGMODE=EmbeddedCouplingMode::average
+#endif
 
 namespace Dumux {
 namespace Properties {
 
 template<class Traits>
-using TheCouplingManager = EmbeddedCouplingManager1d3d<Traits, EmbeddedCouplingMode::cylindersources>;
+using TheCouplingManager = EmbeddedCouplingManager1d3d<Traits, COUPLINGMODE>;
 
 SET_TYPE_PROP(BULKTYPETAG, CouplingManager, TheCouplingManager<MultiDomainTraits<TypeTag, TTAG(LOWDIMTYPETAG)>>);
 SET_TYPE_PROP(BULKTYPETAG, PointSource, typename GET_PROP_TYPE(TypeTag, CouplingManager)::PointSourceTraits::template PointSource<0>);
@@ -152,12 +155,6 @@ int main(int argc, char** argv) try
     auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
     lowDimGridVariables->init(sol[lowDimIdx], oldSol[lowDimIdx]);
 
-    // get some time loop parameters
-    using Scalar = Traits::Scalar;
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
     // intialize the vtk output module
     VtkOutputModule<BulkTypeTag> bulkVtkWriter(*bulkProblem, *bulkFvGridGeometry, *bulkGridVariables, sol[bulkIdx], bulkProblem->name());
     GET_PROP_TYPE(BulkTypeTag, VtkOutputFields)::init(bulkVtkWriter);
@@ -173,85 +170,85 @@ int main(int argc, char** argv) try
     std::ofstream outFile_;
 
     // compute hmax of both domains
-    Scalar hMaxBulk = 0.0;
+    double hMaxBulk = 0.0;
     for (const auto& element : elements(bulkGridView))
         hMaxBulk = std::max(hMaxBulk, diameter(element.geometry()));
 
-    Scalar hMaxLowDim = 0.0;
+    double hMaxLowDim = 0.0;
     for (const auto& element : elements(lowDimGridView))
         hMaxLowDim = std::max(hMaxLowDim, diameter(element.geometry()));
-
-    // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(bulkProblem, lowDimProblem),
                                                  std::make_tuple(bulkFvGridGeometry, lowDimFvGridGeometry),
                                                  std::make_tuple(bulkGridVariables, lowDimGridVariables),
-                                                 couplingManager, timeLoop);
+                                                 couplingManager);
 
     // the linear solver
-    using LinearSolver = ILU0BiCGSTABBackend;
+    using LinearSolver = BlockDiagILU0BiCGSTABSolver;
     auto linearSolver = std::make_shared<LinearSolver>();
 
-    // the non-linear solver
-    using NewtonSolver = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
+    Dune::Timer assembleTimer(false), solveTimer(false), updateTimer(false);
+    std::cout << "\nAssembling linear system... " << std::flush;
 
-    // time loop
-    timeLoop->start();
-    while (!timeLoop->finished())
-    {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(oldSol);
+    // assemble stiffness matrix
+    assembleTimer.start();
+    couplingManager->updateSolution(sol);
+    assembler->assembleJacobianAndResidual(sol);
+    assembleTimer.stop();
 
-        // solve the non-linear system with time step control
-        nonLinearSolver.solve(sol, *timeLoop);
+    std::cout << "done.\n";
+    std::cout << "Solving linear system ("
+              << linearSolver->name() << ") ... " << std::flush;
 
-        // make the new solution the old solution
-        oldSol = sol;
-        bulkGridVariables->advanceTimeStep();
-        lowDimGridVariables->advanceTimeStep();
+    // solve linear system
+    solveTimer.start();
+    auto deltaSol = sol;
+    const bool converged = linearSolver->template solve<2>(assembler->jacobian(), deltaSol, assembler->residual());
+    if (!converged) DUNE_THROW(Dune::MathError, "Linear solver did not converge!");
+    solveTimer.stop();
 
-        // advance to the time loop to the next step
-        timeLoop->advanceTimeStep();
+    // update variables
+    updateTimer.start();
+    sol -= deltaSol;
+    couplingManager->updateSolution(sol);
+    assembler->updateGridVariables(sol);
+    updateTimer.stop();
 
-        // output the source terms
-        bulkProblem->computeSourceIntegral(sol[bulkIdx], *bulkGridVariables);
-        lowDimProblem->computeSourceIntegral(sol[lowDimIdx], *lowDimGridVariables);
+    std::cout << "done.\n";
+    const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
+    std::cout << "Assemble/solve/update time: "
+              <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
+              <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
+              <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
+              << "\n";
 
-        // write vtk output
-        bulkVtkWriter.write(timeLoop->time());
-        lowDimVtkWriter.write(timeLoop->time());
+    // output the source terms
+    bulkProblem->computeSourceIntegral(sol[bulkIdx], *bulkGridVariables);
+    lowDimProblem->computeSourceIntegral(sol[lowDimIdx], *lowDimGridVariables);
 
-        // report statistics of this time step
-        timeLoop->reportTimeStep();
+    // write vtk output
+    bulkVtkWriter.write(1.0);
+    lowDimVtkWriter.write(1.0);
 
-        // set new dt as suggested by newton controller
-        // timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+    // write the L2-norm to file
+    static const int order = getParam<int>("Problem.NormIntegrationOrder");
+    auto norm1D = L2Norm<double>::computeErrorNorm(*lowDimProblem, sol[lowDimIdx], order);
+    norm1D /= L2Norm<double>::computeNormalization(*lowDimProblem, order);
+    auto norm3D = L2Norm<double>::computeErrorNorm(*bulkProblem, sol[bulkIdx], order);
+    norm3D /= L2Norm<double>::computeNormalization(*bulkProblem, order);
 
-        // write the L2-norm to file
-        static const int order = getParam<Scalar>("Problem.NormIntegrationOrder");
-        auto norm1D = L2Norm<Scalar>::computeErrorNorm(*lowDimProblem, sol[lowDimIdx], order);
-        norm1D /= L2Norm<Scalar>::computeNormalization(*lowDimProblem, order);
-        auto norm3D = L2Norm<Scalar>::computeErrorNorm(*bulkProblem, sol[bulkIdx], order);
-        norm3D /= L2Norm<Scalar>::computeNormalization(*bulkProblem, order);
+    // ouput result to terminal
+    std::cout << "-----------------------------------------------------\n";
+    std::cout << " L2_1d: " << norm1D << " hmax_1d: " << hMaxLowDim << '\n'
+              << " L2_3d: " << norm3D << " hmax_3d: " << hMaxBulk << '\n';
+    std::cout << "-----------------------------------------------------" << std::endl;
 
-        // ouput result to terminal
-        std::cout << "-----------------------------------------------------\n";
-        std::cout << " L2_1d: " << norm1D << " hmax_1d: " << hMaxLowDim << '\n'
-                  << " L2_3d: " << norm3D << " hmax_3d: " << hMaxBulk << '\n';
-        std::cout << "-----------------------------------------------------" << std::endl;
-
-        // ... and file.
-        outFile_.open("1p_1p_norm.log", std::ios::app);
-        outFile_ << hMaxBulk << " " << hMaxLowDim << " " << norm3D << " " << norm1D << '\n';
-        outFile_.close();
-    }
-
-    timeLoop->finalize(mpiHelper.getCollectiveCommunication());
+    // ... and file.
+    outFile_.open("1p_1p_norm.log", std::ios::app);
+    outFile_ << hMaxBulk << " " << hMaxLowDim << " " << norm3D << " " << norm1D << '\n';
+    outFile_.close();
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

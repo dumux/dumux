@@ -32,6 +32,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
@@ -52,6 +53,7 @@ namespace Properties {
 
 NEW_TYPE_TAG(TissueTypeTag, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(TissueCCTypeTag, INHERITS_FROM(CCTpfaModel, TissueTypeTag));
+NEW_TYPE_TAG(TissueBoxTypeTag, INHERITS_FROM(BoxModel, TissueTypeTag));
 
 // Set the grid type
 SET_TYPE_PROP(TissueTypeTag, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);

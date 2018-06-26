@@ -28,6 +28,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -46,6 +47,7 @@ namespace Properties {
 
 NEW_TYPE_TAG(BloodFlowTypeTag, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(BloodFlowCCTypeTag, INHERITS_FROM(CCTpfaModel, BloodFlowTypeTag));
+NEW_TYPE_TAG(BloodFlowBoxTypeTag, INHERITS_FROM(BoxModel, BloodFlowTypeTag));
 
 // Set the grid type
 SET_TYPE_PROP(BloodFlowTypeTag, Grid, Dune::FoamGrid<1, 3>);
