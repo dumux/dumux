@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import shlex
 import os, sys
 import subprocess
 import json
@@ -34,7 +35,7 @@ if args['script']:
 # run the test
 res = 1
 try:
-    res = subprocess.call(args['command'][0].split())
+    res = subprocess.call(shlex.split(args['command'][0]))
 except OSError as e:
     print(args['command'][0].split())
     print("OSError: Command not found. Most likely the executable specified doesn't exist.")
