@@ -153,6 +153,55 @@ public:
             qMass = dXH_dt*deltaRhoS;
         }
 
+        else if(T > Teq){
+
+            Scalar dXD_dt1 = 0.0;
+            Scalar dXD_dt2 = 0.0;
+
+            Scalar R = 8.314 ; // [J/molK]
+            Scalar peq = 1e5*exp( (-12845)/T + 16.508);
+
+            Scalar xD =(volVars.solidComponentDensity(hPhaseIdx)-realSolidDensityAverage)/(volVars.solidComponentDensity(hPhaseIdx)- volVars.solidComponentDensity(cPhaseIdx));
+
+            if(xD < 1.0e-5) {xD = 1.0e-5; }
+            if(xD >=1 ) {xD = 1 - 1e-5; }
+            if(peq <= pV) {peq=899954;}
+            Scalar dXD_dt = 0;
+
+            if(xD<0.19){
+                Scalar A= exp(-1.8788e5/(R*T));
+                Scalar B =pow((1-(pV/peq)),3);
+                Scalar C=1-xD;
+                dXD_dt =1.9425e12*A*B*C;
+            }
+            if(xD>0.21){
+                Scalar D = exp(-1.6262e5/(R*T));
+                Scalar E = pow((1-(pV/peq)),3);
+                Scalar F = 1-xD;
+                Scalar G = pow((F),0.5);
+                dXD_dt = 8.9588e9*D*E*2*G;
+            }
+            if(xD>=0.19 && xD <=0.21) {
+                Scalar op = (xD-0.19)*50;
+
+                Scalar D = exp(-1.6262e5/(R*T));
+                Scalar E = pow((1-(pV/peq)),3);
+                Scalar F = 1-xD;
+                Scalar G = pow((F),0.5);
+                dXD_dt1 = 8.9588e9*D*E*2*G;
+
+                Scalar A= exp(-1.8788e5/(R*T));
+                Scalar B =pow((1-(pV/peq)),3);
+                Scalar C=1-xD;
+                dXD_dt2 =1.9425e12*A*B*C;
+
+                dXD_dt = dXD_dt1*op +  dXD_dt2*(1-op);
+            }
+
+            Scalar deltaRhoS = volVars.solidComponentDensity(hPhaseIdx) - volVars.solidComponentDensity(cPhaseIdx);
+            qMass = - dXD_dt*deltaRhoS;
+        }
+
         return qMass;
     }
 
