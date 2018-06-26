@@ -31,6 +31,9 @@
 #if LOWREKEPSILON
 #include <dumux/freeflow/compositional/lowrekepsilonncmodel.hh>
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/problem.hh>
+#elif KEPSILON
+#include <dumux/freeflow/compositional/kepsilonncmodel.hh>
+#include <dumux/freeflow/rans/twoeq/kepsilon/problem.hh>
 #elif KOMEGA
 #include <dumux/freeflow/compositional/komegancmodel.hh>
 #include <dumux/freeflow/rans/twoeq/komega/problem.hh>
@@ -50,6 +53,8 @@ namespace Properties
 #if NONISOTHERMAL
   #if LOWREKEPSILON
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNCNI));
+  #elif KEPSILON
+  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNCNI));
   #elif KOMEGA
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNCNI));
   #else
@@ -58,6 +63,8 @@ namespace Properties
 #else
   #if LOWREKEPSILON
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNC));
+  #elif KEPSILON
+  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNC));
   #elif KOMEGA
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNC));
   #else
@@ -106,6 +113,10 @@ template <class TypeTag>
 class FlatPlateNCTestProblem : public LowReKEpsilonProblem<TypeTag>
 {
     using ParentType = LowReKEpsilonProblem<TypeTag>;
+#elif KEPSILON
+class FlatPlateNCTestProblem : public KEpsilonProblem<TypeTag>
+{
+    using ParentType = KEpsilonProblem<TypeTag>;
 #elif KOMEGA
 class FlatPlateNCTestProblem : public KOmegaProblem<TypeTag>
 {
@@ -215,7 +226,7 @@ public:
             values.setDirichlet(Indices::temperatureIdx);
 #endif
 
-#if LOWREKEPSILON || KOMEGA
+#if KEPSILON || KOMEGA || LOWREKEPSILON
             values.setDirichlet(Indices::turbulentKineticEnergyIdx);
             values.setDirichlet(Indices::dissipationIdx);
 #endif
@@ -229,7 +240,7 @@ public:
             values.setOutflow(Indices::energyBalanceIdx);
 #endif
 
-#if LOWREKEPSILON || KOMEGA
+#if KEPSILON || KOMEGA || LOWREKEPSILON
             values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
             values.setOutflow(Indices::dissipationEqIdx);
 #endif
@@ -244,7 +255,7 @@ public:
             values.setDirichlet(Indices::temperatureIdx);
 #endif
 
-#if LOWREKEPSILON
+#if KEPSILON || LOWREKEPSILON
             values.setDirichlet(Indices::turbulentKineticEnergyEqIdx);
             values.setDirichlet(Indices::dissipationEqIdx);
 #elif KOMEGA
@@ -339,7 +350,7 @@ public:
             values[Indices::velocityXIdx] =  inletVelocity_;
         values[Indices::velocityYIdx] = 0.0;
 
-#if LOWREKEPSILON || KOMEGA
+#if KEPSILON || KOMEGA || LOWREKEPSILON
         values[Indices::turbulentKineticEnergyEqIdx] = turbulentKineticEnergy_;
         values[Indices::dissipationEqIdx] = dissipation_;
         if (isOnWall(globalPos))
