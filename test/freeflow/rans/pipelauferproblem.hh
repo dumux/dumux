@@ -151,12 +151,16 @@ public:
         Scalar density = FluidSystem::density(fluidState, phaseIdx);
         Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, phaseIdx) / density;
         Scalar diameter = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
-        viscosityTilde_ = turbulenceProperties.viscosityTilde(inletVelocity_, diameter, kinematicViscosity);
-        turbulentKineticEnergy_ = turbulenceProperties.turbulentKineticEnergy(inletVelocity_, diameter, kinematicViscosity);
+        viscosityTilde_ = getParam<Scalar>("Problem.InletViscosityTilde",
+                                           turbulenceProperties.viscosityTilde(inletVelocity_, diameter, kinematicViscosity));
+        turbulentKineticEnergy_ = getParam<Scalar>("Problem.InletTurbulentKineticEnergy",
+                                                   turbulenceProperties.turbulentKineticEnergy(inletVelocity_, diameter, kinematicViscosity));
 #if KOMEGA
-        dissipation_ = turbulenceProperties.dissipationRate(inletVelocity_, diameter, kinematicViscosity);
+        dissipation_ = getParam<Scalar>("Problem.InletDissipationRate",
+                                        turbulenceProperties.dissipationRate(inletVelocity_, diameter, kinematicViscosity));
 #else
-        dissipation_ = turbulenceProperties.dissipation(inletVelocity_, diameter, kinematicViscosity);
+        dissipation_ = getParam<Scalar>("Problem.InletDissipation",
+                                        turbulenceProperties.dissipation(inletVelocity_, diameter, kinematicViscosity));
 #endif
         std::cout << std::endl;
     }

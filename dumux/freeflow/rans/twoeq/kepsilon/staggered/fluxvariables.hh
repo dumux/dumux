@@ -117,7 +117,7 @@ public:
         Scalar insideCoeff_e = insideVolVars.kinematicEddyViscosity() / insideVolVars.sigmaEpsilon();
         Scalar outsideCoeff_e = outsideVolVars.kinematicEddyViscosity() / outsideVolVars.sigmaEpsilon();
         static const auto kEpsilonEnableKinematicViscosity_
-            = getParamFromGroup<bool>(problem.paramGroup(), "KEpsilon.EnableKinematicViscosity_", true);
+            = getParamFromGroup<bool>(problem.paramGroup(), "KEpsilon.EnableKinematicViscosity", true);
         if (kEpsilonEnableKinematicViscosity_)
         {
             insideCoeff_k += insideVolVars.kinematicViscosity();
