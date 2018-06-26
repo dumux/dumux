@@ -26,6 +26,8 @@
 #include <cmath>
 #include <dune/geometry/quadraturerules.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/discretization/elementsolution.hh>
+#include <dumux/discretization/evalsolution.hh>
 
 namespace Dumux {
 
@@ -36,7 +38,6 @@ struct L2Norm
     template<class Problem, class Solution>
     static Scalar computeErrorNorm(const Problem &problem, const Solution& sol, int order)
     {
-
         // calculate the L2-Norm and hmax
         Scalar norm = 0.0;
 
@@ -46,6 +47,7 @@ struct L2Norm
         {
             const auto geometry = element.geometry();
             const auto center = geometry.center();
+            const auto elemSol = elementSolution(element, sol, gg);
 
             // maybe exclude some elements from the norm
             static const bool excludeInnerBulk = getParam<bool>("Problem.NormExcludeInnerBulk");
@@ -54,13 +56,12 @@ struct L2Norm
             if (int(GridView::dimension) == 3 && excludeInnerBulk && std::sqrt(center[0]*center[0] + center[1]*center[1]) < radius)
                 continue;
 
-            const auto eIdx = gg.elementMapper().index(element);
             const auto& quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), order);
             for(auto&& qp : quad)
             {
                 const auto globalPos = geometry.global(qp.position());
                 const Scalar pe = problem.exactSolution(globalPos);
-                const Scalar p = sol[eIdx][0];
+                const Scalar p = evalSolution(element, geometry, gg, elemSol, globalPos)[0];
                 norm += (p - pe)*(p - pe)*qp.weight()*geometry.integrationElement(qp.position());
             }
         }
