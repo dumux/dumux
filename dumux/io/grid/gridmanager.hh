@@ -19,13 +19,13 @@
 /*!
  * \file
  * \ingroup InputOutput
- * \brief Provides a grid creator for all supported grid managers with
- *        input file interfaces.
+ * \brief Provides a grid manager for all supported grid managers with
+ *        input file interfaces. Manages data via the grid data member.
  *
  * \todo add Petrel grids with dune-cornerpoint
  */
-#ifndef DUMUX_GRID_CREATOR_HH
-#define DUMUX_GRID_CREATOR_HH
+#ifndef DUMUX_IO_GRID_MANAGER_HH
+#define DUMUX_IO_GRID_MANAGER_HH
 
 #include <array>
 #include <bitset>
@@ -39,7 +39,6 @@
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/gmshreader.hh>
 #include <dune/grid/common/gridfactory.hh>
-#include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 
 // YaspGrid specific includes
@@ -68,39 +67,38 @@
 #include <dune/foamgrid/dgffoam.hh>
 #endif
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 
-#include "./grid/gmshgriddatahandle.hh"
+#include "griddata.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup InputOutput
- * \brief Provides the grid creator base interface (public) and methods common
- *        to most grid creator specializations (protected).
+ * \brief The grid manager base interface (public) and methods common
+ *        to most grid manager specializations (protected).
  */
-template <class Grid>
-class GridCreatorBase
+template <class GridType>
+class GridManagerBase
 {
-    using Intersection = typename Grid::LeafIntersection;
-    using Element = typename Grid::template Codim<0>::Entity;
 public:
+    using Grid = GridType;
+    using GridData = Dumux::GridData<Grid>;
+
     /*!
      * \brief Make the grid. Implement this method in the specialization of this class for a grid type.
      */
-    static void makeGrid(const std::string& modelParamGroup = "")
+    void init(const std::string& modelParamGroup = "")
     {
         DUNE_THROW(Dune::NotImplemented,
-            "The GridCreator for grid type " << Dune::className<Grid>() << " is not implemented! Consider providing your own GridCreator.");
+            "The GridManager for grid type " << Dune::className<Grid>() << " is not implemented! Consider providing your own GridManager.");
     }
 
     /*!
      * \brief Returns a reference to the grid.
      */
-    static Grid &grid()
+    Grid& grid()
     {
         if(enableDgfGridPointer_)
             return *dgfGridPtr();
@@ -109,140 +107,9 @@ public:
     }
 
     /*!
-     * \brief Call the parameters function of the DGF grid pointer if available
-     */
-    template <class Entity>
-    static const std::vector<double>& parameters(const Entity& entity)
-    {
-        if(enableDgfGridPointer_)
-        {
-            if (entity.hasFather())
-            {
-                auto level0entity = entity;
-                while(level0entity.hasFather())
-                    level0entity = level0entity.father();
-
-
-                return dgfGridPtr().parameters(level0entity);
-            }
-            else
-            {
-                return dgfGridPtr().parameters(entity);
-            }
-        }
-        else
-            DUNE_THROW(Dune::InvalidStateException, "The parameters method is only available if the grid was constructed with a DGF file!");
-    }
-
-    /*!
-     * \brief Call the parameters function of the DGF grid pointer if available
-     */
-    template <class GridImp, class IntersectionImp>
-    static const Dune::DGFBoundaryParameter::type& parameters(const Dune::Intersection<GridImp, IntersectionImp>& intersection)
-    {
-        if(enableDgfGridPointer_)
-            return dgfGridPtr().parameters(intersection);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "The parameters method is only available if the grid was constructed with a DGF file!");
-    }
-
-    /*!
-     * \brief Return the boundary domain marker (Gmsh physical entity number) of an intersection
-              Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
-     * \param boundarySegmentIndex The boundary segment index of the intersection (intersection.boundarySegmentIndex()
-     */
-    static int getBoundaryDomainMarker(int boundarySegmentIndex)
-    {
-        if(enableGmshDomainMarkers_)
-        {
-            if (boundarySegmentIndex >= boundaryMarkers_.size())
-                DUNE_THROW(Dune::RangeError, "Boundary segment index "<< boundarySegmentIndex << " bigger than number of boundary segments in grid!");
-            return boundaryMarkers_[boundarySegmentIndex];
-        }
-        else
-            DUNE_THROW(Dune::InvalidStateException, "The getBoundaryDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
-                                                     << " If your Gmsh file contains domain markers / physical entities,"
-                                                     << " enable them by setting 'Grid.DomainMarkers = true' in the input file.");
-    }
-
-    /*!
-     * \brief Return the boundary domain marker (Gmsh physical entity number) of an intersection
-              Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
-     * \param intersection The intersection to be evaluated
-     */
-    static int getBoundaryDomainMarker(const Intersection& intersection)
-    {
-        if(enableGmshDomainMarkers_)
-        {
-            return boundaryMarkers_[intersection.boundarySegmentIndex()];
-        }
-        else
-            DUNE_THROW(Dune::InvalidStateException, "The getBoundaryDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
-                                                     << " If your Gmsh file contains domain markers / physical entities,"
-                                                     << " enable them by setting 'Grid.DomainMarkers = true' in the input file.");
-    }
-
-    /*!
-     * \brief Return the element domain marker (Gmsh physical entity number) of an element.
-              Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
-     * \param elementIdx The element index
-     */
-    DUNE_DEPRECATED_MSG("This may produce wrong results if the grid implementation reorders the elements after insertion. Use getElementDomainMarker(element) instead!")
-    static int getElementDomainMarker(int elementIdx)
-    {
-        if(enableGmshDomainMarkers_)
-        {
-            if(elementIdx >= grid().levelGridView(0).size(0))
-                DUNE_THROW(Dune::RangeError, "Requested element index is bigger than the number of level 0 elements!");
-            return elementMarkers_[elementIdx];
-        }
-        else
-            DUNE_THROW(Dune::InvalidStateException, "The getElementDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
-                                                     << " If your Gmsh file contains domain markers / physical entities,"
-                                                     << " enable them by setting 'Grid.DomainMarkers = true' in the input file.");
-    }
-
-    /*!
-     * \brief Return the element domain marker (Gmsh physical entity number) of an element.
-              Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
-     * \param element The element to be evaluated
-     */
-    static int getElementDomainMarker(const Element& element)
-    {
-        if(enableGmshDomainMarkers_)
-        {
-            // parameters are only given for level 0 elements
-            if (element.hasFather())
-            {
-                auto level0element = element;
-                while(level0element.hasFather())
-                    level0element = level0element.father();
-
-                // in the parallel case the data is load balanced and then accessed with indices of the index set
-                if (grid().comm().size() > 1)
-                    return elementMarkers_[gridPtr()->levelGridView(0).indexSet().index(level0element)];
-                else
-                    return elementMarkers_[gridFactory().insertionIndex(level0element)];
-            }
-            else
-            {
-                // in the parallel case the data is load balanced and then accessed with indices of the index set
-                if (grid().comm().size() > 1)
-                    return elementMarkers_[gridPtr()->levelGridView(0).indexSet().index(element)];
-                else
-                    return elementMarkers_[gridFactory().insertionIndex(element)];
-            }
-        }
-        else
-            DUNE_THROW(Dune::InvalidStateException, "The getElementDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
-                                                    << " If your Gmsh file contains domain markers / physical entities,"
-                                                    << " enable them by setting 'Grid.DomainMarkers = true' in the input file.");
-    }
-
-    /*!
      * \brief Call loadBalance() function of the grid.
      */
-    static void loadBalance()
+    void loadBalance()
     {
         if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
         {
@@ -250,58 +117,52 @@ public:
             if(enableDgfGridPointer_)
             {
                 dgfGridPtr().loadBalance();
+                // update the grid data
+                gridData_ = std::make_shared<GridData>(dgfGridPtr());
             }
+
             // if we have gmsh parameters we have to manually load balance the data
             else if (enableGmshDomainMarkers_)
             {
-                {
-                    // element and face markers are communicated during load balance
-                    using DataHandle = GmshGridDataHandle< Grid, Dune::GridFactory<Grid>, std::vector<int>>;
-                    DataHandle dh(grid(), gridFactory(), elementMarkers_, boundaryMarkers_, faceMarkers_);
-                    gridPtr()->loadBalance(dh.interface());
-                    gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
-                }
+                // element and face markers are communicated during load balance
+                auto dh = gridData_->createGmshDataHandle();
+                gridPtr()->loadBalance(dh.interface());
+                gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
             }
             else
                 gridPtr()->loadBalance();
         }
     }
 
+    std::shared_ptr<GridData> getGridData() const
+    {
+        if (!enableDgfGridPointer_ && !enableGmshDomainMarkers_)
+            DUNE_THROW(Dune::IOError, "No grid data available");
+
+        return gridData_;
+    }
+
+
 protected:
 
     /*!
      * \brief Returns a reference to the grid pointer (std::shared_ptr<Grid>)
      */
-    static std::shared_ptr<Grid> &gridPtr()
+    std::shared_ptr<Grid>& gridPtr()
     {
         if(!enableDgfGridPointer_)
-        {
-            static std::shared_ptr<Grid> gridPtr_;
             return gridPtr_;
-        }
         else
             DUNE_THROW(Dune::InvalidStateException, "You are using DGF. To get the grid pointer use method dgfGridPtr()!");
     }
 
     /*!
-     * \brief Returns a reference to the grid factory
-     */
-    static Dune::GridFactory<Grid> &gridFactory()
-    {
-        static Dune::GridFactory<Grid> gridFactory_;
-        return gridFactory_;
-    }
-
-    /*!
      * \brief Returns a reference to the DGF grid pointer (Dune::GridPtr<Grid>).
      */
-    static Dune::GridPtr<Grid> &dgfGridPtr()
+    Dune::GridPtr<Grid>& dgfGridPtr()
     {
         if(enableDgfGridPointer_)
-        {
-            static Dune::GridPtr<Grid> dgfGridPtr_;
             return dgfGridPtr_;
-        }
         else
             DUNE_THROW(Dune::InvalidStateException, "The DGF grid pointer is only available if the grid was constructed with a DGF file!");
     }
@@ -309,7 +170,7 @@ protected:
     /*!
      * \brief Returns the filename extension of a given filename
      */
-    static std::string getFileExtension(const std::string& fileName)
+    std::string getFileExtension(const std::string& fileName) const
     {
         std::size_t i = fileName.rfind('.', fileName.length());
         if (i != std::string::npos)
@@ -326,21 +187,22 @@ protected:
     /*!
      * \brief Makes a grid from a file. We currently support *.dgf (Dune Grid Format) and *.msh (Gmsh mesh format).
      */
-    static void makeGridFromFile(const std::string& fileName,
-                                 const std::string& modelParamGroup)
+    void makeGridFromFile(const std::string& fileName,
+                          const std::string& modelParamGroup)
     {
         // We found a file in the input file...does it have a supported extension?
         const std::string extension = getFileExtension(fileName);
-        if(extension != "dgf" && extension != "msh")
+        if (extension != "dgf" && extension != "msh")
             DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " only supports DGF (*.dgf) and Gmsh (*.msh) grid files but the specified filename has extension: *."<< extension);
 
         // make the grid
-        if(extension == "dgf")
+        if (extension == "dgf")
         {
             enableDgfGridPointer_ = true;
             dgfGridPtr() = Dune::GridPtr<Grid>(fileName.c_str(), Dune::MPIHelper::getCommunicator());
+            gridData_ = std::make_shared<GridData>(dgfGridPtr_);
         }
-        if(extension == "msh")
+        if (extension == "msh")
         {
             // get some optional parameters
             const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
@@ -353,13 +215,17 @@ protected:
             // as default read it on all processes in parallel
             if(domainMarkers)
             {
-                Dune::GmshReader<Grid>::read(gridFactory(), fileName, boundaryMarkers_, elementMarkers_, verbose, boundarySegments);
-                gridPtr() = std::shared_ptr<Grid>(gridFactory().createGrid());
+                std::vector<int> boundaryMarkers, elementMarkers;
+                auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
+                Dune::GmshReader<Grid>::read(*gridFactory, fileName, boundaryMarkers, elementMarkers, verbose, boundarySegments);
+                gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());
+                gridData_ = std::make_shared<GridData>(gridPtr_, std::move(gridFactory), std::move(elementMarkers), std::move(boundaryMarkers));
             }
             else
             {
-                Dune::GmshReader<Grid>::read(gridFactory(), fileName, verbose, boundarySegments);
-                gridPtr() = std::shared_ptr<Grid>(gridFactory().createGrid());
+                auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
+                Dune::GmshReader<Grid>::read(*gridFactory, fileName, verbose, boundarySegments);
+                gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());
             }
         }
     }
@@ -367,7 +233,7 @@ protected:
     /*!
      * \brief Makes a grid from a DGF file. This is used by grid managers that only support DGF.
      */
-    static void makeGridFromDgfFile(const std::string& fileName)
+    void makeGridFromDgfFile(const std::string& fileName)
     {
         // We found a file in the input file...does it have a supported extension?
         const std::string extension = getFileExtension(fileName);
@@ -387,8 +253,8 @@ protected:
      * \brief Makes a structured cube grid using the structured grid factory
      */
     template <int dim, int dimworld>
-    static void makeStructuredGrid(CellType cellType,
-                                   const std::string& modelParamGroup)
+    void makeStructuredGrid(CellType cellType,
+                            const std::string& modelParamGroup)
     {
         using GlobalPosition = Dune::FieldVector<typename Grid::ctype, dimworld>;
         const auto upperRight = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.UpperRight");
@@ -416,7 +282,7 @@ protected:
     /*!
      * \brief Refines a grid after construction if GridParameterGroup.Refinement is set in the input file
      */
-    static void maybeRefineGrid(const std::string& modelParamGroup)
+    void maybeRefineGrid(const std::string& modelParamGroup)
     {
         if (haveParamInGroup(modelParamGroup, "Grid.Refinement"))
             grid().globalRefine(getParamFromGroup<int>(modelParamGroup, "Grid.Refinement"));
@@ -426,86 +292,35 @@ protected:
     * \brief A state variable if the DGF Dune::GridPtr has been enabled.
     *        It is always enabled if a DGF grid file was used to create the grid.
     */
-    static bool enableDgfGridPointer_;
+    bool enableDgfGridPointer_ = false;
 
     /*!
     * \brief A state variable if domain markers have been read from a Gmsh file.
     */
-    static bool enableGmshDomainMarkers_;
+    bool enableGmshDomainMarkers_ = false;
 
-    /*!
-    * \brief Element and boundary domain markers obtained from Gmsh physical entities
-    *        They map from element indices / boundary ids to the physical entity number
-    */
-    static std::vector<int> elementMarkers_;
-    static std::vector<int> boundaryMarkers_;
-    static std::vector<int> faceMarkers_;
+    std::shared_ptr<Grid> gridPtr_;
+    Dune::GridPtr<Grid> dgfGridPtr_;
+
+    std::shared_ptr<GridData> gridData_;
 };
 
-template <class Grid>
-bool GridCreatorBase<Grid>::enableDgfGridPointer_ = false;
-
-template <class Grid>
-bool GridCreatorBase<Grid>::enableGmshDomainMarkers_ = false;
-
-template <class Grid>
-std::vector<int> GridCreatorBase<Grid>::elementMarkers_;
-
-template <class Grid>
-std::vector<int> GridCreatorBase<Grid>::boundaryMarkers_;
-
-template <class Grid>
-std::vector<int> GridCreatorBase<Grid>::faceMarkers_;
-
 /*!
- * \brief Provides the grid creator implementation for all supported grid managers that constructs a grid
- *        from information in the input file. This class is specialised below for all
- *        supported grid managers. It inherits the functionality of the base class.
+ * \brief The grid manager (this is the class used by the user) for all supported grid managers that constructs a grid
+ *        from information in the input file and handles the data.
+ * \note  This class is specialised below for all supported grid managers. It inherits the functionality of the base class.
  */
-template <class Grid, DiscretizationMethod discMethod>
-class GridCreatorImpl : public GridCreatorBase<Grid> {};
-
-/*!
- * \brief Provides the grid creator (this is the class called by the user) for all supported grid managers that constructs a grid
- *        from information in the input file. This class is specialised below for all
- *        supported grid managers. It inherits the functionality of the base class.
- * \todo  TODO The grid creator is independent of TypeTag now,
- *        it would only need two template parameters, none of the functions use a TypeTag directly
- * \todo  This shouldn't depend on FVGridGeometry, think about how to remove discMethod here, too
- */
-template <class TypeTag>
-using GridCreator = GridCreatorImpl<typename GET_PROP_TYPE(TypeTag, Grid), GET_PROP_TYPE(TypeTag, FVGridGeometry)::discMethod>;
+template <class Grid>
+class GridManager
+: public GridManagerBase<Grid>
+{};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Specializations //////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
- * \brief Helper class for determining the default overlap in case of parallel yasp grids
- * \note the default of 1 works for all overlapping implementation like the cell-centered discretization schemes
- */
-template <DiscretizationMethod discMethod>
-struct YaspOverlapHelper
-{
-    static int getOverlap(const std::string& modelParamGroup)
-    {
-        int overlap = getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
-        if (overlap < 1)
-            DUNE_THROW(Dune::InvalidStateException, "Parallel non-overlapping grids for cc discretization is not allowed.");
-        return overlap;
-    }
-};
-
-//! specialization for the box method
-template <>
-struct YaspOverlapHelper<DiscretizationMethod::box>
-{
-    static int getOverlap(const std::string& modelParamGroup)
-    { return 0; }
-};
-
-/*!
- * \brief Provides a grid creator for YaspGrids
+ * \brief Provides a grid manager for YaspGrids
  *        from information in the input file
  *
  * All keys are expected to be in group GridParameterGroup.
@@ -521,18 +336,18 @@ struct YaspOverlapHelper<DiscretizationMethod::box>
  * - Refinement : the number of global refines to apply initially.
  *
  */
-template<DiscretizationMethod discMethod, class ct, int dim>
-class GridCreatorImpl<Dune::YaspGrid<dim, Dune::EquidistantCoordinates<ct, dim> >, discMethod>
-          : public GridCreatorBase<Dune::YaspGrid<dim, Dune::EquidistantCoordinates<ct, dim> > >
+template<class ct, int dim>
+class GridManager<Dune::YaspGrid<dim, Dune::EquidistantCoordinates<ct, dim> >>
+: public GridManagerBase<Dune::YaspGrid<dim, Dune::EquidistantCoordinates<ct, dim> > >
 {
 public:
     using Grid = typename Dune::YaspGrid<dim, Dune::EquidistantCoordinates<ct, dim> >;
-    using ParentType = GridCreatorBase<Grid>;
+    using ParentType = GridManagerBase<Grid>;
 
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
      */
-    static void makeGrid(const std::string& modelParamGroup = "")
+    void init(const std::string& modelParamGroup = "")
     {
         // First try to create it from a DGF file in GridParameterGroup.File
         if (haveParamInGroup(modelParamGroup, "Grid.File"))
@@ -556,8 +371,8 @@ public:
             // periodic boundaries
             const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>());
 
-            // get the overlap dependent on the discretization method
-            const int overlap = YaspOverlapHelper<discMethod>::getOverlap(modelParamGroup);
+            // get the overlap
+            const int overlap =  getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
 
             // make the grid
             if (!haveParamInGroup(modelParamGroup, "Grid.Partitioning"))
@@ -590,17 +405,18 @@ private:
     /*!
      * \brief Postprocessing for YaspGrid
      */
-    static void postProcessing_(const std::string& modelParamGroup)
+    void postProcessing_(const std::string& modelParamGroup)
     {
         // Check if should refine the grid
         bool keepPhysicalOverlap = getParamFromGroup<bool>(modelParamGroup, "Grid.KeepPhysicalOverlap", true);
         ParentType::grid().refineOptions(keepPhysicalOverlap);
         ParentType::maybeRefineGrid(modelParamGroup);
+        ParentType::loadBalance();
     }
 };
 
 /*!
- * \brief Provides a grid creator for YaspGrids with non-zero offset
+ * \brief Provides a grid manager for YaspGrids with non-zero offset
  *        from information in the input file
  *
  * All keys are expected to be in group GridParameterGroup.
@@ -616,18 +432,18 @@ private:
  * - Refinement : the number of global refines to apply initially.
  *
  */
-template<DiscretizationMethod discMethod, class ct, int dim>
-class GridCreatorImpl<Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<ct, dim> >, discMethod>
-          : public GridCreatorBase<Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<ct, dim> > >
+template<class ct, int dim>
+class GridManager<Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<ct, dim>>>
+: public GridManagerBase<Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<ct, dim>>>
 {
 public:
-    using Grid = typename Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<ct, dim> >;
-    using ParentType = GridCreatorBase<Grid>;
+    using Grid = typename Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<ct, dim>>;
+    using ParentType = GridManagerBase<Grid>;
 
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
      */
-    static void makeGrid(const std::string& modelParamGroup = "")
+    void init(const std::string& modelParamGroup = "")
     {
         // First try to create it from a DGF file in GridParameterGroup.File
         if (haveParamInGroup(modelParamGroup, "Grid.File"))
@@ -652,7 +468,7 @@ public:
             const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>());
 
             // get the overlap dependent on some template parameters
-            const int overlap = YaspOverlapHelper<discMethod>::getOverlap(modelParamGroup);
+            const int overlap = getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
 
             // make the grid
             if (!haveParamInGroup(modelParamGroup, "Grid.Partitioning"))
@@ -685,17 +501,18 @@ private:
     /*!
      * \brief Postprocessing for YaspGrid
      */
-    static void postProcessing_(const std::string& modelParamGroup)
+    void postProcessing_(const std::string& modelParamGroup)
     {
         // Check if should refine the grid
         const bool keepPhysicalOverlap = getParamFromGroup<bool>(modelParamGroup, "Grid.KeepPhysicalOverlap", true);
         ParentType::grid().refineOptions(keepPhysicalOverlap);
         ParentType::maybeRefineGrid(modelParamGroup);
+        ParentType::loadBalance();
     }
 };
 
 /*!
- * \brief Provides a grid creator for YaspGrids with different zones and grading
+ * \brief Provides a grid manager for YaspGrids with different zones and grading
  *
  * All keys are expected to be in group GridParameterGroup.
  * The following keys are recognized:
@@ -722,18 +539,18 @@ private:
  * \f$ g = -\frac{1}{g_\textrm{negative}} \f$
  * to avoid issues with imprecise fraction numbers.
  */
-template<DiscretizationMethod discMethod, class ctype, int dim>
-class GridCreatorImpl<Dune::YaspGrid<dim, Dune::TensorProductCoordinates<ctype, dim> >, discMethod>
-          : public GridCreatorBase<Dune::YaspGrid<dim, Dune::TensorProductCoordinates<ctype, dim> > >
+template<class ctype, int dim>
+class GridManager<Dune::YaspGrid<dim, Dune::TensorProductCoordinates<ctype, dim> >>
+: public GridManagerBase<Dune::YaspGrid<dim, Dune::TensorProductCoordinates<ctype, dim> > >
 {
 public:
     using Grid = typename Dune::YaspGrid<dim, Dune::TensorProductCoordinates<ctype, dim> >;
-    using ParentType = GridCreatorBase<Grid>;
+    using ParentType = GridManagerBase<Grid>;
 
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
      */
-    static void makeGrid(const std::string& modelParamGroup = "")
+    void init(const std::string& modelParamGroup = "")
     {
         // Only construction from the input file is possible
         // Look for the necessary keys to construct from the input file
@@ -759,22 +576,22 @@ public:
         }
 
         // call the generic function
-        makeGrid(positions, cells, grading, modelParamGroup);
+        init(positions, cells, grading, modelParamGroup);
     }
 
     /*!
      * \brief Make the grid using input data not read from the input file.
      */
-    static void makeGrid(const std::array<std::vector<ctype>, dim>& positions,
-                         const std::array<std::vector<int>, dim>& cells,
-                         const std::array<std::vector<ctype>, dim>& grading,
-                         const std::string& modelParamGroup = "")
+    void init(const std::array<std::vector<ctype>, dim>& positions,
+              const std::array<std::vector<int>, dim>& cells,
+              const std::array<std::vector<ctype>, dim>& grading,
+              const std::string& modelParamGroup = "")
     {
 
 
         // Additional arameters (they have a default)
         const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>());
-        const int overlap = YaspOverlapHelper<discMethod>::getOverlap(modelParamGroup);
+        const int overlap = getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
         const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
 
         // Some sanity checks
@@ -822,16 +639,17 @@ private:
     /*!
      * \brief Postprocessing for YaspGrid
      */
-    static void postProcessing_(const std::string& modelParamGroup)
+    void postProcessing_(const std::string& modelParamGroup)
     {
         // Check if should refine the grid
         const bool keepPhysicalOverlap = getParamFromGroup<bool>(modelParamGroup, "Grid.KeepPhysicalOverlap", true);
         ParentType::grid().refineOptions(keepPhysicalOverlap);
         ParentType::maybeRefineGrid(modelParamGroup);
+        ParentType::loadBalance();
     }
 
     //! Compute the global position tensor grid from the given positions, cells, and grading factors
-    static std::array<std::vector<ctype>, dim>
+    std::array<std::vector<ctype>, dim>
     computeGlobalPositions_(const std::array<std::vector<ctype>, dim>& positions,
                             const std::array<std::vector<int>, dim>& cells,
                             const std::array<std::vector<ctype>, dim>& grading,
@@ -938,7 +756,7 @@ private:
 };
 
 /*!
- * \brief Provides a grid creator for OneDGrids
+ * \brief Provides a grid manager for OneDGrids
  *        from information in the input file
  *
  * All keys are expected to be in group GridParameterGroup.
@@ -950,18 +768,18 @@ private:
  * - Refinement : the number of global refines to apply initially.
  *
  */
-template<DiscretizationMethod discMethod>
-class GridCreatorImpl<Dune::OneDGrid, discMethod>
-          : public GridCreatorBase<Dune::OneDGrid>
+template<>
+class GridManager<Dune::OneDGrid>
+: public GridManagerBase<Dune::OneDGrid>
 {
 public:
     using Grid = Dune::OneDGrid;
-    using ParentType = GridCreatorBase<Grid>;
+    using ParentType = GridManagerBase<Grid>;
 
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
      */
-    static void makeGrid(const std::string& modelParamGroup = "")
+    void init(const std::string& modelParamGroup = "")
     {
 
         // try to create it from a DGF or msh file in GridParameterGroup.File
@@ -1006,15 +824,15 @@ public:
     }
 
     /*!
-     * \brief Overload load balance. Does nothing since OneDGrid is not parallel
+     * \brief Call loadBalance() function of the grid. OneDGrid is not parallel an thus cannot communicate.
      */
-    static void loadBalance() {}
+    void loadBalance() {}
 
 private:
     /*!
      * \brief Do some operatrion after making the grid, like global refinement
      */
-    static void postProcessing_(const std::string& modelParamGroup)
+    void postProcessing_(const std::string& modelParamGroup)
     {
         // Set refinement type
         const auto refType = getParamFromGroup<std::string>(modelParamGroup, "Grid.RefinementType", "Local");
@@ -1027,123 +845,14 @@ private:
 
         // Check if should refine the grid
         ParentType::maybeRefineGrid(modelParamGroup);
+        loadBalance();
     }
 };
 
 #if HAVE_UG
 
-template<typename Grid>
-class UGLoadBalance
-{
-    const static int dimension = Grid::dimension;
-    using ctype = typename Grid::ctype;
-    using GridView = typename Grid::LeafGridView;
-    using IdSet = typename Grid::LocalIdSet;
-    using Data = std::map<typename IdSet::IdType, int>;
-
-    class LBDataHandle
-    : public Dune::CommDataHandleIF<LBDataHandle,
-    typename Data::mapped_type>
-    {
-    public:
-        typedef typename Data::mapped_type DataType;
-
-    public:
-
-        bool contains (int dim, int codim) const
-        {
-            assert(dim == dimension);
-            return codim == 0;
-        }
-
-        bool fixedSize (int dim, int codim) const
-        {
-            assert(dim == dimension);
-            return true;
-        }
-
-        template<class Entity>
-        size_t size (Entity& entity) const
-        {
-            return 1;
-        }
-
-        template<class MessageBuffer, class Entity>
-        void gather (MessageBuffer& buff, const Entity& entity) const
-        {
-            const auto& id = idSet_.id(entity);
-            buff.write(data_.at(id));
-        }
-
-        template<class MessageBuffer, class Entity>
-        void scatter (MessageBuffer& buff, const Entity& entity, size_t)
-        {
-            const auto& id = idSet_.id(entity);
-            buff.read(data_[id]);
-        }
-
-        LBDataHandle (const IdSet& idSet, Data& data)
-        : idSet_(idSet)
-        , data_(data)
-        {}
-
-    private:
-        const IdSet& idSet_;
-        Data& data_;
-    };
-
-    static void fillDataFromMarkers(const GridView& gv,
-                                    Data& data,
-                                    const std::vector<int>& elementMarkers)
-    {
-        const auto& idSet = gv.grid().localIdSet();
-
-        for (const auto& element : elements(gv, Dune::Partitions::interiorBorder))
-        {
-            const auto& id = idSet.id(element);
-
-            data[id] = elementMarkers[gv.indexSet().index(element)];
-        }
-    }
-
-    static void retrieveMarkersFromData(const GridView& gv,
-                                        Data& data,
-                                        std::vector<int>& elementMarkers)
-    {
-        const auto& idSet = gv.grid().localIdSet();
-
-        elementMarkers.resize(gv.size(0), 0);
-        for (const auto& element : elements(gv, Dune::Partitions::interiorBorder))
-        {
-            const auto& id = idSet.id(element);
-
-            elementMarkers[gv.indexSet().index(element)] = data[id];
-        }
-    }
-
-public:
-    static void balance(Grid& grid, std::vector<int>& elementMarkers)
-    {
-        const auto& gv = grid.leafGridView();
-
-        // define the map containing the data to be balanced
-        Data data;
-
-        LBDataHandle dataHandle(grid.localIdSet(), data);
-
-        // fill the data map
-        fillDataFromMarkers(gv, data, elementMarkers);
-
-        // balance the grid and the data
-        grid.loadBalance(dataHandle);
-
-        // fill the markers vector
-        retrieveMarkersFromData(gv, data, elementMarkers);
-    }
-};
-
 /*!
- * \brief Provides a grid creator for UGGrids
+ * \brief Provides a grid manager for UGGrids
  *        from information in the input file
  *
  * All keys are expected to be in group GridParameterGroup.
@@ -1160,19 +869,19 @@ public:
  * - BoundarySegments : whether to insert boundary segments into the grid
  *
  */
-template<DiscretizationMethod discMethod, int dim>
-class GridCreatorImpl<Dune::UGGrid<dim>, discMethod>
-          : public GridCreatorBase<Dune::UGGrid<dim> >
+template<int dim>
+class GridManager<Dune::UGGrid<dim>>
+: public GridManagerBase<Dune::UGGrid<dim>>
 {
 public:
     using Grid = typename Dune::UGGrid<dim>;
-    using ParentType = GridCreatorBase<Grid>;
+    using ParentType = GridManagerBase<Grid>;
     using Element = typename Grid::template Codim<0>::Entity;
 
     /*!
      * \brief Make the UGGrid.
      */
-    static void makeGrid(const std::string& modelParamGroup = "")
+    void init(const std::string& modelParamGroup = "")
     {
 
         // try to create it from a DGF or msh file in GridParameterGroup.File
@@ -1217,57 +926,37 @@ public:
      *       For gmsh grids the parameters are read on every process so we use too much memory but
      *       the parameters are available via the insertionIndex of the level 0 element.
      */
-    static void loadBalance()
+    void loadBalance()
     {
-        // if we may have dgf parameters use load balancing of the dgf pointer
-        if(ParentType::enableDgfGridPointer_)
+        if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
         {
-            ParentType::dgfGridPtr().loadBalance();
-        }
-        else if (ParentType::enableGmshDomainMarkers_)
-        {
-            UGLoadBalance<Grid>::balance(ParentType::grid(), ParentType::elementMarkers_);
-        }
-        else
-        {
-            ParentType::gridPtr()->loadBalance();
-        }
-    }
-
-    /*!
-     * \brief Return the element domain marker (Gmsh physical entity number) of an element.
-              Only available when using Gmsh with GridParameterGroup.DomainMarkers = 1.
-     * \param elementIdx The element index
-     */
-    static int getElementDomainMarker(const Element& element)
-    {
-        if(ParentType::enableGmshDomainMarkers_)
-        {
-            // parameters are only given for level 0 elements
-            if (element.hasFather())
+            // if we may have dgf parameters use load balancing of the dgf pointer
+            if(ParentType::enableDgfGridPointer_)
             {
-                auto level0element = element;
-                while(level0element.hasFather())
-                    level0element = level0element.father();
+                ParentType::dgfGridPtr().loadBalance();
+                // update the grid data
+                ParentType::gridData_ = std::make_shared<typename ParentType::GridData>(ParentType::dgfGridPtr());
+            }
 
-                return ParentType::elementMarkers_[ParentType::gridFactory().insertionIndex(level0element)];
+            // if we have gmsh parameters we have to manually load balance the data
+            else if (ParentType::enableGmshDomainMarkers_)
+            {
+                // element and face markers are communicated during load balance
+                auto dh = ParentType::gridData_->createGmshDataHandle();
+                ParentType::gridPtr()->loadBalance(dh.interface());
+                // Right now, UGGrid cannot communicate element data. If this gets implemented, communicate the data here:
+                // ParentType::gridPtr()->communicate(dh.interface(), Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
             }
             else
-            {
-                return ParentType::elementMarkers_[ParentType::gridFactory().insertionIndex(element)];
-            }
+                ParentType::gridPtr()->loadBalance();
         }
-        else
-            DUNE_THROW(Dune::InvalidStateException, "The getElementDomainMarker method is only available if DomainMarkers for Gmsh were enabled!"
-                                                    << " If your Gmsh file contains domain markers / physical entities,"
-                                                    << " enable them by setting 'Grid.DomainMarkers = true' in the input file.");
     }
 
 private:
     /*!
      * \brief Do some operations before making the grid
      */
-    static void preProcessing_(const std::string& modelParamGroup)
+    void preProcessing_(const std::string& modelParamGroup)
     {
         if(haveParamInGroup(modelParamGroup, "Grid.HeapSize"))
             Grid::setDefaultHeapSize(getParamFromGroup<unsigned>(modelParamGroup, "Grid.HeapSize"));
@@ -1276,7 +965,7 @@ private:
     /*!
      * \brief Do some operatrion after making the grid, like global refinement
      */
-    static void postProcessing_(const std::string& modelParamGroup)
+    void postProcessing_(const std::string& modelParamGroup)
     {
         // Set refinement type
         const auto refType = getParamFromGroup<std::string>(modelParamGroup, "Grid.RefinementType", "Local");
@@ -1298,15 +987,17 @@ private:
 
         // Check if should refine the grid
         ParentType::maybeRefineGrid(modelParamGroup);
+        // do load balancing
+        loadBalance();
     }
 };
 
 #endif // HAVE_UG
-
+//
 #if HAVE_DUNE_ALUGRID
 
 /*!
- * \brief Provides a grid creator for Dune ALUGrids
+ * \brief Provides a grid manager for Dune ALUGrids
  *        from information in the input file
  *
  * All keys are expected to be in group GridParameterGroup.
@@ -1321,18 +1012,18 @@ private:
  * - BoundarySegments : whether to insert boundary segments into the grid
  *
  */
-template<DiscretizationMethod discMethod, int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRefinementType refinementType>
-class GridCreatorImpl<Dune::ALUGrid<dim, dimworld, elType, refinementType>, discMethod>
-          : public GridCreatorBase<Dune::ALUGrid<dim, dimworld, elType, refinementType> >
+template<int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRefinementType refinementType>
+class GridManager<Dune::ALUGrid<dim, dimworld, elType, refinementType>>
+: public GridManagerBase<Dune::ALUGrid<dim, dimworld, elType, refinementType>>
 {
 public:
     using Grid = Dune::ALUGrid<dim, dimworld, elType, refinementType>;
-    using ParentType = GridCreatorBase<Grid>;
+    using ParentType = GridManagerBase<Grid>;
 
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
      */
-    static void makeGrid(const std::string& modelParamGroup = "", bool adaptiveRestart = false)
+    void init(const std::string& modelParamGroup = "", bool adaptiveRestart = false)
     {
         // restarting an adaptive grid using Dune's BackupRestoreFacility
         // TODO: the part after first || is backward compatibilty with old sequential models remove once sequential adpative restart is replaced
@@ -1352,6 +1043,7 @@ public:
             oss << name << "_time=" << restartTime << "_rank=" << rank << ".grs";
             std::cout << "Restoring an ALUGrid from " << oss.str() << std::endl;
             ParentType::gridPtr() = std::shared_ptr<Grid>(Dune::BackupRestoreFacility<Grid>::restore(oss.str()));
+            ParentType::loadBalance();
             return;
         }
 
@@ -1360,6 +1052,7 @@ public:
         {
             makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
+            ParentType::loadBalance();
             return;
         }
 
@@ -1374,6 +1067,7 @@ public:
             else
                 DUNE_THROW(Dune::IOError, "ALUGrid only supports Dune::cube or Dune::simplex as cell type!");
             ParentType::maybeRefineGrid(modelParamGroup);
+            ParentType::loadBalance();
         }
 
         // Didn't find a way to construct the grid
@@ -1390,8 +1084,8 @@ public:
     /*!
      * \brief Makes a grid from a file. We currently support *.dgf (Dune Grid Format) and *.msh (Gmsh mesh format).
      */
-    static void makeGridFromFile(const std::string& fileName,
-                                 const std::string& modelParamGroup)
+    void makeGridFromFile(const std::string& fileName,
+                          const std::string& modelParamGroup)
     {
         // We found a file in the input file...does it have a supported extension?
         const std::string extension = ParentType::getFileExtension(fileName);
@@ -1399,12 +1093,13 @@ public:
             DUNE_THROW(Dune::IOError, "Grid type " << Dune::className<Grid>() << " only supports DGF (*.dgf) and Gmsh (*.msh) grid files but the specified filename has extension: *."<< extension);
 
         // make the grid
-        if(extension == "dgf")
+        if (extension == "dgf")
         {
             ParentType::enableDgfGridPointer_ = true;
             ParentType::dgfGridPtr() = Dune::GridPtr<Grid>(fileName.c_str(), Dune::MPIHelper::getCommunicator());
+            ParentType::gridData_ = std::make_shared<typename ParentType::GridData>(ParentType::dgfGridPtr());
         }
-        if(extension == "msh")
+        if (extension == "msh")
         {
             // get some optional parameters
             const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
@@ -1415,37 +1110,42 @@ public:
                 ParentType::enableGmshDomainMarkers_ = true;
 
             // only filll the factory for rank 0
-            if(domainMarkers)
+            if (domainMarkers)
             {
-                std::vector<int> boundaryMarkersInsertionIndex;
+                std::vector<int> boundaryMarkersInsertionIndex, boundaryMarkers, faceMarkers, elementMarkers;
+                auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
                 if (Dune::MPIHelper::getCollectiveCommunication().rank() == 0)
-                    Dune::GmshReader<Grid>::read(ParentType::gridFactory(), fileName, boundaryMarkersInsertionIndex, ParentType::elementMarkers_, verbose, boundarySegments);
+                    Dune::GmshReader<Grid>::read(*gridFactory, fileName, boundaryMarkersInsertionIndex, elementMarkers, verbose, boundarySegments);
 
-                ParentType::gridPtr() = std::shared_ptr<Grid>(ParentType::gridFactory().createGrid());
+                ParentType::gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());
 
                 // reorder boundary markers according to boundarySegmentIndex
-                ParentType::boundaryMarkers_.resize(ParentType::gridPtr()->numBoundarySegments(), 0);
-                ParentType::faceMarkers_.resize(ParentType::gridPtr()->leafGridView().size(1), 0);
+                boundaryMarkers.resize(ParentType::gridPtr()->numBoundarySegments(), 0);
+                faceMarkers.resize(ParentType::gridPtr()->leafGridView().size(1), 0);
                 const auto& indexSet = ParentType::gridPtr()->leafGridView().indexSet();
                 for (const auto& element : elements(ParentType::gridPtr()->leafGridView()))
                 {
                     for (const auto& intersection : intersections(ParentType::gridPtr()->leafGridView(), element))
                     {
-                        if (intersection.boundary() && ParentType::gridFactory().wasInserted(intersection))
+                        if (intersection.boundary() && gridFactory->wasInserted(intersection))
                         {
-                            auto marker = boundaryMarkersInsertionIndex[ParentType::gridFactory().insertionIndex(intersection)];
-                            ParentType::boundaryMarkers_[intersection.boundarySegmentIndex()] = marker;
-                            ParentType::faceMarkers_[indexSet.index(element.template subEntity<1>(intersection.indexInInside()))] = marker;
+                            auto marker = boundaryMarkersInsertionIndex[gridFactory->insertionIndex(intersection)];
+                            boundaryMarkers[intersection.boundarySegmentIndex()] = marker;
+                            faceMarkers[indexSet.index(element.template subEntity<1>(intersection.indexInInside()))] = marker;
                         }
                     }
                 }
+
+                ParentType::gridData_ = std::make_shared<typename ParentType::GridData>(ParentType::gridPtr(), std::move(gridFactory),
+                                                       std::move(elementMarkers), std::move(boundaryMarkers), std::move(faceMarkers));
             }
             else
             {
+                auto gridFactory = std::make_unique<Dune::GridFactory<Grid>>();
                 if (Dune::MPIHelper::getCollectiveCommunication().rank() == 0)
-                    Dune::GmshReader<Grid>::read(ParentType::gridFactory(), fileName, verbose, boundarySegments);
+                    Dune::GmshReader<Grid>::read(*gridFactory, fileName, verbose, boundarySegments);
 
-                ParentType::gridPtr() = std::shared_ptr<Grid>(ParentType::gridFactory().createGrid());
+                ParentType::gridPtr() = std::shared_ptr<Grid>(gridFactory->createGrid());
             }
         }
     }
@@ -1456,7 +1156,7 @@ public:
 #if HAVE_DUNE_FOAMGRID
 
 /*!
- * \brief Provides a grid creator for FoamGrids
+ * \brief Provides a grid manager for FoamGrids
  *        from information in the input file
  *
  * All keys are expected to be in group GridParameterGroup.
@@ -1469,24 +1169,25 @@ public:
  * - Cells : number of elements in a structured grid
  *
  */
-template<DiscretizationMethod discMethod, int dim, int dimworld>
-class GridCreatorImpl<Dune::FoamGrid<dim, dimworld>, discMethod>
-          : public GridCreatorBase<Dune::FoamGrid<dim, dimworld> >
+template<int dim, int dimworld>
+class GridManager<Dune::FoamGrid<dim, dimworld>>
+: public GridManagerBase<Dune::FoamGrid<dim, dimworld>>
 {
 public:
     using Grid = Dune::FoamGrid<dim, dimworld>;
-    using ParentType = GridCreatorBase<Grid>;
+    using ParentType = GridManagerBase<Grid>;
 
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
      */
-    static void makeGrid(const std::string& modelParamGroup = "")
+    void init(const std::string& modelParamGroup = "")
     {
         // try to create it from file
         if (haveParamInGroup(modelParamGroup, "Grid.File"))
         {
             ParentType::makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
+            ParentType::loadBalance();
             return;
         }
 
@@ -1495,6 +1196,7 @@ public:
         {
             ParentType::template makeStructuredGrid<dim, dimworld>(ParentType::CellType::Simplex, modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
+            ParentType::loadBalance();
         }
 
         // Didn't find a way to construct the grid
@@ -1510,7 +1212,7 @@ public:
 };
 
 /*!
- * \brief Provides a grid creator for FoamGrids of dim 1
+ * \brief Provides a grid manager for FoamGrids of dim 1
  *        from information in the input file
  *
  * All keys are expected to be in group GridParameterGroup.
@@ -1523,24 +1225,25 @@ public:
  * - Cells : number of elements in a structured grid
  *
  */
-template<DiscretizationMethod discMethod, int dimworld>
-class GridCreatorImpl<Dune::FoamGrid<1, dimworld>, discMethod>
-          : public GridCreatorBase<Dune::FoamGrid<1, dimworld> >
+template<int dimworld>
+class GridManager<Dune::FoamGrid<1, dimworld>>
+: public GridManagerBase<Dune::FoamGrid<1, dimworld>>
 {
 public:
     using Grid = Dune::FoamGrid<1, dimworld>;
-    using ParentType = GridCreatorBase<Grid>;
+    using ParentType = GridManagerBase<Grid>;
 
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
      */
-    static void makeGrid(const std::string& modelParamGroup = "")
+    void init(const std::string& modelParamGroup = "")
     {
         // try to create it from file
         if (haveParamInGroup(modelParamGroup, "Grid.File"))
         {
             ParentType::makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
+            ParentType::loadBalance();
             return;
         }
 
@@ -1571,11 +1274,12 @@ public:
 
         ParentType::gridPtr() = std::shared_ptr<Grid>(factory.createGrid());
         ParentType::maybeRefineGrid(modelParamGroup);
+        ParentType::loadBalance();
     }
 };
 
 #endif // HAVE_DUNE_FOAMGRID
 
-} // namespace Dumux
+} // end namespace Dumux
 
 #endif

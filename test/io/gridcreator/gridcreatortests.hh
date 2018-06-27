@@ -30,7 +30,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk.hh>
 
-#include <dumux/io/gridcreator.hh>
+#include <dumux/io/grid/gridmanager.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux {
@@ -105,7 +105,7 @@ class GridCreatorTests
     using GridView = typename Grid::LeafGridView;
     using Scalar = double;
     static const int dim = Grid::dimension;
-    using GridCreator = typename Dumux::GridCreatorImpl<Grid, DiscretizationMethod::none>;
+    using GridManager = typename Dumux::GridManager<Grid>;
     using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
 
 public:
@@ -114,17 +114,21 @@ public:
                                               const std::string& vtkFileName = "test",
                                               bool refine = true)
     {
-        // initialize the grid
-        initialize_();
+        // make the grid manager and initialize the grid
+        GridManager gridManager;
+        gridManager.makeGrid();
+        gridManager.loadBalance();
+        auto gridData = gridManager.getGridData();
+        const auto& leafGridView = gridManager.grid().leafGridView();
 
         // read the boundary and element markers as well as the rank
         std::vector<int> boundaryMarker, elementMarker, rank;
-        getBoundaryMarkers_(boundaryMarker);
-        getElementMarkers_(elementMarker, type);
-        getRank_(rank);
+        getBoundaryMarkers_(leafGridView, gridData, boundaryMarker);
+        getElementMarkers_(leafGridView, gridData, elementMarker, type);
+        getRank_(leafGridView, rank);
 
         // construct a vtk output writer and attach the boundary markers
-        Dune::VTKSequenceWriter<typename Grid::LeafGridView> vtkWriter(GridCreator::grid().leafGridView(), vtkFileName, ".", "");
+        Dune::VTKSequenceWriter<typename Grid::LeafGridView> vtkWriter(leafGridView, vtkFileName, ".", "");
         vtkWriter.addVertexData(boundaryMarker, "boundaryMarker");
         vtkWriter.addCellData(elementMarker, "elementMarker");
         vtkWriter.addCellData(rank, "rank");
@@ -133,10 +137,10 @@ public:
         if (refine)
         {
             // refine grid once and write out the markers again
-            GridCreator::grid().globalRefine(1);
-            getBoundaryMarkers_(boundaryMarker);
-            getElementMarkers_(elementMarker, type);
-            getRank_(rank);
+            gridManager.grid().globalRefine(1);
+            getBoundaryMarkers_(leafGridView, gridData, boundaryMarker);
+            getElementMarkers_(leafGridView, gridData, elementMarker, type);
+            getRank_(leafGridView, rank);
             vtkWriter.write(1);
         }
     }
@@ -145,16 +149,19 @@ public:
                                    const std::string& vtkFileName = "test",
                                    bool refine = true)
     {
-        // initialize the grid
-        initialize_();
+        // make the grid manager and initialize the grid
+        GridManager gridManager;
+        gridManager.makeGrid();
+        gridManager.loadBalance();
+        auto gridData = gridManager.getGridData();
 
         // read the element markers and the rank
         std::vector<int> elementMarker, rank;
-        getElementMarkers_(elementMarker, type);
-        getRank_(rank);
+        getElementMarkers_(gridManager.grid().leafGridView(), gridData, elementMarker, type);
+        getRank_(gridManager.grid().leafGridView(), rank);
 
         // construct a vtk output writer and attach the element markers
-        Dune::VTKSequenceWriter<typename Grid::LeafGridView> vtkWriter(GridCreator::grid().leafGridView(), vtkFileName, ".", "");
+        Dune::VTKSequenceWriter<typename Grid::LeafGridView> vtkWriter(gridManager.grid().leafGridView(), vtkFileName, ".", "");
         vtkWriter.addCellData(elementMarker, "elementMarker");
         vtkWriter.addCellData(rank, "rank");
         vtkWriter.write(0);
@@ -162,19 +169,17 @@ public:
         if (refine)
         {
             // refine grid once and write out the markers again
-            GridCreator::grid().globalRefine(1);
-            getElementMarkers_(elementMarker, type);
-            getRank_(rank);
+            gridManager.grid().globalRefine(1);
+            getElementMarkers_(gridManager.grid().leafGridView(), gridData, elementMarker, type);
+            getRank_(gridManager.grid().leafGridView(), rank);
             vtkWriter.write(1);
         }
     }
 
 private:
 
-    static void getRank_(std::vector<int>& rank)
+    static void getRank_(const GridView& gridView, std::vector<int>& rank)
     {
-        const auto& gridView = GridCreator::grid().leafGridView();
-
         rank.clear();
         rank.resize(gridView.size(0));
 
@@ -185,31 +190,32 @@ private:
         }
     }
 
-    static void getElementMarkers_(std::vector<int>& elementMarker,
+    template<class GridData>
+    static void getElementMarkers_(const GridView& gridView,
+                                   const GridData& gridData,
+                                   std::vector<int>& elementMarker,
                                    const std::string& type)
     {
-        const auto& gridView = GridCreator::grid().leafGridView();
-
         elementMarker.clear();
         elementMarker.resize(gridView.size(0));
 
         for(const auto& element : elements(gridView))
         {
-            auto eIdx = gridView.indexSet().index(element);
-
+            const auto eIdx = gridView.indexSet().index(element);
             if (type == "gmsh")
-                elementMarker[eIdx] = GridCreator::getElementDomainMarker(element);
+                elementMarker[eIdx] = gridData->getElementDomainMarker(element);
             else if (type == "dgf")
-                elementMarker[eIdx] = GridCreator::parameters(element)[0];
+                elementMarker[eIdx] = gridData->parameters(element)[0];
             else
                 DUNE_THROW(Dune::InvalidStateException, "No parameters for type " << type);
         }
     }
 
-    static void getBoundaryMarkers_(std::vector<int>& boundaryMarker)
+    template<class GridData>
+    static void getBoundaryMarkers_(const GridView& gridView,
+                                    const GridData& gridData,
+                                    std::vector<int>& boundaryMarker)
     {
-        const auto& gridView = GridCreator::grid().leafGridView();
-
         boundaryMarker.clear();
         boundaryMarker.resize(gridView.size(dim), 0);
 
@@ -217,7 +223,7 @@ private:
         {
             for(const auto& intersection : intersections(gridView, element))
             {
-                if(!intersection.boundary())
+                if (!intersection.boundary())
                     continue;
 
                 const auto refElement = ReferenceElements::general(element.geometry().type());
@@ -231,11 +237,11 @@ private:
 
                     // make sure we always take the lowest non-zero marker (problem dependent!)
                     if (boundaryMarker[vIdxGlobal] == 0)
-                        boundaryMarker[vIdxGlobal] = GridCreator::getBoundaryDomainMarker(intersection);
+                        boundaryMarker[vIdxGlobal] = gridData->getBoundaryDomainMarker(intersection);
                     else
                     {
-                        if (boundaryMarker[vIdxGlobal] > GridCreator::getBoundaryDomainMarker(intersection))
-                            boundaryMarker[vIdxGlobal] = GridCreator::getBoundaryDomainMarker(intersection);
+                        if (boundaryMarker[vIdxGlobal] > gridData->getBoundaryDomainMarker(intersection))
+                            boundaryMarker[vIdxGlobal] = gridData->getBoundaryDomainMarker(intersection);
                     }
                 }
             }
@@ -252,15 +258,6 @@ private:
                                  Dune::InteriorBorder_All_Interface,
                                  Dune::ForwardCommunication);
         }
-    }
-
-    static void initialize_()
-    {
-        // Make the grid
-        GridCreator::makeGrid();
-
-        // Load balancing if parallel
-        GridCreator::loadBalance();
     }
 };
 
