@@ -21,8 +21,8 @@
  * \ingroup Binarycoefficients
  * \brief Binary coefficients for Brine and Air.
  */
-#ifndef DUMUX_BINARY_COEFF_BRINE_Air_HH
-#define DUMUX_BINARY_COEFF_BRINE_Air_HH
+#ifndef DUMUX_BINARY_COEFF_BRINE_AIR_HH
+#define DUMUX_BINARY_COEFF_BRINE_AIR_HH
 
 #include <dumux/material/components/brine.hh>
 #include <dumux/material/components/h2o.hh>
@@ -36,10 +36,9 @@ namespace BinaryCoeff {
  * \brief Binary coefficients for Brine and Air.
  */
 template<class Scalar, class Air, bool verbose = true>
-class Brine_Air {
+class Brine_Air
+{
     using H2O = Dumux::Components::H2O<Scalar>;
-   // using Air = Dumux::Components::Air<Scalar>;
-    using Brine = Dumux::Components::Brine<Scalar,H2O>;
     using IdealGas = Dumux::IdealGas<Scalar>;
     static const int wPhaseIdx = 0; // index of the liquid phase
     static const int nPhaseIdx = 1; // index of the gas phase
@@ -52,7 +51,8 @@ public:
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure) {
+    static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
+    {
         //Diffusion coefficient of water in the Air phase
         const Scalar Theta=1.8;
         const Scalar Daw=2.13e-5;  /* reference value */
@@ -62,7 +62,6 @@ public:
         Dgaw=Daw*(pg0/pressure)*pow((temperature/T0),Theta);
         return Dgaw;
     }
-    ;
 
     /*!
      * Lacking better data on water-air diffusion in liquids, we use at the
@@ -83,12 +82,13 @@ public:
      *
      * R. Ferrell, D. Himmelblau (1967, pp. 111-115) \cite ferrell1967
      */
-    static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure) {
+    static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
+    {
         //Diffusion coefficient of Air in the H2O phase
         const Scalar Texp = 273.15 + 25; // [K]
         const Scalar Dexp = 2.01e-9; // [m^2/s]
         return Dexp * temperature/Texp;
-    };
+    }
 
     /*!
      * \brief Returns the _mol_ (!) fraction of Air in the liquid
@@ -114,7 +114,8 @@ public:
                                        const int knownPhaseIdx,
                                        Scalar &xwAir,
                                        Scalar &xnH2O,
-                                     Scalar &xwNaCl) {
+                                     Scalar &xwNaCl)
+    {
         DUNE_THROW(Dune::InvalidStateException, "Function: " << "calculateMoleFractions" << " is invalid.");
 //        Scalar A = computeA_(temperature, pg);
 //
@@ -158,8 +159,8 @@ public:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar fugacityCoefficientAir(Scalar T, Scalar pg) {
-
+    static Scalar fugacityCoefficientAir(Scalar T, Scalar pg)
+    {
         Scalar V = 1 / (Air::gasDensity(T, pg) / Air::molarMass()) * 1.e6; // molar volume in cm^3/mol
         Scalar pg_bar = pg / 1.e5; // gas phase pressure in bar
         Scalar a_Air = (7.54e7 - 4.13e4 * T); // mixture parameter of  Redlich-Kwong equation
@@ -177,7 +178,6 @@ public:
 
         phiAir = exp(lnPhiAir); // fugacity coefficient of Air
         return phiAir;
-
     }
 
     /*!
@@ -187,8 +187,8 @@ public:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar fugacityCoefficientH2O(Scalar T, Scalar pg) {
-
+    static Scalar fugacityCoefficientH2O(Scalar T, Scalar pg)
+    {
         Scalar V = 1 / (Air::gasDensity(T, pg) / Air::molarMass()) * 1.e6; // molar volume in cm^3/mol
         Scalar pg_bar = pg / 1.e5; // gas phase pressure in bar
         Scalar a_Air = (7.54e7 - 4.13e4 * T);// mixture parameter of  Redlich-Kwong equation
@@ -214,7 +214,8 @@ public:
      *
      * \param XwNaCl mole fraction of NaCL in brine \f$\mathrm{[mol/mol]}\f$
      */
-    static Scalar molalityNaCl(Scalar XwNaCl) {
+    static Scalar molalityNaCl(Scalar XwNaCl)
+    {
 
         // conversion from mol fraction to molality
         const Scalar mol_NaCl = XwNaCl / 58.4428e-3;
@@ -228,8 +229,8 @@ private:
      *
      * \param XwNaCl the XwNaCl \f$\mathrm{[kg NaCl / kg solution]}\f$
      */
-    static Scalar massTomoleFrac_(Scalar XwNaCl) {
-
+    static Scalar massTomoleFrac_(Scalar XwNaCl)
+    {
         DUNE_THROW(Dune::InvalidStateException, "Function: " << "massTomoleFrac_" << " is invalid.");
 
 //        const Scalar Mw = H2O::molarMass(); /* molecular weight of water [kg/mol] */
@@ -248,7 +249,8 @@ private:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar molalityAirinPureWater_(Scalar temperature, Scalar pg) {
+    static Scalar molalityAirinPureWater_(Scalar temperature, Scalar pg)
+    {
         Scalar A = computeA_(temperature, pg); // according to Spycher, Pruess and Ennis-King (2003)
         Scalar B = computeB_(temperature, pg); // according to Spycher, Pruess and Ennis-King (2003)
         Scalar yH2OinGas = (1 - B) / (1. / A - B); // equilibrium mol fraction of H2O in the gas phase
@@ -266,8 +268,8 @@ private:
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      * \param molalityNaCl molality of NaCl \f$\mathrm{(mol NaCl / kg water)}\f$
      */
-    static Scalar activityCoefficient_(Scalar temperature, Scalar pg,
-            Scalar molalityNaCl) {
+    static Scalar activityCoefficient_(Scalar temperature, Scalar pg, Scalar molalityNaCl)
+    {
         Scalar lambda = computeLambda_(temperature, pg); // lambda_{Air-Na+}
         Scalar xi = computeXi_(temperature, pg); // Xi_{Air-Na+-Cl-}
         Scalar lnGammaStar = 2 * lambda * molalityNaCl + xi * molalityNaCl
@@ -285,7 +287,8 @@ private:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar computeA_(Scalar T, Scalar pg) {
+    static Scalar computeA_(Scalar T, Scalar pg)
+    {
         Scalar deltaP = pg / 1e5 - 1; // pressure range [bar] from p0 = 1bar to pg[bar]
         const Scalar v_av_H2O = 18.1; // average partial molar volume of H2O [cm^3/mol]
         const Scalar R = IdealGas::R * 10;
@@ -295,7 +298,6 @@ private:
         using std::exp;
         Scalar A = k0_H2O / (phi_H2O * pg_bar) * exp(deltaP * v_av_H2O / (R * T));
         return A;
-
     }
 
     /*!
@@ -306,7 +308,8 @@ private:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar computeB_(Scalar T, Scalar pg) {
+    static Scalar computeB_(Scalar T, Scalar pg)
+    {
         Scalar deltaP = pg / 1e5 - 1; // pressure range [bar] from p0 = 1bar to pg[bar]
         const Scalar v_av_Air = 32.6; // average partial molar volume of Air [cm^3/mol]
         const Scalar R = IdealGas::R * 10;
@@ -326,7 +329,8 @@ private:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar computeLambda_(Scalar T, Scalar pg) {
+    static Scalar computeLambda_(Scalar T, Scalar pg)
+    {
         Scalar lambda;
         static const Scalar c[6] = { -0.411370585, 6.07632013E-4, 97.5347708,
                 -0.0237622469, 0.0170656236, 1.41335834E-5 };
@@ -346,7 +350,8 @@ private:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar computeXi_(Scalar T, Scalar pg) {
+    static Scalar computeXi_(Scalar T, Scalar pg)
+    {
         Scalar xi;
         static const Scalar c[4] = { 3.36389723E-4, -1.98298980E-5,
                 2.12220830E-3, -5.24873303E-3 };
@@ -363,7 +368,8 @@ private:
      * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      * \param T the temperature \f$\mathrm{[K]}\f$
      */
-    static Scalar equilibriumConstantAir_(Scalar T) {
+    static Scalar equilibriumConstantAir_(Scalar T)
+    {
         Scalar TinC = T - 273.15; //temperature in °C
         static const Scalar c[3] = { 1.189, 1.304e-2, -5.446e-5 };
         Scalar logk0_Air = c[0] + c[1] * TinC + c[2] * TinC * TinC;
@@ -377,7 +383,8 @@ private:
      * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      * \param T the temperature \f$\mathrm{[K]}\f$
      */
-    static Scalar equilibriumConstantH2O_(Scalar T) {
+    static Scalar equilibriumConstantH2O_(Scalar T)
+    {
         Scalar TinC = T - 273.15; //temperature in °C
         static const Scalar c[4] = { -2.209, 3.097e-2, -1.098e-4, 2.048e-7 };
         Scalar logk0_H2O = c[0] + c[1] * TinC + c[2] * TinC * TinC + c[3]
@@ -385,7 +392,6 @@ private:
         Scalar k0_H2O = pow(10, logk0_H2O);
         return k0_H2O;
     }
-
 };
 
 /*!
