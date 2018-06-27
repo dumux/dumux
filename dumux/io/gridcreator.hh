@@ -908,6 +908,11 @@ public:
         }
     }
 
+    /*!
+     * \brief Overload load balance. Does nothing since OneDGrid is not parallel
+     */
+    static void loadBalance() {}
+
 private:
     /*!
      * \brief Do some operatrion after making the grid, like global refinement
