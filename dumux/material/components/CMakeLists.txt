@@ -23,7 +23,6 @@ mesitylene.hh
 n2.hh
 nacl.hh
 o2.hh
-simpleco2.hh
 simpleh2o.hh
 solid.hh
 tabulatedcomponent.hh

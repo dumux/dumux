@@ -42,7 +42,6 @@
 #include <dumux/material/components/mesitylene.hh>
 #include <dumux/material/components/n2.hh>
 #include <dumux/material/components/o2.hh>
-#include <dumux/material/components/simpleco2.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/trichloroethene.hh>
 #include <dumux/material/components/xylene.hh>
@@ -290,8 +289,6 @@ int main(int argc, char *argv[])
         plotStuff< Components::N2<double> >(openPlotWindow);
     else if (compName == "O2")
         plotStuff< Components::O2<double> >(openPlotWindow);
-    else if (compName == "SimpleCO2")
-        plotStuff< Components::SimpleCO2<double> >(openPlotWindow);
     else if (compName == "SimpleH2O")
         plotStuff< Components::SimpleH2O<double>  >(openPlotWindow);
     else if (compName == "Trichloroethene")

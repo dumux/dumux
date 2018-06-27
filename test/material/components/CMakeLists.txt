@@ -53,11 +53,6 @@ dune_add_test(NAME plot_o2
               COMMAND ./plot_component
               CMD_ARGS "O2")
 
-dune_add_test(NAME plot_simpleco2
-              TARGET plot_component
-              COMMAND ./plot_component
-              CMD_ARGS "SimpleCO2")
-
 dune_add_test(NAME plot_simpleh2o
               TARGET plot_component
               COMMAND ./plot_component
