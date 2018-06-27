@@ -31,6 +31,16 @@ dune_add_test(NAME test_1p2c_mpfa
                                 ${CMAKE_CURRENT_BINARY_DIR}/1pnctest_mpfa-00009.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_mpfa test_1p2c_fv.input -Problem.Name 1pnctest_mpfa -Vtk.AddVelocity false")
 
+# salt-water intrusion test using the box model
+dune_add_test(NAME test_saltwaterintrusion_box
+              SOURCES test_1p2c_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=SaltWaterIntrusionTestTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/saltwaterintrusion-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/saltwaterintrusion-00035.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_saltwaterintrusion_box saltwaterintrusion.input")
+
 # non-isothermal tests
 # conduction
 dune_add_test(NAME test_1p2cni_conduction_box
