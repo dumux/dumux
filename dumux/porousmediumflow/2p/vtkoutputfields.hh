@@ -42,15 +42,15 @@ public:
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.porosity(); }, "porosity");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.capillaryPressure(); }, "pc");
 
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(FS::phase0Idx); }, "Sw");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(FS::phase0Idx); }, "pw");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(FS::phase0Idx); }, "rhoW");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.mobility(FS::phase0Idx); }, "mobW");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(FS::phase0Idx); }, "S_w");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(FS::phase0Idx); }, "p_w");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(FS::phase0Idx); }, "rho_w");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.mobility(FS::phase0Idx); }, "mob_w");
 
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(FS::phase1Idx); }, "Sn");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(FS::phase1Idx); }, "pn");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(FS::phase1Idx); }, "rhoN");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.mobility(FS::phase1Idx); }, "mobN");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(FS::phase1Idx); }, "S_n");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(FS::phase1Idx); }, "p_n");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(FS::phase1Idx); }, "rho_n");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.mobility(FS::phase1Idx); }, "mob_n");
     }
 };
 

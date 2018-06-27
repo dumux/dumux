@@ -43,7 +43,7 @@
           9.99936e-05 0 0 9.99936e-05 0 0 9.99936e-05 0 0 9.99936e-05 0 0
           9.99936e-05 0 0 9.99936e-05 0 0 9.99937e-05 0 0 9.99937e-05 0 0
         </DataArray>
-        <DataArray type="Float32" Name="x_H2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^H2O_w" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -52,7 +52,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="x_N2" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^N2_w" NumberOfComponents="1" format="ascii">
           1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10
           1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10
           1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10
@@ -61,7 +61,7 @@
           1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10
           1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10
         </DataArray>
-        <DataArray type="Float32" Name="X_H2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="X^H2O_w" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -70,7 +70,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="X_N2" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="X^N2_w" NumberOfComponents="1" format="ascii">
           1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10
           1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10
           1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10

@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="80" NumberOfPoints="162">
-      <CellData Scalars="Sn" Vectors="velocity">
-        <DataArray type="Float32" Name="Sn" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="S_n" Vectors="velocity">
+        <DataArray type="Float32" Name="S_n" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -12,7 +12,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="Sw" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_w" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -21,7 +21,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="pn" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_n" NumberOfComponents="1" format="ascii">
           121447 121183 120919 120654 120390 120126 119862 119597 119333 119069 118804 118539
           118274 118009 117743 117476 117209 116942 116673 116405 116136 115866 115596 115326
           115055 114784 114514 114243 113972 113700 113429 113158 112887 112615 112344 112073
@@ -30,7 +30,7 @@
           105290 105019 104748 104476 104205 103934 103663 103391 103120 102849 102577 102306
           102035 101763 101492 101221 100950 100678 100407 100136
         </DataArray>
-        <DataArray type="Float32" Name="pw" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_w" NumberOfComponents="1" format="ascii">
           121447 121183 120919 120654 120390 120126 119862 119597 119333 119069 118804 118539
           118274 118009 117743 117476 117209 116942 116673 116405 116136 115866 115596 115326
           115055 114784 114514 114243 113972 113700 113429 113158 112887 112615 112344 112073

@@ -9,28 +9,28 @@
         <DataArray type="Float32" Name="pc" NumberOfComponents="1" format="ascii">
           2614.11 2091.05 2024.13 1414.34
         </DataArray>
-        <DataArray type="Float32" Name="Sw" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_w" NumberOfComponents="1" format="ascii">
           0.285556 0.652038 0.702397 0.96918
         </DataArray>
-        <DataArray type="Float32" Name="pw" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_w" NumberOfComponents="1" format="ascii">
           184557 119320 121961 116546
         </DataArray>
-        <DataArray type="Float32" Name="rhoW" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_w" NumberOfComponents="1" format="ascii">
           1000 1000 1000 1000
         </DataArray>
-        <DataArray type="Float32" Name="mobW" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_w" NumberOfComponents="1" format="ascii">
           22.5775 249.234 311.805 943.527
         </DataArray>
-        <DataArray type="Float32" Name="Sn" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_n" NumberOfComponents="1" format="ascii">
           0.714444 0.347962 0.297603 0.0308204
         </DataArray>
-        <DataArray type="Float32" Name="pn" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_n" NumberOfComponents="1" format="ascii">
           187171 121411 123985 117961
         </DataArray>
-        <DataArray type="Float32" Name="rhoN" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_n" NumberOfComponents="1" format="ascii">
           1460 1460 1460 1460
         </DataArray>
-        <DataArray type="Float32" Name="mobN" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_n" NumberOfComponents="1" format="ascii">
           989.879 243.734 178.199 1.74053
         </DataArray>
         <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
