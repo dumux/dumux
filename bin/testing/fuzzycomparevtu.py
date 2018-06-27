@@ -15,7 +15,9 @@ import sys
 import math
 from six.moves import range
 from six.moves import zip
-
+import os
+import re
+import glob
 
 # fuzzy compare VTK tree from VTK strings
 def compare_vtk(vtk1, vtk2, absolute=1.5e-7, relative=1e-2, zeroValueThreshold={}, verbose=True):
@@ -24,7 +26,11 @@ def compare_vtk(vtk1, vtk2, absolute=1.5e-7, relative=1e-2, zeroValueThreshold={
     Arguments:
     ----------
     vtk1, vtk2 : string
-        The filenames of the vtk files to compare
+        The filenames of the vtk files to compare. If a pvd file is given
+        instead, the corresponding possibly parallel vtk file(s) have to be
+        present and will be converted to a (series of) sequential vtk file(s).
+        The last one in the natural ordering of these files will be taken for
+        comparison.
 
     Keyword Arguments:
     ------------------
@@ -45,6 +51,15 @@ def compare_vtk(vtk1, vtk2, absolute=1.5e-7, relative=1e-2, zeroValueThreshold={
     root1 = ET.fromstring(open(vtk1).read())
     root2 = ET.fromstring(open(vtk2).read())
 
+    # convert parallel vtu to sequential vtu if necessary
+    convertedFromParallelVtu = False
+    if vtk1.endswith('.pvtu'):
+        root1 = convert_pvtu_to_vtu(root1, vtk1)
+        convertedFromParallelVtu = True
+    if vtk2.endswith('.pvtu'):
+        root2 = convert_pvtu_to_vtu(root2, vtk2)
+        convertedFromParallelVtu = True
+
     # sort the vtk file in case nodes appear in different positions
     # e.g. because of minor changes in the output code
     sortedroot1 = sort_vtk(root1)
@@ -56,17 +71,106 @@ def compare_vtk(vtk1, vtk2, absolute=1.5e-7, relative=1e-2, zeroValueThreshold={
 
     # sort the vtk file so that the comparison is independent of the
     # index numbering (coming e.g. from different grid managers)
-    sortedroot1, sortedroot2 = sort_vtk_by_coordinates(sortedroot1, sortedroot2, verbose)
+    sortedroot1, sortedroot2 = sort_vtk_by_coordinates(sortedroot1, sortedroot2, verbose, convertedFromParallelVtu)
 
     # do the fuzzy compare
-    if is_fuzzy_equal_node(sortedroot1, sortedroot2, absolute, relative, zeroValueThreshold, verbose):
+    if is_fuzzy_equal_node(sortedroot1, sortedroot2, absolute, relative, zeroValueThreshold, verbose, convertedFromParallelVtu):
         return 0
     else:
         return 1
 
+# convert a parallel vtu file into sequential one by glueing the pieces together
+def convert_pvtu_to_vtu(pvturoot, filename):
+
+    # get the directory of the vtu file in case the piece paths are relative
+    dirname = os.path.dirname(os.path.abspath(filename))
+    # get the piece file names from the parallel vtu
+    pieces = []
+    for piece in pvturoot.findall(".//Piece"):
+        piecename = os.path.join(dirname, os.path.basename(piece.attrib["Source"]))
+        pieces.append(ET.fromstring(open(piecename).read()))
+
+    root = pieces[0]
+    rootCellDataArrays = []
+    rootPointDataArrays = []
+
+    for dataArray in root.findall(".//PointData/DataArray"):
+        rootPointDataArrays.append(dataArray)
+    for dataArray in root.findall(".//CellData/DataArray"):
+        rootCellDataArrays.append(dataArray)
+    for dataArray in root.findall(".//DataArray"):
+        if dataArray.attrib["Name"] == "connectivity":
+            rootConnectivity = dataArray
+        if dataArray.attrib["Name"] == "types":
+            rootTypes = dataArray
+        if dataArray.attrib["Name"] == "offsets":
+            rootOffsets = dataArray
+        if dataArray.attrib["Name"] == "Coordinates":
+            rootCoordinates = dataArray
+
+    # add all pieces to the first piece
+    for piece in pieces[1:]:
+        cellDataArrays = []
+        pointDataArrays = []
+        for dataArray in piece.findall(".//PointData/DataArray"):
+            pointDataArrays.append(dataArray)
+        for dataArray in piece.findall(".//CellData/DataArray"):
+            cellDataArrays.append(dataArray)
+        for dataArray in piece.findall(".//DataArray"):
+            if dataArray.attrib["Name"] == "connectivity":
+                connectivity = dataArray
+            if dataArray.attrib["Name"] == "types":
+                types = dataArray
+            if dataArray.attrib["Name"] == "offsets":
+                offsets = dataArray
+            if dataArray.attrib["Name"] == "Coordinates":
+                coordinates = dataArray
+
+        # compute offset for the offsets vector (it's the last entry of the current root piece)
+        for dataArray in root.findall(".//Cells/DataArray"):
+            if dataArray.attrib["Name"] == "offsets":
+                offsets_offset = int(dataArray.text.strip().rsplit(' ', 1)[1])
+
+        # add the offsets to the root piece
+        for value in offsets.text.strip().split():
+            newvalue = " " + str(int(value) + offsets_offset) + " "
+            rootOffsets.text += newvalue
+
+        # compute offset for the connectivity vector (it's the number of points of the current root piece)
+        rootNumPoints = int(root.findall(".//Piece")[0].attrib["NumberOfPoints"])
+        rootNumCells = int(root.findall(".//Piece")[0].attrib["NumberOfCells"])
+
+        # add the connectivity vector to the root piece
+        for value in connectivity.text.strip().split():
+            newvalue = " " + str(int(value) + rootNumPoints) + " "
+            rootConnectivity.text += newvalue
+
+        # add the types and coordinates
+        rootTypes.text += " " + types.text
+        rootCoordinates.text += " " + coordinates.text
+
+        # add all the data arrays
+        for i, dataArray in enumerate(cellDataArrays):
+            rootCellDataArrays[i].text += " " + cellDataArrays[i].text
+        for i, dataArray in enumerate(pointDataArrays):
+            rootPointDataArrays[i].text += " " + pointDataArrays[i].text
+
+        # update the number of cells and points
+        newNumPoints = int(piece.findall(".//Piece")[0].attrib["NumberOfPoints"]) + rootNumPoints
+        newNumCells = int(piece.findall(".//Piece")[0].attrib["NumberOfCells"]) + rootNumCells
+
+        root.findall(".//Piece")[0].attrib["NumberOfPoints"] = str(newNumPoints)
+        root.findall(".//Piece")[0].attrib["NumberOfCells"] = str(newNumCells)
+
+    # for debugging the merged vtu file can be written out and viewed in paraview
+    # testname = os.path.join(dirname, "comparisontemp-" + os.path.basename(pvturoot.findall(".//Piece")[0].attrib["Source"]))
+    # vtu = ET.ElementTree(root)
+    # vtu.write(testname)
+
+    return root
 
 # fuzzy compare of VTK nodes
-def is_fuzzy_equal_node(node1, node2, absolute, relative, zeroValueThreshold, verbose):
+def is_fuzzy_equal_node(node1, node2, absolute, relative, zeroValueThreshold, verbose, convertedFromParallelVtu=False):
 
     is_equal = True
     for node1child, node2child in zip(node1.iter(), node2.iter()):
@@ -76,7 +180,7 @@ def is_fuzzy_equal_node(node1, node2, absolute, relative, zeroValueThreshold, ve
                 is_equal = False
             else:
                 return False
-        if list(node1.attrib.items()) != list(node2.attrib.items()):
+        if not convertedFromParallelVtu and (node1.attrib.items()) != list(node2.attrib.items()):
             if verbose:
                 print('Attributes differ in node: {}'.format(node1.tag))
                 is_equal = False
@@ -89,9 +193,13 @@ def is_fuzzy_equal_node(node1, node2, absolute, relative, zeroValueThreshold, ve
             else:
                 return False
         if node1child.text or node2child.text:
+            if node1child.get("NumberOfComponents") == None:
+                numberOfComponents = 1
+            else:
+                numberOfComponents = int(node1child.attrib["NumberOfComponents"])
             if not is_fuzzy_equal_text(node1child.text, node2child.text,
                                        node1child.attrib["Name"],
-                                       int(node1child.attrib["NumberOfComponents"]),
+                                       numberOfComponents,
                                        absolute, relative, zeroValueThreshold, verbose):
                 if node1child.attrib["Name"] == node2child.attrib["Name"]:
                     if verbose:
@@ -253,10 +361,9 @@ def sort_vtk(root):
     # return the sorted element tree
     return newroot
 
-
 # sorts the data by point coordinates so that it is independent of index numbering
-def sort_vtk_by_coordinates(root1, root2, verbose):
-    if not is_fuzzy_equal_node(root1.find(".//Points/DataArray"), root2.find(".//Points/DataArray"), absolute=1e-2, relative=1.5e-7, zeroValueThreshold=dict(), verbose=False):
+def sort_vtk_by_coordinates(root1, root2, verbose, convertedFromParallelVtu=False):
+    if not is_fuzzy_equal_node(root1.find(".//Points/DataArray"), root2.find(".//Points/DataArray"), absolute=1e-2, relative=1.5e-7, zeroValueThreshold=dict(), verbose=False, convertedFromParallelVtu=False):
         if verbose:
             print("Sorting vtu by coordinates...")
         for root in [root1, root2]:
@@ -271,14 +378,31 @@ def sort_vtk_by_coordinates(root1, root2, verbose):
                 cellDataArrays.append(dataArray.attrib["Name"])
             for dataArray in root.findall(".//DataArray"):
                 dataArrays[dataArray.attrib["Name"]] = dataArray.text
-                numberOfComponents[dataArray.attrib["Name"]] = dataArray.attrib["NumberOfComponents"]
+                if dataArray.get("NumberOfComponents") == None:
+                    numberOfComponents[dataArray.attrib["Name"]] = 1
+                else:
+                    numberOfComponents[dataArray.attrib["Name"]] = dataArray.attrib["NumberOfComponents"]
 
             vertexArray = []
             coords = dataArrays["Coordinates"].split()
             # group the coordinates into coordinate tuples
             dim = int(numberOfComponents["Coordinates"])
-            for i in range(len(coords) // dim):
-                vertexArray.append([float(c) for c in coords[i * dim: i * dim + dim]])
+
+            # If the vtk file has been converted from pvd, vertices may be
+            # duplicated. The following procedure eliminates the duplications.
+            if convertedFromParallelVtu:
+                uniqueIdx = []
+                for i in range(len(coords) // dim):
+                    pos = [float(c) for c in coords[i * dim : i * dim + dim]]
+                    if pos in vertexArray:
+                        uIdx = vertexArray.index(pos)
+                    else:
+                        uIdx = len(vertexArray)
+                        vertexArray.append(pos)
+                    uniqueIdx.append(uIdx)
+            else:
+                for i in range(len(coords) // dim):
+                    vertexArray.append([float(c) for c in coords[i * dim : i * dim + dim]])
 
             # group the cells into vertex index tuples
             cellArray = []
@@ -288,7 +412,10 @@ def sort_vtk_by_coordinates(root1, root2, verbose):
             for cellIdx, offset in enumerate(offsets):
                 cellArray.append([])
                 for v in range(vertex, int(offset)):
-                    cellArray[cellIdx].append(int(connectivity[v]))
+                    if convertedFromParallelVtu:
+                        cellArray[cellIdx].append(uniqueIdx[int(connectivity[v])])
+                    else:
+                        cellArray[cellIdx].append(int(connectivity[v]))
                     vertex += 1
 
             # for non-conforming output vertices can have the same coordinates and also
@@ -337,7 +464,15 @@ def sort_vtk_by_coordinates(root1, root2, verbose):
                 items = newitems
                 # sort the items: we have either vertex or cell data
                 if name in pointDataArrays:
-                    sortedItems = [items[i] for i in vertexIndexMapInverse]
+                    # use the unique indices if the vtk file has been converted
+                    # from pvd
+                    if convertedFromParallelVtu:
+                        uniqueItems = [None]*len(vertexArray)
+                        for i in range(len(items)):
+                            uniqueItems[uniqueIdx[i]] = items[i]
+                        sortedItems = [uniqueItems[i] for i in vertexIndexMapInverse]
+                    else:
+                        sortedItems = [items[i] for i in vertexIndexMapInverse]
                 elif name in cellDataArrays or name == "types":
                     sortedItems = [j for (i, j) in sorted(zip(cellArray, items), key=itemgetter(0))]
                 elif name == "offsets":
@@ -370,13 +505,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Fuzzy compare of two VTK\
         (Visualization Toolkit) files. The files are accepted if for every\
         value the difference is below the absolute error or below the\
-        relative error or below both.')
+        relative error or below both.  If a pvd file is given instead, the\
+        corresponding possibly parallel vtk file(s) have to be present and\
+        will be converted to a (series of) sequential vtk file(s). The last\
+        one in the natural ordering of these files will be taken for\
+        comparison.')
     parser.add_argument('vtk_file_1', type=str, help='first file to compare')
     parser.add_argument('vtk_file_2', type=str, help='second file to compare')
     parser.add_argument('-r', '--relative', type=float, default=1e-2, help='maximum relative error (default=1e-2)')
     parser.add_argument('-a', '--absolute', type=float, default=1.5e-7, help='maximum absolute error (default=1.5e-7)')
     parser.add_argument('-z', '--zeroThreshold', type=json.loads, default='{}', help='Thresholds for treating numbers as zero for a parameter as a python dict e.g. {"vel":1e-7,"delP":1.0}')
-    parser.add_argument('-v', '--verbose', type=bool, default=True, help='verbosity of the script')
+    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true')
+    parser.add_argument('--no-verbose', dest='verbose', action='store_false')
+    parser.set_defaults(verbose=True)
     args = vars(parser.parse_args())
 
     sys.exit(compare_vtk(args["vtk_file_1"], args["vtk_file_2"], args["absolute"], args["relative"], args["zeroThreshold"], args["verbose"]))

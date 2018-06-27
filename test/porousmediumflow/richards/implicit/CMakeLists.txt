@@ -6,24 +6,29 @@ target_compile_definitions(test_richards_tpfa PUBLIC TYPETAG=RichardsLensCCTypeT
 add_executable(test_richards_box EXCLUDE_FROM_ALL test_richardslens_fv.cc)
 target_compile_definitions(test_richards_box PUBLIC TYPETAG=RichardsLensBoxTypeTag)
 
-if(MPI_FOUND)
 dune_add_test(NAME test_richards_box_parallel
               TARGET test_richards_box
+              CMAKE_GUARD MPI_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference-parallel.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_box_parallel-00008.vtu
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_box test_richardslens.input -Problem.Name test_richards_box_parallel")
+                               ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_box_parallel-00008.pvtu
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_box test_richardslens.input -Problem.Name test_richards_box_parallel -Grid.Overlap 0")
 
 
 dune_add_test(NAME test_richards_tpfa_parallel
               TARGET test_richards_tpfa
+              CMAKE_GUARD MPI_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
                       --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference-parallel.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_tpfa_parallel-00007.vtu
-                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa test_richardslens.input -Problem.Name test_richards_tpfa_parallel")
-endif()
+                              ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_tpfa_parallel-00007.pvtu
+                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa test_richardslens.input -Problem.Name test_richards_tpfa_parallel -Grid.Overlap 1")
+
 # isothermal tests
 dune_add_test(TARGET test_richards_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
