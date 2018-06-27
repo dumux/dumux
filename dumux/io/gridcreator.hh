@@ -303,7 +303,6 @@ public:
      */
     static void loadBalance()
     {
-        std::cout << Dune::MPIHelper::getCollectiveCommunication().rank() << " before: boundaryMarkers_.size() = " << boundaryMarkers_.size() << std::endl;
         if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
         {
             // if we may have dgf parameters use load balancing of the dgf pointer
@@ -1513,7 +1512,6 @@ public:
                         }
                     }
                 }
-                std::cout << Dune::MPIHelper::getCollectiveCommunication().rank() << ": finished setting of faceMarkers_." << std::endl;
             }
             else
             {
