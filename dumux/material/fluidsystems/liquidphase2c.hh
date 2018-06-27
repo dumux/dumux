@@ -80,9 +80,10 @@ public:
 
     /*!
      * \brief Returns whether the fluids are miscible
+     * \note There is only one phase, so miscibility makes no sense
      */
     static constexpr bool isMiscible()
-    { return true; }
+    { return false; }
 
     /*!
      * \brief A human readable name for the component.
