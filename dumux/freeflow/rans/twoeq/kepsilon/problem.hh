@@ -254,12 +254,11 @@ public:
     //! \brief Returns the nominal wall shear stress velocity (accounts for poor approximation of viscous sublayer)
     const Scalar uStarNominal(unsigned int elementID) const
     {
-        using std::max;
         using std::pow;
         using std::sqrt;
         unsigned int matchingPointID = matchingPointID_[asImp_().wallElementID_[elementID]];
         return pow(cMu(), 0.25)
-               * sqrt(max(storedTurbulentKineticEnergy_[matchingPointID],1e-8));
+               * sqrt(storedTurbulentKineticEnergy_[matchingPointID]);
     }
 
     /*!
