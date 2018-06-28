@@ -62,12 +62,20 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridFaceVariables = typename GridVariables::GridFaceVariables;
+    using ElementFaceVariables = typename GridFaceVariables::LocalView;
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum {
@@ -167,6 +175,19 @@ public:
         return pseudo3DWallFriction(velocity, viscosity, height, factor);
     }
 
+    //! \brief Checks whether a wall function should be used
+    bool useWallFunctionAtPos(const Element& element,
+                              const SubControlVolumeFace& localSubFace) const
+    { return false; }
+
+    //! \brief Returns an additional wall function momentum flux (only needed for RANS models)
+    FacePrimaryVariables wallFunction(const Element& element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const ElementVolumeVariables& elemVolVars,
+                                      const ElementFaceVariables& elemFaceVars,
+                                      const SubControlVolumeFace& scvf,
+                                      const SubControlVolumeFace& localSubFace) const
+    { return FacePrimaryVariables(0.0); }
 
 private:
 
