@@ -258,7 +258,7 @@ public:
         using std::pow;
         using std::sqrt;
         unsigned int matchingPointID = matchingPointID_[asImp_().wallElementID_[elementID]];
-        return pow(0.09/*c_mu*/, 0.25)
+        return pow(cMu(), 0.25)
                * sqrt(max(storedTurbulentKineticEnergy_[matchingPointID],1e-8));
     }
 
@@ -307,6 +307,12 @@ public:
         unsigned int elementID = asImp_().fvGridGeometry().elementMapper().index(element);
         return FacePrimaryVariables(asImp_().tangentialMomentumWallFunction(elementID, abs(elemFaceVars[scvf].velocitySelf()))
                                     * elemVolVars[scvf.insideScvIdx()].density());
+    }
+
+    //! \brief Returns the \$f C_{\mu} \$f constant
+    const Scalar cMu() const
+    {
+        return 0.09;
     }
 
 public:

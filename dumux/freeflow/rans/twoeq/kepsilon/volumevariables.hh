@@ -103,6 +103,7 @@ public:
         const auto flowNormalAxis = problem.flowNormalAxis_[RANSParentType::elementID()];
         yPlusNominal_ = RANSParentType::wallDistance() * uStarNominal / problem.kinematicViscosity_[RANSParentType::elementID()];
         uPlusNominal_ = RANSParentType::velocity()[flowNormalAxis] / uStarNominal;
+        cMu_ = problem.cMu();
         if (problem.useStoredEddyViscosity_)
             dynamicEddyViscosity_ = problem.storedDynamicEddyViscosity_[RANSParentType::elementID()];
         else
@@ -218,7 +219,7 @@ public:
 
     //! \brief Returns the \$f C_\mu \$f constant
     const Scalar cMu() const
-    { return 0.09; }
+    { return cMu_; }
 
     //! \brief Returns the \$f \sigma_\textrm{k} \$f constant
     const Scalar sigmaK() const
@@ -275,6 +276,7 @@ protected:
     Scalar stressTensorScalarProduct_;
     Scalar yPlusNominal_;
     Scalar uPlusNominal_;
+    Scalar cMu_;
     bool inNearWallRegion_;
     bool isMatchingPoint_;
 };
