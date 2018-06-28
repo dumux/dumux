@@ -1,0 +1,34 @@
+[TimeLoop]
+DtInitial = 1e-1 # [s]
+TEnd = 100 # [s]
+
+[Grid]
+Verbosity = true
+Positions0 = 0.0 10.0
+Positions1 = 0.0 0.12345 0.2469
+Cells0 = 25
+Cells1 = 10 10
+
+[Output]
+PlotLawOfTheWall = false
+PlotVelocityProfile = false
+
+[Problem]
+Name = pipe_laufer_reference
+InletVelocity = 2.5 # [m/s]
+EnableGravity = false
+
+[KEpsilon]
+YPlusThreshold = 25.
+
+[Assembly]
+NumericDifferenceMethod = 0
+NumericDifference.BaseEpsilon = 1e-8
+
+[Newton]
+TargetSteps = 5
+MaxRelativeShift = 1e-5
+
+[Vtk]
+AddVelocity = true
+WriteFaceData = true

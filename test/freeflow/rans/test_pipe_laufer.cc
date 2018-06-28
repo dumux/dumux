@@ -236,6 +236,7 @@ int main(int argc, char** argv) try
             gnuplot_lawOfTheWall.resetPlot();
             gnuplot_lawOfTheWall.setXlabel("y^+ [-]");
             gnuplot_lawOfTheWall.setYlabel("u_+ [-]");
+            gnuplot_lawOfTheWall.setYRange(0.0, 30.0);
             gnuplot_lawOfTheWall.setOption("set log x");
             gnuplot_lawOfTheWall.setOption("set xrange [1:3000]");
             gnuplot_lawOfTheWall.addFileToPlot("laufer_re50000_u+y+.csv", "u 1:2 w p t 'Laufer 1954, Re=50000'");
