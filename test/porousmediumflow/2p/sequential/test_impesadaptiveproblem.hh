@@ -115,7 +115,6 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 
 public:
     TestIMPESAdaptiveProblem(TimeManager &timeManager, Grid& grid) :
