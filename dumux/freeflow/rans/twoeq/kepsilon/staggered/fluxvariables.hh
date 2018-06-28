@@ -156,8 +156,9 @@ public:
                                   || bcTypes.isSymmetry()
                                   || problem.isOnWall(scvf.center()))))
         {
-            if (!(insideVolVars.inNearWallRegion() || insideVolVars.isMatchingPoint())
-                || !(insideVolVars.inNearWallRegion() || insideVolVars.isMatchingPoint()))
+            if (!(insideVolVars.isMatchingPoint() && outsideVolVars.isMatchingPoint())
+                || !(insideVolVars.isMatchingPoint() && outsideVolVars.inNearWallRegion())
+                || !(insideVolVars.inNearWallRegion() && outsideVolVars.isMatchingPoint()))
             {
                 flux[turbulentKineticEnergyEqIdx]
                     += coeff_k / distance

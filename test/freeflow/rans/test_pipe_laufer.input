@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 1e-1 # [s]
+DtInitial = 1e-2 # [s]
 TEnd = 100 # [s]
 
 [Grid]
@@ -32,7 +32,7 @@ NumericDifferenceMethod = 0
 NumericDifference.BaseEpsilon = 1e-8
 
 [Newton]
-TargetSteps = 6
+TargetSteps = 5
 MaxRelativeShift = 1e-5
 
 [Vtk]
