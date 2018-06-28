@@ -275,7 +275,9 @@ public:
      */
     const Scalar turbulentKineticEnergyWallFunction(unsigned int elementID) const
     {
-        return storedTurbulentKineticEnergy_[elementID];
+        unsigned int wallElementID = asImp_().wallElementID_[elementID];
+        unsigned int matchingPointID = matchingPointID_[wallElementID];
+        return storedTurbulentKineticEnergy_[matchingPointID];
     }
 
     //! \brief Returns the nominal wall shear stress (accounts for poor approximation of viscous sublayer)
