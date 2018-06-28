@@ -69,7 +69,7 @@ constexpr Scalar harmonicMean(Scalar x, Scalar y, Scalar wx = 1.0, Scalar wy = 1
 
     if (x*y <= 0)
         return 0;
-    return (wx + wy) / (wx / x + wy / y);
+    return (wx + wy) * x * y / (wy * x + wx * y);
 }
 
 /*!
