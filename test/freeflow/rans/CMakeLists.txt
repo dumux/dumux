@@ -21,7 +21,7 @@ dune_add_test(NAME test_pipe_laufer_kepsilon_twolayers
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/pipe_laufer_kepsilon.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/pipe_laufer_reference-00056.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/pipe_laufer_reference-00051.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_pipe_laufer_kepsilon test_pipe_laufer_reference.input")
 
 dune_add_test(NAME test_pipe_laufer_kepsilon_wallfunction

@@ -19,7 +19,7 @@ InletVelocity = 2.5 # [m/s]
 EnableGravity = false
 
 [KEpsilon]
-YPlusThreshold = 25.
+YPlusThreshold = 10. # should be small (10-30) for coarse grids
 
 [Assembly]
 NumericDifferenceMethod = 0

@@ -189,7 +189,12 @@ public:
      * \brief Returns if an element is located in the near-wall region
      */
     const bool inNearWallRegion(unsigned int elementID) const
-    { return yPlusNominal(elementID) < yPlusThreshold_; }
+    {
+        unsigned int wallElementID = asImp_().wallElementID_[elementID];
+        unsigned int matchingPointID = matchingPointID_[wallElementID];
+        return wallElementID == matchingPointID ? yPlusNominal(elementID) < yPlusThreshold_
+                                                : yPlus(elementID) < yPlusThreshold_;
+    }
 
     /*!
      * \brief Returns if an element is the matching point
