@@ -490,6 +490,11 @@ public:
         }
     }
 
+    void applyRestartSolution(SolutionVector& sol) const
+    {
+        applyInitialSolutionImpl_(sol, std::integral_constant<bool, isBox>());
+    }
+
     /*!
      * \brief Evaluate the initial value for
      * an element (for cell-centered models)
