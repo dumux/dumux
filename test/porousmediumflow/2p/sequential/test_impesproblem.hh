@@ -24,6 +24,8 @@
 #ifndef DUMUX_TEST_IMPES_PROBLEM_HH
 #define DUMUX_TEST_IMPES_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
 
@@ -98,9 +100,8 @@ NEW_TYPE_TAG(IMPESTestWithAMGTypeTag, INHERITS_FROM(IMPESTestTypeTag));
 SET_TYPE_PROP(IMPESTestWithAMGTypeTag, LinearSolver, AMGBackend<TypeTag>);
 // Set the grid type
 SET_TYPE_PROP(IMPESTestWithAMGTypeTag, Grid, Dune::YaspGrid<2>);
-// Set the grid creator
-SET_TYPE_PROP(IMPESTestWithAMGTypeTag, GridCreator, GridCreator<TypeTag>);
-}
+
+} // end namespace Properties
 
 /*!
  * \ingroup SequentialTwoPTests

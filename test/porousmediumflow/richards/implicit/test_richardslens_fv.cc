@@ -23,8 +23,6 @@
  */
 #include <config.h>
 
-#include "richardslensproblem.hh"
-
 #include <ctime>
 #include <iostream>
 
@@ -46,31 +44,9 @@
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
-{
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-TimeManager.TEnd      End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial Initial timestep size [s] \n"
-                                        "\t-Grid.File             Name of the file containing the grid \n"
-                                        "\t                       definition in DGF format\n";
+#include <dumux/io/grid/gridmanager.hh>
 
-        std::cout << errorMessageOut
-                  << "\n";
-    }
-}
+#include "richardslensproblem.hh"
 
 ////////////////////////
 // the main function
@@ -90,19 +66,18 @@ int main(int argc, char** argv) try
         DumuxMessage::print(/*firstCall=*/true);
 
     // parse command line arguments and input file
-    Parameters::init(argc, argv, usage);
+    Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    GridCreator::makeGrid();
-    GridCreator::loadBalance();
+    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    gridManager.init();
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid view
-    const auto& leafGridView = GridCreator::grid().leafGridView();
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);

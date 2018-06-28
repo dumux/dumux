@@ -40,6 +40,7 @@
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager.hh>
 
 #include "tracertestproblem.hh"
 
@@ -61,20 +62,19 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    try { GridCreator::makeGrid(); }
+    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    try { gridManager.init(); }
     catch (...) {
         std::cout << "\n\t -> Creation of the grid failed! <- \n\n";
         throw;
     }
-    GridCreator::loadBalance();
 
     ////////////////////////////////////////////////////////////
     // setup instationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     //! we compute on the leaf grid view
-    const auto& leafGridView = GridCreator::grid().leafGridView();
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     //! create the finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);

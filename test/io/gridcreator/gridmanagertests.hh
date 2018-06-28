@@ -21,8 +21,8 @@
  * \note This can/should be extended
  */
 
-#ifndef DUMUX_GRIDCREATOR_TESTS_HH
-#define DUMUX_GRIDCREATOR_TESTS_HH
+#ifndef DUMUX_TEST_IO_GRIDMANAGER_TESTS_HH
+#define DUMUX_TEST_IO_GRIDMANAGER_TESTS_HH
 
 #include <dune/common/version.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -100,7 +100,7 @@ private:
 };
 
 template<class Grid>
-class GridCreatorTests
+class GridManagerTests
 {
     using GridView = typename Grid::LeafGridView;
     using Scalar = double;
@@ -116,8 +116,7 @@ public:
     {
         // make the grid manager and initialize the grid
         GridManager gridManager;
-        gridManager.makeGrid();
-        gridManager.loadBalance();
+        gridManager.init();
         auto gridData = gridManager.getGridData();
         const auto& leafGridView = gridManager.grid().leafGridView();
 
@@ -151,8 +150,7 @@ public:
     {
         // make the grid manager and initialize the grid
         GridManager gridManager;
-        gridManager.makeGrid();
-        gridManager.loadBalance();
+        gridManager.init();
         auto gridData = gridManager.getGridData();
 
         // read the element markers and the rank

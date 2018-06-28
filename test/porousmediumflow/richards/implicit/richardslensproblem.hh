@@ -26,6 +26,8 @@
 #ifndef DUMUX_RICHARDS_LENSPROBLEM_HH
 #define DUMUX_RICHARDS_LENSPROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -60,7 +62,8 @@ SET_TYPE_PROP(RichardsLensTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(RichardsLensTypeTag, Problem, RichardsLensProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsLensTypeTag, SpatialParams, RichardsLensSpatialParams<TypeTag>);
+SET_TYPE_PROP(RichardsLensTypeTag, SpatialParams, RichardsLensSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                                            typename GET_PROP_TYPE(TypeTag, Scalar)>);
 } // end namespace Dumux
 
 /*!

@@ -26,7 +26,8 @@
 #ifndef DUMUX_1PNI_CONVECTION_PROBLEM_HH
 #define DUMUX_1PNI_CONVECTION_PROBLEM_HH
 
-#include <math.h>
+#include <cmath>
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/box/properties.hh>

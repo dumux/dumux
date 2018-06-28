@@ -24,6 +24,7 @@
 #ifndef DUMUX_TEST_TRANSPORT_PROBLEM_HH
 #define DUMUX_TEST_TRANSPORT_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>

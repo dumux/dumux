@@ -26,7 +26,8 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/io/cakegridcreator.hh>
+#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/cakegridcreator.hh>
 
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
@@ -59,18 +60,19 @@ int main(int argc, char** argv) try
     // using declarations
     using TypeTag = TTAG(GridCreatorCakeTest);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridCreator = typename Dumux::CakeGridCreator<Grid>;
+    using GridManager = typename Dumux::CakeGridCreator<Grid>;
+    GridManager gridManager;
 
     // first read parameters from input file
     Dumux::Parameters::init(argc, argv, "test_gridcreator_cake.input");
 
     // make the grid
     Dune::Timer timer;
-    GridCreator::makeGrid();
-    std::cout << "Constructing cake grid with " << GridCreator::grid().leafGridView().size(0) << " elements took "
+    gridManager.init();
+    std::cout << "Constructing cake grid with " << gridManager.grid().leafGridView().size(0) << " elements took "
               << timer.elapsed() << " seconds.\n";
     // construct a vtk output writer and attach the boundaryMakers
-    Dune::VTKWriter<Grid::LeafGridView> vtkWriter(GridCreator::grid().leafGridView());
+    Dune::VTKWriter<Grid::LeafGridView> vtkWriter(gridManager.grid().leafGridView());
     vtkWriter.write("cake-00000");
 
     return 0;

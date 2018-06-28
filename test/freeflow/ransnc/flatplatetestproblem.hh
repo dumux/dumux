@@ -24,6 +24,8 @@
 #ifndef DUMUX_RANS_NC_TEST_PROBLEM_HH
 #define DUMUX_RANS_NC_TEST_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/freeflow/turbulenceproperties.hh>

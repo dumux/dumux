@@ -27,6 +27,7 @@
 #define DUMUX_OBSTACLEPROBLEM_HH
 
 #include <dune/common/parametertreeparser.hh>
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>

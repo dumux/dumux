@@ -24,6 +24,7 @@
 #define DUMUX_ELASTICPROBLEM_HH
 
 #include <dune/common/fmatrix.hh>
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/geomechanics/elastic/model.hh>

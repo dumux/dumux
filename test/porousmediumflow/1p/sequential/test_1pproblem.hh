@@ -24,6 +24,8 @@
 #ifndef DUMUX_TEST_1P_PROBLEM_HH
 #define DUMUX_TEST_1P_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/constant.hh>
 

@@ -25,10 +25,11 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/vtk.hh>
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/io/gridcreator.hh>
-#include <dumux/io/subgridgridcreator.hh>
+#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/grid/subgridgridcreator.hh>
 #include <dumux/discretization/methods.hh>
 
 /*!
@@ -67,13 +68,16 @@ int main(int argc, char** argv) try
 
     Dune::Timer timer;
     using HostGrid = Dune::YaspGrid<dim, Dune::TensorProductCoordinates<double, dim> >;
-    using HostGridCreator = GridCreatorImpl<HostGrid, DiscretizationMethod::none>;
-    HostGridCreator::makeGrid();
+
+    using HostGridManager = Dumux::GridManager<HostGrid>;
+    HostGridManager hostGridManager;
+    hostGridManager.init();
+    auto& hostGrid = hostGridManager.grid();
 
     // Calculate the bounding box of the host grid view.
     GlobalPosition bBoxMin(std::numeric_limits<double>::max());
     GlobalPosition bBoxMax(std::numeric_limits<double>::min());
-    for (const auto& vertex : vertices(HostGridCreator::grid().leafGridView()))
+    for (const auto& vertex : vertices(hostGrid.leafGridView()))
     {
         for (int i=0; i<dim; i++)
         {
@@ -105,14 +109,14 @@ int main(int argc, char** argv) try
     CircleSelector<GlobalPosition> elementSelectorThree(center);
 
     // Create three different subgrids from the same hostgrid.
-    auto subgridPtrOne = SubgridGridCreator<HostGrid>::makeGrid(HostGridCreator::grid(), elementSelectorOne, "SubGridOne");
-    auto subgridPtrTwo = SubgridGridCreator<HostGrid>::makeGrid(HostGridCreator::grid(), elementSelectorTwo, "SubGridTwo");
-    auto subgridPtrThree = SubgridGridCreator<HostGrid>::makeGrid(HostGridCreator::grid(), elementSelectorThree, "SubGridThree");
+    auto subgridPtrOne = SubgridGridCreator<HostGrid>::makeGrid(hostGrid, elementSelectorOne, "SubGridOne");
+    auto subgridPtrTwo = SubgridGridCreator<HostGrid>::makeGrid(hostGrid, elementSelectorTwo, "SubGridTwo");
+    auto subgridPtrThree = SubgridGridCreator<HostGrid>::makeGrid(hostGrid, elementSelectorThree, "SubGridThree");
 
     std::cout << "Constructing a host grid and three subgrids took "  << timer.elapsed() << " seconds.\n";
 
     // Write out the host grid and the subgrids.
-    Dune::VTKWriter<HostGrid::LeafGridView> vtkWriter(HostGridCreator::grid().leafGridView());
+    Dune::VTKWriter<HostGrid::LeafGridView> vtkWriter(hostGrid.leafGridView());
     vtkWriter.write("hostgrid");
 
     return 0;

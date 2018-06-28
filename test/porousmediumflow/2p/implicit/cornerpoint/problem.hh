@@ -25,7 +25,6 @@
 
 #include <opm/grid/CpGrid.hpp>
 
-#include <dumux/io/cpgridcreator.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 
 #include <dumux/material/components/trichloroethene.hh>
@@ -74,9 +73,6 @@ public:
     using type = TwoPCornerPointTestSpatialParams<FVGridGeometry, Scalar>;
 };
 
-// Set the grid creator
-SET_TYPE_PROP(TwoPCornerPoint, GridCreator, CpGridCreator);
-
 // Enable caching
 SET_BOOL_PROP(TwoPCornerPoint, EnableGridVolumeVariablesCache, false);
 SET_BOOL_PROP(TwoPCornerPoint, EnableGridFluxVariablesCache, false);
@@ -105,7 +101,6 @@ class TwoPCornerPointTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     enum { dimWorld = GridView::dimensionworld };
 
 public:
@@ -178,7 +173,7 @@ public:
     {
         NumEqVector values(0.0);
 
-        int eIdx = GridCreator::grid().leafGridView().indexSet().index(element);
+        int eIdx = this->fvGridGeometry().gridView().indexSet().index(element);
         if (eIdx == injectionElement_)
             values[FluidSystem::phase1Idx] = injectionRate_/element.geometry().volume();
 

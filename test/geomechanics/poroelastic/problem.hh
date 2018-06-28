@@ -24,6 +24,7 @@
 #define DUMUX_POROELASTIC_PROBLEM_HH
 
 #include <dune/common/fmatrix.hh>
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/geomechanics/poroelastic/model.hh>

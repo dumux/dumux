@@ -24,6 +24,8 @@
 #ifndef DUMUX_TWOPNC_DIFFUSION_PROBLEM_HH
 #define DUMUX_TWOPNC_DIFFUSION_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/2pnc/model.hh>

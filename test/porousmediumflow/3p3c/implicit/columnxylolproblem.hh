@@ -25,6 +25,8 @@
 #ifndef DUMUX_COLUMNXYLOLPROBLEM_HH
 #define DUMUX_COLUMNXYLOLPROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
 #include <dumux/material/solidstates/compositionalsolidstate.hh>
 #include <dumux/material/solidsystems/compositionalsolidphase.hh>

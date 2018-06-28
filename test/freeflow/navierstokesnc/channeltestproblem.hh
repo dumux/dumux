@@ -24,6 +24,8 @@
 #ifndef DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
 #define DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 

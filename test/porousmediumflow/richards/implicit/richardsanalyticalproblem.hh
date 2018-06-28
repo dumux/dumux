@@ -30,6 +30,8 @@
 
 #include <cmath>
 #include <dune/geometry/quadraturerules.hh>
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>

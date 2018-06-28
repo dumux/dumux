@@ -24,6 +24,8 @@
 #ifndef DUMUX_TEST_2P2C_PROBLEM_HH
 #define DUMUX_TEST_2P2C_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/porousmediumflow/2p2c/sequential/problem.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/fvpressure.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/fvtransport.hh>

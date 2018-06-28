@@ -24,6 +24,11 @@
 #ifndef DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
 #define DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
 
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/common/math.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/adaptiveproperties.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/problem.hh>

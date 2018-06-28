@@ -37,31 +37,26 @@ namespace Dumux {
  * \ingroup ImplicitTestProblems
  * \brief The spatial parameters for the RichardsLensProblem
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class RichardsLensSpatialParams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, Scalar),
-                         RichardsLensSpatialParams<TypeTag>>
+: public FVSpatialParams<FVGridGeometry, Scalar, RichardsLensSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using ThisType = RichardsLensSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
     using GridView = typename FVGridGeometry::GridView;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, RichardsLensSpatialParams<TypeTag>>;
-
-    enum { dimWorld=GridView::dimensionworld };
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+    enum { dimWorld = GridView::dimensionworld };
 
 public:
-    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLaw = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
     using MaterialLawParams = typename MaterialLaw::Params;
     // export permeability type
     using PermeabilityType = Scalar;
 
     RichardsLensSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
 
         lensLowerLeft_ = {1.0, 2.0};

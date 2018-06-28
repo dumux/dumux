@@ -23,6 +23,14 @@
 #ifndef DUMUX_INCOMPRESSIBLE_TWOPBOXDFM_TEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_TWOPBOXDFM_TEST_PROBLEM_HH
 
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/material/components/trichloroethene.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>

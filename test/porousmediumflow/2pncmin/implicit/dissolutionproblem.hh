@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISSOLUTION_PROBLEM_HH
 #define DUMUX_DISSOLUTION_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>

@@ -27,6 +27,8 @@
 #ifndef DUMUX_COMBUSTION_PROBLEM_ONE_COMPONENT_HH
 #define DUMUX_COMBUSTION_PROBLEM_ONE_COMPONENT_HH
 
+#include <dune/grid/onedgrid.hh>
+
 #include <dumux/discretization/box/properties.hh>
 
 #include <dumux/porousmediumflow/problem.hh>

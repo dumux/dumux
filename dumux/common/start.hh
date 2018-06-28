@@ -21,8 +21,8 @@
  * \ingroup Common
  * \brief Provides a few default main functions for convenience.
  */
-#ifndef DUMUX_START_HH
-#define DUMUX_START_HH
+#ifndef DUMUX_COMMON_START_HH
+#define DUMUX_COMMON_START_HH
 
 #include <ctime>
 #include <iostream>
@@ -34,6 +34,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
+#include <dumux/io/grid/gridmanager.hh>
 
 #warning "start.hh is deprecated. Use new style main files see e.g. /test/porousmediumflow/1p."
 
@@ -64,7 +65,6 @@ int start_(int argc,
 {
     // some aliases for better readability
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
@@ -86,8 +86,8 @@ int start_(int argc,
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    GridCreator::makeGrid();
-    GridCreator::loadBalance();
+    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    gridManager.init();
 
     //////////////////////////////////////////////////////////////////////
     // run the simulation
@@ -108,7 +108,7 @@ int start_(int argc,
 
     // instantiate and run the problem
     TimeManager timeManager;
-    Problem problem(timeManager, GridCreator::grid());
+    Problem problem(timeManager, gridManager.grid());
     timeManager.init(problem, restartTime, dt, tEnd, restart);
     timeManager.run();
 
