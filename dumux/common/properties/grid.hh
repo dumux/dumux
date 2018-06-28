@@ -28,20 +28,15 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/pointsource.hh>
-#include <dumux/io/gridcreator.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
+
 //! Type tag for numeric models.
 NEW_TYPE_TAG(GridProperties);
 
 //! Use the leaf grid view if not defined otherwise
 SET_TYPE_PROP(GridProperties, GridView, typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
-
-//! Use the DgfGridCreator by default
-SET_TYPE_PROP(GridProperties, GridCreator, GridCreator<TypeTag>);
 
 //! Use the minimal point source implementation as default
 SET_PROP(GridProperties, PointSource)

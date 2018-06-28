@@ -39,7 +39,6 @@ namespace Properties {
 ///////////////////////////////////////
 NEW_PROP_TAG(Scalar);                 //!< Property to specify the type of scalar values.
 NEW_PROP_TAG(ModelDefaultParameters); //!< Property which defines the group that is queried for parameters by default
-NEW_PROP_TAG(GridCreator);            //!< Property which provides a GridCreator (manages grids)
 NEW_PROP_TAG(Grid);                   //!< The DUNE grid type
 NEW_PROP_TAG(PrimaryVariables);       //!< A vector of primary variables
 NEW_PROP_TAG(NumEqVector);            //!< A vector of size number equations that can be used for Neumann fluxes, sources, residuals, ...
