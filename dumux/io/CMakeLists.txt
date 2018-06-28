@@ -5,7 +5,6 @@ adaptivegridrestart.hh
 container.hh
 defaultvtkoutputfields.hh
 gnuplotinterface.hh
-gridcreator.hh
 ploteffectivediffusivitymodel.hh
 plotmateriallaw.hh
 plotmateriallaw3p.hh
