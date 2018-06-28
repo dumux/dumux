@@ -35,6 +35,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <dumux/io/tinyxml2/tinyxml2.h>
+
 namespace Dumux {
 /*!
  * \ingroup InputOutput
@@ -287,6 +289,67 @@ public:
                    "Restart::restartFileList()");
     }
 
+    template <class Scalar, class FVGridGeometry>
+    static std::vector<Scalar> extractDataToVector(tinyxml2::XMLElement *xmlNode,
+                                            const std::string& name,
+                                            const FVGridGeometry& fvGridGeometry)
+    {
+        // loop over XML node siblings to find the correct data array
+        tinyxml2::XMLElement *dataArray = xmlNode->FirstChildElement("DataArray");
+        for (; dataArray != nullptr; dataArray = dataArray->NextSiblingElement("DataArray"))
+        {
+            const char *attributeText = dataArray->Attribute("Name");
+
+            if (attributeText == nullptr)
+                DUNE_THROW(Dune::IOError, "Couldn't get Name attribute.");
+
+            if (std::string(attributeText) == name)
+                break;
+        }
+        if (dataArray == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't find the data array " << name << ".");
+
+        std::stringstream dataStream(dataArray->GetText());
+        std::vector<Scalar> vec(fvGridGeometry.numDofs());
+        for (auto& val : vec)
+        {
+            dataStream >> val;
+        }
+
+        return vec;
+    }
+
+    template <class FVGridGeometry, class SolutionVector>
+    static void loadSolutionFromVtkFile(const FVGridGeometry& fvGridGeometry,
+                                        std::vector<std::string> pvNames,
+                                        SolutionVector& sol)
+    {
+        using namespace tinyxml2;
+        auto fileName = getParam<std::string>("Restart.File");
+
+        XMLDocument xmlDoc;
+        auto eResult = xmlDoc.LoadFile(fileName.c_str());
+        if (eResult != XML_SUCCESS)
+            DUNE_THROW(Dune::IOError, "Couldn't open XML file.");
+
+        XMLElement *pieceNode = xmlDoc.FirstChildElement("VTKFile")->FirstChildElement("UnstructuredGrid")->FirstChildElement("Piece");
+        if (pieceNode == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't get Piece node.");
+
+        XMLElement *cellDataNode = pieceNode->FirstChildElement("CellData");
+        if (cellDataNode == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't get CellData node.");
+
+        using PrimaryVariables = typename SolutionVector::block_type;
+        using Scalar = typename PrimaryVariables::field_type;
+        for (size_t pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
+        {
+            auto vec = extractDataToVector<Scalar>(cellDataNode, pvNames[pvIdx], fvGridGeometry);
+
+            for (size_t i = 0; i < sol.size(); ++i)
+                sol[i][pvIdx] = vec[i];
+        }
+    }
 
 private:
     std::string fileName_;
