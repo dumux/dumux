@@ -29,6 +29,8 @@
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 
+#include <dumux/io/restart.hh>
+
 #include <dumux/material/components/trichloroethene.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -228,6 +230,12 @@ public:
     Scalar temperature() const
     {
         return 293.15; // 10°C
+    }
+
+    template <class SolutionVector>
+    void applyRestartSolution(SolutionVector& sol) const
+    {
+        Restart::loadSolutionFromVtkFile(this->fvGridGeometry(), {"pw", "Sn"}, sol);
     }
 
 private:

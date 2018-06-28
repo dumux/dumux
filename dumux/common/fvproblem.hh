@@ -476,10 +476,18 @@ public:
      * \brief Applies the initial solution for all degrees of freedom of the grid.
      * \param sol the initial solution vector
      */
-    void applyInitialSolution(SolutionVector& sol) const
+    void applyInitialSolution(SolutionVector& sol, Scalar restartTime = 0) const
     {
-        // set the initial values by forwarding to a specialized method
-        applyInitialSolutionImpl_(sol, std::integral_constant<bool, isBox>());
+        if (restartTime > 0)
+        {
+            // set initial values for a restarted simulation
+            asImp_().applyRestartSolution(sol);
+        }
+        else
+        {
+            // set the initial values by forwarding to a specialized method
+            applyInitialSolutionImpl_(sol, std::integral_constant<bool, isBox>());
+        }
     }
 
     /*!
