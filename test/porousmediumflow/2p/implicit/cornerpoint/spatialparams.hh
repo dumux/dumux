@@ -23,7 +23,7 @@
 #ifndef DUMUX_TWOP_CORNERPOINT_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_TWOP_CORNERPOINT_TEST_SPATIAL_PARAMS_HH
 
-#include <dumux/io/cpgridcreator.hh>
+#include <dumux/io/grid/cpgridcreator.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -44,7 +44,6 @@ class TwoPCornerPointTestSpatialParams
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ThisType = TwoPCornerPointTestSpatialParams<FVGridGeometry, Scalar>;
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
-    using GridCreator = CpGridCreator;
 
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -63,11 +62,11 @@ public:
     {
         homogeneous_ = getParam<bool>("Problem.Homogeneous");
 
-        const std::vector<int>& globalCell = GridCreator::grid().globalCell();
+        const std::vector<int>& globalCell = this->fvGridGeometry().grid().globalCell();
 
-        if (GridCreator::deck().hasKeyword("PORO")) {
+        if (CpGridCreator::deck().hasKeyword("PORO")) {
             std::cout << "Found PORO..." << std::endl;
-            std::vector<double> eclVector = GridCreator::deck().getKeyword("PORO").getRawDoubleData();
+            std::vector<double> eclVector = CpGridCreator::deck().getKeyword("PORO").getRawDoubleData();
             porosity_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
@@ -78,9 +77,9 @@ public:
             }
         }
 
-        if (GridCreator::deck().hasKeyword("PERMX")) {
+        if (CpGridCreator::deck().hasKeyword("PERMX")) {
             std::cout << "Found PERMX..." << std::endl;
-            std::vector<double> eclVector = GridCreator::deck().getKeyword("PERMX").getRawDoubleData();
+            std::vector<double> eclVector = CpGridCreator::deck().getKeyword("PERMX").getRawDoubleData();
             permX_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
@@ -92,9 +91,9 @@ public:
             }
         }
 
-        if (GridCreator::deck().hasKeyword("PERMZ")) {
+        if (CpGridCreator::deck().hasKeyword("PERMZ")) {
             std::cout << "Found PERMZ..." << std::endl;
-            std::vector<double> eclVector = GridCreator::deck().getKeyword("PERMZ").getRawDoubleData();
+            std::vector<double> eclVector = CpGridCreator::deck().getKeyword("PERMZ").getRawDoubleData();
             permZ_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
@@ -129,7 +128,7 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
-        int eIdx = GridCreator::grid().leafGridView().indexSet().index(element);
+        int eIdx = this->fvGridGeometry().gridView().indexSet().index(element);
 
         PermeabilityType K(0);
         K[0][0] = K[1][1] = permX_[eIdx];
@@ -151,7 +150,7 @@ public:
                     const SubControlVolume& scv,
                     const ElementSolution& elemSol) const
     {
-        int eIdx = GridCreator::grid().leafGridView().indexSet().index(element);
+        int eIdx = this->fvGridGeometry().gridView().indexSet().index(element);
 
         return porosity_[eIdx];
     }

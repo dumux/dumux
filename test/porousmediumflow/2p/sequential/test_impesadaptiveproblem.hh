@@ -24,6 +24,9 @@
 #ifndef DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 #define DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -115,7 +118,6 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 
 public:
     TestIMPESAdaptiveProblem(TimeManager &timeManager, Grid& grid) :

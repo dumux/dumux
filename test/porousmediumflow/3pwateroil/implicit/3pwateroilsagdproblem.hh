@@ -24,6 +24,8 @@
 #ifndef DUMUX_SAGDPROBLEM_HH
 #define DUMUX_SAGDPROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/discretization/box/properties.hh>

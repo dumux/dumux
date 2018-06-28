@@ -26,6 +26,8 @@
 #ifndef DUMUX_RICHARDS_NC_WELL_TRACER_PROBLEM_HH
 #define DUMUX_RICHARDS_NC_WELL_TRACER_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>

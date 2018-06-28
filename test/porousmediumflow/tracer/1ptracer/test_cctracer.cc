@@ -44,6 +44,7 @@
 #include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/grid/gridmanager.hh>
 
 int main(int argc, char** argv) try
 {
@@ -72,16 +73,11 @@ int main(int argc, char** argv) try
     /////////////////////////////////////////////////////////////////////
 
     // only create the grid once using the 1p type tag
-    using GridCreator = typename GET_PROP_TYPE(OnePTypeTag, GridCreator);
-    try { GridCreator::makeGrid(); }
-    catch (...) {
-        std::cout << "\n\t -> Creation of the grid failed! <- \n\n";
-        throw;
-    }
-    GridCreator::loadBalance();
+    GridManager<typename GET_PROP_TYPE(OnePTypeTag, Grid)> gridManager;
+    gridManager.init();
 
     //! we compute on the leaf grid view
-    const auto& leafGridView = GridCreator::grid().leafGridView();
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     ////////////////////////////////////////////////////////////
     // setup & solve 1p problem on this grid

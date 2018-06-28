@@ -58,7 +58,7 @@ public:
     /*!
      * \brief Make the grid.
      */
-    static void makeGrid(const std::string& modelParamGroup = "")
+    void init(const std::string& modelParamGroup = "")
     {
         static_assert(dim == 2 || dim == 3, "The CakeGridCreator is only implemented for 2D and 3D.");
 
@@ -70,6 +70,7 @@ public:
         createVectors(polarCoordinates, indices, modelParamGroup, verbose);
 
         gridPtr() = createCakeGrid(polarCoordinates, indices, modelParamGroup, verbose);
+        loadBalance();
     }
 
     /*!
@@ -264,10 +265,10 @@ public:
      * \param polarCoordinates Vector containing radial, angular and axial coordinates (in this order)
      * \param indices Indices specifing the radial, angular and axial direction (in this order)
      */
-    static std::shared_ptr<Grid> createCakeGrid(std::array<std::vector<Scalar>, dim> &polarCoordinates,
-                                                Dune::FieldVector<int, dim> &indices,
-                                                const std::string& modelParamGroup,
-                                                bool verbose = false)
+    std::unique_ptr<Grid> createCakeGrid(std::array<std::vector<Scalar>, dim> &polarCoordinates,
+                                         Dune::FieldVector<int, dim> &indices,
+                                         const std::string& modelParamGroup,
+                                         bool verbose = false)
     {
         std::vector<Scalar> dR = polarCoordinates[0];
         std::vector<Scalar> dA = polarCoordinates[1];
@@ -446,14 +447,13 @@ public:
             }
         }
         // return the grid pointer
-        return std::shared_ptr<Grid>(gridFactory.createGrid());
-
+        return std::unique_ptr<Grid>(gridFactory.createGrid());
     }
 
     /*!
      * \brief Returns a reference to the grid.
      */
-    static Grid &grid()
+    Grid& grid()
     {
         return *gridPtr();
     }
@@ -462,19 +462,23 @@ public:
      * \brief Distributes the grid on all processes of a parallel
      *        computation.
      */
-    static void loadBalance()
+    void loadBalance()
     {
         gridPtr()->loadBalance();
     }
 
+protected:
+
     /*!
      * \brief Returns a reference to the shared pointer to the grid.
      */
-    static GridPointer &gridPtr()
+    GridPointer& gridPtr()
     {
-        static GridPointer cakeGrid;
-        return cakeGrid;
+        return cakeGrid_;
     }
+
+private:
+    GridPointer cakeGrid_;
 };
 
 } // end namespace Dumux

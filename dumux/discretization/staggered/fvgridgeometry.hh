@@ -25,6 +25,7 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_FV_GRID_GEOMETRY
 
 #include <dumux/discretization/basefvgridgeometry.hh>
+#include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux {
@@ -85,7 +86,13 @@ public:
     //! Constructor
     StaggeredFVGridGeometry(const GridView& gridView)
     : ParentType(gridView)
-    , intersectionMapper_(gridView) {}
+    , intersectionMapper_(gridView)
+    {
+        // Check if the overlap size is what we expect
+        if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
+            DUNE_THROW(Dune::InvalidStateException, "The satggered discretization method needs at least an overlap of 1 for parallel computations. "
+                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
+    }
 
     //! The total number of sub control volumes
     std::size_t numScv() const

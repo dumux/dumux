@@ -28,6 +28,8 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
+#include <dumux/io/grid/gridmanager.hh>
+
 #include "test_diffusionproblem.hh"
 #include "resultevaluation.hh"
 
@@ -62,9 +64,9 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // create the grid
         ////////////////////////////////////////////////////////////
-        using GridCreator = GET_PROP_TYPE(TypeTag, GridCreator);
-        GridCreator::makeGrid();
-        auto& grid = GridCreator::grid();
+        Dumux::GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+        gridManager.init();
+        auto& grid = gridManager.grid();
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem

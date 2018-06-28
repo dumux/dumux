@@ -27,6 +27,7 @@
 #ifndef DUMUX_HETEROGENEOUS_SPATIAL_PARAMS_HH
 #define DUMUX_HETEROGENEOUS_SPATIAL_PARAMS_HH
 
+#include <dumux/io/grid/griddata.hh>
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -42,21 +43,19 @@ namespace Dumux {
  *        problem which uses the non-isothermal or isothermal CO2
  *        fully implicit model.
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class HeterogeneousSpatialParams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, Scalar),
-                         HeterogeneousSpatialParams<TypeTag>>
+: public FVSpatialParams<FVGridGeometry,
+                         Scalar,
+                         HeterogeneousSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Grid = typename FVGridGeometry::Grid;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, HeterogeneousSpatialParams<TypeTag>>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, HeterogeneousSpatialParams<FVGridGeometry, Scalar>>;
 
-    enum { dimWorld = GridView::dimensionworld };
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
@@ -71,8 +70,9 @@ public:
      *
      * \param gridView The grid view
      */
-    HeterogeneousSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    HeterogeneousSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                               std::shared_ptr<const GridData<Grid>> gridData)
+    : ParentType(fvGridGeometry), gridData_(gridData)
     {
 
         //Set the permeability for the layers
@@ -101,11 +101,10 @@ public:
         const auto& gridView = this->fvGridGeometry().gridView();
         paramIdx_.resize(gridView.size(0));
 
-        using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
         for (const auto& element : elements(gridView))
         {
             const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
-            paramIdx_[eIdx] = GridCreator::parameters(element)[0];
+            paramIdx_[eIdx] = gridData_->parameters(element)[0];
         }
     }
 
@@ -203,6 +202,9 @@ public:
     { return FluidSystem::BrineIdx; }
 
 private:
+
+    std::shared_ptr<const GridData<Grid>> gridData_;
+
     int barrierTop_ = 1;
     int barrierMiddle_ = 2;
     int reservoir_ = 3;

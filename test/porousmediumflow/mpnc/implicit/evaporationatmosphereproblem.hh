@@ -39,6 +39,8 @@
 // setting it here, because it impacts volume variables and spatialparameters
 #define USE_PCMAX 1
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 

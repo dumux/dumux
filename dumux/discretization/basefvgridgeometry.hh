@@ -55,6 +55,8 @@ class BaseFVGridGeometry
     using Element = typename GV::template Codim<0>::Entity;
 
 public:
+    //! export the grid type
+    using Grid = typename GV::Grid;
     //! export the grid view type
     using GridView = GV;
     //! export the global coordinate type

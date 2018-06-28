@@ -24,6 +24,10 @@
 #ifndef DUMUX_HETEROGENEOUS_PROBLEM_HH
 #define DUMUX_HETEROGENEOUS_PROBLEM_HH
 
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 
@@ -55,15 +59,14 @@ NEW_TYPE_TAG(HeterogeneousBoxTypeTag, INHERITS_FROM(BoxModel, HeterogeneousTypeT
 NEW_TYPE_TAG(HeterogeneousCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, HeterogeneousTypeTag));
 
 //Set the grid type
-#if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(HeterogeneousTypeTag, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-#endif
 
 // Set the problem property
 SET_TYPE_PROP(HeterogeneousTypeTag, Problem, HeterogeneousProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(HeterogeneousTypeTag, SpatialParams, HeterogeneousSpatialParams<TypeTag>);
+SET_TYPE_PROP(HeterogeneousTypeTag, SpatialParams, HeterogeneousSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                                              typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set fluid configuration
 SET_TYPE_PROP(HeterogeneousTypeTag, FluidSystem, FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
@@ -84,7 +87,8 @@ SET_TYPE_PROP(HeterogeneousNITypeTag, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune
 SET_TYPE_PROP(HeterogeneousNITypeTag, Problem, HeterogeneousProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(HeterogeneousNITypeTag, SpatialParams, HeterogeneousSpatialParams<TypeTag>);
+SET_TYPE_PROP(HeterogeneousNITypeTag, SpatialParams,HeterogeneousSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                                               typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set fluid configuration
 SET_TYPE_PROP(HeterogeneousNITypeTag, FluidSystem, FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
@@ -185,8 +189,9 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    HeterogeneousProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    template<class SpatialParams>
+    HeterogeneousProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, std::shared_ptr<SpatialParams> spatialParams)
+    : ParentType(fvGridGeometry, spatialParams)
     , injectionTop_(1)
     , injectionBottom_(2)
     , dirichletBoundary_(3)

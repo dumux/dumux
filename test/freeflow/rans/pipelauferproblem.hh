@@ -27,6 +27,8 @@
 #ifndef DUMUX_PIPE_LAUFER_PROBLEM_HH
 #define DUMUX_PIPE_LAUFER_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/turbulenceproperties.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>

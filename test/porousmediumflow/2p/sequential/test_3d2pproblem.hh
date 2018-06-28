@@ -24,6 +24,9 @@
 #ifndef DUMUX_TEST_3D2P_PROBLEM_HH
 #define DUMUX_TEST_3D2P_PROBLEM_HH
 
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>

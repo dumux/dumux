@@ -24,6 +24,8 @@
 #ifndef DUMUX_THERMOCHEM_PROBLEM_HH
 #define DUMUX_THERMOCHEM_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/porousmediumflow/1pncmin/model.hh>
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/box/properties.hh>

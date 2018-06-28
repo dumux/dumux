@@ -25,6 +25,8 @@
 #ifndef DUMUX_MAXWELL_STEFAN_TEST_PROBLEM_HH
 #define DUMUX_MAXWELL_STEFAN_TEST_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/elementsolution.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>

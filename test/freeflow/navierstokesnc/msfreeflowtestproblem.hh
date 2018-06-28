@@ -24,6 +24,8 @@
 #ifndef DUMUX_CHANNEL_MAXWELL_STEFAN_TEST_PROBLEM_HH
 #define DUMUX_CHANNEL_MAXWELL_STEFAN_TEST_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 

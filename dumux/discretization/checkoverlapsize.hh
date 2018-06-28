@@ -18,41 +18,40 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Properties
- * \brief Defines a type tags and some fundamental grid-related properties
+ * \ingroup Discretization
+ * \brief Check the overlap size for different discretization methods
  */
-#ifndef DUMUX_GRID_PROPERTIES_HH
-#define DUMUX_GRID_PROPERTIES_HH
+#ifndef DUMUX_DISCRETIZATION_CHECK_OVERLAP_SIZE_HH
+#define DUMUX_DISCRETIZATION_CHECK_OVERLAP_SIZE_HH
 
-#include <dune/common/fvector.hh>
-
-#include <dumux/common/properties.hh>
-#include <dumux/common/pointsource.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux {
-namespace Properties {
 
-//! Type tag for numeric models.
-NEW_TYPE_TAG(GridProperties);
-
-//! Use the leaf grid view if not defined otherwise
-SET_TYPE_PROP(GridProperties, GridView, typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
-
-//! Use the minimal point source implementation as default
-SET_PROP(GridProperties, PointSource)
+/*!
+ * \ingroup Discretization
+ * \brief Check if the overlap size is valid for a given discretization method
+ * \note the default checks if the grid has at least an overlap of one if there are no ghosts
+ * \note for sequential grids every overlap is fine
+ * \note specialize this for your discretization method if the default doesn't apply
+ */
+template<DiscretizationMethod discMethod>
+struct CheckOverlapSize
 {
-private:
-    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using GlobalPosition = typename Dune::FieldVector<typename GridView::ctype, GridView::dimensionworld>;
-public:
-    using type = PointSource<GlobalPosition, SourceValues>;
+    template<class GridView>
+    static bool isValid(const GridView& gridView) noexcept
+    { return gridView.comm().size() <= 1 || gridView.overlapSize(0) + gridView.ghostSize(0) > 0; }
 };
 
-//! Use the point source helper using the bounding box tree as a default
-SET_TYPE_PROP(GridProperties, PointSourceHelper, BoundingBoxTreePointSourceHelper);
+//! specialization for the box method which requires an overlap size of 0
+template<>
+struct CheckOverlapSize<DiscretizationMethod::box>
+{
+    template<class GridView>
+    static bool isValid(const GridView& gridView) noexcept
+    { return gridView.comm().size() <= 1 || gridView.overlapSize(0) == 0; }
+};
 
-} // namespace Properties
-} // namespace Dumux
+} // end namespace Dumux
 
 #endif

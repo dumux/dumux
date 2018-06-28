@@ -25,7 +25,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dumux/common/parameters.hh>
 
-#include "gridcreatortests.hh"
+#include "gridmanagertests.hh"
 
 int main(int argc, char** argv) try
 {
@@ -35,7 +35,7 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv, "test_gridcreator_gmsh_3d.input");
     const auto name = getParam<std::string>("Problem.Name");
     const auto refine = Dumux::getParam<bool>("Grid.Refine", true);
-    GridCreatorTests<GRIDTYPE>::testBoundaryAndElementMarkers("gmsh", name, refine);
+    GridManagerTests<GRIDTYPE>::testBoundaryAndElementMarkers("gmsh", name, refine);
 
     return 0;
 }

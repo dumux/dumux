@@ -31,6 +31,7 @@
 #include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
+#include <dumux/discretization/checkoverlapsize.hh>
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
@@ -116,7 +117,12 @@ public:
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
     : ParentType(gridView)
-    {}
+    {
+        // Check if the overlap size is what we expect
+        if (!CheckOverlapSize<DiscretizationMethod::cctpfa>::isValid(gridView))
+            DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
+                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
+    }
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -389,7 +395,12 @@ public:
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
     : ParentType(gridView)
-    {}
+    {
+        // Check if the overlap size is what we expect
+        if (!CheckOverlapSize<DiscretizationMethod::cctpfa>::isValid(gridView))
+            DUNE_THROW(Dune::InvalidStateException, "The cctpfa discretization method needs at least an overlap of 1 for parallel computations. "
+                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
+    }
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
