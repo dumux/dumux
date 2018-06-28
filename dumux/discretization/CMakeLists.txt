@@ -4,6 +4,7 @@ add_subdirectory(staggered)
 
 install(FILES
 basefvgridgeometry.hh
+checkoverlapsize.hh
 darcyslaw.hh
 effectivestresslaw.hh
 elementsolution.hh

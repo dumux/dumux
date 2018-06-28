@@ -31,6 +31,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
+#include <dumux/discretization/checkoverlapsize.hh>
 
 namespace Dumux {
 
@@ -47,6 +48,16 @@ namespace Dumux {
  */
 template<class GridView, class Traits, bool enableCache>
 class CCMpfaFVGridGeometry;
+
+//! check the overlap size for parallel computations
+template<class GridView>
+void checkOverlapSizeCCMpfa(const GridView& gridView)
+{
+    // Check if the overlap size is what we expect
+    if (!CheckOverlapSize<DiscretizationMethod::ccmpfa>::isValid(gridView))
+        DUNE_THROW(Dune::InvalidStateException, "The ccmpfa discretization method needs at least an overlap of 1 for parallel computations. "
+                                                 << " Set the parameter \"Grid.Overlap\" in the input file.");
+}
 
 /*!
  * \ingroup CCMpfaDiscretization
@@ -108,13 +119,17 @@ public:
     : ParentType(gridView)
     , secondaryIvIndicator_([] (const Element& e, const Intersection& is, bool isBranching)
                                { return is.boundary() || isBranching; } )
-    {}
+    {
+        checkOverlapSizeCCMpfa(gridView);
+    }
 
     //! Constructor with user-defined indicator function for secondary interaction volumes
     CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicatorType& indicator)
     : ParentType(gridView)
     , secondaryIvIndicator_(indicator)
-    {}
+    {
+        checkOverlapSizeCCMpfa(gridView);
+    }
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -467,13 +482,17 @@ public:
     : ParentType(gridView)
     , secondaryIvIndicator_([] (const Element& e, const Intersection& is, bool isBranching)
                                { return is.boundary() || isBranching; } )
-    {}
+    {
+        checkOverlapSizeCCMpfa(gridView);
+    }
 
     //! Constructor with user-defined indicator function for secondary interaction volumes
     CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicatorType& indicator)
     : ParentType(gridView)
     , secondaryIvIndicator_(indicator)
-    {}
+    {
+        checkOverlapSizeCCMpfa(gridView);
+    }
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
