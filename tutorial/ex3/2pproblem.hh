@@ -30,6 +30,9 @@
 //The box discretization
 #include <dumux/discretization/box/properties.hh>
 
+//The grid managers
+#include <dumux/io/grid/gridmanager.hh>
+
 // The base porous media box problem
 #include <dumux/porousmediumflow/problem.hh>
 
