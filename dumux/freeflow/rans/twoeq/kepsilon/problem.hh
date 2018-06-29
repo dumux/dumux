@@ -295,11 +295,15 @@ public:
     }
 
     //! \brief Checks whether a wall function should be used
-    bool useWallFunctionAtPos(const Element& element,
-                              const SubControlVolumeFace& localSubFace) const
+    bool useWallFunction(const Element& element,
+                         const SubControlVolumeFace& localSubFace,
+                         const int& eqIdx) const
     {
         unsigned int elementID = asImp_().fvGridGeometry().elementMapper().index(element);
-        return asImp_().isOnWall(localSubFace.center()) && isMatchingPoint(elementID);
+        auto bcTypes = asImp_().boundaryTypes(element, localSubFace);
+        return asImp_().isOnWall(localSubFace.center())
+               && bcTypes.isDirichlet(eqIdx)
+               && isMatchingPoint(elementID);
     }
 
     //! \brief Returns an additional wall function momentum flux (only needed for RANS models)

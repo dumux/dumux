@@ -176,8 +176,9 @@ public:
     }
 
     //! \brief Checks whether a wall function should be used
-    bool useWallFunctionAtPos(const Element& element,
-                              const SubControlVolumeFace& localSubFace) const
+    bool useWallFunction(const Element& element,
+                         const SubControlVolumeFace& localSubFace,
+                         const int& eqIdx) const
     { return false; }
 
     //! \brief Returns an additional wall function momentum flux (only needed for RANS models)

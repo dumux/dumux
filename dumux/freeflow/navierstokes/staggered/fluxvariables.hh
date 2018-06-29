@@ -319,7 +319,7 @@ public:
                 }
 
                 // Handle wall-function fluxes (only required for RANS models)
-                if(problem.useWallFunctionAtPos(element, localSubFace))
+                if(problem.useWallFunction(element, localSubFace, Indices::velocity(scvf.directionIndex())))
                 {
                     normalFlux += problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, localSubFace)[Indices::velocity(scvf.directionIndex())]
                                                        * elemVolVars[normalFace.insideScvIdx()].extrusionFactor() * normalFace.area() * 0.5;
