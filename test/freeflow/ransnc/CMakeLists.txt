@@ -5,8 +5,11 @@ dune_add_test(NAME test_flatplate_kepsilon2c
               COMPILE_ONLY CMAKE_GUARD HAVE_UMFPACK)
 target_compile_definitions(test_flatplate_kepsilon2c PUBLIC "KEPSILON=1")
 
-dune_add_test(NAME test_flatplate_kepsilon2cni
-              SOURCES test_flatplate.cc
+add_executable(test_flatplate_kepsilon2cni EXCLUDE_FROM_ALL test_flatplate.cc)
+target_compile_definitions(test_flatplate_kepsilon2cni PUBLIC "KEPSILON=1" "NONISOTHERMAL=1")
+
+dune_add_test(NAME test_flatplate_kepsilon2cni_twolayer
+              TARGET test_flatplate_kepsilon2cni
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
@@ -14,7 +17,16 @@ dune_add_test(NAME test_flatplate_kepsilon2cni
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00036.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_kepsilon2cni
                                        test_flatplate2cni.input")
-target_compile_definitions(test_flatplate_kepsilon2cni PUBLIC "KEPSILON=1" "NONISOTHERMAL=1")
+
+dune_add_test(NAME test_flatplate_kepsilon2cni_wallfunction
+              TARGET test_flatplate_kepsilon2cni
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_kepsilon2cni_wallfunction.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni_wallfunction-00025.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_kepsilon2cni
+                                       test_flatplate2cni_wallfunction.input")
 
 dune_add_test(NAME test_flatplate_komega2c
               SOURCES test_flatplate.cc
