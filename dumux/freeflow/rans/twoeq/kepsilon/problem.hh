@@ -68,9 +68,20 @@ class KEpsilonProblem : public RANSProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
+
+    static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
+    static constexpr bool isCompositional = ModelTraits::numComponents() > 1;
+
+    // account for the offset of the cell center privars within the PrimaryVariables container
+    static constexpr auto cellCenterOffset = ModelTraits::numEq() - CellCenterPrimaryVariables::dimension;
+    static_assert(cellCenterOffset == ModelTraits::dim(), "cellCenterOffset must equal dim for staggered NavierStokes");
 
 public:
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+
     //! The constructor sets the gravity, if desired by the user.
     KEpsilonProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
@@ -317,6 +328,119 @@ public:
         unsigned int elementID = asImp_().fvGridGeometry().elementMapper().index(element);
         return FacePrimaryVariables(asImp_().tangentialMomentumWallFunction(elementID, abs(elemFaceVars[scvf].velocitySelf()))
                                     * elemVolVars[scvf.insideScvIdx()].density());
+    }
+
+    //! \brief Returns the flux for non-isothermal and compositional RANS models
+    template<bool eB = enableEnergyBalance, bool compositional = isCompositional,
+             typename std::enable_if_t<eB && compositional, int> = 0>
+    CellCenterPrimaryVariables wallFunction(const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const ElementFaceVariables& elemFaceVars,
+                                            const SubControlVolumeFace& scvf) const
+    {
+        return wallFunctionComponent(element, fvGeometry, elemVolVars, elemFaceVars, scvf)
+               + wallFunctionEnergy(element, fvGeometry, elemVolVars, elemFaceVars, scvf);
+    }
+
+    //! \brief Returns the flux for isothermal and compositional RANS models
+    template<bool eB = enableEnergyBalance, bool compositional = isCompositional,
+             typename std::enable_if_t<!eB && compositional, int> = 0>
+    CellCenterPrimaryVariables wallFunction(const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const ElementFaceVariables& elemFaceVars,
+                                            const SubControlVolumeFace& scvf) const
+    { return wallFunctionComponent(element, fvGeometry, elemVolVars, elemFaceVars, scvf); }
+
+    //! \brief Returns the flux for non-isothermal RANS models
+    template<bool eB = enableEnergyBalance, bool compositional = isCompositional,
+             typename std::enable_if_t<eB && !compositional, int> = 0>
+    CellCenterPrimaryVariables wallFunction(const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const ElementFaceVariables& elemFaceVars,
+                                            const SubControlVolumeFace& scvf) const
+    { return wallFunctionEnergy(element, fvGeometry, elemVolVars, elemFaceVars, scvf); }
+
+    //! \brief Returns the flux for isothermal RANS models
+    template<bool eB = enableEnergyBalance, bool compositional = isCompositional,
+             typename std::enable_if_t<!eB && !compositional, int> = 0>
+    CellCenterPrimaryVariables wallFunction(const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const ElementFaceVariables& elemFaceVars,
+                                            const SubControlVolumeFace& scvf) const
+    { return CellCenterPrimaryVariables(0.0); }
+
+    //! \brief Returns the component wall-function flux
+    CellCenterPrimaryVariables wallFunctionComponent(const Element& element,
+                                                     const FVElementGeometry& fvGeometry,
+                                                     const ElementVolumeVariables& elemVolVars,
+                                                     const ElementFaceVariables& elemFaceVars,
+                                                     const SubControlVolumeFace& scvf) const
+    {
+        auto wallFunctionFlux = CellCenterPrimaryVariables(0.0);
+        unsigned int elementID = asImp_().fvGridGeometry().elementMapper().index(element);
+
+        // component mass fluxes
+        for (int compIdx = 0; compIdx < ModelTraits::numComponents(); ++compIdx)
+        {
+            if (Indices::replaceCompEqIdx == compIdx)
+                continue;
+
+            Scalar schmidtNumber = elemVolVars[scvf.insideScvIdx()].kinematicViscosity()
+                                   / elemVolVars[scvf.insideScvIdx()].diffusionCoefficient(compIdx);
+            Scalar massConversionFactor = useMoles ? 1.0
+                                                   : FluidSystem::molarMass(compIdx);
+            wallFunctionFlux[compIdx] +=
+                -1.0 * (asImp_().dirichlet(element, scvf)[Indices::conti0EqIdx + compIdx]
+                        - elemVolVars[scvf.insideScvIdx()].moleFraction(compIdx))
+                * elemVolVars[scvf.insideScvIdx()].molarDensity()
+                * uStarNominal(elementID)
+                / asImp_().turbulentSchmidtNumber()
+                / (1. / asImp_().karmanConstant() * log(yPlusNominal(elementID) * 9.793)
+                    + pFunction(schmidtNumber, asImp_().turbulentSchmidtNumber()));
+        }
+
+        return wallFunctionFlux;
+    }
+
+    //! \brief Returns the energy wall-function flux
+    CellCenterPrimaryVariables wallFunctionEnergy(const Element& element,
+                                                  const FVElementGeometry& fvGeometry,
+                                                  const ElementVolumeVariables& elemVolVars,
+                                                  const ElementFaceVariables& elemFaceVars,
+                                                  const SubControlVolumeFace& scvf) const
+    {
+        auto wallFunctionFlux = CellCenterPrimaryVariables(0.0);
+        unsigned int elementID = asImp_().fvGridGeometry().elementMapper().index(element);
+        // energy fluxes
+        Scalar prandtlNumber = elemVolVars[scvf.insideScvIdx()].kinematicViscosity()
+                               * elemVolVars[scvf.insideScvIdx()].density()
+                               * elemVolVars[scvf.insideScvIdx()].heatCapacity()
+                               / elemVolVars[scvf.insideScvIdx()].thermalConductivity();
+        wallFunctionFlux[Indices::energyBalanceIdx - cellCenterOffset] +=
+            -1.0 * (asImp_().dirichlet(element, scvf)[Indices::temperatureIdx]
+                    - elemVolVars[scvf.insideScvIdx()].temperature())
+            * elemVolVars[scvf.insideScvIdx()].density()
+            * elemVolVars[scvf.insideScvIdx()].heatCapacity()
+            * uStarNominal(elementID)
+            / asImp_().turbulentPrandtlNumber()
+            / (1. / asImp_().karmanConstant() * log(yPlusNominal(elementID) * 9.793)
+                + pFunction(prandtlNumber, asImp_().turbulentPrandtlNumber()));
+
+        return wallFunctionFlux;
+    }
+
+    //! \brief Returns the value of the P-function after Jayatilleke \cite Versteeg2009a
+    const Scalar pFunction(Scalar molecularNumber, Scalar turbulentNumber) const
+    {
+        using std::pow;
+        using std::exp;
+        return 9.24
+               * (pow(molecularNumber / turbulentNumber, 0.75) - 1.0)
+               * (1.0 + 0.28 * exp(-0.007 * molecularNumber / turbulentNumber));
     }
 
     //! \brief Returns the \$f C_{\mu} \$f constant
