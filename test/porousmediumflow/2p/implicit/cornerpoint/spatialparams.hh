@@ -23,7 +23,8 @@
 #ifndef DUMUX_TWOP_CORNERPOINT_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_TWOP_CORNERPOINT_TEST_SPATIAL_PARAMS_HH
 
-#include <dumux/io/grid/cpgridcreator.hh>
+#include <opm/parser/eclipse/Deck/Deck.hpp>
+
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -57,16 +58,18 @@ public:
     using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = DimWorldMatrix;
 
-    TwoPCornerPointTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    TwoPCornerPointTestSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                                     std::shared_ptr<const Opm::Deck> deck)
     : ParentType(fvGridGeometry)
+    , deck_(deck)
     {
         homogeneous_ = getParam<bool>("Problem.Homogeneous");
 
-        const std::vector<int>& globalCell = this->fvGridGeometry().grid().globalCell();
+        const std::vector<int>& globalCell = this->fvGridGeometry().gridView().grid().globalCell();
 
-        if (CpGridCreator::deck().hasKeyword("PORO")) {
+        if (deck_->hasKeyword("PORO")) {
             std::cout << "Found PORO..." << std::endl;
-            std::vector<double> eclVector = CpGridCreator::deck().getKeyword("PORO").getRawDoubleData();
+            std::vector<double> eclVector = deck_->getKeyword("PORO").getRawDoubleData();
             porosity_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
@@ -77,9 +80,9 @@ public:
             }
         }
 
-        if (CpGridCreator::deck().hasKeyword("PERMX")) {
+        if (deck_->hasKeyword("PERMX")) {
             std::cout << "Found PERMX..." << std::endl;
-            std::vector<double> eclVector = CpGridCreator::deck().getKeyword("PERMX").getRawDoubleData();
+            std::vector<double> eclVector = deck_->getKeyword("PERMX").getRawDoubleData();
             permX_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
@@ -91,9 +94,9 @@ public:
             }
         }
 
-        if (CpGridCreator::deck().hasKeyword("PERMZ")) {
+        if (deck_->hasKeyword("PERMZ")) {
             std::cout << "Found PERMZ..." << std::endl;
-            std::vector<double> eclVector = CpGridCreator::deck().getKeyword("PERMZ").getRawDoubleData();
+            std::vector<double> eclVector = deck_->getKeyword("PERMZ").getRawDoubleData();
             permZ_.resize(globalCell.size());
 
             for (size_t i = 0; i < globalCell.size(); ++i) {
@@ -151,7 +154,6 @@ public:
                     const ElementSolution& elemSol) const
     {
         int eIdx = this->fvGridGeometry().gridView().indexSet().index(element);
-
         return porosity_[eIdx];
     }
 
@@ -190,6 +192,7 @@ public:
     { return permZ_[eIdx]; }
 
 private:
+    std::shared_ptr<const Opm::Deck> deck_; //!< the eclipse deck
     MaterialLawParams materialParams_;
     std::vector<Scalar> porosity_;
     std::vector<Scalar> permX_;

@@ -56,7 +56,7 @@
 #include <dumux/discretization/methods.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
-#include <dumux/io/grid/cpgridcreator.hh>
+#include <dumux/io/grid/cpgridmanager.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -108,15 +108,15 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv, usage);
 
     // try to create a grid (from the given grid file or the input file)
-    CpGridCreator::makeGrid();
-    CpGridCreator::loadBalance();
+    CpGridManager gridManager;
+    gridManager.init();
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid view
-    const auto& leafGridView = CpGridCreator::grid().leafGridView();
+    const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -125,7 +125,8 @@ int main(int argc, char** argv) try
 
     // the problem (initial and boundary conditions)
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
+    auto spatialParams = std::make_shared<typename Problem::SpatialParams>(fvGridGeometry, gridManager.getDeck());
+    auto problem = std::make_shared<Problem>(fvGridGeometry, spatialParams);
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);

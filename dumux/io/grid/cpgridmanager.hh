@@ -21,8 +21,8 @@
  * \ingroup InputOutput
  * \brief A grid creator that reads Petrel files and generates a CpGrid.
  */
-#ifndef DUMUX_CPGRID_CREATOR_HH
-#define DUMUX_CPGRID_CREATOR_HH
+#ifndef DUMUX_IO_GRID_CPGRIDMANAGER_HH
+#define DUMUX_IO_GRID_CPGRIDMANAGER_HH
 
 #if HAVE_OPM_GRID
 #include <opm/grid/CpGrid.hpp>
@@ -32,50 +32,36 @@
 
 #include <dumux/common/parameters.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup InputOutput
  * \brief A grid creator that reads Petrel files and generates a CpGrid.
  */
-class CpGridCreator
+class CpGridManager
 {
+public:
     using Grid = Dune::CpGrid;
-    using GridPointer = std::shared_ptr<Grid>;
     using Deck = Opm::Deck;
 
-public:
     /*!
      * \brief Create the Grid.
      */
-    static void makeGrid()
+    void init(const std::string& paramGroup = "")
     {
-        auto fileName = getParam<std::string>("Grid.File");
-
-        static auto deckLocal = Opm::Parser().parseFile(fileName);
-        Opm::EclipseGrid ecl_grid(deckLocal);
-        deck() = deckLocal;
-
-        gridPtr() = std::make_shared<Grid>(*(new Grid()));
-        gridPtr()->processEclipseFormat(ecl_grid, false, false);
+        const auto fileName = getParamFromGroup<std::string>(paramGroup, "Grid.File");
+        deck_ = std::make_shared<Opm::Deck>(Opm::Parser().parseFile(fileName));
+        Opm::EclipseGrid eclGrid(*deck_);
+        grid_ = std::make_shared<Grid>();
+        grid_->processEclipseFormat(eclGrid, false, false);
     }
 
     /*!
      * \brief Returns a reference to the grid.
      */
-    static Grid &grid()
+    Grid &grid()
     {
-        return *gridPtr();
-    }
-
-    /*!
-     * \brief Returns a reference to the grid pointer.
-     */
-    static GridPointer &gridPtr()
-    {
-        static GridPointer cpGrid;
-        return cpGrid;
+        return *grid_;
     }
 
     /*!
@@ -83,22 +69,27 @@ public:
      *
      * The input deck can be used to read parameters like porosity/permeability.
      */
-    static Deck &deck()
+    std::shared_ptr<Deck> getDeck() const
     {
-        static Deck deck_;
         return deck_;
     }
 
     /*!
      * \brief Distributes the grid over all processes for a parallel computation.
      */
-    static void loadBalance()
+    void loadBalance()
     {
-        if (gridPtr()->comm().size() > 1)
-            gridPtr()->loadBalance();
+        if (grid_->comm().size() > 1)
+            grid_->loadBalance();
     }
+
+private:
+    std::shared_ptr<Deck> deck_; //!< the eclipse deck
+    std::shared_ptr<Grid> grid_; //!< the grid pointer
 };
-}
+
+} // end namespace Dumux
+
 #endif // HAVE_OPM_GRID
 
 #endif
