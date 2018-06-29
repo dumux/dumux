@@ -108,7 +108,7 @@ namespace Dumux {
  * \tparam f The two-phase formulation used
  * \tparam useM Boolean to specify if moles or masses are balanced
  */
-template<TwoPFormulation f, bool useM>
+template<TwoPFormulation f, bool useM, int repCompEqIdx = 2>
 struct TwoPTwoCModelTraits
 {
     using Indices = TwoPTwoCIndices;
@@ -116,6 +116,7 @@ struct TwoPTwoCModelTraits
     static constexpr int numEq() { return 2; }
     static constexpr int numPhases() { return 2; }
     static constexpr int numComponents() { return 2; }
+    static constexpr int replaceCompEqIdx() { return repCompEqIdx; }
 
     static constexpr bool useMoles() { return useM; }
     static constexpr bool enableAdvection() { return true; }
@@ -174,7 +175,7 @@ private:
 
 public:
     using type = TwoPTwoCModelTraits< GET_PROP_VALUE(TypeTag, Formulation),
-                                      GET_PROP_VALUE(TypeTag, UseMoles) >;
+                                      GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx) >;
 };
 
 //! Set the vtk output fields specific to this model
@@ -200,7 +201,7 @@ SET_PROP(TwoPTwoC, Formulation)
 { static constexpr TwoPFormulation value = TwoPFormulation::p0s1; };
 
 //! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());
+SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);
 
 //! Use the compositional local residual operator
 SET_TYPE_PROP(TwoPTwoC, LocalResidual, CompositionalLocalResidual<TypeTag>);
@@ -268,7 +269,7 @@ private:
     static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
     using Traits = TwoPTwoCModelTraits< GET_PROP_VALUE(TypeTag, Formulation),
-                                        GET_PROP_VALUE(TypeTag, UseMoles) >;
+                                        GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 public:
     using type = PorousMediumFlowNIModelTraits< Traits >;
 };

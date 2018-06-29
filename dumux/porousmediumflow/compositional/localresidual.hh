@@ -59,12 +59,12 @@ class CompositionalLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidua
 
     static constexpr int numPhases = ModelTraits::numPhases();
     static constexpr int numComponents = ModelTraits::numComponents();
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = ModelTraits::useMoles();
 
     enum { conti0EqIdx = Indices::conti0EqIdx };
 
     //! The index of the component balance equation that gets replaced with the total mass balance
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static constexpr int replaceCompEqIdx = ModelTraits::replaceCompEqIdx();
     static constexpr bool useTotalMoleOrMassBalance = replaceCompEqIdx < numComponents;
 
 public:

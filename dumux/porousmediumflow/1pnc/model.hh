@@ -84,7 +84,7 @@ namespace Dumux {
  * \tparam nComp the number of components to be considered.
  * \tparam fluidSystemPhaseIdx The index of the fluid phase in the fluid system
  */
-template<int nComp, int fluidSystemPhaseIdx>
+template<int nComp, int fluidSystemPhaseIdx, bool useM, int repCompEqIdx = nComp>
 struct OnePNCModelTraits
 {
     using Indices = OnePNCIndices<fluidSystemPhaseIdx>;
@@ -92,7 +92,9 @@ struct OnePNCModelTraits
     static constexpr int numEq() { return nComp; }
     static constexpr int numPhases() { return 1; }
     static constexpr int numComponents() { return nComp; }
+    static constexpr int replaceCompEqIdx() { return repCompEqIdx; }
 
+    static constexpr bool useMoles() { return useM; }
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
     static constexpr bool enableEnergyBalance() { return false; }
@@ -134,17 +136,18 @@ NEW_TYPE_TAG(OnePNCNI, INHERITS_FROM(OnePNC));
 // properties for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
+//! Set as default that no component mass balance is replaced by the total mass balance
+SET_INT_PROP(OnePNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);
+
 //! The model traits. Per default, we use the number of components of the fluid system.
 SET_PROP(OnePNC, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
 public:
-    using type = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx)>;
+    using type = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx), GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
 
-//! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(OnePNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents());
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -164,6 +167,9 @@ public:
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(OnePNC, EffectiveDiffusivityModel,
               DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
+//! Use mole fractions in the balance equations by default
+SET_BOOL_PROP(OnePNC, UseMoles, true);
 
 SET_INT_PROP(OnePNC, PhaseIdx, 0); //!< The default phase index
 SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>);        //!< The local residual function
@@ -207,7 +213,7 @@ SET_PROP(OnePNCNI, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-    using IsothermalTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx)>;
+    using IsothermalTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx), GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
