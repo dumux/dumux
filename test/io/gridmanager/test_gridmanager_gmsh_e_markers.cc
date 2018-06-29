@@ -31,10 +31,10 @@ int main(int argc, char** argv) try
 {
     Dune::MPIHelper::instance(argc, argv);
 
-    Dumux::Parameters::init(argc, argv, "test_gridcreator_dgf_e_markers.input");
+    Dumux::Parameters::init(argc, argv, "test_gridmanager_gmsh_e_markers.input");
 
     auto name = Dumux::getParam<std::string>("Problem.Name");
-    Dumux::GridManagerTests<GRIDTYPE>::testElementMarkers("dgf", name);
+    Dumux::GridManagerTests<GRIDTYPE>::testElementMarkers("gmsh", name);
 
     return 0;
 }
