@@ -25,10 +25,11 @@
 #ifndef DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 #define DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 
+#include <dune/grid/yaspgrid.hh>
+
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/methods.hh>
-#include <dumux/io/grid/gridmanager.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/3p/model.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
