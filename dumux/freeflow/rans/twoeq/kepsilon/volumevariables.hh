@@ -155,10 +155,8 @@ public:
     template<class Problem>
     void calculateEddyDiffusivity(const Problem& problem)
     {
-        static const auto turbulentSchmidtNumber
-            = getParamFromGroup<Scalar>(problem.paramGroup(),
-                                        "RANS.TurbulentSchmidtNumber", 1.0);
-        eddyDiffusivity_ = RANSParentType::kinematicEddyViscosity() / turbulentSchmidtNumber;
+        eddyDiffusivity_ = RANSParentType::kinematicEddyViscosity()
+                           / problem.turbulentSchmidtNumber();
     }
 
     /*!
