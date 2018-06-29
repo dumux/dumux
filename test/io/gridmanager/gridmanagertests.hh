@@ -174,6 +174,24 @@ public:
         }
     }
 
+    static void testVertexMarkers(const std::string& type = "dgf",
+                                  const std::string& vtkFileName = "test")
+    {
+        // make the grid manager and initialize the grid
+        GridManager gridManager;
+        gridManager.init();
+        auto gridData = gridManager.getGridData();
+
+        // read the element markers and the rank
+        std::vector<int> vertexMarker;
+        getVertexMarkers_(gridManager.grid().levelGridView(0), gridData, vertexMarker, type);
+
+        // construct a vtk output writer and attach the element markers
+        Dune::VTKSequenceWriter<typename Grid::LevelGridView> vtkWriter(gridManager.grid().levelGridView(0), vtkFileName, ".", "");
+        vtkWriter.addVertexData(vertexMarker, "vertexData");
+        vtkWriter.write(0);
+    }
+
 private:
 
     static void getRank_(const GridView& gridView, std::vector<int>& rank)
@@ -206,6 +224,25 @@ private:
                 elementMarker[eIdx] = gridData->parameters(element)[0];
             else
                 DUNE_THROW(Dune::InvalidStateException, "No parameters for type " << type);
+        }
+    }
+
+    template<class LevelGridView, class GridData>
+    static void getVertexMarkers_(const LevelGridView& gridView,
+                                  const GridData& gridData,
+                                  std::vector<int>& vertexMarker,
+                                  const std::string& type)
+    {
+        if (type != "dgf")
+            DUNE_THROW(Dune::InvalidStateException, "Vertex marker only exist for dgf grids.");
+
+        vertexMarker.clear();
+        vertexMarker.resize(gridView.size(Grid::dimension));
+
+        for (const auto& vertex : vertices(gridView.grid().levelGridView(0)))
+        {
+            const auto vIdx = gridView.indexSet().index(vertex);
+            vertexMarker[vIdx] = gridData->parameters(vertex)[0];
         }
     }
 

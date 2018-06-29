@@ -21,7 +21,7 @@ dune_add_test(NAME test_gridmanager_subgrid
 
 dune_symlink_to_source_files(FILES "test_gridmanager_gmsh_3d.input"
                                    "test_gridmanager_gmsh_e_markers.input"
-                                   "test_gridmanager_dgf_e_markers.input")
+                                   "test_gridmanager_dgf.input")
 
 add_executable(test_gridmanager_gmsh_3d_alu EXCLUDE_FROM_ALL test_gridmanager_gmsh_3d.cc)
 target_compile_definitions(test_gridmanager_gmsh_3d_alu PUBLIC GRIDTYPE=Dune::ALUGrid<3,3,Dune::simplex,Dune::nonconforming>)
@@ -119,52 +119,60 @@ dune_add_test(NAME test_gridmanager_gmsh_e_markers_ug_parallel
                               ${CMAKE_SOURCE_DIR}/test/references/fracture_ug-reference-refined.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-fracture_ug_parallel-00001.pvtu)
 
-add_executable(test_gridmanager_dgf_e_markers_alu EXCLUDE_FROM_ALL test_gridmanager_dgf_e_markers.cc)
-target_compile_definitions(test_gridmanager_dgf_e_markers_alu PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>)
+add_executable(test_gridmanager_dgf_alu EXCLUDE_FROM_ALL test_gridmanager_dgf.cc)
+target_compile_definitions(test_gridmanager_dgf_alu PUBLIC GRIDTYPE=Dune::ALUGrid<2,2,Dune::simplex,Dune::conforming>)
 
-dune_add_test(NAME test_gridmanager_dgf_e_markers_alu_sequential
-              TARGET test_gridmanager_dgf_e_markers_alu
+dune_add_test(NAME test_gridmanager_dgf_alu_sequential
+              TARGET test_gridmanager_dgf_alu
               CMAKE_GUARD dune-alugrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_dgf_e_markers_alu -Problem.Name co2_alu"
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_dgf_alu -Problem.Name co2_alu"
                        --files ${CMAKE_SOURCE_DIR}/test/references/gridmanager-co2_alu-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/co2_alu-00000.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/co2_alu-element-00000.vtu
                                ${CMAKE_SOURCE_DIR}/test/references/gridmanager-co2_alu-reference-refined.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/co2_alu-00001.vtu)
+                               ${CMAKE_CURRENT_BINARY_DIR}/co2_alu-element-00001.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/gridmanager-co2-simpl-vertex-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/co2_alu-vertex-00000.vtu)
 
-dune_add_test(NAME test_gridmanager_dgf_e_markers_alu_parallel
-              TARGET test_gridmanager_dgf_e_markers_alu
+dune_add_test(NAME test_gridmanager_dgf_alu_parallel
+              TARGET test_gridmanager_dgf_alu
               CMAKE_GUARD "( dune-alugrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_dgf_e_markers_alu -Problem.Name co2_alu_parallel"
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_dgf_alu -Problem.Name co2_alu_parallel"
                        --files ${CMAKE_SOURCE_DIR}/test/references/gridmanager-co2_alu-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_alu_parallel-00000.pvtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_alu_parallel-element-00000.pvtu
                                ${CMAKE_SOURCE_DIR}/test/references/gridmanager-co2_alu-reference-refined.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_alu_parallel-00001.pvtu)
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_alu_parallel-element-00001.pvtu
+                               ${CMAKE_SOURCE_DIR}/test/references/gridmanager-co2-simpl-vertex-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_alu_parallel-vertex-00000.pvtu)
 
-add_executable(test_gridmanager_dgf_e_markers_ug EXCLUDE_FROM_ALL test_gridmanager_dgf_e_markers.cc)
-target_compile_definitions(test_gridmanager_dgf_e_markers_ug PUBLIC GRIDTYPE=Dune::UGGrid<2>)
+add_executable(test_gridmanager_dgf_ug EXCLUDE_FROM_ALL test_gridmanager_dgf.cc)
+target_compile_definitions(test_gridmanager_dgf_ug PUBLIC GRIDTYPE=Dune::UGGrid<2>)
 
-dune_add_test(NAME test_gridmanager_dgf_e_markers_ug_sequential
-              TARGET test_gridmanager_dgf_e_markers_ug
+dune_add_test(NAME test_gridmanager_dgf_ug_sequential
+              TARGET test_gridmanager_dgf_ug
               CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_dgf_e_markers_ug -Problem.Name co2_ug"
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_dgf_ug -Problem.Name co2_ug"
                        --files ${CMAKE_SOURCE_DIR}/test/references/gridmanager-co2_ug-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/co2_ug-00000.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/co2_ug-element-00000.vtu
                                ${CMAKE_SOURCE_DIR}/test/references/gridmanager-co2_ug-reference-refined.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/co2_ug-00001.vtu)
+                               ${CMAKE_CURRENT_BINARY_DIR}/co2_ug-element-00001.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/gridmanager-co2-quad-vertex-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/co2_ug-vertex-00000.vtu)
 
-dune_add_test(NAME test_gridmanager_dgf_e_markers_ug_parallel
-              TARGET test_gridmanager_dgf_e_markers_ug
+dune_add_test(NAME test_gridmanager_dgf_ug_parallel
+              TARGET test_gridmanager_dgf_ug
               CMAKE_GUARD "( dune-uggrid_FOUND AND MPI_FOUND )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy --zeroThreshold {"rank":100}
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_dgf_e_markers_ug -Problem.Name co2_ug_parallel"
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_gridmanager_dgf_ug -Problem.Name co2_ug_parallel"
                        --files ${CMAKE_SOURCE_DIR}/test/references/gridmanager-co2_ug-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_ug_parallel-00000.pvtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_ug_parallel-element-00000.pvtu
                                ${CMAKE_SOURCE_DIR}/test/references/gridmanager-co2_ug-reference-refined.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_ug_parallel-00001.pvtu)
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_ug_parallel-element-00001.pvtu
+                               ${CMAKE_SOURCE_DIR}/test/references/gridmanager-co2-quad-vertex-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-co2_ug_parallel-vertex-00000.pvtu)
