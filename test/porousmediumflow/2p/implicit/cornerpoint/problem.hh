@@ -87,25 +87,26 @@ template<class TypeTag>
 class TwoPCornerPointTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     enum { dimWorld = GridView::dimensionworld };
 
 public:
-    TwoPCornerPointTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    TwoPCornerPointTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                               std::shared_ptr<typename ParentType::SpatialParams> spatialParams)
+    : ParentType(fvGridGeometry, spatialParams)
     {
         gravity_ = {0, 0, 9.81};
         injectionElement_ = getParam<int>("Problem.InjectionElement");
