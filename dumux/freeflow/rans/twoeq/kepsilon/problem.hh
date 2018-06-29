@@ -51,6 +51,15 @@ class KEpsilonProblem : public RANSProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridFaceVariables = typename GridVariables::GridFaceVariables;
+    using ElementFaceVariables = typename GridFaceVariables::LocalView;
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
+
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
@@ -58,6 +67,7 @@ class KEpsilonProblem : public RANSProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
 public:
@@ -119,22 +129,24 @@ public:
         }
 
         // get matching point for k-epsilon wall function
-        unsigned int numElementsInWallRegion = 0;
+        unsigned int numElementsInNearWallRegion = 0;
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
             unsigned int wallNormalAxis = asImp_().wallNormalAxis_[elementID];
             unsigned int neighborID0 = asImp_().neighborID_[elementID][wallNormalAxis][0];
             unsigned int neighborID1 = asImp_().neighborID_[elementID][wallNormalAxis][1];
-            numElementsInWallRegion = inNearWallRegion(elementID) ? numElementsInWallRegion + 1 : numElementsInWallRegion + 0;
-            if ((inNearWallRegion(elementID) && (inNearWallRegion(neighborID0) != inNearWallRegion(neighborID1)))
-                || (inNearWallRegion(elementID) && (asImp_().wallElementID_[neighborID0] != asImp_().wallElementID_[neighborID1]))
-                || (elementID == asImp_().wallElementID_[elementID] && (!inNearWallRegion(neighborID0) || !inNearWallRegion(neighborID1))))
+            numElementsInNearWallRegion = inNearWallRegion(elementID)
+                                          ? numElementsInNearWallRegion + 1
+                                          : numElementsInNearWallRegion + 0;
+            if ((!inNearWallRegion(elementID) && (inNearWallRegion(neighborID0) || inNearWallRegion(neighborID1)))
+                || (!inNearWallRegion(elementID) && elementID == asImp_().wallElementID_[elementID])
+                || (inNearWallRegion(elementID) && (asImp_().wallElementID_[neighborID0] != asImp_().wallElementID_[neighborID1])))
             {
                 matchingPointID_[asImp_().wallElementID_[elementID]] = elementID;
             }
         }
-        std::cout << "numElementsInWallRegion: " << numElementsInWallRegion << std::endl;
+        std::cout << "numElementsInNearWallRegion: " << numElementsInNearWallRegion << std::endl;
 
         // calculate the potential zeroeq eddy viscosities for two-layer model
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
@@ -177,7 +189,12 @@ public:
      * \brief Returns if an element is located in the near-wall region
      */
     const bool inNearWallRegion(unsigned int elementID) const
-    { return yPlus(elementID) < yPlusThreshold_; }
+    {
+        unsigned int wallElementID = asImp_().wallElementID_[elementID];
+        unsigned int matchingPointID = matchingPointID_[wallElementID];
+        return wallElementID == matchingPointID ? yPlusNominal(elementID) < yPlusThreshold_
+                                                : yPlus(elementID) < yPlusThreshold_;
+    }
 
     /*!
      * \brief Returns if an element is the matching point
@@ -191,6 +208,14 @@ public:
     const Scalar yPlus(unsigned int elementID) const
     {
         return asImp_().wallDistance_[elementID] * uStar(elementID)
+               / asImp_().kinematicViscosity_[elementID];
+    }
+    /*!
+     * \brief Returns the nominal \f$ y^+ \f$ value at an element center
+     */
+    const Scalar yPlusNominal(unsigned int elementID) const
+    {
+        return asImp_().wallDistance_[elementID] * uStarNominal(elementID)
                / asImp_().kinematicViscosity_[elementID];
     }
 
@@ -234,12 +259,11 @@ public:
     //! \brief Returns the nominal wall shear stress velocity (accounts for poor approximation of viscous sublayer)
     const Scalar uStarNominal(unsigned int elementID) const
     {
-        using std::max;
         using std::pow;
         using std::sqrt;
         unsigned int matchingPointID = matchingPointID_[asImp_().wallElementID_[elementID]];
-        return pow(0.09/*c_mu*/, 0.25)
-               * sqrt(max(storedTurbulentKineticEnergy_[matchingPointID],1e-8));
+        return pow(cMu(), 0.25)
+               * sqrt(storedTurbulentKineticEnergy_[matchingPointID]);
     }
 
     /*!
@@ -256,7 +280,45 @@ public:
      */
     const Scalar turbulentKineticEnergyWallFunction(unsigned int elementID) const
     {
-        return storedTurbulentKineticEnergy_[elementID];
+        unsigned int wallElementID = asImp_().wallElementID_[elementID];
+        unsigned int matchingPointID = matchingPointID_[wallElementID];
+        return storedTurbulentKineticEnergy_[matchingPointID];
+    }
+
+    //! \brief Returns the nominal wall shear stress (accounts for poor approximation of viscous sublayer)
+    const Scalar tangentialMomentumWallFunction(unsigned int elementID, Scalar velocity) const
+    {
+        using std::log;
+        Scalar velocityNominal = uStarNominal(elementID) * (1.0 / asImp_().karmanConstant() * log(yPlusNominal(elementID)) + 5.0);
+        return uStarNominal(elementID) * uStarNominal(elementID)
+               * velocity / velocityNominal;
+    }
+
+    //! \brief Checks whether a wall function should be used
+    bool useWallFunctionAtPos(const Element& element,
+                              const SubControlVolumeFace& localSubFace) const
+    {
+        unsigned int elementID = asImp_().fvGridGeometry().elementMapper().index(element);
+        return asImp_().isOnWall(localSubFace.center()) && isMatchingPoint(elementID);
+    }
+
+    //! \brief Returns an additional wall function momentum flux (only needed for RANS models)
+    FacePrimaryVariables wallFunction(const Element& element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const ElementVolumeVariables& elemVolVars,
+                                      const ElementFaceVariables& elemFaceVars,
+                                      const SubControlVolumeFace& scvf,
+                                      const SubControlVolumeFace& localSubFace) const
+    {
+        unsigned int elementID = asImp_().fvGridGeometry().elementMapper().index(element);
+        return FacePrimaryVariables(asImp_().tangentialMomentumWallFunction(elementID, abs(elemFaceVars[scvf].velocitySelf()))
+                                    * elemVolVars[scvf.insideScvIdx()].density());
+    }
+
+    //! \brief Returns the \$f C_{\mu} \$f constant
+    const Scalar cMu() const
+    {
+        return 0.09;
     }
 
 public:

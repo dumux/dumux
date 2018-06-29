@@ -99,11 +99,16 @@ public:
         storedDissipation_ = problem.storedDissipation_[RANSParentType::elementID()];
         storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementID()];
         stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementID()];
+        const Scalar uStarNominal = problem.uStarNominal(RANSParentType::elementID());
+        const auto flowNormalAxis = problem.flowNormalAxis_[RANSParentType::elementID()];
+        yPlusNominal_ = RANSParentType::wallDistance() * uStarNominal / problem.kinematicViscosity_[RANSParentType::elementID()];
+        uPlusNominal_ = RANSParentType::velocity()[flowNormalAxis] / uStarNominal;
+        cMu_ = problem.cMu();
         if (problem.useStoredEddyViscosity_)
             dynamicEddyViscosity_ = problem.storedDynamicEddyViscosity_[RANSParentType::elementID()];
         else
             dynamicEddyViscosity_ = calculateEddyViscosity();
-        if (inNearWallRegion_ && !isMatchingPoint_)
+        if (inNearWallRegion_)
         {
             dynamicEddyViscosity_ = problem.zeroEqDynamicEddyViscosity_[RANSParentType::elementID()];
         }
@@ -214,7 +219,7 @@ public:
 
     //! \brief Returns the \$f C_\mu \$f constant
     const Scalar cMu() const
-    { return 0.09; }
+    { return cMu_; }
 
     //! \brief Returns the \$f \sigma_\textrm{k} \$f constant
     const Scalar sigmaK() const
@@ -231,6 +236,18 @@ public:
     //! \brief Returns the \$f C_{2\varepsilon} \$f constant
     const Scalar cTwoEpsilon() const
     { return 1.92; }
+
+    /*!
+     * \brief Return the nominal dimensionless wall distance \f$\mathrm{[-]}\f$.
+     */
+    Scalar yPlusNominal() const
+    { return yPlusNominal_; }
+
+    /*!
+     * \brief Return the nominal dimensionless velocity \f$\mathrm{[-]}\f$.
+     */
+    Scalar uPlusNominal() const
+    { return uPlusNominal_; }
 
     /*!
      * \brief Returns the eddy diffusivity \f$\mathrm{[m^2/s]}\f$
@@ -257,6 +274,9 @@ protected:
     Scalar storedTurbulentKineticEnergy_;
     Scalar storedDissipation_;
     Scalar stressTensorScalarProduct_;
+    Scalar yPlusNominal_;
+    Scalar uPlusNominal_;
+    Scalar cMu_;
     bool inNearWallRegion_;
     bool isMatchingPoint_;
 };

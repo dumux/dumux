@@ -70,6 +70,7 @@ class KEpsilonFluxVariablesImpl<TypeTag, BaseFluxVariables, DiscretizationMethod
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
 
     static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
     static constexpr int dissipationEqIdx = Indices::dissipationEqIdx - ModelTraits::dim();
@@ -152,10 +153,12 @@ public:
 
         const auto bcTypes = problem.boundaryTypes(element, scvf);
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
-                                  || bcTypes.isSymmetry())))
+                                  || bcTypes.isSymmetry()
+                                  || problem.isOnWall(scvf.center()))))
         {
-            if (!insideVolVars.inNearWallRegion()
-                || !insideVolVars.inNearWallRegion())
+            if (!(insideVolVars.isMatchingPoint() && outsideVolVars.isMatchingPoint())
+                || !(insideVolVars.isMatchingPoint() && outsideVolVars.inNearWallRegion())
+                || !(insideVolVars.inNearWallRegion() && outsideVolVars.isMatchingPoint()))
             {
                 flux[turbulentKineticEnergyEqIdx]
                     += coeff_k / distance

@@ -313,9 +313,16 @@ public:
                 // Handle Neumann boundary conditions. No further calculations are then required for the given sub face.
                 if(bcTypes.isNeumann(Indices::velocity(scvf.directionIndex())))
                 {
-                    const auto extrusionFactor = elemVolVars[normalFace.insideScvIdx()].extrusionFactor();
                     normalFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, localSubFace)[Indices::velocity(scvf.directionIndex())]
-                                                  * extrusionFactor * normalFace.area() * 0.5;
+                                                  * elemVolVars[normalFace.insideScvIdx()].extrusionFactor() * normalFace.area() * 0.5;
+                    continue;
+                }
+
+                // Handle wall-function fluxes (only required for RANS models)
+                if(problem.useWallFunctionAtPos(element, localSubFace))
+                {
+                    normalFlux += problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, localSubFace)[Indices::velocity(scvf.directionIndex())]
+                                                       * elemVolVars[normalFace.insideScvIdx()].extrusionFactor() * normalFace.area() * 0.5;
                     continue;
                 }
             }
