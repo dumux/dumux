@@ -31,7 +31,13 @@
 #include <dumux/discretization/box/properties.hh>
 
 //The grid managers
-#include <dumux/io/grid/gridmanager.hh>
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#elif HAVE_UG
+#include <dune/grid/uggrid.hh>
+#else
+#include <dune/grid/yaspgrid.hh>
+#endif
 
 // The base porous media box problem
 #include <dumux/porousmediumflow/problem.hh>
