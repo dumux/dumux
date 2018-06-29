@@ -283,7 +283,7 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 unsigned int normDim = scvf.directionIndex();
-                if (scvf.boundary() && !asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::pressureIdx))
+                if (scvf.boundary() && asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::velocity(normDim)))
                 {
                     for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
                     {
