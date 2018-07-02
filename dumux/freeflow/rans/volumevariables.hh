@@ -215,14 +215,10 @@ public:
     template<class Problem>
     void calculateEddyThermalConductivity(const Problem& problem)
     {
-        static const auto turbulentPrandtlNumber
-            = getParamFromGroup<Scalar>(problem.paramGroup(),
-                                        "RANS.TurbulentPrandtlNumber", 1.0);
-
         eddyThermalConductivity_ = ParentType::kinematicEddyViscosity()
                                    * ParentType::asImp_().density()
                                    * ParentType::asImp_().heatCapacity()
-                                   / turbulentPrandtlNumber;
+                                   / problem.turbulentPrandtlNumber();
     }
 
     /*!

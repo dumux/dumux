@@ -79,6 +79,9 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
 
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
+    static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
+    static constexpr bool isCompositional = ModelTraits::numComponents() > 1;
+
 public:
     using EnergyLocalResidual = FreeFlowEnergyLocalResidual<FVGridGeometry, FluxVariables, ModelTraits::enableEnergyBalance(), (ModelTraits::numComponents() > 1)>;
 
@@ -222,6 +225,7 @@ protected:
             if (scvf.boundary())
             {
                 const auto bcTypes = problem.boundaryTypes(element, scvf);
+                const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
 
                 // treat Dirichlet and outflow BCs
                 FluxVariables fluxVars;
@@ -231,17 +235,25 @@ protected:
                 EnergyLocalResidual::heatFlux(boundaryFlux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
 
                 // treat Neumann BCs, i.e. overwrite certain fluxes by user-specified values
+                static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
                 if(bcTypes.hasNeumann())
                 {
-                    static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
                     for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                     {
                         if(bcTypes.isNeumann(eqIdx + cellCenterOffset))
                         {
-                            const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
                             boundaryFlux[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx + cellCenterOffset]
-                                                  * extrusionFactor * scvf.area();
+                                                                  * extrusionFactor * scvf.area();
                         }
+                    }
+                }
+                for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
+                {
+                    // use a wall function
+                    if(problem.useWallFunction(element, scvf, eqIdx + cellCenterOffset))
+                    {
+                        boundaryFlux[eqIdx] = problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx]
+                                                                   * extrusionFactor * scvf.area();
                     }
                 }
 

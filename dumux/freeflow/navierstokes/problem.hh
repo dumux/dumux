@@ -76,6 +76,7 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum {
@@ -176,8 +177,9 @@ public:
     }
 
     //! \brief Checks whether a wall function should be used
-    bool useWallFunctionAtPos(const Element& element,
-                              const SubControlVolumeFace& localSubFace) const
+    bool useWallFunction(const Element& element,
+                         const SubControlVolumeFace& localSubFace,
+                         const int& eqIdx) const
     { return false; }
 
     //! \brief Returns an additional wall function momentum flux (only needed for RANS models)
@@ -188,6 +190,14 @@ public:
                                       const SubControlVolumeFace& scvf,
                                       const SubControlVolumeFace& localSubFace) const
     { return FacePrimaryVariables(0.0); }
+
+    //! \brief Returns an additional wall function flux for cell-centered quantities (only needed for RANS models)
+    CellCenterPrimaryVariables wallFunction(const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const ElementFaceVariables& elemFaceVars,
+                                            const SubControlVolumeFace& scvf) const
+    { return CellCenterPrimaryVariables(0.0); }
 
 private:
 

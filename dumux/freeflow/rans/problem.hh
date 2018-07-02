@@ -283,7 +283,7 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 unsigned int normDim = scvf.directionIndex();
-                if (scvf.boundary() && !asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::pressureIdx))
+                if (scvf.boundary() && asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::velocity(normDim)))
                 {
                     for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
                     {
@@ -370,6 +370,28 @@ public:
      */
     const Scalar karmanConstant() const
     { return 0.41; }
+
+    /*!
+     * \brief Return the turbulent Prandtl number \f$ [-] \f$ which is used to convert
+     *        the eddy viscosity to an eddy thermal conductivity
+     */
+    Scalar turbulentPrandtlNumber() const
+    {
+        static const Scalar turbulentPrandtlNumber
+            = getParamFromGroup<Scalar>(this->paramGroup(), "RANS.TurbulentPrandtlNumber", 1.0);
+        return turbulentPrandtlNumber;
+    }
+
+    /*!
+     * \brief Return the turbulent Schmidt number \f$ [-] \f$ which is used to convert
+     *        the eddy viscosity to an eddy diffusivity
+     */
+    Scalar turbulentSchmidtNumber() const
+    {
+        static const Scalar turbulentSchmidtNumber
+            = getParamFromGroup<Scalar>(this->paramGroup(), "RANS.TurbulentSchmidtNumber", 1.0);
+        return turbulentSchmidtNumber;
+    }
 
 public:
     std::vector<unsigned int> wallElementID_;
