@@ -152,7 +152,7 @@ private:
     using NonMineralizationTraits = TwoPNCModelTraits<FluidSystem::numComponents,
                                                       GET_PROP_VALUE(TypeTag, UseMoles),
                                                       GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
-                                                      GET_PROP_VALUE(TypeTag, Formulation)>;
+                                                      GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 public:
     using type = MineralizationModelTraits<NonMineralizationTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 };
@@ -182,7 +182,7 @@ private:
     using TwoPNCTraits = TwoPNCModelTraits<FluidSystem::numComponents,
                                            GET_PROP_VALUE(TypeTag, UseMoles),
                                            GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
-                                           GET_PROP_VALUE(TypeTag, Formulation)>;
+                                           GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
     using IsothermalTraits = MineralizationModelTraits<TwoPNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:
     // the mineralization traits, based on 2pnc traits, are the isothermal traits

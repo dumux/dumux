@@ -116,7 +116,7 @@ namespace Dumux {
  * \tparam useMol whether to use molar or mass balances
  * \tparam setMoleFractionForFP whether to set mole fractions for first or second phase
  */
-template<int nComp, bool useMol, bool setMoleFractionForFP, TwoPFormulation formulation>
+template<int nComp, bool useMol, bool setMoleFractionForFP, TwoPFormulation formulation, int repCompEqIdx = nComp>
 struct TwoPNCModelTraits
 {
     using Indices = TwoPTwoCIndices;
@@ -124,6 +124,7 @@ struct TwoPNCModelTraits
     static constexpr int numEq() { return nComp; }
     static constexpr int numPhases() { return 2; }
     static constexpr int numComponents() { return nComp; }
+    static constexpr int replaceCompEqIdx() { return repCompEqIdx; }
 
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
@@ -208,7 +209,7 @@ public:
     using type = TwoPNCModelTraits<FluidSystem::numComponents,
                                    GET_PROP_VALUE(TypeTag, UseMoles),
                                    GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
-                                   GET_PROP_VALUE(TypeTag, Formulation)>;
+                                   GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
 
 //! Set the vtk output fields specific to this model
@@ -252,7 +253,7 @@ private:
     using IsothermalTraits = TwoPNCModelTraits<FluidSystem::numComponents,
                                                GET_PROP_VALUE(TypeTag, UseMoles),
                                                GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
-                                               GET_PROP_VALUE(TypeTag, Formulation)>;
+                                               GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };

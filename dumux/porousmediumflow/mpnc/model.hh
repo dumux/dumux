@@ -132,7 +132,7 @@ namespace Dumux
  * \tparam nPhases the number of phases to be considered
  * \tparam nComp the number of components to be considered
  */
-template<int nPhases, int nComp, MpNcPressureFormulation formulation>
+template<int nPhases, int nComp, MpNcPressureFormulation formulation, bool useM, int repCompEqIdx = nComp>
 struct MPNCModelTraits
 {
     static constexpr int numEq() { return numTransportEq()+numConstraintEq(); }
@@ -140,7 +140,9 @@ struct MPNCModelTraits
     static constexpr int numComponents() { return nComp; }
     static constexpr int numTransportEq() { return nComp;}
     static constexpr int numConstraintEq() { return nPhases; }
+    static constexpr int replaceCompEqIdx() { return repCompEqIdx; }
 
+    static constexpr bool useMoles() { return useM; }
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return true; }
     static constexpr bool enableEnergyBalance() { return false; }
@@ -231,7 +233,9 @@ private:
 public:
     using type = MPNCModelTraits<FluidSystem::numPhases,
                                  FluidSystem::numComponents,
-                                 GET_PROP_VALUE(TypeTag, PressureFormulation)>;
+                                 GET_PROP_VALUE(TypeTag, PressureFormulation),
+                                 GET_PROP_VALUE(TypeTag, UseMoles),
+                                 GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
 
 //! This model uses the compositional fluid state
@@ -288,7 +292,9 @@ private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using IsothermalTraits = MPNCModelTraits<FluidSystem::numPhases,
                                              FluidSystem::numComponents,
-                                             GET_PROP_VALUE(TypeTag, PressureFormulation)>;
+                                             GET_PROP_VALUE(TypeTag, PressureFormulation),
+                                             GET_PROP_VALUE(TypeTag, UseMoles),
+                                             GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
@@ -328,7 +334,9 @@ private:
 public:
     using type = MPNCModelTraits<FluidSystem::numPhases,
                                  FluidSystem::numComponents,
-                                 GET_PROP_VALUE(TypeTag, PressureFormulation)>;
+                                 GET_PROP_VALUE(TypeTag, PressureFormulation),
+                                 GET_PROP_VALUE(TypeTag, UseMoles),
+                                 GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
 
 //! in case we do not assume full non-equilibrium one needs a thermal conductivity

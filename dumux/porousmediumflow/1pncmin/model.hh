@@ -123,7 +123,7 @@ SET_PROP(OnePNCMin, ModelTraits)
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using NonMinTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx)>;
+    using NonMinTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx), GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 public:
     using type = MineralizationModelTraits<NonMinTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 };
@@ -155,7 +155,7 @@ SET_PROP(OnePNCMinNI, ModelTraits)
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using OnePNCTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx)>;
+    using OnePNCTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx), GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
     using IsothermalTraits = MineralizationModelTraits<OnePNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;

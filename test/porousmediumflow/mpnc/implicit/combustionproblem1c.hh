@@ -49,8 +49,8 @@ template<class TypeTag>
 class CombustionProblemOneComponent;
 
 //! Custom model traits to deactivate diffusion for this test
-template<int numP, int numC, MpNcPressureFormulation formulation>
-struct CombustionModelTraits : public MPNCModelTraits<numP, numC, formulation>
+template<int numP, int numC, MpNcPressureFormulation formulation, bool useM>
+struct CombustionModelTraits : public MPNCModelTraits<numP, numC, formulation, useM>
 {
     static constexpr bool enableMolecularDiffusion() { return false; }
 };
@@ -93,7 +93,8 @@ private:
 public:
     using type = CombustionModelTraits< FluidSystem::numPhases,
                                         FluidSystem::numComponents,
-                                        GET_PROP_VALUE(TypeTag, PressureFormulation) >;
+                                        GET_PROP_VALUE(TypeTag, PressureFormulation),
+                                        GET_PROP_VALUE(TypeTag, UseMoles) >;
 };
 
 SET_PROP(CombustionOneComponentTypeTag, FluidState)
