@@ -176,6 +176,24 @@ public:
         }
         return flux;
     }
+
+    /*!
+    * \brief Returns the momentum flux over all staggered faces.
+    */
+    FacePrimaryVariables computeMomentumFlux(const Problem& problem,
+                                             const Element& element,
+                                             const SubControlVolumeFace& scvf,
+                                             const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars,
+                                             const ElementFaceVariables& elemFaceVars)
+    {
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+
+        return ParentType::computeFrontalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars)
+               + ParentType::computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars)
+               + 2.0 / ModelTraits::dim() * insideVolVars.density() * insideVolVars.turbulentKineticEnergy()
+                 * scvf.area() * scvf.directionSign() * insideVolVars.extrusionFactor();
+    }
 };
 
 } // end namespace
