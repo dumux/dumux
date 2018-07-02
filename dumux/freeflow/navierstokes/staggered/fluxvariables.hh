@@ -160,7 +160,7 @@ public:
                                              const ElementFaceVariables& elemFaceVars)
     {
         return computeFrontalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars) +
-               computeNormalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
+               computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
     }
 
     /*!
@@ -273,12 +273,12 @@ public:
     *                 scvf
     * \endverbatim
     */
-    FacePrimaryVariables computeNormalMomentumFlux(const Problem& problem,
-                                                   const Element& element,
-                                                   const SubControlVolumeFace& scvf,
-                                                   const FVElementGeometry& fvGeometry,
-                                                   const ElementVolumeVariables& elemVolVars,
-                                                   const ElementFaceVariables& elemFaceVars)
+    FacePrimaryVariables computeLateralMomentumFlux(const Problem& problem,
+                                                    const Element& element,
+                                                    const SubControlVolumeFace& scvf,
+                                                    const FVElementGeometry& fvGeometry,
+                                                    const ElementVolumeVariables& elemVolVars,
+                                                    const ElementFaceVariables& elemFaceVars)
     {
         FacePrimaryVariables normalFlux(0.0);
         auto& faceVars = elemFaceVars[scvf];
@@ -329,9 +329,9 @@ public:
 
             // If there is no symmetry or Neumann boundary condition for the given sub face, proceed to calculate the tangential momentum flux.
             if(enableInertiaTerms)
-                normalFlux += computeAdvectivePartOfNormalMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx);
+                normalFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx);
 
-            normalFlux += computeDiffusivePartOfNormalMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx);
+            normalFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx);
         }
         return normalFlux;
     }
@@ -359,13 +359,13 @@ private:
     *                 scvf
     * \endverbatim
     */
-    FacePrimaryVariables computeAdvectivePartOfNormalMomentumFlux_(const Problem& problem,
-                                                                   const Element& element,
-                                                                   const SubControlVolumeFace& scvf,
-                                                                   const SubControlVolumeFace& normalFace,
-                                                                   const ElementVolumeVariables& elemVolVars,
-                                                                   const FaceVariables& faceVars,
-                                                                   const int localSubFaceIdx)
+    FacePrimaryVariables computeAdvectivePartOfLateralMomentumFlux_(const Problem& problem,
+                                                                    const Element& element,
+                                                                    const SubControlVolumeFace& scvf,
+                                                                    const SubControlVolumeFace& normalFace,
+                                                                    const ElementVolumeVariables& elemVolVars,
+                                                                    const FaceVariables& faceVars,
+                                                                    const int localSubFaceIdx)
     {
         // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
         // of interest is located.
@@ -437,13 +437,13 @@ private:
     *                                              -- elements
     * \endverbatim
     */
-    FacePrimaryVariables computeDiffusivePartOfNormalMomentumFlux_(const Problem& problem,
-                                                                   const Element& element,
-                                                                   const SubControlVolumeFace& scvf,
-                                                                   const SubControlVolumeFace& normalFace,
-                                                                   const ElementVolumeVariables& elemVolVars,
-                                                                   const FaceVariables& faceVars,
-                                                                   const int localSubFaceIdx)
+    FacePrimaryVariables computeDiffusivePartOfLateralMomentumFlux_(const Problem& problem,
+                                                                    const Element& element,
+                                                                    const SubControlVolumeFace& scvf,
+                                                                    const SubControlVolumeFace& normalFace,
+                                                                    const ElementVolumeVariables& elemVolVars,
+                                                                    const FaceVariables& faceVars,
+                                                                    const int localSubFaceIdx)
     {
         FacePrimaryVariables normalDiffusiveFlux(0.0);
 

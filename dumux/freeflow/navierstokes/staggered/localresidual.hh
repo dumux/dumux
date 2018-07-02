@@ -301,7 +301,7 @@ protected:
 
                 // treat the remaining (normal) faces of the staggered control volume
                 FluxVariables fluxVars;
-                residual += fluxVars.computeNormalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
+                residual += fluxVars.computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
             }
             else if(bcTypes.isSymmetry())
             {
