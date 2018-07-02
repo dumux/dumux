@@ -171,14 +171,14 @@ public:
      * \brief Returns the total internal energy of a phase in the
      *        sub-control volume.
      */
-    Scalar internalEnergy() const
+    Scalar internalEnergy(int phaseIdx = fluidSystemPhaseIdx) const
     { return ParentType::asImp_().fluidState().internalEnergy(fluidSystemPhaseIdx); }
 
     /*!
      * \brief Returns the total enthalpy of a phase in the sub-control
      *        volume.
      */
-    Scalar enthalpy() const
+    Scalar enthalpy(int phaseIdx = fluidSystemPhaseIdx) const
     { return ParentType::asImp_().fluidState().enthalpy(fluidSystemPhaseIdx); }
 
     /*!
