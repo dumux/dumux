@@ -569,10 +569,38 @@ private:
      */
     void applyInitialSolutionImpl_(SolutionVector& sol, /*isBox=*/std::true_type) const
     {
-        for (const auto& vertex : vertices(fvGridGeometry_->gridView()))
+        const auto numDofs = fvGridGeometry_->vertexMapper().size();
+        const auto numVert = fvGridGeometry_->gridView().size(dim);
+
+        // if there are more dofs than vertices (enriched nodal dofs), we have to
+        // call initial for all dofs at the nodes, coming from all neighboring elements.
+        if (numDofs != numVert)
         {
-            const auto dofIdxGlobal = fvGridGeometry_->vertexMapper().index(vertex);
-            sol[dofIdxGlobal] = asImp_().initial(vertex);
+            std::vector<bool> dofVisited(numDofs, false);
+            for (const auto& element : elements(fvGridGeometry_->gridView()))
+            {
+                for (int i = 0; i < element.subEntities(dim); ++i)
+                {
+                    const auto dofIdxGlobal = fvGridGeometry_->vertexMapper().subIndex(element, i, dim);
+
+                    // forward to implementation if value at dof is not set yet
+                    if (!dofVisited[dofIdxGlobal])
+                    {
+                        sol[dofIdxGlobal] = asImp_().initial(element.template subEntity<dim>(i));
+                        dofVisited[dofIdxGlobal] = true;
+                    }
+                }
+            }
+        }
+
+        // otherwise we directly loop over the vertices
+        else
+        {
+            for (const auto& vertex : vertices(fvGridGeometry_->gridView()))
+            {
+                const auto dofIdxGlobal = fvGridGeometry_->vertexMapper().index(vertex);
+                sol[dofIdxGlobal] = asImp_().initial(vertex);
+            }
         }
     }
 
