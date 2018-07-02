@@ -99,6 +99,7 @@ public:
         velocityMaximum_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
         velocityGradients_.resize(this->fvGridGeometry().elementMapper().size(), DimMatrix(0.0));
         stressTensorScalarProduct_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
+        vorticityTensorScalarProduct_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
         flowNormalAxis_.resize(this->fvGridGeometry().elementMapper().size(), 0);
         wallNormalAxis_.resize(this->fvGridGeometry().elementMapper().size(), 1);
         kinematicViscosity_.resize(this->fvGridGeometry().elementMapper().size(), 0.0);
@@ -325,6 +326,24 @@ public:
                 }
             }
 
+            Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension> vorticityTensor(0.0);
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                {
+                    vorticityTensor[dimIdx][velIdx] = 0.5 * velocityGradients_[elementID][dimIdx][velIdx]
+                                                      - 0.5 * velocityGradients_[elementID][velIdx][dimIdx];
+              }
+            }
+            vorticityTensorScalarProduct_[elementID] = 0.0;
+            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            {
+                for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
+                {
+                    vorticityTensorScalarProduct_[elementID] += vorticityTensor[dimIdx][velIdx] * vorticityTensor[dimIdx][velIdx];
+                }
+            }
+
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
@@ -403,6 +422,7 @@ public:
     std::vector<DimVector> velocityMinimum_;
     std::vector<DimMatrix> velocityGradients_;
     std::vector<Scalar> stressTensorScalarProduct_;
+    std::vector<Scalar> vorticityTensorScalarProduct_;
     std::vector<unsigned int> wallNormalAxis_;
     std::vector<unsigned int> flowNormalAxis_;
     std::vector<Scalar> kinematicViscosity_;

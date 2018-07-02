@@ -95,6 +95,7 @@ public:
         uStar_ = max(uStar_, 1e-10); // zero values lead to numerical problems in some turbulence models
         yPlus_ = wallDistance_ * uStar_ / problem.kinematicViscosity_[elementID_];
         uPlus_ = velocity_[flowNormalAxis] / uStar_;
+        karmanConstant_ = problem.karmanConstant();
     }
 
     /*!
@@ -126,6 +127,12 @@ public:
      */
     Scalar wallDistance() const
     { return wallDistance_; }
+
+    /*!
+     * \brief Return the Karman constant
+     */
+    Scalar karmanConstant() const
+    { return karmanConstant_; }
 
     /*!
      * \brief Return the wall friction velocity \f$\mathrm{[m/s]}\f$
@@ -166,6 +173,7 @@ protected:
     std::size_t elementID_;
     std::size_t wallElementID_;
     Scalar wallDistance_;
+    Scalar karmanConstant_;
     Scalar uStar_;
     Scalar yPlus_;
     Scalar uPlus_;

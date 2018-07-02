@@ -43,6 +43,9 @@
 #elif KOMEGA
 #include <dumux/freeflow/rans/twoeq/komega/model.hh>
 #include <dumux/freeflow/rans/twoeq/komega/problem.hh>
+#elif ONEEQ
+#include <dumux/freeflow/rans/oneeq/model.hh>
+#include <dumux/freeflow/rans/oneeq/problem.hh>
 #else
 #include <dumux/freeflow/rans/zeroeq/model.hh>
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
@@ -64,6 +67,8 @@ NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsi
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilon));
 #elif KOMEGA
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, KOmega));
+#elif ONEEQ
+NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, OneEq));
 #else
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEq));
 #endif
@@ -109,6 +114,10 @@ class PipeLauferProblem : public KEpsilonProblem<TypeTag>
 class PipeLauferProblem : public KOmegaProblem<TypeTag>
 {
     using ParentType = KOmegaProblem<TypeTag>;
+#elif ONEEQ
+class PipeLauferProblem : public OneEqProblem<TypeTag>
+{
+    using ParentType = OneEqProblem<TypeTag>;
 #else
 class PipeLauferProblem : public ZeroEqProblem<TypeTag>
 {
@@ -143,7 +152,7 @@ public:
         inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 283.15);
         wallTemperature_ = getParam<Scalar>("Problem.WallTemperature", 323.15);
         sandGrainRoughness_ = getParam<Scalar>("Problem.SandGrainRoughness", 0.0);
-        startWithZeroVelocity_ = getParam<bool>("RANS.StartWithZeroVelocity", false);
+        startWithZeroVelocity_ = getParam<bool>("Problem.StartWithZeroVelocity", false);
 
         FluidSystem::init();
         Dumux::TurbulenceProperties<Scalar, dimWorld, true> turbulenceProperties;
@@ -244,12 +253,14 @@ public:
 #if LOWREKEPSILON || KEPSILON || KOMEGA
             values.setDirichlet(Indices::turbulentKineticEnergyIdx);
             values.setDirichlet(Indices::dissipationIdx);
-
+#endif
 #if KOMEGA
             // set a fixed dissipation (omega) in one cell
             if (isOnWall(globalPos))
                 values.setDirichletCell(Indices::dissipationIdx);
 #endif
+#if ONEEQ
+            values.setDirichlet(Indices::viscosityTildeIdx);
 #endif
         }
         return values;
@@ -325,12 +336,20 @@ public:
 #endif
 
 #if LOWREKEPSILON || KEPSILON || KOMEGA
-        values[Indices::turbulentKineticEnergyEqIdx] = turbulentKineticEnergy_;
-        values[Indices::dissipationEqIdx] = dissipation_;
+        values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
+        values[Indices::dissipationIdx] = dissipation_;
         if (isOnWall(globalPos))
         {
-            values[Indices::turbulentKineticEnergyEqIdx] = 0.0;
-            values[Indices::dissipationEqIdx] = 0.0;
+            values[Indices::turbulentKineticEnergyIdx] = 0.0;
+            values[Indices::dissipationIdx] = 0.0;
+        }
+#endif
+
+#if ONEEQ
+        values[Indices::viscosityTildeIdx] = viscosityTilde_;
+        if (isOnWall(globalPos))
+        {
+            values[Indices::viscosityTildeIdx] = 0.0;
         }
 #endif
 

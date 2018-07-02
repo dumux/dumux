@@ -1,3 +1,4 @@
+add_subdirectory(oneeq)
 add_subdirectory(twoeq)
 add_subdirectory(zeroeq)
 
