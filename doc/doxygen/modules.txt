@@ -188,13 +188,12 @@
        * \ingroup RANSModel
        * \defgroup ZeroEqModel 0-Eq. Models
        * \brief Zero-equation or algebraic turbulence models
-       * \copydetails ./freeflow/rans/model.hh
+       * \copydetails ./freeflow/rans/zeroeq/model.hh
        */
       /*!
        * \ingroup RANSModel
        * \defgroup TwoEqModel 2-Eq. Models
        * \brief Two-equation turbulence models
-       * \copydetails ./freeflow/rans/model.hh
        */
         /*!
          * \ingroup TwoEqModel

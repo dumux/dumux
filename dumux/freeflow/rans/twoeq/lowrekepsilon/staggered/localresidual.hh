@@ -19,7 +19,7 @@
  /*!
   * \file
   * \ingroup LowReKEpsilonModel
-  * \copydoc Dumux::LowReKepsilonResidualImpl
+  * \copydoc Dumux::LowReKEpsilonResidualImpl
   */
 #ifndef DUMUX_STAGGERED_LOWREKEPSILON_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_LOWREKEPSILON_LOCAL_RESIDUAL_HH
