@@ -234,11 +234,29 @@ public:
     //! \brief Returns a modified version of the stress tensor scalar product
     Scalar stressTensorScalarProductTilde() const
     {
-//         return std::max(0.3 * vorticityMagnitude(),
-//                vorticityMagnitude()
-//                + viscosityTilde() * fv2()
-//                  / RANSParentType::karmanConstant() / RANSParentType::karmanConstant()
-//                  / RANSParentType::wallDistance() / RANSParentType::wallDistance());
+
+        static const int sTildeTerm = getParamFromGroup<int>("",
+                                                             "OneEq.STildeType", 0);
+        if (sTildeTerm == 1)
+        {
+            return std::max(0.3 * vorticityMagnitude(),
+                   vorticityMagnitude()
+                   + viscosityTilde() * fv2()
+                     / RANSParentType::karmanConstant() / RANSParentType::karmanConstant()
+                     / RANSParentType::wallDistance() / RANSParentType::wallDistance());
+        }
+        else if (sTildeTerm == 2)
+        {
+            Scalar sBar = viscosityTilde() * fv2()
+                          / RANSParentType::karmanConstant() / RANSParentType::karmanConstant()
+                          / RANSParentType::wallDistance() / RANSParentType::wallDistance();
+            return sBar < -c2() * vorticityMagnitude()
+                  ? vorticityMagnitude()
+                    + (vorticityMagnitude() * (c2() * c2() * vorticityMagnitude() + c3() * sBar))
+                      / ((c3() - 2.0 * c2()) * vorticityMagnitude() - sBar)
+                  : vorticityMagnitude() + sBar;
+        }
+
         return vorticityMagnitude()
                + viscosityTilde() * fv2()
                  / RANSParentType::karmanConstant() / RANSParentType::karmanConstant()
@@ -251,6 +269,14 @@ public:
         using std::sqrt;
         return sqrt(2.0 * vorticityTensorScalarProduct_);
     }
+
+    //! \brief Returns a model constant
+    Scalar c2() const
+    { return 0.7; }
+
+    //! \brief Returns a model constant
+    Scalar c3() const
+    { return 0.9; }
 
     //! \brief Returns a model constant
     Scalar sigma() const

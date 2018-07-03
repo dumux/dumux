@@ -20,6 +20,9 @@ InletVelocity = 2.5 # [m/s]
 EnableGravity = false
 SandGrainRoughness = 0.0 # [m] # not implemented for EddyViscosityModel = 3
 
+[OneEq]
+STildeType = 2
+
 [RANS]
 EddyViscosityModel = "baldwinLomax"
 UseStoredEddyViscosity = false
