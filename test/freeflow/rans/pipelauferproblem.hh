@@ -152,7 +152,11 @@ public:
         inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 283.15);
         wallTemperature_ = getParam<Scalar>("Problem.WallTemperature", 323.15);
         sandGrainRoughness_ = getParam<Scalar>("Problem.SandGrainRoughness", 0.0);
-        startWithZeroVelocity_ = getParam<bool>("Problem.StartWithZeroVelocity", false);
+#if ONEEQ
+        initializationTime_ = getParam<Scalar>("TimeLoop.Initialization", 1.0);
+#else
+        initializationTime_ = getParam<Scalar>("TimeLoop.Initialization", -1.0);
+#endif
 
         FluidSystem::init();
         Dumux::TurbulenceProperties<Scalar, dimWorld, true> turbulenceProperties;
@@ -162,8 +166,9 @@ public:
         Scalar density = FluidSystem::density(fluidState, phaseIdx);
         Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, phaseIdx) / density;
         Scalar diameter = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
+        // ideally the viscosityTilde parameter as inflow for the Spalart-Allmaras model should be zero
         viscosityTilde_ = getParam<Scalar>("Problem.InletViscosityTilde",
-                                           turbulenceProperties.viscosityTilde(inletVelocity_, diameter, kinematicViscosity));
+                                           1e-3 * turbulenceProperties.viscosityTilde(inletVelocity_, diameter, kinematicViscosity));
         turbulentKineticEnergy_ = getParam<Scalar>("Problem.InletTurbulentKineticEnergy",
                                                    turbulenceProperties.turbulentKineticEnergy(inletVelocity_, diameter, kinematicViscosity));
 #if KOMEGA
@@ -320,9 +325,10 @@ public:
     {
         PrimaryVariables values(0.0);
         values[Indices::pressureIdx] = 1.0e+5;
-        values[Indices::velocityXIdx] = inletVelocity_;
-        if (isOnWall(globalPos)
-            || (startWithZeroVelocity_ && time() < eps_))
+        values[Indices::velocityXIdx] = time() > initializationTime_
+                                        ? inletVelocity_
+                                        : time() / initializationTime_ * inletVelocity_;
+        if (isOnWall(globalPos))
         {
             values[Indices::velocityXIdx] = 0.0;
         }
@@ -384,7 +390,7 @@ private:
     Scalar inletTemperature_;
     Scalar wallTemperature_;
     Scalar sandGrainRoughness_;
-    bool startWithZeroVelocity_;
+    Scalar initializationTime_;
     Scalar viscosityTilde_;
     Scalar turbulentKineticEnergy_;
     Scalar dissipation_;
