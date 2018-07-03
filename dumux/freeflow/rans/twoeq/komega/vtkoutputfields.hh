@@ -53,10 +53,6 @@ public:
     {
         vtk.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
         vtk.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "omega");
-        vtk.addVolumeVariable([](const auto& v){ return 2.0 * v.kinematicEddyViscosity() * v.stressTensorScalarProduct();}, "production_k");
-        vtk.addVolumeVariable([](const auto& v){ return 2.0 * v.kinematicEddyViscosity() * v.stressTensorScalarProduct() * v.alpha() * ( v.dissipation() / v.turbulentKineticEnergy() ) ; }, "production_omega");
-        vtk.addVolumeVariable([](const auto& v){ return v.betaK() * v.turbulentKineticEnergy() * v.dissipation() ;}, "destruction_k");
-        vtk.addVolumeVariable([](const auto& v){ return v.betaOmega() * v.dissipation() * v.dissipation() ;}, "destruction_omega");
     }
 };
 
