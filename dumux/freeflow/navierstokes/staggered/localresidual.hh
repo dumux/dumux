@@ -300,8 +300,7 @@ protected:
                                            * extrusionFactor * scvf.area();
 
                 // treat the remaining (normal) faces of the staggered control volume
-                FluxVariables fluxVars;
-                residual += fluxVars.computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
+                residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
             }
             else if(bcTypes.isSymmetry())
             {
