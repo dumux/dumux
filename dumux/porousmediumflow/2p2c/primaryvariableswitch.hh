@@ -75,23 +75,23 @@ protected:
         if (phasePresence == Indices::secondPhaseOnly)
         {
             // calculate mole fraction in the hypothetic first phase
-            Scalar xww = volVars.moleFraction(phase0Idx, comp0Idx);
-            Scalar xwn = volVars.moleFraction(phase0Idx, comp1Idx);
+            Scalar x00 = volVars.moleFraction(phase0Idx, comp0Idx);
+            Scalar x01 = volVars.moleFraction(phase0Idx, comp1Idx);
 
-            Scalar xwMax = 1.0;
-            if (xww + xwn > xwMax)
+            Scalar x0Max = 1.0;
+            if (x00 + x01 > x0Max)
                 wouldSwitch = true;
             if (this->wasSwitched_[dofIdxGlobal])
-                xwMax *= 1.02;
+                x0Max *= 1.02;
 
-            // if the sum of the mole fractions is larger than
-            // 100%, first phase appears
-            if (xww + xwn > xwMax)
+            // if the sum of the mole fractions is too large, first phase appears
+            if (x00 + x01 > x0Max)
             {
-                // wetting phase appears
-                std::cout << "first phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", x00 + x01: "
-                          << xww + xwn << std::endl;
+                std::cout << "First phase (" << FluidSystem::phaseName(phase0Idx) << ")"
+                          << " appears at vertex " << dofIdxGlobal
+                          << ", coordinates: " << globalPos
+                          << ", sum x^i_" << FluidSystem::phaseName(phase0Idx) << ": " << x00 + x01
+                          << std::endl;
                 newPhasePresence = Indices::bothPhases;
                 if (formulation == TwoPFormulation::p1s0)
                     priVars[switchIdx] = 0.0001;
@@ -101,25 +101,24 @@ protected:
         }
         else if (phasePresence == Indices::firstPhaseOnly)
         {
-            // calculate fractions of the partial pressures in the
-            // hypothetic nonwetting phase
-            Scalar xnw = volVars.moleFraction(phase1Idx, comp0Idx);
-            Scalar xnn = volVars.moleFraction(phase1Idx, comp1Idx);
+            // calculate mole fraction in the hypothetic second phase
+            Scalar x10 = volVars.moleFraction(phase1Idx, comp0Idx);
+            Scalar x11 = volVars.moleFraction(phase1Idx, comp1Idx);
 
-            Scalar xgMax = 1.0;
-            if (xnw + xnn > xgMax)
+            Scalar x1Max = 1.0;
+            if (x10 + x11 > x1Max)
                 wouldSwitch = true;
             if (this->wasSwitched_[dofIdxGlobal])
-                xgMax *= 1.02;
+                x1Max *= 1.02;
 
-            // if the sum of the mole fractions is larger than
-            // 100%, nonwetting phase appears
-            if (xnw + xnn > xgMax)
+            // if the sum of the mole fractions is too large, second phase appears
+            if (x10 + x11 > x1Max)
             {
-                // nonwetting phase appears
-                std::cout << "second phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", x10 + x11: "
-                          << xnw + xnn << std::endl;
+                std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ")"
+                          << " appears at vertex " << dofIdxGlobal
+                          << ", coordinates: " << globalPos
+                          << ", sum x^i_" << FluidSystem::phaseName(phase1Idx) << ": " << x10 + x11
+                          << std::endl;
                 newPhasePresence = Indices::bothPhases;
                 if (formulation == TwoPFormulation::p1s0)
                     priVars[switchIdx] = 0.9999;
@@ -135,11 +134,12 @@ protected:
 
             if (volVars.saturation(phase1Idx) <= Smin)
             {
+                std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ")"
+                          << " disappears at vertex " << dofIdxGlobal
+                          << ", coordinates: " << globalPos
+                          << ", S_" << FluidSystem::phaseName(phase1Idx) << ": " << volVars.saturation(phase1Idx)
+                          << std::endl;
                 wouldSwitch = true;
-                // nonwetting phase disappears
-                std::cout << "second phase disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", s1: "
-                          << volVars.saturation(phase1Idx) << std::endl;
                 newPhasePresence = Indices::firstPhaseOnly;
 
                 if(useMoles) // mole-fraction formulation
@@ -149,11 +149,12 @@ protected:
             }
             else if (volVars.saturation(phase0Idx) <= Smin)
             {
+                std::cout << "First phase (" << FluidSystem::phaseName(phase0Idx) << ")"
+                          << " disappears at vertex " << dofIdxGlobal
+                          << ", coordinates: " << globalPos
+                          << ", S_" << FluidSystem::phaseName(phase0Idx) << ": " << volVars.saturation(phase1Idx)
+                          << std::endl;
                 wouldSwitch = true;
-                // wetting phase disappears
-                std::cout << "first phase disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", s0: "
-                          << volVars.saturation(phase0Idx) << std::endl;
                 newPhasePresence = Indices::secondPhaseOnly;
 
                 if(useMoles) // mole-fraction formulation
