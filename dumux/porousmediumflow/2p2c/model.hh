@@ -126,6 +126,29 @@ struct TwoPTwoCModelTraits
     static constexpr TwoPFormulation priVarFormulation() { return f; }
 };
 
+template<TwoPFormulation formulation, class FluidSystem>
+struct TwoPTwoCPrimaryVariableNames
+{
+    static std::vector<std::string> get()
+    {
+        const auto p0s1SwitchedPvNames =
+          "x_" + FluidSystem::phaseName(0) + "^" + FluidSystem::componentName(1)
+          + "/x_" + FluidSystem::phaseName(1) + "^" + FluidSystem::componentName(0)
+          + "/Sn";
+        const auto p1s0SwitchedPvNames =
+          "x_" + FluidSystem::phaseName(0) + "^" + FluidSystem::componentName(1)
+          + "/x_" + FluidSystem::phaseName(1) + "^" + FluidSystem::componentName(0)
+          + "/Sw";
+        switch (formulation)
+        {
+            case TwoPFormulation::p0s1:
+                return {"pw", p0s1SwitchedPvNames, "phase presence"};
+            case TwoPFormulation::p1s0:
+                return {"pn", p1s0SwitchedPvNames, "phase presence"};
+        }
+    }
+};
+
 /*!
  * \ingroup TwoPTwoCModel
  * \brief Traits class for the two-phase two-component model.
@@ -176,6 +199,16 @@ private:
 public:
     using type = TwoPTwoCModelTraits< GET_PROP_VALUE(TypeTag, Formulation),
                                       GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx) >;
+};
+
+NEW_PROP_TAG(PrimaryVariableNames);
+SET_PROP(TwoPTwoC, PrimaryVariableNames)
+{
+private:
+    static constexpr auto formulation = GET_PROP_VALUE(TypeTag, Formulation);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    using type = TwoPTwoCPrimaryVariableNames<formulation, FluidSystem>;
 };
 
 //! Set the vtk output fields specific to this model

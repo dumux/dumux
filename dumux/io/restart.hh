@@ -317,11 +317,16 @@ public:
         if (pieceNode == nullptr)
             DUNE_THROW(Dune::IOError, "Couldn't get Piece node in " << fileName << ".");
 
-        XMLElement *cellDataNode = pieceNode->FirstChildElement("CellData");
-        if (cellDataNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get CellData node in " << fileName << ".");
+        XMLElement *dataNode = nullptr;
+        if (FVGridGeometry::discMethod == DiscretizationMethod::box)
+            dataNode = pieceNode->FirstChildElement("PointData");
+        else
+            dataNode = pieceNode->FirstChildElement("CellData");
 
-        setPrimaryVariables_(cellDataNode, fvGridGeometry, pvNames, sol);
+        if (dataNode == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't get data node in " << fileName << ".");
+
+        setPrimaryVariables_(dataNode, fvGridGeometry, pvNames, sol);
     }
 
 private:
@@ -433,7 +438,6 @@ private:
         {
             pos = pvName.find('/', lastPos + 1);
             switchedPvNames.push_back(pvName.substr(lastPos+1, pos - lastPos - 1));
-            std::cout << "Found switched PV name " << pvName.substr(lastPos+1, pos - lastPos - 1) << std::endl;
             lastPos = pos;
         } while (pos != std::string::npos);
 

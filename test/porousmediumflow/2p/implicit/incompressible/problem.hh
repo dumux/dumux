@@ -235,7 +235,9 @@ public:
     template <class SolutionVector>
     void applyRestartSolution(SolutionVector& sol) const
     {
-        Restart::loadSolutionFromVtkFile(this->fvGridGeometry(), {"pw", "Sn"}, sol);
+        using PvNames = typename GET_PROP_TYPE(TypeTag, PrimaryVariableNames);
+
+        Restart::loadSolutionFromVtkFile(this->fvGridGeometry(), PvNames::get(), sol);
     }
 
 private:
