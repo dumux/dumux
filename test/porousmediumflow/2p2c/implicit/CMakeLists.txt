@@ -20,6 +20,15 @@ dune_add_test(NAME test_2p2c_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/injection_tpfa-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_tpfa test_2p2c_fv.input -Problem.Name injection_tpfa")
 
+dune_add_test(NAME test_2p2c_tpfa_restart
+              SOURCES test_2p2c_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=InjectionCCTpfaTypeTag ENABLECACHING=0
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/injectioncc-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/injection_tpfa_restart-00004.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_tpfa test_2p2c_fv.input -Problem.Name injection_tpfa_restart -TimeLoop.DtInitial 1488.5 -Restart.Time 2158.85 -Restart.File injection_tpfa-00004.vtu")
+
 dune_add_test(NAME test_2p2c_mpfa
               SOURCES test_2p2c_fv.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionCCMpfaTypeTag ENABLECACHING=0
