@@ -55,14 +55,19 @@ public:
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 moleFraction_[phaseIdx][compIdx] = 0;
+                fugacityCoefficient_[phaseIdx][compIdx] = 0;
             }
 
             averageMolarMass_[phaseIdx] = 0;
             sumMoleFractions_[phaseIdx] = 0;
+            pressure_[phaseIdx] = 0;
+            saturation_[phaseIdx] = 0;
+            density_[phaseIdx] = 0;
+            molarDensity_[phaseIdx] = 0;
+            enthalpy_[phaseIdx] = 0;
+            viscosity_[phaseIdx] = 0;
+            temperature_[phaseIdx] = 0;
         }
-
-        // make everything undefined so that valgrind will complain
-        Valgrind::SetUndefined(*this);
     }
 
     template <class FluidState>
