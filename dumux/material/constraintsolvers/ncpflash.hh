@@ -181,11 +181,6 @@ public:
 
         const int nMax = 50; // <- maximum number of newton iterations
         for (int nIdx = 0; nIdx < nMax; ++nIdx) {
-            // regularize fluid state
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
-                if (fluidState.averageMolarMass(phaseIdx) < 1e-10)
-                    fluidState.setMoleFraction(phaseIdx, /*compIdx=*/0, 1e-10);
-
             // calculate Jacobian matrix and right hand side
             linearize_<MaterialLaw>(J, b, fluidState, paramCache, matParams, globalMolarities);
             Valgrind::CheckDefined(J);
