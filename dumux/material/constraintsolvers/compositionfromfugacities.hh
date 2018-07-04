@@ -154,7 +154,9 @@ public:
 
             if (relError < 1e-9) {
                 Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+                Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
                 fluidState.setDensity(phaseIdx, rho);
+                fluidState.setMolarDensity(phaseIdx, rhoMolar);
 
                 //std::cout << "num iterations: " << nIdx << "\n";
                 return;
@@ -194,6 +196,8 @@ protected:
 
         Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
         fluidState.setDensity(phaseIdx, rho);
+        Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
+        fluidState.setMolarDensity(phaseIdx, rhoMolar);
     }
 
     template <class FluidState>

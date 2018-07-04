@@ -69,6 +69,16 @@ public:
     }
 
     /*!
+     * \brief The molar density of MyIncompressibleComponent in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    { return liquidDensity(temperature, pressure)/molarMass(); }
+
+    /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of MyIncompressibleComponent.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$

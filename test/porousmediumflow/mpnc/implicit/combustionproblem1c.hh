@@ -330,14 +330,18 @@ public:
         fluidState.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);
         // compute density of injection phase
         const Scalar density = FluidSystem::density(fluidState,
-                dummyCache,
-                wPhaseIdx);
+                                                    dummyCache,
+                                                    wPhaseIdx);
         fluidState.setDensity(wPhaseIdx, density);
+        const Scalar molarDensity = FluidSystem::molarDensity(fluidState,
+                                                              dummyCache,
+                                                              wPhaseIdx);
+        fluidState.setMolarDensity(wPhaseIdx, molarDensity);
 
         for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++) {
             const Scalar h = FluidSystem::enthalpy(fluidState,
-                    dummyCache,
-                    phaseIdx);
+                                                   dummyCache,
+                                                   phaseIdx);
             fluidState.setEnthalpy(phaseIdx, h);
         }
 

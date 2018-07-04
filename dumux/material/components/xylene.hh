@@ -48,6 +48,7 @@ class Xylene
 , public Components::Gas<Scalar, Xylene<Scalar> >
 {
     using Consts = Constants<Scalar>;
+    using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:
     /*!
@@ -247,9 +248,9 @@ public:
      */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
-        return IdealGas<Scalar>::density(molarMass(),
-                                         temperature,
-                                         pressure);
+        return IdealGas::density(molarMass(),
+                                 temperature,
+                                 pressure);
     }
 
     /*!
@@ -258,10 +259,8 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar molarGasDensity(Scalar temperature, Scalar pressure)
-    {
-        return (gasDensity(temperature, pressure) / molarMass());
-    }
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
 
     /*!
      * \brief The molar liquid density of pure xylene at a given pressure and temperature
@@ -272,7 +271,7 @@ public:
      * \param temp temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar molarLiquidDensity(Scalar temp, Scalar pressure)
+    static Scalar liquidMolarDensity(Scalar temp, Scalar pressure)
     {
         // saturated molar volume according to Lide, CRC Handbook of
         // Thermophysical and Thermochemical Data, CRC Press, 1994
@@ -299,7 +298,7 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-        return molarLiquidDensity(temperature, pressure)*molarMass(); // [kg/m^3]
+        return liquidMolarDensity(temperature, pressure)*molarMass();
     }
 
     /*!

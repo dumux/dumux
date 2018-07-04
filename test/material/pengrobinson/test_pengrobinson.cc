@@ -23,6 +23,7 @@
  *        Peng-Robinson EOS) and the NCP flash solver.
  */
 #include <config.h>
+#include <iomanip>
 
 #include <dumux/material/constraintsolvers/ncpflash.hh>
 #include <dumux/material/fluidstates/compositional.hh>
@@ -71,6 +72,7 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
                                                   reservoirFluidState.moleFraction(phaseIdx, compIdx));
             }
             surfaceFluidState.setDensity(phaseIdx, reservoirFluidState.density(phaseIdx));
+            surfaceFluidState.setMolarDensity(phaseIdx, reservoirFluidState.molarDensity(phaseIdx));
             surfaceFluidState.setPressure(phaseIdx, reservoirFluidState.pressure(phaseIdx));
             surfaceFluidState.setSaturation(phaseIdx, 0.0);
         }
@@ -189,7 +191,9 @@ int main(int argc, char** argv)
     // density
     paramCache.updatePhase(fluidState, oPhaseIdx);
     Scalar rho = FluidSystem::density(fluidState, paramCache, oPhaseIdx);
+    Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, oPhaseIdx);
     fluidState.setDensity(oPhaseIdx, rho);
+    fluidState.setMolarDensity(oPhaseIdx, rhoMolar);
 
     ////////////
     // Calculate the total molarities of the components
@@ -214,7 +218,7 @@ int main(int argc, char** argv)
     Scalar rho_gRef = surfaceFluidState.density(gPhaseIdx);
     Scalar rho_oRef = surfaceFluidState.density(oPhaseIdx);
 
-    std::cout << "alpha[-] p[Pa] S_g[-] rho_o[kg/m^3] rho_g[kg/m^3] <M_o>[kg/mol] <M_g>[kg/mol] R_s[m^3/m^3] B_g[-] B_o[-]\n";
+    std::cout << "alpha[-]     p[Pa]        S_g[-]       rho_o[kg/m^3] rho_g[kg/m^3] rhom_o[mol/m^3] rhom_g[mol/m^3] <M_o>[kg/mol] <M_g>[kg/mol] R_s[m^3/m^3] B_g[-] B_o[-]\n";
     int n = 50;
     for (int i = 0; i < n; ++i) {
         Scalar minAlpha = 0.98;
@@ -234,11 +238,13 @@ int main(int argc, char** argv)
                                                                      surfaceAlpha,
                                                                      flashFluidState,
                                                                      /*guessInitial=*/false);
-        std::cout << alpha << " "
+        std::cout << std::scientific << alpha << " "
                   << flashFluidState.pressure(oPhaseIdx) << " "
                   << flashFluidState.saturation(gPhaseIdx) << " "
                   << flashFluidState.density(oPhaseIdx) << " "
                   << flashFluidState.density(gPhaseIdx) << " "
+                  << flashFluidState.molarDensity(oPhaseIdx) << " "
+                  << flashFluidState.molarDensity(gPhaseIdx) << " "
                   << flashFluidState.averageMolarMass(oPhaseIdx) << " "
                   << flashFluidState.averageMolarMass(gPhaseIdx) << " "
                   << surfaceFluidState.saturation(gPhaseIdx)*alphaSurface << " "

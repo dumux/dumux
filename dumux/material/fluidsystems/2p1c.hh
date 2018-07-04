@@ -279,19 +279,41 @@ public:
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
-        Scalar T = fluidState.temperature(phaseIdx);
-        Scalar p = fluidState.pressure(phaseIdx);
+        Scalar temperature = fluidState.temperature(phaseIdx);
+        Scalar pressure = fluidState.pressure(phaseIdx);
 
         // liquid phase
         if (phaseIdx == liquidPhaseIdx) {
-                return Component::liquidDensity(T, p);
+            return Component::liquidDensity(temperature, pressure);
         }
         else if (phaseIdx == gasPhaseIdx)// gas phase
         {
-            return Component::gasDensity(T, p);
+            return Component::gasDensity(temperature, pressure);
         }
         else DUNE_THROW(Dune::NotImplemented,
                    "wrong index");
+    }
+
+    using Base::molarDensity;
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density is defined by the
+     * mass density \f$\rho_\alpha\f$ and the molar mass \f$M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+        Scalar temperature = fluidState.temperature(phaseIdx);
+        Scalar pressure = fluidState.temperature(phaseIdx);
+        if (phaseIdx == liquidPhaseIdx)
+            return Component::liquidMolarDensity(temperature, pressure);
+
+        return Component::gasMolarDensity(temperature, pressure);
+
     }
 
     /*!
@@ -307,16 +329,16 @@ public:
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
-        Scalar T = fluidState.temperature(phaseIdx);
-        Scalar p = fluidState.pressure(phaseIdx);
+        Scalar temperature = fluidState.temperature(phaseIdx);
+        Scalar pressure = fluidState.pressure(phaseIdx);
 
         // liquid phase
         if (phaseIdx == liquidPhaseIdx) {
-                return Component::liquidViscosity(T, p);
+            return Component::liquidViscosity(temperature, pressure);
         }
         else if (phaseIdx == gasPhaseIdx) // gas phase
         {
-            return Component::gasViscosity(T, p) ;
+            return Component::gasViscosity(temperature, pressure) ;
         }
         else DUNE_THROW(Dune::NotImplemented,
                    "wrong index");
@@ -374,12 +396,14 @@ public:
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         assert(0 <= compIdx  && compIdx < numComponents);
 
-        Scalar T = fluidState.temperature(phaseIdx);
-        Scalar p = fluidState.pressure(phaseIdx);
+        Scalar temperature = fluidState.temperature(phaseIdx);
+        Scalar pressure = fluidState.pressure(phaseIdx);
 
         // liquid phase
         if (phaseIdx == liquidPhaseIdx)
-           return Component::vaporPressure(T)/p;
+        {
+           return Component::vaporPressure(temperature)/pressure;
+        }
 
         // for the gas phase, assume an ideal gas when it comes to
         // fugacity (-> fugacity == partial pressure)
@@ -443,12 +467,12 @@ public:
         // liquid phase
         if (phaseIdx == liquidPhaseIdx) {
             return Component::liquidEnthalpy(fluidState.temperature(phaseIdx),
-                                           fluidState.pressure(phaseIdx));
+                                             fluidState.pressure(phaseIdx));
         }
         else if (phaseIdx == gasPhaseIdx) // gas phase
         {
             return Component::gasEnthalpy(fluidState.temperature(phaseIdx),
-                                           fluidState.pressure(phaseIdx));
+                                          fluidState.pressure(phaseIdx));
         }
         else DUNE_THROW(Dune::NotImplemented,
                    "wrong index");
@@ -471,12 +495,12 @@ public:
         // liquid phase
         if (phaseIdx == liquidPhaseIdx) {
                  return Component::liquidThermalConductivity(fluidState.temperature(phaseIdx),
-                                                        fluidState.pressure(phaseIdx)); //0.68 ;
+                                                             fluidState.pressure(phaseIdx)); //0.68 ;
         }
         else if (phaseIdx == gasPhaseIdx) // gas phase
         {
             return Component::gasThermalConductivity(fluidState.temperature(phaseIdx),
-                                                        fluidState.pressure(phaseIdx)); //0.0248;
+                                                     fluidState.pressure(phaseIdx)); //0.0248;
         }
         else DUNE_THROW(Dune::NotImplemented,
                    "wrong index");
@@ -497,13 +521,13 @@ public:
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         // liquid phase
         if (phaseIdx == liquidPhaseIdx) {
-                 return Component::liquidHeatCapacity(fluidState.temperature(phaseIdx),
-                                           fluidState.pressure(phaseIdx));//4.217e3 ;
+            return Component::liquidHeatCapacity(fluidState.temperature(phaseIdx),
+                                                 fluidState.pressure(phaseIdx));//4.217e3 ;
         }
         else if (phaseIdx == gasPhaseIdx) // gas phase
         {
             return Component::gasHeatCapacity(fluidState.temperature(phaseIdx),
-                                           fluidState.pressure(phaseIdx));//2.029e3;
+                                              fluidState.pressure(phaseIdx));//2.029e3;
         }
         else DUNE_THROW(Dune::NotImplemented, "wrong index");
     }

@@ -70,6 +70,15 @@ public:
     }
 
     /*!
+     * \brief The molar density \f$\mathrm{[mol/m^3]}\f$ of CaO.
+     * Molar density at 293 K. Literature value from Shao et al. (2013).
+     */
+    static Scalar solidMolarDensity(Scalar temperature)
+    {
+        return solidDensity(temperature)/molarMass();
+    }
+
+    /*!
      * \brief The specific heat capacity \f$\mathrm{[J/kg K]}\f$ of CaO.
      */
     static Scalar solidHeatCapacity(Scalar temperature)

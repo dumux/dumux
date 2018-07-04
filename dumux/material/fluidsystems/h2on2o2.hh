@@ -128,6 +128,17 @@ public:
     }
 
     /*!
+     * \brief Return whether a phase is gaseous
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr bool isGas(int phaseIdx)
+    {
+        assert(0 <= phaseIdx && phaseIdx < numPhases);
+        return phaseIdx == gasPhaseIdx;
+    }
+
+    /*!
      * \brief Returns true if and only if a fluid phase is assumed to
      *        be an ideal mixture.
      *
@@ -334,9 +345,9 @@ public:
         return fugacityCoefficient(fluidState, phaseIdx, compIdx)
                * fluidState.pressure(phaseIdx)
                * exp(-(fluidState.pressure(gasPhaseIdx)-fluidState.pressure(liquidPhaseIdx))
-                          / density(fluidState, phaseIdx)
-                          / (Dumux::Constants<Scalar>::R / molarMass(compIdx))
-                          / fluidState.temperature());
+                      / density(fluidState, phaseIdx)
+                      / (Dumux::Constants<Scalar>::R / molarMass(compIdx))
+                      / fluidState.temperature());
     }
 
     /*!
@@ -418,7 +429,7 @@ public:
      * in Class et al. (2002a) \cite A3:class:2002b <BR>
      * for the liquid density.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     template <class FluidState>
@@ -430,10 +441,6 @@ public:
         Scalar T = fluidState.temperature(phaseIdx);
         Scalar p = fluidState.pressure(phaseIdx);
 
-        Scalar sumMoleFrac = 0;
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            sumMoleFrac += fluidState.moleFraction(phaseIdx, compIdx);
-
         // liquid phase
         if (phaseIdx == liquidPhaseIdx) {
             if (!useComplexRelations)
@@ -442,19 +449,12 @@ public:
             else
             {
                 // See: Eq. (7) in Class et al. (2002a)
-                Scalar rholH2O = H2O::liquidDensity(T,p);
-                Scalar clH2O = rholH2O/H2O::molarMass();
-
-                // this assumes each nitrogen molecule displaces exactly one
-                // water molecule in the liquid
-                return
-                    clH2O*
-                    (fluidState.moleFraction(liquidPhaseIdx, H2OIdx)*H2O::molarMass()
-                    +
-                    fluidState.moleFraction(liquidPhaseIdx, N2Idx)*N2::molarMass()
-                    +
-                    fluidState.moleFraction(liquidPhaseIdx, O2Idx)*O2::molarMass())
-                    / sumMoleFrac;
+                // This assumes each gas molecule displaces exactly one
+                // molecule in the liquid.
+                return H2O::liquidMolarDensity(T, p)
+                       * (fluidState.moleFraction(liquidPhaseIdx, H2OIdx)*H2O::molarMass()
+                          + fluidState.moleFraction(liquidPhaseIdx, N2Idx)*N2::molarMass()
+                          + fluidState.moleFraction(liquidPhaseIdx, O2Idx)*O2::molarMass());
             }
         }
 
@@ -462,17 +462,52 @@ public:
         using std::max;
         if (!useComplexRelations)
             // for the gas phase assume an ideal gas
-            return
-                IdealGas::molarDensity(T, p)
-                * fluidState.averageMolarMass(gasPhaseIdx)
-                / max(1e-5, sumMoleFrac);
+            return IdealGas::molarDensity(T, p)
+                   * fluidState.averageMolarMass(gasPhaseIdx);
 
         // assume ideal mixture: steam, nitrogen and oxygen don't "see" each
         // other
-        Scalar rho_gH2O = H2O::gasDensity(T, p*fluidState.moleFraction(gasPhaseIdx, H2OIdx));
-        Scalar rho_gN2 = N2::gasDensity(T, p*fluidState.moleFraction(gasPhaseIdx, N2Idx));
-        Scalar rho_gO2 = O2::gasDensity(T, p*fluidState.moleFraction(gasPhaseIdx, O2Idx));
-        return (rho_gH2O + rho_gN2 + rho_gO2 ) / max(1e-5, sumMoleFrac);
+        return H2O::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, H2OIdx))
+               + N2::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, N2Idx))
+               + O2::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, O2Idx));
+    }
+
+    using Base::molarDensity;
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density for the simple relation is defined by the
+     * mass density \f$\rho_\alpha\f$ and the molar mass of the main component
+     *
+     * The molar density for the complrex relation is defined by the
+     * mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
+
+        if (phaseIdx == liquidPhaseIdx)
+        {
+            // assume pure water or that each gas molecule displaces exactly one
+            // molecule in the liquid.
+            return H2O::liquidMolarDensity(T, p);
+        }
+        else
+        {
+            if (!useComplexRelations)
+            {   //assume ideal gas
+                return IdealGas::molarDensity(T,p);
+            }
+
+            return H2O::gasMolarDensity(T, fluidState.partialPressure(gasPhaseIdx, H2OIdx))
+                   + N2::gasMolarDensity(T, fluidState.partialPressure(gasPhaseIdx, N2Idx))
+                   + O2::gasMolarDensity(T, fluidState.partialPressure(gasPhaseIdx, O2Idx));
+        }
     }
 
     using Base::viscosity;
@@ -575,9 +610,9 @@ public:
         if (phaseIdx == liquidPhaseIdx)
         {
             switch(compIdx){
-            case H2OIdx: return H2O::vaporPressure(T)/p;
-            case N2Idx: return BinaryCoeff::H2O_N2::henry(T)/p;
-            case O2Idx: return BinaryCoeff::H2O_O2::henry(T)/p;
+                case H2OIdx: return H2O::vaporPressure(T)/p;
+                case N2Idx: return BinaryCoeff::H2O_N2::henry(T)/p;
+                case O2Idx: return BinaryCoeff::H2O_O2::henry(T)/p;
             };
         }
 
@@ -817,8 +852,8 @@ public:
                                           fluidState.pressure(phaseIdx)
                                           * fluidState.moleFraction(phaseIdx, H2OIdx));
             c_pO2 = O2::gasHeatCapacity(fluidState.temperature(phaseIdx),
-                                          fluidState.pressure(phaseIdx)
-                                          * fluidState.moleFraction(phaseIdx, O2Idx));
+                                        fluidState.pressure(phaseIdx)
+                                        * fluidState.moleFraction(phaseIdx, O2Idx));
         }
         else {
             // assume an ideal gas for both components. See:

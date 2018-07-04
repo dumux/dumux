@@ -546,6 +546,16 @@ public:
     }
 
     /*!
+     *  \brief The molar density of steam in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return gasDensity(temperature, pressure)/molarMass(); }
+
+    /*!
      * \brief Returns true if the gas phase is assumed to be ideal
      */
     static constexpr bool gasIsIdeal()
@@ -649,6 +659,16 @@ public:
 
         return 1/volumeRegion1_(temperature, pressure);
     }
+
+    /*!
+     * \brief The molar density of water in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    { return liquidDensity(temperature, pressure)/molarMass(); }
 
     /*!
      * \brief The pressure of liquid water in \f$\mathrm{[Pa]}\f$ at a given density and

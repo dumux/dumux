@@ -333,6 +333,30 @@ public:
         else DUNE_THROW(Dune::NotImplemented, "Wrong phase index");
     }
 
+    using Base::molarDensity;
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density is defined by the
+     * mass density \f$\rho_\alpha\f$ and the main component molar mass \f$M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+        if (phaseIdx == wPhaseIdx)
+        {
+            return density(fluidState, phaseIdx)/H2O::molarMass();
+        }
+        else if (phaseIdx == nPhaseIdx)
+        {
+            return density(fluidState, phaseIdx)/N2::molarMass();
+        }
+        else DUNE_THROW(Dune::NotImplemented, "Wrong phase index");
+    }
+
     using Base::viscosity;
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase \f$\mathrm{[Pa*s]}\f$

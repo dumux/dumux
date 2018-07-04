@@ -134,6 +134,16 @@ public:
     }
 
     /*!
+     *  \brief The molar density of \f$N_2\f$ gas in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
+
+    /*!
      * \brief Returns true if the gas phase is assumed to be compressible
      */
     static bool gasIsCompressible()

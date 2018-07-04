@@ -45,6 +45,7 @@ class Trichloroethene
 , public Components::Liquid<Scalar, Trichloroethene<Scalar> >
 , public Components::Gas<Scalar, Trichloroethene<Scalar> >
 {
+    typedef Dumux::IdealGas<Scalar> IdealGas;
 
 public:
     /*!
@@ -130,10 +131,20 @@ public:
     */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
-        return IdealGas<Scalar>::density(molarMass(),
-                                         temperature,
-                                         pressure);
+        return IdealGas::density(molarMass(),
+                                 temperature,
+                                 pressure);
     }
+
+    /*!
+     *  \brief The molar density of steam in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be ideal
@@ -151,6 +162,16 @@ public:
     {
         return 1460.0; // [kg/m^3]
     }
+
+    /*!
+     * \brief The molar density of pure TCE in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    { return liquidDensity(temperature, pressure)/molarMass(); }
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure TCE.

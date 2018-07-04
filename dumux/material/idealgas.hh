@@ -50,7 +50,7 @@ public:
     static constexpr Scalar density(Scalar avgMolarMass,
                                     Scalar temperature,
                                     Scalar pressure)
-    { return pressure*avgMolarMass/(R*temperature); }
+    { return molarDensity(temperature,pressure)*avgMolarMass;}
 
     /*!
      * \brief The pressure of the gas in \f$\mathrm{[Pa]}\f$, depending on

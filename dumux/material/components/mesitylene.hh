@@ -48,7 +48,7 @@ class Mesitylene
 , public Components::Gas<Scalar, Mesitylene<Scalar> >
 {
     using Consts = Constants<Scalar>;
-
+    using IdealGas = Dumux::IdealGas<Scalar>;
 public:
     /*!
      * \brief A human readable name for the mesitylene
@@ -206,10 +206,19 @@ public:
      */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
-        return IdealGas<Scalar>::density(molarMass(),
-                                         temperature,
-                                         pressure);
+        return IdealGas::density(molarMass(),
+                                 temperature,
+                                 pressure);
     }
+
+    /*!
+     * \brief The molar density of mesitylene in \f$\mathrm{[mol/m^3]}\f$,
+     *   depending on pressure and temperature.
+     * \param temperature The temperature of the gas
+     * \param pressure The pressure of the gas
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
 
     /*!
      * \brief The density of pure mesitylene at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
@@ -219,7 +228,31 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-        return molarLiquidDensity_(temperature)*molarMass(); // [kg/m^3]
+        return liquidMolarDensity(temperature, pressure)*molarMass();
+    }
+
+    /*!
+     * \brief The molar density of pure mesitylene at a given pressure and temperature
+     * \f$\mathrm{[mol/m^3]}\f$.
+     *
+     * source : Reid et al. (1987, Modified Racket technique (chap. 3-11, eq. 3-11.9)) \cite reid1987
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    {
+        using std::min;
+        using std::max;
+        temperature = min(temperature, 500.0); // regularization
+        temperature = max(temperature, 250.0);
+
+        const Scalar Z_RA = 0.2556; // from equation
+
+        using std::pow;
+        const Scalar expo = 1.0 + pow(1.0 - temperature/criticalTemperature(), 2.0/7.0);
+        Scalar V = Consts::R*criticalTemperature()/criticalPressure()*pow(Z_RA, expo); // liquid molar volume [cm^3/mol]
+
+        return 1.0/V; // molar density [mol/m^3]
     }
 
     /*!
@@ -347,32 +380,6 @@ public:
     {
         return 0.1351;
     }
-
-protected:
-    /*!
-     * \brief The molar density of pure mesitylene at a given pressure and temperature
-     * \f$\mathrm{[mol/m^3]}\f$.
-     *
-     * source : Reid et al. (1987, Modified Racket technique (chap. 3-11, eq. 3-11.9)) \cite reid1987
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     */
-    static Scalar molarLiquidDensity_(Scalar temperature)
-    {
-        using std::min;
-        using std::max;
-        temperature = min(temperature, 500.0); // regularization
-        temperature = max(temperature, 250.0);
-
-        const Scalar Z_RA = 0.2556; // from equation
-
-        using std::pow;
-        const Scalar expo = 1.0 + pow(1.0 - temperature/criticalTemperature(), 2.0/7.0);
-        Scalar V = Consts::R*criticalTemperature()/criticalPressure()*pow(Z_RA, expo); // liquid molar volume [cm^3/mol]
-
-        return 1.0/V; // molar density [mol/m^3]
-    }
-
 };
 
 } // end namespace Components

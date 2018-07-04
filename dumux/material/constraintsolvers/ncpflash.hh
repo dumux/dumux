@@ -182,10 +182,9 @@ public:
         const int nMax = 50; // <- maximum number of newton iterations
         for (int nIdx = 0; nIdx < nMax; ++nIdx) {
             // regularize fluid state
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
                 if (fluidState.averageMolarMass(phaseIdx) < 1e-10)
                     fluidState.setMoleFraction(phaseIdx, /*compIdx=*/0, 1e-10);
-            }
 
             // calculate Jacobian matrix and right hand side
             linearize_<MaterialLaw>(J, b, fluidState, paramCache, matParams, globalMolarities);
@@ -195,7 +194,23 @@ public:
             // Solve J*x = b
             deltaX = 0;
 
-            try { J.solve(deltaX, b); }
+            try {
+
+                // simple preconditioning of the linear system to reduce condition number
+                int eqIdx = 0;
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    for (int phaseIdx = 1; phaseIdx < numPhases; ++phaseIdx)
+                    {
+                        J[eqIdx] *= 10e-7; // roughly the magnitude of the fugacities
+                        b[eqIdx] *= 10e-7;
+                        ++eqIdx;
+                    }
+                }
+
+                J.solve(deltaX, b);
+
+            }
             catch (Dune::FMatrixError &e)
             {
                 /*
@@ -269,6 +284,11 @@ protected:
         std::cout << "densities: ";
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             std::cout << fs.density(phaseIdx) << " ";
+        std::cout << "\n";
+
+        std::cout << "molar densities: ";
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            std::cout << fs.molarDensity(phaseIdx) << " ";
         std::cout << "\n";
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
@@ -511,8 +531,11 @@ protected:
 
         // update all densities and fugacity coefficients
         for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+
             Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+            Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
             fluidState.setDensity(phaseIdx, rho);
+            fluidState.setMolarDensity(phaseIdx, rhoMolar);
 
             for (int compIdx = 0; compIdx < numComponents; ++ compIdx) {
                 Scalar phi = FluidSystem::fugacityCoefficient( fluidState, paramCache, phaseIdx, compIdx);
@@ -577,7 +600,9 @@ protected:
             // update all densities and fugacity coefficients
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 Scalar rho = FluidSystem::density(fs, paramCache, phaseIdx);
+                Scalar rhoMolar = FluidSystem::molarDensity(fs, paramCache, phaseIdx);
                 fs.setDensity(phaseIdx, rho);
+                fs.setMolarDensity(phaseIdx, rhoMolar);
 
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
                     Scalar phi = FluidSystem::fugacityCoefficient(fs, paramCache, phaseIdx, compIdx);
@@ -607,7 +632,9 @@ protected:
             // update all densities and fugacity coefficients
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 Scalar rho = FluidSystem::density(fs, paramCache, phaseIdx);
+                Scalar rhoMolar = FluidSystem::molarDensity(fs, paramCache, phaseIdx);
                 fs.setDensity(phaseIdx, rho);
+                fs.setMolarDensity(phaseIdx, rhoMolar);
 
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
                     Scalar phi = FluidSystem::fugacityCoefficient(fs, paramCache, phaseIdx, compIdx);
@@ -625,7 +652,9 @@ protected:
 
             // update the density of the phase
             Scalar rho = FluidSystem::density(fs, paramCache, phaseIdx);
+            Scalar rhoMolar = FluidSystem::molarDensity(fs, paramCache, phaseIdx);
             fs.setDensity(phaseIdx, rho);
+            fs.setMolarDensity(phaseIdx, rhoMolar);
 
             // if the phase's fugacity coefficients are composition
             // dependent, update them as well.

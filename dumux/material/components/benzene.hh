@@ -45,7 +45,7 @@ class Benzene
 , public Components::Liquid<Scalar, Benzene<Scalar> >
 , public Components::Gas<Scalar, Benzene<Scalar> >
 {
-
+     using IdealGas = Dumux::IdealGas<Scalar>;
 public:
     /*!
      * \brief A human readable name for the benzene
@@ -67,10 +67,19 @@ public:
     */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
-        return IdealGas<Scalar>::density(molarMass(),
-                                         temperature,
-                                         pressure);
+        return IdealGas::density(molarMass(),
+                                 temperature,
+                                 pressure);
     }
+
+    /*!
+     * \brief The molar density of steam in \f$\mathrm{[mol/m^3]}\f$,
+     *   depending on pressure and temperature.
+     * \param temperature The temperature of the gas
+     * \param pressure The pressure of the gas
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return IdealGas::molarDensity(temperature, pressure); }
 
     /*!
      * \brief The density of pure benzene at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
@@ -80,7 +89,18 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-        return 889.51; // [kg/m^3]
+        return 889.51;
+    }
+
+    /*!
+     * \brief The molar density of pure benzene at a given pressure and temperature \f$\mathrm{[mol/m^3]}\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    {
+        return liquidDensity(temperature, pressure)/molarMass();
     }
 
     /*!

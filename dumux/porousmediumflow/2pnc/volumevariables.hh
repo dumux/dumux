@@ -329,10 +329,12 @@ public:
         for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
         {
             Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+            Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
             Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
             Scalar h = EnergyVolVars::enthalpy(fluidState, paramCache, phaseIdx);
 
             fluidState.setDensity(phaseIdx, rho);
+            fluidState.setMolarDensity(phaseIdx, rhoMolar);
             fluidState.setViscosity(phaseIdx, mu);
             fluidState.setEnthalpy(phaseIdx, h);
         }
@@ -378,13 +380,19 @@ public:
     { return fluidState_.viscosity(phaseIdx); }
 
     /*!
-     * \brief Returns the mass density of a given phase within the
+     * \brief Returns the molar density of a given phase within the
      *        control volume.
      *
      * \param phaseIdx The phase index
      */
     Scalar molarDensity(int phaseIdx) const
-    { return fluidState_.molarDensity(phaseIdx); }
+    {
+        if (phaseIdx < ModelTraits::numPhases())
+            return fluidState_.molarDensity(phaseIdx);
+
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
+    }
 
     /*!
      * \brief Returns the effective pressure of a given phase within

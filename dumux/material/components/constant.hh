@@ -119,6 +119,16 @@ public:
     }
 
     /*!
+     * \brief The molar density in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    { return liquidDensity(temperature, pressure)/molarMass(); }
+
+    /*!
      * \brief Sets the liquid dynamic viscosity in \f$\mathrm{[Pa*s]}\f$.
      *
      * Although the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ is returned,
@@ -144,6 +154,17 @@ public:
         static const Scalar density = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasDensity", 1.0);
         return density;
     }
+
+    /*!
+     * \brief The molar density in \f$\mathrm{[mol/m^3]}\f$ at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return gasDensity(temperature, pressure)/molarMass(); }
+
 
     /*!
      * \brief Sets the gas dynamic viscosity in \f$\mathrm{[Pa*s]}\f$.

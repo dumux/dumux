@@ -293,6 +293,8 @@ public:
             paramCache.updateComposition(fluidState, phaseIdx);
             const Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
             fluidState.setDensity(phaseIdx, rho);
+            const Scalar rhoMolar = FluidSystem::molarDensity(fluidState, phaseIdx);
+            fluidState.setMolarDensity(phaseIdx, rhoMolar);
             const Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
             fluidState.setViscosity(phaseIdx,mu);
 

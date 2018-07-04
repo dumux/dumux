@@ -204,11 +204,14 @@ public:
         solidState.setTemperature(temperature);
 
         // set the densities
-        const Scalar rhoW = FluidSystem::density(fluidState, wPhaseIdx);
-        const Scalar rhoG = FluidSystem::density(fluidState, nPhaseIdx);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            Scalar rho = FluidSystem::density(fluidState, phaseIdx);
+            Scalar rhoMolar = FluidSystem::molarDensity(fluidState, phaseIdx);
 
-        fluidState.setDensity(wPhaseIdx, rhoW);
-        fluidState.setDensity(nPhaseIdx, rhoG);
+            fluidState.setDensity(phaseIdx, rho);
+            fluidState.setMolarDensity(phaseIdx, rhoMolar);
+        }
 
         //get the viscosity and mobility
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -266,7 +269,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar molarDensity(const int phaseIdx) const
-    { return fluidState_.density(phaseIdx) / fluidState_.averageMolarMass(phaseIdx); }
+    { return fluidState_.molarDensity(phaseIdx); }
 
     /*!
      * \brief Returns the effective pressure of a given phase within

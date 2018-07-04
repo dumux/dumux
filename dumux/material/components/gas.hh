@@ -81,6 +81,20 @@ public:
     }
 
     /*!
+     * \brief The molar density in \f$\mathrm{[mol/m^3]}\f$ of the component at a given pressure in
+     *          \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    template<class C = Component>
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: gasMolarDensity(t,p)");
+        DUNE_THROW(Dune::NotImplemented, "gasMolarDensity(t,p)");
+    }
+
+    /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of the pure component in gas.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$

@@ -260,10 +260,16 @@ public:
                 Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
                 Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
                 Scalar rhoN = FluidSystem::density(fluidState_, nPhaseIdx);
+                Scalar rhoWMolar = FluidSystem::molarDensity(fluidState_, wPhaseIdx);
+                Scalar rhoGMolar = FluidSystem::molarDensity(fluidState_, gPhaseIdx);
+                Scalar rhoNMolar = FluidSystem::molarDensity(fluidState_, nPhaseIdx);
 
                 fluidState_.setDensity(wPhaseIdx, rhoW);
                 fluidState_.setDensity(gPhaseIdx, rhoG);
                 fluidState_.setDensity(nPhaseIdx, rhoN);
+                fluidState_.setMolarDensity(wPhaseIdx, rhoWMolar);
+                fluidState_.setMolarDensity(gPhaseIdx, rhoGMolar);
+                fluidState_.setMolarDensity(nPhaseIdx, rhoNMolar);
             }
         }
         else if (phasePresence == wPhaseOnly) {
@@ -324,10 +330,16 @@ public:
                 Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
                 Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
                 Scalar rhoN = FluidSystem::density(fluidState_, nPhaseIdx);
+                Scalar rhoWMolar = FluidSystem::molarDensity(fluidState_, wPhaseIdx);
+                Scalar rhoGMolar = FluidSystem::molarDensity(fluidState_, gPhaseIdx);
+                Scalar rhoNMolar = FluidSystem::molarDensity(fluidState_, nPhaseIdx);
 
                 fluidState_.setDensity(wPhaseIdx, rhoW);
                 fluidState_.setDensity(gPhaseIdx, rhoG);
                 fluidState_.setDensity(nPhaseIdx, rhoN);
+                fluidState_.setMolarDensity(wPhaseIdx, rhoWMolar);
+                fluidState_.setMolarDensity(gPhaseIdx, rhoGMolar);
+                fluidState_.setMolarDensity(nPhaseIdx, rhoNMolar);
             }
         }
         else if (phasePresence == gnPhaseOnly) {
@@ -439,10 +451,16 @@ public:
                 Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
                 Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
                 Scalar rhoN = FluidSystem::density(fluidState_, nPhaseIdx);
+                Scalar rhoWMolar = FluidSystem::molarDensity(fluidState_, wPhaseIdx);
+                Scalar rhoGMolar = FluidSystem::molarDensity(fluidState_, gPhaseIdx);
+                Scalar rhoNMolar = FluidSystem::molarDensity(fluidState_, nPhaseIdx);
 
                 fluidState_.setDensity(wPhaseIdx, rhoW);
                 fluidState_.setDensity(gPhaseIdx, rhoG);
                 fluidState_.setDensity(nPhaseIdx, rhoN);
+                fluidState_.setMolarDensity(wPhaseIdx, rhoWMolar);
+                fluidState_.setMolarDensity(gPhaseIdx, rhoGMolar);
+                fluidState_.setMolarDensity(nPhaseIdx, rhoNMolar);
             }
         }
         else if (phasePresence == wgPhaseOnly) {
@@ -502,10 +520,16 @@ public:
                 Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
                 Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
                 Scalar rhoN = FluidSystem::density(fluidState_, nPhaseIdx);
+                Scalar rhoWMolar = FluidSystem::molarDensity(fluidState_, wPhaseIdx);
+                Scalar rhoGMolar = FluidSystem::molarDensity(fluidState_, gPhaseIdx);
+                Scalar rhoNMolar = FluidSystem::molarDensity(fluidState_, nPhaseIdx);
 
                 fluidState_.setDensity(wPhaseIdx, rhoW);
                 fluidState_.setDensity(gPhaseIdx, rhoG);
                 fluidState_.setDensity(nPhaseIdx, rhoN);
+                fluidState_.setMolarDensity(wPhaseIdx, rhoWMolar);
+                fluidState_.setMolarDensity(gPhaseIdx, rhoGMolar);
+                fluidState_.setMolarDensity(nPhaseIdx, rhoNMolar);
             }
         }
         else
@@ -618,7 +642,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar molarDensity(const int phaseIdx) const
-    { return fluidState_.density(phaseIdx) / fluidState_.averageMolarMass(phaseIdx); }
+    { return fluidState_.molarDensity(phaseIdx); }
 
     /*!
      * \brief Returns the effective pressure of a given phase within

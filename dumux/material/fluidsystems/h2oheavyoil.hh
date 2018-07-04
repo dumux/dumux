@@ -126,6 +126,23 @@ public:
         return phaseIdx != gPhaseIdx;
     }
 
+    /*!
+     * \brief Return whether a phase is gaseous
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr bool isGas(int phaseIdx)
+    {
+        assert(0 <= phaseIdx && phaseIdx < numPhases);
+        return phaseIdx == gPhaseIdx;
+    }
+
+    /*!
+     * \brief Returns true if and only if a fluid phase is assumed to
+     *        be an ideal gas.
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
     static bool isIdealGas(int phaseIdx)
     { return phaseIdx == gPhaseIdx && H2O::gasIsIdeal() && HeavyOil::gasIsIdeal(); }
 
@@ -181,9 +198,9 @@ public:
     static std::string phaseName(int phaseIdx)
     {
         switch (phaseIdx) {
-        case wPhaseIdx: return "w";
-        case nPhaseIdx: return "n";
-        case gPhaseIdx: return "g";
+            case wPhaseIdx: return "w";
+            case nPhaseIdx: return "n";
+            case gPhaseIdx: return "g";
         };
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -194,8 +211,8 @@ public:
     static std::string componentName(int compIdx)
     {
         switch (compIdx) {
-        case H2OIdx: return H2O::name();
-        case NAPLIdx: return HeavyOil::name();
+            case H2OIdx: return H2O::name();
+            case NAPLIdx: return HeavyOil::name();
         };
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
@@ -206,8 +223,8 @@ public:
     static Scalar molarMass(int compIdx)
     {
         switch (compIdx) {
-        case H2OIdx: return H2O::molarMass();
-        case NAPLIdx: return HeavyOil::molarMass();
+            case H2OIdx: return H2O::molarMass();
+            case NAPLIdx: return HeavyOil::molarMass();
         };
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
@@ -224,15 +241,13 @@ public:
             // See: doctoral thesis of Steffen Ochs 2007
             // Steam injection into saturated porous media : process analysis including experimental and numerical investigations
             // http://elib.uni-stuttgart.de/bitstream/11682/271/1/Diss_Ochs_OPUS.pdf
-            Scalar rholH2O = H2O::liquidDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
-            Scalar clH2O = rholH2O/H2O::molarMass();
 
-            // this assumes each dissolved molecule displaces exactly one
-            // water molecule in the liquid
-            return
-                clH2O*(H2O::molarMass()*fluidState.moleFraction(wPhaseIdx, H2OIdx)
-                       +
-                       HeavyOil::molarMass()*fluidState.moleFraction(wPhaseIdx, NAPLIdx));
+            // This assumes each gas molecule displaces exactly one
+            // molecule in the liquid.
+
+            return H2O::liquidMolarDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx))
+                   * (H2O::molarMass()*fluidState.moleFraction(wPhaseIdx, H2OIdx)
+                      + HeavyOil::molarMass()*fluidState.moleFraction(wPhaseIdx, NAPLIdx));
         }
         else if (phaseIdx == nPhaseIdx) {
             // assume pure NAPL for the NAPL phase
@@ -247,9 +262,39 @@ public:
         Scalar pNAPL =
             fluidState.moleFraction(gPhaseIdx, NAPLIdx)  *
             fluidState.pressure(gPhaseIdx);
-        return
-            H2O::gasDensity(fluidState.temperature(phaseIdx), pH2O) +
-            HeavyOil::gasDensity(fluidState.temperature(phaseIdx), pNAPL);
+        return H2O::gasDensity(fluidState.temperature(phaseIdx), pH2O)
+               + HeavyOil::gasDensity(fluidState.temperature(phaseIdx), pNAPL);
+    }
+
+    using Base::molarDensity;
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density is defined by the
+     * mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
+     */
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+        Scalar temperature = fluidState.temperature(phaseIdx);
+        Scalar pressure = fluidState.pressure(phaseIdx);
+        if (phaseIdx == nPhaseIdx)
+        {
+            return HeavyOil::liquidMolarDensity(temperature, pressure);
+        }
+        else if (phaseIdx == wPhaseIdx)
+        {   // This assumes each gas molecule displaces exactly one
+            // molecule in the liquid.
+            return H2O::liquidMolarDensity(temperature, pressure);
+        }
+        else
+        {
+            return H2O::gasMolarDensity(temperature, fluidState.partialPressure(gPhaseIdx, H2OIdx))
+                   + HeavyOil::gasMolarDensity(temperature, fluidState.partialPressure(gPhaseIdx, NAPLIdx));
+        }
     }
 
     /*!
@@ -267,7 +312,8 @@ public:
         }
         else if (phaseIdx == nPhaseIdx) {
             // assume pure NAPL viscosity
-            return HeavyOil::liquidViscosity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+            return HeavyOil::liquidViscosity(fluidState.temperature(phaseIdx),
+                                             fluidState.pressure(phaseIdx));
         }
 
         assert (phaseIdx == gPhaseIdx);
@@ -289,7 +335,7 @@ public:
         };
 
         return mu[H2OIdx]*fluidState.moleFraction(gPhaseIdx, H2OIdx)
-                + mu[NAPLIdx]*fluidState.moleFraction(gPhaseIdx, NAPLIdx);
+               + mu[NAPLIdx]*fluidState.moleFraction(gPhaseIdx, NAPLIdx);
     }
 
 

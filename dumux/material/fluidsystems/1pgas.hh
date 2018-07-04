@@ -189,6 +189,36 @@ public:
     }
 
     /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density is defined by the
+     * mass density \f$\rho_\alpha\f$ and the component molar mass \f$M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
+     */
+    static Scalar molarDensity(Scalar temperature, Scalar pressure)
+    { return Component::gasMolarDensity(temperature, pressure); }
+
+    /*!
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density is defined by the
+     * mass density \f$\rho_\alpha\f$ and the component molar mass \f$M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
+     */
+    using Base::molarDensity;
+    template <class FluidState>
+    static Scalar molarDensity(const FluidState &fluidState,
+                               const int phaseIdx)
+    {
+        return molarDensity(fluidState.temperature(phaseIdx),
+                            fluidState.pressure(phaseIdx));
+    }
+
+    /*!
      * \brief The pressure \f$\mathrm{[Pa]}\f$ of the component at a given density and temperature.
      * \param temperature The given temperature \f$\mathrm{[K]}\f$
      * \param density The given density \f$\mathrm{[kg/m^3]}\f$

@@ -121,18 +121,18 @@ public:
     }
 
     /*!
-     * \brief Returns the mass fraction \f$X^\kappa_\alpha\f$ of component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
-     *
-     * The mass fraction \f$X^\kappa_\alpha\f$ is defined as the weight of all molecules of a
-     * component divided by the total mass of the fluid phase. It is related with the component's mole fraction by means of the relation
-     *
-     * This is either set to 1 or 0 depending on the phase presence for the
-     * non-wetting phase in general.
-     * It is set to the mass fraction of water or 1-massFractionWater
-     * if the considered component is the main component of the wetting phase.
-     *
-     * \param phaseIdx the index of the phase
-     * \param compIdx the index of the component
+     *  @copydoc CompositionalFluidState::molarDensity()
+     */
+    Scalar molarDensity(int phaseIdx) const
+    {
+        if(phaseIdx == presentPhaseIdx_)
+            return molarDensity_;
+        else
+            return 0.;
+    }
+
+    /*!
+     *  @copydoc CompositionalFluidState::massFraction()
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     {
@@ -292,6 +292,17 @@ public:
         density_ = value;
     }
     /*!
+     * \brief Set the molar density of a phase \f$\mathrm{[mol / m^3]}\f$
+     *
+     * \param phaseIdx the index of the phase
+     * @param value Value to be stored
+     */
+    void setMolarDensity(int phaseIdx, Scalar value)
+    {
+        assert(phaseIdx == presentPhaseIdx_);
+        molarDensity_ = value;
+    }
+    /*!
      * \brief Sets the phase Index that is present in this fluidState.
      * @param phaseIdx the index of the phase
      */
@@ -349,6 +360,7 @@ protected:
     Scalar moleFractionWater_;
     Scalar pressure_[numPhases];
     Scalar density_;
+    Scalar molarDensity_;
     Scalar viscosity_;
     Scalar enthalpy_;
     Scalar temperature_;

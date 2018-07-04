@@ -36,8 +36,8 @@ dune_add_test(NAME test_2p2c_box_caching
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/injectionbox-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/injection_box-00008.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_box_caching test_2p2c_fv.input -Problem.Name injection_box")
+                               ${CMAKE_CURRENT_BINARY_DIR}/injection_box_caching-00008.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_box_caching test_2p2c_fv.input -Problem.Name injection_box_caching")
 
 dune_add_test(NAME test_2p2c_tpfa_caching
               SOURCES test_2p2c_fv.cc
@@ -45,8 +45,8 @@ dune_add_test(NAME test_2p2c_tpfa_caching
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/injectioncc-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/injection_tpfa-00008.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_tpfa_caching test_2p2c_fv.input -Problem.Name injection_tpfa")
+                               ${CMAKE_CURRENT_BINARY_DIR}/injection_tpfa_caching-00008.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_tpfa_caching test_2p2c_fv.input -Problem.Name injection_tpfa_caching")
 
 dune_add_test(NAME test_2p2c_mpfa_caching
               SOURCES test_2p2c_fv.cc
@@ -54,8 +54,8 @@ dune_add_test(NAME test_2p2c_mpfa_caching
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/injectioncc-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/injection_mpfa-00008.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_mpfa_caching test_2p2c_fv.input -Problem.Name injection_mpfa")
+                               ${CMAKE_CURRENT_BINARY_DIR}/injection_mpfa_caching-00008.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_mpfa_caching test_2p2c_fv.input -Problem.Name injection_mpfa_caching")
 
 # non-isothermal tests
 dune_add_test(NAME test_2p2cni_box

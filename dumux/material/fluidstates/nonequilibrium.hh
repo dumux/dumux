@@ -205,7 +205,7 @@ public:
      * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
      */
     Scalar molarDensity(int phaseIdx) const
-    { return density_[phaseIdx]/averageMolarMass(phaseIdx); }
+    { return molarDensity_[phaseIdx]; }
 
 
     /*!
@@ -375,6 +375,12 @@ public:
     { density_[phaseIdx] = value; }
 
     /*!
+     * \brief Set the molar density of a phase \f$\mathrm{[kg / m^3]}\f$
+     */
+    void setMolarDensity(int phaseIdx, Scalar value)
+    { molarDensity_[phaseIdx] = value; }
+
+    /*!
      * \brief Set the specific enthalpy of a phase \f$\mathrm{[J/m^3]}\f$
      */
     void setEnthalpy(int phaseIdx, Scalar value)
@@ -413,6 +419,7 @@ public:
             pressure_[phaseIdx] = fs.pressure(phaseIdx);
             saturation_[phaseIdx] = fs.saturation(phaseIdx);
             density_[phaseIdx] = fs.density(phaseIdx);
+            molarDensity_[phaseIdx] = fs.molarDensity(phaseIdx);
             enthalpy_[phaseIdx] = fs.enthalpy(phaseIdx);
             viscosity_[phaseIdx] = fs.viscosity(phaseIdx);
             temperature_[phaseIdx] = fs.temperature(phaseIdx);
@@ -439,6 +446,7 @@ public:
             Valgrind::CheckDefined(pressure_[i]);
             Valgrind::CheckDefined(saturation_[i]);
             Valgrind::CheckDefined(density_[i]);
+            Valgrind::CheckDefined(molarDensity_[i]);
             Valgrind::CheckDefined(temperature_[i]);
             Valgrind::CheckDefined(enthalpy_[i]);
             Valgrind::CheckDefined(viscosity_[i]);
@@ -455,6 +463,7 @@ protected:
     Scalar pressure_[numPhases];
     Scalar saturation_[numPhases];
     Scalar density_[numPhases];
+    Scalar molarDensity_[numPhases];
     Scalar enthalpy_[numPhases];
     Scalar viscosity_[numPhases];
     Scalar temperature_[numPhases]; //

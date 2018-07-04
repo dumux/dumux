@@ -86,6 +86,7 @@ public:
             BaseFluidState::setSaturation(phaseIdx, 1.0 / numPhases);
             BaseFluidState::setPressure(phaseIdx, 1e5);
             BaseFluidState::setDensity(phaseIdx, 1.0);
+            BaseFluidState::setMolarDensity(phaseIdx, 1.0);
 
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
@@ -532,7 +533,13 @@ int checkFluidSystem()
         {
             collectedErrors += "error: FluidSystem::density() throws exception!\n";
         }
-
+        try
+        {
+            val = FluidSystem::molarDensity(fs, paramCache, phaseIdx);
+        } catch (Dune::Exception e)
+        {
+            collectedErrors += "error: FluidSystem::molarDensity() throws exception!\n";
+        }
         fs.allowPressure(true);
         fs.allowDensity(true);
         try

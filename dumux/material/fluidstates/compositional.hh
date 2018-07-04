@@ -194,15 +194,11 @@ public:
     { return density_[phaseIdx]; }
 
     /*!
-     * \brief The molar density \f$\rho_{mol,\alpha}\f$
-     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
-     *
-     * The molar density is defined by the mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$:
-     *
-     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
+     * \brief The molar density \f$\rho_\alpha\f$ of the fluid phase
+     *  \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
      */
     Scalar molarDensity(int phaseIdx) const
-    { return density_[phaseIdx]/averageMolarMass(phaseIdx); }
+    { return molarDensity_[phaseIdx]; }
 
     /*!
      * \brief The absolute temperature\f$T_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[K]}\f$
@@ -298,6 +294,7 @@ public:
             pressure_[phaseIdx] = fs.pressure(phaseIdx);
             saturation_[phaseIdx] = fs.saturation(phaseIdx);
             density_[phaseIdx] = fs.density(phaseIdx);
+            molarDensity_[phaseIdx] = fs.molarDensity(phaseIdx);
             enthalpy_[phaseIdx] = fs.enthalpy(phaseIdx);
             viscosity_[phaseIdx] = fs.viscosity(phaseIdx);
         }
@@ -428,6 +425,12 @@ public:
     { density_[phaseIdx] = value; }
 
     /*!
+     * \brief Set the molar density of a phase \f$\mathrm{[mol / m^3]}\f$
+     */
+    void setMolarDensity(int phaseIdx, Scalar value)
+    { molarDensity_[phaseIdx] = value; }
+
+    /*!
      * \brief Set the specific enthalpy of a phase\f$\mathrm{[J/kg]}\f$
      */
     void setEnthalpy(int phaseIdx, Scalar value)
@@ -465,6 +468,7 @@ public:
             Valgrind::CheckDefined(pressure_[phaseIdx]);
             Valgrind::CheckDefined(saturation_[phaseIdx]);
             Valgrind::CheckDefined(density_[phaseIdx]);
+            Valgrind::CheckDefined(molarDensity_[phaseIdx]);
             Valgrind::CheckDefined(enthalpy_[phaseIdx]);
             Valgrind::CheckDefined(viscosity_[phaseIdx]);
         }
@@ -482,6 +486,7 @@ protected:
     Scalar pressure_[numPhases];
     Scalar saturation_[numPhases];
     Scalar density_[numPhases];
+    Scalar molarDensity_[numPhases];
     Scalar enthalpy_[numPhases];
     Scalar viscosity_[numPhases];
     Scalar temperature_[numPhases];

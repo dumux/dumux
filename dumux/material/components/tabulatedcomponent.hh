@@ -448,6 +448,17 @@ public:
     }
 
     /*!
+     *  \brief The molar density of gas in \f$\mathrm{[mol/m^3]}\f$
+     *  at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar gasMolarDensity(Scalar temperature, Scalar pressure)
+    { return gasDensity(temperature, pressure)/molarMass(); }
+
+    /*!
      * \brief The density of liquid at a given pressure and
      *        temperature \f$\mathrm{[kg/m^3]}\f$.
      *
@@ -479,6 +490,17 @@ public:
 
         return result;
     }
+
+    /*!
+     * \brief The molar density of liquid in \f$\mathrm{[mol/m^3]}\f$
+     * at a given pressure and temperature.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     */
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    { return liquidDensity(temperature, pressure)/molarMass(); }
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of gas.

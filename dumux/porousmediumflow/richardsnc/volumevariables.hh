@@ -179,6 +179,7 @@ public:
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
         fluidState.setDensity(fluidSystemPhaseIdx, FluidSystem::density(fluidState, paramCache, fluidSystemPhaseIdx));
+        fluidState.setMolarDensity(fluidSystemPhaseIdx, FluidSystem::molarDensity(fluidState, paramCache, fluidSystemPhaseIdx));
         fluidState.setViscosity(fluidSystemPhaseIdx, FluidSystem::viscosity(fluidState, paramCache, fluidSystemPhaseIdx));
 
         // compute and set the enthalpy

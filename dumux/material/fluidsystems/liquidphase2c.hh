@@ -189,23 +189,35 @@ public:
         const Scalar p = fluidState.pressure(phaseIdx);
 
         // See: Eq. (7) in Class et al. (2002a)
-        // We assume each tracer molecule replaces on main component molecule
-        // this is consistent with the assumption in Fick's law and the computation
-        // of the composition molar mass in the compositional fluid state
-        const Scalar densityMain = MainComponent::liquidDensity(T, p);
-        const Scalar molarDensity = densityMain/MainComponent::molarMass();
+        // This assumes each gas molecule displaces exactly one
+        // molecule in the liquid.
+        const Scalar pureComponentMolarDensity = MainComponent::liquidMolarDensity(T, p);
 
-        return molarDensity * (MainComponent::molarMass()*fluidState.moleFraction(phase0Idx, mainCompIdx)
-                               + SecondComponent::molarMass()*fluidState.moleFraction(phase0Idx, secondCompIdx));
+        return pureComponentMolarDensity
+               * (MainComponent::molarMass()*fluidState.moleFraction(phase0Idx, mainCompIdx)
+                  + SecondComponent::molarMass()*fluidState.moleFraction(phase0Idx, secondCompIdx));
     }
 
+    using Base::molarDensity;
     /*!
-     * \brief The molar density \f$\mathrm{[mol/m^3]}\f$ of the phase at a given pressure and temperature.
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density is defined by the
+     * mass density \f$\rho_\alpha\f$ and the molar mass \f$M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
      */
     template <class FluidState>
-    static Scalar molarDensity(const FluidState &fluidState,
-                               const int phaseIdx = 0)
-    { return fluidState.molarDensity(phaseIdx); }
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx)
+    {
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
+
+        // assume pure component or that each gas molecule displaces exactly one
+        // molecule in the liquid.
+        return MainComponent::liquidMolarDensity(T, p);
+    }
 
     /*!
      * \brief The pressure \f$\mathrm{[Pa]}\f$ of the component at a given density and temperature.

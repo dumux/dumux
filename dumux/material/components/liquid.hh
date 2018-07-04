@@ -71,6 +71,20 @@ public:
     }
 
     /*!
+     * \brief The molar density \f$\mathrm{[mole/m^3]}\f$ of the liquid component at a given pressure in
+     *          \f$\mathrm{[Pa]}\f$ and temperature in \f$\mathrm{[K]}\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    template<class C = Component>
+    static Scalar liquidMolarDensity(Scalar temperature, Scalar pressure)
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: liquidMolarDensity(t,p)");
+        DUNE_THROW(Dune::NotImplemented, "Component::liquidMolarDensity(t,p)");
+    }
+
+    /*!
      * \brief The dynamic liquid viscosity \f$\mathrm{[Pa*s]}\f$ of the pure component.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$

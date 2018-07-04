@@ -205,9 +205,16 @@ public:
         // density and viscosity
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
-        fluidState.setDensity(FluidSystem::liquidPhaseIdx, FluidSystem::density(fluidState, paramCache, FluidSystem::liquidPhaseIdx));
-        fluidState.setDensity(FluidSystem::gasPhaseIdx, FluidSystem::density(fluidState, paramCache, FluidSystem::gasPhaseIdx));
-        fluidState.setViscosity(FluidSystem::liquidPhaseIdx, FluidSystem::viscosity(fluidState, paramCache, FluidSystem::liquidPhaseIdx));
+        fluidState.setDensity(FluidSystem::liquidPhaseIdx,
+                              FluidSystem::density(fluidState, paramCache, FluidSystem::liquidPhaseIdx));
+        fluidState.setDensity(FluidSystem::gasPhaseIdx,
+                              FluidSystem::density(fluidState, paramCache, FluidSystem::gasPhaseIdx));
+        fluidState.setMolarDensity(FluidSystem::liquidPhaseIdx,
+                                   FluidSystem::molarDensity(fluidState, paramCache, FluidSystem::liquidPhaseIdx));
+        fluidState.setMolarDensity(FluidSystem::gasPhaseIdx,
+                                   FluidSystem::molarDensity(fluidState, paramCache, FluidSystem::gasPhaseIdx));
+        fluidState.setViscosity(FluidSystem::liquidPhaseIdx,
+                                FluidSystem::viscosity(fluidState, paramCache, FluidSystem::liquidPhaseIdx));
 
         // compute and set the enthalpy
         fluidState.setEnthalpy(FluidSystem::liquidPhaseIdx, EnergyVolVars::enthalpy(fluidState, paramCache, FluidSystem::liquidPhaseIdx));
