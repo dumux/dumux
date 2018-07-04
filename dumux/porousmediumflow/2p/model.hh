@@ -100,6 +100,21 @@ struct TwoPModelTraits
     static constexpr bool enableEnergyBalance() { return false; }
 };
 
+template<TwoPFormulation formulation>
+struct TwoPPrimaryVariableNames
+{
+    static std::vector<std::string> get()
+    {
+        switch (formulation)
+        {
+            case TwoPFormulation::p0s1:
+                return {"pw", "Sn"};
+            case TwoPFormulation::p1s0:
+                return {"pn", "Sw"};
+        }
+    }
+};
+
 /*!
  * \ingroup TwoPModel
  * \brief Traits class for the two-phase model.
@@ -148,6 +163,9 @@ NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP));
  //!< Set the default formulation to pwsn
 SET_PROP(TwoP, Formulation)
 { static constexpr auto value = TwoPFormulation::p0s1; };
+
+NEW_PROP_TAG(PrimaryVariableNames);
+SET_TYPE_PROP(TwoP, PrimaryVariableNames, TwoPPrimaryVariableNames<GET_PROP_VALUE(TypeTag, Formulation)>);
 
 SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //!< Use the immiscible local residual operator for the 2p model
 

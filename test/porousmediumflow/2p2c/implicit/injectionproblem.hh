@@ -297,7 +297,9 @@ public:
     template <class SolutionVector>
     void applyRestartSolution(SolutionVector& sol) const
     {
-        Restart::loadSolutionFromVtkFile(this->fvGridGeometry(), {"pw", "x_w^N2/x_n^H2O/Sn", "phase presence"}, sol);
+        using PvNames = typename GET_PROP_TYPE(TypeTag, PrimaryVariableNames);
+
+        Restart::loadSolutionFromVtkFile(this->fvGridGeometry(), PvNames::get(), sol);
     }
 
 private:
