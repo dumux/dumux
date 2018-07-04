@@ -128,18 +128,6 @@ class SweTestProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
     //TODO map that saves the water flux for each boundary
-    std::map<int,double> waterdischarge;
-    std::map<int,double> waterdepth;
-
-    std::vector<BoundaryBox> boundaryBoxesVec;
-    std::map<int,BoundaryValues> boundaryValuesMap;
-
-
-    int searchedId;
-    int numberOfBoundaryfiles = 0;
-    std::vector<int> boundaryfilesExistsForId;
-
-
 
 public:
     /*!
@@ -178,35 +166,8 @@ public:
      * \param globalPos The position for which the boundary type is set
      */
 
-    int setBoundaryValues(std::vector<int> bd_types, int number_of_bd){
-
-        std::ifstream infile;
-        std::string line;
-        std::string splittedLine;
-        int read_bdId;
-        double read_bdTime;
-        double read_bdValue;
-        this->boundaryValuesVector.resize(number_of_bd);
-        this->hA_boundarySum.resize(number_of_bd);
-
-        //read the boundary file
-        infile.open("boundary.dat");
-        if (!infile) {
-            std::cerr << "Unable to open boundary file " << "bounday.dat" << std::endl;
-        }
-        while(std::getline(infile,line))
-        {
-            std::stringstream ssin(line);
-            while(ssin.good()){
-                while(ssin >> read_bdId >> read_bdTime >> read_bdValue){
-                    this->boundaryValuesVector[read_bdId].time.push_back(read_bdTime);
-                    this->boundaryValuesVector[read_bdId].value.push_back(read_bdValue);
-                }
-            }
-        }
-        this->number_of_bd = number_of_bd;
-        this->bd_types = bd_types;
-        return 0;
+    int setBoundaryValues(){
+        this->readBoundaryBoxFile("boundary_boxes.dat");
     }
 
 
@@ -226,7 +187,6 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes bcTypes;
-
         bcTypes.setAllNeumann();
         return bcTypes;
     }
@@ -263,6 +223,28 @@ public:
 
         int bdType = 0; //0 = Neumann, 1 = definded q, 2 = defined h
         double bdValue = 0.0;
+        double x = 4.0;
+        double y = 4.2;
+
+        //TODO check the boundary type
+        auto myBoundaryId = this->getBoundaryId(x,y); //TODO we need global x and y!
+        auto boundaryValues = this->boundaryValuesMap_.at(myBoundaryId);
+
+        if (boundaryValues.type == "hq-curve")
+        {
+            bdValue = getWQBoundaryValue(time_,myBoundaryId);
+        }else{
+            bdValue = getBoundaryValue(time_,myBoundaryId);
+        }
+
+        if (boundaryValues.type == "hq-curve") bdType = 2;
+        if (boundaryValues.type == "depth") bdType = 2;
+        if (boundaryValues.type == "discharge") bdType = 1;
+
+        //TODO scale the boundary?
+        //auto segIndex = is.boundarySegmentIndex();
+        //bdValue = (bdValue / this->hA_boundarySum[bd_id])* this->hA_boundaryMap.at(segIndex);
+
 
         //call boundaryfluxes for computing the Riemann invariants
         boundaryFluxes(nxy,scvf.area(),minHBoundary_,
@@ -283,7 +265,6 @@ public:
         values[massBalanceIdx] = riemannFlux[0];
         values[velocityXIdx]   = riemannFlux[1];
         values[velocityYIdx]   = riemannFlux[2];
-
 
 
         return values;
@@ -309,10 +290,13 @@ public:
     //! do some preprocessing
     void preTimeStep(const SolutionVector& curSol,
                       const GridVariables& gridVariables,
+                      const Scalar time,
                       const Scalar timeStepSize)
     {
         // compute the mass in the entire domain to make sure the tracer is conserved
         Scalar tracerMass = 0.0;
+        time_ = time;
+        timeStepSize_ = timeStepSize;
 
         // bulk elements
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
@@ -323,7 +307,19 @@ public:
             auto elemVolVars = localView(gridVariables.curGridVolVars());
             elemVolVars.bindElement(element, fvGeometry, curSol);
 
+            //TODO loop over all boundary scvf
+                //1) ha_boundarySum berechnen
+                //2) parallel_sum von ha_boundarySum berechnen (overlapping?) ask if ghost element!
+                //3) make a map ha_boundary[segIndex]
+
             for (auto&& scv : scvs(fvGeometry))
+            {
+                //check if the element is a boundary element and store the boudary condition type
+                //and the boundary condition value (sum up the overall values over all partions
+                // for each boundary)
+            }
+
+            for (auto&& scvf : scvfs(fvGeometry))
             {
                 //check if the element is a boundary element and store the boudary condition type
                 //and the boundary condition value (sum up the overall values over all partions
@@ -417,8 +413,8 @@ public:
                         myBox.y1 = y1;
                         myBox.id = id;
                         myBox.boundaryfilename = boundaryfilename;
-                        boundaryBoxesVec.push_back(myBox);
-                        numberOfBoundaryfiles = std::max(id,numberOfBoundaryfiles);
+                        boundaryBoxesVec_.push_back(myBox);
+                        numberOfBoundaryfiles_ = std::max(id,numberOfBoundaryfiles_);
                     }
                 }else{
                     ssin.ignore(256);
@@ -431,17 +427,17 @@ public:
 
     }
 
-    int getBoundaryId(double x, double y)
+    int getBoundaryId(double x, double y) const
     {
-        searchedId = 0;
+        int searchedId = 0;
 
         //loop over all boxes
-        for(std::vector<int>::size_type i = 0; i != boundaryBoxesVec.size(); i++) {
-            auto x0 = std::min(boundaryBoxesVec[i].x0,boundaryBoxesVec[i].x1);
-            auto x1 = std::max(boundaryBoxesVec[i].x0,boundaryBoxesVec[i].x1);
-            auto y0 = std::min(boundaryBoxesVec[i].y0,boundaryBoxesVec[i].y1);
-            auto y1 = std::max(boundaryBoxesVec[i].y0,boundaryBoxesVec[i].y1);
-            int id = boundaryBoxesVec[i].id;
+        for(std::vector<int>::size_type i = 0; i != boundaryBoxesVec_.size(); i++) {
+            auto x0 = std::min(boundaryBoxesVec_[i].x0,boundaryBoxesVec_[i].x1);
+            auto x1 = std::max(boundaryBoxesVec_[i].x0,boundaryBoxesVec_[i].x1);
+            auto y0 = std::min(boundaryBoxesVec_[i].y0,boundaryBoxesVec_[i].y1);
+            auto y1 = std::max(boundaryBoxesVec_[i].y0,boundaryBoxesVec_[i].y1);
+            int id = boundaryBoxesVec_[i].id;
 
             searchedId = 0;
             if (((x >= x0)&&(x <= x1)) && ((y >= y0)&&(y <= y1))){
@@ -455,9 +451,9 @@ public:
 
 
     //get the boundary value for a given time and id
-    double getBoundaryValue(double m_time, int idPosition)
+    double getBoundaryValue(auto m_time, int idPosition) const
     {
-        auto boundaryValues = this->boundaryValuesMap[idPosition];
+        auto boundaryValues = this->boundaryValuesMap_.at(idPosition);
         int steps = boundaryValues.x.size();
         double bd_value;
 
@@ -490,9 +486,9 @@ public:
     }
 
     //get the boundary value for a given time and id for hq we also give the oldvalue
-    double getWQBoundaryValue(double sim_q, int idPosition)
+    double getWQBoundaryValue(double sim_q, int idPosition) const
     {
-        auto boundaryValues = this->boundaryValuesMap[idPosition];
+        auto boundaryValues = this->boundaryValuesMap_.at(idPosition);
         int steps = boundaryValues.x.size();
         double bd_value;
 
@@ -528,6 +524,15 @@ public:
 
 private:
 
+    std::map<int,double> waterdischarge_;
+    std::map<int,double> waterdepth_;
+
+    std::vector<BoundaryBox> boundaryBoxesVec_;
+    std::map<int,BoundaryValues> boundaryValuesMap_;
+
+    int numberOfBoundaryfiles_ = 0;
+    double time_ = 0;
+    double timeStepSize_ = 0;
 
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
@@ -562,12 +567,12 @@ private:
         std::string actualfile;
 
         //open an read all files n = numberOfBoundaryfiles there might be more boxes as files!
-        for (std::vector<int>::size_type i = 0; i != boundaryBoxesVec.size(); i++){
+        for (std::vector<int>::size_type i = 0; i != boundaryBoxesVec_.size(); i++){
 
-            infile.open(this->boundaryBoxesVec[i].boundaryfilename);
+            infile.open(this->boundaryBoxesVec_[i].boundaryfilename);
             if (!infile) {
                 std::cerr << "\nError in readBoundaryValuesFiles() Unable to open boundary file "
-                          << this->boundaryBoxesVec[i].boundaryfilename << std::endl;
+                          << this->boundaryBoxesVec_[i].boundaryfilename << std::endl;
                 //TODO exit the programm
             }
             BoundaryValues myValues;
@@ -609,7 +614,7 @@ private:
                 }
             }
             infile.close();
-            this->boundaryValuesMap[myValues.id] = myValues;
+            this->boundaryValuesMap_[myValues.id] = myValues;
         }
     }
 };

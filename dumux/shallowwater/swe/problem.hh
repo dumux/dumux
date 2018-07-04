@@ -88,7 +88,7 @@ public:
 
     Scalar getKs(const Element& element)
     {
-        return asImp_().getZ();
+        return asImp_().getKs();
     }
 
     Scalar getFrictionH(const Element& element)

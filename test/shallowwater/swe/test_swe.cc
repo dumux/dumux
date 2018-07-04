@@ -165,13 +165,15 @@ int main(int argc, char** argv) try
     auto newtonController = std::make_shared<NewtonController>(timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
+    // read in the boundary values
+    problem->setBoundaryValues();
 
     // time loop
     timeLoop->start(); do
     {
 
         //preprocessing
-        problem->preTimeStep(x, *gridVariables, timeLoop->timeStepSize());
+        problem->preTimeStep(x, *gridVariables, timeLoop->time(),timeLoop->timeStepSize());
 
 
         // set previous solution for storage evaluations
