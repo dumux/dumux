@@ -35,9 +35,20 @@
 #include <fstream>
 #include <sstream>
 
+#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/io/tinyxml2/tinyxml2.h>
 
 namespace Dumux {
+
+//! helper struct detecting if a PrimaryVariables object has a state() function
+struct hasState
+{
+    template<class PrimaryVariables>
+    auto operator()(PrimaryVariables&& priVars)
+    -> decltype(priVars.state())
+    {}
+};
+
 /*!
  * \ingroup InputOutput
  * \brief Load or save a state of a model to/from the harddisk.
@@ -289,10 +300,36 @@ public:
                    "Restart::restartFileList()");
     }
 
+    template <class FVGridGeometry, class SolutionVector>
+    static void loadSolutionFromVtkFile(const FVGridGeometry& fvGridGeometry,
+                                        const std::vector<std::string>& pvNames,
+                                        SolutionVector& sol)
+    {
+        using namespace tinyxml2;
+        auto fileName = getParam<std::string>("Restart.File");
+
+        XMLDocument xmlDoc;
+        auto eResult = xmlDoc.LoadFile(fileName.c_str());
+        if (eResult != XML_SUCCESS)
+            DUNE_THROW(Dune::IOError, "Couldn't open XML file " << fileName << ".");
+
+        XMLElement *pieceNode = xmlDoc.FirstChildElement("VTKFile")->FirstChildElement("UnstructuredGrid")->FirstChildElement("Piece");
+        if (pieceNode == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't get Piece node in " << fileName << ".");
+
+        XMLElement *cellDataNode = pieceNode->FirstChildElement("CellData");
+        if (cellDataNode == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't get CellData node in " << fileName << ".");
+
+        setPrimaryVariables_(cellDataNode, fvGridGeometry, pvNames, sol);
+    }
+
+private:
+
     template <class Scalar, class FVGridGeometry>
-    static std::vector<Scalar> extractDataToVector(tinyxml2::XMLElement *xmlNode,
-                                            const std::string& name,
-                                            const FVGridGeometry& fvGridGeometry)
+    static std::vector<Scalar> extractDataToVector_(tinyxml2::XMLElement *xmlNode,
+                                                    const std::string& name,
+                                                    const FVGridGeometry& fvGridGeometry)
     {
         // loop over XML node siblings to find the correct data array
         tinyxml2::XMLElement *dataArray = xmlNode->FirstChildElement("DataArray");
@@ -319,39 +356,90 @@ public:
         return vec;
     }
 
-    template <class FVGridGeometry, class SolutionVector>
-    static void loadSolutionFromVtkFile(const FVGridGeometry& fvGridGeometry,
-                                        std::vector<std::string> pvNames,
-                                        SolutionVector& sol)
+    template<class SolutionVector, class FVGridGeometry>
+    static auto setPrimaryVariables_(tinyxml2::XMLElement *node,
+                                     const FVGridGeometry& fvGridGeometry,
+                                     std::vector<std::string> pvNames,
+                                     SolutionVector& sol)
+    -> typename std::enable_if_t<!decltype(isValid(hasState())(sol[0]))::value, void>
     {
-        using namespace tinyxml2;
-        auto fileName = getParam<std::string>("Restart.File");
-
-        XMLDocument xmlDoc;
-        auto eResult = xmlDoc.LoadFile(fileName.c_str());
-        if (eResult != XML_SUCCESS)
-            DUNE_THROW(Dune::IOError, "Couldn't open XML file.");
-
-        XMLElement *pieceNode = xmlDoc.FirstChildElement("VTKFile")->FirstChildElement("UnstructuredGrid")->FirstChildElement("Piece");
-        if (pieceNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get Piece node.");
-
-        XMLElement *cellDataNode = pieceNode->FirstChildElement("CellData");
-        if (cellDataNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get CellData node.");
-
         using PrimaryVariables = typename SolutionVector::block_type;
         using Scalar = typename PrimaryVariables::field_type;
-        for (size_t pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
+
+        for (size_t pvIdx = 0; pvIdx < pvNames.size(); ++pvIdx)
         {
-            auto vec = extractDataToVector<Scalar>(cellDataNode, pvNames[pvIdx], fvGridGeometry);
+            auto pvName = pvNames[pvIdx];
+
+            auto vec = extractDataToVector_<Scalar>(node, pvName, fvGridGeometry);
 
             for (size_t i = 0; i < sol.size(); ++i)
                 sol[i][pvIdx] = vec[i];
         }
     }
 
-private:
+    template<class SolutionVector, class FVGridGeometry>
+    static auto setPrimaryVariables_(tinyxml2::XMLElement *node,
+                                     const FVGridGeometry& fvGridGeometry,
+                                     std::vector<std::string> pvNames,
+                                     SolutionVector& sol)
+    -> typename std::enable_if_t<decltype(isValid(hasState())(sol[0]))::value, void>
+    {
+        auto phasePresenceIt = std::find(pvNames.begin(), pvNames.end(), "phase presence");
+        if (phasePresenceIt != pvNames.end())
+        {
+            auto vec = extractDataToVector_<int>(node, "phase presence", fvGridGeometry);
+
+            for (size_t i = 0; i < sol.size(); ++i)
+                sol[i].setState(vec[i]);
+
+            pvNames.erase(phasePresenceIt);
+        }
+
+        using PrimaryVariables = typename SolutionVector::block_type;
+        using Scalar = typename PrimaryVariables::field_type;
+        for (size_t pvIdx = 0; pvIdx < pvNames.size(); ++pvIdx)
+        {
+            auto pvName = pvNames[pvIdx];
+
+            auto switchedPvNames = getSwitchedPvNames_(pvName);
+
+            if (switchedPvNames[0] == pvName)
+            {
+                auto vec = extractDataToVector_<Scalar>(node, pvName, fvGridGeometry);
+
+                for (size_t i = 0; i < sol.size(); ++i)
+                    sol[i][pvIdx] = vec[i];
+            }
+            else
+            {
+                std::vector<std::vector<Scalar>> switchedPvsSol;
+                for (size_t switchedPvIdx = 0; switchedPvIdx < switchedPvNames.size(); ++switchedPvIdx)
+                    switchedPvsSol.push_back(extractDataToVector_<Scalar>(node,
+                                                                          switchedPvNames[switchedPvIdx],
+                                                                          fvGridGeometry));
+
+                for (size_t i = 0; i < sol.size(); ++i)
+                    sol[i][pvIdx] = switchedPvsSol[sol[i].state()-1][i];
+            }
+        }
+    }
+
+    static std::vector<std::string> getSwitchedPvNames_(std::string pvName)
+    {
+        std::vector<std::string> switchedPvNames;
+        int lastPos = -1;
+        size_t pos = 0;
+        do
+        {
+            pos = pvName.find('/', lastPos + 1);
+            switchedPvNames.push_back(pvName.substr(lastPos+1, pos - lastPos - 1));
+            std::cout << "Found switched PV name " << pvName.substr(lastPos+1, pos - lastPos - 1) << std::endl;
+            lastPos = pos;
+        } while (pos != std::string::npos);
+
+        return switchedPvNames;
+    }
+
     std::string fileName_;
     std::ifstream inStream_;
     std::ofstream outStream_;
