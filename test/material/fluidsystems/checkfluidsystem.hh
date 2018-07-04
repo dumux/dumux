@@ -533,7 +533,13 @@ int checkFluidSystem()
         {
             collectedErrors += "error: FluidSystem::density() throws exception!\n";
         }
-
+        try
+        {
+            val = FluidSystem::molarDensity(fs, paramCache, phaseIdx);
+        } catch (Dune::Exception e)
+        {
+            collectedErrors += "error: FluidSystem::molarDensity() throws exception!\n";
+        }
         fs.allowPressure(true);
         fs.allowDensity(true);
         try
