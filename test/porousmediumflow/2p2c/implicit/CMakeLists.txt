@@ -11,6 +11,15 @@ dune_add_test(NAME test_2p2c_box
                                ${CMAKE_CURRENT_BINARY_DIR}/injection_box-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_box test_2p2c_fv.input -Problem.Name injection_box")
 
+dune_add_test(NAME test_2p2c_box_restart
+              SOURCES test_2p2c_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=InjectionBoxTypeTag ENABLECACHING=0
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/injectionbox-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/injection_box_restart-00004.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_box_restart test_2p2c_fv.input -Problem.Name injection_box_restart -TimeLoop.DtInitial 1488.5 -Restart.Time 2158.85 -Restart.File injection_box-00004.vtu")
+
 dune_add_test(NAME test_2p2c_tpfa
               SOURCES test_2p2c_fv.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionCCTpfaTypeTag ENABLECACHING=0
@@ -19,15 +28,6 @@ dune_add_test(NAME test_2p2c_tpfa
                        --files ${CMAKE_SOURCE_DIR}/test/references/injectioncc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/injection_tpfa-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_tpfa test_2p2c_fv.input -Problem.Name injection_tpfa")
-
-dune_add_test(NAME test_2p2c_tpfa_restart
-              SOURCES test_2p2c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=InjectionCCTpfaTypeTag ENABLECACHING=0
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy
-                       --files ${CMAKE_SOURCE_DIR}/test/references/injectioncc-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/injection_tpfa_restart-00004.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_tpfa test_2p2c_fv.input -Problem.Name injection_tpfa_restart -TimeLoop.DtInitial 1488.5 -Restart.Time 2158.85 -Restart.File injection_tpfa-00004.vtu")
 
 dune_add_test(NAME test_2p2c_mpfa
               SOURCES test_2p2c_fv.cc
