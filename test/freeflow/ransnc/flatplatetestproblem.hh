@@ -39,6 +39,9 @@
 #elif KOMEGA
 #include <dumux/freeflow/compositional/komegancmodel.hh>
 #include <dumux/freeflow/rans/twoeq/komega/problem.hh>
+#elif ONEEQ
+#include <dumux/freeflow/compositional/oneeqncmodel.hh>
+#include <dumux/freeflow/rans/oneeq/problem.hh>
 #else
 #include <dumux/freeflow/compositional/zeroeqncmodel.hh>
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
@@ -59,6 +62,8 @@ namespace Properties
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNCNI));
   #elif KOMEGA
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNCNI));
+  #elif ONEEQ
+  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNCNI));
   #else
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI));
   #endif
@@ -69,6 +74,8 @@ namespace Properties
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNC));
   #elif KOMEGA
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNC));
+  #elif ONEEQ
+  NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNC));
   #else
   NEW_TYPE_TAG(FlatPlateNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC));
   #endif
@@ -123,6 +130,10 @@ class FlatPlateNCTestProblem : public KEpsilonProblem<TypeTag>
 class FlatPlateNCTestProblem : public KOmegaProblem<TypeTag>
 {
     using ParentType = KOmegaProblem<TypeTag>;
+#elif ONEEQ
+class FlatPlateNCTestProblem : public OneEqProblem<TypeTag>
+{
+    using ParentType = OneEqProblem<TypeTag>;
 #else
 class FlatPlateNCTestProblem : public ZeroEqProblem<TypeTag>
 {
@@ -166,6 +177,7 @@ public:
         Scalar density = FluidSystem::density(fluidState, phaseIdx);
         Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, phaseIdx) / density;
         Scalar diameter = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
+        viscosityTilde_ = 1e-3 * turbulenceProperties.viscosityTilde(inletVelocity_, diameter, kinematicViscosity);
         turbulentKineticEnergy_ = turbulenceProperties.turbulentKineticEnergy(inletVelocity_, diameter, kinematicViscosity);
 #if KOMEGA
         dissipation_ = turbulenceProperties.dissipationRate(inletVelocity_, diameter, kinematicViscosity);
@@ -232,6 +244,9 @@ public:
             values.setDirichlet(Indices::turbulentKineticEnergyIdx);
             values.setDirichlet(Indices::dissipationIdx);
 #endif
+#if ONEEQ
+            values.setDirichlet(Indices::viscosityTildeIdx);
+#endif
         }
         else if(isOutlet_(globalPos))
         {
@@ -245,6 +260,9 @@ public:
 #if KEPSILON || KOMEGA || LOWREKEPSILON
             values.setOutflow(Indices::turbulentKineticEnergyEqIdx);
             values.setOutflow(Indices::dissipationEqIdx);
+#endif
+#if ONEEQ
+            values.setOutflow(Indices::viscosityTildeIdx);
 #endif
         }
         else if(isOnWall(globalPos))
@@ -263,6 +281,9 @@ public:
 #elif KOMEGA
             values.setDirichlet(Indices::turbulentKineticEnergyEqIdx);
             values.setDirichletCell(Indices::dissipationIdx);
+#endif
+#if ONEEQ
+            values.setDirichlet(Indices::viscosityTildeIdx);
 #endif
         }
         else
@@ -362,6 +383,14 @@ public:
         }
 #endif
 
+#if ONEEQ
+        values[Indices::viscosityTildeIdx] = viscosityTilde_;
+        if (isOnWall(globalPos))
+        {
+            values[Indices::viscosityTildeIdx] = 0.0;
+        }
+#endif
+
         return values;
     }
 
@@ -397,6 +426,7 @@ private:
 
     const Scalar eps_;
     Scalar inletVelocity_;
+    Scalar viscosityTilde_;
     Scalar turbulentKineticEnergy_;
     Scalar dissipation_;
     TimeLoopPtr timeLoop_;
