@@ -325,9 +325,8 @@ public:
                                       const SubControlVolumeFace& scvf,
                                       const SubControlVolumeFace& localSubFace) const
     {
-        using std::abs;
         unsigned int elementID = asImp_().fvGridGeometry().elementMapper().index(element);
-        return FacePrimaryVariables(asImp_().tangentialMomentumWallFunction(elementID, abs(elemFaceVars[scvf].velocitySelf()))
+        return FacePrimaryVariables(asImp_().tangentialMomentumWallFunction(elementID, elemFaceVars[scvf].velocitySelf())
                                     * elemVolVars[scvf.insideScvIdx()].density());
     }
 
