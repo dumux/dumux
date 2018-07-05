@@ -24,11 +24,8 @@
 #ifndef DUMUX_2P2C_FLUID_STATE_HH
 #define DUMUX_2P2C_FLUID_STATE_HH
 
-#include <dune/common/fvector.hh>
-#include <dumux/common/valgrind.hh>
+namespace Dumux {
 
-namespace Dumux
-{
 /*!
  * \ingroup FluidStates
  * \brief Calculates the phase state from the primary variables in the
@@ -44,17 +41,16 @@ public:
         phase1Idx = FluidSystem::phase1Idx,
     };
 
-    enum {  numPhases = FluidSystem::numPhases,
-            numComponents = FluidSystem::numComponents};
-    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
+    enum {
+        numPhases = FluidSystem::numPhases,
+        numComponents = FluidSystem::numComponents
+    };
 
 public:
 
     // comply with new style 2p2c models
     int wettingPhase() const
-    {
-        return phase0Idx;
-    }
+    { return phase0Idx; }
 
     /*!
      * \name access functions
@@ -71,13 +67,7 @@ public:
      * \param phaseIdx the index of the phase
      */
     Scalar saturation(int phaseIdx) const
-    {
-        if (phaseIdx == phase0Idx)
-        {
-            return sw_;
-        }
-        return 1.0 - sw_;
-    }
+    { return phaseIdx == phase0Idx ? sw_ : 1.0 - sw_; }
 
     /*!
      * \brief Returns the molar fraction \f$x^\kappa_\alpha\f$ of the component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
@@ -89,9 +79,7 @@ public:
      * \param compIdx the index of the component
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
-    {
-        return moleFraction_[phaseIdx][compIdx];
-    }
+    { return moleFraction_[phaseIdx][compIdx]; }
 
     /*!
      * \brief Returns the mass fraction \f$X^\kappa_\alpha\f$ of component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
@@ -109,9 +97,7 @@ public:
      * \param compIdx the index of the component
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
-    {
-        return massFraction_[phaseIdx][compIdx];
-    }
+    { return massFraction_[phaseIdx][compIdx]; }
 
     /*!
      * \brief The mass density \f$\rho_\alpha\f$ of the fluid phase
@@ -132,14 +118,14 @@ public:
 
     /*!
      * \brief The partial pressure of a component in the n-phase \f$\mathrm{[Pa]}\f$
+     * \todo is this necessary?
      */
     Scalar partialPressure(int compIdx) const
-    {
-        return partialPressure(phase1Idx, compIdx);
-    }
+    { return partialPressure(phase1Idx, compIdx); }
 
     /*!
      * \brief The partial pressure of a component in a phase \f$\mathrm{[Pa]}\f$
+     * \todo is this necessary?
      */
     Scalar partialPressure(int phaseIdx, int compIdx) const
     {
@@ -176,10 +162,9 @@ public:
     Scalar averageMolarMass(int phaseIdx) const
     {
         Scalar averageMolarMass = 0;
-
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             averageMolarMass += moleFraction_[phaseIdx][compIdx]*FluidSystem::molarMass(compIdx);
-        }
+
         return averageMolarMass;
     }
 
@@ -189,7 +174,7 @@ public:
      */
     Scalar phaseMassFraction(int phaseIdx)
     {
-      using std::isnan;
+        using std::isnan;
         if (isnan(nu_[phaseIdx]))  //in contrast to the standard update() method, satflash() does not calculate nu.
         {
             nu_[phase0Idx] = sw_ * density_[phase0Idx] / (sw_ * density_[phase0Idx] + (1. - sw_) * density_[phase1Idx]);
@@ -204,7 +189,7 @@ public:
      *  phase mass per total mass \f$\mathrm{[kg/kg]}\f$.
      * \param phaseIdx the index of the phase
      */
-    Scalar& nu(int phaseIdx) const
+    Scalar nu(int phaseIdx) const
     {
         return phaseMassFraction(phaseIdx);
     }
@@ -229,9 +214,7 @@ public:
      * @param value Value to be stored
      */
     void setMassFraction(int phaseIdx, int compIdx, Scalar value)
-    {
-        massFraction_[phaseIdx][compIdx] = value;
-    }
+    { massFraction_[phaseIdx][compIdx] = value; }
 
     /*!
      * \brief Sets the molar fraction of a component in a fluid phase.
@@ -240,9 +223,8 @@ public:
      * @param value Value to be stored
      */
     void setMoleFraction(int phaseIdx, int compIdx, Scalar value)
-    {
-        moleFraction_[phaseIdx][compIdx] = value;
-    }
+    { moleFraction_[phaseIdx][compIdx] = value; }
+
     /*!
      * \brief Sets the density of a phase \f$\mathrm{[kg/m^3]}\f$.
      * \param phaseIdx the index of the phase
@@ -264,12 +246,7 @@ public:
      * @param value Value to be stored
      */
     void setSaturation(int phaseIdx, Scalar value)
-    {
-        if (phaseIdx == phase0Idx)
-            sw_ = value;
-        else
-            sw_ = 1.-value;
-    }
+    { sw_ = phaseIdx == phase0Idx ? value : 1.0 - value; }
 
     /*!
      * \brief Sets the phase mass fraction. phase mass per total mass \f$\mathrm{[kg/kg]}\f$.
@@ -277,43 +254,34 @@ public:
      * @param value Value to be stored
      */
     void setNu(int phaseIdx, Scalar value)
-    {
-            nu_[phaseIdx] = value;
-    }
+    { nu_[phaseIdx] = value; }
+
     /*!
      * \brief Sets the temperature
      * @param value Value to be stored
      */
     void setTemperature(Scalar value)
-    {
-        temperature_ = value;
-    }
+    { temperature_ = value; }
+
     /*!
      * \brief Sets phase pressure
      * \param phaseIdx the index of the phase
      * @param value Value to be stored
      */
     void setPressure(int phaseIdx, Scalar value)
-    {
-        phasePressure_[phaseIdx] = value;
-    }
-
-    //@}
-    TwoPTwoCFluidState()
-    { Valgrind::SetUndefined(*this); }
+    { phasePressure_[phaseIdx] = value; }
 
 protected:
-//    Scalar massConcentration_[numComponents];
-    Scalar phasePressure_[numPhases];
-    Scalar temperature_;
-
-    Scalar sw_;
-    PhaseVector nu_; //phase mass fraction
-    Scalar density_[numPhases];
-    Scalar molarDensity_[numPhases];
-    Scalar viscosity_[numPhases];
-    Scalar massFraction_[numPhases][numComponents];
-    Scalar moleFraction_[numPhases][numComponents];
+    //! zero-initialize all data members with braces syntax
+    Scalar temperature_ = 0.0;
+    Scalar sw_ = 0.0;
+    Scalar phasePressure_[numPhases] = {};
+    Scalar nu_[numPhases] = {};
+    Scalar density_[numPhases] = {};
+    Scalar molarDensity_[numPhases] = {};
+    Scalar viscosity_[numPhases] = {};
+    Scalar massFraction_[numPhases][numComponents] = {};
+    Scalar moleFraction_[numPhases][numComponents] = {};
 };
 
 } // end namespace Dumux
