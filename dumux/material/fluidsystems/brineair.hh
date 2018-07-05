@@ -132,7 +132,7 @@ public:
     static constexpr bool isGas(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        return phaseIdx == phase0Idx;
+        return phaseIdx == gasPhaseIdx;
     }
 
     /*!
