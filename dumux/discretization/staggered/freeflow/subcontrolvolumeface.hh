@@ -87,8 +87,7 @@ public:
       pairData_(geometryHelper.pairData()),
       localFaceIdx_(geometryHelper.localFaceIndex()),
       dirIdx_(geometryHelper.directionIndex()),
-      normalInPosCoordDir_(unitOuterNormal_[directionIndex()] > 0.0),
-      outerNormalScalar_(unitOuterNormal_[directionIndex()]),
+      outerNormalSign_(sign(unitOuterNormal_[directionIndex()])),
       isGhostFace_(false)
       {
           corners_.resize(isGeometry.corners());
@@ -213,13 +212,13 @@ public:
     //! Returns whether the unitNormal of the face points in positive coordinate direction
     bool normalInPosCoordDir() const
     {
-        return normalInPosCoordDir_;
+        return directionSign() > 0;
     }
 
     //! Returns the sign of the unit outer normal's vector
-    Scalar directionSign() const
+    int directionSign() const
     {
-        return outerNormalScalar_;
+        return outerNormalSign_;
     }
 
     //! Returns the data for one sub face
@@ -265,8 +264,7 @@ private:
     std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_;
     int localFaceIdx_;
     unsigned int dirIdx_;
-    bool normalInPosCoordDir_;
-    Scalar outerNormalScalar_;
+    int outerNormalSign_;
     bool isGhostFace_;
 };
 

@@ -56,7 +56,7 @@ struct PairData
  * \brief Returns the dirction index of the facet (0 = x, 1 = y, 2 = z)
  */
 template<class Vector>
-inline static int directionIndex(Vector&& vector)
+inline static unsigned int directionIndex(Vector&& vector)
 {
     const auto eps = 1e-8;
     const int idx = std::find_if(vector.begin(), vector.end(), [eps](const auto& x) { return std::abs(x) > eps; } ) - vector.begin();
