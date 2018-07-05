@@ -325,9 +325,8 @@ public:
                                       const SubControlVolumeFace& scvf,
                                       const SubControlVolumeFace& localSubFace) const
     {
-        using std::abs;
         unsigned int elementID = asImp_().fvGridGeometry().elementMapper().index(element);
-        return FacePrimaryVariables(asImp_().tangentialMomentumWallFunction(elementID, abs(elemFaceVars[scvf].velocitySelf()))
+        return FacePrimaryVariables(asImp_().tangentialMomentumWallFunction(elementID, elemFaceVars[scvf].velocitySelf())
                                     * elemVolVars[scvf.insideScvIdx()].density());
     }
 
@@ -404,6 +403,12 @@ public:
                 / asImp_().turbulentSchmidtNumber()
                 / (1. / asImp_().karmanConstant() * log(yPlusNominal(elementID) * 9.793)
                     + pFunction(schmidtNumber, asImp_().turbulentSchmidtNumber()));
+        }
+
+        if (Indices::replaceCompEqIdx < ModelTraits::numComponents())
+        {
+            wallFunctionFlux[Indices::replaceCompEqIdx] =
+                -std::accumulate(wallFunctionFlux.begin(), wallFunctionFlux.end(), 0.0);
         }
 
         return wallFunctionFlux;
