@@ -210,7 +210,7 @@ public:
     /*!
      * \brief Returns if an element is the matching point
      */
-    Scalar isMatchingPoint() const
+    bool isMatchingPoint() const
     {
         return isMatchingPoint_;
     }
