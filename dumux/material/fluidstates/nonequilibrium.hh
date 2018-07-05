@@ -187,7 +187,6 @@ public:
     Scalar molarDensity(int phaseIdx) const
     { return molarDensity_[phaseIdx]; }
 
-
     /*!
      * \brief The absolute temperature\f$T_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[K]}\f$
      */
