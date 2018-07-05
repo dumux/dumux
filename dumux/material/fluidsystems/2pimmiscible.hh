@@ -274,7 +274,32 @@ public:
      * \brief Initialize the fluid system's static parameters
      */
     static void init()
-    {}
+    {
+        // initialize with some default values
+        init(/*tempMin=*/273.15, /*tempMax=*/623.15, /*numTemp=*/100,
+             /*pMin=*/-10.0, /*pMax=*/20e6, /*numP=*/200);
+    }
+
+    /*!
+     * \brief Initialize the fluid system's static parameters using
+     *        problem specific temperature and pressure ranges
+     *
+     * \param tempMin The minimum temperature used for tabulation of water \f$\mathrm{[K]}\f$
+     * \param tempMax The maximum temperature used for tabulation of water\f$\mathrm{[K]}\f$
+     * \param nTemp The number of ticks on the temperature axis of the  table of water
+     * \param pressMin The minimum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
+     * \param pressMax The maximum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
+     * \param nPress The number of ticks on the pressure axis of the  table of water
+     */
+    static void init(Scalar tempMin, Scalar tempMax, std::size_t nTemp,
+                     Scalar pressMin, Scalar pressMax, std::size_t nPress)
+    {
+        if (Fluid0::Component::isTabulated)
+            Fluid0::Component::init(tempMin, tempMax, nTemp, pressMin, pressMax, nPress);
+
+        if (Fluid1::Component::isTabulated)
+            Fluid1::Component::init(tempMin, tempMax, nTemp, pressMin, pressMax, nPress);
+    }
 
     using Base::density;
     /*!

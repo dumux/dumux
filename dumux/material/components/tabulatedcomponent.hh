@@ -33,6 +33,7 @@
 #include <cassert>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/material/components/componenttraits.hh>
@@ -96,8 +97,8 @@ public:
      * \param pressMax The maximum of the pressure range in \f$\mathrm{[Pa]}\f$
      * \param nPress The number of entries/steps within the pressure range
      */
-    static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
-                     Scalar pressMin, Scalar pressMax, unsigned nPress)
+    static void init(Scalar tempMin, Scalar tempMax, std::size_t nTemp,
+                     Scalar pressMin, Scalar pressMax, std::size_t nPress)
     {
 #ifndef NDEBUG
         initialized_  = true;
@@ -110,6 +111,15 @@ public:
         pressMax_ = pressMax;
         nPress_ = nPress;
         nDensity_ = nPress_;
+
+        std::cout << "-------------------------------------------------------------------------\n"
+                  << "Initializing tables for the " << RawComponent::name()
+                  << " fluid properties (" << nTemp*nPress  << " entries).\n"
+                  << "Temperature -> min: " << std::scientific << std::setprecision(3)
+                  << tempMin << ", max: "  << tempMax << ", n: " << nTemp << '\n'
+                  << "Pressure    -> min: " << std::scientific << std::setprecision(3)
+                  << pressMin << ", max: " << pressMax << ", n: " << nPress << '\n'
+                  << "-------------------------------------------------------------------------" << std::endl;
 
         // resize & initilialize the arrays with NaN
         assert(std::numeric_limits<Scalar>::has_quiet_NaN);
