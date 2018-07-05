@@ -75,8 +75,11 @@ public:
      * \param gridView The grid view
      */
     IMPESProblem2P(TimeManager& timeManager, Grid& grid)
-        : ParentType(timeManager, grid),
-        gravity_(0)
+        : IMPESProblem2P(timeManager, grid, grid.leafGridView())
+    {}
+
+    IMPESProblem2P(TimeManager& timeManager, Grid& grid, const GridView& gridView)
+        : ParentType(timeManager, grid, gridView), gravity_(0)
     {
         spatialParams_ = std::make_shared<SpatialParams>(asImp_());
 

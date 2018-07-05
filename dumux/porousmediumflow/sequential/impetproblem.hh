@@ -96,11 +96,15 @@ public:
      * \param gridView gridview to the grid.
      */
     IMPETProblem(TimeManager &timeManager, Grid& grid)
+        : IMPETProblem(timeManager, grid, grid.leafGridView())
+    {}
+
+    IMPETProblem(TimeManager &timeManager, Grid& grid, const GridView& gridView)
         : grid_(&grid),
+          gridView_(gridView),
           bBoxMin_(std::numeric_limits<double>::max()),
           bBoxMax_(-std::numeric_limits<double>::max()),
           timeManager_(&timeManager),
-          variables_(gridView()),
           outputInterval_(1),
           outputTimeInterval_(0.0),
           vtkOutputLevel_(-1)
@@ -108,7 +112,7 @@ public:
         // calculate the bounding box of the grid view
         using std::min;
         using std::max;
-        for (const auto& vertex : vertices(gridView())) {
+        for (const auto& vertex : vertices(this->gridView())) {
             for (int i=0; i<dim; i++) {
                 bBoxMin_[i] = min(bBoxMin_[i], vertex.geometry().center()[i]);
                 bBoxMax_[i] = max(bBoxMax_[i], vertex.geometry().center()[i]);
@@ -116,12 +120,13 @@ public:
         }
 
         // communicate to get the bounding box of the whole domain
-        if (gridView().comm().size() > 1)
+        if (this->gridView().comm().size() > 1)
             for (int i = 0; i < dim; ++i) {
-                bBoxMin_[i] = gridView().comm().min(bBoxMin_[i]);
-                bBoxMax_[i] = gridView().comm().max(bBoxMax_[i]);
+                bBoxMin_[i] = this->gridView().comm().min(bBoxMin_[i]);
+                bBoxMax_[i] = this->gridView().comm().max(bBoxMax_[i]);
             }
 
+        variables_ = std::make_shared<Variables>(this->gridView());
         pressModel_ = std::make_shared<PressureModel>(asImp_());
 
         transportModel_ = std::make_shared<TransportModel>(asImp_());
@@ -319,7 +324,7 @@ public:
     void init()
     {
         // set the initial condition of the model
-        variables_.initialize();
+        variables_->initialize();
         model().initialize();
         if (adaptiveGrid)
             gridAdapt().init();
@@ -565,10 +570,10 @@ public:
     /*!
      * \brief The GridView which used by the problem.
      */
-    const GridView gridView() const
-    { return asImp_().gridView_(); }
-    GridView gridView()
-    { return asImp_().gridView_(); }
+    const GridView& gridView() const
+    {
+        return gridView_;
+    }
 
     /*!
      * \brief Returns the current grid which used by the problem.
@@ -628,13 +633,13 @@ public:
      * \brief Returns the mapper for vertices to indices.
      */
     const VertexMapper &vertexMapper() const
-    { return variables_.vertexMapper(); }
+    { return variables_->vertexMapper(); }
 
     /*!
      * \brief Returns the mapper for elements to indices.
      */
     const ElementMapper &elementMapper() const
-    { return variables_.elementMapper(); }
+    { return variables_->elementMapper(); }
 
     /*!
      * \brief The coordinate of the corner of the GridView's bounding
@@ -669,11 +674,11 @@ public:
      * simulation process, such as pressure, saturation etc.
      */
     Variables& variables ()
-    { return variables_; }
+    { return *variables_; }
 
     //! \copydoc IMPETProblem::variables ()
     const Variables& variables () const
-    { return variables_; }
+    { return *variables_; }
 
     /*!
      * \brief Returns numerical model used for the problem.
@@ -833,17 +838,12 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
-    const GridView gridView_() const
-    { return grid_->leafGridView(); }
-    GridView gridView_()
-    { return grid_->leafGridView(); }
-
-
     std::string simname_; // a string for the name of the current simulation,
     // which could be set by means of a program argument, for example.
 
     // pointer to a possibly adaptive grid.
     Grid *grid_;
+    GridView gridView_;
 
     GlobalPosition bBoxMin_;
     GlobalPosition bBoxMax_;
@@ -851,7 +851,7 @@ private:
     TimeManager *timeManager_;
     Scalar maxTimeStepSize_;
 
-    Variables variables_;
+    std::shared_ptr<Variables> variables_;
 
     std::shared_ptr<PressureModel> pressModel_;//!< object including the pressure model
     std::shared_ptr<TransportModel> transportModel_;//!< object including the saturation model
