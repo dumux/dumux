@@ -345,11 +345,8 @@ public:
         else
             std::cout << "Using fast H2O-Air fluid system\n";
 
-        if (H2O::isTabulated) {
-            std::cout << "Initializing tables for the H2O fluid properties ("
-                      << nTemp*nPress
-                      << " entries).\n";
-
+        if (H2O::isTabulated)
+        {
             H2O::init(tempMin, tempMax, nTemp,
                       pressMin, pressMax, nPress);
         }

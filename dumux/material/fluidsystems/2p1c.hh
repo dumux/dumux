@@ -256,11 +256,8 @@ public:
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
                      Scalar pressMin, Scalar pressMax, unsigned nPress)
     {
-        if (Component::isTabulated) {
-            std::cout << "Initializing tables for the fluid properties ("
-                      << nTemp*nPress
-                      << " entries).\n";
-
+        if (Component::isTabulated)
+        {
             Component::init(tempMin, tempMax, nTemp,
                                pressMin, pressMax, nPress);
         }
