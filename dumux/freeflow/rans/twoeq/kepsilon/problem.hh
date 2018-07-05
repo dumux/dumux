@@ -405,6 +405,12 @@ public:
                     + pFunction(schmidtNumber, asImp_().turbulentSchmidtNumber()));
         }
 
+        if (Indices::replaceCompEqIdx < ModelTraits::numComponents())
+        {
+            wallFunctionFlux[Indices::replaceCompEqIdx] =
+                -std::accumulate(wallFunctionFlux.begin(), wallFunctionFlux.end(), 0.0);
+        }
+
         return wallFunctionFlux;
     }
 
