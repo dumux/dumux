@@ -68,10 +68,10 @@ public:
     //! Constructor with intersection
     template <class Intersection, class GeometryHelper>
     FreeFlowStaggeredSubControlVolumeFace(const Intersection& is,
-                               const typename Intersection::Geometry& isGeometry,
-                               GridIndexType scvfIndex,
-                               const std::vector<GridIndexType>& scvIndices,
-                               const GeometryHelper& geometryHelper
+                                          const typename Intersection::Geometry& isGeometry,
+                                          GridIndexType scvfIndex,
+                                          const std::vector<GridIndexType>& scvIndices,
+                                          const GeometryHelper& geometryHelper
                            )
     : ParentType(),
       geomType_(isGeometry.type()),
@@ -87,8 +87,7 @@ public:
       pairData_(geometryHelper.pairData()),
       localFaceIdx_(geometryHelper.localFaceIndex()),
       dirIdx_(geometryHelper.directionIndex()),
-      normalInPosCoordDir_(unitOuterNormal_[directionIndex()] > 0.0),
-      outerNormalScalar_(unitOuterNormal_[directionIndex()]),
+      outerNormalSign_(sign(unitOuterNormal_[directionIndex()])),
       isGhostFace_(false)
       {
           corners_.resize(isGeometry.corners());
@@ -99,13 +98,15 @@ public:
     //! Constructor for a ghost face outside of the domain. Only needed to retrieve the center and scvIndices
     FreeFlowStaggeredSubControlVolumeFace(const GlobalPosition& dofPosition,
                                           const std::vector<GridIndexType>& scvIndices,
-                                          const int dofIdx = -1,
-                                          const int scvfIndex = -1)
+                                          const unsigned int dirIdx,
+                                          const int dofIdx,
+                                          const int scvfIndex)
     : center_(dofPosition),
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
       dofIdx_(dofIdx),
       selfToOppositeDistance_(0.0),
+      dirIdx_(dirIdx),
       isGhostFace_(true)
     {}
 
@@ -197,7 +198,7 @@ public:
     }
 
     //! Returns the dirction index of the facet (0 = x, 1 = y, 2 = z)
-    int directionIndex() const
+    unsigned int directionIndex() const
     {
         return dirIdx_;
     }
@@ -211,13 +212,13 @@ public:
     //! Returns whether the unitNormal of the face points in positive coordinate direction
     bool normalInPosCoordDir() const
     {
-        return normalInPosCoordDir_;
+        return directionSign() > 0;
     }
 
     //! Returns the sign of the unit outer normal's vector
-    Scalar directionSign() const
+    int directionSign() const
     {
-        return outerNormalScalar_;
+        return outerNormalSign_;
     }
 
     //! Returns the data for one sub face
@@ -262,9 +263,8 @@ private:
     Scalar selfToOppositeDistance_;
     std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_;
     int localFaceIdx_;
-    int dirIdx_;
-    bool normalInPosCoordDir_;
-    Scalar outerNormalScalar_;
+    unsigned int dirIdx_;
+    int outerNormalSign_;
     bool isGhostFace_;
 };
 
