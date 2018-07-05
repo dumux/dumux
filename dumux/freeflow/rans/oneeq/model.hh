@@ -94,9 +94,12 @@ namespace Properties {
 /*!
  * \ingroup OneEqModel
  * \brief Traits for the Spalart-Allmaras model
+ *
+ * \tparam dimension The dimension of the problem
+ * \tparam fluidSystemPhaseIdx The the index of the phase used for the fluid system
  */
-template<int dimension>
-struct OneEqModelTraits : RANSModelTraits<dimension>
+template<int dimension, int fluidSystemPhaseIdx>
+struct OneEqModelTraits : RANSModelTraits<dimension, fluidSystemPhaseIdx>
 {
     //! The dimension of the model
     static constexpr int dim() { return dimension; }
@@ -109,7 +112,7 @@ struct OneEqModelTraits : RANSModelTraits<dimension>
     static constexpr int numComponents() { return 1; }
 
     //! the indices
-    using Indices = OneEqIndices<dim(), numComponents()>;
+    using Indices = OneEqIndices<dim(), numComponents(), fluidSystemPhaseIdx>;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -125,8 +128,9 @@ SET_PROP(OneEq, ModelTraits)
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr int dim = GridView::dimension;
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 public:
-    using type = OneEqModelTraits<dim>;
+    using type = OneEqModelTraits<dim, phaseIdx>;
 };
 
 //! The flux variables
@@ -184,7 +188,8 @@ SET_PROP(OneEqNI, ModelTraits)
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr int dim = GridView::dimension;
-    using IsothermalTraits = OneEqModelTraits<dim>;
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    using IsothermalTraits = OneEqModelTraits<dim, phaseIdx>;
 public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };

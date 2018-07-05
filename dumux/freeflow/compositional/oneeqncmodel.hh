@@ -56,9 +56,15 @@ NEW_TYPE_TAG(OneEqNC, INHERITS_FROM(NavierStokesNC));
 /*!
  * \ingroup FreeflowNCModel
  * \brief Traits for the one-equation multi-component model
+ *
+ * \tparam dimension The dimension of the problem
+ * \tparam nComp The number of components to be considered
+ * \tparam fluidSystemPhaseIdx The the index of the phase used for the fluid system
+ * \tparam replaceCompEqIdx The index of the component balance equation that should be replaced by a total mass/mole balance
+ * \tparam useM Use molar or mass balances
  */
-template<int dimension, int nComp, int phaseIdx, int replaceCompEqIdx, bool useMoles>
-struct OneEqNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, phaseIdx, replaceCompEqIdx, useMoles>
+template<int dimension, int nComp, int fluidSystemPhaseIdx, int replaceCompEqIdx, bool useMoles>
+struct OneEqNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, fluidSystemPhaseIdx, replaceCompEqIdx, useMoles>
 {
     //! There are as many momentum balance equations as dimensions
     //! and as many balance equations as components.
@@ -68,7 +74,7 @@ struct OneEqNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, phaseIdx
     static constexpr bool usesTurbulenceModel() { return true; }
 
     //! the indices
-    using Indices = FreeflowNCIndices<dimension, numEq(), phaseIdx, replaceCompEqIdx, OneEqIndices<dimension, nComp>>;
+    using Indices = FreeflowNCIndices<dimension, numEq(), fluidSystemPhaseIdx, replaceCompEqIdx, OneEqIndices<dimension, nComp, fluidSystemPhaseIdx>>;
 };
 
 //!< states some specifics of the isothermal multi-component one-equation model

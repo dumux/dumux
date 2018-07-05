@@ -35,9 +35,10 @@ namespace Dumux {
  *
  * \tparam dimension The dimension of the problem
  * \tparam numComponents The number of considered transported components
+ * \tparam fluidSystemPhaseIdx The the index of the phase used for the fluid system
  */
-template<int dimension, int numComponents>
-struct OneEqIndices : public NavierStokesIndices<dimension>
+template<int dimension, int numComponents, int fluidSystemPhaseIdx>
+struct OneEqIndices : public NavierStokesIndices<dimension, fluidSystemPhaseIdx>
 {
 public:
     static constexpr auto viscosityTildeEqIdx = dimension + numComponents;

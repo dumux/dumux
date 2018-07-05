@@ -68,7 +68,7 @@ struct KEpsilonNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, phase
     static constexpr bool usesTurbulenceModel() { return true; }
 
     //! the indices
-    using Indices = FreeflowNCIndices<dimension, numEq(), phaseIdx, replaceCompEqIdx, KEpsilonIndices<dimension, nComp>>;
+    using Indices = FreeflowNCIndices<dimension, numEq(), phaseIdx, replaceCompEqIdx, KEpsilonIndices<dimension, nComp, phaseIdx>>;
 };
 
 //!< states some specifics of the isothermal multi-component low-Reynolds k-epsilon model
