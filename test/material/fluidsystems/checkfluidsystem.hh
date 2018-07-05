@@ -263,9 +263,6 @@ int checkFluidState(const BaseFluidState &fs)
     BaseFluidState tmpFs(fs);
     tmpFs = fs;
 
-    // a fluid state must provide a checkDefined() method
-    fs.checkDefined();
-
     // output strings
     std::string collectedErrors;
     std::string collectedWarnings;

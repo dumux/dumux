@@ -244,9 +244,6 @@ public:
             Scalar h = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
             fluidState.setEnthalpy(phaseIdx, h);
         }
-
-        // make sure the quantities in the fluid state are well-defined
-        fluidState.checkDefined();
    }
 
     /*!
@@ -686,9 +683,6 @@ public:
             Scalar h = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
             fluidState.setEnthalpy(phaseIdx, h);
         }
-
-        // make sure the quantities in the fluid state are well-defined
-        fluidState.checkDefined();
    }
 
         /*!
