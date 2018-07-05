@@ -199,8 +199,9 @@ public:
     Scalar ft2() const
     {
         using std::exp;
+        // the trip correction term is dropped according to Versteeg2009 and Wilcox2006
+        // return ct3() * exp(-ct4() * viscosityRatio()  * viscosityRatio());
         return 0.0;
-//         return ct3() * exp(-ct4() * viscosityRatio()  * viscosityRatio());
     }
 
     //! \brief Returns a model function
@@ -231,36 +232,32 @@ public:
     Scalar viscosityRatio() const
     { return viscosityTilde() / RANSParentType::kinematicViscosity(); }
 
-    //! \brief Returns a modified version of the stress tensor scalar product
+    /*
+     * ! \brief Returns a modified version of the stress tensor scalar product
+     *
+     * According to <a href="https://turbmodels.larc.nasa.gov/spalart.html">NASA</a>
+     * this term should never be zero and different limiters might be used.
+     * The Implementation uses the one proposed in:
+     * Allmaras, S. R., Johnson, F. T., and Spalart, P. R.,
+     * "Modifications and Clarifications for the Implementation of the Spalart-Allmaras Turbulence Model," ICCFD7-1902
+     */
     Scalar stressTensorScalarProductTilde() const
     {
+        // original form
+        // return vorticityMagnitude()
+        //        + viscosityTilde() * fv2()
+        //          / RANSParentType::karmanConstant() / RANSParentType::karmanConstant()
+        //          / RANSParentType::wallDistance() / RANSParentType::wallDistance();
 
-        static const int sTildeTerm = getParamFromGroup<int>("",
-                                                             "OneEq.STildeType", 0);
-        if (sTildeTerm == 1)
-        {
-            return std::max(0.3 * vorticityMagnitude(),
-                   vorticityMagnitude()
-                   + viscosityTilde() * fv2()
-                     / RANSParentType::karmanConstant() / RANSParentType::karmanConstant()
-                     / RANSParentType::wallDistance() / RANSParentType::wallDistance());
-        }
-        else if (sTildeTerm == 2)
-        {
-            Scalar sBar = viscosityTilde() * fv2()
-                          / RANSParentType::karmanConstant() / RANSParentType::karmanConstant()
-                          / RANSParentType::wallDistance() / RANSParentType::wallDistance();
-            return sBar < -c2() * vorticityMagnitude()
-                  ? vorticityMagnitude()
-                    + (vorticityMagnitude() * (c2() * c2() * vorticityMagnitude() + c3() * sBar))
-                      / ((c3() - 2.0 * c2()) * vorticityMagnitude() - sBar)
-                  : vorticityMagnitude() + sBar;
-        }
-
-        return vorticityMagnitude()
-               + viscosityTilde() * fv2()
-                 / RANSParentType::karmanConstant() / RANSParentType::karmanConstant()
-                 / RANSParentType::wallDistance() / RANSParentType::wallDistance();
+        // limiter form, literature source see above
+        Scalar sBar = viscosityTilde() * fv2()
+                      / RANSParentType::karmanConstant() / RANSParentType::karmanConstant()
+                      / RANSParentType::wallDistance() / RANSParentType::wallDistance();
+        return sBar < -c2() * vorticityMagnitude()
+               ? vorticityMagnitude()
+                 + (vorticityMagnitude() * (c2() * c2() * vorticityMagnitude() + c3() * sBar))
+                   / ((c3() - 2.0 * c2()) * vorticityMagnitude() - sBar)
+               : vorticityMagnitude() + sBar;
     }
 
     //! \brief Returns the magnitude of the vorticity

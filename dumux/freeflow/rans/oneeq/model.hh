@@ -24,7 +24,54 @@
  *
  * \copydoc RANSModel
  *
- * \todo please doc me
+ * This model, published by Spalart and Allmaras 1992 \cite Spalart1992a,
+ * uses one additional PDE for a working variable \f$ \tilde{\nu} \f$.
+ * This variable has the units of a viscosity and can be converted to the eddy
+ * viscosity via a model function~(\f$ f_\text{v1} \f$):
+ * \f[
+ *  \nu_\text{t} = \tilde{\nu} f_\text{v1}
+ * \f]
+ *
+ * Here, as proposed by Wilcox \cite Wilcox2008a and Versteeg \cite Versteeg2009a, the correction
+ * term which account for the transition or trip, is dropped from the original equations,
+ * such that the balance equation simplifies to:
+ * \f[
+ *   \frac{\partial \tilde{\nu}}{\partial t}
+ *   + \nabla \cdot \left( \tilde{\nu} \textbf{v} \right)
+ *   - c_\text{b1} \tilde{S} \tilde{\nu}
+ *   - \frac{1}{\sigma_{\tilde{\nu}}} \nabla \cdot \left( \left[ \nu + \tilde{\nu} \right] \nabla \tilde{\nu} \right)
+ *   - \frac{c_\text{b2}}{\sigma_{\tilde{\nu}}} \left| \nabla \tilde{\nu} \right|^2
+ *   + c_\text{w1} f_\text{w} \frac{\tilde{\nu}^2}{y^2}
+ *   = 0
+ * \f]
+ *
+ * Here, a modified mean effective strain rate (\f$ \tilde{S} \f$) based on
+ * the mean rotation rate tensor (\f$ \mathbf{\Omega} \f$) is used:
+ * \f[
+ *  \tilde{S} = \sqrt{2 \mathbf{\Omega} \cdot \mathbf{\Omega}} + \frac{\tilde{\nu}}{\kappa^2 y^2} f_\text{v2}
+ * \f]
+ * \f[
+ *  \mathbf{\Omega} = \frac{1}{2} \left( \nabla \textbf{v}_\text{g}
+ *                                  - \nabla \textbf{v}_\text{g}^\intercal \right)
+ * \f]
+ *
+ * This balance equation is linked to the flow geometry by the distance to the closest wall ($y$).
+ * Further, the model uses the following functions and expressions:
+ * \f[ \chi = \frac{\tilde{\nu}}{\nu} \f]
+ * \f[ f_\text{v1} = \frac{\chi^3}{\chi^3+c_\text{v1}^3} \f]
+ * \f[ f_\text{v2} = 1 - \frac{\chi}{1+f_\text{v1}\chi} \f]
+ * \f[ f_\text{w} = g_\text{w} \left( \frac{1+c_\text{w3}^6}{g^6_\text{w}+c_\text{w3}^6}
+ *                             \right)^\frac{1}{6} \f]
+ * \f[ g_\text{w} = r_\text{w} + c_\text{w2} (r_\text{w}^6 - r_\text{w}) \f]
+ * \f[ r_\text{w} = \min \left[ \frac{\tilde{\nu}}{\tilde{S}\kappa^2 y^2},10\right] \f]
+ * \f[ \sigma_{\tilde{\nu}} = \nicefrac{2}{3} \f]
+ * \f[ c_\text{b1} = 0.1355 \f]
+ * \f[ c_\text{b2} = 0.622 \f]
+ * \f[ c_\text{v1} = 7.1 \f]
+ * \f[ c_\text{w1} = \frac{c_\text{b1}}{\kappa^2}
+ *                   + \frac{1+c_\text{b2}}{\sigma_{\tilde{\nu}}} \f]
+ * \f[ c_\text{w2} = 0.3 \f]
+ * \f[ c_\text{w3} = 2 \f]
  */
 
 #ifndef DUMUX_ONEEQ_MODEL_HH

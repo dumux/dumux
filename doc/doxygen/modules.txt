@@ -194,7 +194,7 @@
        * \ingroup RANSModel
        * \defgroup OneEqModel 1-Eq. Models
        * \brief One-equation turbulence model by Spalart-Allmaras
-       * \copydetails ./freeflow/oneeq/model.hh
+       * \copydetails ./freeflow/rans/oneeq/model.hh
        */
       /*!
        * \ingroup RANSModel
