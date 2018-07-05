@@ -26,11 +26,8 @@
 #ifndef DUMUX_SATURATION_OVERLAY_FLUID_STATE_HH
 #define DUMUX_SATURATION_OVERLAY_FLUID_STATE_HH
 
-#include <array>
-#include <dumux/common/valgrind.hh>
+namespace Dumux {
 
-namespace Dumux
-{
 /*!
  * \ingroup FluidStates
  * \brief This is a fluid state which allows to set the fluid
@@ -47,30 +44,23 @@ public:
     /*!
      * \brief Constructor
      *
-     * The overlay fluid state copies the saturations from the
-     * argument, so it initially behaves exactly like the underlying
-     * fluid state.
+     * \param fs Fluidstate
+     * The overlay fluid state copies the saturation from the argument,
+     * so it initially behaves exactly like the underlying fluid
+     * state.
      */
     SaturationOverlayFluidState(const FluidState &fs)
-        : fs_(&fs)
+    : fs_(&fs)
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             saturation_[phaseIdx] = fs.saturation(phaseIdx);
     }
 
-    // copy constructor
-    SaturationOverlayFluidState(const SaturationOverlayFluidState &fs)
-        : fs_(fs.fs_)
-        , saturation_(fs.saturation_)
-    {}
-
-    // assignment operator
-    SaturationOverlayFluidState &operator=(const SaturationOverlayFluidState &fs)
-    {
-        fs_ = fs.fs_;
-        saturation_ = fs.saturation_;
-        return *this;
-    }
+    // copy & move constructor / assignment operators
+    SaturationOverlayFluidState(const SaturationOverlayFluidState &fs) = default;
+    SaturationOverlayFluidState(SaturationOverlayFluidState &&fs) = default;
+    SaturationOverlayFluidState& operator=(const SaturationOverlayFluidState &fs) = default;
+    SaturationOverlayFluidState& operator=(SaturationOverlayFluidState &&fs) = default;
 
     /*****************************************************
      * Generic access to fluid properties (No assumptions
@@ -183,22 +173,9 @@ public:
     void setSaturation(int phaseIdx, Scalar value)
     { saturation_[phaseIdx] = value; }
 
-    /*!
-     * \brief Make sure that all attributes are defined.
-     *
-     * This method does not do anything if the program is not run
-     * under valgrind. If it is, then valgrind will print an error
-     * message if some attributes of the object have not been properly
-     * defined.
-     */
-    void checkDefined() const
-    {
-        Valgrind::CheckDefined(saturation_);
-    }
-
 protected:
     const FluidState *fs_;
-    std::array<Scalar, numPhases> saturation_;
+    Scalar saturation_[numPhases] = {};
 };
 
 } // end namespace Dumux

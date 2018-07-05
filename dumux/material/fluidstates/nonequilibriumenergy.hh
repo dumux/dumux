@@ -26,16 +26,10 @@
 #ifndef DUMUX_NONEQUILIBRIUM_ENERGY_FLUID_STATE_HH
 #define DUMUX_NONEQUILIBRIUM_ENERGY_FLUID_STATE_HH
 
-#include <cmath>
-#include <algorithm>
-#include <iostream>
-
 #include <dune/common/exceptions.hh>
-#include <dumux/common/valgrind.hh>
 #include <dumux/material/fluidstates/nonequilibrium.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup FluidStates
@@ -50,26 +44,18 @@ template <class Scalar, class FluidSystem>
 class NonEquilibriumEnergyFluidState
 : public NonEquilibriumFluidState<Scalar, FluidSystem>
 {
+    using ParentType = NonEquilibriumFluidState<Scalar, FluidSystem>;
 public:
-        enum { numPhases = FluidSystem::numPhases };
-        enum { numComponents = FluidSystem::numComponents };
+    enum { numPhases = FluidSystem::numPhases };
+    enum { numComponents = FluidSystem::numComponents };
 
-    NonEquilibriumEnergyFluidState()
-    : NonEquilibriumFluidState<Scalar, FluidSystem>()
-    {}
+    using ParentType::ParentType;
 
     /*****************************************************
      * Access to fluid properties which only make sense
      * if assuming chemical equilibrium
      *****************************************************/
-    /*!
-     * \brief The fugacity of a component
-     *
-     * This assumes chemical equilibrium.
-     */
-    Scalar fugacity(int compIdx) const
-    { return fugacity(0, compIdx); }
-
+    using ParentType::fugacity;
     /*!
      * \brief The fugacity \f$f^\kappa_\alpha\f$ of component \f$\kappa\f$
      *  in fluid phase \f$\alpha\f$ in \f$\mathrm{[Pa]}\f$
@@ -88,12 +74,7 @@ public:
      *     \f[f^\kappa := f^\kappa_\alpha = f^\kappa_\beta\quad\forall \alpha, \beta\f]
      */
     Scalar fugacity(int phaseIdx, int compIdx) const
-    {
-        // Unfortunately throw does not work when triggered from a constructor
-        std::cout <<"file: "<< __FILE__ << ", line: " << __LINE__ <<". This is a fluidstate for *thermal* non-equilibrium, not chemical! \n ";
-        DUNE_THROW(Dune::NotImplemented, "This is a fluidstate for *thermal* non-equilibrium, not chemical!");
-        return 0.;
-    }
+    { DUNE_THROW(Dune::NotImplemented, "This is a fluidstate for *thermal* non-equilibrium, not chemical!"); }
 
     /*****************************************************
      * Setter methods. Note that these are not part of the
@@ -101,31 +82,13 @@ public:
      * implementation...
      *****************************************************/
 
+    using ParentType::setTemperature;
     /*!
      * \brief Set the temperature \f$\mathrm{[K]}\f$ of a fluid phase
-     *        Both versions of the function need to be here.
-     *        Otherwise the compiler gets confused.
-     *        Thus, this is just forwarding to the Parent
-     *        (unclear why this is necessary).
-     */
-    void setTemperature(int phaseIdx, Scalar value)
-    {
-        this->setTemperature(phaseIdx, value);
-    }
-
-    /*!
-     * \brief Set the temperature \f$\mathrm{[K]}\f$ of a fluid phase
-     *        Both versions of the function need to be here.
-     *        Otherwise the compiler gets confused.
-     *        Thus, this is just presenting the signature to the compiler.
+     * \note temperatures are different for each phase
      */
     void setTemperature(Scalar value)
-    {
-        // Unfortunately throw does not work when triggered from a constructor
-        std::cout <<"file: "<< __FILE__ << ", line: " << __LINE__ <<". This is a fluidstate for *thermal* non-equilibrium, not chemical! \n ";
-        DUNE_THROW(Dune::NotImplemented, "This is a fluidstate for *thermal* non-equilibrium, not chemical!");
-    }
-
+    { DUNE_THROW(Dune::NotImplemented, "This is a fluidstate for *thermal* non-equilibrium, not chemical!"); }
 };
 
 } // end namespace Dumux

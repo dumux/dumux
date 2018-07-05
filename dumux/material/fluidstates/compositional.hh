@@ -28,12 +28,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <type_traits>
 
 #include <dune/common/exceptions.hh>
-#include <dumux/common/valgrind.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup FluidStates
  * \brief Represents all relevant thermodynamic quantities of a
@@ -47,32 +47,19 @@ public:
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };
 
-    CompositionalFluidState()
-    {
-        // set the composition to 0
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
-                moleFraction_[phaseIdx][compIdx] = 0;
-                fugacityCoefficient_[phaseIdx][compIdx] = 0;
-            }
+    //! default constructor
+    CompositionalFluidState() = default;
 
-            averageMolarMass_[phaseIdx] = 0;
-            sumMoleFractions_[phaseIdx] = 0;
-            pressure_[phaseIdx] = 0;
-            saturation_[phaseIdx] = 0;
-            density_[phaseIdx] = 0;
-            molarDensity_[phaseIdx] = 0;
-            enthalpy_[phaseIdx] = 0;
-            viscosity_[phaseIdx] = 0;
-            temperature_[phaseIdx] = 0;
-        }
-    }
-
-    template <class FluidState>
-    CompositionalFluidState(FluidState &fs)
+    //! copy constructor from arbitrary fluid state
+    template <class FluidState, typename std::enable_if_t<!std::is_same<FluidState, CompositionalFluidState>::value, int> = 0>
+    CompositionalFluidState(const FluidState &fs)
     { assign(fs); }
+
+    // copy and move constructor / assignment operator
+    CompositionalFluidState(const CompositionalFluidState &fs) = default;
+    CompositionalFluidState(CompositionalFluidState &&fs) = default;
+    CompositionalFluidState& operator=(const CompositionalFluidState &fs) = default;
+    CompositionalFluidState& operator=(CompositionalFluidState &&fs) = default;
 
     /*****************************************************
      * Generic access to fluid properties (No assumptions
@@ -189,7 +176,7 @@ public:
      * This quantity is the inverse of the molar density.
      */
     Scalar molarVolume(int phaseIdx) const
-    { return 1/molarDensity(phaseIdx); }
+    { return 1.0/molarDensity(phaseIdx); }
 
     /*!
      * \brief The mass density \f$\rho_\alpha\f$ of the fluid phase
@@ -219,6 +206,7 @@ public:
 
     /*!
      * \brief The partial pressure of a component in a phase \f$\mathrm{[Pa]}\f$
+     * \todo is this needed?
      */
     Scalar partialPressure(int phaseIdx, int compIdx) const
     {
@@ -286,11 +274,13 @@ public:
     template <class FluidState>
     void assign(const FluidState &fs)
     {
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
             averageMolarMass_[phaseIdx] = 0;
             sumMoleFractions_[phaseIdx] = 0;
             temperature_[phaseIdx] = fs.temperature();
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
                 moleFraction_[phaseIdx][compIdx] = fs.moleFraction(phaseIdx, compIdx);
                 fugacityCoefficient_[phaseIdx][compIdx] = fs.fugacityCoefficient(phaseIdx, compIdx);
                 averageMolarMass_[phaseIdx] += moleFraction_[phaseIdx][compIdx]*FluidSystem::molarMass(compIdx);
@@ -320,9 +310,7 @@ public:
      *        This is not implemented in this fluidstate.
      */
     void setTemperature(const int phaseIdx, const Scalar value)
-    {
-       temperature_[phaseIdx] = value;
-    }
+    { temperature_[phaseIdx] = value; }
 
     /*!
      * \brief Set the fluid pressure of a phase  \f$\mathrm{[Pa]}\f$
@@ -343,17 +331,13 @@ public:
      */
     void setMoleFraction(int phaseIdx, int compIdx, Scalar value)
     {
-        Valgrind::CheckDefined(value);
-        Valgrind::SetDefined(sumMoleFractions_[phaseIdx]);
-        Valgrind::SetDefined(averageMolarMass_[phaseIdx]);
-        Valgrind::SetDefined(moleFraction_[phaseIdx][compIdx]);
-
         moleFraction_[phaseIdx][compIdx] = value;
 
         // re-calculate the mean molar mass
         sumMoleFractions_[phaseIdx] = 0.0;
         averageMolarMass_[phaseIdx] = 0.0;
-        for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx) {
+        for (int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
+        {
             sumMoleFractions_[phaseIdx] += moleFraction_[phaseIdx][compJIdx];
             averageMolarMass_[phaseIdx] += moleFraction_[phaseIdx][compJIdx]*FluidSystem::molarMass(compJIdx);
         }
@@ -366,11 +350,6 @@ public:
      */
     void setMassFraction(int phaseIdx, int compIdx, Scalar value)
     {
-        Valgrind::CheckDefined(value);
-        Valgrind::SetDefined(sumMoleFractions_[phaseIdx]);
-        Valgrind::SetDefined(averageMolarMass_[phaseIdx]);
-        Valgrind::SetDefined(moleFraction_[phaseIdx][compIdx]);
-
         if (numComponents != 2)
             DUNE_THROW(Dune::NotImplemented, "This currently only works for 2 components.");
         else
@@ -402,8 +381,6 @@ public:
     template <class FluidState>
     void setRelativeHumidity(FluidState &fluidState, int phaseIdx, int compIdx, Scalar value)
     {
-        Valgrind::CheckDefined(value);
-
         // asserts for the assumption under which setting the relative humidity is possible
         assert(phaseIdx == FluidSystem::nPhaseIdx);
         assert(compIdx == FluidSystem::wCompIdx);
@@ -453,48 +430,19 @@ public:
     void setWettingPhase(int phaseIdx)
     { wPhaseIdx_ = phaseIdx; }
 
-    /*!
-     * \brief Make sure that all attributes are defined.
-     *
-     * This method does not do anything if the program is not run
-     * under valgrind. If it is, then valgrind will print an error
-     * message if some attributes of the object have not been properly
-     * defined.
-     */
-    void checkDefined() const
-    {
-#if HAVE_VALGRIND && ! defined NDEBUG
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                Valgrind::CheckDefined(moleFraction_[phaseIdx][compIdx]);
-                Valgrind::CheckDefined(fugacityCoefficient_[phaseIdx][compIdx]);
-            }
-            Valgrind::CheckDefined(averageMolarMass_[phaseIdx]);
-            Valgrind::CheckDefined(pressure_[phaseIdx]);
-            Valgrind::CheckDefined(saturation_[phaseIdx]);
-            Valgrind::CheckDefined(density_[phaseIdx]);
-            Valgrind::CheckDefined(molarDensity_[phaseIdx]);
-            Valgrind::CheckDefined(enthalpy_[phaseIdx]);
-            Valgrind::CheckDefined(viscosity_[phaseIdx]);
-        }
-
-        Valgrind::CheckDefined(temperature_);
-#endif // HAVE_VALGRIND
-    }
-
 protected:
-    Scalar moleFraction_[numPhases][numComponents];
-    Scalar fugacityCoefficient_[numPhases][numComponents];
-
-    Scalar averageMolarMass_[numPhases];
-    Scalar sumMoleFractions_[numPhases];
-    Scalar pressure_[numPhases];
-    Scalar saturation_[numPhases];
-    Scalar density_[numPhases];
-    Scalar molarDensity_[numPhases];
-    Scalar enthalpy_[numPhases];
-    Scalar viscosity_[numPhases];
-    Scalar temperature_[numPhases];
+    //! zero-initialize all data members with braces syntax
+    Scalar moleFraction_[numPhases][numComponents] = {};
+    Scalar fugacityCoefficient_[numPhases][numComponents] = {};
+    Scalar averageMolarMass_[numPhases] = {};
+    Scalar sumMoleFractions_[numPhases] = {};
+    Scalar pressure_[numPhases] = {};
+    Scalar saturation_[numPhases] = {};
+    Scalar density_[numPhases] = {};
+    Scalar molarDensity_[numPhases] = {};
+    Scalar enthalpy_[numPhases] = {};
+    Scalar viscosity_[numPhases] = {};
+    Scalar temperature_[numPhases] = {};
 
     // For porous medium flow models, here we ... the index of the wetting
     // phase (needed for vapor pressure evaluation if kelvin equation is used)

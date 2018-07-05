@@ -44,9 +44,10 @@ class PseudoOnePTwoCFluidState
 {
 
 public:
-    enum { numPhases = FluidSystem::numPhases,
-           numComponents = FluidSystem::numComponents
-        };
+    enum {
+        numPhases = FluidSystem::numPhases,
+        numComponents = FluidSystem::numComponents
+    };
     enum {
         phase0Idx = FluidSystem::phase0Idx,
         phase1Idx = FluidSystem::phase1Idx,
@@ -67,21 +68,15 @@ public:
      * \param phaseIdx the index of the phase
      */
     Scalar saturation(int phaseIdx) const
-    {
-        if (phaseIdx == presentPhaseIdx_)
-            return 1.;
-        else
-            return 0.;
-    }
+    { return phaseIdx == presentPhaseIdx_ ? 1.0 : 0.0; }
 
     //! \brief Returns the index of the phase that is present in that cell.
     int presentPhaseIdx() const
-    {
-        return presentPhaseIdx_;
-    }
+    { return presentPhaseIdx_; }
 
     /*!
      * \brief Return the partial pressure of a component in the gas phase.
+     * \todo is this needed?
      *
      * For an ideal gas, this means \f$ R*T*c \f$.
      * Unit: \f$\mathrm{[Pa] = [N/m^2]}\f$
@@ -89,12 +84,11 @@ public:
      * \param compIdx the index of the component
      */
     Scalar partialPressure(int compIdx) const
-    {
-        return partialPressure(phase1Idx, compIdx);
-    }
+    { return partialPressure(phase1Idx, compIdx); }
 
     /*!
      * \brief The partial pressure of a component in a phase \f$\mathrm{[Pa]}\f$
+     * \todo is this needed?
      */
     Scalar partialPressure(int phaseIdx, int compIdx) const
     {
@@ -112,44 +106,23 @@ public:
      * \brief Set the density of a phase \f$\mathrm{[kg / m^3]}\f$
      */
     Scalar density(int phaseIdx) const
-    {
-        if(phaseIdx == presentPhaseIdx_)
-            return density_;
-        else
-            return 0.;
-//            return FluidSystem::density(*this, phaseIdx);
-    }
+    { return phaseIdx == presentPhaseIdx_ ? density_ : 0.0; }
 
     /*!
      *  @copydoc CompositionalFluidState::molarDensity()
      */
     Scalar molarDensity(int phaseIdx) const
-    {
-        if(phaseIdx == presentPhaseIdx_)
-            return molarDensity_;
-        else
-            return 0.;
-    }
+    { return phaseIdx == presentPhaseIdx_ ? molarDensity_ : 0.0; }
 
     /*!
      *  @copydoc CompositionalFluidState::massFraction()
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     {
-        if(phaseIdx != presentPhaseIdx_)
-        {
-            if(phaseIdx == compIdx)
-                return 1.;
-            else
-                return 0.;
-        }
+        if (phaseIdx != presentPhaseIdx_)
+            return phaseIdx == compIdx ? 1.0 : 0.0;
 
-
-        if (compIdx == phase0Idx)
-            return massFractionWater_;
-        else
-            return 1.-massFractionWater_;
-
+        return compIdx == phase0Idx ? massFractionWater_ : 1.0 - massFractionWater_;
     }
 
     /*!
@@ -164,18 +137,10 @@ public:
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     {
-        if(phaseIdx != presentPhaseIdx_)
-        {
-            if(phaseIdx == compIdx)
-                return 1.;
-            else
-                return 0.;
-        }
+        if (phaseIdx != presentPhaseIdx_)
+            return phaseIdx == compIdx ? 1.0 : 0.0;
 
-        if (compIdx == phase0Idx)
-            return moleFractionWater_;
-        else
-            return 1.-moleFractionWater_;
+        return compIdx == phase0Idx ? moleFractionWater_ : 1.0 - moleFractionWater_;
     }
 
     /*!
@@ -196,20 +161,13 @@ public:
      * \f[\mathrm{ \overline M_\alpha = \sum_\kappa M^\kappa x_\alpha^\kappa}\f]
      */
     Scalar averageMolarMass(int phaseIdx) const
-    {
-        return aveMoMass_;
-    }
+    { return averageMolarMass_; }
 
     /*!
      * \brief The specific enthalpy \f$h_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[J/kg]}\f$
      */
     Scalar enthalpy(int phaseIdx) const
-    {
-        if(phaseIdx == presentPhaseIdx_)
-            return enthalpy_;
-        else
-            return 0.;
-    }
+    { return phaseIdx == presentPhaseIdx_ ? enthalpy_ : 0.0; }
 
     /*!
      * \brief The specific internal energy \f$u_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[J/kg]}\f$
@@ -219,12 +177,7 @@ public:
      * \f[u_\alpha = h_\alpha - \frac{p_\alpha}{\rho_\alpha}\f]
      */
     Scalar internalEnergy(int phaseIdx) const
-    {
-        if(phaseIdx == presentPhaseIdx_)
-            return enthalpy_ - this->pressure(phaseIdx)/this->density(phaseIdx);
-        else
-            return 0.;
-    }
+    { return phaseIdx == presentPhaseIdx_ ?  enthalpy_ - pressure(phaseIdx)/density(phaseIdx) : 0.0; }
 
     /*!
      * \brief Returns the temperature of the fluids \f$\mathrm{[K]}\f$.
@@ -251,6 +204,7 @@ public:
         assert(phaseIdx == presentPhaseIdx_);
         viscosity_ = value;
     }
+
     /*!
      * \brief Sets the mass fraction of a component in a phase.
      *
@@ -259,12 +213,7 @@ public:
      * @param value Value to be stored
      */
     void setMassFraction(int phaseIdx, int compIdx, Scalar value)
-    {
-        if (compIdx == comp0Idx)
-            massFractionWater_ = value;
-        else
-            massFractionWater_ = 1- value;
-    }
+    { massFractionWater_ = compIdx == comp0Idx ? value : 1.0 - value; }
 
     /*!
      * \brief Sets the molar fraction of a component in a fluid phase.
@@ -274,12 +223,8 @@ public:
      * @param value Value to be stored
      */
     void setMoleFraction(int phaseIdx, int compIdx, Scalar value)
-    {
-        if (compIdx == comp0Idx)
-            moleFractionWater_ = value;
-        else
-            moleFractionWater_ = 1-value;
-    }
+    { moleFractionWater_ = compIdx == comp0Idx ? value : 1.0 - value; }
+
     /*!
      * \brief Sets the density of a phase \f$\mathrm{[kg/m^3]}\f$.
      *
@@ -291,6 +236,7 @@ public:
         assert(phaseIdx == presentPhaseIdx_);
         density_ = value;
     }
+
     /*!
      * \brief Set the molar density of a phase \f$\mathrm{[mol / m^3]}\f$
      *
@@ -302,14 +248,13 @@ public:
         assert(phaseIdx == presentPhaseIdx_);
         molarDensity_ = value;
     }
+
     /*!
      * \brief Sets the phase Index that is present in this fluidState.
      * @param phaseIdx the index of the phase
      */
     void setPresentPhaseIdx(int phaseIdx)
-    {
-        presentPhaseIdx_ = phaseIdx;
-    }
+    { presentPhaseIdx_ = phaseIdx; }
 
     /*!
      * \brief Sets the temperature
@@ -317,9 +262,8 @@ public:
      * @param value Value to be stored
      */
     void setTemperature(Scalar value)
-    {
-        temperature_ = value;
-    }
+    { temperature_ = value; }
+
     /*!
      * \brief Set the average molar mass of a fluid phase [kg/mol]
      *
@@ -329,16 +273,13 @@ public:
      * \f[ \bar M_\alpha = \sum_\kappa M^\kappa x_\alpha^\kappa \f]
      */
     void setAverageMolarMass(int phaseIdx, Scalar value)
-    {
-        aveMoMass_ = value;
-    }
+    { averageMolarMass_ = value; }
+
     /*!
      * \brief Sets the phase pressure \f$\mathrm{[Pa]}\f$.
      */
     void setPressure(int phaseIdx, Scalar value)
-    {
-        pressure_[phaseIdx] = value;
-    }
+    { pressure_[phaseIdx] = value; }
 
     /*!
      * \brief Sets phase enthalpy
@@ -354,17 +295,17 @@ public:
     //@}
 
 protected:
-    Scalar aveMoMass_;
-    Scalar massConcentration_[numComponents];
-    Scalar massFractionWater_;
-    Scalar moleFractionWater_;
-    Scalar pressure_[numPhases];
-    Scalar density_;
-    Scalar molarDensity_;
-    Scalar viscosity_;
-    Scalar enthalpy_;
-    Scalar temperature_;
-    int presentPhaseIdx_;
+    Scalar pressure_[numPhases] = {};
+    Scalar massConcentration_[numComponents] = {};
+    Scalar averageMolarMass_ = 0.0;
+    Scalar massFractionWater_ = 0.0;
+    Scalar moleFractionWater_ = 0.0;
+    Scalar density_ = 0.0;
+    Scalar molarDensity_ = 0.0;
+    Scalar viscosity_  = 0.0;
+    Scalar enthalpy_ = 0.0;
+    Scalar temperature_ = 0.0;
+    int presentPhaseIdx_ = 0;
 };
 
 } // end namespace Dumux
