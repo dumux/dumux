@@ -24,6 +24,7 @@
 #ifndef DUMUX_3P_VOLUME_VARIABLES_HH
 #define DUMUX_3P_VOLUME_VARIABLES_HH
 
+#include <dumux/common/valgrind.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
