@@ -26,12 +26,8 @@
 #ifndef DUMUX_PRESSURE_OVERLAY_FLUID_STATE_HH
 #define DUMUX_PRESSURE_OVERLAY_FLUID_STATE_HH
 
-#include <array>
+namespace Dumux {
 
-#include <dumux/common/valgrind.hh>
-
-namespace Dumux
-{
 /*!
  * \ingroup FluidStates
  * \brief This is a fluid state which allows to set the fluid
@@ -54,26 +50,17 @@ public:
      * state.
      */
     PressureOverlayFluidState(const FluidState &fs)
-        : fs_(&fs)
+    : fs_(&fs)
     {
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             pressure_[phaseIdx] = fs.pressure(phaseIdx);
     }
 
-    // copy constructor
-    PressureOverlayFluidState(const PressureOverlayFluidState &fs)
-        : fs_(fs.fs_)
-        , pressure_(fs.pressure_)
-    {
-    }
-
-    // assignment operator
-    PressureOverlayFluidState &operator=(const PressureOverlayFluidState &fs)
-    {
-        fs_ = fs.fs_;
-        pressure_ = fs.pressure_;
-        return *this;
-    }
+    // copy & move constructor / assignment operators
+    PressureOverlayFluidState(const PressureOverlayFluidState &fs) = default;
+    PressureOverlayFluidState(PressureOverlayFluidState &&fs) = default;
+    PressureOverlayFluidState& operator=(const PressureOverlayFluidState &fs) = default;
+    PressureOverlayFluidState& operator=(PressureOverlayFluidState &&fs) = default;
 
     /*****************************************************
      * Generic access to fluid properties (No assumptions
@@ -241,22 +228,9 @@ public:
     void setPressure(int phaseIdx, Scalar value)
     { pressure_[phaseIdx] = value; }
 
-    /*!
-     * \brief Make sure that all attributes are defined.
-     *
-     * This method does not do anything if the program is not run
-     * under valgrind. If it is, then valgrind will print an error
-     * message if some attributes of the object have not been properly
-     * defined.
-     */
-    void checkDefined() const
-    {
-        Valgrind::CheckDefined(pressure_);
-    }
-
 protected:
     const FluidState *fs_;
-    std::array<Scalar, numPhases> pressure_;
+    Scalar pressure_[numPhases] = {};
 };
 
 } // end namespace Dumux
