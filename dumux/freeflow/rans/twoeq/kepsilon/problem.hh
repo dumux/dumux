@@ -325,6 +325,7 @@ public:
                                       const SubControlVolumeFace& scvf,
                                       const SubControlVolumeFace& localSubFace) const
     {
+        using std::abs;
         unsigned int elementID = asImp_().fvGridGeometry().elementMapper().index(element);
         return FacePrimaryVariables(asImp_().tangentialMomentumWallFunction(elementID, abs(elemFaceVars[scvf].velocitySelf()))
                                     * elemVolVars[scvf.insideScvIdx()].density());
@@ -380,6 +381,7 @@ public:
                                                      const ElementFaceVariables& elemFaceVars,
                                                      const SubControlVolumeFace& scvf) const
     {
+        using std::log;
         auto wallFunctionFlux = CellCenterPrimaryVariables(0.0);
         unsigned int elementID = asImp_().fvGridGeometry().elementMapper().index(element);
 
@@ -391,12 +393,13 @@ public:
 
             Scalar schmidtNumber = elemVolVars[scvf.insideScvIdx()].kinematicViscosity()
                                    / elemVolVars[scvf.insideScvIdx()].diffusionCoefficient(compIdx);
-            Scalar massConversionFactor = useMoles ? 1.0
-                                                   : FluidSystem::molarMass(compIdx);
+            Scalar moleToMassConversionFactor = useMoles
+                                                ? 1.0 : FluidSystem::molarMass(compIdx);
             wallFunctionFlux[compIdx] +=
                 -1.0 * (asImp_().dirichlet(element, scvf)[Indices::conti0EqIdx + compIdx]
                         - elemVolVars[scvf.insideScvIdx()].moleFraction(compIdx))
                 * elemVolVars[scvf.insideScvIdx()].molarDensity()
+                * moleToMassConversionFactor
                 * uStarNominal(elementID)
                 / asImp_().turbulentSchmidtNumber()
                 / (1. / asImp_().karmanConstant() * log(yPlusNominal(elementID) * 9.793)
@@ -413,6 +416,7 @@ public:
                                                   const ElementFaceVariables& elemFaceVars,
                                                   const SubControlVolumeFace& scvf) const
     {
+        using std::log;
         auto wallFunctionFlux = CellCenterPrimaryVariables(0.0);
         unsigned int elementID = asImp_().fvGridGeometry().elementMapper().index(element);
         // energy fluxes
