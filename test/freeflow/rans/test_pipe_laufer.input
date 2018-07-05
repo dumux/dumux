@@ -1,6 +1,7 @@
 [TimeLoop]
 DtInitial = 1e-2 # [s]
 TEnd = 100 # [s]
+Initialization = 1.0 # [s]
 
 [Grid]
 Verbosity = true

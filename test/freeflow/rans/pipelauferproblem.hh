@@ -43,6 +43,9 @@
 #elif KOMEGA
 #include <dumux/freeflow/rans/twoeq/komega/model.hh>
 #include <dumux/freeflow/rans/twoeq/komega/problem.hh>
+#elif ONEEQ
+#include <dumux/freeflow/rans/oneeq/model.hh>
+#include <dumux/freeflow/rans/oneeq/problem.hh>
 #else
 #include <dumux/freeflow/rans/zeroeq/model.hh>
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
@@ -64,6 +67,8 @@ NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsi
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilon));
 #elif KOMEGA
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, KOmega));
+#elif ONEEQ
+NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, OneEq));
 #else
 NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEq));
 #endif
@@ -109,6 +114,10 @@ class PipeLauferProblem : public KEpsilonProblem<TypeTag>
 class PipeLauferProblem : public KOmegaProblem<TypeTag>
 {
     using ParentType = KOmegaProblem<TypeTag>;
+#elif ONEEQ
+class PipeLauferProblem : public OneEqProblem<TypeTag>
+{
+    using ParentType = OneEqProblem<TypeTag>;
 #else
 class PipeLauferProblem : public ZeroEqProblem<TypeTag>
 {
@@ -143,7 +152,11 @@ public:
         inletTemperature_ = getParam<Scalar>("Problem.InletTemperature", 283.15);
         wallTemperature_ = getParam<Scalar>("Problem.WallTemperature", 323.15);
         sandGrainRoughness_ = getParam<Scalar>("Problem.SandGrainRoughness", 0.0);
-        startWithZeroVelocity_ = getParam<bool>("RANS.StartWithZeroVelocity", false);
+#if ONEEQ
+        initializationTime_ = getParam<Scalar>("TimeLoop.Initialization", 1.0);
+#else
+        initializationTime_ = getParam<Scalar>("TimeLoop.Initialization", -1.0);
+#endif
 
         FluidSystem::init();
         Dumux::TurbulenceProperties<Scalar, dimWorld, true> turbulenceProperties;
@@ -153,8 +166,9 @@ public:
         Scalar density = FluidSystem::density(fluidState, phaseIdx);
         Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, phaseIdx) / density;
         Scalar diameter = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
+        // ideally the viscosityTilde parameter as inflow for the Spalart-Allmaras model should be zero
         viscosityTilde_ = getParam<Scalar>("Problem.InletViscosityTilde",
-                                           turbulenceProperties.viscosityTilde(inletVelocity_, diameter, kinematicViscosity));
+                                           1e-3 * turbulenceProperties.viscosityTilde(inletVelocity_, diameter, kinematicViscosity));
         turbulentKineticEnergy_ = getParam<Scalar>("Problem.InletTurbulentKineticEnergy",
                                                    turbulenceProperties.turbulentKineticEnergy(inletVelocity_, diameter, kinematicViscosity));
 #if KOMEGA
@@ -244,12 +258,14 @@ public:
 #if LOWREKEPSILON || KEPSILON || KOMEGA
             values.setDirichlet(Indices::turbulentKineticEnergyIdx);
             values.setDirichlet(Indices::dissipationIdx);
-
+#endif
 #if KOMEGA
             // set a fixed dissipation (omega) in one cell
             if (isOnWall(globalPos))
                 values.setDirichletCell(Indices::dissipationIdx);
 #endif
+#if ONEEQ
+            values.setDirichlet(Indices::viscosityTildeIdx);
 #endif
         }
         return values;
@@ -309,9 +325,10 @@ public:
     {
         PrimaryVariables values(0.0);
         values[Indices::pressureIdx] = 1.0e+5;
-        values[Indices::velocityXIdx] = inletVelocity_;
-        if (isOnWall(globalPos)
-            || (startWithZeroVelocity_ && time() < eps_))
+        values[Indices::velocityXIdx] = time() > initializationTime_
+                                        ? inletVelocity_
+                                        : time() / initializationTime_ * inletVelocity_;
+        if (isOnWall(globalPos))
         {
             values[Indices::velocityXIdx] = 0.0;
         }
@@ -325,12 +342,20 @@ public:
 #endif
 
 #if LOWREKEPSILON || KEPSILON || KOMEGA
-        values[Indices::turbulentKineticEnergyEqIdx] = turbulentKineticEnergy_;
-        values[Indices::dissipationEqIdx] = dissipation_;
+        values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
+        values[Indices::dissipationIdx] = dissipation_;
         if (isOnWall(globalPos))
         {
-            values[Indices::turbulentKineticEnergyEqIdx] = 0.0;
-            values[Indices::dissipationEqIdx] = 0.0;
+            values[Indices::turbulentKineticEnergyIdx] = 0.0;
+            values[Indices::dissipationIdx] = 0.0;
+        }
+#endif
+
+#if ONEEQ
+        values[Indices::viscosityTildeIdx] = viscosityTilde_;
+        if (isOnWall(globalPos))
+        {
+            values[Indices::viscosityTildeIdx] = 0.0;
         }
 #endif
 
@@ -365,7 +390,7 @@ private:
     Scalar inletTemperature_;
     Scalar wallTemperature_;
     Scalar sandGrainRoughness_;
-    bool startWithZeroVelocity_;
+    Scalar initializationTime_;
     Scalar viscosityTilde_;
     Scalar turbulentKineticEnergy_;
     Scalar dissipation_;

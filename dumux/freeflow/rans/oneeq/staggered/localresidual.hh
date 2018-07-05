@@ -18,11 +18,11 @@
  *****************************************************************************/
  /*!
   * \file
-  * \ingroup LowReKEpsilonModel
-  * \copydoc Dumux::LowReKEpsilonResidualImpl
+  * \ingroup OneEqModel
+  * \copydoc Dumux::OneEqResidualImpl
   */
-#ifndef DUMUX_STAGGERED_LOWREKEPSILON_LOCAL_RESIDUAL_HH
-#define DUMUX_STAGGERED_LOWREKEPSILON_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_STAGGERED_ONEEQ_LOCAL_RESIDUAL_HH
+#define DUMUX_STAGGERED_ONEEQ_LOCAL_RESIDUAL_HH
 
 #include <dune/common/hybridutilities.hh>
 #include <dumux/common/properties.hh>
@@ -33,14 +33,15 @@ namespace Dumux {
 
 // forward declaration
 template<class TypeTag, class BaseLocalResidual, DiscretizationMethod discMethod>
-class LowReKEpsilonResidualImpl;
+class OneEqResidualImpl;
 
 /*!
- * \ingroup LowReKEpsilonModel
- * \brief Element-wise calculation of the residual for low-Reynolds k-epsilon models using the staggered discretization
+ * \ingroup OneEqModel
+ * \brief Element-wise calculation of the residual for one-equation turbulence models
+ *        using the staggered discretization
  */
 template<class TypeTag, class BaseLocalResidual>
-class LowReKEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
+class OneEqResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod::staggered>
 : public BaseLocalResidual
 {
     using ParentType = BaseLocalResidual;
@@ -69,8 +70,7 @@ class LowReKEpsilonResidualImpl<TypeTag, BaseLocalResidual, DiscretizationMethod
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
-    static constexpr int turbulentKineticEnergyEqIdx = Indices::turbulentKineticEnergyEqIdx - ModelTraits::dim();
-    static constexpr int dissipationEqIdx = Indices::dissipationEqIdx - ModelTraits::dim();
+    static constexpr int viscosityTildeEqIdx = Indices::viscosityTildeEqIdx - ModelTraits::dim();
 
 public:
     using ParentType::ParentType;
@@ -81,10 +81,7 @@ public:
                                                            const VolumeVariables& volVars) const
     {
         CellCenterPrimaryVariables storage = ParentType::computeStorageForCellCenter(problem, scv, volVars);
-
-        storage[turbulentKineticEnergyEqIdx] = volVars.turbulentKineticEnergy();
-        storage[dissipationEqIdx] = volVars.dissipationTilde();
-
+        storage[viscosityTildeEqIdx] = volVars.viscosityTilde();
         return storage;
     }
 
@@ -100,23 +97,21 @@ public:
 
         const auto& volVars = elemVolVars[scv];
 
-        // production
-        source[turbulentKineticEnergyEqIdx] += 2.0 * volVars.kinematicEddyViscosity()
-                                               * volVars.stressTensorScalarProduct();
-        source[dissipationEqIdx] += volVars.cOneEpsilon() * volVars.fOne()
-                                    * volVars.dissipationTilde() / volVars.turbulentKineticEnergy()
-                                    * 2.0 * volVars.kinematicEddyViscosity()
-                                    * volVars.stressTensorScalarProduct();
+        source[viscosityTildeEqIdx] += volVars.cb1() * (1.0 - volVars.ft2())
+                                       * volVars.stressTensorScalarProductTilde()
+                                       * volVars.viscosityTilde();
 
-        // destruction
-        source[turbulentKineticEnergyEqIdx] -= volVars.dissipationTilde();
-        source[dissipationEqIdx] -= volVars.cTwoEpsilon() * volVars.fTwo()
-                                    * volVars.dissipationTilde() * volVars.dissipationTilde()
-                                    / volVars.turbulentKineticEnergy();
+        source[viscosityTildeEqIdx] -= (volVars.cw1() * volVars.fW()
+                                        - volVars.cb1() * volVars.ft2() / problem.karmanConstant() / problem.karmanConstant())
+                                       * volVars.viscosityTilde() * volVars.viscosityTilde()
+                                       / volVars.wallDistance() / volVars.wallDistance();
 
-        // dampening functions
-        source[turbulentKineticEnergyEqIdx] -= volVars.dValue();
-        source[dissipationEqIdx] += volVars.eValue();
+        for (unsigned int dimIdx = 0; dimIdx < ModelTraits::dim(); ++dimIdx)
+        {
+            source[viscosityTildeEqIdx] += volVars.cb2() / volVars.sigma()
+                                           * volVars.storedViscosityTildeGradient()[dimIdx]
+                                           * volVars.storedViscosityTildeGradient()[dimIdx];
+        }
 
         return source;
     }

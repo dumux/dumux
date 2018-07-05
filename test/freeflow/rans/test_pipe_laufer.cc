@@ -252,6 +252,9 @@ int main(int argc, char** argv) try
 #elif KOMEGA
             gnuplot_lawOfTheWall.addFileToPlot("pdelab-komega.csv", "u 24:23 w l lw 2 t 'PDELab k-omega'");
             gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
+#elif ONEEQ
+            gnuplot_lawOfTheWall.addFileToPlot("pdelab-oneeq.csv", "u 22:21 w l lw 2 t 'PDELab 1-Eq.'");
+            gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
 #else
             gnuplot_lawOfTheWall.addFileToPlot("pdelab-zeroeq.csv", "u 22:21 w l lw 2 t 'PDELab 0-Eq.'");
             gnuplot_lawOfTheWall.addFileToPlot(std::string(fileName) + ".csv", "u 12:13 w l lc 7");
@@ -276,6 +279,9 @@ int main(int argc, char** argv) try
 #elif KOMEGA
             gnuplot_velocityProfile.addFileToPlot("pdelab-komega.csv", "u 5:($29/0.2456) w l lw 2 t 'PDELab k-omega'");
             gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($26/0.2456) w l lc 7");
+#elif ONEEQ
+            gnuplot_velocityProfile.addFileToPlot("pdelab-oneeq.csv", "u 5:($26/0.2456) w l lw 2 t 'PDELab 1-Eq.'");
+            gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($25/0.2456) w l lc 7");
 #else
             gnuplot_velocityProfile.addFileToPlot("pdelab-zeroeq.csv", "u 5:($26/0.2456) w l lw 2 t 'PDELab 0-Eq.'");
             gnuplot_velocityProfile.addFileToPlot(std::string(fileName) + ".csv", "u 7:($24/0.2456) w l lc 7");
