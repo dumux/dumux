@@ -276,13 +276,13 @@ public:
     }
 
 protected:
-    Scalar dynamicEddyViscosity_;
-    Scalar eddyDiffusivity_;
-    Scalar turbulentKineticEnergy_;
-    Scalar dissipationTilde_;
-    Scalar storedTurbulentKineticEnergy_;
-    Scalar storedDissipationTilde_;
-    Scalar stressTensorScalarProduct_;
+    Scalar dynamicEddyViscosity_ = 0.0;
+    Scalar eddyDiffusivity_ = 0.0;
+    Scalar turbulentKineticEnergy_ = 0.0;
+    Scalar dissipationTilde_ = 0.0;
+    Scalar storedTurbulentKineticEnergy_ = 0.0;
+    Scalar storedDissipationTilde_ = 0.0;
+    Scalar stressTensorScalarProduct_ = 0.0;
 };
 
 }
