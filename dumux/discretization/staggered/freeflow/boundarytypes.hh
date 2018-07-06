@@ -57,6 +57,7 @@ public:
         boundaryInfo_[eqIdx].visited = false;
         boundaryInfo_[eqIdx].isDirichletCell = false;
         boundaryInfo_[eqIdx].isSymmetry = false;
+        boundaryInfo_[eqIdx].isBJS = false;
     }
 
 
@@ -120,11 +121,46 @@ public:
         static_assert(AlwaysFalse<T>::value, "Setting all boundary types to Neumann not permitted!");
     }
 
+    /*!
+     * \brief Set a boundary condition for a single equation to
+     *        Beavers-Joseph-Saffman (special case of Dirichlet b.c.).
+     */
+    void setBJS(int eqIdx)
+    {
+        resetEq(eqIdx);
+        boundaryInfo_[eqIdx].visited = true;
+        boundaryInfo_[eqIdx].isBJS = true;
+    }
+
+    /*!
+     * \brief Returns true if an equation is used to specify a
+     *        Beavers-Joseph-Saffman boundary condition.
+     *
+     * \param eqIdx The index of the equation
+     */
+    bool isBJS(unsigned eqIdx) const
+    {
+        return boundaryInfo_[eqIdx].isBJS;
+    }
+
+    /*!
+     * \brief Returns true if some equation is used to specify a
+     *        Beavers-Joseph-Saffman boundary condition.
+     */
+    bool hasBJS() const
+    {
+        for (int i = 0; i < numEq; ++i)
+            if (boundaryInfo_[i].isBJS)
+                return true;
+        return false;
+    }
+
 protected:
     struct StaggeredFreeFlowBoundaryInfo {
         bool visited;
         bool isDirichletCell;
         bool isSymmetry;
+        bool isBJS;
     };
 
     std::array<StaggeredFreeFlowBoundaryInfo, numEq> boundaryInfo_;

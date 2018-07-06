@@ -24,6 +24,7 @@
 #ifndef DUMUX_NAVIERSTOKES_PROBLEM_HH
 #define DUMUX_NAVIERSTOKES_PROBLEM_HH
 
+#include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/methods.hh>
@@ -198,6 +199,26 @@ public:
                                             const ElementFaceVariables& elemFaceVars,
                                             const SubControlVolumeFace& scvf) const
     { return CellCenterPrimaryVariables(0.0); }
+
+    /*!
+     * \brief Returns the intrinsic permeability of required as input parameter for the Beavers-Joseph-Saffman boundary condition
+     *
+     * This member function must be overloaded in the problem implementation, if the BJS boundary condition is used.
+     */
+    Scalar permeability(const SubControlVolumeFace& scvf) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the permeability must be returned in the acutal problem");
+    }
+
+    /*!
+     * \brief Returns the alpha value required as input parameter for the Beavers-Joseph-Saffman boundary condition
+     *
+     * This member function must be overloaded in the problem implementation, if the BJS boundary condition is used.
+     */
+    Scalar alphaBJ(const SubControlVolumeFace& scvf) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the alpha value must be returned in the acutal problem");
+    }
 
 private:
 
