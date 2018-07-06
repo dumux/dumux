@@ -332,15 +332,15 @@ public:
     }
 
 protected:
-    Scalar dynamicEddyViscosity_;
-    Scalar eddyDiffusivity_;
-    Scalar viscosityTilde_;
-    Scalar storedViscosityTilde_;
-    DimVector storedViscosityTildeGradient_;
-    Scalar stressTensorScalarProduct_;
-    Scalar vorticityTensorScalarProduct_;
+    Scalar dynamicEddyViscosity_ = 0.0;
+    Scalar eddyDiffusivity_ = 0.0;
+    Scalar viscosityTilde_ = 0.0;
+    Scalar storedViscosityTilde_ = 0.0;
+    DimVector storedViscosityTildeGradient_ = 0.0;
+    Scalar stressTensorScalarProduct_ = 0.0;
+    Scalar vorticityTensorScalarProduct_ = 0.0;
 };
 
-}
+} // end namespace Dumux
 
 #endif

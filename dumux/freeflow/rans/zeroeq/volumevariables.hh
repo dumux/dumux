@@ -223,10 +223,10 @@ public:
     { return NavierStokesParentType::fluidState_; }
 
 protected:
-    Scalar dynamicEddyViscosity_;
-    Scalar eddyDiffusivity_;
-    Scalar additionalRoughnessLength_;
-    Scalar yPlusRough_;
+    Scalar dynamicEddyViscosity_ = 0.0;
+    Scalar eddyDiffusivity_ = 0.0;
+    Scalar additionalRoughnessLength_ = 0.0;
+    Scalar yPlusRough_ = 0.0;
 };
 
 } // end namespace Dumux

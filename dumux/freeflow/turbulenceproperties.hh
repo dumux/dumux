@@ -99,7 +99,8 @@ public:
                           const Scalar kinematicViscosity,
                           bool print=verbose) const
     {
-        return velocity * charLengthScale / kinematicViscosity;
+        using std::abs;
+        return abs(velocity * charLengthScale / kinematicViscosity);
     }
 
     /**
@@ -204,9 +205,10 @@ public:
                           const Scalar kinematicViscosity,
                           bool print=verbose) const
     {
+        using std::abs;
         using std::sqrt;
         const Scalar re_d = reynoldsNumber(velocity, diameter, kinematicViscosity, false);
-        const Scalar viscosityTilde = sqrt(1.5) * velocity
+        const Scalar viscosityTilde = sqrt(1.5) * abs(velocity)
                                       * turbulenceIntensity(re_d)
                                       * turbulenceLengthScale(diameter);
         if (print)

@@ -259,18 +259,18 @@ public:
     }
 
 protected:
-    Scalar betaOmega_;
-    Scalar eddyDiffusivity_;
-    Scalar dynamicEddyViscosity_;
-    Scalar dissipation_;
-    Scalar turbulentKineticEnergy_;
-    Scalar storedDissipation_;
-    DimVector storedDissipationGradient_;
-    Scalar storedTurbulentKineticEnergy_;
-    DimVector storedTurbulentKineticEnergyGradient_;
-    Scalar stressTensorScalarProduct_;
+    Scalar betaOmega_ = 0.0;
+    Scalar eddyDiffusivity_ = 0.0;
+    Scalar dynamicEddyViscosity_ = 0.0;
+    Scalar dissipation_ = 0.0;
+    Scalar turbulentKineticEnergy_ = 0.0;
+    Scalar storedDissipation_ = 0.0;
+    DimVector storedDissipationGradient_ = 0.0;
+    Scalar storedTurbulentKineticEnergy_ = 0.0;
+    DimVector storedTurbulentKineticEnergyGradient_ = 0.0;
+    Scalar stressTensorScalarProduct_ = 0.0;
 };
 
-}
+} // end namespace Dumux
 
 #endif

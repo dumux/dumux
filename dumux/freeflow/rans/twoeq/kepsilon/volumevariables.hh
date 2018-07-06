@@ -51,6 +51,7 @@ class KEpsilonVolumeVariables
     static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
 
 public:
+
     //! export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
     //! export the indices type
@@ -265,20 +266,20 @@ public:
     }
 
 protected:
-    Scalar dynamicEddyViscosity_;
-    Scalar eddyDiffusivity_;
-    Scalar turbulentKineticEnergy_;
-    Scalar dissipation_;
-    Scalar storedTurbulentKineticEnergy_;
-    Scalar storedDissipation_;
-    Scalar stressTensorScalarProduct_;
-    Scalar yPlusNominal_;
-    Scalar uPlusNominal_;
-    Scalar cMu_;
-    bool inNearWallRegion_;
-    bool isMatchingPoint_;
+    Scalar dynamicEddyViscosity_ = 0.0;
+    Scalar eddyDiffusivity_ = 0.0;
+    Scalar turbulentKineticEnergy_ = 0.0;
+    Scalar dissipation_ = 0.0;
+    Scalar storedTurbulentKineticEnergy_ = 0.0;
+    Scalar storedDissipation_ = 0.0;
+    Scalar stressTensorScalarProduct_ = 0.0;
+    Scalar yPlusNominal_ = 0.0;
+    Scalar uPlusNominal_ = 0.0;
+    Scalar cMu_ = 0.0;
+    bool inNearWallRegion_ = false;
+    bool isMatchingPoint_ = false;
 };
 
-}
+} // end namespace Dumux
 
 #endif
