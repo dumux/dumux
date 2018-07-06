@@ -21,8 +21,8 @@
  * \ingroup TracerTests
  * \brief The properties for the incompressible test
  */
-#ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
-#define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
+#ifndef DUMUX_ONEP_TRACER_TEST_PROBLEM_HH
+#define DUMUX_ONEP_TRACER_TEST_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
 
