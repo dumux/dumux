@@ -62,6 +62,8 @@ class StaggeredCouplingManagerBase: public CouplingManager<MDTraits>
 
 public:
 
+    using ParentType::evalCouplingResidual;
+
     using Traits = MDTraits;
 
     static constexpr auto cellCenterIdx = Dune::index_constant<0>();
@@ -220,16 +222,27 @@ public:
     }
 
     /*!
-     * \brief return the numeric epsilon used for deflecting primary variables of coupled domain j
+     * \brief return the numeric epsilon used for deflecting primary variables of coupled domain i.
+     * \note  specialization for non-staggered schemes
      */
-    using ParentType::numericEpsilon;
-    template<std::size_t j, typename std::enable_if_t<(FVGridGeometry<j>::discMethod == DiscretizationMethod::staggered), int> = 0>
-    decltype(auto) numericEpsilon(Dune::index_constant<j> domainJ,
+    template<std::size_t i, typename std::enable_if_t<(FVGridGeometry<i>::discMethod != DiscretizationMethod::staggered), int> = 0>
+    decltype(auto) numericEpsilon(Dune::index_constant<i> id,
+                                  const std::string& paramGroup) const
+    {
+        return ParentType::numericEpsilon(id, paramGroup);
+    }
+
+    /*!
+     * \brief return the numeric epsilon used for deflecting primary variables of coupled domain i.
+     * \note  specialization for non-staggered schemes
+     */
+    template<std::size_t i, typename std::enable_if_t<(FVGridGeometry<i>::discMethod == DiscretizationMethod::staggered), int> = 0>
+    decltype(auto) numericEpsilon(Dune::index_constant<i>,
                                   const std::string& paramGroup) const
     {
         constexpr std::size_t numEqCellCenter = Traits::template PrimaryVariables<cellCenterIdx>::dimension;
         constexpr std::size_t numEqFace = Traits::template PrimaryVariables<faceIdx>::dimension;
-        constexpr bool isCellCenter = FVGridGeometry<j>::isCellCenter();
+        constexpr bool isCellCenter = FVGridGeometry<i>::isCellCenter();
         constexpr std::size_t numEq = isCellCenter ? numEqCellCenter : numEqFace;
         constexpr auto prefix = isCellCenter ? "CellCenter" : "Face";
 
