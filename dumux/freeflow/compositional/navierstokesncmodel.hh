@@ -76,9 +76,15 @@ namespace Dumux {
 /*!
  * \ingroup FreeflowNCModel
  * \brief Traits for the multi-component free-flow model
+ *
+ * \tparam dimension The dimension of the problem
+ * \tparam nComp The number of components to be considered
+ * \tparam fluidSystemPhaseIdx The the index of the phase used for the fluid system
+ * \tparam replaceCompEqIdx The index of the component balance equation that should be replaced by a total mass/mole balance
+ * \tparam useM Use molar or mass balances
  */
-template<int dimension, int nComp, int phaseIdx, int replaceCompEqIdx, bool useM>
-struct NavierStokesNCModelTraits : NavierStokesModelTraits<dimension>
+template<int dimension, int nComp, int fluidSystemPhaseIdx, int replaceCompEqIdx, bool useM>
+struct NavierStokesNCModelTraits : NavierStokesModelTraits<dimension, fluidSystemPhaseIdx>
 {
     //! There are as many momentum balance equations as dimensions
     //! and as many balance equations as components.
@@ -94,7 +100,7 @@ struct NavierStokesNCModelTraits : NavierStokesModelTraits<dimension>
     static constexpr bool enableMolecularDiffusion() { return true; }
 
     //! the indices
-    using Indices = FreeflowNCIndices<dimension, numEq(), phaseIdx, replaceCompEqIdx, NavierStokesIndices<dimension>>;
+    using Indices = FreeflowNCIndices<dimension, numEq(), fluidSystemPhaseIdx, replaceCompEqIdx, NavierStokesIndices<dimension, fluidSystemPhaseIdx>>;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -127,6 +133,10 @@ private:
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+
+    static_assert(phaseIdx >= 0 && phaseIdx < FluidSystem::numPhases,
+                  "PhaseIdx must be non-negative and smaller than the number of phases");
+
 public:
     using type = NavierStokesNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
 };

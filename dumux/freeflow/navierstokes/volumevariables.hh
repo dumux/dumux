@@ -111,14 +111,14 @@ public:
      * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      */
-    Scalar pressure() const
+    Scalar pressure(int phaseIdx = fluidSystemPhaseIdx) const
     { return fluidState_.pressure(fluidSystemPhaseIdx); }
 
     /*!
      * \brief Return the mass density \f$\mathrm{[kg/m^3]}\f$ of a given phase within the
      *        control volume.
      */
-    Scalar density() const
+    Scalar density(int phaseIdx = fluidSystemPhaseIdx) const
     { return fluidState_.density(fluidSystemPhaseIdx); }
 
     /*!
@@ -135,7 +135,7 @@ public:
      * \brief Returns the mass density of a given phase within the
      *        control volume.
      */
-    Scalar molarDensity() const
+    Scalar molarDensity(int phaseIdx = fluidSystemPhaseIdx) const
     {
         return fluidState_.molarDensity(fluidSystemPhaseIdx);
     }
@@ -144,7 +144,7 @@ public:
      * \brief Returns the molar mass of a given phase within the
      *        control volume.
      */
-    Scalar molarMass() const
+    Scalar molarMass(int phaseIdx = fluidSystemPhaseIdx) const
     {
         return fluidState_.averageMolarMass(fluidSystemPhaseIdx);
     }
@@ -153,7 +153,7 @@ public:
      * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
      */
-    Scalar viscosity() const
+    Scalar viscosity(int phaseIdx = fluidSystemPhaseIdx) const
     { return fluidState_.viscosity(fluidSystemPhaseIdx); }
 
     /*!

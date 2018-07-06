@@ -299,7 +299,7 @@ protected:
                 residual = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
                                            * extrusionFactor * scvf.area();
 
-                // treat the remaining (normal) faces of the staggered control volume
+                // treat the remaining (frontal and lateral) faces of the staggered control volume
                 residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
             }
             else if(bcTypes.isSymmetry())

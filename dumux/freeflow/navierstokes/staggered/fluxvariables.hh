@@ -248,7 +248,7 @@ public:
         // Handle inflow or outflow conditions.
         // Treat the staggered half-volume adjacent to the boundary as if it was on the opposite side of the boundary.
         // The respective face's outer normal vector will point in the same direction as the scvf's one.
-        if(scvf.boundary())
+        if(scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(Indices::pressureIdx))
             frontalFlux += inflowOutflowBoundaryFlux_(problem, element, scvf, elemVolVars, elemFaceVars);
 
         // Account for the staggered face's area. For rectangular elements, this equals the area of the scvf

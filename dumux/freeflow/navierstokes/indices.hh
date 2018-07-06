@@ -31,8 +31,9 @@ namespace Dumux {
  * \brief The common indices for the isothermal Navier-Stokes model.
  *
  * \tparam dimension The dimension of the problem
+ * \tparam fsPhaseIdx The the index of the phase used for the fluid system
  */
-template <int dimension>
+template <int dimension, int fsPhaseIdx>
 struct NavierStokesIndices
 {
     static constexpr int dimXIdx = 0; //!< Index of the x-component of a vector of size dim
@@ -63,7 +64,7 @@ struct NavierStokesIndices
     }
 
     //! The index of the fluid phase in the fluid system (for compatibility reasons)
-    static constexpr int fluidSystemPhaseIdx = 0;
+    static constexpr int fluidSystemPhaseIdx = fsPhaseIdx;
 };
 
 } // end namespace Dumux

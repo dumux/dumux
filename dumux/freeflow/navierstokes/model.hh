@@ -70,8 +70,11 @@ namespace Dumux {
 /*!
  * \ingroup NavierStokesModel
  * \brief Traits for the Navier-Stokes model
+ *
+ * \tparam dimension The dimension of the problem
+ * \tparam fluidSystemPhaseIdx The the index of the phase used for the fluid system
  */
-template<int dimension>
+template<int dimension, int fluidSystemPhaseIdx>
 struct NavierStokesModelTraits
 {
     //! The dimension of the model
@@ -100,7 +103,7 @@ struct NavierStokesModelTraits
     static constexpr bool usesTurbulenceModel() { return false; }
 
     //! the indices
-    using Indices = NavierStokesIndices<dim()>;
+    using Indices = NavierStokesIndices<dim(), fluidSystemPhaseIdx>;
 };
 
 /*!
@@ -152,9 +155,13 @@ SET_PROP(NavierStokes, ModelTraits)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
-    static constexpr int dim = GridView::dimension;
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+
+    static_assert(phaseIdx >= 0 && phaseIdx < GET_PROP_TYPE(TypeTag, FluidSystem)::numPhases,
+                  "PhaseIdx must be non-negative and smaller than the number of phases");
 public:
-    using type = NavierStokesModelTraits<dim>;
+    using type = NavierStokesModelTraits<dim, phaseIdx>;
 };
 
 /*!
@@ -183,9 +190,8 @@ private:
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
-    static_assert(MT::numPhases() == 1 && MT::numComponents() == 1 &&
-                  FSY::numPhases == 1 && FSY::numComponents == 1,
-                  "The Navier-Stokes model only works with a single-phase fluid system.");
+    static_assert(!FSY::isMiscible(),
+                  "The Navier-Stokes model only works with immiscible fluid systems.");
 
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
 public:
@@ -215,8 +221,9 @@ SET_PROP(NavierStokesNI, ModelTraits)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
-    static constexpr int dim = GridView::dimension;
-    using IsothermalTraits = NavierStokesModelTraits<dim>;
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto fluidSystemPhaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    using IsothermalTraits = NavierStokesModelTraits<dim, fluidSystemPhaseIdx>;
 public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };
