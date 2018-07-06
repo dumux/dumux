@@ -31,6 +31,12 @@
 #include <dune/alugrid/grid.hh>
 #endif
 
+// dune-subgrid specific includes
+#if HAVE_DUNE_SUBGRID
+#include <dune/subgrid/subgrid.hh>
+#endif
+
+
 namespace Dumux {
 
 /*!
@@ -79,6 +85,27 @@ public:
     using value_type = int;
 
     value_type get() const { return flag_; }
+
+private:
+    int flag_;
+};
+#endif
+
+#if HAVE_DUNE_SUBGRID
+//! dune-subgrid doesn't have this implemented
+template<int dim, class HostGrid>
+class BoundaryFlag<Dune::SubGrid<dim, HostGrid>>
+{
+public:
+    BoundaryFlag() : flag_(-1) {}
+
+    template<class Intersection>
+    BoundaryFlag(const Intersection& i) : flag_(-1) {}
+
+    using value_type = int;
+
+    value_type get() const
+    { DUNE_THROW(Dune::NotImplemented, "Sub-grid doesn't implement boundary segment indices!"); }
 
 private:
     int flag_;
