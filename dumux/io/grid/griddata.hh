@@ -154,6 +154,11 @@ public:
     int getBoundaryDomainMarker(const Intersection& intersection) const
     { return getBoundaryDomainMarker(intersection.boundarySegmentIndex()); }
 
+    /*!
+     * \brief Returns true if an intersection was inserted during grid creation
+     */
+    bool wasInserted(const Intersection& intersection) const
+    { return gridFactory_->wasInserted(intersection); }
 
     /*!
      * \brief Return the element domain marker (Gmsh physical entity number) of an element.
