@@ -198,6 +198,7 @@ public:
         resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = true;
         boundaryInfo_[eqIdx].isCouplingDirichlet = true;
+        boundaryInfo_[eqIdx].isDirichlet = true;
     }
 
     /*!
@@ -209,6 +210,7 @@ public:
         resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = true;
         boundaryInfo_[eqIdx].isCouplingNeumann = true;
+        boundaryInfo_[eqIdx].isNeumann = true;
     }
 
     /*!
