@@ -563,6 +563,10 @@ public:
     const TimeLoop& timeLoop() const
     { return *timeLoop_; }
 
+    //! returns true if the residual is stationary
+    bool isStationary() const
+    { return !timeLoop_; }
+
     // \}
 protected:
 
