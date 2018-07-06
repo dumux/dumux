@@ -21,8 +21,8 @@
  * \ingroup Fluidmatrixinteractions
  * \brief A relationship for the porosity of a porous medium under mechanical deformation.
  */
-#ifndef DUMUX_POROSITY_DEFORMATION_HH
-#define DUMUX_POROSITY_DEFORMATION_HH
+#ifndef DUMUX_MATERIAL_POROSITY_DEFORMATION_HH
+#define DUMUX_MATERIAL_POROSITY_DEFORMATION_HH
 
 #include <dumux/discretization/evalgradients.hh>
 
@@ -39,36 +39,61 @@ class PorosityDeformation
 {
 public:
     /*!
-     * \brief Calculates the porosity in a sub-control volume
-     * \note This assumes the primary variables to be organized
-     *       such that the displacements in the different grid
-     *       directions are stored in the first entries of the
-     *       primary variable vector.
+     * \brief Calculates the porosity at a position inside an element
+     * \note This assumes the primary variables to be organized such that
+     *       the displacements in the different grid directions are stored
+     *       in the first entries of the primary variable vector.
      *
      *
      * \param fvGridGeometry The finite volume grid geometry
-     * \param element element
-     * \param elemSol the element solution
-     * \param scv sub control volume
+     * \param element The finite element
+     * \param elemSol The element solution
+     * \param globalPos The global position (in the element)
      * \param refPoro The solid matrix porosity without deformation
      * \param minPoro A minimum porosity value
      */
     template< class FVGridGeom, class ElemSol >
-    Scalar evaluatePorosity(const FVGridGeom& fvGridGeometry,
-                            const typename FVGridGeom::GridView::template Codim<0>::Entity& element,
-                            const typename FVGridGeom::SubControlVolume& scv,
-                            const ElemSol& elemSol,
-                            Scalar refPoro,
-                            Scalar minPoro = 0.0) const
+    static Scalar evaluatePorosity(const FVGridGeom& fvGridGeometry,
+                                   const typename FVGridGeom::GridView::template Codim<0>::Entity& element,
+                                   const typename FVGridGeom::GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate& globalPos,
+                                   const ElemSol& elemSol,
+                                   Scalar refPoro,
+                                   Scalar minPoro = 0.0)
     {
-        // compute divergence of diplacement for this scv
+        // compute divergence of diplacement at the given position
         Scalar divU = 0.0;
-        const auto gradU = evalGradients(element, element.geometry(), fvGridGeometry, elemSol, scv.center());
+        const auto gradU = evalGradients(element, element.geometry(), fvGridGeometry, elemSol, globalPos);
         for (int dir = 0; dir < FVGridGeom::GridView::dimension; ++dir)
             divU += gradU[dir][dir];
 
         using std::max;
         return max(minPoro, refPoro*(1.0+divU));
+    }
+
+    /*!
+     * \brief Calculates the porosity at a position inside an element
+     * \note This assumes the primary variables to be organized such that
+     *       the displacements in the different grid directions are stored
+     *       in the first entries of the primary variable vector.
+     *
+     *
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param element The finite element
+     * \param elemSol The element solution
+     * \param scv The sub-control volume
+     * \param refPoro The solid matrix porosity without deformation
+     * \param minPoro A minimum porosity value
+     */
+    template< class FVGridGeom, class ElemSol >
+    static Scalar evaluatePorosity(const FVGridGeom& fvGridGeometry,
+                                   const typename FVGridGeom::GridView::template Codim<0>::Entity& element,
+                                   const typename FVGridGeom::SubControlVolume& scv,
+                                   const ElemSol& elemSol,
+                                   Scalar refPoro,
+                                   Scalar minPoro = 0.0)
+    {
+        // evaluate the porosity at the scv center
+        return evaluatePorosity(fvGridGeometry, element, scv.center(), elemSol, refPoro, minPoro);
     }
 };
 
