@@ -63,6 +63,7 @@ class GridData
 {
     using Intersection = typename Grid::LeafIntersection;
     using Element = typename Grid::template Codim<0>::Entity;
+    using Vertex = typename Grid::template Codim<Grid::dimension>::Entity;
     using DataHandle = GmshGridDataHandle<Grid, Dune::GridFactory<Grid>, std::vector<int>>;
 
 public:
@@ -82,27 +83,36 @@ public:
     , isDgfData_(true)
     {}
 
+    /*!
+     * \brief Call the parameters function of the DGF grid pointer if available for vertex data
+     * \note You can only pass vertices that exist on level 0!
+     */
+    const std::vector<double>& parameters(const Vertex& vertex) const
+    {
+        if (isDgfData_)
+            return dgfGrid_.parameters(vertex);
+        else
+            DUNE_THROW(Dune::InvalidStateException, "The parameters method is only available if the grid was constructed with a DGF file.");
+    }
 
     /*!
-     * \brief Call the parameters function of the DGF grid pointer if available
+     * \brief Call the parameters function of the DGF grid pointer if available for element data
      */
-    template <class Entity>
-    const std::vector<double>& parameters(const Entity& entity) const
+    const std::vector<double>& parameters(const Element& element) const
     {
         if (isDgfData_)
         {
-            if (entity.hasFather())
+            if (element.hasFather())
             {
-                auto level0entity = entity;
-                while(level0entity.hasFather())
-                    level0entity = level0entity.father();
+                auto level0Element = element;
+                while(level0Element.hasFather())
+                    level0Element = level0Element.father();
 
-
-                return dgfGrid_.parameters(level0entity);
+                return dgfGrid_.parameters(level0Element);
             }
             else
             {
-                return dgfGrid_.parameters(entity);
+                return dgfGrid_.parameters(element);
             }
         }
         else
@@ -131,7 +141,8 @@ public:
         if (!gmshGrid_)
             DUNE_THROW(Dune::InvalidStateException, "Domain markers are only available for gmsh grids.");
         if (boundarySegmentIndex >= boundaryMarkers_.size())
-            DUNE_THROW(Dune::RangeError, "Boundary segment index "<< boundarySegmentIndex << " bigger than number of boundary segments in grid.");
+            DUNE_THROW(Dune::RangeError, "Boundary segment index "<< boundarySegmentIndex << " bigger than number of boundary segments in grid.\n"
+                                         "Make sure to call this function only for boundaries that were defined as physical entities in gmsh.");
         return boundaryMarkers_[boundarySegmentIndex];
     }
 
@@ -143,6 +154,11 @@ public:
     int getBoundaryDomainMarker(const Intersection& intersection) const
     { return getBoundaryDomainMarker(intersection.boundarySegmentIndex()); }
 
+    /*!
+     * \brief Returns true if an intersection was inserted during grid creation
+     */
+    bool wasInserted(const Intersection& intersection) const
+    { return gridFactory_->wasInserted(intersection); }
 
     /*!
      * \brief Return the element domain marker (Gmsh physical entity number) of an element.
