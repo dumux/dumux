@@ -141,7 +141,8 @@ public:
         if (!gmshGrid_)
             DUNE_THROW(Dune::InvalidStateException, "Domain markers are only available for gmsh grids.");
         if (boundarySegmentIndex >= boundaryMarkers_.size())
-            DUNE_THROW(Dune::RangeError, "Boundary segment index "<< boundarySegmentIndex << " bigger than number of boundary segments in grid.");
+            DUNE_THROW(Dune::RangeError, "Boundary segment index "<< boundarySegmentIndex << " bigger than number of boundary segments in grid.\n"
+                                         "Make sure to call this function only for boundaries that were defined as physical entities in gmsh.");
         return boundaryMarkers_[boundarySegmentIndex];
     }
 
