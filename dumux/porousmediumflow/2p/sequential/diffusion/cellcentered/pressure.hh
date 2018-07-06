@@ -217,6 +217,7 @@ public:
             viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
         }
 
+        storePressureSolution();
         updateMaterialLaws();
 
         this->assemble(true);
