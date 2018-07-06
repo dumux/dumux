@@ -38,9 +38,12 @@ namespace Dumux {
 class NoPrimaryVariableSwitch
 {
 public:
+    NoPrimaryVariableSwitch(...) {}
     void init(...) {}
     bool wasSwitched(...) const { return false; }
     bool update(...) { return false; }
+    void updateSwitchedVolVars(...) {}
+    void updateSwitchedFluxVarsCache(...) {}
     bool update_(...) {return false; }
 };
 
@@ -104,7 +107,6 @@ public:
 
                     if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
                         switched = true;
-
                 }
             }
         }
@@ -116,6 +118,81 @@ public:
 
         return switched;
     }
+
+    /*!
+     * \brief Update the volume variables whose primary variables were
+              switched. Required when volume variables are cached globally.
+     */
+    template<class Problem, class GridVariables, class SolutionVector,
+             std::enable_if_t<GridVariables::GridVolumeVariables::cachingEnabled, int> = 0>
+    void updateSwitchedVolVars(const Problem& problem,
+                               const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
+                               const typename GridVariables::GridGeometry& fvGridGeometry,
+                               GridVariables& gridVariables,
+                               const SolutionVector& sol)
+    {
+        // make sure FVElementGeometry is bound to the element
+        auto fvGeometry = localView(fvGridGeometry);
+        fvGeometry.bindElement(element);
+
+        // update the secondary variables if global caching is enabled
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            const auto dofIdxGlobal = scv.dofIndex();
+            if (asImp_().wasSwitched(dofIdxGlobal))
+            {
+                const auto elemSol = elementSolution(element, sol, fvGridGeometry);
+                auto& volVars = gridVariables.curGridVolVars().volVars(scv);
+                volVars.update(elemSol, problem, element, scv);
+            }
+        }
+    }
+
+    /*!
+     * \brief Update the fluxVars cache for dof whose primary variables were
+              switched. Required when flux variables are cached globally (not for box method).
+     */
+     template<class Problem, class GridVariables, class SolutionVector,
+              std::enable_if_t<(GridVariables::GridFluxVariablesCache::cachingEnabled &&
+                                GridVariables::GridGeometry::discMethod != DiscretizationMethod::box), int> = 0>
+     void updateSwitchedFluxVarsCache(const Problem& problem,
+                                const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
+                                const typename GridVariables::GridGeometry& fvGridGeometry,
+                                GridVariables& gridVariables,
+                                const SolutionVector& sol)
+    {
+        // update the flux variables if global caching is enabled
+        const auto dofIdxGlobal = fvGridGeometry.dofMapper().index(element);
+
+        if (asImp_().wasSwitched(dofIdxGlobal))
+        {
+            // make sure FVElementGeometry and the volume variables are bound
+            auto fvGeometry = localView(fvGridGeometry);
+            fvGeometry.bind(element);
+            auto curElemVolVars = localView(gridVariables.curGridVolVars());
+            curElemVolVars.bind(element, fvGeometry, sol);
+            gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
+        }
+    }
+
+     //! brief Do nothing when volume variables are not cached globally.
+     template<class Problem, class GridVariables, class SolutionVector,
+              std::enable_if_t<!GridVariables::GridVolumeVariables::cachingEnabled, int> = 0>
+    void updateSwitchedVolVars(const Problem& problem,
+                               const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
+                               const typename GridVariables::GridGeometry& fvGridGeometry,
+                               GridVariables& gridVariables,
+                               const SolutionVector &uCurrentIter) const {}
+
+    //! brief Do nothing when flux variables are not cached globally or the box method is used.
+    template<class Problem, class GridVariables, class SolutionVector,
+             std::enable_if_t<(!GridVariables::GridFluxVariablesCache::cachingEnabled ||
+                               GridVariables::GridGeometry::discMethod == DiscretizationMethod::box), int> = 0>
+    void updateSwitchedFluxVarsCache(const Problem& problem,
+                               const typename GridVariables::GridGeometry::GridView::template Codim<0>::Entity& element,
+                               const typename GridVariables::GridGeometry& fvGridGeometry,
+                               GridVariables& gridVariables,
+                               const SolutionVector& sol) const {}
 
 protected:
 
