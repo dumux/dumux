@@ -1,4 +1,5 @@
 install(FILES
+couplingjacobianpattern.hh
 couplingmanager.hh
 newtonsolver.hh
 traits.hh
