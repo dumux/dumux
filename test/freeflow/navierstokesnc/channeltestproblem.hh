@@ -71,7 +71,11 @@ SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridVolumeVariablesCache, true);
 
 // Use mole fraction formulation
+#if USE_MASS
+SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, false);
+#else
 SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, true);
+#endif
 
 SET_BOOL_PROP(ChannelNCTestTypeTag, EnableInertiaTerms, true);
 }
@@ -99,8 +103,9 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
-    static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
-    static constexpr auto transportEqIdx = Indices::conti0EqIdx + 1;
+    static constexpr auto compIdx = 1;
+    static constexpr auto transportCompIdx = Indices::conti0EqIdx + compIdx;
+    static constexpr auto transportEqIdx = Indices::conti0EqIdx + compIdx;
 
 public:
     ChannelNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -195,7 +200,6 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
         PrimaryVariables values = initialAtPos(globalPos);
 
         // give the system some time so that the pressure can equilibrate, then start the injection of the tracer
@@ -203,7 +207,15 @@ public:
         {
             if(time() >= 10.0 || inletVelocity_  < eps_)
             {
-                values[transportCompIdx] = 1e-3;
+                Scalar moleFracTransportedComp = 1e-3;
+#if USE_MASS
+                Scalar averageMolarMassPhase = moleFracTransportedComp * FluidSystem::molarMass(compIdx)
+                                               + (1. - moleFracTransportedComp)  * FluidSystem::molarMass(1-compIdx);
+                values[transportCompIdx] = moleFracTransportedComp * FluidSystem::molarMass(compIdx)
+                                           / averageMolarMassPhase;
+#else
+                values[transportCompIdx] = moleFracTransportedComp;
+#endif
 #if NONISOTHERMAL
             values[Indices::temperatureIdx] = 293.15;
 #endif

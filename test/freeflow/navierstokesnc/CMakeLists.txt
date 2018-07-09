@@ -13,9 +13,22 @@ dune_add_test(NAME test_stokes2c_densitydrivenflow
                              --zeroThreshold {"velocity_liquid \(m/s\)":1e-10}
                              --zeroThreshold {"deltaRho":1e-7})
 
+add_executable(test_stokes2c_mass EXCLUDE_FROM_ALL test_channel.cc)
+target_compile_definitions(test_stokes2c_mass PUBLIC "USE_MASS=1")
+
 add_executable(test_stokes2c EXCLUDE_FROM_ALL test_channel.cc)
 
-dune_add_test(NAME test_stokes2c_purediffusion
+dune_add_test(NAME test_stokes2c_purediffusion_mass
+              TARGET test_stokes2c_mass
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-purediffusion.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_purediffusion-00014.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2c_mass test_stokes2c_purediffusion.input"
+                             --zeroThreshold {"velocity_liquid \(m/s\)":1e-22})
+
+dune_add_test(NAME test_stokes2c_purediffusion_mole
               TARGET test_stokes2c
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
