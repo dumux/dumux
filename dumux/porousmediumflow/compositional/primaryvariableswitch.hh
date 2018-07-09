@@ -38,13 +38,15 @@ namespace Dumux {
 class NoPrimaryVariableSwitch
 {
 public:
-    NoPrimaryVariableSwitch(...) {}
-    void init(...) {}
-    bool wasSwitched(...) const { return false; }
-    bool update(...) { return false; }
-    void updateSwitchedVolVars(...) {}
-    void updateSwitchedFluxVarsCache(...) {}
-    bool update_(...) {return false; }
+    template<typename... Args>
+    NoPrimaryVariableSwitch(Args&&...) {}
+
+    template<typename... Args> void init(Args&&...) {}
+    template<typename... Args> bool wasSwitched(Args&&...) const { return false; }
+    template<typename... Args> bool update(Args&&...) { return false; }
+    template<typename... Args> void updateSwitchedVolVars(Args&&...) {}
+    template<typename... Args> void updateSwitchedFluxVarsCache(Args&&...) {}
+    template<typename... Args> bool update_(Args&&...) {return false; }
 };
 
 /*!
