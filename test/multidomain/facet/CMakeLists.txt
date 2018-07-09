@@ -1,3 +1,4 @@
+add_subdirectory(1p_1p)
 dune_symlink_to_source_files(FILES "grid.msh" "grid2.msh" "test_gridcreator.input" "2d_grid.msh" "3d_grid.msh")
 
 dune_add_test(NAME test_facetgridcreator_alu
