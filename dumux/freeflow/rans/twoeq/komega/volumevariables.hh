@@ -265,9 +265,9 @@ protected:
     Scalar dissipation_ = 0.0;
     Scalar turbulentKineticEnergy_ = 0.0;
     Scalar storedDissipation_ = 0.0;
-    DimVector storedDissipationGradient_ = 0.0;
+    DimVector storedDissipationGradient_ = DimVector(0.0);
     Scalar storedTurbulentKineticEnergy_ = 0.0;
-    DimVector storedTurbulentKineticEnergyGradient_ = 0.0;
+    DimVector storedTurbulentKineticEnergyGradient_ = DimVector(0.0);
     Scalar stressTensorScalarProduct_ = 0.0;
 };
 

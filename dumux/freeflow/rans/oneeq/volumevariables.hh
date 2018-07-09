@@ -336,7 +336,7 @@ protected:
     Scalar eddyDiffusivity_ = 0.0;
     Scalar viscosityTilde_ = 0.0;
     Scalar storedViscosityTilde_ = 0.0;
-    DimVector storedViscosityTildeGradient_ = 0.0;
+    DimVector storedViscosityTildeGradient_ = DimVector(0.0);
     Scalar stressTensorScalarProduct_ = 0.0;
     Scalar vorticityTensorScalarProduct_ = 0.0;
 };
