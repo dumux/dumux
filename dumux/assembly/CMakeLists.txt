@@ -12,6 +12,5 @@ jacobianpattern.hh
 numericepsilon.hh
 partialreassembler.hh
 staggeredfvassembler.hh
-staggeredlocalassembler.hh
 staggeredlocalresidual.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/assembly)

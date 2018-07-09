@@ -3,6 +3,8 @@ couplingjacobianpattern.hh
 couplingmanager.hh
 fvassembler.hh
 newtonsolver.hh
+staggeredcouplingmanager.hh
+staggeredtraits.hh
 subdomainboxlocalassembler.hh
 subdomaincclocalassembler.hh
 subdomainstaggeredlocalassembler.hh
