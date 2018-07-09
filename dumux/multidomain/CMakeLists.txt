@@ -1,3 +1,5 @@
+add_subdirectory(embedded)
+
 install(FILES
 couplingjacobianpattern.hh
 couplingmanager.hh
