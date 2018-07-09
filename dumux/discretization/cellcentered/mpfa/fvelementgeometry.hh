@@ -496,8 +496,8 @@ private:
     }
 
     //! map a global index to the local storage index
-    const unsigned int findLocalIndex(const GridIndexType idx,
-                                      const std::vector<GridIndexType>& indices) const
+    unsigned int findLocalIndex(const GridIndexType idx,
+                                const std::vector<GridIndexType>& indices) const
     {
         auto it = std::find(indices.begin(), indices.end(), idx);
         assert(it != indices.end() && "Could not find the scv/scvf! Make sure to properly bind this class!");
