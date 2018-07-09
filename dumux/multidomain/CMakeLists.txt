@@ -1,6 +1,7 @@
 install(FILES
 couplingjacobianpattern.hh
 couplingmanager.hh
+fvassembler.hh
 newtonsolver.hh
 subdomainboxlocalassembler.hh
 subdomaincclocalassembler.hh
