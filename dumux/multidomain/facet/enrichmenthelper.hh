@@ -304,7 +304,7 @@ private:
             }
         }
 
-        if (foundCounter != 2)
+        if (foundCounter != numIsToFind)
             DUNE_THROW(Dune::InvalidStateException, "Could not find all intersections at the vertex");
     }
 };
