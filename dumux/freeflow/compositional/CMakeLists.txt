@@ -8,6 +8,7 @@ komegancmodel.hh
 localresidual.hh
 lowrekepsilonncmodel.hh
 navierstokesncmodel.hh
+oneeqncmodel.hh
 volumevariables.hh
 vtkoutputfields.hh
 zeroeqncmodel.hh

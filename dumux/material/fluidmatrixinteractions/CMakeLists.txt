@@ -9,5 +9,6 @@ install(FILES
 diffusivityconstanttortuosity.hh
 diffusivitymillingtonquirk.hh
 permeabilitykozenycarman.hh
+porositydeformation.hh
 porosityprecipitation.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions)
