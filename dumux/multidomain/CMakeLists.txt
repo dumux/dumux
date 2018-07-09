@@ -3,6 +3,7 @@ couplingjacobianpattern.hh
 couplingmanager.hh
 newtonsolver.hh
 subdomainboxlocalassembler.hh
+subdomaincclocalassembler.hh
 subdomainstaggeredlocalassembler.hh
 traits.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain)
