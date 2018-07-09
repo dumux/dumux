@@ -1,3 +1,4 @@
+add_subdirectory(boundary)
 add_subdirectory(embedded)
 
 install(FILES
