@@ -20,6 +20,7 @@
  * \file
  * \ingroup MultiDomain
  * \ingroup BoundaryCoupling
+ * \ingroup DarcyDarcyCoupling
  * \brief Coupling manager for equal-dimension boundary coupling
  */
 
@@ -45,6 +46,7 @@ namespace Dumux {
 /*!
  * \ingroup MultiDomain
  * \ingroup BoundaryCoupling
+ * \ingroup DarcyDarcyCoupling
  * \brief Coupling manager for equal-dimension boundary coupling of darcy models
  */
 template<class MDTraits>

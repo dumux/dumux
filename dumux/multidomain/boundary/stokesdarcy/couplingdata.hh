@@ -20,6 +20,7 @@
  * \file
  * \ingroup MultiDomain
  * \ingroup BoundaryCoupling
+ * \ingroup StokesDarcyCoupling
  * \copydoc Dumux::StokesDarcyCouplingData
  */
 
@@ -36,6 +37,7 @@ namespace Dumux {
 /*!
  * \ingroup MultiDomain
  * \ingroup BoundaryCoupling
+ * \ingroup StokesDarcyCoupling
  * \brief This structs holds a set of options which allow to modify the Stokes-Darcy coupling mechanism during runtime.
  */
 struct StokesDarcyCouplingOptions
@@ -86,6 +88,7 @@ using StokesDarcyCouplingData = StokesDarcyCouplingDataImplementation<MDTraits, 
 /*!
  * \ingroup MultiDomain
  * \ingroup BoundaryCoupling
+ * \ingroup StokesDarcyCoupling
  * \brief A base class which provides some common methods used for Stokes-Darcy coupling.
  */
 template<class MDTraits, class CouplingManager>
@@ -299,6 +302,7 @@ private:
 /*!
  * \ingroup MultiDomain
  * \ingroup BoundaryCoupling
+ * \ingroup StokesDarcyCoupling
  * \brief Coupling data specialization for non-compositional models.
  */
 template<class MDTraits, class CouplingManager, bool enableEnergyBalance>
@@ -457,6 +461,7 @@ private:
 /*!
  * \ingroup MultiDomain
  * \ingroup BoundaryCoupling
+ * \ingroup StokesDarcyCoupling
  * \brief Coupling data specialization for compositional models.
  */
 template<class MDTraits, class CouplingManager, bool enableEnergyBalance>

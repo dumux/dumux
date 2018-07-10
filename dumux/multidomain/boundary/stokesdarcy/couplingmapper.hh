@@ -20,6 +20,7 @@
  * \file
  * \ingroup MultiDomain
  * \ingroup BoundaryCoupling
+ * \ingroup StokesDarcyCoupling
  * \copydoc Dumux::StokesDarcyCouplingMapper
  */
 
@@ -41,6 +42,7 @@ namespace Dumux {
 /*!
  * \ingroup MultiDomain
  * \ingroup BoundaryCoupling
+ * \ingroup StokesDarcyCoupling
  * \brief Coupling mapper for Stokes and Darcy domains with equal dimension.
  */
 template<class MDTraits>
