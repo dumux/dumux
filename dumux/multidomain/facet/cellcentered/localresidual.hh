@@ -19,8 +19,8 @@
 /*!
  * \file
  * \ingroup Assembly
- * \ingroup MixedDimension
- * \ingroud MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Calculates the element-wise residual for cell-centered discretization schemes
  *        in models where coupling occurs across the element facets. This extra implementation
  *        is necessary as facets that lie on the boundary but couple to a facet element have to be
@@ -36,8 +36,8 @@ namespace Dumux {
 
 /*!
  * \ingroup Assembly
- * \ingroup MixedDimension
- * \ingroud MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Calculates the element-wise residual for cell-centered discretization schemes
  *        in models where coupling occurs across the element facets. We only overwrite the
  *        function for the computation of a flux across a single sub-control volume face,

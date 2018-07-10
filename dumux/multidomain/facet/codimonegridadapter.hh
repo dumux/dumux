@@ -19,8 +19,8 @@
 
 /*!
  * \file
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief copydoc Dumux::CodimOneGridAdapter
  */
 #ifndef DUMUX_FACETCOUPLING_CODIM_ONE_GRID_ADAPTER_HH
@@ -32,8 +32,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Adapter to be plugged on top of a grid creator that allows for obtaining
  *        information on a d-dimensional grid for entities of a (d-1)-dimensional
  *        grid. This lower-dimensional grid is assumed to be facet-conforming to the

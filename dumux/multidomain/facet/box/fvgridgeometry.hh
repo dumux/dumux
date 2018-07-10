@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \ingroup BoxDiscretization
  * \brief Base class for the finite volume grid geometry for box models in the
  *        context of models considering coupling of different domains across the
@@ -47,8 +47,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \ingroup BoxDiscretization
  * \brief The default traits for the finite volume grid geometry
  *        of the box scheme with coupling occuring across the element facets.
@@ -74,8 +74,8 @@ struct BoxFacetCouplingDefaultGridGeometryTraits
 };
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \ingroup BoxDiscretization
  * \brief Base class for the finite volume geometry vector for box schemes in the context
  *        of coupled models where the coupling occurs across the element facets. This builds
@@ -89,8 +89,8 @@ template<class Scalar,
 class BoxFacetCouplingFVGridGeometry;
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \ingroup BoxDiscretization
  * \brief Base class for the finite volume geometry vector for box schemes in the context
  *        of coupled models where the coupling occurs across the element facets. This builds
@@ -326,6 +326,8 @@ private:
 };
 
 /*!
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \ingroup BoxDiscretization
  * \brief Base class for the finite volume geometry vector for box schemes
  *        This builds up the sub control volumes and sub control volume faces

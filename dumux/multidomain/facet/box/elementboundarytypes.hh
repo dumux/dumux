@@ -18,6 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Boundary types gathered on an element for the box scheme
  *        with coupling occurring across the element facets.
  */
@@ -32,8 +34,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief This class stores an array of BoundaryTypes objects
  *        on an element for the box scheme with coupling occuring
  *        across the element facets.

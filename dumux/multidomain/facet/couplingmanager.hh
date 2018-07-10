@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \copydoc Dumux::FacetCouplingManager
  */
 #ifndef DUMUX_FACETCOUPLING_MANAGER_HH
@@ -33,6 +33,8 @@
 namespace Dumux {
 
 /*!
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Free function that allows the creation of a volume variables object
  *        interpolated to a given position within an element. This is the standard
  *        implementation which simply interpolates the solution to the given position
@@ -69,8 +71,8 @@ void makeInterpolatedVolVars(VolumeVariables& volVars,
 }
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Implementation for the coupling manager between two domains of dimension d
  *        and (d-1) for models considering coupling across the bulk domain element facets.
  *        The implementations are specificto the discretization method used in the bulk
@@ -92,8 +94,8 @@ template< class MDTraits,
 class FacetCouplingManager;
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Class that handles the coupling between three sub-domains in models where
  *        the coupling between the two occurs across the facets of the d- and (d-1)-
  *        dimensional domains.

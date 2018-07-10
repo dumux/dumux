@@ -19,8 +19,8 @@
 
 /*!
  * \file
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief copydoc Dumux::VertexEnrichmentHelper
  */
 #ifndef DUMUX_VERTEX_ENRICHMENT_HELPER_HH
@@ -42,6 +42,8 @@
 namespace Dumux {
 
 /*!
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Specialization of the enrichment helper class for 2d grids.
  *        In this case, we look for two-dimensional bulk grid elements that
  *        are enclosed by (lie in between) two 1-dimensional facet grid elements.

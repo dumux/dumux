@@ -16,8 +16,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \copydoc Dumux::FacetCouplingMapper
  */
 #ifndef DUMUX_FACETCOUPLING_MAPPER_HH
@@ -29,8 +29,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Implementation for the coupling mapper that sets up and stores
  *        the coupling maps between two domains of dimension d and (d-1).
  *        The implementations are specific to the discretization method
@@ -52,8 +52,8 @@ template< class BulkFVG,
 class FacetCouplingMapper;
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Specialization of the mapper class for the case of
  *        three domains with the grid dimensions d, (d-1) & (d-2).
  *

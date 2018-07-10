@@ -16,8 +16,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \copydoc Dumux::FacetCouplingMapper
  */
 #ifndef DUMUX_CCTPFA_FACETCOUPLING_MAPPER_HH
@@ -32,8 +32,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Base class for the coupling mapper that sets up and stores
  *        the coupling maps between two domains of dimension d and (d-1).
  *        This specialization is for the bulk domain using the cell-centered

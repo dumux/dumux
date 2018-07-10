@@ -16,8 +16,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \copydoc Dumux::FacetCouplingMapperBase
  */
 #ifndef DUMUX_FACETCOUPLING_MAPPER_BASE_HH
@@ -32,8 +32,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Base class for the coupling mapper that sets up and stores
  *        the coupling maps between two domains of dimension d and (d-1).
  *

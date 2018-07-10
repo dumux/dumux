@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \ingroup BoxDiscretization
  * \brief \copydoc Dumux::BoxFacetCouplingFVElementGeometry
  */
@@ -36,8 +36,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \ingroup BoxDiscretization
  * \brief Base class for the element-local finite volume geometry for box models
  *        in the context of models considering coupling of different domains across the

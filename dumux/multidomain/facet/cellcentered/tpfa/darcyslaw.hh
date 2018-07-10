@@ -18,6 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \copydoc Dumux::CCTpfaFacetCouplingDarcysLaw
  */
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FACET_COUPLING_DARCYS_LAW_HH
@@ -44,7 +46,8 @@ template<class TypeTag, bool isNetwork>
 class CCTpfaFacetCouplingDarcysLawImpl;
 
 /*!
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief The cache corresponding to tpfa Darcy's Law with facet coupling
  * \note We distinguish between network and non-network grids here. Specializations
  *       for the two cases can be found below.
@@ -53,8 +56,8 @@ template<class TypeTag, bool isNetwork>
 class CCTpfaFacetCouplingDarcysLawCache;
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Darcy's law for cell-centered finite volume schemes with two-point flux approximation
  *        in the context of coupled models where the coupling occurs across the facets of the bulk
  *        domain elements with a lower-dimensional domain living on these facets.
@@ -65,7 +68,8 @@ using CCTpfaFacetCouplingDarcysLaw =
                                                    int(GET_PROP_TYPE(TypeTag, GridView)::dimensionworld) ) >;
 
 /*!
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for non-network grids.
  */
 template<class TypeTag>
@@ -126,7 +130,8 @@ private:
 };
 
 /*!
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim=dimWorld
  */
 template<class TypeTag>
@@ -328,7 +333,8 @@ class CCTpfaFacetCouplingDarcysLawImpl<TypeTag, /*isNetwork*/false>
 };
 
 /*!
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Specialization of the FacetCouplingTpfaDarcysLawCache for network grids
  */
 template<class TypeTag>
@@ -389,7 +395,8 @@ private:
 };
 
 /*!
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Specialization of the CCTpfaDarcysLaw grids where dim<dimWorld
  */
 template<class TypeTag>

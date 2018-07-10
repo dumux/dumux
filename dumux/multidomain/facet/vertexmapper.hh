@@ -19,8 +19,8 @@
 
 /*!
  * \file
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief copydoc Dumux::EnrichedVertexDofMapper
  */
 #ifndef DUMUX_ENRICHED_VERTEX_DOF_MAPPER_HH
@@ -39,8 +39,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief An indicator class used to mark vertices for enrichment. This
  *        implementation marks all vertices of a given grid of codimension
  *        one for enrichment, except those that are connected to inmersed
@@ -136,8 +136,8 @@ public:
 };
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief A vertex mapper that allows for enrichment of nodes. Indication on where to
  *        enrich the nodes is done on the basis of a grid of codimension one living
  *        on the facets of the bulk grid.

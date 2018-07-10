@@ -19,9 +19,9 @@
 /*!
  * \file
  * \ingroup Assembly
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
-+ * \brief Calculates the element-wise residual for the box scheme with
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
+ * \brief Calculates the element-wise residual for the box scheme with
  *        coupling to a lower-dimensional domain occurring across the element facets.
  */
 #ifndef DUMUX_FACETCOUPLING_BOX_LOCAL_RESIDUAL_HH
@@ -36,8 +36,8 @@ namespace Dumux {
 
 /*!
  * \ingroup Assembly
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief The element-wise residual for the box scheme
  * \tparam TypeTag the TypeTag
  */

@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \copydoc Dumux::FacetCouplingManager
  */
 #ifndef DUMUX_CCTPFA_FACETCOUPLING_MANAGER_HH
@@ -37,8 +37,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Manages the coupling between bulk elements and lower dimensional elements
  *        where the coupling occurs across the facets of the bulk grid. This implementation
  *        is to be used in conjunction with models using the cell-centered tpfa scheme.

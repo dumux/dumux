@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \brief Properties (and default properties) for all models using the box
  *        scheme together with coupling across the grid element facets
  * \note If n is the dimension of the lowest grid to be considered in the hierarchy,

@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \ingroup BoxDiscretization
  * \brief Base class for a sub control volume face of the box method
  *        in the context of of models considering coupling of different
@@ -41,8 +41,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionFacet
+ * \ingroup MultiDomain
+ * \ingroup FacetCoupling
  * \ingroup BoxDiscretization
  * \brief Class for a sub control volume face in the box method, i.e a part of the boundary
  *        of a sub control volume we compute fluxes on. This is a specialization for models
