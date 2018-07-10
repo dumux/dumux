@@ -30,8 +30,6 @@
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 
-#include <dumux/io/restart.hh>
-
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/2p2c/model.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
@@ -293,14 +291,6 @@ public:
     { return initial_(globalPos); }
 
     // \}
-
-    template <class SolutionVector>
-    void applyRestartSolution(SolutionVector& sol) const
-    {
-        using PvNames = typename GET_PROP_TYPE(TypeTag, PrimaryVariableNames);
-
-        Restart::loadSolutionFromVtkFile(this->fvGridGeometry(), PvNames::get(), sol);
-    }
 
 private:
     /*!
