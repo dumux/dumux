@@ -64,18 +64,15 @@ namespace Dumux
 /*! \brief This fluid state ensures that only the allowed quantities
  * are accessed
  */
-template<class Scalar, class FluidSystem, class BaseFluidState = CompositionalFluidState<Scalar, FluidSystem> >
+template<class ScalarType, class FluidSystem, class BaseFluidState = CompositionalFluidState<ScalarType, FluidSystem> >
 class HairSplittingFluidState: protected BaseFluidState
 {
 public:
-    enum
-    {
-        numPhases = FluidSystem::numPhases
-    };
-    enum
-    {
-        numComponents = FluidSystem::numComponents
-    };
+    //! export the type used for scalars
+    using typename BaseFluidState::Scalar;
+
+    static constexpr int numPhases = FluidSystem::numPhases;
+    static constexpr int numComponents = FluidSystem::numComponents;
 
     HairSplittingFluidState()
     {

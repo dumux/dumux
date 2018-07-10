@@ -38,12 +38,15 @@ namespace Dumux {
  *        multi-phase, multi-component fluid system without using
  *        any assumptions.
  */
-template <class Scalar, class FluidSystem>
+template <class ScalarType, class FluidSystem>
 class NonEquilibriumFluidState
 {
 public:
     static constexpr int numPhases = FluidSystem::numPhases;
     static constexpr int numComponents = FluidSystem::numComponents;
+
+    //! export the scalar type
+    using Scalar = ScalarType;
 
     /*****************************************************
      * Generic access to fluid properties (No assumptions

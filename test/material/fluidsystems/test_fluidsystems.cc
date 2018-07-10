@@ -104,15 +104,15 @@ int main()
         success += checkFluidState<Scalar>(nonEquilibriumMassFluidState);
 
         // PressureOverlayFluidState
-        PressureOverlayFluidState<Scalar, BaseFluidState> pressureOverlayFluidState(baseFs);
+        PressureOverlayFluidState<BaseFluidState> pressureOverlayFluidState(baseFs);
         success += checkFluidState<Scalar>(pressureOverlayFluidState);
 
         // SaturationOverlayFluidState
-        SaturationOverlayFluidState<Scalar, BaseFluidState> saturationOverlayFluidState(baseFs);
+        SaturationOverlayFluidState<BaseFluidState> saturationOverlayFluidState(baseFs);
         success += checkFluidState<Scalar>(saturationOverlayFluidState);
 
         // TemperatureOverlayFluidState
-        TemperatureOverlayFluidState<Scalar, BaseFluidState> temperatureOverlayFluidState(baseFs);
+        TemperatureOverlayFluidState<BaseFluidState> temperatureOverlayFluidState(baseFs);
         success += checkFluidState<Scalar>(temperatureOverlayFluidState);
     }
 

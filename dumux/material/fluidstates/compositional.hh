@@ -40,12 +40,15 @@ namespace Dumux {
  *        multi-phase, multi-component fluid system assuming
  *        thermodynamic equilibrium.
  */
-template <class Scalar, class FluidSystem>
+template <class ScalarType, class FluidSystem>
 class CompositionalFluidState
 {
 public:
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };
+
+    //! export the scalar type
+    using Scalar = ScalarType;
 
     //! default constructor
     CompositionalFluidState() = default;

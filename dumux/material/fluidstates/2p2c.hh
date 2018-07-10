@@ -32,7 +32,7 @@ namespace Dumux {
  *        sequential 2p2c model.
  * This boils down to so-called "flash calculation", in this case isothermal and isobaric.
  */
-template <class Scalar, class FluidSystem>
+template <class ScalarType, class FluidSystem>
 class TwoPTwoCFluidState
 {
 public:
@@ -47,6 +47,8 @@ public:
     };
 
 public:
+    //! export the scalar type
+    using Scalar = ScalarType;
 
     // comply with new style 2p2c models
     int wettingPhase() const

@@ -37,7 +37,7 @@ namespace Dumux {
  *        multi-phase fluid system assuming immiscibility and
  *        thermodynamic equilibrium.
  */
-template <class Scalar, class FluidSystem>
+template <class ScalarType, class FluidSystem>
 class ImmiscibleFluidState
 {
 public:
@@ -46,6 +46,9 @@ public:
     static_assert(numPhases == numComponents,
                   "The number of phases must be equal to the number of "
                   "components if immiscibility is assumed!");
+
+    //! export the scalar type
+    using Scalar = ScalarType;
 
     //! default constructor
     ImmiscibleFluidState() = default;

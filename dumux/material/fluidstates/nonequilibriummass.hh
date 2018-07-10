@@ -40,14 +40,17 @@ namespace Dumux {
  *        - local thermal equilibrium
  *        - local chemical non-equilibrium
  */
-template <class Scalar, class FluidSystem>
+template <class ScalarType, class FluidSystem>
 class NonEquilibriumMassFluidState
-: public NonEquilibriumFluidState<Scalar, FluidSystem>
+: public NonEquilibriumFluidState<ScalarType, FluidSystem>
 {
-    using ParentType = NonEquilibriumFluidState<Scalar, FluidSystem>;
+    using ParentType = NonEquilibriumFluidState<ScalarType, FluidSystem>;
 public:
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };
+
+    //! export the scalar type
+    using Scalar = ScalarType;
 
     using ParentType::ParentType;
 

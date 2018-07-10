@@ -37,11 +37,15 @@ namespace Dumux {
  *        multi-phase fluid system assuming immiscibility and
  *        thermodynamic equilibrium.
  */
-template <class Scalar, class FluidSystem>
+template <class ScalarType, class FluidSystem>
 class IsothermalImmiscibleFluidState
 {
 public:
     static constexpr int numPhases = FluidSystem::numPhases;
+    static constexpr int numComponents = FluidSystem::numComponents;
+
+    //! export the scalar type
+    using Scalar = ScalarType;
 
     //! default constructor
     IsothermalImmiscibleFluidState() = default;
