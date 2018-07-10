@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Nonlinear
  * \ingroup MultiDomain
  * \copydoc Dumux::MultiDomainPriVarSwitchNewtonSolver
  */
@@ -34,6 +35,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup Nonlinear
  * \ingroup MultiDomain
  * \brief A newton solver that handles primary variable switches for multi domain problems
  */

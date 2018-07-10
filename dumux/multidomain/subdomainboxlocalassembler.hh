@@ -20,10 +20,8 @@
  * \file
  * \ingroup Assembly
  * \ingroup BoxDiscretization
- * \brief An assembler for Jacobian and residual contribution per element (box methods)
- * \tparam TypeTag the TypeTag
- * \tparam DM the differentiation method to residual compute derivatives
- * \tparam implicit if to use an implicit or explicit time discretization
+ * \ingroup MultiDomain
+ * \brief An assembler for Jacobian and residual contribution per element (box methods) for multidomain problems
  */
 #ifndef DUMUX_MULTIDOMAIN_BOX_LOCAL_ASSEMBLER_HH
 #define DUMUX_MULTIDOMAIN_BOX_LOCAL_ASSEMBLER_HH
@@ -44,11 +42,13 @@ namespace Dumux {
 
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
- * \brief A base class for all local assemblers
+ * \ingroup BoxDiscretization
+ * \ingroup MultiDomain
+ * \brief A base class for all box local assemblers
  * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
+ * \tparam Implementation the actual implementation type
  */
 template<std::size_t id, class TypeTag, class Assembler, class Implementation>
 class SubDomainBoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler,Implementation, true>
@@ -234,10 +234,13 @@ private:
 
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
- * \brief A base class for all implicit local assemblers
+ * \ingroup BoxDiscretization
+ * \ingroup MultiDomain
+ * \brief A base class for all implicit box local assemblers
+ * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
+ * \tparam Implementation the actual implementation type
  */
 template<std::size_t id, class TypeTag, class Assembler, class Implementation>
 class SubDomainBoxLocalAssemblerImplicitBase : public SubDomainBoxLocalAssemblerBase<id, TypeTag, Assembler, Implementation>
@@ -286,19 +289,23 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
- * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
+ * \ingroup BoxDiscretization
+ * \ingroup MultiDomain
+ * \brief The box scheme multidomain local assembler
+ * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
- * \tparam DM the differentiation method to residual compute derivatives
- * \tparam implicit if to use an implicit or explicit time discretization
+ * \tparam Assembler the assembler type
+ * \tparam DM the numeric differentiation method
+ * \tparam implicit whether the assembler is explicit or implicit in time
  */
 template<std::size_t id, class TypeTag, class Assembler, DiffMethod DM = DiffMethod::numeric, bool implicit = true>
 class SubDomainBoxLocalAssembler;
 
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
- * \brief Cell-centered scheme local assembler using numeric differentiation and implicit time discretization
+ * \ingroup BoxDiscretization
+ * \ingroup MultiDomain
+ * \brief Box scheme multi domain local assembler using numeric differentiation and implicit time discretization
  */
 template<std::size_t id, class TypeTag, class Assembler>
 class SubDomainBoxLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>

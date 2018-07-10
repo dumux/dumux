@@ -20,10 +20,8 @@
  * \file
  * \ingroup Assembly
  * \ingroup CCDiscretization
- * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
- * \tparam TypeTag the TypeTag
- * \tparam DM the differentiation method to residual compute derivatives
- * \tparam implicit if to use an implicit or explicit time discretization
+ * \ingroup MultiDomain
+ * \brief A multidomain local assembler for Jacobian and residual contribution per element (cell-centered methods)
  */
 #ifndef DUMUX_MULTIDOMAIN_CC_LOCAL_ASSEMBLER_HH
 #define DUMUX_MULTIDOMAIN_CC_LOCAL_ASSEMBLER_HH
@@ -46,10 +44,12 @@ namespace Dumux {
 /*!
  * \ingroup Assembly
  * \ingroup CCDiscretization
- * \brief A base class for all local assemblers
+ * \ingroup MultiDomain
+ * \brief A base class for all multidomain local assemblers
  * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
+ * \tparam Implementation the actual assembler implementation
  */
 template<std::size_t id, class TypeTag, class Assembler, class Implementation>
 class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler,Implementation, true>
@@ -192,9 +192,12 @@ private:
 /*!
  * \ingroup Assembly
  * \ingroup CCDiscretization
- * \brief A base class for all implicit local assemblers
+ * \ingroup MultiDomain
+ * \brief A base class for all implicit multidomain local assemblers
+ * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
+ * \tparam Implementation the actual assembler implementation
  */
 template<std::size_t id, class TypeTag, class Assembler, class Implementation>
 class SubDomainCCLocalAssemblerImplicitBase : public SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, Implementation>
@@ -249,10 +252,13 @@ public:
 /*!
  * \ingroup Assembly
  * \ingroup CCDiscretization
- * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
+ * \ingroup MultiDomain
+ * \brief The cell-centered scheme multidomain local assembler
+ * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
- * \tparam DM the differentiation method to residual compute derivatives
- * \tparam implicit if to use an implicit or explicit time discretization
+ * \tparam Assembler the assembler type
+ * \tparam DM the numeric differentiation method
+ * \tparam implicit whether the assembler is explicit or implicit in time
  */
 template<std::size_t id, class TypeTag, class Assembler, DiffMethod DM = DiffMethod::numeric, bool implicit = true>
 class SubDomainCCLocalAssembler;
@@ -260,7 +266,8 @@ class SubDomainCCLocalAssembler;
 /*!
  * \ingroup Assembly
  * \ingroup CCDiscretization
- * \brief Cell-centered scheme local assembler using numeric differentiation and implicit time discretization
+ * \ingroup MultiDomain
+ * \brief Cell-centered scheme multidomain local assembler using numeric differentiation and implicit time discretization
  */
 template<std::size_t id, class TypeTag, class Assembler>
 class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>

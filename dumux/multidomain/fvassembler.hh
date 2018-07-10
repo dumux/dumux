@@ -289,6 +289,9 @@ public:
         { res[domainId].resize(this->numDofs(domainId)); });
     }
 
+    /*!
+     * \brief Updates the grid variables with the given solution
+     */
     void updateGridVariables(const SolutionVector& curSol)
     {
         using namespace Dune::Hybrid;
@@ -296,6 +299,9 @@ public:
         { this->gridVariables(domainId).update(curSol[domainId]); });
     }
 
+    /*!
+     * \brief Resets the grid variables to the last time step
+     */
     void resetTimeStep(const SolutionVector& curSol)
     {
         using namespace Dune::Hybrid;
@@ -303,39 +309,49 @@ public:
         { this->gridVariables(domainId).resetTimeStep(curSol[domainId]); });
     }
 
+    //! the number of dof locations of domain i
     template<std::size_t i>
     std::size_t numDofs(Dune::index_constant<i> domainId) const
     { return std::get<domainId>(fvGridGeometryTuple_)->numDofs(); }
 
+    //! the problem of domain i
     template<std::size_t i>
     const auto& problem(Dune::index_constant<i> domainId) const
     { return *std::get<domainId>(problemTuple_); }
 
+    //! the finite volume grid geometry of domain i
     template<std::size_t i>
     const auto& fvGridGeometry(Dune::index_constant<i> domainId) const
     { return *std::get<domainId>(fvGridGeometryTuple_); }
 
+    //! the grid view of domain i
     template<std::size_t i>
     const auto& gridView(Dune::index_constant<i> domainId) const
     { return fvGridGeometry(domainId).gridView(); }
 
+    //! the grid variables of domain i
     template<std::size_t i>
     auto& gridVariables(Dune::index_constant<i> domainId)
     { return *std::get<domainId>(gridVariablesTuple_); }
 
+    //! the grid variables of domain i
     template<std::size_t i>
     const auto& gridVariables(Dune::index_constant<i> domainId) const
     { return *std::get<domainId>(gridVariablesTuple_); }
 
+    //! the coupling manager
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
+    //! the full Jacobian matrix
     JacobianMatrix& jacobian()
     { return *jacobian_; }
 
+    //! the full residual vector
     SolutionVector& residual()
     { return *residual_; }
 
+    //! the solution of the previous time step
     const SolutionVector& prevSol() const
     { return *prevSol_; }
 
@@ -487,6 +503,6 @@ private:
     std::shared_ptr<SolutionVector> residual_;
 };
 
-} // namespace Dumux
+} // end namespace Dumux
 
 #endif

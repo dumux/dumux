@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MixedDimension
+ * \ingroup MultiDomain
+ * \ingroup StaggeredDiscretization
  * \brief Linear algebra traits for mixeddimension problems
  */
 
@@ -44,6 +45,8 @@
 namespace Dumux {
 
 /*
+ * \ingroup MultiDomain
+ * \ingroup StaggeredDiscretization
  * \brief A traits class every multidomain model has to provide
  * \tparam SubDomainTypeTags the TypeTags of the sub domain problems
  * \note should export the types

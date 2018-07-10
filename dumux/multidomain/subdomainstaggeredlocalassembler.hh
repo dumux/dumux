@@ -20,10 +20,8 @@
  * \file
  * \ingroup Assembly
  * \ingroup StaggeredDiscretization
- * \brief An assembler for Jacobian and residual contribution per element (staggered method)
- * \tparam TypeTag the TypeTag
- * \tparam DM the differentiation method to residual compute derivatives
- * \tparam implicit if to use an implicit or explicit time discretization
+ * \ingroup MultiDomain
+ * \brief A multidomain assembler for Jacobian and residual contribution per element (staggered method)
  */
 #ifndef DUMUX_MULTIDOMAIN_STAGGERED_LOCAL_ASSEMBLER_HH
 #define DUMUX_MULTIDOMAIN_STAGGERED_LOCAL_ASSEMBLER_HH
@@ -45,10 +43,13 @@ namespace Dumux {
 /*!
  * \ingroup Assembly
  * \ingroup StaggeredDiscretization
- * \brief A base class for all local assemblers
+ * \ingroup MultiDomain
+ * \brief A base class for all multidomain local assemblers (staggered)
  * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
+ * \tparam Implementation the actual assembler implementation
+ * \tparam implicit whether the assembly is explicit or implicit in time
  */
 template<std::size_t id, class TypeTag, class Assembler, class Implementation, bool isImplicit = true>
 class SubDomainStaggeredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler,Implementation, isImplicit>
@@ -370,10 +371,13 @@ private:
 
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
- * \brief A base class for all implicit local assemblers
+ * \ingroup StaggeredDiscretization
+ * \ingroup MultiDomain
+ * \brief A base class for all implicit multidomain local assemblers (staggered)
+ * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
+ * \tparam Implementation the actual assembler implementation
  */
 template<std::size_t id, class TypeTag, class Assembler, class Implementation>
 class SubDomainStaggeredLocalAssemblerImplicitBase : public SubDomainStaggeredLocalAssemblerBase<id, TypeTag, Assembler, Implementation>
@@ -411,19 +415,23 @@ public:
 
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
- * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
+ * \ingroup StaggeredDiscretization
+ * \ingroup MultiDomain
+ * \brief The staggered multidomain local assembler
+ * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
- * \tparam DM the differentiation method to residual compute derivatives
- * \tparam implicit if to use an implicit or explicit time discretization
+ * \tparam Assembler the assembler type
+ * \tparam DM the numeric differentiation method
+ * \tparam implicit whether the assembler is explicit or implicit in time
  */
 template<std::size_t id, class TypeTag, class Assembler, DiffMethod DM = DiffMethod::numeric, bool implicit = true>
 class SubDomainStaggeredLocalAssembler;
 
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
- * \brief Cell-centered scheme local assembler using numeric differentiation and implicit time discretization
+ * \ingroup StaggeredDiscretization
+ * \ingroup MultiDomain
+ * \brief Staggered scheme local assembler using numeric differentiation and implicit time discretization
  */
 template<std::size_t id, class TypeTag, class Assembler>
 class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>

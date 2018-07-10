@@ -19,8 +19,8 @@
 /*!
  * \file
  * \ingroup Nonlinear
+ * \ingroup MultiDomain
  * \copydoc Dumux::MultiDomainNewtonSolver
- *
  */
 #ifndef DUMUX_MULTIDOMAIN_NEWTON_SOLVER_HH
 #define DUMUX_MULTIDOMAIN_NEWTON_SOLVER_HH
@@ -32,6 +32,7 @@ namespace Dumux {
 
 /*!
  * \ingroup Nonlinear
+ * \ingroup MultiDomain
  * \brief Newton sover for coupled problems
  */
 template <class Assembler, class LinearSolver, class CouplingManager,

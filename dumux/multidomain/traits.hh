@@ -86,6 +86,7 @@ public:
 } // end namespace Detail
 
 /*
+ * \ingroup MultiDomain
  * \brief A traits class every multidomain model has to provide
  * \tparam SubDomainTypeTags the TypeTags of the sub domain problems
  * \note should export the types
