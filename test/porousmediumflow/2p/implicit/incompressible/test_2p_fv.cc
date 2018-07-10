@@ -51,7 +51,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dumux/io/restart.hh>
+#include <dumux/io/loadsolution.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -136,8 +136,9 @@ int main(int argc, char** argv) try
     SolutionVector x(fvGridGeometry->numDofs());
     if (restartTime > 0)
     {
-        using PvNames = typename GET_PROP_TYPE(TypeTag, PrimaryVariableNames);
-        Restart::loadSolutionFromVtkFile(*fvGridGeometry, PvNames::get(), x);
+        using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+        auto fileName = getParam<std::string>("Restart.File");
+        loadSolution(fileName, *fvGridGeometry, primaryVariableName<ModelTraits>, x);
     }
     else
         problem->applyInitialSolution(x);
