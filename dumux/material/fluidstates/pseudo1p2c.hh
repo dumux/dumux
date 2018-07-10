@@ -44,10 +44,8 @@ class PseudoOnePTwoCFluidState
 {
 
 public:
-    enum {
-        numPhases = FluidSystem::numPhases,
-        numComponents = FluidSystem::numComponents
-    };
+    static constexpr int numPhases = FluidSystem::numPhases;
+    static constexpr int numComponents = FluidSystem::numComponents;
 
     //! export the scalar type
     using Scalar = ScalarType;

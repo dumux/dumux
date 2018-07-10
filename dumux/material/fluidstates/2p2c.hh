@@ -41,12 +41,10 @@ public:
         phase1Idx = FluidSystem::phase1Idx,
     };
 
-    enum {
-        numPhases = FluidSystem::numPhases,
-        numComponents = FluidSystem::numComponents
-    };
-
 public:
+    static constexpr int numPhases = FluidSystem::numPhases;
+    static constexpr int numComponents = FluidSystem::numComponents;
+
     //! export the scalar type
     using Scalar = ScalarType;
 

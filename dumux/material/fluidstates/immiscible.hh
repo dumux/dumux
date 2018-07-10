@@ -41,8 +41,8 @@ template <class ScalarType, class FluidSystem>
 class ImmiscibleFluidState
 {
 public:
-    static constexpr int numComponents = FluidSystem::numComponents;
     static constexpr int numPhases = FluidSystem::numPhases;
+    static constexpr int numComponents = FluidSystem::numComponents;
     static_assert(numPhases == numComponents,
                   "The number of phases must be equal to the number of "
                   "components if immiscibility is assumed!");
