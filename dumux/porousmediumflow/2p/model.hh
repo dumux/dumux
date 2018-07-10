@@ -98,20 +98,13 @@ struct TwoPModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return false; }
     static constexpr bool enableEnergyBalance() { return false; }
-};
 
-template<TwoPFormulation formulation>
-struct TwoPPrimaryVariableNames
-{
-    static std::vector<std::string> get()
+    static std::string primaryVariableName(int pvIdx)
     {
-        switch (formulation)
-        {
-            case TwoPFormulation::p0s1:
-                return {"pw", "Sn"};
-            case TwoPFormulation::p1s0:
-                return {"pn", "Sw"};
-        }
+        if (priVarFormulation() == TwoPFormulation::p0s1)
+            return pvIdx == 0 ? "pw" : "Sn";
+        else
+            return pvIdx == 0 ? "pn" : "Sw";
     }
 };
 
@@ -163,9 +156,6 @@ NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP));
  //!< Set the default formulation to pwsn
 SET_PROP(TwoP, Formulation)
 { static constexpr auto value = TwoPFormulation::p0s1; };
-
-NEW_PROP_TAG(PrimaryVariableNames);
-SET_TYPE_PROP(TwoP, PrimaryVariableNames, TwoPPrimaryVariableNames<GET_PROP_VALUE(TypeTag, Formulation)>);
 
 SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //!< Use the immiscible local residual operator for the 2p model
 
