@@ -47,6 +47,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/restart.hh>
 
 // the problem definitions
 #include "injectionproblem.hh"
@@ -101,7 +102,13 @@ int main(int argc, char** argv) try
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     SolutionVector x(fvGridGeometry->numDofs());
-    problem->applyInitialSolution(x, restartTime);
+    if (restartTime > 0)
+    {
+        using PvNames = typename GET_PROP_TYPE(TypeTag, PrimaryVariableNames);
+        Restart::loadSolutionFromVtkFile(*fvGridGeometry, PvNames::get(), x);
+    }
+    else
+        problem->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables

@@ -51,6 +51,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/restart.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -133,7 +134,13 @@ int main(int argc, char** argv) try
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     SolutionVector x(fvGridGeometry->numDofs());
-    problem->applyInitialSolution(x, restartTime);
+    if (restartTime > 0)
+    {
+        using PvNames = typename GET_PROP_TYPE(TypeTag, PrimaryVariableNames);
+        Restart::loadSolutionFromVtkFile(*fvGridGeometry, PvNames::get(), x);
+    }
+    else
+        problem->applyInitialSolution(x);
     auto xOld = x;
 
     // maybe update the interface parameters
