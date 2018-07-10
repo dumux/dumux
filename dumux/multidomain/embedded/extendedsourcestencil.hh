@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup MultiDomain
  * \ingroup EmbeddedCoupling
  * \brief Extended source stencil helper class for coupling managers
  */
@@ -32,6 +33,7 @@ namespace Dumux {
 namespace EmbeddedCoupling {
 
 /*!
+ * \ingroup MultiDomain
  * \ingroup EmbeddedCoupling
  * \brief A class managing an extended source stencil
  * \tparam CouplingManager the coupling manager type

@@ -48,6 +48,7 @@ template<class BulkGridView, class LowDimGridView, class BulkMapper, class LowDi
 class MixedDimensionGlue;
 
 /*!
+ * \ingroup MultiDomain
  * \ingroup MixedDimension
  * \brief Range generator to iterate with range-based for loops over all intersections
  *        as follows: for (const auto& is : intersections(glue)) { ... }
@@ -60,6 +61,7 @@ intersections(const MixedDimensionGlue<BulkGridView, LowDimGridView, BulkMapper,
 namespace Glue {
 
 /*!
+ * \ingroup MultiDomain
  * \ingroup MixedDimension
  * \brief An intersection object representing an intersection
  *        between two grid entites of different grids
@@ -226,6 +228,6 @@ private:
     Intersections intersections_;
 };
 
-} // namespace Dumux
+} // end namespace Dumux
 
 #endif

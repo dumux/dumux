@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MixedDimension
- * \ingroup MixedDimensionEmbedded
+ * \ingroup MultiDomain
+ * \ingroup EmbeddedCoupling
  * \brief Data associated with a point source
  */
 
@@ -35,8 +35,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionEmbedded
+ * \ingroup MultiDomain
+ * \ingroup EmbeddedCoupling
  * \brief A point source data class used for integration in multidimension models
  * \note The point source and related data are connected via an identifier (id)
  */
@@ -138,8 +138,8 @@ private:
 };
 
 /*!
- * \ingroup MixedDimension
- * \ingroup MixedDimensionEmbedded
+ * \ingroup MultiDomain
+ * \ingroup EmbeddedCoupling
  * \brief A point source data class used for integration in multidimension models
  * \note The point source and related data are connected via an identifier (id)
  * When explicitly computing the circle average, i.e. the pressure for
