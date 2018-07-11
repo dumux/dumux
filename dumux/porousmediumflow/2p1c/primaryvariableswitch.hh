@@ -81,8 +81,9 @@ protected:
                 wouldSwitch = true;
                 // gas phase disappears
                 if (this->verbosity() > 1)
-                    std::cout << "Gas phase disappears at dof " << dofIdxGlobal
-                              << ", coordinates: " << globalPos << ", sg: "
+                    std::cout << "Gas phase (" << FluidSystem::phaseName(FluidSystem::gasPhaseIdx) << ") disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", S_" << FluidSystem::phaseName(FluidSystem::gasPhaseIdx) << ": "
                               << volVars.saturation(FluidSystem::gasPhaseIdx) << std::endl;
                 newPhasePresence = Indices::liquidPhaseOnly;
 
@@ -93,8 +94,9 @@ protected:
                 wouldSwitch = true;
                 // water phase disappears
                 if (this->verbosity() > 1)
-                    std::cout << "Liquid phase disappears at dof " << dofIdxGlobal
-                              << ", coordinates: " << globalPos << ", sw: "
+                    std::cout << "Liquid phase (" << FluidSystem::phaseName(FluidSystem::liquidPhaseIdx) << ") disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", S_" << FluidSystem::phaseName(FluidSystem::liquidPhaseIdx) << ": "
                               << volVars.saturation(FluidSystem::liquidPhaseIdx) << std::endl;
                 newPhasePresence = Indices::gasPhaseOnly;
 
@@ -114,7 +116,7 @@ protected:
                 wouldSwitch = true;
                 // gas phase appears
                 if (this->verbosity() > 1)
-                    std::cout << "gas phase appears at dof " << dofIdxGlobal
+                    std::cout << "Gas phase (" << FluidSystem::phaseName(FluidSystem::gasPhaseIdx) << ") appears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos  << std::endl;
 
                newPhasePresence = Indices::twoPhases;
@@ -134,7 +136,7 @@ protected:
                 wouldSwitch = true;
                 // liquid phase appears
                 if (this->verbosity() > 1)
-                    std::cout << "Liquid phase appears at dof " << dofIdxGlobal
+                    std::cout << "Liquid phase (" << FluidSystem::phaseName(FluidSystem::liquidPhaseIdx) << ") appears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos  << std::endl;
 
                newPhasePresence = Indices::twoPhases;
