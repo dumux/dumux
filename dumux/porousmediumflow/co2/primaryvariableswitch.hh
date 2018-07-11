@@ -98,7 +98,7 @@ protected:
             {
                 // wetting phase appears
                 if (this->verbosity() > 1)
-                    std::cout << "First phase appears at vertex " << dofIdxGlobal
+                    std::cout << "First phase appears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos << ", x10 > x10_max: "
                               << xnw << " > " << xnwMax << std::endl;
                 newPhasePresence = Indices::bothPhases;
@@ -126,7 +126,7 @@ protected:
             {
                 // Second phase appears
                 if (this->verbosity() > 1)
-                    std::cout << "Second phase appears at vertex " << dofIdxGlobal
+                    std::cout << "Second phase appears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos << ", x01 > x01_max: "
                               << xwn << " > " << xwnMax << std::endl;
                 newPhasePresence = Indices::bothPhases;
@@ -148,7 +148,7 @@ protected:
                 wouldSwitch = true;
                 // nonwetting phase disappears
                 if (this->verbosity() > 1)
-                    std::cout << "Second phase disappears at vertex " << dofIdxGlobal
+                    std::cout << "Second phase disappears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos << ", s1: "
                               << volVars.saturation(phase1Idx) << std::endl;
                 newPhasePresence = Indices::firstPhaseOnly;
@@ -163,7 +163,7 @@ protected:
                 wouldSwitch = true;
                 // wetting phase disappears
                 if (this->verbosity() > 1)
-                    std::cout << "First phase disappears at vertex " << dofIdxGlobal
+                    std::cout << "First phase disappears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos << ", s0: "
                               << volVars.saturation(phase0Idx) << std::endl;
                 newPhasePresence = Indices::secondPhaseOnly;

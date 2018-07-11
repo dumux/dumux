@@ -89,7 +89,7 @@ protected:
             {
                 if (this->verbosity() > 1)
                     std::cout << "First phase (" << FluidSystem::phaseName(phase0Idx) << ")"
-                              << " appears at vertex " << dofIdxGlobal
+                              << " appears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos
                               << ", sum x^i_" << FluidSystem::phaseName(phase0Idx) << ": " << x00 + x01
                               << std::endl;
@@ -117,7 +117,7 @@ protected:
             {
                 if (this->verbosity() > 1)
                     std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ")"
-                              << " appears at vertex " << dofIdxGlobal
+                              << " appears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos
                               << ", sum x^i_" << FluidSystem::phaseName(phase1Idx) << ": " << x10 + x11
                               << std::endl;
@@ -138,7 +138,7 @@ protected:
             {
                 if (this->verbosity() > 1)
                     std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ")"
-                              << " disappears at vertex " << dofIdxGlobal
+                              << " disappears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos
                               << ", S_" << FluidSystem::phaseName(phase1Idx) << ": " << volVars.saturation(phase1Idx)
                               << std::endl;
@@ -154,7 +154,7 @@ protected:
             {
                 if (this->verbosity() > 1)
                     std::cout << "First phase (" << FluidSystem::phaseName(phase0Idx) << ")"
-                              << " disappears at vertex " << dofIdxGlobal
+                              << " disappears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos
                               << ", S_" << FluidSystem::phaseName(phase0Idx) << ": " << volVars.saturation(phase1Idx)
                               << std::endl;

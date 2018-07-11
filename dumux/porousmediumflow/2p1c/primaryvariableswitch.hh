@@ -81,7 +81,7 @@ protected:
                 wouldSwitch = true;
                 // gas phase disappears
                 if (this->verbosity() > 1)
-                    std::cout << "Gas phase disappears at vertex " << dofIdxGlobal
+                    std::cout << "Gas phase disappears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos << ", sg: "
                               << volVars.saturation(FluidSystem::gasPhaseIdx) << std::endl;
                 newPhasePresence = Indices::liquidPhaseOnly;
@@ -93,7 +93,7 @@ protected:
                 wouldSwitch = true;
                 // water phase disappears
                 if (this->verbosity() > 1)
-                    std::cout << "Liquid phase disappears at vertex " << dofIdxGlobal
+                    std::cout << "Liquid phase disappears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos << ", sw: "
                               << volVars.saturation(FluidSystem::liquidPhaseIdx) << std::endl;
                 newPhasePresence = Indices::gasPhaseOnly;
@@ -114,7 +114,7 @@ protected:
                 wouldSwitch = true;
                 // gas phase appears
                 if (this->verbosity() > 1)
-                    std::cout << "gas phase appears at vertex " << dofIdxGlobal
+                    std::cout << "gas phase appears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos  << std::endl;
 
                newPhasePresence = Indices::twoPhases;
@@ -134,7 +134,7 @@ protected:
                 wouldSwitch = true;
                 // liquid phase appears
                 if (this->verbosity() > 1)
-                    std::cout << "Liquid phase appears at vertex " << dofIdxGlobal
+                    std::cout << "Liquid phase appears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos  << std::endl;
 
                newPhasePresence = Indices::twoPhases;
