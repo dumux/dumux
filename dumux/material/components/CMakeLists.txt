@@ -5,8 +5,11 @@ air.hh
 base.hh
 benzene.hh
 brine.hh
+calcite.hh
+calciumion.hh
 cao.hh
 cao2h2.hh
+carbonateion.hh
 ch4.hh
 co2.hh
 co2tablereader.hh
