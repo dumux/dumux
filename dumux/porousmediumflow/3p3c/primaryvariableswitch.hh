@@ -73,9 +73,10 @@ protected:
             {
                 wouldSwitch = true;
                 // gas phase disappears
-                std::cout << "Gas phase disappears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sg: "
-                          << volVars.saturation(FluidSystem::gPhaseIdx) << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "Gas phase disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", sg: "
+                              << volVars.saturation(FluidSystem::gPhaseIdx) << std::endl;
                 newPhasePresence = Indices::wnPhaseOnly;
 
                 priVars[Indices::switch1Idx] = volVars.moleFraction(FluidSystem::wPhaseIdx, FluidSystem::gCompIdx);
@@ -84,9 +85,10 @@ protected:
             {
                 wouldSwitch = true;
                 // water phase disappears
-                std::cout << "Water phase disappears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sw: "
-                          << volVars.saturation(FluidSystem::wPhaseIdx) << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "Water phase disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", sw: "
+                              << volVars.saturation(FluidSystem::wPhaseIdx) << std::endl;
                 newPhasePresence = Indices::gnPhaseOnly;
 
                 priVars[Indices::switch1Idx] = volVars.moleFraction(FluidSystem::gPhaseIdx, FluidSystem::wCompIdx);
@@ -95,9 +97,10 @@ protected:
             {
                 wouldSwitch = true;
                 // NAPL phase disappears
-                std::cout << "NAPL phase disappears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sn: "
-                          << volVars.saturation(FluidSystem::nPhaseIdx) << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "NAPL phase disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", sn: "
+                              << volVars.saturation(FluidSystem::nPhaseIdx) << std::endl;
                 newPhasePresence = Indices::wgPhaseOnly;
 
                 priVars[Indices::switch2Idx] = volVars.moleFraction(FluidSystem::gPhaseIdx, FluidSystem::nCompIdx);
@@ -129,9 +132,10 @@ protected:
             if (xwg + xgg + xng > xgMax)
             {
                 // gas phase appears
-                std::cout << "gas phase appears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xwg + xgg + xng: "
-                          << xwg + xgg + xng << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "gas phase appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", xwg + xgg + xng: "
+                              << xwg + xgg + xng << std::endl;
                 gasPresent = true;
             }
 
@@ -155,9 +159,10 @@ protected:
             if (xnn > xnMax)
             {
                 // NAPL phase appears
-                std::cout << "NAPL phase appears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xnn: "
-                          << xnn << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "NAPL phase appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", xnn: "
+                              << xnn << std::endl;
                 nonwettingPresent = true;
             }
 
@@ -193,9 +198,10 @@ protected:
             {
                 wouldSwitch = true;
                 // NAPL phase disappears
-                std::cout << "NAPL phase disappears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sn: "
-                          << volVars.saturation(FluidSystem::nPhaseIdx) << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "NAPL phase disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", sn: "
+                              << volVars.saturation(FluidSystem::nPhaseIdx) << std::endl;
                 nonwettingPresent = true;
             }
 
@@ -217,9 +223,10 @@ protected:
             if (xww > xwMax)
             {
                 // water phase appears
-                std::cout << "water phase appears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xww=xwg*pg/pwsat : "
-                          << xww << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "water phase appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", xww=xwg*pg/pwsat : "
+                              << xww << std::endl;
                 wettingPresent = true;
             }
 
@@ -255,9 +262,10 @@ protected:
             {
                 wouldSwitch = true;
                 // NAPL phase disappears
-                std::cout << "NAPL phase disappears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sn: "
-                          << volVars.saturation(FluidSystem::nPhaseIdx) << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "NAPL phase disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", sn: "
+                              << volVars.saturation(FluidSystem::nPhaseIdx) << std::endl;
                 nonwettingPresent = true;
             }
 
@@ -282,9 +290,10 @@ protected:
             if (xwg + xgg + xng > xgMax)
             {
                 // gas phase appears
-                std::cout << "gas phase appears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xwg + xgg + xng: "
-                          << xwg + xgg + xng << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "gas phase appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", xwg + xgg + xng: "
+                              << xwg + xgg + xng << std::endl;
                 gasPresent = true;
             }
 
@@ -330,9 +339,10 @@ protected:
             if (xnn > xnMax)
             {
                 // NAPL phase appears
-                std::cout << "NAPL phase appears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xnn: "
-                          << xnn << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "NAPL phase appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", xnn: "
+                              << xnn << std::endl;
                 nonwettingPresent = true;
             }
             // calculate fractions of the hypothetical water phase
@@ -352,9 +362,10 @@ protected:
             if (xww > xwMax)
             {
                 // water phase appears
-                std::cout << "water phase appears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xww=xwg*pg/pwsat : "
-                          << xww << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "water phase appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", xww=xwg*pg/pwsat : "
+                              << xww << std::endl;
                 wettingPresent = true;
             }
             if (wettingPresent && !nonwettingPresent)
@@ -399,9 +410,10 @@ protected:
             if (xnn > xnMax)
             {
                 // NAPL phase appears
-                std::cout << "NAPL phase appears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xnn: "
-                          << xnn << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "NAPL phase appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", xnn: "
+                              << xnn << std::endl;
                 nonwettingPresent = true;
             }
 
@@ -413,9 +425,10 @@ protected:
             {
                 wouldSwitch = true;
                 // gas phase disappears
-                std::cout << "Gas phase disappears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sg: "
-                          << volVars.saturation(FluidSystem::gPhaseIdx) << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "Gas phase disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", sg: "
+                              << volVars.saturation(FluidSystem::gPhaseIdx) << std::endl;
                 gasPresent = true;
             }
 
@@ -427,9 +440,10 @@ protected:
             {
                 wouldSwitch = true;
                 // gas phase disappears
-                std::cout << "Water phase disappears at dof " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sw: "
-                          << volVars.saturation(FluidSystem::wPhaseIdx) << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "Water phase disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", sw: "
+                              << volVars.saturation(FluidSystem::wPhaseIdx) << std::endl;
                 wettingPresent = true;
             }
 

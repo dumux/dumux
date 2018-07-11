@@ -87,11 +87,12 @@ protected:
             // if the sum of the mole fractions is too large, first phase appears
             if (x00 + x01 > x0Max)
             {
-                std::cout << "First phase (" << FluidSystem::phaseName(phase0Idx) << ")"
-                          << " appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos
-                          << ", sum x^i_" << FluidSystem::phaseName(phase0Idx) << ": " << x00 + x01
-                          << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "First phase (" << FluidSystem::phaseName(phase0Idx) << ")"
+                              << " appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", sum x^i_" << FluidSystem::phaseName(phase0Idx) << ": " << x00 + x01
+                              << std::endl;
                 newPhasePresence = Indices::bothPhases;
                 if (formulation == TwoPFormulation::p1s0)
                     priVars[switchIdx] = 0.0001;
@@ -114,11 +115,12 @@ protected:
             // if the sum of the mole fractions is too large, second phase appears
             if (x10 + x11 > x1Max)
             {
-                std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ")"
-                          << " appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos
-                          << ", sum x^i_" << FluidSystem::phaseName(phase1Idx) << ": " << x10 + x11
-                          << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ")"
+                              << " appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", sum x^i_" << FluidSystem::phaseName(phase1Idx) << ": " << x10 + x11
+                              << std::endl;
                 newPhasePresence = Indices::bothPhases;
                 if (formulation == TwoPFormulation::p1s0)
                     priVars[switchIdx] = 0.9999;
@@ -134,11 +136,12 @@ protected:
 
             if (volVars.saturation(phase1Idx) <= Smin)
             {
-                std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ")"
-                          << " disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos
-                          << ", S_" << FluidSystem::phaseName(phase1Idx) << ": " << volVars.saturation(phase1Idx)
-                          << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ")"
+                              << " disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", S_" << FluidSystem::phaseName(phase1Idx) << ": " << volVars.saturation(phase1Idx)
+                              << std::endl;
                 wouldSwitch = true;
                 newPhasePresence = Indices::firstPhaseOnly;
 
@@ -149,11 +152,12 @@ protected:
             }
             else if (volVars.saturation(phase0Idx) <= Smin)
             {
-                std::cout << "First phase (" << FluidSystem::phaseName(phase0Idx) << ")"
-                          << " disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos
-                          << ", S_" << FluidSystem::phaseName(phase0Idx) << ": " << volVars.saturation(phase1Idx)
-                          << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "First phase (" << FluidSystem::phaseName(phase0Idx) << ")"
+                              << " disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", S_" << FluidSystem::phaseName(phase0Idx) << ": " << volVars.saturation(phase1Idx)
+                              << std::endl;
                 wouldSwitch = true;
                 newPhasePresence = Indices::secondPhaseOnly;
 

@@ -69,7 +69,8 @@ public:
     void newtonBegin(const SolutionVector &u) override
     {
         ParentType::newtonBegin(u);
-        priVarSwitch_ = std::make_unique<PrimaryVariableSwitch>(u.size());
+        const int verbosity = getParamFromGroup<int>(this->paramGroup(), "PrimaryVariableSwitch.Verbosity", 1);
+        priVarSwitch_ = std::make_unique<PrimaryVariableSwitch>(u.size(), verbosity);
     }
 
     /*!

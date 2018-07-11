@@ -57,7 +57,8 @@ template<class Implementation>
 class PrimaryVariableSwitch
 {
 public:
-    PrimaryVariableSwitch(const std::size_t& numDofs)
+    PrimaryVariableSwitch(const std::size_t& numDofs, int verbosity = 1)
+    : verbosity_(verbosity)
     {
         wasSwitched_.resize(numDofs, false);
     }
@@ -84,6 +85,7 @@ public:
     {
         bool switched = false;
         visited_.assign(wasSwitched_.size(), false);
+        std::size_t countSwitched = 0;
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {
             // make sure FVElementGeometry is bound to the element
@@ -108,10 +110,17 @@ public:
                     volVars.update(curElemSol, problem, element, scv);
 
                     if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
+                    {
                         switched = true;
+                        ++countSwitched;
+                    }
                 }
             }
         }
+
+        if (verbosity_ > 0 && countSwitched > 0)
+            std::cout << "Switched primary variables at " << countSwitched << " dof locations on processor "
+                      << fvGridGeometry.gridView().comm().rank() << "." << std::endl;
 
         // make sure that if there was a variable switch in an
         // other partition we will also set the switch flag for our partition.
@@ -196,6 +205,9 @@ public:
                                GridVariables& gridVariables,
                                const SolutionVector& sol) const {}
 
+    //!
+    int verbosity() const
+    { return verbosity_; }
 protected:
 
     //! return actual implementation (static polymorphism)
@@ -231,6 +243,8 @@ private:
     static auto getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     -> std::enable_if_t<GridVolumeVariables::cachingEnabled, decltype(gridVolVars.volVars(scv))>
     { return gridVolVars.volVars(scv); }
+
+    int verbosity_; //!< The verbosity level of the primary variable switch
 };
 
 } // end namespace dumux
