@@ -20,6 +20,9 @@ dune_add_test(NAME test_2p_incompressible_tpfa_restart
                                ${CMAKE_CURRENT_BINARY_DIR}/2p_tpfa_restart-00003.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_tpfa_restart test_2p.input -Problem.Name 2p_tpfa_restart  -TimeLoop.DtInitial 526.62 -Restart.Time 1859.95 -Restart.File 2p_tpfa-00005.vtu")
 
+# the restart test has to run after the test that produces the corresponding vtu file
+set_tests_properties(test_2p_incompressible_tpfa_restart PROPERTIES DEPENDS test_2p_incompressible_tpfa)
+
 # using box
 dune_add_test(NAME test_2p_incompressible_box
               SOURCES test_2p_fv.cc
