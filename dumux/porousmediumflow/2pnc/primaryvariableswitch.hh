@@ -86,11 +86,12 @@ protected:
             {
                 wouldSwitch = true;
                 // first phase has to disappear
-                std::cout << "First phase (" << FluidSystem::phaseName(phase0Idx) << ")"
-                          << " disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos
-                          << ", S_" << FluidSystem::phaseName(phase0Idx) << ": " << volVars.saturation(phase0Idx)
-                          << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "First phase (" << FluidSystem::phaseName(phase0Idx) << ")"
+                              << " disappears at vertex " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", S_" << FluidSystem::phaseName(phase0Idx) << ": " << volVars.saturation(phase0Idx)
+                              << std::endl;
                 newPhasePresence = Indices::secondPhaseOnly;
 
                 // switch not depending on formulation, switch "S0" to "x10"
@@ -106,11 +107,12 @@ protected:
             {
                 wouldSwitch = true;
                 // second phase has to disappear
-                std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ")"
-                          << " disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos
-                          << ", S_" << FluidSystem::phaseName(phase1Idx) << ": " << volVars.saturation(phase1Idx)
-                          << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ")"
+                              << " disappears at vertex " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", S_" << FluidSystem::phaseName(phase1Idx) << ": " << volVars.saturation(phase1Idx)
+                              << std::endl;
                 newPhasePresence = Indices::firstPhaseOnly;
 
                 // switch "S1" to "x01"
@@ -133,11 +135,12 @@ protected:
             // first phase appears if sum is larger than one
             if (x0Sum/*sum of mole fractions*/ > x0Max/*1*/)
             {
-                std::cout << "Second phase (" << FluidSystem::phaseName(phase0Idx) << ")"
-                          << " appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos
-                          << ", sum x^i_" << FluidSystem::phaseName(phase0Idx) << ": " << x0Sum
-                          << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "Second phase (" << FluidSystem::phaseName(phase0Idx) << ")"
+                              << " appears at vertex " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", sum x^i_" << FluidSystem::phaseName(phase0Idx) << ": " << x0Sum
+                              << std::endl;
                 newPhasePresence = Indices::bothPhases;
 
                 // saturation of the first phase set to 0.0001 (if formulation TwoPFormulation::p1s0 and vice versa)
@@ -168,11 +171,12 @@ protected:
             // wetting phase appears if sum is larger than one
             if (x1Sum > x1Max)
             {
-                std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ")"
-                          << " appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos
-                          << ", sum x^i_" << FluidSystem::phaseName(phase1Idx) << ": " << x1Sum
-                          << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ")"
+                              << " appears at vertex " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", sum x^i_" << FluidSystem::phaseName(phase1Idx) << ": " << x1Sum
+                              << std::endl;
                 newPhasePresence = Indices::bothPhases;
                 //saturation of the wetting phase set to 0.9999 (if formulation TwoPFormulation::pnsw and vice versa)
                 if (formulation == TwoPFormulation::p1s0)

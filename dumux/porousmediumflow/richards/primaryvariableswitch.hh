@@ -91,10 +91,11 @@ protected:
             if (xnw / xnwPredicted > xwMax)
             {
                 // wetting phase appears
-                std::cout << "wetting phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xnw / xnwPredicted * 100: "
-                          << xnw / xnwPredicted * 100 << "%"
-                          << ", at x_n^w: " << priVars[Indices::switchIdx] << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "Liquid phase appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", xnw / xnwPredicted * 100: "
+                              << xnw / xnwPredicted * 100 << "%"
+                              << ", at x_n^w: " << priVars[Indices::switchIdx] << std::endl;
                 newPhasePresence = Indices::bothPhases;
                 priVars[Indices::switchIdx] = 0.0;
             }
@@ -112,10 +113,11 @@ protected:
                 newPhasePresence = Indices::gasPhaseOnly;
                 priVars[Indices::switchIdx] = volVars.moleFraction(FluidSystem::gasPhaseIdx, liquidCompIdx);
 
-                std::cout << "Wetting phase disappears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", sw: "
-                          << volVars.saturation(FluidSystem::liquidPhaseIdx)
-                          << ", x_n^w: " << priVars[Indices::switchIdx] << std::endl;
+                if (this->verbosity() > 1)
+                    std::cout << "Liquid phase disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos << ", sw: "
+                              << volVars.saturation(FluidSystem::liquidPhaseIdx)
+                              << ", x_n^w: " << priVars[Indices::switchIdx] << std::endl;
             }
         }
         else if (phasePresence == Indices::liquidPhaseOnly)
