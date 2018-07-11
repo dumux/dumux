@@ -37,6 +37,7 @@
 
 namespace Dumux {
 
+namespace Detail {
 //! helper struct detecting if a PrimaryVariables object has a state() function
 struct hasState
 {
@@ -46,16 +47,18 @@ struct hasState
     {}
 };
 
+} // end namespace Detail
+
 /*!
  * \ingroup InputOutput
  * \brief helper function to read from a file into a solution vector
  */
 template <class SolutionVector, class PvNamesFunc>
-auto loadFromVtuFile(const std::string fileName,
-                     const VTUReader::DataType& dataType,
-                     PvNamesFunc&& pvNamesFunc,
-                     SolutionVector& sol)
--> typename std::enable_if_t<!decltype(isValid(hasState())(sol[0]))::value, void>
+auto loadSolutionFromVtuFile(const std::string fileName,
+                             const VTUReader::DataType& dataType,
+                             PvNamesFunc&& pvNamesFunc,
+                             SolutionVector& sol)
+-> typename std::enable_if_t<!decltype(isValid(Detail::hasState())(sol[0]))::value, void>
 {
     VTUReader vtu(fileName);
     using PrimaryVariables = typename SolutionVector::block_type;
@@ -78,11 +81,11 @@ auto loadFromVtuFile(const std::string fileName,
  * \brief helper function to read from a file into a solution vector
  */
 template <class SolutionVector, class PvNamesFunc>
-auto loadFromVtuFile(const std::string fileName,
-                     const VTUReader::DataType& dataType,
-                     PvNamesFunc&& pvNamesFunc,
-                     SolutionVector& sol)
--> typename std::enable_if_t<decltype(isValid(hasState())(sol[0]))::value, void>
+auto loadSolutionFromVtuFile(const std::string fileName,
+                             const VTUReader::DataType& dataType,
+                             PvNamesFunc&& pvNamesFunc,
+                             SolutionVector& sol)
+-> typename std::enable_if_t<decltype(isValid(Detail::hasState())(sol[0]))::value, void>
 {
     VTUReader vtu(fileName);
     const auto vec = vtu.readData<std::vector<int>>("phase presence", dataType);
@@ -160,7 +163,7 @@ void loadSolution(const std::string& fileName,
     {
         const auto dataType = FVGridGeometry::discMethod == DiscretizationMethod::box
                               ? VTUReader::DataType::pointData : VTUReader::DataType::cellData;
-        loadFromVtuFile(fileName, dataType, pvNamesFunc, sol);
+        loadSolutionFromVtuFile(fileName, dataType, pvNamesFunc, sol);
     }
     else
         DUNE_THROW(Dune::NotImplemented, "loadSolution for extension " << extension);
