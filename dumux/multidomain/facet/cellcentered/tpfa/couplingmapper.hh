@@ -62,12 +62,12 @@ public:
      *
      * \param bulkFvGridGeometry The finite-volume grid geometry of the bulk grid
      * \param lowDimFvGridGeometry The finite-volume grid geometry of the lower-dimensional grid
-     * \param gridCreator Class that contains the grid factories and embedments
+     * \param gridManager Class that contains the embedments and allows obtaining entity insertion indices
      */
-    template< class GridCreator >
+    template< class GridManager >
     void update(const BulkFVG& bulkFvGridGeometry,
                 const LowDimFVG& lowDimFvGridGeometry,
-                const GridCreator& gridCreator)
+                const GridManager& gridManager)
     {
         // define the execution policy how to add map entries from an embedment
         auto addEmbedmentPolicy = [&] (auto&& embedments,
@@ -150,7 +150,7 @@ public:
         };
 
         // let the parent do the update subject to the execution policy defined above
-        ParentType::update_(bulkFvGridGeometry, lowDimFvGridGeometry, gridCreator, addEmbedmentPolicy);
+        ParentType::update_(bulkFvGridGeometry, lowDimFvGridGeometry, gridManager, addEmbedmentPolicy);
 
         // coupling stencils might not be unique if box is used in lowdim domain
         if (LowDimFVG::discMethod == DiscretizationMethod::box)

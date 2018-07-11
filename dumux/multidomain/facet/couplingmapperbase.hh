@@ -64,11 +64,11 @@ class FacetCouplingMapperBase
     static constexpr auto bulkDiscMethod = BulkFVG::discMethod;
 
     // helper struct to check validity of the given domain id offset
-    template< class GridCreator >
-    class IsValidGridCreator
+    template< class GridManager >
+    class IsValidGridManager
     {
-        using GCBulkGridView = typename GridCreator::template Grid<bulkId>::LeafGridView;
-        using GCLowDimGridView = typename GridCreator::template Grid<lowDimId>::LeafGridView;
+        using GCBulkGridView = typename GridManager::template Grid<bulkId>::LeafGridView;
+        using GCLowDimGridView = typename GridManager::template Grid<lowDimId>::LeafGridView;
         static constexpr bool bulkMatch = std::is_same<GCBulkGridView, BulkGridView>::value;
         static constexpr bool lowDimMatch = std::is_same<GCLowDimGridView, LowDimGridView>::value;
         static_assert(bulkMatch, "The bulk domain id does not match the provided bulk grid geometry");
@@ -145,10 +145,10 @@ public:
      * \brief Update coupling maps. This is the standard interface
      *        and has to be overloaded by the implementation.
      */
-    template< class GridCreator >
+    template< class GridManager >
     void update(const BulkFVG& bulkFvGridGeometry,
                 const LowDimFVG& lowDimFvGridGeometry,
-                const GridCreator& gridCreator)
+                const GridManager& gridManager)
     { DUNE_THROW(Dune::NotImplemented, "Implementation does not provide an update() function."); }
 
     //! returns coupling data for bulk -> lowDim
@@ -166,30 +166,30 @@ protected:
      *
      * \param bulkFvGridGeometry The finite-volume grid geometry of the bulk grid
      * \param lowDimFvGridGeometry The finite-volume grid geometry of the lower-dimensional grid
-     * \param gridCreator Class that contains the grid factories and embedments
+     * \param gridManager Class that contains the embedments and allows obtaining entity insertion indices
      * \param EmbedmentExecutionPolicy Policy for adding coupling entries for embedments
      */
-    template< class GridCreator, typename EmbedmentExecutionPolicy >
+    template< class GridManager, typename EmbedmentExecutionPolicy >
     void update_(const BulkFVG& bulkFvGridGeometry,
                  const LowDimFVG& lowDimFvGridGeometry,
-                 const GridCreator& gridCreator,
+                 const GridManager& gridManager,
                  EmbedmentExecutionPolicy&& embedmentPolicy)
     {
         // some static assertions on the grid creator
-        static_assert(IsValidGridCreator< GridCreator >::value, "Grid type mismatch. Please review the provided domain id offset.");
+        static_assert(IsValidGridManager< GridManager >::value, "Grid type mismatch. Please review the provided domain id offset.");
 
         // clear data
         bulkCouplingData_.clear();
         lowDimCouplingData_.clear();
 
         // set up maps between element indices and insertion indices
-        const auto& bulkGridFactory = gridCreator.template gridFactory<bulkId>();
+        const auto& bulkGridFactory = gridManager.template gridFactory<bulkId>();
         const auto bulkInsertionToElemIdxMap = makeInsertionToGridIndexMap_(bulkGridFactory, bulkFvGridGeometry);
 
         // set up coupling maps coming from the low dim domain
         for (const auto& element : elements(lowDimFvGridGeometry.gridView()))
         {
-            auto embedments = gridCreator.template embedmentEntityIndices<lowDimId>(element);
+            auto embedments = gridManager.template embedmentEntityIndices<lowDimId>(element);
 
             // proceed only if embedments were found
             if (embedments.size() == 0)

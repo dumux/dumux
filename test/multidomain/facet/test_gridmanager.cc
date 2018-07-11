@@ -27,13 +27,16 @@
 #include <dune/common/float_cmp.hh>
 
 #include <dune/grid/uggrid.hh>
+#include <dune/grid/common/mcmgmapper.hh>
+#include <dune/geometry/referenceelements.hh>
 #include <dune/alugrid/grid.hh>
 #include <dune/foamgrid/foamgrid.hh>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/multidomain/facet/gridcreator.hh>
+#include <dumux/io/vtkfunction.hh>
+#include <dumux/multidomain/facet/gridmanager.hh>
 
 #ifndef BULKGRIDTYPE // default to ug grid if not provided by CMake
 #define BULKGRIDTYPE Dune::UGGrid<3>
@@ -51,17 +54,17 @@ int main (int argc, char *argv[]) try
     using FacetGrid = Dune::FoamGrid<2, 3>;
     using EdgeGrid = Dune::FoamGrid<1, 3>;
 
-    using GridCreator = Dumux::FacetCouplingGridCreator<BulkGrid, FacetGrid, EdgeGrid>;
-    GridCreator gridCreator;
-    gridCreator.makeGrids("grid.msh");
+    using GridManager = Dumux::FacetCouplingGridManager<BulkGrid, FacetGrid, EdgeGrid>;
+    GridManager gridManager;
+    gridManager.init();
 
     // check grid sizes
-    const auto& bulkGridView = gridCreator.grid<0>().leafGridView();
-    const auto& facetGridView = gridCreator.grid<1>().leafGridView();
-    const auto& edgeGridView = gridCreator.grid<2>().leafGridView();
+    const auto& bulkGridView = gridManager.grid<0>().leafGridView();
+    const auto& facetGridView = gridManager.grid<1>().leafGridView();
+    const auto& edgeGridView = gridManager.grid<2>().leafGridView();
 
-    if (bulkGridView.size(0) != 507)
-        DUNE_THROW(Dune::InvalidStateException, "Bulk grid has " << bulkGridView.size(0) << " instead of 507 elements");
+    if (bulkGridView.size(0) != 491)
+        DUNE_THROW(Dune::InvalidStateException, "Bulk grid has " << bulkGridView.size(0) << " instead of 491 elements");
     if (bulkGridView.size(3) != 153)
         DUNE_THROW(Dune::InvalidStateException, "Bulk grid has " << bulkGridView.size(3) << " instead of 153 vertices");
 
@@ -78,21 +81,21 @@ int main (int argc, char *argv[]) try
     // all entities should have the domain index 10
     for (const auto& e : elements(bulkGridView))
     {
-        const auto domainMarker = gridCreator.getElementDomainMarker<0>(e);
+        const auto domainMarker = gridManager.getGridData()->getElementDomainMarker<0>(e);
         if (domainMarker != 10)
             DUNE_THROW(Dune::InvalidStateException, "Bulk element has domain marker " << domainMarker << " instead of 10");
     }
 
     for (const auto& e : elements(facetGridView))
     {
-        const auto domainMarker = gridCreator.getElementDomainMarker<1>(e);
+        const auto domainMarker = gridManager.getGridData()->getElementDomainMarker<1>(e);
         if (domainMarker != 10)
             DUNE_THROW(Dune::InvalidStateException, "Facet element has domain marker " << domainMarker << " instead of 10");
     }
 
     for (const auto& e : elements(edgeGridView))
     {
-        const auto domainMarker = gridCreator.getElementDomainMarker<2>(e);
+        const auto domainMarker = gridManager.getGridData()->getElementDomainMarker<2>(e);
         if (domainMarker != 10)
             DUNE_THROW(Dune::InvalidStateException, "Edge element has domain marker " << domainMarker << " instead of 10");
     }
@@ -100,8 +103,8 @@ int main (int argc, char *argv[]) try
     // Check boundary boundary segments. There should be mesh
     // file-defined segments on all sides except the positive x-direction
     std::size_t bSegmentCount = 0;
-    std::size_t negXCount, posYCount, negYCount, posZCount, negZCount;
-    negXCount = posYCount = negYCount = posZCount = negZCount = 0;
+    std::size_t posXCount, negXCount, posYCount, negYCount, posZCount, negZCount;
+    posXCount = negXCount = posYCount = negYCount = posZCount = negZCount = 0;
     for (const auto& e : elements(bulkGridView))
     {
         for (const auto& is : intersections(bulkGridView, e))
@@ -110,52 +113,60 @@ int main (int argc, char *argv[]) try
             {
                 const auto n = is.centerUnitOuterNormal();
 
-                if (gridCreator.gridFactory<0>().wasInserted(is))
+                if (gridManager.getGridData()->wasInserted<0>(is))
                 {
                     bSegmentCount++;
-                    const auto marker = gridCreator.getBoundaryDomainMarker<0>(is);
-                    if (Dune::FloatCmp::eq(n[0], -1.0, 1e-6)) // neg x-dir
+                    const auto insIdx = gridManager.gridFactory<0>().insertionIndex(is);
+                    const auto marker = gridManager.getGridData()->getBoundaryDomainMarker<0>(insIdx);
+
+                    if (Dune::FloatCmp::eq(n[0], 1.0, 1e-6)) // pos x-dir
                     {
-                        if (marker != 4)
+                        if (marker != 1)
+                            DUNE_THROW(Dune::InvalidStateException, "positive x-face should have marker 7, but has " << marker);
+                        posXCount++;
+                    }
+                    else if (Dune::FloatCmp::eq(n[0], -1.0, 1e-6)) // neg x-dir
+                    {
+                        if (marker != 2)
                             DUNE_THROW(Dune::InvalidStateException, "negative x-face should have marker 4, but has " << marker);
                         negXCount++;
                     }
                     else if (Dune::FloatCmp::eq(n[1], 1.0, 1e-6)) // pos y-dir
                     {
-                        if (marker != 5)
+                        if (marker != 3)
                             DUNE_THROW(Dune::InvalidStateException, "positive y-face should have marker 5, but has " << marker);
                         posYCount++;
                     }
                     else if (Dune::FloatCmp::eq(n[1], -1.0, 1e-6)) // neg y-dir
                     {
-                        if (marker != 6)
+                        if (marker != 4)
                             DUNE_THROW(Dune::InvalidStateException, "negative y-face should have marker 6, but has " << marker);
                         negYCount++;
                     }
                     else if (Dune::FloatCmp::eq(n[2], 1.0, 1e-6)) // pos z-dir
                     {
-                        if (marker != 1)
+                        if (marker != 5)
                             DUNE_THROW(Dune::InvalidStateException, "positive z-face should have marker 1, but has " << marker);
                         posZCount++;
                     }
                     else if (Dune::FloatCmp::eq(n[2], -1.0, 1e-6)) // neg z-dir
                     {
-                        if (marker != 2)
+                        if (marker != 6)
                             DUNE_THROW(Dune::InvalidStateException, "negative z-face should have marker 2, but has " << marker);
                         negZCount++;
                     }
+                    else
+                        DUNE_THROW(Dune::InvalidStateException, "Could not deduce boundary segment orientation");
                 }
                 else
-                {
-                    if (!Dune::FloatCmp::eq(n[0], 1.0, 1e-6)) // pos x-dir
-                        DUNE_THROW(Dune::InvalidStateException, "Found a boundary segment not specified in .msh file that is not on pos-x face");
-                }
+                    DUNE_THROW(Dune::InvalidStateException, "Boundary intersection was not inserted. Can't obtain boundary segment index");
             }
         }
     }
 
     //! make sure we found the right number of boundary segments
-    if (bSegmentCount != 200) DUNE_THROW(Dune::InvalidStateException, "Found " << bSegmentCount << " instead of 200 boundary segments");
+    if (bSegmentCount != 240) DUNE_THROW(Dune::InvalidStateException, "Found " << bSegmentCount << " instead of 200 boundary segments");
+    if (posXCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << posXCount << " instead of 40 boundary segments in pos x-direction");
     if (negXCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << negXCount << " instead of 40 boundary segments in neg x-direction");
     if (posYCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << posYCount << " instead of 40 boundary segments in pos y-direction");
     if (negYCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << negYCount << " instead of 40 boundary segments in neg y-direction");
@@ -163,16 +174,16 @@ int main (int argc, char *argv[]) try
     if (negZCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << negZCount << " instead of 40 boundary segments in neg z-direction");
 
     //! check if we found the right number of embeddings
-    const auto& edgeEmbeddings = gridCreator.embeddedEntityMap(2);
-    const auto& edgeEmbedments = gridCreator.embedmentMap(2);
+    const auto& edgeEmbeddings = gridManager.embeddedEntityMap(2);
+    const auto& edgeEmbedments = gridManager.embedmentMap(2);
     if (edgeEmbeddings.size() != 0) DUNE_THROW(Dune::InvalidStateException, "The grid with lowest dimension can't have embedded entities");
     if (edgeEmbedments.size() != 2) DUNE_THROW(Dune::InvalidStateException, "Found " << edgeEmbedments.size() << " instead of 2 edge element embedments");
     for (const auto& embedments : edgeEmbedments)
         if (embedments.second.size() != 4)
             DUNE_THROW(Dune::InvalidStateException, "edge element is embedded in " << embedments.second.size() << " facet elements instead of 4");
 
-    const auto& facetEmbeddings = gridCreator.embeddedEntityMap(1);
-    const auto& facetEmbedments = gridCreator.embedmentMap(1);
+    const auto& facetEmbeddings = gridManager.embeddedEntityMap(1);
+    const auto& facetEmbedments = gridManager.embedmentMap(1);
     if (facetEmbeddings.size() != 8) DUNE_THROW(Dune::InvalidStateException, "Found " << facetEmbeddings.size() << " instead of 8 embeddings in facet grid");
     if (facetEmbedments.size() != 32) DUNE_THROW(Dune::InvalidStateException, "Found " << facetEmbedments.size() << " instead of 32 facet element embedments");
     for (const auto& embedments : facetEmbedments)
@@ -182,8 +193,8 @@ int main (int argc, char *argv[]) try
         if (embeddings.second.size() != 1)
             DUNE_THROW(Dune::InvalidStateException, "facet element has " << embeddings.second.size() << " embedded entities instead of 1");
 
-    const auto& bulkEmbeddings = gridCreator.embeddedEntityMap(0);
-    const auto& bulkEmbedments = gridCreator.embedmentMap(0);
+    const auto& bulkEmbeddings = gridManager.embeddedEntityMap(0);
+    const auto& bulkEmbedments = gridManager.embedmentMap(0);
     if (bulkEmbeddings.size() != 56) DUNE_THROW(Dune::InvalidStateException, "Found " << bulkEmbeddings.size() << " instead of 56 embeddings in bulk grid");
     if (bulkEmbedments.size() != 0) DUNE_THROW(Dune::InvalidStateException, "The grid with highest dimension can't have embedments");
 
@@ -205,14 +216,14 @@ int main (int argc, char *argv[]) try
     doubleEmbeddings = 0;
     for (const auto& e : elements(bulkGridView))
     {
-        if (gridCreator.embeddedEntityIndices<0>(e).size() == 1)
+        if (gridManager.embeddedEntityIndices<0>(e).size() == 1)
             singleEmbeddings++;
-        else if (gridCreator.embeddedEntityIndices<0>(e).size() == 2)
+        else if (gridManager.embeddedEntityIndices<0>(e).size() == 2)
             doubleEmbeddings++;
-        else if (gridCreator.embeddedEntityIndices<0>(e).size() != 0)
+        else if (gridManager.embeddedEntityIndices<0>(e).size() != 0)
             DUNE_THROW(Dune::InvalidStateException, "wrong number of embeddings!");
 
-        if (gridCreator.embedmentEntityIndices<0>(e).size() != 0)
+        if (gridManager.embedmentEntityIndices<0>(e).size() != 0)
             DUNE_THROW(Dune::InvalidStateException, "bulk grid can't be embedded anywhere!");
     }
 
@@ -223,14 +234,14 @@ int main (int argc, char *argv[]) try
     std::size_t embedments = 0;
     for (const auto& e : elements(facetGridView))
     {
-        if (gridCreator.embeddedEntityIndices<1>(e).size() == 1)
+        if (gridManager.embeddedEntityIndices<1>(e).size() == 1)
             embeddings++;
-        else if (gridCreator.embeddedEntityIndices<1>(e).size() != 0)
+        else if (gridManager.embeddedEntityIndices<1>(e).size() != 0)
             DUNE_THROW(Dune::InvalidStateException, "wrong number of embeddings!");
 
-        if (gridCreator.embedmentEntityIndices<1>(e).size() == 2)
+        if (gridManager.embedmentEntityIndices<1>(e).size() == 2)
             embedments++;
-        else if (gridCreator.embedmentEntityIndices<1>(e).size() != 0)
+        else if (gridManager.embedmentEntityIndices<1>(e).size() != 0)
             DUNE_THROW(Dune::InvalidStateException, "wrong number of embedments!");
     }
 
@@ -241,12 +252,12 @@ int main (int argc, char *argv[]) try
     embedments = 0;
     for (const auto& e : elements(edgeGridView))
     {
-        if (gridCreator.embeddedEntityIndices<2>(e).size() != 0)
+        if (gridManager.embeddedEntityIndices<2>(e).size() != 0)
             DUNE_THROW(Dune::InvalidStateException, "wrong number of embeddings!");
 
-        if (gridCreator.embedmentEntityIndices<2>(e).size() == 4)
+        if (gridManager.embedmentEntityIndices<2>(e).size() == 4)
             embedments++;
-        else if (gridCreator.embedmentEntityIndices<2>(e).size() != 0)
+        else if (gridManager.embedmentEntityIndices<2>(e).size() != 0)
             DUNE_THROW(Dune::InvalidStateException, "wrong number of embedments!");
     }
 

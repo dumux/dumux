@@ -52,25 +52,24 @@ namespace Dumux {
  *       then be interpreted as boundary segments. Use respective physical entity
  *       indexing in your grid file in that case.
  *
- * \tparam GCTraits The type traits of the grid creator class
+ * \tparam BulkGrid The type of the highest-dimensional grid in the hierachy
+ * \tparam IndexType The index type to be used
+ * \tparam numGrids The number of grids to be considered in the hierarchy
  */
-template<typename GCTraits>
+template <class BulkGrid, class IndexType, int numGrids>
 class FacetCouplingGmshReader
 {
     // extract some necessary info from bulk grid
-    using BulkGrid = typename GCTraits::BulkGrid;
     static constexpr int bulkDim = BulkGrid::dimension;
     static constexpr int bulkDimWorld = BulkGrid::dimensionworld;
     using ctype = typename BulkGrid::ctype;
     using GlobalPosition = Dune::FieldVector<ctype, bulkDimWorld>;
 
     // determine minimum dimension for which a grid is created
-    static constexpr int numGrids = GCTraits::numGrids;
     static constexpr int minGridDim = BulkGrid::dimension - numGrids + 1;
     static_assert(minGridDim >= 1, "Grids with dim < 1 cannot be read!");
 
     // structure to store data on an element
-    using IndexType = typename GCTraits::IndexType;
     using VertexIndexSet = std::vector<IndexType>;
     struct ElementData
     {
@@ -302,28 +301,28 @@ public:
     }
 
     //! Returns the maps of element markers
-    typename GCTraits::ElementToDomainMarkerMap& elementMarkerMap(std::size_t id)
+    std::vector<int>& elementMarkerMap(std::size_t id)
     {
         assert(id < numGrids && "Index exceeds number of grids provided");
         return elementMarkerMaps_[id];
     }
 
     //! Returns the maps of domain markers
-    typename GCTraits::BoundarySegmentToMarkerMap& boundaryMarkerMap(std::size_t id)
+    std::vector<int>& boundaryMarkerMap(std::size_t id)
     {
         assert(id < numGrids && "Index exceeds number of grids provided");
         return boundaryMarkerMaps_[id];
     }
 
     //! Returns the maps of the embedded entities
-    typename GCTraits::EmbeddedEntityMap& embeddedEntityMap(std::size_t id)
+    std::unordered_map< IndexType, std::vector<IndexType> >& embeddedEntityMap(std::size_t id)
     {
         assert(id < numGrids && "Index exceeds number of grids provided");
         return embeddedEntityMaps_[id];
     }
 
     //! Returns the maps of the embedments
-    typename GCTraits::EmbedmentMap& embedmentMap(std::size_t id)
+    std::unordered_map< IndexType, std::vector<IndexType> >& embedmentMap(std::size_t id)
     {
         assert(id < numGrids && "Index exceeds number of grids provided");
         return embedmentMaps_[id];
@@ -415,12 +414,12 @@ private:
     std::array<std::vector<VertexIndexSet>, numGrids> boundarySegments_;
 
     //! data on connectivity between the grids
-    std::array< typename GCTraits::EmbeddedEntityMap, numGrids > embeddedEntityMaps_;
-    std::array< typename GCTraits::EmbedmentMap, numGrids > embedmentMaps_;
+    std::array< std::unordered_map< IndexType, std::vector<IndexType> >, numGrids > embeddedEntityMaps_;
+    std::array< std::unordered_map< IndexType, std::vector<IndexType> >, numGrids > embedmentMaps_;
 
     //! data on domain and boundary markers
-    std::array< typename GCTraits::ElementToDomainMarkerMap, numGrids > elementMarkerMaps_;
-    std::array< typename GCTraits::BoundarySegmentToMarkerMap, numGrids > boundaryMarkerMaps_;
+    std::array< std::vector<int>, numGrids > elementMarkerMaps_;
+    std::array< std::vector<int>, numGrids > boundaryMarkerMaps_;
 };
 
 } // end namespace Dumux

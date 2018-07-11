@@ -8,6 +8,6 @@ couplingmapper.hh
 couplingmapperbase.hh
 enrichmenthelper.hh
 gmshreader.hh
-gridcreator.hh
+gridmanager.hh
 vertexmapper.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/multidomain/facet)

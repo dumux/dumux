@@ -35,7 +35,7 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/multidomain/facet/box/fvgridgeometry.hh>
-#include <dumux/multidomain/facet/gridcreator.hh>
+#include <dumux/multidomain/facet/gridmanager.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/codimonegridadapter.hh>
 
@@ -73,20 +73,20 @@ void checkScvfEmbedment(const Scvf& scvf, const LowDimGeom& lowDimGeom)
 }
 
 // update a tpfa finite volume grid geometry
-template< class BulkFVG, class FacetFVG, class GridCreator,
+template< class BulkFVG, class FacetFVG, class GridManager,
           std::enable_if_t<BulkFVG::discMethod == Dumux::DiscretizationMethod::cctpfa, int> = 0 >
-void updateBulkFvGeometry(BulkFVG& bulkFVG, const FacetFVG& facetFVG, const GridCreator& gc)
+void updateBulkFvGeometry(BulkFVG& bulkFVG, const FacetFVG& facetFVG, const GridManager& gm)
 {
     bulkFVG.update();
 }
 
 // update a box finite volume grid geometry
-template< class BulkFVG, class FacetFVG, class GridCreator,
+template< class BulkFVG, class FacetFVG, class GridManager,
           std::enable_if_t<BulkFVG::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
-void updateBulkFvGeometry(BulkFVG& bulkFVG, const FacetFVG& facetFVG, const GridCreator& gc)
+void updateBulkFvGeometry(BulkFVG& bulkFVG, const FacetFVG& facetFVG, const GridManager& gm)
 {
-    using FacetGridAdapter = Dumux::CodimOneGridAdapter<GridCreator, 0, 1>;
-    bulkFVG.update(facetFVG.gridView(), FacetGridAdapter{gc}, true);
+    using FacetGridAdapter = Dumux::CodimOneGridAdapter<GridManager, 0, 1>;
+    bulkFVG.update(facetFVG.gridView(), FacetGridAdapter{gm}, true);
 }
 
 // main program
@@ -102,39 +102,39 @@ int main (int argc, char *argv[]) try
     using FacetGrid = Dune::FoamGrid<2, 3>;
     using EdgeGrid = Dune::FoamGrid<1, 3>;
 
-    using GridCreator = Dumux::FacetCouplingGridCreator<BulkGrid, FacetGrid, EdgeGrid>;
-    GridCreator gridCreator;
-    gridCreator.makeGrids("grid.msh");
+    using GridManager = Dumux::FacetCouplingGridManager<BulkGrid, FacetGrid, EdgeGrid>;
+    GridManager gridManager;
+    gridManager.init();
 
     // instantiate the grid geometries with caching
     using BulkGridView = typename BulkGrid::LeafGridView;
     using BulkFVGridGeometry = typename std::conditional< USEBOXINBULK,
                                                           Dumux::BoxFacetCouplingFVGridGeometry<double, BulkGridView, true>,
                                                           Dumux::CCTpfaFVGridGeometry<BulkGridView, /*caching*/true> >::type;
-    BulkFVGridGeometry bulkFvGeometry( gridCreator.grid<0>().leafGridView() );
+    BulkFVGridGeometry bulkFvGeometry( gridManager.grid<0>().leafGridView() );
 
     using FacetGridView = typename FacetGrid::LeafGridView;
     using FacetFVGridGeometry = Dumux::CCTpfaFVGridGeometry<FacetGridView, true>;
-    FacetFVGridGeometry facetFvGeometry( gridCreator.grid<1>().leafGridView() );
+    FacetFVGridGeometry facetFvGeometry( gridManager.grid<1>().leafGridView() );
     facetFvGeometry.update();
 
     using EdgeGridView = typename EdgeGrid::LeafGridView;
     using EdgeFVGridGeometry = Dumux::CCTpfaFVGridGeometry<EdgeGridView, true>;
-    EdgeFVGridGeometry edgeFvGeometry( gridCreator.grid<2>().leafGridView() );
+    EdgeFVGridGeometry edgeFvGeometry( gridManager.grid<2>().leafGridView() );
 
     // update grid geometries
     edgeFvGeometry.update();
     facetFvGeometry.update();
-    updateBulkFvGeometry(bulkFvGeometry, facetFvGeometry, gridCreator);
+    updateBulkFvGeometry(bulkFvGeometry, facetFvGeometry, gridManager);
 
     // instantiate and update mappers for all domain combinations
     Dumux::FacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry> bulkFacetMapper;
     Dumux::FacetCouplingMapper<FacetFVGridGeometry, EdgeFVGridGeometry, /*bulkDomainId*/1, /*edgeDomainId*/2> facetEdgeMapper;
     Dumux::FacetCouplingThreeDomainMapper<BulkFVGridGeometry, FacetFVGridGeometry, EdgeFVGridGeometry> hierarchyMapper;
 
-    bulkFacetMapper.update(bulkFvGeometry, facetFvGeometry, gridCreator);
-    facetEdgeMapper.update(facetFvGeometry, edgeFvGeometry, gridCreator);
-    hierarchyMapper.update(bulkFvGeometry, facetFvGeometry, edgeFvGeometry, gridCreator);
+    bulkFacetMapper.update(bulkFvGeometry, facetFvGeometry, gridManager);
+    facetEdgeMapper.update(facetFvGeometry, edgeFvGeometry, gridManager);
+    hierarchyMapper.update(bulkFvGeometry, facetFvGeometry, edgeFvGeometry, gridManager);
 
     constexpr auto bulkDomainId = Dune::index_constant<0>();
     constexpr auto facetDomainId = Dune::index_constant<1>();

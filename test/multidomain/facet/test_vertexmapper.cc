@@ -29,7 +29,8 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dumux/io/vtkfunction.hh>
-#include <dumux/multidomain/facet/gridcreator.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/multidomain/facet/gridmanager.hh>
 #include <dumux/multidomain/facet/codimonegridadapter.hh>
 #include <dumux/multidomain/facet/vertexmapper.hh>
 
@@ -95,25 +96,24 @@ int main (int argc, char *argv[]) try
     // initialize mpi
     Dune::MPIHelper::instance(argc, argv);
 
-    // we must have one single command line argument
-    if (argc != 2)
-        DUNE_THROW(Dune::IOError, "You must provide one command line argument, which is the grid file");
+    // initialize parameter tree
+    Dumux::Parameters::init(argc, argv);
 
     using BulkGrid = BULKGRIDTYPE;
     using FacetGrid = FACETGRIDTYPE;
-    using GridCreator = Dumux::FacetCouplingGridCreator<BulkGrid, FacetGrid>;
-    GridCreator gridCreator;
-    gridCreator.makeGrids(argv[1]);
+    using GridManager = Dumux::FacetCouplingGridManager<BulkGrid, FacetGrid>;
+    GridManager gridManager;
+    gridManager.init();
 
     // dimension of the bulk grid
     static constexpr int bulkDim = BulkGrid::dimension;
 
     // check grid sizes
-    const auto& bulkGridView = gridCreator.grid<0>().leafGridView();
-    const auto& facetGridView = gridCreator.grid<1>().leafGridView();
+    const auto& bulkGridView = gridManager.grid<0>().leafGridView();
+    const auto& facetGridView = gridManager.grid<1>().leafGridView();
 
     // data converter
-    Dumux::CodimOneGridAdapter<GridCreator, 0, 1> facetGridAdapter(gridCreator);
+    Dumux::CodimOneGridAdapter<GridManager, 0, 1> facetGridAdapter(gridManager);
 
     // enriched vertex dof mapper
     Dumux::EnrichedVertexDofMapper<typename BulkGrid::LeafGridView> mapper(bulkGridView);

@@ -43,7 +43,7 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
 
-#include <dumux/multidomain/facet/gridcreator.hh>
+#include <dumux/multidomain/facet/gridmanager.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/couplingmanager.hh>
 
@@ -100,19 +100,19 @@ int main(int argc, char** argv) try
     using FacetGrid = typename GET_PROP_TYPE(FacetProblemTypeTag, Grid);
     using EdgeGrid = typename GET_PROP_TYPE(EdgeProblemTypeTag, Grid);
 
-    using GridCreator = FacetCouplingGridCreator<BulkGrid, FacetGrid, EdgeGrid>;
-    GridCreator gridCreator;
-    gridCreator.makeGrids(getParam<std::string>("Grid.File"));
-    gridCreator.loadBalance();
+    using GridManager = FacetCouplingGridManager<BulkGrid, FacetGrid, EdgeGrid>;
+    GridManager gridManager;
+    gridManager.init();
+    gridManager.loadBalance();
 
     ////////////////////////////////////////////////////////////
     // run stationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid views
-    const auto& bulkGridView = gridCreator.template grid<0>().leafGridView();
-    const auto& facetGridView = gridCreator.template grid<1>().leafGridView();
-    const auto& edgeGridView = gridCreator.template grid<2>().leafGridView();
+    const auto& bulkGridView = gridManager.template grid<0>().leafGridView();
+    const auto& facetGridView = gridManager.template grid<1>().leafGridView();
+    const auto& edgeGridView = gridManager.template grid<2>().leafGridView();
 
     // create the finite volume grid geometries
     using BulkFVGridGeometry = typename GET_PROP_TYPE(BulkProblemTypeTag, FVGridGeometry);
@@ -154,7 +154,7 @@ int main(int argc, char** argv) try
     // the coupling mapper
     using CouplingMapper = typename TestTraits::CouplingMapper;
     auto couplingMapper = std::make_shared<CouplingMapper>();
-    couplingMapper->update(*bulkFvGridGeometry, *facetFvGridGeometry, *edgeFvGridGeometry, gridCreator);
+    couplingMapper->update(*bulkFvGridGeometry, *facetFvGridGeometry, *edgeFvGridGeometry, gridManager);
 
     // the coupling manager
     using CouplingManager = typename TestTraits::CouplingManager;

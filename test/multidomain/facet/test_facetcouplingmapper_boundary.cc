@@ -32,7 +32,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
-#include <dumux/multidomain/facet/gridcreator.hh>
+#include <dumux/multidomain/facet/gridmanager.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
 
 #ifndef BULKGRIDTYPE // default to ug grid if not provided by CMake
@@ -53,27 +53,30 @@ int main (int argc, char *argv[]) try
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
 
+    // initialize parameter tree
+    Dumux::Parameters::init(argc, argv);
+
     using BulkGrid = BULKGRIDTYPE;
     using FacetGrid = Dune::FoamGrid<1, 2>;
 
-    using GridCreator = Dumux::FacetCouplingGridCreator<BulkGrid, FacetGrid>;
-    GridCreator gridCreator;
-    gridCreator.makeGrids("grid2.msh");
+    using GridManager = Dumux::FacetCouplingGridManager<BulkGrid, FacetGrid>;
+    GridManager gridManager;
+    gridManager.init();
 
     // instantiate the grid geometries with caching
     using BulkGridView = typename BulkGrid::LeafGridView;
     using BulkFVGridGeometry = Dumux::CCTpfaFVGridGeometry<BulkGridView, true>;
-    BulkFVGridGeometry bulkFvGeometry( gridCreator.grid<0>().leafGridView() );
+    BulkFVGridGeometry bulkFvGeometry( gridManager.grid<0>().leafGridView() );
     bulkFvGeometry.update();
 
     using FacetGridView = typename FacetGrid::LeafGridView;
     using FacetFVGridGeometry = Dumux::CCTpfaFVGridGeometry<FacetGridView, true>;
-    FacetFVGridGeometry facetFvGeometry( gridCreator.grid<1>().leafGridView() );
+    FacetFVGridGeometry facetFvGeometry( gridManager.grid<1>().leafGridView() );
     facetFvGeometry.update();
 
     // instantiate and update mapper for all domain combinations
     Dumux::FacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry> mapper;
-    mapper.update(bulkFvGeometry, facetFvGeometry, gridCreator);
+    mapper.update(bulkFvGeometry, facetFvGeometry, gridManager);
 
     constexpr auto bulkDomainId = Dune::index_constant<0>();
     constexpr auto facetDomainId = Dune::index_constant<1>();

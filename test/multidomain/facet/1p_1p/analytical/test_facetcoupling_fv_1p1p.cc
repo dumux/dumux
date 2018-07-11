@@ -46,7 +46,7 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/traits.hh>
 
-#include <dumux/multidomain/facet/gridcreator.hh>
+#include <dumux/multidomain/facet/gridmanager.hh>
 #include <dumux/multidomain/facet/couplingmapper.hh>
 #include <dumux/multidomain/facet/couplingmanager.hh>
 #include <dumux/multidomain/facet/codimonegridadapter.hh>
@@ -157,24 +157,24 @@ computeL2Norm(const GridView& gridView,
 // the update. The reason is that we have to create additional faces on interior
 // boundaries, which wouldn't be created in the standard scheme.
 template< class FVGridGeometry,
-          class GridCreator,
+          class GridManager,
           class LowDimGridView,
           std::enable_if_t<FVGridGeometry::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
 void updateBulkFVGridGeometry(FVGridGeometry& fvGridGeometry,
-                              const GridCreator& gridCreator,
+                              const GridManager& gridManager,
                               const LowDimGridView& lowDimGridView)
 {
-    Dumux::CodimOneGridAdapter<GridCreator> facetGridAdapter(gridCreator);
+    Dumux::CodimOneGridAdapter<GridManager> facetGridAdapter(gridManager);
     fvGridGeometry.update(lowDimGridView, facetGridAdapter);
 }
 
 // specialization for cell-centered schemes
 template< class FVGridGeometry,
-          class GridCreator,
+          class GridManager,
           class LowDimGridView,
           std::enable_if_t<FVGridGeometry::discMethod != Dumux::DiscretizationMethod::box, int> = 0 >
 void updateBulkFVGridGeometry(FVGridGeometry& fvGridGeometry,
-                              const GridCreator& gridCreator,
+                              const GridManager& gridManager,
                               const LowDimGridView& lowDimGridView)
 {
     fvGridGeometry.update();
@@ -206,25 +206,25 @@ int main(int argc, char** argv) try
     using BulkGrid = typename GET_PROP_TYPE(BulkProblemTypeTag, Grid);
     using LowDimGrid = typename GET_PROP_TYPE(LowDimProblemTypeTag, Grid);
 
-    using GridCreator = FacetCouplingGridCreator<BulkGrid, LowDimGrid>;
-    GridCreator gridCreator;
-    gridCreator.makeGrids(getParam<std::string>("Grid.File"));
-    gridCreator.loadBalance();
+    using GridManager = FacetCouplingGridManager<BulkGrid, LowDimGrid>;
+    GridManager gridManager;
+    gridManager.init();
+    gridManager.loadBalance();
 
     ////////////////////////////////////////////////////////////
     // run stationary, non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid views
-    const auto& bulkGridView = gridCreator.template grid<0>().leafGridView();
-    const auto& lowDimGridView = gridCreator.template grid<1>().leafGridView();
+    const auto& bulkGridView = gridManager.template grid<0>().leafGridView();
+    const auto& lowDimGridView = gridManager.template grid<1>().leafGridView();
 
     // create the finite volume grid geometries
     using BulkFVGridGeometry = typename GET_PROP_TYPE(BulkProblemTypeTag, FVGridGeometry);
     using LowDimFVGridGeometry = typename GET_PROP_TYPE(LowDimProblemTypeTag, FVGridGeometry);
     auto bulkFvGridGeometry = std::make_shared<BulkFVGridGeometry>(bulkGridView);
     auto lowDimFvGridGeometry = std::make_shared<LowDimFVGridGeometry>(lowDimGridView);
-    updateBulkFVGridGeometry(*bulkFvGridGeometry, gridCreator, lowDimGridView);
+    updateBulkFVGridGeometry(*bulkFvGridGeometry, gridManager, lowDimGridView);
     lowDimFvGridGeometry->update();
 
     // the problems (boundary conditions)
@@ -250,7 +250,7 @@ int main(int argc, char** argv) try
 
     // the coupling mapper
     auto couplingMapper = std::make_shared<typename TestTraits::CouplingMapper>();
-    couplingMapper->update(*bulkFvGridGeometry, *lowDimFvGridGeometry, gridCreator);
+    couplingMapper->update(*bulkFvGridGeometry, *lowDimFvGridGeometry, gridManager);
 
     // the coupling manager
     using CouplingManager = typename TestTraits::CouplingManager;
