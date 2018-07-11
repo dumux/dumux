@@ -21,6 +21,9 @@ dune_add_test(NAME test_2p2c_box_restart
                                ${CMAKE_CURRENT_BINARY_DIR}/injection_box_restart-00004.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_box test_2p2c_fv.input -Problem.Name injection_box_restart -TimeLoop.DtInitial 1488.5 -Restart.Time 2158.85 -Restart.File injection_box-00004.vtu")
 
+# the restart test has to run after the test that produces the corresponding vtu file
+set_tests_properties(test_2p2c_box_restart PROPERTIES DEPENDS test_2p2c_box)
+
 dune_add_test(NAME test_2p2c_tpfa
               SOURCES test_2p2c_fv.cc
               COMPILE_DEFINITIONS TYPETAG=InjectionCCTpfaTypeTag ENABLECACHING=0
