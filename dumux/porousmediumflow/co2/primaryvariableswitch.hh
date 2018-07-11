@@ -98,8 +98,9 @@ protected:
             {
                 // wetting phase appears
                 if (this->verbosity() > 1)
-                    std::cout << "First phase appears at dof " << dofIdxGlobal
-                              << ", coordinates: " << globalPos << ", x10 > x10_max: "
+                    std::cout << "First phase (" << FluidSystem::phaseName(phase0Idx) << ") appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", x^" << FluidSystem::componentName(comp0Idx) << "_" << FluidSystem::phaseName(phase1Idx) << " > x_equilibrium: "
                               << xnw << " > " << xnwMax << std::endl;
                 newPhasePresence = Indices::bothPhases;
                 if (formulation == TwoPFormulation::p1s0)
@@ -126,8 +127,9 @@ protected:
             {
                 // Second phase appears
                 if (this->verbosity() > 1)
-                    std::cout << "Second phase appears at dof " << dofIdxGlobal
-                              << ", coordinates: " << globalPos << ", x01 > x01_max: "
+                    std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ") appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", x^" << FluidSystem::componentName(comp1Idx) << "_" << FluidSystem::phaseName(phase0Idx) << " > x_equilibrium: "
                               << xwn << " > " << xwnMax << std::endl;
                 newPhasePresence = Indices::bothPhases;
                 if (formulation == TwoPFormulation::p1s0)
@@ -148,9 +150,10 @@ protected:
                 wouldSwitch = true;
                 // nonwetting phase disappears
                 if (this->verbosity() > 1)
-                    std::cout << "Second phase disappears at dof " << dofIdxGlobal
-                              << ", coordinates: " << globalPos << ", s1: "
-                              << volVars.saturation(phase1Idx) << std::endl;
+                    std::cout << "Second phase (" << FluidSystem::phaseName(phase1Idx) << ") disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", S_" << FluidSystem::phaseName(phase1Idx) << ": " << volVars.saturation(phase1Idx)
+                              << std::endl;
                 newPhasePresence = Indices::firstPhaseOnly;
 
                 if(useMoles) // mole-fraction formulation
@@ -163,9 +166,10 @@ protected:
                 wouldSwitch = true;
                 // wetting phase disappears
                 if (this->verbosity() > 1)
-                    std::cout << "First phase disappears at dof " << dofIdxGlobal
-                              << ", coordinates: " << globalPos << ", s0: "
-                              << volVars.saturation(phase0Idx) << std::endl;
+                    std::cout << "First phase (" << FluidSystem::phaseName(phase0Idx) << ") disappears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << ", S_" << FluidSystem::phaseName(phase0Idx) << ": " << volVars.saturation(phase0Idx)
+                              << std::endl;
                 newPhasePresence = Indices::secondPhaseOnly;
 
                 if(useMoles) // mole-fraction formulation
