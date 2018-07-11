@@ -21,17 +21,19 @@
  * \ingroup InputOutput
  * \brief read from a file into a solution vector
  */
-#ifndef DUMUX_LOADSOLUTION_HH
-#define DUMUX_LOADSOLUTION_HH
+#ifndef DUMUX_IO_LOADSOLUTION_HH
+#define DUMUX_IO_LOADSOLUTION_HH
 
 #include <string>
 #include <iostream>
+#include <vector>
+#include <unordered_set>
 
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/isvalid.hh>
-#include <dumux/io/tinyxml2/tinyxml2.h>
+#include <dumux/io/vtk/vtureader.hh>
 
 namespace Dumux {
 
@@ -46,139 +48,78 @@ struct hasState
 
 /*!
  * \ingroup InputOutput
- * \brief helper class to read from a file into a solution vector
+ * \brief helper function to read from a file into a solution vector
  */
-class LoadSolutionHelper {
-public:
-    template <class FVGridGeometry, class SolutionVector, class PvNamesFunc>
-    static void loadFromVtkFile(const std::string fileName,
-                                const FVGridGeometry& fvGridGeometry,
-                                PvNamesFunc pvNamesFunc,
-                                SolutionVector& sol)
+template <class SolutionVector, class PvNamesFunc>
+auto loadFromVtuFile(const std::string fileName,
+                     const VTUReader::DataType& dataType,
+                     PvNamesFunc&& pvNamesFunc,
+                     SolutionVector& sol)
+-> typename std::enable_if_t<!decltype(isValid(hasState())(sol[0]))::value, void>
+{
+    VTUReader vtu(fileName);
+    using PrimaryVariables = typename SolutionVector::block_type;
+    using Scalar = typename PrimaryVariables::field_type;
+
+    for (size_t pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
     {
-        using namespace tinyxml2;
+        const auto pvName = pvNamesFunc(pvIdx);
+        const auto vec = vtu.readData<std::vector<Scalar>>(pvName, dataType);
+        if (vec.size() != sol.size())
+            DUNE_THROW(Dune::IOError, "Size mismatch between solution vector and read data (" << sol.size() << " != " << vec.size() << ")");
 
-        XMLDocument xmlDoc;
-        auto eResult = xmlDoc.LoadFile(fileName.c_str());
-        if (eResult != XML_SUCCESS)
-            DUNE_THROW(Dune::IOError, "Couldn't open XML file " << fileName << ".");
+        for (std::size_t i = 0; i < sol.size(); ++i)
+            sol[i][pvIdx] = vec[i];
+    }
+}
 
-        XMLElement *pieceNode = xmlDoc.FirstChildElement("VTKFile")->FirstChildElement("UnstructuredGrid")->FirstChildElement("Piece");
-        if (pieceNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get Piece node in " << fileName << ".");
-
-        XMLElement *dataNode = nullptr;
-        if (FVGridGeometry::discMethod == DiscretizationMethod::box)
-            dataNode = pieceNode->FirstChildElement("PointData");
-        else
-            dataNode = pieceNode->FirstChildElement("CellData");
-
-        if (dataNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get data node in " << fileName << ".");
-
-        setPrimaryVariables_(dataNode, fvGridGeometry, pvNamesFunc, sol);
+/*!
+ * \ingroup InputOutput
+ * \brief helper function to read from a file into a solution vector
+ */
+template <class SolutionVector, class PvNamesFunc>
+auto loadFromVtuFile(const std::string fileName,
+                     const VTUReader::DataType& dataType,
+                     PvNamesFunc&& pvNamesFunc,
+                     SolutionVector& sol)
+-> typename std::enable_if_t<decltype(isValid(hasState())(sol[0]))::value, void>
+{
+    VTUReader vtu(fileName);
+    const auto vec = vtu.readData<std::vector<int>>("phase presence", dataType);
+    std::unordered_set<int> states;
+    for (size_t i = 0; i < sol.size(); ++i)
+    {
+        const int state = vec[i];
+        sol[i].setState(state);
+        states.insert(state);
     }
 
-private:
-
-    template <class Scalar, class FVGridGeometry>
-    static std::vector<Scalar> extractDataToVector_(tinyxml2::XMLElement *xmlNode,
-                                                    const std::string& name,
-                                                    const FVGridGeometry& fvGridGeometry)
+    using PrimaryVariables = typename SolutionVector::block_type;
+    using Scalar = typename PrimaryVariables::field_type;
+    for (size_t pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
     {
-        // loop over XML node siblings to find the correct data array
-        tinyxml2::XMLElement *dataArray = xmlNode->FirstChildElement("DataArray");
-        for (; dataArray != nullptr; dataArray = dataArray->NextSiblingElement("DataArray"))
+        if (pvNamesFunc(pvIdx, 1) == pvNamesFunc(pvIdx, 2))
         {
-            const char *attributeText = dataArray->Attribute("Name");
-
-            if (attributeText == nullptr)
-                DUNE_THROW(Dune::IOError, "Couldn't get Name attribute.");
-
-            if (std::string(attributeText) == name)
-                break;
-        }
-        if (dataArray == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't find the data array " << name << ".");
-
-        std::stringstream dataStream(dataArray->GetText());
-        std::vector<Scalar> vec(fvGridGeometry.numDofs());
-        for (auto& val : vec)
-        {
-            dataStream >> val;
-        }
-
-        return vec;
-    }
-
-    template<class SolutionVector, class FVGridGeometry, class PvNamesFunc>
-    static auto setPrimaryVariables_(tinyxml2::XMLElement *node,
-                                     const FVGridGeometry& fvGridGeometry,
-                                     PvNamesFunc pvNamesFunc,
-                                     SolutionVector& sol)
-    -> typename std::enable_if_t<!decltype(isValid(hasState())(sol[0]))::value, void>
-    {
-        using PrimaryVariables = typename SolutionVector::block_type;
-        using Scalar = typename PrimaryVariables::field_type;
-
-        for (size_t pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
-        {
-            auto pvName = pvNamesFunc(pvIdx);
-
-            auto vec = extractDataToVector_<Scalar>(node, pvName, fvGridGeometry);
-
+            const auto vec = vtu.readData<std::vector<Scalar>>(pvNamesFunc(pvIdx, 1), dataType);
             for (size_t i = 0; i < sol.size(); ++i)
                 sol[i][pvIdx] = vec[i];
         }
-    }
-
-    template<class SolutionVector, class FVGridGeometry, class PvNamesFunc>
-    static auto setPrimaryVariables_(tinyxml2::XMLElement *node,
-                                     const FVGridGeometry& fvGridGeometry,
-                                     PvNamesFunc pvNamesFunc,
-                                     SolutionVector& sol)
-    -> typename std::enable_if_t<decltype(isValid(hasState())(sol[0]))::value, void>
-    {
-        auto vec = extractDataToVector_<int>(node, "phase presence", fvGridGeometry);
-
-        int minState = std::numeric_limits<int>::max();
-        int maxState = std::numeric_limits<int>::min();
-        for (size_t i = 0; i < sol.size(); ++i)
+        else
         {
-            int state = vec[i];
-            sol[i].setState(state);
-            using std::min;
-            minState = min(minState, state);
-            using std::max;
-            maxState = max(maxState, state);
-        }
+            std::unordered_map<int, std::vector<Scalar>> switchedPvsSol;
+            for (const auto& state : states)
+                switchedPvsSol[state] = vtu.readData<std::vector<Scalar>>(pvNamesFunc(pvIdx, state), dataType);
 
-        using PrimaryVariables = typename SolutionVector::block_type;
-        using Scalar = typename PrimaryVariables::field_type;
-        for (size_t pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
-        {
-            if (pvNamesFunc(pvIdx, 1) == pvNamesFunc(pvIdx, 2))
-            {
-                auto vec = extractDataToVector_<Scalar>(node, pvNamesFunc(pvIdx, 1), fvGridGeometry);
-
-                for (size_t i = 0; i < sol.size(); ++i)
-                    sol[i][pvIdx] = vec[i];
-            }
-            else
-            {
-                std::vector<std::vector<Scalar>> switchedPvsSol;
-                for (int state = minState; state <= maxState; ++state)
-                    switchedPvsSol.push_back(extractDataToVector_<Scalar>(node,
-                                                                          pvNamesFunc(pvIdx, state),
-                                                                          fvGridGeometry));
-
-                for (size_t i = 0; i < sol.size(); ++i)
-                    sol[i][pvIdx] = switchedPvsSol[sol[i].state() - minState][i];
-            }
+            for (size_t i = 0; i < sol.size(); ++i)
+                sol[i][pvIdx] = switchedPvsSol[sol[i].state()][i];
         }
     }
-};
+}
 
+/*!
+ * \ingroup InputOutput
+ * \brief helper function to determine the primray variable names of a model with privar state
+ */
 template<class ModelTraits, class FluidSystem>
 std::string primaryVariableName(int pvIdx, int state)
 {
@@ -188,6 +129,10 @@ std::string primaryVariableName(int pvIdx, int state)
         return ModelTraits::template primaryVariableName<FluidSystem>(pvIdx, state);
 }
 
+/*!
+ * \ingroup InputOutput
+ * \brief helper function to determine the primray variable names of a model
+ */
 template<class ModelTraits>
 std::string primaryVariableName(int pvIdx)
 {
@@ -197,16 +142,26 @@ std::string primaryVariableName(int pvIdx)
         return ModelTraits::primaryVariableName(pvIdx);
 }
 
+
+/*!
+ * \ingroup InputOutput
+ * \brief load a solution vector from file
+ * \note Supports the following file extensions: *.vtu
+ */
 template <class FVGridGeometry, class SolutionVector, class PvNamesFunc>
 void loadSolution(const std::string& fileName,
                   const FVGridGeometry& fvGridGeometry,
-                  PvNamesFunc pvNamesFunc,
+                  PvNamesFunc&& pvNamesFunc,
                   SolutionVector& sol)
 {
-    auto extension = fileName.substr(fileName.find_last_of(".") + 1);
+    const auto extension = fileName.substr(fileName.find_last_of(".") + 1);
 
     if (extension == "vtu")
-        LoadSolutionHelper::loadFromVtkFile(fileName, fvGridGeometry, pvNamesFunc, sol);
+    {
+        const auto dataType = FVGridGeometry::discMethod == DiscretizationMethod::box
+                              ? VTUReader::DataType::pointData : VTUReader::DataType::cellData;
+        loadFromVtuFile(fileName, dataType, pvNamesFunc, sol);
+    }
     else
         DUNE_THROW(Dune::NotImplemented, "loadSolution for extension " << extension);
 }
