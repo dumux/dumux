@@ -140,7 +140,10 @@ template<class ModelTraits>
 std::string primaryVariableName(int pvIdx)
 {
     if (haveParam("LoadSolution.PrimaryVariableNames"))
-        DUNE_THROW(Dune::NotImplemented, "reading PrimaryVariableNames from input file");
+    {
+        static auto pvNames = getParam<std::vector<std::string>>("LoadSolution.PrimaryVariableNames");
+        return pvNames[pvIdx];
+    }
     else
         return ModelTraits::primaryVariableName(pvIdx);
 }
@@ -151,9 +154,9 @@ std::string primaryVariableName(int pvIdx)
  * \brief load a solution vector from file
  * \note Supports the following file extensions: *.vtu
  */
-template <class FVGridGeometry, class SolutionVector, class PvNamesFunc>
+template <class SolutionVector, class PvNamesFunc>
 void loadSolution(const std::string& fileName,
-                  const FVGridGeometry& fvGridGeometry,
+                  DiscretizationMethod discMethod,
                   PvNamesFunc&& pvNamesFunc,
                   SolutionVector& sol)
 {
@@ -161,7 +164,7 @@ void loadSolution(const std::string& fileName,
 
     if (extension == "vtu")
     {
-        const auto dataType = FVGridGeometry::discMethod == DiscretizationMethod::box
+        const auto dataType = discMethod == DiscretizationMethod::box
                               ? VTUReader::DataType::pointData : VTUReader::DataType::cellData;
         loadSolutionFromVtuFile(fileName, dataType, pvNamesFunc, sol);
     }
