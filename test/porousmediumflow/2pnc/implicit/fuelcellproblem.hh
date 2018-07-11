@@ -68,9 +68,8 @@ SET_PROP(FuelCellTypeTag, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    static const bool useComplexRelations = true;
 public:
-    using type = FluidSystems::H2ON2O2<Scalar, useComplexRelations>;
+    using type = FluidSystems::H2ON2O2<Scalar>;
 };
 } // end namespace Properties
 

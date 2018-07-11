@@ -38,7 +38,8 @@
 
      using Scalar = double;
      using ThermCondModel = ThermalConductivitySomerton<Scalar>;
-     using FluidSystem = FluidSystems::H2ON2<Scalar, false>;
+
+     using FluidSystem = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
      PlotThermalConductivityModel<Scalar, ThermCondModel, FluidSystem> plotThermalConductivityModel(293.15, 1e5);
      const std::string fileName = "somerton_lambda_eff.dat";
      const Scalar porosity = 0.3; // [-]

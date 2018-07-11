@@ -52,7 +52,7 @@ NEW_PROP_TAG(FluidSystem);
 
 // Select the fluid system
 SET_TYPE_PROP(ChannelNCTestTypeTag, FluidSystem,
-              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true*/>);
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 SET_INT_PROP(ChannelNCTestTypeTag, PhaseIdx,
              GET_PROP_TYPE(TypeTag, FluidSystem)::liquidPhaseIdx);

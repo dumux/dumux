@@ -67,7 +67,7 @@ SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, Problem, OnePTwoCNIConductionProblem<
 // Set fluid configuration
 SET_TYPE_PROP(OnePTwoCNIConductionTypeTag,
               FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
+              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, SpatialParams, OnePNCTestSpatialParams<TypeTag>);

@@ -67,7 +67,7 @@ SET_TYPE_PROP(OnePTwoCTestTypeTag, Problem, OnePTwoCTestProblem<TypeTag>);
 // Set fluid configuration
 SET_TYPE_PROP(OnePTwoCTestTypeTag,
               FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePTwoCTestTypeTag, SpatialParams, OnePNCTestSpatialParams<TypeTag>);

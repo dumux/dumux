@@ -72,7 +72,7 @@ SET_TYPE_PROP(CombustionOneComponentTypeTag, SpatialParams, CombustionSpatialPar
 
 SET_TYPE_PROP(CombustionOneComponentTypeTag,
               FluidSystem,
-              FluidSystems::CombustionFluidsystem<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
+              FluidSystems::CombustionFluidsystem<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //! Set the default pressure formulation: either pw first or pn first
 SET_PROP(CombustionOneComponentTypeTag, PressureFormulation)

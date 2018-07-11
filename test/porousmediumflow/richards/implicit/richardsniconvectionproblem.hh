@@ -61,7 +61,7 @@ SET_TYPE_PROP(RichardsNIConvectionTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(RichardsNIConvectionTypeTag, Problem, RichardsNIConvectionProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(RichardsNIConvectionTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(RichardsNIConvectionTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(RichardsNIConvectionTypeTag, SpatialParams, RichardsNISpatialParams<TypeTag>);

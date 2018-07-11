@@ -69,7 +69,7 @@ SET_TYPE_PROP(Injection2PNITypeTag, Grid, GRIDTYPE);
 SET_TYPE_PROP(Injection2PNITypeTag, Problem, InjectionProblem2PNI<TypeTag>);
 
 // Use the same fluid system as the 2p2c injection problem
-SET_TYPE_PROP(Injection2PNITypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(Injection2PNITypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(Injection2PNITypeTag, SpatialParams, InjectionSpatialParams<TypeTag>);

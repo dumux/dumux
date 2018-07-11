@@ -63,7 +63,7 @@ SET_TYPE_PROP(DissolutionTypeTag, Problem, DissolutionProblem<TypeTag>);
 SET_PROP(DissolutionTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::BrineAir<Scalar, Components::H2O<Scalar>, true/*useComplexrelations=*/>;
+    using type = FluidSystems::BrineAir<Scalar, Components::H2O<Scalar>>;
 };
 
 SET_PROP(DissolutionTypeTag, SolidSystem)

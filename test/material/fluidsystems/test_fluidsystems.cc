@@ -71,7 +71,7 @@ int main()
     /////////////////////////
     // check all fluid states
     {
-        using FluidSystem = FluidSystems::H2ON2<Scalar, /*enableComplexRelations=*/false>;
+        using FluidSystem = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
         using BaseFluidState = CompositionalFluidState<Scalar, FluidSystem>;
         BaseFluidState baseFs;
 
@@ -132,40 +132,32 @@ int main()
 
     // Brine -- Air
     {   using H2OType = Components::SimpleH2O<Scalar>;
-        const bool enableComplexRelations=false;
-        using FluidSystem = FluidSystems::BrineAir<Scalar, H2OType, enableComplexRelations>;
+        using FluidSystem = FluidSystems::BrineAir<Scalar, H2OType, FluidSystems::BrineAirDefaultPolicy</*fastButSimplifiedRelations=*/true>>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
     {   using H2OType = Components::SimpleH2O<Scalar>;
-        const bool enableComplexRelations=true;
-        using FluidSystem = FluidSystems::BrineAir<Scalar, H2OType, enableComplexRelations>;
+        using FluidSystem = FluidSystems::BrineAir<Scalar, H2OType>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // Brine -- CO2
 
     // H2O -- Air
     {   using H2OType = Components::SimpleH2O<Scalar>;
-        const bool enableComplexRelations=false;
-        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
+        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, FluidSystems::H2OAirDefaultPolicy</*fastButSimplifiedRelations=*/true>>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
     {   using H2OType = Components::SimpleH2O<Scalar>;
-        const bool enableComplexRelations=true;
-        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
+        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
     {   using H2OType =  Components::H2O<Scalar>;
-        const bool enableComplexRelations=false;
-        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
+        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, FluidSystems::H2OAirDefaultPolicy</*fastButSimplifiedRelations=*/true>>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
     {   using H2OType =  Components::H2O<Scalar>;
-        const bool enableComplexRelations=true;
-        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
+        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
     {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
-        const bool enableComplexRelations=false;
-        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
+        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, FluidSystems::H2OAirDefaultPolicy</*fastButSimplifiedRelations=*/true>>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
     {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
-        const bool enableComplexRelations=true;
-        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType, enableComplexRelations>;
+        using FluidSystem = FluidSystems::H2OAir<Scalar, H2OType>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // gas phase
@@ -181,21 +173,21 @@ int main()
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- N2
-    {   using FluidSystem = FluidSystems::H2ON2<Scalar, /*enableComplexRelations=*/false>;
+    {   using FluidSystem = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using FluidSystem = FluidSystems::H2ON2<Scalar, /*enableComplexRelations=*/true>;
+    {   using FluidSystem = FluidSystems::H2ON2<Scalar>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- N2 -- kinetic
-    {   using FluidSystem = FluidSystems::H2ON2Kinetic<Scalar, /*enableComplexRelations=*/false>;
+    {   using FluidSystem = FluidSystems::H2ON2Kinetic<Scalar, FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using FluidSystem = FluidSystems::H2ON2Kinetic<Scalar, /*enableComplexRelations=*/true>;
+    {   using FluidSystem = FluidSystems::H2ON2Kinetic<Scalar>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // H2O -- N2 -- o2
-    {   using FluidSystem = FluidSystems::H2ON2O2<Scalar, /*enableComplexRelations=*/false>;
+    {   using FluidSystem = FluidSystems::H2ON2O2<Scalar, FluidSystems::H2ON2O2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using FluidSystem = FluidSystems::H2ON2O2<Scalar, /*enableComplexRelations=*/true>;
+    {   using FluidSystem = FluidSystems::H2ON2O2<Scalar>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // liquid phase

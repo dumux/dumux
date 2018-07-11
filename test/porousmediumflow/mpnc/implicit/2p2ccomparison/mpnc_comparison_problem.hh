@@ -66,7 +66,7 @@ SET_TYPE_PROP(MPNCComparisonTypeTag, SpatialParams, MPNCComparisonSpatialParams<
 // Set fluid configuration
 SET_TYPE_PROP(MPNCComparisonTypeTag,
               FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
+              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(MPNCComparisonTypeTag, Scalar, double);
