@@ -1,9 +1,8 @@
-dune_symlink_to_source_files(FILES "grids" "test_facetcoupling_1p1p_threedomain.input")
+dune_symlink_to_source_files(FILES "grids" "facetcoupling_1p1p_threedomain.input")
 
 dune_add_test(NAME test_facetcoupling_tpfa_1p1p_threedomain
               SOURCES test_facetcoupling_tpfa_1p1p_threedomain.cc
-              CMAKE_GUARD dune-foamgrid_FOUND
-              CMAKE_GUARD dune-alugrid_FOUND
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND )"
               COMPILE_DEFINITIONS BULKTYPETAG=TissueCCTypeTag LOWDIMTYPETAG=BloodFlowCCTypeTag COUPLINGMODE=EmbeddedCouplingMode::average
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
@@ -13,7 +12,7 @@ dune_add_test(NAME test_facetcoupling_tpfa_1p1p_threedomain
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_1p_facet-00001.vtu
                                 ${CMAKE_SOURCE_DIR}/test/references/facetcoupling_1p1p_threedomain_edge.vtp
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_1p_edge-00001.vtp
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_facetcoupling_tpfa_1p1p_threedomain test_facetcoupling_1p1p_threedomain.input")
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_facetcoupling_tpfa_1p1p_threedomain facetcoupling_1p1p_threedomain.input")
 
 set(CMAKE_BUILD_TYPE Release)
 

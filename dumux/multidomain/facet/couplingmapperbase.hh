@@ -64,11 +64,11 @@ class FacetCouplingMapperBase
     static constexpr auto bulkDiscMethod = BulkFVG::discMethod;
 
     // helper struct to check validity of the given domain id offset
-    template< class GridManager >
-    class IsValidGridManager
+    template< class Embeddings >
+    class IsValidDomainId
     {
-        using GCBulkGridView = typename GridManager::template Grid<bulkId>::LeafGridView;
-        using GCLowDimGridView = typename GridManager::template Grid<lowDimId>::LeafGridView;
+        using GCBulkGridView = typename Embeddings::template GridView<bulkId>;
+        using GCLowDimGridView = typename Embeddings::template GridView<lowDimId>;
         static constexpr bool bulkMatch = std::is_same<GCBulkGridView, BulkGridView>::value;
         static constexpr bool lowDimMatch = std::is_same<GCLowDimGridView, LowDimGridView>::value;
         static_assert(bulkMatch, "The bulk domain id does not match the provided bulk grid geometry");
@@ -145,10 +145,10 @@ public:
      * \brief Update coupling maps. This is the standard interface
      *        and has to be overloaded by the implementation.
      */
-    template< class GridManager >
+    template< class Embeddings >
     void update(const BulkFVG& bulkFvGridGeometry,
                 const LowDimFVG& lowDimFvGridGeometry,
-                const GridManager& gridManager)
+                std::shared_ptr<const Embeddings> embeddings)
     { DUNE_THROW(Dune::NotImplemented, "Implementation does not provide an update() function."); }
 
     //! returns coupling data for bulk -> lowDim
@@ -166,40 +166,40 @@ protected:
      *
      * \param bulkFvGridGeometry The finite-volume grid geometry of the bulk grid
      * \param lowDimFvGridGeometry The finite-volume grid geometry of the lower-dimensional grid
-     * \param gridManager Class that contains the embedments and allows obtaining entity insertion indices
-     * \param EmbedmentExecutionPolicy Policy for adding coupling entries for embedments
+     * \param embeddings Class that contains the embedments and allows obtaining entity insertion indices
+     * \param AddCouplingEntryPolicy Policy for adding coupling entries starting from a lower-dimensional
+     *                               element and corresponding adjoined higher-dimensional entity indices
      */
-    template< class GridManager, typename EmbedmentExecutionPolicy >
+    template< class Embeddings, typename AddCouplingEntryPolicy >
     void update_(const BulkFVG& bulkFvGridGeometry,
                  const LowDimFVG& lowDimFvGridGeometry,
-                 const GridManager& gridManager,
-                 EmbedmentExecutionPolicy&& embedmentPolicy)
+                 std::shared_ptr<const Embeddings> embeddings,
+                 AddCouplingEntryPolicy&& addCouplingEntryPolicy)
     {
         // some static assertions on the grid creator
-        static_assert(IsValidGridManager< GridManager >::value, "Grid type mismatch. Please review the provided domain id offset.");
+        static_assert(IsValidDomainId<Embeddings>::value, "Grid type mismatch. Please review the provided domain id offset.");
 
         // clear data
         bulkCouplingData_.clear();
         lowDimCouplingData_.clear();
 
         // set up maps between element indices and insertion indices
-        const auto& bulkGridFactory = gridManager.template gridFactory<bulkId>();
-        const auto bulkInsertionToElemIdxMap = makeInsertionToGridIndexMap_(bulkGridFactory, bulkFvGridGeometry);
+        const auto bulkInsertionToElemIdxMap = makeInsertionToGridIndexMap_(embeddings, bulkFvGridGeometry);
 
         // set up coupling maps coming from the low dim domain
         for (const auto& element : elements(lowDimFvGridGeometry.gridView()))
         {
-            auto embedments = gridManager.template embedmentEntityIndices<lowDimId>(element);
+            auto adjoinedEntities = embeddings->template adjoinedEntityIndices<lowDimId>(element);
 
-            // proceed only if embedments were found
-            if (embedments.size() == 0)
+            // proceed only if element is embedded
+            if (adjoinedEntities.size() == 0)
                 continue;
 
-            // turn embedments into actual grid element indices ...
-            std::for_each(embedments.begin(), embedments.end(), [&] (auto& idx) { idx = bulkInsertionToElemIdxMap[idx]; });
+            // turn (insertion) indices into actual grid element indices ...
+            std::for_each(adjoinedEntities.begin(), adjoinedEntities.end(), [&] (auto& idx) { idx = bulkInsertionToElemIdxMap[idx]; });
 
             // ... and add them
-            embedmentPolicy(std::move(embedments),  element, lowDimFvGridGeometry, bulkFvGridGeometry);
+            addCouplingEntryPolicy(std::move(adjoinedEntities), element, lowDimFvGridGeometry, bulkFvGridGeometry);
         }
     }
 
@@ -231,15 +231,15 @@ protected:
 private:
 
     //! Creates the map from element insertion index to grid element index
-    template< class GridFactory, class FVGridGeometry>
+    template< class Embeddings, class FVGridGeometry>
     std::vector< typename FVGridGeometry::GridView::IndexSet::IndexType >
-    makeInsertionToGridIndexMap_(const GridFactory& gridFactory, const FVGridGeometry& fvGridGeometry) const
+    makeInsertionToGridIndexMap_(std::shared_ptr<const Embeddings> embeddings, const FVGridGeometry& fvGridGeometry) const
     {
         using IndexType = typename FVGridGeometry::GridView::IndexSet::IndexType;
 
         std::vector< IndexType > map(fvGridGeometry.gridView().size(0));
         for (const auto& e : elements(fvGridGeometry.gridView()))
-            map[ gridFactory.insertionIndex(e) ] = fvGridGeometry.elementMapper().index(e);
+            map[ embeddings->template insertionIndex<bulkId>(e) ] = fvGridGeometry.elementMapper().index(e);
 
         return map;
     }

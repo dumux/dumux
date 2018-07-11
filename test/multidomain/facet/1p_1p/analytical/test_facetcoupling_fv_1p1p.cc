@@ -122,10 +122,8 @@ computeL2Norm(const GridView& gridView,
         // make discrete element solution
         const auto elemSol = elementSolution(element, x, problem.fvGridGeometry());
 
-        // the element geometry
-        const auto eg = element.geometry();
-
         // integrate the pressure error over the element
+        const auto eg = element.geometry();
         const auto& rule = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(eg.type(), order);
         for (auto&& qp : rule)
         {
@@ -164,7 +162,8 @@ void updateBulkFVGridGeometry(FVGridGeometry& fvGridGeometry,
                               const GridManager& gridManager,
                               const LowDimGridView& lowDimGridView)
 {
-    Dumux::CodimOneGridAdapter<GridManager> facetGridAdapter(gridManager);
+    using BulkFacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
+    BulkFacetGridAdapter facetGridAdapter(gridManager.getEmbeddings());
     fvGridGeometry.update(lowDimGridView, facetGridAdapter);
 }
 
@@ -250,7 +249,7 @@ int main(int argc, char** argv) try
 
     // the coupling mapper
     auto couplingMapper = std::make_shared<typename TestTraits::CouplingMapper>();
-    couplingMapper->update(*bulkFvGridGeometry, *lowDimFvGridGeometry, gridManager);
+    couplingMapper->update(*bulkFvGridGeometry, *lowDimFvGridGeometry, gridManager.getEmbeddings());
 
     // the coupling manager
     using CouplingManager = typename TestTraits::CouplingManager;

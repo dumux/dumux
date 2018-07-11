@@ -85,8 +85,8 @@ template< class BulkFVG, class FacetFVG, class GridManager,
           std::enable_if_t<BulkFVG::discMethod == Dumux::DiscretizationMethod::box, int> = 0 >
 void updateBulkFvGeometry(BulkFVG& bulkFVG, const FacetFVG& facetFVG, const GridManager& gm)
 {
-    using FacetGridAdapter = Dumux::CodimOneGridAdapter<GridManager, 0, 1>;
-    bulkFVG.update(facetFVG.gridView(), FacetGridAdapter{gm}, true);
+    using FacetGridAdapter = Dumux::CodimOneGridAdapter<typename GridManager::Embeddings>;
+    bulkFVG.update(facetFVG.gridView(), FacetGridAdapter(gm.getEmbeddings()), true);
 }
 
 // main program
@@ -129,12 +129,12 @@ int main (int argc, char *argv[]) try
 
     // instantiate and update mappers for all domain combinations
     Dumux::FacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry> bulkFacetMapper;
-    Dumux::FacetCouplingMapper<FacetFVGridGeometry, EdgeFVGridGeometry, /*bulkDomainId*/1, /*edgeDomainId*/2> facetEdgeMapper;
+    Dumux::FacetCouplingMapper<FacetFVGridGeometry, EdgeFVGridGeometry, /*bulkGridId*/1, /*edgeGridId*/2> facetEdgeMapper;
     Dumux::FacetCouplingThreeDomainMapper<BulkFVGridGeometry, FacetFVGridGeometry, EdgeFVGridGeometry> hierarchyMapper;
 
-    bulkFacetMapper.update(bulkFvGeometry, facetFvGeometry, gridManager);
-    facetEdgeMapper.update(facetFvGeometry, edgeFvGeometry, gridManager);
-    hierarchyMapper.update(bulkFvGeometry, facetFvGeometry, edgeFvGeometry, gridManager);
+    bulkFacetMapper.update(bulkFvGeometry, facetFvGeometry, gridManager.getEmbeddings());
+    facetEdgeMapper.update(facetFvGeometry, edgeFvGeometry, gridManager.getEmbeddings());
+    hierarchyMapper.update(bulkFvGeometry, facetFvGeometry, edgeFvGeometry, gridManager.getEmbeddings());
 
     constexpr auto bulkDomainId = Dune::index_constant<0>();
     constexpr auto facetDomainId = Dune::index_constant<1>();

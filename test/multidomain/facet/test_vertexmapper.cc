@@ -99,6 +99,7 @@ int main (int argc, char *argv[]) try
     // initialize parameter tree
     Dumux::Parameters::init(argc, argv);
 
+    // make a grid from the grid file in input file
     using BulkGrid = BULKGRIDTYPE;
     using FacetGrid = FACETGRIDTYPE;
     using GridManager = Dumux::FacetCouplingGridManager<BulkGrid, FacetGrid>;
@@ -112,10 +113,12 @@ int main (int argc, char *argv[]) try
     const auto& bulkGridView = gridManager.grid<0>().leafGridView();
     const auto& facetGridView = gridManager.grid<1>().leafGridView();
 
-    // data converter
-    Dumux::CodimOneGridAdapter<GridManager, 0, 1> facetGridAdapter(gridManager);
+    // adapter between bulk and facet grid
+    using Embeddings = typename GridManager::Embeddings;
+    using BulkFacetAdapter = Dumux::CodimOneGridAdapter<Embeddings>;
+    BulkFacetAdapter facetGridAdapter(gridManager.getEmbeddings());
 
-    // enriched vertex dof mapper
+    // instantiate the enriched vertex dof mapper
     Dumux::EnrichedVertexDofMapper<typename BulkGrid::LeafGridView> mapper(bulkGridView);
 
     // print out number of dofs managed by the mapper before enrichment

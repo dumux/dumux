@@ -113,16 +113,16 @@ public:
      * \param bulkFvGridGeometry The finite-volume grid geometry of the bulk grid
      * \param facetFvGridGeometry The finite-volume grid geometry of the codimension-one grid
      * \param edgeFvGridGeometry The finite-volume grid geometry of the codimension-two grid
-     * \param gridManager Class that contains the embedments and allows obtaining entity insertion indices
+     * \param embeddings Class that contains the embedments among the grids and entity insertion indices
      */
-    template< class GridManager >
+    template< class Embeddings >
     void update(const BulkFVG& bulkFvGridGeometry,
                 const FacetFVG& facetFvGridGeometry,
                 const EdgeFVG& edgeFvGridGeometry,
-                const GridManager& gridManager)
+                std::shared_ptr<const Embeddings> embeddings)
     {
-        BulkFacetMapper::update(bulkFvGridGeometry, facetFvGridGeometry, gridManager);
-        FacetEdgeMapper::update(facetFvGridGeometry, edgeFvGridGeometry, gridManager);
+        BulkFacetMapper::update(bulkFvGridGeometry, facetFvGridGeometry, embeddings);
+        FacetEdgeMapper::update(facetFvGridGeometry, edgeFvGridGeometry, embeddings);
     }
 
     //! Pull up the parents' access operators to allow for individual updates

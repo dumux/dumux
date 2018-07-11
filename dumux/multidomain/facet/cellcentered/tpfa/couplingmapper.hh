@@ -62,18 +62,18 @@ public:
      *
      * \param bulkFvGridGeometry The finite-volume grid geometry of the bulk grid
      * \param lowDimFvGridGeometry The finite-volume grid geometry of the lower-dimensional grid
-     * \param gridManager Class that contains the embedments and allows obtaining entity insertion indices
+     * \param embeddings Class that contains the embedments among the grids and entity insertion indices
      */
-    template< class GridManager >
+    template< class Embeddings >
     void update(const BulkFVG& bulkFvGridGeometry,
                 const LowDimFVG& lowDimFvGridGeometry,
-                const GridManager& gridManager)
+                std::shared_ptr<const Embeddings> embeddings)
     {
-        // define the execution policy how to add map entries from an embedment
-        auto addEmbedmentPolicy = [&] (auto&& embedments,
-                                       const LowDimElement& lowDimElement,
-                                       const LowDimFVG& lowDimFvGridGeometry,
-                                       const BulkFVG& bulkFvGridGeometry)
+        // define the policy how to add map entries for given lowdim element and adjoined entity indices
+        auto addCouplingEntryPolicy = [&] (auto&& adjoinedEntityIndices,
+                                           const LowDimElement& lowDimElement,
+                                           const LowDimFVG& lowDimFvGridGeometry,
+                                           const BulkFVG& bulkFvGridGeometry)
         {
             using LowDimIndexType = typename LowDimFVG::GridView::IndexSet::IndexType;
             using BulkIndexType = typename BulkFVG::GridView::IndexSet::IndexType;
@@ -81,9 +81,9 @@ public:
             const auto lowDimElemIdx = lowDimFvGridGeometry.elementMapper().index(lowDimElement);
             auto& lowDimData = this->couplingMap_(facetGridId, bulkGridId)[lowDimElemIdx];
 
-            // find the scvfs in the embedments coinciding with the low dim element
+            // find the scvfs in the adjoined entities coinciding with the low dim element
             // since the bulk domain uses tpfa, there is always only going to be one scvf
-            for (auto bulkElemIdx : embedments)
+            for (auto bulkElemIdx : adjoinedEntityIndices)
             {
                 const auto bulkElement = bulkFvGridGeometry.element(bulkElemIdx);
 
@@ -98,7 +98,9 @@ public:
                     // of the outside scv indices is in the set of embedments
                     if (!scvf.boundary())
                     {
-                        if (std::find(embedments.begin(), embedments.end(), scvf.outsideScvIdx()) != embedments.end())
+                        if ( std::find(adjoinedEntityIndices.begin(),
+                                       adjoinedEntityIndices.end(),
+                                       scvf.outsideScvIdx()) != adjoinedEntityIndices.end() )
                         {
                             embeddedScvfIdx = scvf.index();
                             found = true; break;
@@ -145,12 +147,12 @@ public:
                 lowDimData.embedments.emplace_back( bulkElemIdx, std::vector<BulkIndexType>({embeddedScvfIdx}) );
             }
 
-            // embedments = coupling stencil for tpfa
-            lowDimData.couplingStencil = std::move(embedments);
+            // adjoint entity indices = coupling stencil for tpfa
+            lowDimData.couplingStencil = std::move(adjoinedEntityIndices);
         };
 
         // let the parent do the update subject to the execution policy defined above
-        ParentType::update_(bulkFvGridGeometry, lowDimFvGridGeometry, gridManager, addEmbedmentPolicy);
+        ParentType::update_(bulkFvGridGeometry, lowDimFvGridGeometry, embeddings, addCouplingEntryPolicy);
 
         // coupling stencils might not be unique if box is used in lowdim domain
         if (LowDimFVG::discMethod == DiscretizationMethod::box)

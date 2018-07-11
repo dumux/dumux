@@ -56,9 +56,9 @@ int main (int argc, char *argv[]) try
     // initialize parameter tree
     Dumux::Parameters::init(argc, argv);
 
+    // try to create a grid (from the given grid file or the input file)
     using BulkGrid = BULKGRIDTYPE;
     using FacetGrid = Dune::FoamGrid<1, 2>;
-
     using GridManager = Dumux::FacetCouplingGridManager<BulkGrid, FacetGrid>;
     GridManager gridManager;
     gridManager.init();
@@ -76,7 +76,7 @@ int main (int argc, char *argv[]) try
 
     // instantiate and update mapper for all domain combinations
     Dumux::FacetCouplingMapper<BulkFVGridGeometry, FacetFVGridGeometry> mapper;
-    mapper.update(bulkFvGeometry, facetFvGeometry, gridManager);
+    mapper.update(bulkFvGeometry, facetFvGeometry, gridManager.getEmbeddings());
 
     constexpr auto bulkDomainId = Dune::index_constant<0>();
     constexpr auto facetDomainId = Dune::index_constant<1>();

@@ -34,77 +34,73 @@ namespace Dumux {
 /*!
  * \ingroup MultiDomain
  * \ingroup FacetCoupling
- * \brief Adapter to be plugged on top of a grid creator that allows for obtaining
- *        information on a d-dimensional grid for entities of a (d-1)-dimensional
- *        grid. This lower-dimensional grid is assumed to be facet-conforming to the
- *        d-dimensional grid. This class can be used in the context of models where
- *        a sub-domain lives on the facets of a bulk grid.
+ * \brief Adapter that  allows retrieving information on a d-dimensional grid for
+ *        entities of a (d-1)-dimensional grid. This lower-dimensional grid is
+ *        assumed to be facet-conforming to the d-dimensional grid. This class
+ *        can be used in the context of models where a sub-domain lives on the
+ *        facets of a bulk grid.
  *
- * \tparam GridManager A grid manager containing a hierarchy of facet-conforming grids.
+ * \tparam Embeddings Class containing the embedments of entites between grids of codim 1
  * \tparam bulkGridId The grid id of the d-dimensional grid within the hierarchy
  * \tparam facetGridId The grid id of the (d-1)-dimensional grid within the hierarchy
  */
-template<class GridManager, int bulkGridId = 0, int facetGridId = 1>
+template<class Embeddings, int bulkGridId = 0, int facetGridId = 1>
 class CodimOneGridAdapter
 {
     // Extract some types of the facet-conforming grid of codimension one
-    using FacetGrid = typename GridManager::template Grid<facetGridId>;
-    using FacetGridView = typename FacetGrid::LeafGridView;
-    using FacetGridVertex = typename FacetGridView::template Codim<FacetGrid::dimension>::Entity;
+    using FacetGridView = typename Embeddings::template GridView<facetGridId>;
+    using FacetGridVertex = typename FacetGridView::template Codim<FacetGridView::dimension>::Entity;
     using FacetGridElement = typename FacetGridView::template Codim<0>::Entity;
     using FacetGridIndexType = typename FacetGridView::IndexSet::IndexType;
 
     // Extract some types of the bulk grid
-    using BulkGrid = typename GridManager::template Grid<bulkGridId>;
-    using BulkGridView = typename BulkGrid::LeafGridView;
+    using BulkGridView = typename Embeddings::template GridView<bulkGridId>;
     using BulkMapper = Dune::MultipleCodimMultipleGeomTypeMapper<BulkGridView>;
-    using BulkReferenceElements = typename Dune::ReferenceElements<typename BulkGridView::ctype, BulkGrid::dimension>;
+    using BulkReferenceElements = typename Dune::ReferenceElements<typename BulkGridView::ctype, BulkGridView::dimension>;
     using BulkGridElement = typename BulkGridView::template Codim<0>::Entity;
     using BulkGridIntersection = typename BulkGridView::Intersection;
-    using BulkGridVertex = typename BulkGridView::template Codim<BulkGrid::dimension>::Entity;
+    using BulkGridVertex = typename BulkGridView::template Codim<BulkGridView::dimension>::Entity;
     using BulkIndexType = typename BulkGridView::IndexSet::IndexType;
 
     // Find out if the given bulk grid is the one with highest dimensionality among the created grids
-    static constexpr bool bulkHasHighestDimension = (int(BulkGrid::dimension) == GridManager::bulkDim);
+    static constexpr bool bulkHasHighestDimension = (int(BulkGridView::dimension) == Embeddings::bulkDim);
 
     // check if provided id combination makes sense
-    static_assert( int(FacetGrid::dimension) == int(BulkGrid::dimension) - 1,
+    static_assert( int(FacetGridView::dimension) == int(BulkGridView::dimension) - 1,
                    "Grid dimension mismatch! Please check the provided domain ids!" );
-    static_assert( int(FacetGrid::dimensionworld) == int(BulkGrid::dimensionworld),
+    static_assert( int(FacetGridView::dimensionworld) == int(BulkGridView::dimensionworld),
                    "Grid world dimension mismatch! All grids must have the same world dimension" );
 
 public:
 
     //! The constructor
-    CodimOneGridAdapter(const GridManager& gridManager)
-    : gridManagerPtr_(&gridManager)
-    , bulkVertexMapper_(gridManager.template grid<bulkGridId>().leafGridView(), Dune::mcmgVertexLayout())
+    CodimOneGridAdapter(std::shared_ptr<const Embeddings> embeddings)
+    : embeddingsPtr_(embeddings)
+    , bulkVertexMapper_(embeddings->template gridView<bulkGridId>(), Dune::mcmgVertexLayout())
     {
         // bulk insertion to grid index map
-        const auto& bulkGridView = gridManager.template grid<bulkGridId>().leafGridView();
-        const auto& bulkGridFactory = gridManagerPtr_->template gridFactory<bulkGridId>();
-        bulkInsertionToGridVIdx_.resize(bulkGridView.size(BulkGrid::dimension));
+        const auto& bulkGridView = embeddings->template gridView<bulkGridId>();
+        bulkInsertionToGridVIdx_.resize(bulkGridView.size(BulkGridView::dimension));
         for (const auto& v : vertices(bulkGridView))
-            bulkInsertionToGridVIdx_[ bulkGridFactory.insertionIndex(v) ] = bulkVertexMapper_.index(v);
+            bulkInsertionToGridVIdx_[embeddings->template insertionIndex<bulkGridId>(v)] = bulkVertexMapper_.index(v);
 
         // maybe set up index map from hierachy insertion to bulk insertion indices
-        makeBulkIndexMap_(gridManager);
+        makeBulkIndexMap_();
 
         // determine which bulk vertices lie on facet elements
-        bulkVertexIsOnFacetGrid_.resize(bulkGridView.size(BulkGrid::dimension), false);
-        const auto& facetGridView = gridManager.template grid<facetGridId>().leafGridView();
-        const auto& facetGridFactory = gridManager.template gridFactory<facetGridId>();
+        bulkVertexIsOnFacetGrid_.resize(bulkGridView.size(BulkGridView::dimension), false);
+        const auto& facetGridView = embeddings->template gridView<facetGridId>();
         for (const auto& v : vertices(facetGridView))
         {
-            const auto insIdx = facetGridFactory.insertionIndex(v);
-            const auto highestLevelInsIdx = gridManager.lowDimVertexIndices(facetGridId)[insIdx];
+            const auto insIdx = embeddings->template insertionIndex<facetGridId>(v);
+            const auto highestLevelInsIdx = embeddings->lowDimVertexIndices(facetGridId)[insIdx];
             const auto bulkGridIdx = getBulkGridVertexIndex_(highestLevelInsIdx);
             bulkVertexIsOnFacetGrid_[ bulkGridIdx ] = true;
         }
 
         // determine the bulk vertex indices that make up facet elements & connectivity
         facetElementCorners_.resize(facetGridView.size(0));
-        facetElementsAtBulkVertex_.resize(bulkGridView.size(BulkGrid::dimension));
+        facetElementsAtBulkVertex_.resize(bulkGridView.size(BulkGridView::dimension));
 
         std::size_t facetElementCounter = 0;
         for (const auto& element : elements(facetGridView))
@@ -112,10 +108,10 @@ public:
             if (isEmbedded(element))
             {
                 // obtain the bulk vertex indices of the corners of this element
-                const auto numCorners = element.subEntities(FacetGrid::dimension);
+                const auto numCorners = element.subEntities(FacetGridView::dimension);
                 std::vector<BulkIndexType> cornerIndices(numCorners);
                 for (int i = 0; i < numCorners; ++i)
-                    cornerIndices[i] = bulkGridVertexIndex(element.template subEntity<FacetGrid::dimension>(i));
+                    cornerIndices[i] = bulkGridVertexIndex(element.template subEntity<FacetGridView::dimension>(i));
 
                 // update connectivity map facetVertex -> facetElements
                 for (auto bulkVIdx : cornerIndices)
@@ -138,8 +134,8 @@ public:
      */
     BulkIndexType bulkGridVertexIndex(const FacetGridVertex& v) const
     {
-        const auto insIdx = gridManagerPtr_->template gridFactory<facetGridId>().insertionIndex(v);
-        const auto highestLevelInsIdx = gridManagerPtr_->lowDimVertexIndices(facetGridId)[insIdx];
+        const auto insIdx = embeddingsPtr_->template insertionIndex<facetGridId>(v);
+        const auto highestLevelInsIdx = embeddingsPtr_->lowDimVertexIndices(facetGridId)[insIdx];
         return getBulkGridVertexIndex_(highestLevelInsIdx);
     }
 
@@ -149,7 +145,7 @@ public:
      */
     bool isOnFacetGrid(const BulkGridVertex& v) const
     {
-        const auto bulkInsIdx = gridManagerPtr_->template gridFactory<bulkGridId>().insertionIndex(v);
+        const auto bulkInsIdx = embeddingsPtr_->template insertionIndex<bulkGridId>(v);
         const auto bulkVIdx = bulkInsertionToGridVIdx_[bulkInsIdx];
         return bulkVertexIsOnFacetGrid_[bulkVIdx];
     }
@@ -170,8 +166,8 @@ public:
         std::vector<BulkIndexType> cornerIndices(numCorners);
         for (int i = 0; i < numCorners; ++i)
             cornerIndices[i] = bulkVertexMapper_.subIndex( element,
-                                                           refElement.subEntity(facetIdx, 1, i, BulkGrid::dimension),
-                                                           BulkGrid::dimension );
+                                                           refElement.subEntity(facetIdx, 1, i, BulkGridView::dimension),
+                                                           BulkGridView::dimension );
 
         return composeFacetElement(cornerIndices);
     }
@@ -230,29 +226,29 @@ public:
      *        given (d-1)-dimensional element is embedded in
      */
     std::size_t numEmbedments(const FacetGridElement& e) const
-    { return gridManagerPtr_->template embedmentEntityIndices<facetGridId>(e).size(); }
+    { return embeddingsPtr_->template adjoinedEntityIndices<facetGridId>(e).size(); }
 
 private:
     //! Determine map from the insertion idx of the highest-dimensional grid to bulk insertion idx
     template< bool isHighest = bulkHasHighestDimension, std::enable_if_t<!isHighest, int> = 0 >
-    void makeBulkIndexMap_(const GridManager& gridManager)
+    void makeBulkIndexMap_()
     {
         // obtain highest-dimensional grid using the bulkId from grid creator
-        const auto& highestLevelGridView = gridManager.template grid<GridManager::bulkGridId>().leafGridView();
-        highestLevelInsertionToBulkInsertionIdx_.resize(highestLevelGridView.size(GridManager::bulkDim));
+        const auto& highestLevelGridView = embeddingsPtr_->template gridView<Embeddings::bulkGridId>();
+        highestLevelInsertionToBulkInsertionIdx_.resize(highestLevelGridView.size(Embeddings::bulkDim));
 
         // indices in grid creator stem from the grid file, which has one set of vertices
         // for the entire hierarchy. Thus, the vertex indices we obtain from the grid creator
         // that make up this bulk grid (lower-dimensional within the hierarchy), correspond to
         // the highest-dimensional grid's insertion indices.
-        const auto& vertexInsIndices = gridManager.lowDimVertexIndices(bulkGridId);
+        const auto& vertexInsIndices = embeddingsPtr_->lowDimVertexIndices(bulkGridId);
         for (std::size_t insIdx = 0; insIdx < vertexInsIndices.size(); ++insIdx)
             highestLevelInsertionToBulkInsertionIdx_[ vertexInsIndices[insIdx] ] = insIdx;
     }
 
     //! If the given bulk grid is on the highest level of grid creation, we do not need the map
     template< bool isHighest = bulkHasHighestDimension, std::enable_if_t<isHighest, int> = 0 >
-    void makeBulkIndexMap_(const GridManager& gridManager)
+    void makeBulkIndexMap_()
     {}
 
     //! Obtains the bulk grid vertex index from a given insertion index on the hierarchy
@@ -263,8 +259,8 @@ private:
                : bulkInsertionToGridVIdx_[ highestLevelInsertionToBulkInsertionIdx_[ highestLevelInsertionIdx] ];
     }
 
-    // pointer to the grid creator
-    const GridManager* gridManagerPtr_;
+    // shared pointer to the embedment data
+    std::shared_ptr<const Embeddings> embeddingsPtr_;
 
     // vertex mapper of the bulk grid
     BulkMapper bulkVertexMapper_;

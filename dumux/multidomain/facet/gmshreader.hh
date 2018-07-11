@@ -53,16 +53,16 @@ namespace Dumux {
  *       indexing in your grid file in that case.
  *
  * \tparam BulkGrid The type of the highest-dimensional grid in the hierachy
- * \tparam IndexType The index type to be used
  * \tparam numGrids The number of grids to be considered in the hierarchy
  */
-template <class BulkGrid, class IndexType, int numGrids>
+template <class BulkGrid, int numGrids>
 class FacetCouplingGmshReader
 {
     // extract some necessary info from bulk grid
     static constexpr int bulkDim = BulkGrid::dimension;
     static constexpr int bulkDimWorld = BulkGrid::dimensionworld;
     using ctype = typename BulkGrid::ctype;
+    using IndexType = typename BulkGrid::LeafGridView::IndexSet::IndexType;
     using GlobalPosition = Dune::FieldVector<ctype, bulkDimWorld>;
 
     // determine minimum dimension for which a grid is created
@@ -322,10 +322,10 @@ public:
     }
 
     //! Returns the maps of the embedments
-    std::unordered_map< IndexType, std::vector<IndexType> >& embedmentMap(std::size_t id)
+    std::unordered_map< IndexType, std::vector<IndexType> >& adjoinedEntityMap(std::size_t id)
     {
         assert(id < numGrids && "Index exceeds number of grids provided");
-        return embedmentMaps_[id];
+        return adjoinedEntityMaps_[id];
     }
 
 private:
@@ -398,7 +398,7 @@ private:
                     if ( std::all_of(e.cornerIndices.begin(), e.cornerIndices.end(), vertIsContained) )
                     {
                         embeddedEntityMaps_[gridIdx][curElemIdx].push_back(i);
-                        embedmentMaps_[embeddedGridIdx][i].push_back(curElemIdx);
+                        adjoinedEntityMaps_[embeddedGridIdx][i].push_back(curElemIdx);
                     }
                 }
 
@@ -415,7 +415,7 @@ private:
 
     //! data on connectivity between the grids
     std::array< std::unordered_map< IndexType, std::vector<IndexType> >, numGrids > embeddedEntityMaps_;
-    std::array< std::unordered_map< IndexType, std::vector<IndexType> >, numGrids > embedmentMaps_;
+    std::array< std::unordered_map< IndexType, std::vector<IndexType> >, numGrids > adjoinedEntityMaps_;
 
     //! data on domain and boundary markers
     std::array< std::vector<int>, numGrids > elementMarkerMaps_;

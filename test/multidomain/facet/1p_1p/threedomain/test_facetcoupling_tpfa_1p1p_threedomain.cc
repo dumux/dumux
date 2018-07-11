@@ -90,9 +90,7 @@ int main(int argc, char** argv) try
     // initialize parameter tree
     Parameters::init(argc, argv);
 
-    //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
-    /////////////////////////////////////////////////////////////////////
     using BulkProblemTypeTag = TTAG(OnePBulkTpfa);
     using FacetProblemTypeTag = TTAG(OnePFacetTpfa);
     using EdgeProblemTypeTag = TTAG(OnePEdgeTpfa);
@@ -154,7 +152,7 @@ int main(int argc, char** argv) try
     // the coupling mapper
     using CouplingMapper = typename TestTraits::CouplingMapper;
     auto couplingMapper = std::make_shared<CouplingMapper>();
-    couplingMapper->update(*bulkFvGridGeometry, *facetFvGridGeometry, *edgeFvGridGeometry, gridManager);
+    couplingMapper->update(*bulkFvGridGeometry, *facetFvGridGeometry, *edgeFvGridGeometry, gridManager.getEmbeddings());
 
     // the coupling manager
     using CouplingManager = typename TestTraits::CouplingManager;

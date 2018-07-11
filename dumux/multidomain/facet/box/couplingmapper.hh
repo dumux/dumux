@@ -69,16 +69,16 @@ public:
      *
      * \param bulkFvGridGeometry The finite-volume grid geometry of the bulk grid
      * \param lowDimFvGridGeometry The finite-volume grid geometry of the lower-dimensional grid
-     * \param gridManager Class that contains the embedments and allows obtaining entity insertion indices
+     * \param embeddings Class that contains the embedments among the grids and entity insertion indices
      */
-    template< class GridManager >
+    template< class Embeddings >
     void update(const BulkFVG& bulkFvGridGeometry,
                 const LowDimFVG& lowDimFvGridGeometry,
-                const GridManager& gridManager)
+                std::shared_ptr<const Embeddings> embeddings)
     {
         // forward to update function with instantiated vertex adapter
-        using GridAdapter = CodimOneGridAdapter<GridManager, bulkGridId, facetGridId>;
-        update(bulkFvGridGeometry, lowDimFvGridGeometry, gridManager, GridAdapter{gridManager});
+        using GridAdapter = CodimOneGridAdapter<Embeddings, bulkGridId, facetGridId>;
+        update(bulkFvGridGeometry, lowDimFvGridGeometry, embeddings, GridAdapter(embeddings));
     }
     /*!
      * \brief Update coupling maps. This is the standard
@@ -86,20 +86,20 @@ public:
      *
      * \param bulkFvGridGeometry The finite-volume grid geometry of the bulk grid
      * \param lowDimFvGridGeometry The finite-volume grid geometry of the lower-dimensional grid
-     * \param gridManager Class that contains the embedments and allows obtaining entity insertion indices
+     * \param embeddings Class that contains the embedments among the grids and entity insertion indices
      * \param codimOneGridAdapter Allows direct access to data on the bulk grid for lowdim grid entities
      */
-    template< class GridManager, class CodimOneGridAdapter >
+    template< class Embeddings, class CodimOneGridAdapter >
     void update(const BulkFVG& bulkFvGridGeometry,
                 const LowDimFVG& lowDimFvGridGeometry,
-                const GridManager& gridManager,
+                std::shared_ptr<const Embeddings> embeddings,
                 const CodimOneGridAdapter& codimOneGridAdapter)
     {
-        // define the execution policy how to add map entries from an embedment
-        auto addEmbedmentPolicy = [&] (auto&& embedments,
-                                       const LowDimElement& lowDimElement,
-                                       const LowDimFVG& lowDimFvGridGeometry,
-                                       const BulkFVG& bulkFvGridGeometry)
+        // define the policy how to add map entries for given lowdim element and adjoined entity indices
+        auto addCouplingEntryPolicy = [&] (auto&& adjoinedEntityIndices,
+                                           const LowDimElement& lowDimElement,
+                                           const LowDimFVG& lowDimFvGridGeometry,
+                                           const BulkFVG& bulkFvGridGeometry)
         {
             using LowDimIndexType = typename LowDimGridView::IndexSet::IndexType;
             using BulkIndexType = typename BulkGridView::IndexSet::IndexType;
@@ -115,10 +115,10 @@ public:
             for (int i = 0; i < numElementCorners; ++i)
                 elementCorners[i] = codimOneGridAdapter.bulkGridVertexIndex(lowDimElement.template subEntity<lowDimDim>(i));
 
-            // save unsorted set of corner indices and search scvfs in embedments
+            // save unsorted set of corner indices and search scvfs in adjoined entities
             const auto unsortedElemCorners = elementCorners;
             std::sort(elementCorners.begin(), elementCorners.end());
-            for (auto bulkElemIdx : embedments)
+            for (auto bulkElemIdx : adjoinedEntityIndices)
             {
                 const auto bulkElement = bulkFvGridGeometry.element(bulkElemIdx);
                 const auto bulkRefElem = BulkReferenceElements::general(bulkElement.geometry().type());
@@ -204,7 +204,7 @@ public:
         };
 
         // let the parent do the update subject to the execution policy defined above
-        ParentType::update_(bulkFvGridGeometry, lowDimFvGridGeometry, gridManager, addEmbedmentPolicy);
+        ParentType::update_(bulkFvGridGeometry, lowDimFvGridGeometry, embeddings, addCouplingEntryPolicy);
 
         // coupling stencils might not be unique with the policy above
         auto makeStencilUnique = [] (auto& data)

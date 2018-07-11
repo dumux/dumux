@@ -50,10 +50,10 @@ int main (int argc, char *argv[]) try
     // parse command line argument parameters
     Dumux::Parameters::init(argc, argv);
 
+    // make grid from input file
     using BulkGrid = BULKGRIDTYPE;
     using FacetGrid = Dune::FoamGrid<2, 3>;
     using EdgeGrid = Dune::FoamGrid<1, 3>;
-
     using GridManager = Dumux::FacetCouplingGridManager<BulkGrid, FacetGrid, EdgeGrid>;
     GridManager gridManager;
     gridManager.init();
@@ -116,7 +116,7 @@ int main (int argc, char *argv[]) try
                 if (gridManager.getGridData()->wasInserted<0>(is))
                 {
                     bSegmentCount++;
-                    const auto insIdx = gridManager.gridFactory<0>().insertionIndex(is);
+                    const auto insIdx = gridManager.getEmbeddings()->insertionIndex<0>(is);
                     const auto marker = gridManager.getGridData()->getBoundaryDomainMarker<0>(insIdx);
 
                     if (Dune::FloatCmp::eq(n[0], 1.0, 1e-6)) // pos x-dir
@@ -174,16 +174,16 @@ int main (int argc, char *argv[]) try
     if (negZCount != 40) DUNE_THROW(Dune::InvalidStateException, "Found " << negZCount << " instead of 40 boundary segments in neg z-direction");
 
     //! check if we found the right number of embeddings
-    const auto& edgeEmbeddings = gridManager.embeddedEntityMap(2);
-    const auto& edgeEmbedments = gridManager.embedmentMap(2);
+    const auto& edgeEmbeddings = gridManager.getEmbeddings()->embeddedEntityMap(2);
+    const auto& edgeEmbedments = gridManager.getEmbeddings()->adjoinedEntityMap(2);
     if (edgeEmbeddings.size() != 0) DUNE_THROW(Dune::InvalidStateException, "The grid with lowest dimension can't have embedded entities");
     if (edgeEmbedments.size() != 2) DUNE_THROW(Dune::InvalidStateException, "Found " << edgeEmbedments.size() << " instead of 2 edge element embedments");
     for (const auto& embedments : edgeEmbedments)
         if (embedments.second.size() != 4)
             DUNE_THROW(Dune::InvalidStateException, "edge element is embedded in " << embedments.second.size() << " facet elements instead of 4");
 
-    const auto& facetEmbeddings = gridManager.embeddedEntityMap(1);
-    const auto& facetEmbedments = gridManager.embedmentMap(1);
+    const auto& facetEmbeddings = gridManager.getEmbeddings()->embeddedEntityMap(1);
+    const auto& facetEmbedments = gridManager.getEmbeddings()->adjoinedEntityMap(1);
     if (facetEmbeddings.size() != 8) DUNE_THROW(Dune::InvalidStateException, "Found " << facetEmbeddings.size() << " instead of 8 embeddings in facet grid");
     if (facetEmbedments.size() != 32) DUNE_THROW(Dune::InvalidStateException, "Found " << facetEmbedments.size() << " instead of 32 facet element embedments");
     for (const auto& embedments : facetEmbedments)
@@ -193,8 +193,8 @@ int main (int argc, char *argv[]) try
         if (embeddings.second.size() != 1)
             DUNE_THROW(Dune::InvalidStateException, "facet element has " << embeddings.second.size() << " embedded entities instead of 1");
 
-    const auto& bulkEmbeddings = gridManager.embeddedEntityMap(0);
-    const auto& bulkEmbedments = gridManager.embedmentMap(0);
+    const auto& bulkEmbeddings = gridManager.getEmbeddings()->embeddedEntityMap(0);
+    const auto& bulkEmbedments = gridManager.getEmbeddings()->adjoinedEntityMap(0);
     if (bulkEmbeddings.size() != 56) DUNE_THROW(Dune::InvalidStateException, "Found " << bulkEmbeddings.size() << " instead of 56 embeddings in bulk grid");
     if (bulkEmbedments.size() != 0) DUNE_THROW(Dune::InvalidStateException, "The grid with highest dimension can't have embedments");
 
@@ -216,14 +216,14 @@ int main (int argc, char *argv[]) try
     doubleEmbeddings = 0;
     for (const auto& e : elements(bulkGridView))
     {
-        if (gridManager.embeddedEntityIndices<0>(e).size() == 1)
+        if (gridManager.getEmbeddings()->embeddedEntityIndices<0>(e).size() == 1)
             singleEmbeddings++;
-        else if (gridManager.embeddedEntityIndices<0>(e).size() == 2)
+        else if (gridManager.getEmbeddings()->embeddedEntityIndices<0>(e).size() == 2)
             doubleEmbeddings++;
-        else if (gridManager.embeddedEntityIndices<0>(e).size() != 0)
+        else if (gridManager.getEmbeddings()->embeddedEntityIndices<0>(e).size() != 0)
             DUNE_THROW(Dune::InvalidStateException, "wrong number of embeddings!");
 
-        if (gridManager.embedmentEntityIndices<0>(e).size() != 0)
+        if (gridManager.getEmbeddings()->adjoinedEntityIndices<0>(e).size() != 0)
             DUNE_THROW(Dune::InvalidStateException, "bulk grid can't be embedded anywhere!");
     }
 
@@ -234,14 +234,14 @@ int main (int argc, char *argv[]) try
     std::size_t embedments = 0;
     for (const auto& e : elements(facetGridView))
     {
-        if (gridManager.embeddedEntityIndices<1>(e).size() == 1)
+        if (gridManager.getEmbeddings()->embeddedEntityIndices<1>(e).size() == 1)
             embeddings++;
-        else if (gridManager.embeddedEntityIndices<1>(e).size() != 0)
+        else if (gridManager.getEmbeddings()->embeddedEntityIndices<1>(e).size() != 0)
             DUNE_THROW(Dune::InvalidStateException, "wrong number of embeddings!");
 
-        if (gridManager.embedmentEntityIndices<1>(e).size() == 2)
+        if (gridManager.getEmbeddings()->adjoinedEntityIndices<1>(e).size() == 2)
             embedments++;
-        else if (gridManager.embedmentEntityIndices<1>(e).size() != 0)
+        else if (gridManager.getEmbeddings()->adjoinedEntityIndices<1>(e).size() != 0)
             DUNE_THROW(Dune::InvalidStateException, "wrong number of embedments!");
     }
 
@@ -252,12 +252,12 @@ int main (int argc, char *argv[]) try
     embedments = 0;
     for (const auto& e : elements(edgeGridView))
     {
-        if (gridManager.embeddedEntityIndices<2>(e).size() != 0)
+        if (gridManager.getEmbeddings()->embeddedEntityIndices<2>(e).size() != 0)
             DUNE_THROW(Dune::InvalidStateException, "wrong number of embeddings!");
 
-        if (gridManager.embedmentEntityIndices<2>(e).size() == 4)
+        if (gridManager.getEmbeddings()->adjoinedEntityIndices<2>(e).size() == 4)
             embedments++;
-        else if (gridManager.embedmentEntityIndices<2>(e).size() != 0)
+        else if (gridManager.getEmbeddings()->adjoinedEntityIndices<2>(e).size() != 0)
             DUNE_THROW(Dune::InvalidStateException, "wrong number of embedments!");
     }
 
