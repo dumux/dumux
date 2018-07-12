@@ -126,8 +126,20 @@ auto loadSolutionFromVtuFile(const std::string fileName,
 template<class ModelTraits, class FluidSystem>
 std::string primaryVariableName(int pvIdx, int state)
 {
-    if (haveParam("LoadSolution.PrimaryVariableNames"))
-        DUNE_THROW(Dune::NotImplemented, "reading PrimaryVariableNames from input file");
+    using std::pow;
+    static auto numStates = pow(2, ModelTraits::numPhases()) - 1;
+    const auto paramNameWithState = "LoadSolution.PriVarNamesState" + std::to_string(state);
+
+    if (haveParam("LoadSolution.PriVarNames"))
+    {
+        DUNE_THROW(Dune::NotImplemented, "please provide LoadSolution.PriVarNamesState1..." << numStates
+                   << " or remove LoadSolution.PriVarNames to use default names");
+    }
+    else if (haveParam(paramNameWithState))
+    {
+        const auto pvNames = getParam<std::vector<std::string>>(paramNameWithState);
+        return pvNames[pvIdx];
+    }
     else
         return ModelTraits::template primaryVariableName<FluidSystem>(pvIdx, state);
 }
@@ -139,9 +151,9 @@ std::string primaryVariableName(int pvIdx, int state)
 template<class ModelTraits>
 std::string primaryVariableName(int pvIdx)
 {
-    if (haveParam("LoadSolution.PrimaryVariableNames"))
+    if (haveParam("LoadSolution.PriVarNames"))
     {
-        static auto pvNames = getParam<std::vector<std::string>>("LoadSolution.PrimaryVariableNames");
+        static auto pvNames = getParam<std::vector<std::string>>("LoadSolution.PriVarNames");
         return pvNames[pvIdx];
     }
     else
