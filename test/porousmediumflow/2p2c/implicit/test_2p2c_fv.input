@@ -19,3 +19,8 @@ PressureLow = 1e5 # [Pa] lower pressure limit for tabularization
 PressureHigh = 3e7 # [Pa] upper pressure limit for tabularization
 TemperatureLow = 312.15 # [Pa] lower temperature limit for tabularization
 TemperatureHigh = 314.15 # [Pa] upper temperature limit for tabularization
+
+[LoadSolution]
+PriVarNamesState1 = pw x_w^N2
+PriVarNamesState2 = pw x_n^H2O
+PriVarNamesState3 = pw Sn
