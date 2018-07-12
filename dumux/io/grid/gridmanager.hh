@@ -67,6 +67,12 @@
 #include <dune/foamgrid/dgffoam.hh>
 #endif
 
+// SPGrid specific includes
+#if HAVE_DUNE_SPGRID
+#include <dune/grid/spgrid.hh>
+#include <dune/grid/spgrid/dgfparser.hh>
+#endif
+
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 
@@ -1279,6 +1285,47 @@ public:
 };
 
 #endif // HAVE_DUNE_FOAMGRID
+
+#if HAVE_DUNE_SPGRID
+
+/*!
+ * \brief Provides a grid manager for SPGrid
+ *
+ * The following keys are recognized:
+ * - File : A DGF or gmsh file to load from, type detection by file extension
+ *
+ */
+template<class ct, int dim, template< int > class Ref, class Comm>
+class GridManager<Dune::SPGrid<ct, dim, Ref, Comm>>
+: public GridManagerBase<Dune::SPGrid<ct, dim, Ref, Comm>>
+{
+public:
+    using Grid = Dune::SPGrid<ct, dim, Ref, Comm>;
+    using ParentType = GridManagerBase<Grid>;
+
+    /*!
+     * \brief Make the grid. This is implemented by specializations of this method.
+     */
+    void init(const std::string& modelParamGroup = "")
+    {
+        // try to create it from file
+        if (haveParamInGroup(modelParamGroup, "Grid.File"))
+        {
+            ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
+            ParentType::maybeRefineGrid(modelParamGroup);
+            ParentType::loadBalance();
+            return;
+        }
+        // Didn't find a way to construct the grid
+        else
+        {
+            const auto prefix = modelParamGroup == "" ? modelParamGroup : modelParamGroup + ".";
+            DUNE_THROW(ParameterException, "Please supply a grid file in " << prefix + "Grid.File");
+        }
+    }
+};
+
+#endif // HAVE_DUNE_SPGRID
 
 } // end namespace Dumux
 
