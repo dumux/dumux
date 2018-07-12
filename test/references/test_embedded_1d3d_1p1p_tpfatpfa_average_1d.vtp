@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<VTKFile type="PolyData" version="0.1" byte_order="LittleEndian">
+  <PolyData>
+    <Piece NumberOfLines="20" NumberOfPoints="21">
+      <CellData Scalars="pressure">
+        <DataArray type="Float32" Name="pressure" NumberOfComponents="1" format="ascii">
+          1.02519 1.07551 1.12578 1.17601 1.22619 1.27633 1.32643 1.3765 1.42653 1.47653 1.52651 1.57645
+          1.62637 1.67626 1.72613 1.77598 1.8258 1.8756 1.92538 1.97513
+        </DataArray>
+        <DataArray type="Float32" Name="process rank" NumberOfComponents="1" format="ascii">
+          0 0 0 0 0 0 0 0 0 0 0 0
+          0 0 0 0 0 0 0 0
+        </DataArray>
+        <DataArray type="Float32" Name="exact pressure" NumberOfComponents="1" format="ascii">
+          1.025 1.075 1.125 1.175 1.225 1.275 1.325 1.375 1.425 1.475 1.525 1.575
+          1.625 1.675 1.725 1.775 1.825 1.875 1.925 1.975
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" Name="Coordinates" NumberOfComponents="3" format="ascii">
+          0 0 0 0 0 0.05 0 0 0.1 0 0 0.15
+          0 0 0.2 0 0 0.25 0 0 0.3 0 0 0.35
+          0 0 0.4 0 0 0.45 0 0 0.5 0 0 0.55
+          0 0 0.6 0 0 0.65 0 0 0.7 0 0 0.75
+          0 0 0.8 0 0 0.85 0 0 0.9 0 0 0.95
+          0 0 1
+        </DataArray>
+      </Points>
+      <Lines>
+        <DataArray type="Int32" Name="connectivity" NumberOfComponents="1" format="ascii">
+          0 1 1 2 2 3 3 4 4 5 5 6
+          6 7 7 8 8 9 9 10 10 11 11 12
+          12 13 13 14 14 15 15 16 16 17 17 18
+          18 19 19 20
+        </DataArray>
+        <DataArray type="Int32" Name="offsets" NumberOfComponents="1" format="ascii">
+          2 4 6 8 10 12 14 16 18 20 22 24
+          26 28 30 32 34 36 38 40
+        </DataArray>
+      </Lines>
+    </Piece>
+  </PolyData>
+</VTKFile>

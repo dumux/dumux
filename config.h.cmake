@@ -58,6 +58,12 @@
 /* Define path to gstat executable */
 #cmakedefine GSTAT_EXECUTABLE "@GSTAT_EXECUTABLE@"
 
+/* Define to 1 if gmsh was found */
+#cmakedefine HAVE_GMSH 1
+
+/* Define path to gmsh executable */
+#cmakedefine GMSH_EXECUTABLE "@GMSH_EXECUTABLE@"
+
 /* Defines whether pvpython has been found */
 #cmakedefine HAVE_PVPYTHON 1
 

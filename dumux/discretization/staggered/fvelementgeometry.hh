@@ -70,6 +70,12 @@ public:
     StaggeredFVElementGeometry(const FVGridGeometry& fvGridGeometry)
     : fvGridGeometryPtr_(&fvGridGeometry) {}
 
+    //! Constructor getting a auxiliary cell center of face specific FvGridGeometry type.
+    //! Needed for the multi-domain framework.
+    template<class CellCenterOrFaceFVGridGeometry>
+    StaggeredFVElementGeometry(const CellCenterOrFaceFVGridGeometry& fvGridGeometry)
+    : fvGridGeometryPtr_(&fvGridGeometry.actualfvGridGeometry()) {}
+
     //! Get an elment sub control volume with a global scv index
     //! We separate element and neighbor scvs to speed up mapping
     const SubControlVolume& scv(IndexType scvIdx) const
