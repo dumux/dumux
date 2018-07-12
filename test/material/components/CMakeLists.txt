@@ -18,10 +18,40 @@ dune_add_test(NAME plot_brine
               COMMAND ./plot_component
               CMD_ARGS "Brine")
 
+dune_add_test(NAME plot_calcite
+            TARGET plot_component
+            COMMAND ./plot_component
+            CMD_ARGS "Calcite")
+
+dune_add_test(NAME plot_calciumion
+              TARGET plot_component
+              COMMAND ./plot_component
+              CMD_ARGS "CalciumIon")
+
+dune_add_test(NAME plot_cao
+            TARGET plot_component
+            COMMAND ./plot_component
+            CMD_ARGS "CaO")
+
+dune_add_test(NAME plot_cao2h2
+            TARGET plot_component
+            COMMAND ./plot_component
+            CMD_ARGS "CaO2H2")
+
+dune_add_test(NAME plot_carbonateion
+            TARGET plot_component
+            COMMAND ./plot_component
+            CMD_ARGS "CarbonateIon")
+
 dune_add_test(NAME plot_ch4
               TARGET plot_component
               COMMAND ./plot_component
               CMD_ARGS "CH4")
+
+dune_add_test(NAME plot_granite
+            TARGET plot_component
+            COMMAND ./plot_component
+            CMD_ARGS "Granite")
 
 dune_add_test(NAME plot_h2
               TARGET plot_component
@@ -47,6 +77,11 @@ dune_add_test(NAME plot_n2
               TARGET plot_component
               COMMAND ./plot_component
               CMD_ARGS "N2")
+
+dune_add_test(NAME plot_nacl
+            TARGET plot_component
+            COMMAND ./plot_component
+            CMD_ARGS "NaCl")
 
 dune_add_test(NAME plot_o2
               TARGET plot_component
