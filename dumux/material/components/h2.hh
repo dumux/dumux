@@ -30,7 +30,6 @@
 
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/gas.hh>
-#include <dumux/material/components/solid.hh>
 
 namespace Dumux {
 namespace Components {
@@ -45,7 +44,6 @@ template <class Scalar>
 class H2
 : public Components::Base<Scalar, H2<Scalar> >
 , public Components::Gas<Scalar, H2<Scalar> >
-, public Components::Solid<Scalar, H2<Scalar> >
 {
     using IdealGas = Dumux::IdealGas<Scalar>;
 

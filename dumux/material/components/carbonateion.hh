@@ -18,25 +18,49 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test the compoent traits
+ * \ingroup Components
+ * \brief A class for the CO3 ion properties.
  */
+#ifndef DUMUX_CO3_ION_HH
+#define DUMUX_CO3_ION_HH
 
-#include "config.h"
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/ion.hh>
 
-#include <type_traits>
+namespace Dumux {
+namespace Components {
 
-#include <dumux/material/components/air.hh>
-#include <dumux/material/components/componenttraits.hh>
-
-int main(int argc, char *argv[])
+/*!
+ * \ingroup Components
+ * \brief A class for the CO3 fluid properties.
+ */
+template <class Scalar>
+class CarbonateIon
+: public Components::Base<Scalar, CarbonateIon<Scalar> >
+, public Components::Ion<Scalar, CarbonateIon<Scalar> >
 {
-    using namespace Dumux;
+public:
+    /*!
+     * \brief A human readable name for the CO3 ion.
+     */
+    static std::string name()
+    { return "CO3-"; }
 
-    using Traits = ComponentTraits<Components::Air<double>>;
-    static_assert(Traits::hasGasState, "Air component is reported to have no gas state?!");
-    static_assert(!Traits::hasSolidState, "Air component is reported to implement a solid state?!");
-    static_assert(!Traits::hasLiquidState, "Air component is reported to implement a liquid state?!");
-    static_assert(!Traits::isIon, "Air component is reported to be an ion?!");
-    static_assert(std::is_same<double, Traits::Scalar>::value, "Scalar type not correctly reported!");
-}
+    /*!
+     * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the CO3 ion.
+     */
+    static constexpr Scalar molarMass()
+    { return 60.0092e-3; } // kg/mol
+
+    /*!
+     * \brief The charge balance of the CO3 ion.
+     */
+    static constexpr int charge()
+    { return -2; }
+
+};
+
+} // end namespace Components
+} // end namespace Dumux
+
+#endif

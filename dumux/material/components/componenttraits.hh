@@ -30,6 +30,7 @@
 #include <dumux/material/components/solid.hh>
 #include <dumux/material/components/liquid.hh>
 #include <dumux/material/components/gas.hh>
+#include <dumux/material/components/ion.hh>
 
 namespace Dumux {
 
@@ -46,6 +47,9 @@ struct ComponentTraits
 
     //! if the component implements a gaseous state
     static constexpr bool hasGasState = std::is_base_of<Components::Gas<Scalar, Component>, Component>::value;
+
+    //! if the component implements an ion
+    static constexpr bool isIon = std::is_base_of<Components::Ion<Scalar, Component>, Component>::value;
 };
 
 } // end namespace Dumux

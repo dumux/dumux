@@ -34,13 +34,20 @@
 #include <dumux/material/components/air.hh>
 #include <dumux/material/components/benzene.hh>
 #include <dumux/material/components/brine.hh>
+#include <dumux/material/components/calcite.hh>
+#include <dumux/material/components/calciumion.hh>
+#include <dumux/material/components/cao.hh>
+#include <dumux/material/components/cao2h2.hh>
+#include <dumux/material/components/carbonateion.hh>
 #include <dumux/material/components/ch4.hh>
 #include <dumux/material/components/co2.hh>
+#include <dumux/material/components/granite.hh>
 #include <dumux/material/components/h2.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/heavyoil.hh>
 #include <dumux/material/components/mesitylene.hh>
 #include <dumux/material/components/n2.hh>
+#include <dumux/material/components/nacl.hh>
 #include <dumux/material/components/o2.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/trichloroethene.hh>
@@ -76,6 +83,10 @@ struct checkGasEnth { template<class C> auto operator()(C&& c) -> decltype(C::te
 struct checkGasHeatCap { template<class C> auto operator()(C&& c) -> decltype(C::template gasHeatCapacity<DisableStaticAssert>(0.0, 0.0)) {} };
 struct checkGasVisc { template<class C> auto operator()(C&& c) -> decltype(C::template gasViscosity<DisableStaticAssert>(0.0, 0.0)) {} };
 struct checkGasThermCond { template<class C> auto operator()(C&& c) -> decltype(C::template gasThermalConductivity<DisableStaticAssert>(0.0, 0.0)) {} };
+struct checkSolDen { template<class C> auto operator()(C&& c) -> decltype(C::template solidDensity<DisableStaticAssert>(0.0, 0.0)) {} };
+struct checkSolHeatCap { template<class C> auto operator()(C&& c) -> decltype(C::template solidHeatCapacity<DisableStaticAssert>(0.0, 0.0)) {} };
+struct checkSolThermCond { template<class C> auto operator()(C&& c) -> decltype(C::template solidThermalConductivity<DisableStaticAssert>(0.0, 0.0)) {} };
+struct checkIonCharge { template<class C> auto operator()(C&& c) -> decltype(C::template charge<DisableStaticAssert>(0.0, 0.0)) {} };
 
 //! plot given values
 template<class Functor>
@@ -186,6 +197,38 @@ auto plotGasThermalConductivity(const vector<double>& T, double p, bool openPlot
     plot(f, T, p, C::name(), "gas", "thermal conductivity", "[J/(kg*K)]", openPlot);
 }
 
+template<class C, class hasNoDensityOverload = checkSolDen>
+auto plotSolidDensity(const vector<double>& T, double p, bool openPlot)
+-> typename std::enable_if_t<!decltype(isValid(hasNoDensityOverload{})(declval<C>()))::value && ComponentTraits<C>::hasSolidState, void>
+{
+    auto f = [] (auto T, auto p) { return C::solidDensity(T); };
+    plot(f, T, p, C::name(), "solid", "density", "[kg/^3]", openPlot);
+}
+
+template<class C, class hasNoHeatCapOverload = checkSolHeatCap>
+auto plotSolidHeatCapacity(const vector<double>& T, double p, bool openPlot)
+-> typename std::enable_if_t<!decltype(isValid(hasNoHeatCapOverload{})(declval<C>()))::value && ComponentTraits<C>::hasSolidState, void>
+{
+    auto f = [] (auto T, auto p) { return C::solidHeatCapacity(T); };
+    plot(f, T, p, C::name(), "solid", "heat capacity", "[J/(kg*K)]", openPlot);
+}
+
+template<class C, class hasNoThermCondOverload = checkSolThermCond>
+auto plotSolidThermalConductivity(const vector<double>& T, double p, bool openPlot)
+-> typename std::enable_if_t<!decltype(isValid(hasNoThermCondOverload{})(declval<C>()))::value && ComponentTraits<C>::hasSolidState, void>
+{
+    auto f = [] (auto T, auto p) { return C::solidThermalConductivity(T); };
+    plot(f, T, p, C::name(), "solid", "thermal conductivity", "[J/(kg*K)]", openPlot);
+}
+
+template<class C, class hasNoChargeOverload = checkIonCharge>
+auto plotIonCharge(const vector<double>& T, double p, bool openPlot)
+-> typename std::enable_if_t<!decltype(isValid(hasNoChargeOverload{})(declval<C>()))::value && ComponentTraits<C>::isIon, void>
+{
+    auto f = [] (auto T, auto p) { return C::charge(); };
+    plot(f, T, p, C::name(), "ion", "charge", "[e]", openPlot);
+}
+
 //! Do not plot properties if overloads don't compile
 template<class C, class hasNoDensityOverload = checkLiqDen>
 auto plotLiquidDensity(const vector<double>& T, double p, bool openPlot)
@@ -227,6 +270,22 @@ template<class C, class hasNoThermCondOverload = checkGasThermCond>
 auto plotGasThermalConductivity(const vector<double>& T, double p, bool openPlot)
 -> typename std::enable_if_t<decltype(isValid(hasNoThermCondOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasGasState, void> {}
 
+template<class C, class hasNoDensityOverload = checkSolDen>
+auto plotSolidDensity(const vector<double>& T, double p, bool openPlot)
+-> typename std::enable_if_t<decltype(isValid(hasNoDensityOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasSolidState, void> {}
+
+template<class C, class hasNoHeatCapOverload = checkSolHeatCap>
+auto plotSolidHeatCapacity(const vector<double>& T, double p, bool openPlot)
+-> typename std::enable_if_t<decltype(isValid(hasNoHeatCapOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasSolidState, void> {}
+
+template<class C, class hasNoThermCondOverload = checkSolThermCond>
+auto plotSolidThermalConductivity(const vector<double>& T, double p, bool openPlot)
+-> typename std::enable_if_t<decltype(isValid(hasNoThermCondOverload{})(declval<C>()))::value || !ComponentTraits<C>::hasSolidState, void> {}
+
+template<class C, class hasNoChargeOverload = checkIonCharge>
+auto plotIonCharge(const vector<double>& T, double p, bool openPlot)
+-> typename std::enable_if_t<decltype(isValid(hasNoChargeOverload{})(declval<C>()))::value || !ComponentTraits<C>::isIon, void> {}
+
 //! a number of properties of a component
 template<class Component>
 void plotStuff(bool openPlotWindow)
@@ -251,6 +310,12 @@ void plotStuff(bool openPlotWindow)
     plotGasHeatCapacity<Component>(T, pressure, openPlotWindow);
     plotGasViscosity<Component>(T, pressure, openPlotWindow);
     plotGasThermalConductivity<Component>(T, pressure, openPlotWindow);
+
+    plotSolidDensity<Component>(T, pressure, openPlotWindow);
+    plotSolidThermalConductivity<Component>(T, pressure, openPlotWindow);
+    plotSolidHeatCapacity<Component>(T, pressure, openPlotWindow);
+
+    plotIonCharge<Component>(T, pressure, openPlotWindow);
 }
 
 ////////////////////////
@@ -275,8 +340,20 @@ int main(int argc, char *argv[])
         plotStuff< Components::Benzene<double> >(openPlotWindow);
     else if (compName == "Brine")
         plotStuff< Components::Brine<double> >(openPlotWindow);
+    else if (compName == "Calcite")
+        plotStuff< Components::Calcite<double> >(openPlotWindow);
+    else if (compName == "CalciumIon")
+        plotStuff< Components::CalciumIon<double> >(openPlotWindow);
+    else if (compName == "CaO")
+        plotStuff< Components::CaO<double> >(openPlotWindow);
+    else if (compName == "CaO2H2")
+        plotStuff< Components::CaO2H2<double> >(openPlotWindow);
+    else if (compName == "CarbonateIon")
+        plotStuff< Components::CarbonateIon<double> >(openPlotWindow);
     else if (compName == "CH4")
         plotStuff< Components::CH4<double> >(openPlotWindow);
+    else if (compName == "Granite")
+        plotStuff< Components::Granite<double> >(openPlotWindow);
     else if (compName == "H2")
         plotStuff< Components::H2<double> >(openPlotWindow);
     else if (compName == "H2O")
@@ -287,6 +364,8 @@ int main(int argc, char *argv[])
         plotStuff< Components::Mesitylene<double> >(openPlotWindow);
     else if (compName == "N2")
         plotStuff< Components::N2<double> >(openPlotWindow);
+    else if (compName == "NaCl")
+        plotStuff< Components::NaCl<double> >(openPlotWindow);
     else if (compName == "O2")
         plotStuff< Components::O2<double> >(openPlotWindow);
     else if (compName == "SimpleH2O")

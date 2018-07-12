@@ -18,25 +18,49 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test the compoent traits
+ * \ingroup Components
+ * \brief A class for the Ca2+ (Calcium ion) component properties
  */
+#ifndef DUMUX_CA_ION_HH
+#define DUMUX_CA_ION_HH
 
-#include "config.h"
+#include <dumux/material/components/base.hh>
+#include <dumux/material/components/ion.hh>
 
-#include <type_traits>
+namespace Dumux {
+namespace Components {
 
-#include <dumux/material/components/air.hh>
-#include <dumux/material/components/componenttraits.hh>
-
-int main(int argc, char *argv[])
+/*!
+ * \ingroup Components
+ * \brief A class for the Ca2+ (Calcium ion) component properties.
+ */
+template <class Scalar>
+class CalciumIon
+: public Components::Base<Scalar, CalciumIon<Scalar> >
+, public Components::Ion<Scalar, CalciumIon<Scalar> >
 {
-    using namespace Dumux;
+public:
+    /*!
+     * \brief A human readable name for the Ca ion.
+     */
+    static std::string name()
+    { return "Ca2+"; }
 
-    using Traits = ComponentTraits<Components::Air<double>>;
-    static_assert(Traits::hasGasState, "Air component is reported to have no gas state?!");
-    static_assert(!Traits::hasSolidState, "Air component is reported to implement a solid state?!");
-    static_assert(!Traits::hasLiquidState, "Air component is reported to implement a liquid state?!");
-    static_assert(!Traits::isIon, "Air component is reported to be an ion?!");
-    static_assert(std::is_same<double, Traits::Scalar>::value, "Scalar type not correctly reported!");
-}
+    /*!
+     * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the Ca ion.
+     */
+    static constexpr Scalar molarMass()
+    { return 40.078e-3; } // kg/mol
+
+    /*!
+     * \brief The charge balance of the Ca ion.
+     */
+    static constexpr int charge()
+    { return +2; }
+
+};
+
+} // end namespace Components
+} // end namespace Dumux
+
+#endif

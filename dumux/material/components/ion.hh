@@ -18,25 +18,35 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test the compoent traits
+ * \ingroup Components
+ * \brief Interface for components that are ions.
  */
+#ifndef DUMUX_COMPONENT_ION_HH
+#define DUMUX_COMPONENT_ION_HH
 
-#include "config.h"
+#include <dune/common/exceptions.hh>
 
-#include <type_traits>
+#include <dumux/common/typetraits/typetraits.hh>
 
-#include <dumux/material/components/air.hh>
-#include <dumux/material/components/componenttraits.hh>
+namespace Dumux {
+namespace Components {
 
-int main(int argc, char *argv[])
+template<class Scalar, class Component>
+class Ion
 {
-    using namespace Dumux;
+public:
+    /*!
+     * \brief Returns the charge of the ion.
+     */
+    template<class C = Component>
+    static constexpr int charge()
+    {
+        static_assert(AlwaysFalse<C>::value, "Mandatory function not implemented: charge()");
+        return 0; // iso c++ requires a return statement for constexpr functions
+    }
+};
 
-    using Traits = ComponentTraits<Components::Air<double>>;
-    static_assert(Traits::hasGasState, "Air component is reported to have no gas state?!");
-    static_assert(!Traits::hasSolidState, "Air component is reported to implement a solid state?!");
-    static_assert(!Traits::hasLiquidState, "Air component is reported to implement a liquid state?!");
-    static_assert(!Traits::isIon, "Air component is reported to be an ion?!");
-    static_assert(std::is_same<double, Traits::Scalar>::value, "Scalar type not correctly reported!");
-}
+} // end namespace Components
+} // end namespace Dumux
+
+#endif
