@@ -281,8 +281,10 @@ public:
 
         std::vector<IndexType> handledNeighbors;
         handledNeighbors.reserve(element.subEntities(1));
+
         for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
         {
+            // for inner intersections and periodic (according to grid interface) intersections make neighbor geometry
             if (intersection.neighbor())
             {
                 const auto outside = intersection.outside();
@@ -297,7 +299,8 @@ public:
             }
         }
 
-        if (dim < dimWorld)
+        // build flip index set for network, surface, and periodic grids
+        if (dim < dimWorld || fvGridGeometry().isPeriodic())
         {
             flippedScvfIndices_.resize(scvfs_.size());
             for (unsigned int localScvfIdx = 0; localScvfIdx < scvfs_.size(); ++localScvfIdx)
@@ -332,21 +335,6 @@ public:
                 }
             }
         }
-
-        //! TODO Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
-        //! on additional DOFs not included in the discretization schemes' occupation pattern
-        // const auto globalI = fvGridGeometry().elementMapper().index(element);
-        // const auto& additionalDofDependencies = problem.getAdditionalDofDependencies(globalI);
-        // if (!additionalDofDependencies.empty())
-        // {
-        //     neighborScvs_.reserve(neighborScvs_.size() + additionalDofDependencies.size());
-        //     neighborScvIndices_.reserve(neighborScvIndices_.size() + additionalDofDependencies.size());
-        //     for (auto globalJ : additionalDofDependencies)
-        //     {
-        //         neighborScvs_.emplace_back(fvGridGeometry().element(globalJ).geometry(), globalJ);
-        //         neighborScvIndices_.emplace_back(globalJ);
-        //     }
-        // }
     }
 
     //! Binding of an element preparing the geometries only inside the element
@@ -418,7 +406,6 @@ private:
                     continue;
 
             const auto& scvfNeighborVolVarIndices = neighborVolVarIndices[scvfCounter];
-
             if (intersection.neighbor() || intersection.boundary())
             {
                 ScvfGridIndexStorage scvIndices;
@@ -429,7 +416,7 @@ private:
                                     intersection.geometry(),
                                     scvFaceIndices[scvfCounter],
                                     scvIndices,
-                                    intersection.boundary());
+                                    intersection.boundary() && !intersection.neighbor());
                 scvfIndices_.emplace_back(scvFaceIndices[scvfCounter]);
                 scvfCounter++;
 
@@ -466,14 +453,14 @@ private:
                 if (handledScvf[intersection.indexInInside()])
                     continue;
 
+            // this catches inner and periodic scvfs
             const auto& scvfNeighborVolVarIndices = neighborVolVarIndices[scvfCounter];
-
-            if (intersection.neighbor())
+            if (scvfNeighborVolVarIndices[0] < fvGridGeometry().gridView().size(0))
             {
                 // only create subcontrol faces where the outside element is the bound element
                 if (dim == dimWorld)
                 {
-                    if (intersection.outside() == *elementPtr_)
+                    if (scvfNeighborVolVarIndices[0] == fvGridGeometry().elementMapper().index(*elementPtr_))
                     {
                         ScvfGridIndexStorage scvIndices({eIdx, scvfNeighborVolVarIndices[0]});
                         neighborScvfs_.emplace_back(intersection,
@@ -509,7 +496,6 @@ private:
                             break;
                         }
                     }
-
                 }
 
                 // for surface and network grids mark that we handled this face
@@ -517,9 +503,11 @@ private:
                     handledScvf[intersection.indexInInside()] = true;
                 scvfCounter++;
             }
+
+            // only increase counter for boundary intersections
+            // (exclude periodic boundaries according to dune grid interface, they have been handled in neighbor==true)
             else if (intersection.boundary())
             {
-                // for surface and network grids mark that we handled this face
                 if (dim < dimWorld)
                     handledScvf[intersection.indexInInside()] = true;
                 scvfCounter++;
