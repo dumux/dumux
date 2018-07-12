@@ -208,7 +208,7 @@ protected:
             dgfGridPtr() = Dune::GridPtr<Grid>(fileName.c_str(), Dune::MPIHelper::getCommunicator());
             gridData_ = std::make_shared<GridData>(dgfGridPtr_);
         }
-        if (extension == "msh")
+        else if (extension == "msh")
         {
             // get some optional parameters
             const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
@@ -248,6 +248,7 @@ protected:
 
         enableDgfGridPointer_ = true;
         dgfGridPtr() = Dune::GridPtr<Grid>(fileName.c_str(), Dune::MPIHelper::getCommunicator());
+        gridData_ = std::make_shared<GridData>(dgfGridPtr_);
     }
 
     /*!
