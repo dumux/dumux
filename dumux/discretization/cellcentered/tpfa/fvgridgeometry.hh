@@ -208,9 +208,13 @@ public:
 
             for (const auto& intersection : intersections(this->gridView(), element))
             {
-                // inner sub control volume faces
+                // inner sub control volume faces (includes periodic boundaries)
                 if (intersection.neighbor())
                 {
+                    // update the grid geometry if we have periodic boundaries
+                    if (intersection.boundary())
+                        this->setPeriodic();
+
                     if (dim == dimWorld)
                     {
                         const auto nIdx = this->elementMapper().index(intersection.outside());
@@ -257,8 +261,8 @@ public:
             scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
         }
 
-        // Make the flip index set for network and surface grids
-        if (dim < dimWorld)
+        // Make the flip index set for network, surface, and periodic grids
+        if (dim < dimWorld || this->isPeriodic())
         {
             flipScvfIndices_.resize(scvfs_.size());
             for (auto&& scvf : scvfs_)
@@ -467,9 +471,13 @@ public:
 
             for (const auto& intersection : intersections(this->gridView(), element))
             {
-                // inner sub control volume faces
+                // inner sub control volume faces (includes periodic boundaries)
                 if (intersection.neighbor())
                 {
+                    // update the grid geometry if we have periodic boundaries
+                    if (intersection.boundary())
+                        this->setPeriodic();
+
                     if (dim == dimWorld)
                     {
                         scvfsIndexSet.push_back(numScvf_++);

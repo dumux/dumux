@@ -191,10 +191,12 @@ class CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ false>
             {
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
                 const auto outsideK = outsideVolVars.permeability();
-                const auto outsideTi = computeTpfaTransmissibility(scvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
+                const auto outsideTi = fvGeometry.fvGridGeometry().isPeriodic()
+                    ? computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, outsideK, outsideVolVars.extrusionFactor())
+                    : -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
                 const auto alpha_outside = vtmv(scvf.unitOuterNormal(), outsideK, g)*outsideVolVars.extrusionFactor();
 
-                flux += rho*tij/outsideTi*(alpha_inside - alpha_outside);
+                flux -= rho*tij/outsideTi*(alpha_inside - alpha_outside);
             }
 
             return flux;
@@ -241,9 +243,9 @@ class CCTpfaDarcysLaw<ScalarType, FVGridGeometry, /*isNetwork*/ false>
             // refers to the scv of our element, so we use the scv method
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const Scalar tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv,
-                                                               getPermeability_(problem, outsideVolVars, scvf.ipGlobal()),
-                                                               outsideVolVars.extrusionFactor());
+            const Scalar tj = fvGeometry.fvGridGeometry().isPeriodic()
+                ? computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, getPermeability_(problem, outsideVolVars, scvf.ipGlobal()), outsideVolVars.extrusionFactor())
+                : -1.0*computeTpfaTransmissibility(scvf, outsideScv, getPermeability_(problem, outsideVolVars, scvf.ipGlobal()), outsideVolVars.extrusionFactor());
 
             // harmonic mean (check for division by zero!)
             // TODO: This could lead to problems!? Is there a better way to do this?
