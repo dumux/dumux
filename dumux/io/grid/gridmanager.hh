@@ -375,8 +375,9 @@ public:
             std::array<int, dim> cells; cells.fill(1);
             cells = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Cells", cells);
 
-            // periodic boundaries
-            const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>());
+            // \todo TODO periodic boundaries with yasp (the periodicity concept of yasp grid is currently not supported, use dune-spgrid)
+            // const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>());
+            const std::bitset<dim> periodic;
 
             // get the overlap
             const int overlap =  getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
@@ -471,8 +472,9 @@ public:
             std::array<int, dim> cells; cells.fill(1);
             cells = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Cells", cells);
 
-            // periodic boundaries
-            const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>());
+            // \todo TODO periodic boundaries with yasp (the periodicity concept of yasp grid is currently not supported, use dune-spgrid)
+            // const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>());
+            const std::bitset<dim> periodic;
 
             // get the overlap dependent on some template parameters
             const int overlap = getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
@@ -597,9 +599,11 @@ public:
 
 
         // Additional arameters (they have a default)
-        const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>());
         const int overlap = getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
         const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
+        // \todo TODO periodic boundaries with yasp (the periodicity concept of yasp grid is currently not supported, use dune-spgrid)
+        // const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>());
+        const std::bitset<dim> periodic;
 
         // Some sanity checks
         for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
