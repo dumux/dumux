@@ -99,7 +99,7 @@ struct TwoPModelTraits
     static constexpr bool enableMolecularDiffusion() { return false; }
     static constexpr bool enableEnergyBalance() { return false; }
 
-    static std::string primaryVariableName(int pvIdx)
+    static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         if (priVarFormulation() == TwoPFormulation::p0s1)
             return pvIdx == 0 ? "pw" : "Sn";
