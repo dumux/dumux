@@ -89,6 +89,7 @@ public:
     {
         using std::abs;
         std::cout << "Update static wall properties. ";
+        calledUpdateStaticWallProperties = true;
 
         // update size and initial values of the global vectors
         wallElementID_.resize(this->fvGridGeometry().elementMapper().size());
@@ -132,6 +133,10 @@ public:
             }
         }
         std::cout << "NumWallIntersections=" << wallPositions.size() << std::endl;
+        if (wallPositions.size() == 0)
+            DUNE_THROW(Dune::InvalidStateException,
+                       "No wall intersections have been found. Make sure that the isOnWall(globalPos) is working properly.");
+
 
         // search for shortest distance to wall for each element
         for (const auto& element : elements(gridView))
@@ -214,6 +219,9 @@ public:
         using std::max;
         using std::min;
         std::cout << "Update dynamic wall properties." << std::endl;
+        if (!calledUpdateStaticWallProperties)
+            DUNE_THROW(Dune::InvalidStateException,
+                       "You have to call updateStaticWallProperties() once before you call updateDynamicWallProperties().");
 
         static const int flowNormalAxis
             = getParamFromGroup<int>(this->paramGroup(), "RANS.FlowNormalAxis", -1);
@@ -413,6 +421,7 @@ public:
     }
 
 public:
+    bool calledUpdateStaticWallProperties = false;
     std::vector<unsigned int> wallElementID_;
     std::vector<Scalar> wallDistance_;
     std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborID_;
