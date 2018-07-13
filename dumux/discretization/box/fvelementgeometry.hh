@@ -313,7 +313,7 @@ private:
         // construct the sub control volume faces on the domain boundary
         for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
         {
-            if (intersection.boundary())
+            if (intersection.boundary() && !intersection.neighbor())
             {
                 const auto isGeometry = intersection.geometry();
 
