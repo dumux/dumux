@@ -320,16 +320,6 @@ bool haveParamInGroup(const std::string& paramGroup, const std::string& param)
         return p.hasKey(paramGroup + "." + param);
 }
 
-#ifndef DOXYGEN
-template<typename T, typename... Args>
-DUNE_DEPRECATED_MSG("Using preprocessor MACROS for getting parameters is deprecated on next. Please use the new getParam method.")
-T getParam_UsingDeprecatedMacro(Args&&... args)
-{
-    const auto& p = Parameters::getTree();
-    return p.template get<T>(std::forward<Args>(args)... );
-}
-#endif
-
 } // namespace Dumux
 
 #endif
