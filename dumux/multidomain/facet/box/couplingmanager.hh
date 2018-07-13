@@ -298,6 +298,34 @@ public:
     }
 
     /*!
+     * \brief returns the lower-dimensional element coinciding with a bulk scvf.
+     */
+    const Element<lowDimId> getLowDimElement(const Element<bulkId>& element,
+                                             const SubControlVolumeFace<bulkId>& scvf) const
+    {
+        const auto eIdx = problem<bulkId>().fvGridGeometry().elementMapper().index(element);
+        assert(bulkContext_.isSet);
+        assert(bulkElemIsCoupled_[eIdx]);
+
+        const auto& map = couplingMapperPtr_->couplingMap(bulkGridId, lowDimGridId);
+        const auto& couplingData = map.find(eIdx)->second;
+
+        // search the low dim element idx this scvf is embedded in
+        auto it = std::find_if( couplingData.elementToScvfMap.begin(),
+                                couplingData.elementToScvfMap.end(),
+                                [&] (auto& dataPair)
+                                {
+                                    const auto& scvfList = dataPair.second;
+                                    auto it = std::find(scvfList.begin(), scvfList.end(), scvf.index());
+                                    return it != scvfList.end();
+                                } );
+
+        assert(it != couplingData.elementToScvfMap.end());
+        const auto lowDimElemIdx = it->first;
+        return problem<lowDimId>().fvGridGeometry().element(lowDimElemIdx);
+    }
+
+    /*!
      * \brief Evaluates the coupling element residual of a bulk domain element with respect
      *        to a dof in the lower-dimensional domain (dofIdxGlobalJ). This is essentially
      *        the fluxes across the bulk element facets that coincide with the lower-dimensional
