@@ -3,7 +3,6 @@
 from math import *
 import subprocess
 import sys
-import numpy as np
 
 if len(sys.argv) > 5 or len(sys.argv) < 3:
     sys.stderr.write("Invalid number of arguments given. Please provide the following arguments (in this order):\n\
@@ -26,7 +25,7 @@ for permIndex in range(0, len(k)):
     print("Removed old log file (" + execName + '.log' + ")!")
 
     # for each given number of cells, create new .geo file, mesh & run simulation
-    numCells = np.linspace(10, 100, 10)
+    numCells = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     for cells in numCells:
         geoFile = open("grids/hybridgrid.geo", 'r')
         lines = geoFile.readlines()
