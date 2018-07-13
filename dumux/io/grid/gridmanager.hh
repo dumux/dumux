@@ -284,7 +284,7 @@ protected:
      */
     void maybeRefineGrid(const std::string& modelParamGroup)
     {
-        if (haveParamInGroup(modelParamGroup, "Grid.Refinement"))
+        if (hasParamInGroup(modelParamGroup, "Grid.Refinement"))
             grid().globalRefine(getParamFromGroup<int>(modelParamGroup, "Grid.Refinement"));
     }
 
@@ -350,7 +350,7 @@ public:
     void init(const std::string& modelParamGroup = "")
     {
         // First try to create it from a DGF file in GridParameterGroup.File
-        if (haveParamInGroup(modelParamGroup, "Grid.File"))
+        if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
             ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
             postProcessing_(modelParamGroup);
@@ -358,7 +358,7 @@ public:
         }
 
         // Then look for the necessary keys to construct from the input file
-        else if (haveParamInGroup(modelParamGroup, "Grid.UpperRight"))
+        else if (hasParamInGroup(modelParamGroup, "Grid.UpperRight"))
         {
 
             // get the upper right corner coordinates
@@ -375,7 +375,7 @@ public:
             const int overlap =  getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
 
             // make the grid
-            if (!haveParamInGroup(modelParamGroup, "Grid.Partitioning"))
+            if (!hasParamInGroup(modelParamGroup, "Grid.Partitioning"))
             {
                 // construct using default load balancing
                 ParentType::gridPtr() = std::make_shared<Grid>(upperRight, cells, periodic, overlap);
@@ -446,7 +446,7 @@ public:
     void init(const std::string& modelParamGroup = "")
     {
         // First try to create it from a DGF file in GridParameterGroup.File
-        if (haveParamInGroup(modelParamGroup, "Grid.File"))
+        if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
             ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
             postProcessing_(modelParamGroup);
@@ -454,7 +454,7 @@ public:
         }
 
         // Then look for the necessary keys to construct from the input file
-        else if (haveParamInGroup(modelParamGroup, "Grid.UpperRight"))
+        else if (hasParamInGroup(modelParamGroup, "Grid.UpperRight"))
         {
             using GlobalPosition = Dune::FieldVector<ct, dim>;
             const auto upperRight = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.UpperRight");
@@ -471,7 +471,7 @@ public:
             const int overlap = getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
 
             // make the grid
-            if (!haveParamInGroup(modelParamGroup, "Grid.Partitioning"))
+            if (!hasParamInGroup(modelParamGroup, "Grid.Partitioning"))
             {
                 // construct using default load balancing
                 ParentType::gridPtr() = std::make_shared<Grid>(lowerLeft, upperRight, cells, periodic, overlap);
@@ -619,7 +619,7 @@ public:
         const auto globalPositions = computeGlobalPositions_(positions, cells, grading, verbose);
 
         // make the grid
-        if (!haveParamInGroup(modelParamGroup, "Grid.Partitioning"))
+        if (!hasParamInGroup(modelParamGroup, "Grid.Partitioning"))
         {
             // construct using default load balancing
             ParentType::gridPtr() = std::make_shared<Grid>(globalPositions, periodic, overlap);
@@ -783,7 +783,7 @@ public:
     {
 
         // try to create it from a DGF or msh file in GridParameterGroup.File
-        if (haveParamInGroup(modelParamGroup, "Grid.File"))
+        if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
             ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
             postProcessing_(modelParamGroup);
@@ -791,7 +791,7 @@ public:
         }
 
         // Look for the necessary keys to construct from the input file
-        else if (haveParamInGroup(modelParamGroup, "Grid.RightBoundary"))
+        else if (hasParamInGroup(modelParamGroup, "Grid.RightBoundary"))
         {
             // The required parameters
             using CoordinateType = typename Grid::ctype;
@@ -805,7 +805,7 @@ public:
         }
 
         // Look for the necessary keys to construct from the input file with just a coordinates vector
-        else if (haveParamInGroup(modelParamGroup, "Grid.Coordinates"))
+        else if (hasParamInGroup(modelParamGroup, "Grid.Coordinates"))
         {
             const auto coordinates = getParamFromGroup<std::vector<typename Grid::ctype>>(modelParamGroup, "Grid.Coordinates");
             ParentType::gridPtr() = std::make_shared<Grid>(coordinates);
@@ -885,7 +885,7 @@ public:
     {
 
         // try to create it from a DGF or msh file in GridParameterGroup.File
-        if (haveParamInGroup(modelParamGroup, "Grid.File"))
+        if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
             preProcessing_(modelParamGroup);
             ParentType::makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
@@ -894,7 +894,7 @@ public:
         }
 
         // Then look for the necessary keys to construct from the input file
-        else if (haveParamInGroup(modelParamGroup, "Grid.UpperRight"))
+        else if (hasParamInGroup(modelParamGroup, "Grid.UpperRight"))
         {
             preProcessing_(modelParamGroup);
             // make the grid
@@ -958,7 +958,7 @@ private:
      */
     void preProcessing_(const std::string& modelParamGroup)
     {
-        if(haveParamInGroup(modelParamGroup, "Grid.HeapSize"))
+        if(hasParamInGroup(modelParamGroup, "Grid.HeapSize"))
             Grid::setDefaultHeapSize(getParamFromGroup<unsigned>(modelParamGroup, "Grid.HeapSize"));
     }
 
@@ -1027,11 +1027,11 @@ public:
     {
         // restarting an adaptive grid using Dune's BackupRestoreFacility
         // TODO: the part after first || is backward compatibilty with old sequential models remove once sequential adpative restart is replaced
-        if (adaptiveRestart || haveParam("Restart") || haveParam("TimeManager.Restart"))
+        if (adaptiveRestart || hasParam("Restart") || hasParam("TimeManager.Restart"))
         {
             auto restartTime = getParamFromGroup<double>(modelParamGroup, "TimeLoop.Restart", 0.0);
             // TODO: backward compatibilty with old sequential models remove once sequential adpative restart is replaced
-            if (haveParam("Restart") || haveParam("TimeManager.Restart"))
+            if (hasParam("Restart") || hasParam("TimeManager.Restart"))
             {
                 restartTime = getParamFromGroup<double>("TimeManager", "Restart");
                 std::cerr << "Warning: You are using a deprecated restart mechanism. The usage will change in the future.\n";
@@ -1048,7 +1048,7 @@ public:
         }
 
         // try to create it from a DGF or msh file in GridParameterGroup.File
-        else if (haveParamInGroup(modelParamGroup, "Grid.File"))
+        else if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
             makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
@@ -1057,7 +1057,7 @@ public:
         }
 
         // Then look for the necessary keys to construct from the input file
-        else if (haveParamInGroup(modelParamGroup, "Grid.UpperRight"))
+        else if (hasParamInGroup(modelParamGroup, "Grid.UpperRight"))
         {
             // make a structured grid
             if (elType == Dune::cube)
@@ -1183,7 +1183,7 @@ public:
     void init(const std::string& modelParamGroup = "")
     {
         // try to create it from file
-        if (haveParamInGroup(modelParamGroup, "Grid.File"))
+        if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
             ParentType::makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
@@ -1192,7 +1192,7 @@ public:
         }
 
         // Then look for the necessary keys to construct a structured grid from the input file
-        else if (haveParamInGroup(modelParamGroup, "Grid.UpperRight"))
+        else if (hasParamInGroup(modelParamGroup, "Grid.UpperRight"))
         {
             ParentType::template makeStructuredGrid<dim, dimworld>(ParentType::CellType::Simplex, modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
@@ -1239,7 +1239,7 @@ public:
     void init(const std::string& modelParamGroup = "")
     {
         // try to create it from file
-        if (haveParamInGroup(modelParamGroup, "Grid.File"))
+        if (hasParamInGroup(modelParamGroup, "Grid.File"))
         {
             ParentType::makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);

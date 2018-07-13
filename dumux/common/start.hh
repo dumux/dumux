@@ -100,7 +100,7 @@ int start_(int argc,
     // check if we are about to restart a previously interrupted simulation
     bool restart = false;
     Scalar restartTime = 0;
-    if (haveParam("Restart") || haveParam("TimeManager.Restart"))
+    if (hasParam("Restart") || hasParam("TimeManager.Restart"))
     {
         restart = true;
         restartTime =  getParam<Scalar>("TimeManager.Restart");

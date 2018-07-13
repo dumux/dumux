@@ -156,7 +156,7 @@ Test3D2PProblem(TimeManager& timeManager, Grid& grid) :
 ParentType(timeManager, grid), inflowEdge_(0), outflowEdge_(0)
 {
     int refinementFactor = 0;
-    if (haveParam("Grid.RefinementFactor") && !GET_PROP_VALUE(TypeTag, AdaptiveGrid))
+    if (hasParam("Grid.RefinementFactor") && !GET_PROP_VALUE(TypeTag, AdaptiveGrid))
     {
         refinementFactor = getParam<Scalar>("Grid.RefinementFactor");
         grid.globalRefine(refinementFactor);
@@ -183,14 +183,14 @@ ParentType(timeManager, grid), inflowEdge_(0), outflowEdge_(0)
     }
 
     int outputInterval = 0;
-    if (haveParam("Problem.OutputInterval"))
+    if (hasParam("Problem.OutputInterval"))
     {
         outputInterval = getParam<int>("Problem.OutputInterval");
     }
     this->setOutputInterval(outputInterval);
 
     Scalar outputTimeInterval = 1e6;
-    if (haveParam("Problem.OutputTimeInterval"))
+    if (hasParam("Problem.OutputTimeInterval"))
     {
         outputTimeInterval = getParam<Scalar>("Problem.OutputTimeInterval");
     }

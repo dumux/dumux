@@ -103,9 +103,9 @@ public:
 
         for (int i = 0; i < dim; ++i)
         {
-            const bool hasRadial = haveParamInGroup(modelParamGroup, "Grid.Radial" + std::to_string(i));
-            const bool hasAngular = haveParamInGroup(modelParamGroup, "Grid.Angular" + std::to_string(i));
-            const bool hasAxial = (dim == 3) && haveParamInGroup(modelParamGroup, "Grid.Axial" + std::to_string(i));
+            const bool hasRadial = hasParamInGroup(modelParamGroup, "Grid.Radial" + std::to_string(i));
+            const bool hasAngular = hasParamInGroup(modelParamGroup, "Grid.Angular" + std::to_string(i));
+            const bool hasAxial = (dim == 3) && hasParamInGroup(modelParamGroup, "Grid.Axial" + std::to_string(i));
             if (static_cast<int>(hasRadial) + static_cast<int>(hasAngular) + static_cast<int>(hasAxial) != 1)
                 DUNE_THROW(Dune::RangeError, "Multiple or no position vectors (radial, angular, axial) specified in coord direction: " << i << std::endl);
 

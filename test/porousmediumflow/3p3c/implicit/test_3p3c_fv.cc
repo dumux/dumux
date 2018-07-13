@@ -183,7 +183,7 @@ int main(int argc, char** argv) try
 
         // write vtk output
         // if episode length was specificied output only at the end of episodes
-        if (!haveParam("TimeLoop.EpisodeLength") || timeLoop->isCheckPoint() || timeLoop->finished() || timeLoop->timeStepIndex() == 1)
+        if (!hasParam("TimeLoop.EpisodeLength") || timeLoop->isCheckPoint() || timeLoop->finished() || timeLoop->timeStepIndex() == 1)
             vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
