@@ -126,11 +126,10 @@ auto loadSolutionFromVtuFile(const std::string fileName,
 template<class ModelTraits, class FluidSystem>
 std::string primaryVariableName(int pvIdx, int state)
 {
-    using std::pow;
-    static auto numStates = pow(2, ModelTraits::numPhases()) - 1;
+    static auto numStates = (1 << ModelTraits::numPhases()) - 1;
     const auto paramNameWithState = "LoadSolution.PriVarNamesState" + std::to_string(state);
 
-    if (haveParam("LoadSolution.PriVarNames"))
+    if (haveParam("LoadSolution.PriVarNames") && !haveParam(paramNameWithState))
     {
         DUNE_THROW(Dune::NotImplemented, "please provide LoadSolution.PriVarNamesState1..." << numStates
                    << " or remove LoadSolution.PriVarNames to use default names");
