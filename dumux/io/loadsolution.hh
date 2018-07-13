@@ -174,7 +174,7 @@ void loadSolution(const std::string& fileName,
 {
     const auto extension = fileName.substr(fileName.find_last_of(".") + 1);
 
-    if (extension == "vtu")
+    if (extension == "vtu" || extension == "vtp")
     {
         const auto dataType = discMethod == DiscretizationMethod::box
                               ? VTUReader::DataType::pointData : VTUReader::DataType::cellData;

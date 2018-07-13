@@ -51,6 +51,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/loadsolution.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -116,17 +117,6 @@ int main(int argc, char** argv) try
     const std::string paramGroup = FVGridGeometry::discMethod == DiscretizationMethod::ccmpfa ? "MpfaTest" : "";
     auto problem = std::make_shared<Problem>(fvGridGeometry, paramGroup);
 
-    // the solution vector
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(fvGridGeometry->numDofs());
-    problem->applyInitialSolution(x);
-    auto xOld = x;
-
-    // the grid variables
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
-    gridVariables->init(x, xOld);
-
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
@@ -134,9 +124,25 @@ int main(int argc, char** argv) try
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
-        restartTime = getParam<Scalar>("TimeLoop.Restart");
+    Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
+
+    // the solution vector
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    SolutionVector x(fvGridGeometry->numDofs());
+    if (restartTime > 0)
+    {
+        using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+        auto fileName = getParam<std::string>("Restart.File");
+        loadSolution(fileName, FVGridGeometry::discMethod, primaryVariableName<ModelTraits>, x);
+    }
+    else
+        problem->applyInitialSolution(x);
+    auto xOld = x;
+
+    // the grid variables
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    gridVariables->init(x, xOld);
 
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
@@ -145,7 +151,7 @@ int main(int argc, char** argv) try
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
-    vtkWriter.write(0.0);
+    vtkWriter.write(restartTime);
 
     // output every vtkOutputInterval time step
     const int vtkOutputInterval = getParam<int>("Problem.OutputInterval");

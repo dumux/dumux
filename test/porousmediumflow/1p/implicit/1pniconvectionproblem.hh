@@ -55,7 +55,7 @@ NEW_TYPE_TAG(OnePNIConvectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePNICon
 NEW_TYPE_TAG(OnePNIConvectionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePNIConvectionTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(OnePNIConvectionTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(OnePNIConvectionTypeTag, Grid, Dune::YaspGrid<1>);
 
 // Set the problem property
 SET_TYPE_PROP(OnePNIConvectionTypeTag, Problem, OnePNIConvectionProblem<TypeTag>);

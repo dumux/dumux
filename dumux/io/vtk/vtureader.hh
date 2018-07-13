@@ -67,20 +67,30 @@ public:
     Container readData(const std::string& name, const DataType& type)
     {
         using namespace tinyxml2;
-        XMLElement *pieceNode = doc_.FirstChildElement("VTKFile")->FirstChildElement("UnstructuredGrid")->FirstChildElement("Piece");
-        if (pieceNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get Piece node in " << fileName_ << ".");
 
-        XMLElement *dataNode = nullptr;
+        XMLElement *dataNode = doc_.FirstChildElement("VTKFile");
+        if (dataNode == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't get 'VTKFile' node in " << fileName_ << ".");
+
+        dataNode = dataNode->FirstChildElement("UnstructuredGrid");
+        if (dataNode == nullptr)
+            dataNode = doc_.FirstChildElement("VTKFile")->FirstChildElement("PolyData");
+        if (dataNode == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't get 'UnstructuredGrid' or 'PolyData' node in " << fileName_ << ".");
+
+        dataNode = dataNode->FirstChildElement("Piece");
+        if (dataNode == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't get 'Piece' node in " << fileName_ << ".");
+
         if (type == DataType::pointData)
-            dataNode = pieceNode->FirstChildElement("PointData");
+            dataNode = dataNode->FirstChildElement("PointData");
         else if (type == DataType::cellData)
-            dataNode = pieceNode->FirstChildElement("CellData");
+            dataNode = dataNode->FirstChildElement("CellData");
         else
             DUNE_THROW(Dune::IOError, "Only cell and point data are supported.");
 
         if (dataNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get data node in " << fileName_ << ".");
+            DUNE_THROW(Dune::IOError, "Couldn't get 'PointData' or 'CellData' node in " << fileName_ << ".");
 
         // loop over XML node siblings to find the correct data array
         XMLElement *dataArray = dataNode->FirstChildElement("DataArray");
