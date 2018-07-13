@@ -79,6 +79,8 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 int main(int argc, char** argv) try
 {
+    std::cout << "DEbug 1 "<< std::endl;
+
     using namespace Dumux;
 
     // define the type tag for this problem
@@ -86,6 +88,7 @@ int main(int argc, char** argv) try
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+    std::cout << "DEbug 1 "<< std::endl;
 
     // print dumux start message
     if (mpiHelper.rank() == 0)
@@ -98,6 +101,7 @@ int main(int argc, char** argv) try
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     GridCreator::makeGrid();
     GridCreator::loadBalance();
+    std::cout << "DEbug 2 "<< std::endl;
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
@@ -110,6 +114,7 @@ int main(int argc, char** argv) try
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
+    std::cout << "DEbug 3 "<< std::endl;
 
     // the problem (initial and boundary conditions)
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -166,6 +171,7 @@ int main(int argc, char** argv) try
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
     // read in the boundary values
+    std::cout << "DEbug setBoundaryValues "<< std::endl;
     problem->setBoundaryValues();
 
     // time loop

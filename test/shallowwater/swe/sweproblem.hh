@@ -215,7 +215,7 @@ public:
         cellStatesLeft[3]  = insideVolVars.getBottom();
 
 
-        //first case reflecting wall boundary
+        //first case reflecting wall boundary (no-flow)
         cellStatesRight[0] = cellStatesLeft[0];
         cellStatesRight[1] = -cellStatesLeft[1];
         cellStatesRight[2] = -cellStatesLeft[2];
@@ -225,21 +225,31 @@ public:
         double bdValue = 0.0;
         double x = 4.0;
         double y = 4.2;
-
-        //TODO check the boundary type
         auto myBoundaryId = this->getBoundaryId(x,y); //TODO we need global x and y!
-        auto boundaryValues = this->boundaryValuesMap_.at(myBoundaryId);
 
-        if (boundaryValues.type == "hq-curve")
-        {
-            bdValue = getWQBoundaryValue(time_,myBoundaryId);
+        if (myBoundaryId != 0){
+            auto boundaryValues = this->boundaryValuesMap_.at(myBoundaryId);
+
+            if (boundaryValues.type == "hq-curve")
+            {
+                bdValue = getWQBoundaryValue(time_,myBoundaryId);
+                bdType = 2;
+            }
+            if (boundaryValues.type == "depth")
+            {
+                bdValue = getBoundaryValue(time_,myBoundaryId);
+                bdType = 2;
+            }
+            if (boundaryValues.type == "discharge")
+            {
+                bdValue = getBoundaryValue(time_,myBoundaryId);
+                bdType = 1;
+            }
         }else{
-            bdValue = getBoundaryValue(time_,myBoundaryId);
+            bdType = 0;
+            bdValue = 0.0;
         }
 
-        if (boundaryValues.type == "hq-curve") bdType = 2;
-        if (boundaryValues.type == "depth") bdType = 2;
-        if (boundaryValues.type == "discharge") bdType = 1;
 
         //TODO scale the boundary?
         //auto segIndex = is.boundarySegmentIndex();
@@ -247,7 +257,7 @@ public:
 
 
         //call boundaryfluxes for computing the Riemann invariants
-        boundaryFluxes(nxy,scvf.area(),minHBoundary_,
+        boundaryFluxes(nxy,scvf.area(),0.2,
                        cellStatesLeft,cellStatesRight,bdType,bdValue);
 
 
@@ -298,6 +308,17 @@ public:
         time_ = time;
         timeStepSize_ = timeStepSize;
 
+        this->hBoundarySegmentMap_.clear();
+        this->hBoundarySumMap_.clear();
+
+        for( auto const& [key, val] : this->boundaryValuesMap_)
+        {
+            this->hBoundarySumMap_[val.id] = 0.0;
+        }
+
+        double h = 1.0;
+
+
         // bulk elements
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
@@ -308,22 +329,50 @@ public:
             elemVolVars.bindElement(element, fvGeometry, curSol);
 
             //TODO loop over all boundary scvf
-                //1) ha_boundarySum berechnen
-                //2) parallel_sum von ha_boundarySum berechnen (overlapping?) ask if ghost element!
-                //3) make a map ha_boundary[segIndex]
+                // 1) ha_boundarySum berechnen
+                // 2) parallel_sum von ha_boundarySum berechnen (overlapping?) ask if ghost element!
+                //    in pdelab we asked cell.partitionType() != Dune::GhostEntity
+                // 3) make a map ha_boundary[segIndex]
+
+                std::cout << "element " << std::endl;
 
             for (auto&& scv : scvs(fvGeometry))
             {
-                //check if the element is a boundary element and store the boudary condition type
-                //and the boundary condition value (sum up the overall values over all partions
-                // for each boundary)
-            }
 
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
                 //check if the element is a boundary element and store the boudary condition type
                 //and the boundary condition value (sum up the overall values over all partions
                 // for each boundary)
+
+                std::cout << "scv " << std::endl;
+
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    // so ähnlich abfragen this->hA_boundaryMap.find(segIndex)) == this->hA_boundaryMap.end())
+
+                    std::cout << "scvf " << std::endl;
+                    std::cout << "index " <<   scvf.index() << std::endl;
+                    std::cout << "isboundary " <<   scvf.boundary() << std::endl;
+                    std::cout << "area " <<   scvf.area() << std::endl;
+
+                    if (scvf.boundary()){
+                       if (this->hBoundarySegmentMap_.find(scvf.index()) == this->hBoundarySegmentMap_.end())
+                       {
+
+                            if (h > minHBoundary_){
+                                //save for segment
+                                this->hBoundarySegmentMap_[scvf.index()] = scvf.area() * h;
+                                //save for sum
+                                /*if (notGhost){
+
+                                //TDODO summe der segmente einfügen ist schon 0.0 am start.
+
+                                this->hBoundarySumMap_[] += scvf.area() * h;
+                                }*/
+                            }
+                       }
+                    }
+
+                }
             }
         }
     }
@@ -392,6 +441,7 @@ public:
         std::ifstream infile;
         std::string line;
         std::string comment ("#");
+        std::cout << "Debug, start reading boundary file " << std::flush;;
 
         infile.open(filename);
         if (!infile) {
@@ -400,6 +450,7 @@ public:
         }
         while(std::getline(infile,line))
         {
+            std::cout << "Debug, start reading boundary file " << std::endl;
             std::stringstream ssin(line);
             while(ssin.good()){
                 //check if comment line
@@ -422,8 +473,10 @@ public:
             }
         }
 
+        std::cout << "Debug, finished reading boundary file " << std::endl;
         //TODO read boundaryBoxesFiles
         this->readBoundaryValuesFiles();
+        std::cout << "Debug, finished reading boundary value files " << std::endl;
 
     }
 
@@ -527,6 +580,9 @@ private:
     std::map<int,double> waterdischarge_;
     std::map<int,double> waterdepth_;
 
+    std::map<int,double> hBoundarySegmentMap_;
+    std::map<int,double> hBoundarySumMap_;
+
     std::vector<BoundaryBox> boundaryBoxesVec_;
     std::map<int,BoundaryValues> boundaryValuesMap_;
 
@@ -563,6 +619,7 @@ private:
         std::vector<double> x;
         std::vector<double> y;
         double inx,iny;
+
 
         std::string actualfile;
 

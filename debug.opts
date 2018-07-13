@@ -17,7 +17,7 @@ GXX_OPTS=" \
     -g"
 
 # configure flags
-CMAKE_FLAGS="\
+CMAKE_FLAGS=" \
   -DCMAKE_CXX_FLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
   -DUG_DIR=ug_installation_path \
   "
