@@ -104,7 +104,7 @@ int main(int argc, char** argv) try
 
     //! check if we are about to restart a previously interrupted simulation
     Scalar restartTime = 0;
-    if (haveParam("Restart") || haveParam("TimeLoop.Restart"))
+    if (hasParam("Restart") || hasParam("TimeLoop.Restart"))
         restartTime = getParam<Scalar>("TimeLoop.Restart");
 
     //! instantiate time loop

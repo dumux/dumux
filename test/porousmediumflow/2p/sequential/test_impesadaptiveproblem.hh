@@ -127,7 +127,7 @@ public:
 
         // Refine the grid provided that no restart occurs. Otherwise, an
         // already refined grid will be read.
-        if (!(haveParam("Restart") || haveParam("TimeManager.Restart")))
+        if (!(hasParam("Restart") || hasParam("TimeManager.Restart")))
             grid.globalRefine(getParam<int>("GridAdapt.MaxLevel"));
 
         this->setOutputInterval(10);
