@@ -117,7 +117,11 @@ public:
                                                                                compIIdx,
                                                                                compJIdx);
         }
-
+        // The diffusion coefficients are swapped, the general procedure for the flux
+        // calculation always goes form phaseIdx = 0 to numPhaseIdx.
+        // Swapping the coefficients ensures that the diffusion coefficient for compIdx == 0
+        // is always defined.
+        std::swap(diffCoeff_[0],diffCoeff_[mainCompMoleOrMassFracIdx]);
     }
 
     /*!
@@ -315,6 +319,9 @@ public:
 
     /*!
      * \brief Return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
+     *
+     * \note For fluidSystemPhaseIdx > 0, the diffusion coefficients
+     *        diffCoeff_[0] and  diffCoeff_[mainCompMoleOrMassFracIdx] are swapped
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
