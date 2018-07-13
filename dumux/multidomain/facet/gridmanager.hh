@@ -108,6 +108,11 @@ public:
         std::get<id>(gridDataPtrTuple_) = std::make_shared<GridData<id>>( std::move(gridData) );
     }
 
+    //! return the grid data for a specific grid
+    template<std::size_t id>
+    std::shared_ptr<const GridData<id>> getSubDomainGridData() const
+    { return std::get<id>(gridDataPtrTuple_); }
+
     //! Returns domain marker of an element
     template<std::size_t id>
     int getElementDomainMarker(const typename Grid<id>::template Codim<0>::Entity& element) const
