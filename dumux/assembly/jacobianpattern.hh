@@ -51,11 +51,20 @@ Dune::MatrixIndexSet getJacobianPattern(const GridGeometry& gridGeometry)
             for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
             {
                 const auto globalI = gridGeometry.vertexMapper().subIndex(element, vIdx, dim);
-                for (unsigned int vIdx2 = vIdx; vIdx2 < element.subEntities(dim); ++vIdx2)
+                for (unsigned int vIdx2 = 0; vIdx2 < element.subEntities(dim); ++vIdx2)
                 {
                     const auto globalJ = gridGeometry.vertexMapper().subIndex(element, vIdx2, dim);
                     pattern.add(globalI, globalJ);
                     pattern.add(globalJ, globalI);
+
+                    if (gridGeometry.dofOnPeriodicBoundary(globalI) && globalI != globalJ)
+                    {
+                        const auto globalIP = gridGeometry.periodicallyMappedDof(globalI);
+                        pattern.add(globalIP, globalI);
+                        pattern.add(globalI, globalIP);
+                        if (globalI > globalIP)
+                            pattern.add(globalIP, globalJ);
+                    }
                 }
             }
         }

@@ -38,12 +38,12 @@ dune_add_test(NAME test_1p_periodic_tpfa_caching
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p_tpfa_caching-00001.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_tpfa test_1p.input -Problem.Name test_1p_tpfa_caching")
 
-#dune_add_test(NAME test_1p_periodic_box
-#              SOURCES test_1pfv.cc
-#              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox
-#              CMAKE_GUARD dune-spgrid_FOUND
-#              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#              CMD_ARGS  --script fuzzy
-#                        --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
-#                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_box-00001.vtu
-#                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_box test_1p.input -Problem.Name test_1p_box")
+dune_add_test(NAME test_1p_periodic_box
+              SOURCES test_1pfv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox
+              CMAKE_GUARD dune-spgrid_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p_box-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p_periodic_box test_1p.input -Problem.Name test_1p_box")

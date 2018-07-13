@@ -27,6 +27,7 @@
 #include <type_traits>
 
 #include <dune/istl/matrixindexset.hh>
+#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
@@ -121,6 +122,8 @@ public:
             LocalAssembler localAssembler(*this, element, curSol);
             localAssembler.assembleJacobianAndResidual(*jacobian_, *residual_, *gridVariables_, partialReassembler);
         });
+
+        enforcePeriodicConstraints_(*jacobian_, *residual_, *fvGridGeometry_);
     }
 
     /*!
@@ -394,6 +397,29 @@ private:
         if (!succeeded)
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
     }
+
+    template<class GG> std::enable_if_t<GG::discMethod == DiscretizationMethod::box, void>
+    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const GG& fvGridGeometry)
+    {
+        for (const auto& m : fvGridGeometry.periodicVertexMap())
+        {
+            if (m.first < m.second)
+            {
+                // add the second row to the first
+                res[m.first] += res[m.second];
+                const auto end = jac[m.second].end();
+                for (auto it = jac[m.second].begin(); it != end; ++it)
+                    jac[m.first][it.index()] += (*it);
+
+                // enforce constraint in second row
+                for (auto it = jac[m.second].begin(); it != end; ++it)
+                    (*it) = it.index() == m.second ? 1.0 : it.index() == m.first ? -1.0 : 0.0;
+            }
+        }
+    }
+
+    template<class GG> std::enable_if_t<GG::discMethod != DiscretizationMethod::box, void>
+    enforcePeriodicConstraints_(JacobianMatrix& jac, SolutionVector& res, const GG& fvGridGeometry) {}
 
     //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
