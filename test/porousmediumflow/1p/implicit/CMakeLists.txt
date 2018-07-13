@@ -63,6 +63,19 @@ dune_add_test(NAME test_1pnibox_convection
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnibox_convection test_1pnifv_convection.input -Problem.Name 1pnibox_convection"
                        --zeroThreshold {"velocity":1e-15})
 
+dune_add_test(NAME test_1pnibox_convection_restart
+              SOURCES test_1pnifv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionBoxTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconvection-reference.vtp
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pnibox_convection_restart-00005.vtp
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnibox_convection test_1pnifv_convection.input -Problem.Name 1pnibox_convection_restart -TimeLoop.DtInitial 1000 -Restart.Time 11761.8 -Restart.File 1pnibox_convection-00006.vtp"
+                       --zeroThreshold {"velocity":1e-15})
+
+# the restart test has to run after the test that produces the corresponding vtu file
+set_tests_properties(test_1pnibox_convection_restart PROPERTIES DEPENDS test_1pnibox_convection)
+
 dune_add_test(NAME test_1pnicctpfa_conduction
               SOURCES test_1pnifv.cc
               COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCTpfaTypeTag
