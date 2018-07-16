@@ -36,7 +36,7 @@ public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(); }, "pressure");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(); }, "p");
     }
 };
 

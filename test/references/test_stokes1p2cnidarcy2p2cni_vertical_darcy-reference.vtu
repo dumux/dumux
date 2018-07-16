@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="400" NumberOfPoints="441">
-      <CellData Scalars="Sn" Vectors="velocity_liquid (m/s)">
-        <DataArray type="Float32" Name="Sn" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="S_n" Vectors="velocity_liquid (m/s)">
+        <DataArray type="Float32" Name="S_n" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -39,7 +39,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="Sw" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_w" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -75,7 +75,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="pn" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_n" NumberOfComponents="1" format="ascii">
           100001 100001 100001 100001 100001 100001 100001 100001 100001 100001 100001 100001
           100001 100001 100001 100001 100001 100001 100001 100001 100003 100003 100003 100003
           100003 100003 100003 100003 100003 100003 100003 100003 100003 100003 100003 100003
@@ -111,7 +111,7 @@
           100044 100044 100044 100044 100044 100044 100044 100044 100044 100044 100044 100044
           100044 100044 100044 100044
         </DataArray>
-        <DataArray type="Float32" Name="pw" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_w" NumberOfComponents="1" format="ascii">
           96317 96317 96317 96317 96317 96317 96317 96317 96317 96317 96317 96317
           96317 96317 96317 96317 96317 96317 96317 96317 96319.2 96319.2 96319.2 96319.2
           96319.2 96319.2 96319.2 96319.2 96319.2 96319.2 96319.2 96319.2 96319.2 96319.2 96319.2 96319.2

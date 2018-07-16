@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="400" NumberOfPoints="441">
-      <CellData Scalars="pressure" Vectors="velocity_SimpleH2O (m/s)">
-        <DataArray type="Float32" Name="pressure" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="p" Vectors="velocity_SimpleH2O (m/s)">
+        <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
           0.33375 0.33375 0.33375 0.33375 0.33375 0.33375 0.33375 0.33375 0.33375 0.33375 0.33375 0.33375
           0.33375 0.33375 0.33375 0.33375 0.33375 0.33375 0.33375 0.33375 1.00125 1.00125 1.00125 1.00125
           1.00125 1.00125 1.00125 1.00125 1.00125 1.00125 1.00125 1.00125 1.00125 1.00125 1.00125 1.00125

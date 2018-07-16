@@ -2,8 +2,8 @@
 <VTKFile type="PolyData" version="0.1" byte_order="LittleEndian">
   <PolyData>
     <Piece NumberOfLines="1738" NumberOfPoints="1739">
-      <CellData Scalars="pressure">
-        <DataArray type="Float32" Name="pressure" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="p">
+        <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
           -67152.4 -66887 -66818.4 -66750.4 -66683.1 -66616.2 -66549.6 -66483.7 -66418.5 -66353.6 -66289.1 -66224.6
           -66160.2 -66096.2 -66032.6 -65969.4 -65906.5 -65843.9 -65782.2 -65721.2 -65660.5 -65600.3 -65543.3 -65489.7
           -65436.4 -65383.3 -65330.6 -65284.4 -65244.8 -65205.4 -65166.2 -65124.5 -65080.4 -65036.5 -64993 -64949.7

@@ -41,10 +41,10 @@ public:
         using VolumeVariables = typename VtkOutputModule::VolumeVariables;
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
-        vtk.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::liquidPhaseIdx); }, "Sw");
-        vtk.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::gasPhaseIdx); }, "Sn");
-        vtk.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::liquidPhaseIdx); }, "pw");
-        vtk.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::gasPhaseIdx); }, "pn");
+        vtk.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::liquidPhaseIdx); }, "S_w");
+        vtk.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::gasPhaseIdx); }, "S_n");
+        vtk.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::liquidPhaseIdx); }, "p_w");
+        vtk.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::gasPhaseIdx); }, "p_n");
         vtk.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); }, "pc");
         vtk.addVolumeVariable([](const auto& v){ return v.density(VolumeVariables::liquidPhaseIdx); }, "density");
         vtk.addVolumeVariable([](const auto& v){ return v.mobility(VolumeVariables::liquidPhaseIdx); }, "mobility");
@@ -59,7 +59,7 @@ public:
 
         for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
             vtk.addVolumeVariable([compIdx](const auto& v){ return v.moleFraction(VolumeVariables::liquidPhaseIdx, compIdx); },
-                                  "x^" + FluidSystem::phaseName(VolumeVariables::liquidPhaseIdx) + "_" + FluidSystem::componentName(compIdx));
+                                  "x^" + FluidSystem::componentName(compIdx) + "_" + FluidSystem::phaseName(VolumeVariables::liquidPhaseIdx));
 
     }
 };

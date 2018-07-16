@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="400" NumberOfPoints="441">
-      <CellData Scalars="Sn" Vectors="velocity_liquid (m/s)">
-        <DataArray type="Float32" Name="Sn" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="S_n" Vectors="velocity_liquid (m/s)">
+        <DataArray type="Float32" Name="S_n" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -39,7 +39,7 @@
           1.02762 1.02625 1.02507 1.02405 1.02317 1.0224 1.02173 1.02114 1.02063 1.02017 1.01976 1.0194
           1.01907 1.01879 1.01869 1.02071
         </DataArray>
-        <DataArray type="Float32" Name="Sw" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_w" NumberOfComponents="1" format="ascii">
           -6.66041e-07 -6.66893e-07 -6.68526e-07 -6.70833e-07 -6.73579e-07 -6.76642e-07 -6.79761e-07 -6.82743e-07 -6.85447e-07 -6.87726e-07 -6.89517e-07 -6.90756e-07
           -6.91515e-07 -6.91808e-07 -6.91763e-07 -6.91454e-07 -6.9102e-07 -6.90606e-07 -6.90244e-07 -6.90058e-07 -6.87642e-07 -6.88685e-07 -6.90715e-07 -6.93538e-07
           -6.9695e-07 -7.00691e-07 -7.0452e-07 -7.08178e-07 -7.11457e-07 -7.14219e-07 -7.16369e-07 -7.17862e-07 -7.18722e-07 -7.19047e-07 -7.18921e-07 -7.18514e-07
@@ -75,7 +75,7 @@
           -0.0276196 -0.0262508 -0.0250707 -0.0240503 -0.0231654 -0.0223983 -0.0217299 -0.021144 -0.0206275 -0.0201695 -0.0197614 -0.0193966
           -0.0190713 -0.0187926 -0.0186921 -0.020714
         </DataArray>
-        <DataArray type="Float32" Name="pn" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_n" NumberOfComponents="1" format="ascii">
           100003 100003 100003 100003 100003 100003 100003 100003 100003 100003 100003 100003
           100003 100003 100003 100003 100003 100003 100003 100003 100003 100003 100003 100003
           100003 100003 100003 100003 100003 100003 100003 100003 100003 100003 100003 100003
@@ -111,7 +111,7 @@
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
           100000 100000 100000 100000
         </DataArray>
-        <DataArray type="Float32" Name="pw" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_w" NumberOfComponents="1" format="ascii">
           96318.5 96318.5 96318.5 96318.5 96318.5 96318.5 96318.5 96318.5 96318.5 96318.5 96318.5 96318.5
           96318.5 96318.5 96318.5 96318.5 96318.5 96318.5 96318.5 96318.5 96318.4 96318.4 96318.4 96318.4
           96318.4 96318.4 96318.4 96318.4 96318.4 96318.4 96318.4 96318.4 96318.4 96318.4 96318.4 96318.4

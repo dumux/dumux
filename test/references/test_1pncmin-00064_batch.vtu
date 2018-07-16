@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="2" NumberOfPoints="6">
-      <PointData Scalars="pressure">
-        <DataArray type="Float32" Name="pressure" NumberOfComponents="1" format="ascii">
+      <PointData Scalars="p">
+        <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
           200000 200000 200000 200000 200000 200000
         </DataArray>
         <DataArray type="Float32" Name="rho" NumberOfComponents="1" format="ascii">
@@ -15,16 +15,16 @@
         <DataArray type="Float32" Name="delp" NumberOfComponents="1" format="ascii">
           100000 100000 100000 100000 100000 100000
         </DataArray>
-        <DataArray type="Float32" Name="x_N2" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^N2_n" NumberOfComponents="1" format="ascii">
           0.536 0.536 0.536 0.536 0.536 0.536
         </DataArray>
-        <DataArray type="Float32" Name="x_H2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^H2O_n" NumberOfComponents="1" format="ascii">
           0.464 0.464 0.464 0.464 0.464 0.464
         </DataArray>
-        <DataArray type="Float32" Name="X_N2" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="X^N2_n" NumberOfComponents="1" format="ascii">
           0.642382 0.642382 0.642382 0.642382 0.642382 0.642382
         </DataArray>
-        <DataArray type="Float32" Name="X_H2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="X^H2O_n" NumberOfComponents="1" format="ascii">
           0.357618 0.357618 0.357618 0.357618 0.357618 0.357618
         </DataArray>
         <DataArray type="Float32" Name="precipVolFrac_CaO" NumberOfComponents="1" format="ascii">

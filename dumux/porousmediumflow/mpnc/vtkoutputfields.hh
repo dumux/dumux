@@ -48,7 +48,7 @@ public:
             vtk.addVolumeVariable([i](const auto& v){ return v.mobility(i); },"lambda_"+ FluidSystem::phaseName(i));
 
             for (int j = 0; j < VolumeVariables::numComponents(); ++j)
-                vtk.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },"x_"+ FluidSystem::phaseName(i) + "^" + FluidSystem::componentName(j));
+                vtk.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },"x^"+ FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i));
         }
     }
 };

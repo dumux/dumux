@@ -174,7 +174,7 @@
           0.35 0.35 0.35 0.35 0.35 0.35 0.35 0.35 0.35 0.35 0.35 0.35
           0.35 0.35 0.35 0.35 0.35 0.35 0.35 0.35
         </DataArray>
-        <DataArray type="Float32" Name="x_w^SimpleH2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^SimpleH2O_w" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -193,7 +193,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 0.406912
         </DataArray>
-        <DataArray type="Float32" Name="x_w^N2" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^N2_w" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           -0 -0 -0 -0 -0 -0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -212,7 +212,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="x_n^SimpleH2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^SimpleH2O_n" NumberOfComponents="1" format="ascii">
           0.03529 0.0352982 0.0353048 0.0353116 0.0353187 0.0353262 0.035334 0.0353423 0.035351 0.0353603 0.0353701 0.0353805
           0.0353917 0.0354036 0.0354164 0.0354301 0.0354449 0.0354608 0.0354781 0.0354967 0.0355169 0.0355389 0.0355628 0.0355889
           0.0356173 0.0356483 0.0356822 0.0357194 0.0357601 0.0358048 0.0358539 0.0359078 0.0359671 0.0360324 0.0361043 0.0361836
@@ -231,7 +231,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="x_n^N2" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^N2_n" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           -0 -0 -0 -0 -0 -0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0

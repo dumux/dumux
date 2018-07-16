@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="88" NumberOfPoints="57">
-      <CellData Scalars="pressure">
-        <DataArray type="Float32" Name="pressure" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="p">
+        <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
           1.5078 1.50688 1.50091 1.50238 1.50942 1.50914 1.4994 1.49969 1.50845 1.50035 1.50284 1.50155
           1.50638 1.50463 1.50764 1.50558 1.50654 1.50375 1.50468 1.50261 1.50154 1.50767 1.50697 1.50807
           1.50246 1.50121 1.50929 1.5096 1.4997 1.49998 1.50563 1.50664 1.5038 1.50475 1.50271 1.50063

@@ -3,7 +3,7 @@
   <UnstructuredGrid>
     <Piece NumberOfCells="80" NumberOfPoints="162">
       <CellData Scalars="p" Vectors="velocity_H2O (m/s)">
-        <DataArray type="Float32" Name="pressure" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
           121429 121165 120901 120637 120373 120108 119844 119580 119316 119052 118788 118524
           118259 117994 117729 117463 117196 116928 116659 116390 116120 115850 115580 115309
           115038 114767 114497 114226 113955 113684 113413 113142 112871 112600 112329 112058
