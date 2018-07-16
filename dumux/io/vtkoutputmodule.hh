@@ -53,14 +53,13 @@ namespace Dumux {
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format
  *
  * \tparam TypeTag The TypeTag of the problem implementation
- * \tparam phaseIdxOffset Used for single-phase problems to retrieve the right phase name
  *
  * Handles the output of scalar and vector fields to VTK formatted file for multiple
  * variables and timesteps. Certain predefined fields can be registered on
  * initialization and/or be turned on/off using the designated properties. Additionally
  * non-standardized scalar and vector fields can be added to the writer manually.
  */
-template<typename TypeTag, int phaseIdxOffset = 0>
+template<typename TypeTag>
 class VtkOutputModule
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -372,7 +371,7 @@ private:
                 {
                     for (int phaseIdx = 0; phaseIdx < numPhaseVelocities; ++phaseIdx)
                         sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), velocity[phaseIdx],
-                                                             "velocity_" + velocityOutput.phaseName(phaseIdx+phaseIdxOffset) + " (m/s)",
+                                                             "velocity_" + velocityOutput.phaseName(phaseIdx) + " (m/s)",
                                                              /*numComp*/dimWorld, /*codim*/dim).get() );
                 }
                 // cell-centered models
@@ -380,7 +379,7 @@ private:
                 {
                     for (int phaseIdx = 0; phaseIdx < numPhaseVelocities; ++phaseIdx)
                         sequenceWriter_.addCellData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), velocity[phaseIdx],
-                                                           "velocity_" + velocityOutput.phaseName(phaseIdx+phaseIdxOffset) + " (m/s)",
+                                                           "velocity_" + velocityOutput.phaseName(phaseIdx) + " (m/s)",
                                                            /*numComp*/dimWorld, /*codim*/0).get() );
                 }
             }
@@ -540,14 +539,14 @@ private:
                 if (dim > 1)
                     for (int phaseIdx = 0; phaseIdx < numPhaseVelocities; ++phaseIdx)
                         sequenceWriter_.addVertexData( Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), velocity[phaseIdx],
-                                                             "velocity_" + velocityOutput.phaseName(phaseIdx+phaseIdxOffset) + " (m/s)",
+                                                             "velocity_" + velocityOutput.phaseName(phaseIdx) + " (m/s)",
                                                              /*numComp*/dimWorld, /*codim*/dim).get() );
 
                 // cell-wise velocities
                 else
                     for (int phaseIdx = 0; phaseIdx < numPhaseVelocities; ++phaseIdx)
                         sequenceWriter_.addCellData( Field(gridGeom_.gridView(), gridGeom_.elementMapper(), velocity[phaseIdx],
-                                                           "velocity_" + velocityOutput.phaseName(phaseIdx+phaseIdxOffset) + " (m/s)",
+                                                           "velocity_" + velocityOutput.phaseName(phaseIdx) + " (m/s)",
                                                            /*numComp*/dimWorld, /*codim*/0).get() );
             }
 

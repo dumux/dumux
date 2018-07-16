@@ -30,10 +30,24 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/typetraits/isvalid.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/elementsolution.hh>
 
 namespace Dumux {
+
+namespace Detail {
+
+//! helper struct detecting if an Indices class contains a fluidSystemPhaseIdx
+struct hasFluidSystemPhaseIdx
+{
+    template<class Indices>
+    auto operator()(Indices&&)
+    -> decltype(Indices::fluidSystemPhaseIdx)
+    {}
+};
+
+} // end namespace Detail
 
 /*!
  * \brief Velocity output for implicit (porous media) models
@@ -52,6 +66,7 @@ class PorousMediumFlowVelocityOutput
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -106,7 +121,12 @@ public:
     //! returns whether or not velocity output is enabled
     bool enableOutput() { return velocityOutput_; }
 
+    //! returns the name of the phase for a given index for models that use a fluidsystem phase index (e.g. 1pnc)
+    template<bool hasFluidSystemPhaseIdx = decltype(isValid(Detail::hasFluidSystemPhaseIdx())(Indices{}))::value, std::enable_if_t<hasFluidSystemPhaseIdx, int> = 0>
+    static std::string phaseName(int phaseIdx) { return FluidSystem::phaseName(Indices::fluidSystemPhaseIdx); }
+
     //! returns the name of the phase for a given index
+    template<bool hasFluidSystemPhaseIdx = decltype(isValid(Detail::hasFluidSystemPhaseIdx())(Indices{}))::value, std::enable_if_t<!hasFluidSystemPhaseIdx, int> = 0>
     static std::string phaseName(int phaseIdx) { return FluidSystem::phaseName(phaseIdx); }
 
     //! returns the number of phase velocities computed by this class

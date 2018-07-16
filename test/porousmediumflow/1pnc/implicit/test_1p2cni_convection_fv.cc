@@ -110,7 +110,7 @@ int main(int argc, char** argv) try
     auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
     // intialize the vtk output module
-    VtkOutputModule<TypeTag, GET_PROP_VALUE(TypeTag, PhaseIdx)> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");

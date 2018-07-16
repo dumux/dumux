@@ -51,10 +51,10 @@ namespace Dumux {
  * initialization and/or be turned on/off using the designated properties. Additionally
  * non-standardized scalar and vector fields can be added to the writer manually.
  */
-template<class TypeTag, class FractureGrid, int phaseIdxOffset = 0>
-class BoxDfmVtkOutputModule : public VtkOutputModule<TypeTag, phaseIdxOffset>
+template<class TypeTag, class FractureGrid>
+class BoxDfmVtkOutputModule : public VtkOutputModule<TypeTag>
 {
-    using ParentType = VtkOutputModule<TypeTag, phaseIdxOffset>;
+    using ParentType = VtkOutputModule<TypeTag>;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -270,7 +270,7 @@ private:
             {
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().vertexMapper(), velocity[phaseIdx],
-                                                                "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                                "velocity_" + velocityOutput.phaseName(phaseIdx) + " (m/s)",
                                                                 /*numComp*/dimWorld, /*codim*/dim).get() );
             }
 
@@ -455,7 +455,7 @@ private:
             {
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().vertexMapper(), velocity[phaseIdx],
-                                                                "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                                "velocity_" + velocityOutput.phaseName(phaseIdx) + " (m/s)",
                                                                 /*numComp*/dimWorld, /*codim*/dim).get() );
             }
 
