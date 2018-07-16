@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="40" NumberOfPoints="63">
-      <PointData Scalars="pressure" Vectors="velocity_w (m/s)">
-        <DataArray type="Float32" Name="pressure" NumberOfComponents="1" format="ascii">
+      <PointData Scalars="p" Vectors="velocity_w (m/s)">
+        <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
           200000 195000 200000 195000 190000 190000 185000 185000 180001 180001 175001 175001
           170001 170001 165001 165001 160001 160001 155001 155001 150001 150001 145001 145001
           140001 140001 135001 135001 130001 130001 125001 125001 120001 120001 115000 115000

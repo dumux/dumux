@@ -135,7 +135,7 @@ int main(int argc, char** argv) try
     //! write output to vtk
     using GridView = typename GET_PROP_TYPE(OnePTypeTag, GridView);
     Dune::VTKWriter<GridView> onepWriter(leafGridView);
-    onepWriter.addCellData(p, "pressure");
+    onepWriter.addCellData(p, "p");
     const auto& k = problemOneP->spatialParams().getKField();
     onepWriter.addCellData(k, "permeability");
     onepWriter.write("1p");

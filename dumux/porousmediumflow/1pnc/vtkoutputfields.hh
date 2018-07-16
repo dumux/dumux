@@ -42,7 +42,7 @@ public:
         using FluidSystem = typename VolumeVariables::FluidSystem;
         using Indices = typename VolumeVariables::Indices;
 
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(Indices::fluidSystemPhaseIdx); }, "pressure");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(Indices::fluidSystemPhaseIdx); }, "p");
         vtk.addVolumeVariable([](const auto& volVars){ return volVars.density(Indices::fluidSystemPhaseIdx); }, "rho");
         vtk.addVolumeVariable([](const auto& volVars){ return volVars.viscosity(Indices::fluidSystemPhaseIdx); }, "mu");
         vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(Indices::fluidSystemPhaseIdx) - 1e5; }, "delp");
