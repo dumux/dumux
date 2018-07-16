@@ -1,9 +1,7 @@
 add_input_file_links()
 
-add_executable(test_stokes1pdarcy2pvertical EXCLUDE_FROM_ALL test_stokes1pdarcy2pvertical.cc)
-
 dune_add_test(NAME test_stokes1pdarcy2pvertical
-              TARGET test_stokes1pdarcy2pvertical
+              SOURCES test_stokes1pdarcy2pvertical.cc
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
