@@ -179,7 +179,7 @@ public:
             deltaX = 0;
 
             try { J.solve(deltaX, b); }
-            catch (Dune::FMatrixError e)
+            catch (Dune::FMatrixError& e)
             {
                 /*
                 std::cout << "error: " << e << "\n";

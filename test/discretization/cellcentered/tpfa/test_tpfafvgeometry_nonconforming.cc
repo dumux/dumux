@@ -382,7 +382,7 @@ int main (int argc, char *argv[]) try
 // //////////////////////////////////
 //   Error handler
 // /////////////////////////////////
-catch (Dune::Exception e) {
+catch (Dune::Exception& e) {
 
     std::cout << e << std::endl;
     return 1;
