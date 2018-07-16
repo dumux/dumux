@@ -23,7 +23,7 @@
  */
 #ifndef DUMUX_SWE_TEST_PROBLEM_HH
 #define DUMUX_SWE_TEST_PROBLEM_HH
-
+#include <dune/grid/common/gridenums.hh> // for GhostEntity
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/shallowwater/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -205,6 +205,7 @@ public:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& nxy = scvf.unitOuterNormal();
+        const auto& ip = scvf.ipGlobal();
 
         Scalar cellStatesLeft[4] = {0.0};
         Scalar cellStatesRight[4] = {0.0};
@@ -214,7 +215,6 @@ public:
         cellStatesLeft[2]  = insideVolVars.getV();
         cellStatesLeft[3]  = insideVolVars.getBottom();
 
-
         //first case reflecting wall boundary (no-flow)
         cellStatesRight[0] = cellStatesLeft[0];
         cellStatesRight[1] = -cellStatesLeft[1];
@@ -223,9 +223,8 @@ public:
 
         int bdType = 0; //0 = Neumann, 1 = definded q, 2 = defined h
         double bdValue = 0.0;
-        double x = 4.0;
-        double y = 4.2;
-        auto myBoundaryId = this->getBoundaryId(x,y); //TODO we need global x and y!
+
+        auto myBoundaryId = this->getBoundaryId(ip[0],ip[1]); //use the integration point
 
         if (myBoundaryId != 0){
             auto boundaryValues = this->boundaryValuesMap_.at(myBoundaryId);
@@ -307,17 +306,16 @@ public:
         Scalar tracerMass = 0.0;
         time_ = time;
         timeStepSize_ = timeStepSize;
+        double isNoGhost = true;
 
         this->hBoundarySegmentMap_.clear();
-        this->hBoundarySumMap_.clear();
 
+        //clear the existing map and create a new one
+        this->hBoundarySumMap_.clear();
         for( auto const& [key, val] : this->boundaryValuesMap_)
         {
             this->hBoundarySumMap_[val.id] = 0.0;
         }
-
-        double h = 1.0;
-
 
         // bulk elements
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
@@ -328,20 +326,20 @@ public:
             auto elemVolVars = localView(gridVariables.curGridVolVars());
             elemVolVars.bindElement(element, fvGeometry, curSol);
 
-            //TODO loop over all boundary scvf
-                // 1) ha_boundarySum berechnen
-                // 2) parallel_sum von ha_boundarySum berechnen (overlapping?) ask if ghost element!
-                //    in pdelab we asked cell.partitionType() != Dune::GhostEntity
-                // 3) make a map ha_boundary[segIndex]
-
-                std::cout << "element " << std::endl;
+            //check if the actual element is a ghost
+            if (element.partitionType() == Dune::GhostEntity)
+            {
+                isNoGhost = false;
+            }else
+            {
+                isNoGhost = true;
+            }
 
             for (auto&& scv : scvs(fvGeometry))
             {
-
-                //check if the element is a boundary element and store the boudary condition type
-                //and the boundary condition value (sum up the overall values over all partions
-                // for each boundary)
+                auto h = elemVolVars[scv].getH();
+                auto u = elemVolVars[scv].getU();
+                auto v = elemVolVars[scv].getV();
 
                 std::cout << "scv " << std::endl;
 
@@ -385,6 +383,14 @@ public:
     {
         // compute the mass in the entire domain to make sure the tracer is conserved
         Scalar tracerMass = 0.0;
+        bool isNoGhost = false;
+
+        //clear the existing map and create a new one
+        this->hBoundaryFluxMap_.clear();
+        for( auto const& [key, val] : this->boundaryValuesMap_)
+        {
+            this->hBoundaryFluxMap_[val.id] = 0.0;
+        }
 
         // bulk elements
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
@@ -395,12 +401,110 @@ public:
             auto elemVolVars = localView(gridVariables.curGridVolVars());
             elemVolVars.bindElement(element, fvGeometry, curSol);
 
+            //check if the actual element is a ghost
+            if (element.partitionType() == Dune::GhostEntity)
+            {
+                isNoGhost = false;
+            }else
+            {
+                isNoGhost = true;
+            }
+
             for (auto&& scv : scvs(fvGeometry))
             {
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    auto h = elemVolVars[scv].getH();
+                    auto u = elemVolVars[scv].getU();
+                    auto v = elemVolVars[scv].getV();
 
+                    if (scvf.boundary()){
+                        if (this->hBoundarySegmentMap_.find(scvf.index()) == this->hBoundarySegmentMap_.end())
+                        {
+                            if (isNoGhost){
+
+                                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                                const auto& insideVolVars = elemVolVars[insideScv];
+                                const auto& nxy = scvf.unitOuterNormal();
+                                const auto& ip = scvf.ipGlobal();
+
+                                Scalar cellStatesLeft[4] = {0.0};
+                                Scalar cellStatesRight[4] = {0.0};
+
+                                cellStatesLeft[0]  =  elemVolVars[scv].getH();
+                                cellStatesLeft[1]  =  elemVolVars[scv].getU();
+                                cellStatesLeft[2]  =  elemVolVars[scv].getV();
+                                cellStatesLeft[3]  =  elemVolVars[scv].getBottom();
+
+                                //first case reflecting wall boundary (no-flow)
+                                cellStatesRight[0] = cellStatesLeft[0];
+                                cellStatesRight[1] = -cellStatesLeft[1];
+                                cellStatesRight[2] = -cellStatesLeft[2];
+                                cellStatesRight[3] = cellStatesLeft[3];
+
+                                int bdType = 0; //0 = Neumann, 1 = definded q, 2 = defined h
+                                double bdValue = 0.0;
+
+                                auto myBoundaryId = this->getBoundaryId(ip[0],ip[1]); //use the integration point
+                                auto boundaryValues = this->boundaryValuesMap_.at(myBoundaryId);
+
+                                if (myBoundaryId != 0){
+                                    if (boundaryValues.type == "hq-curve")
+                                    {
+                                        bdValue = getWQBoundaryValue(time_,myBoundaryId);
+                                        bdType = 2;
+                                    }
+                                    if (boundaryValues.type == "depth")
+                                    {
+                                        bdValue = getBoundaryValue(time_,myBoundaryId);
+                                        bdType = 2;
+                                    }
+                                    if (boundaryValues.type == "discharge")
+                                    {
+                                        bdValue = getBoundaryValue(time_,myBoundaryId);
+                                        bdType = 1;
+                                    }
+                                }else{
+                                    bdType = 0;
+                                    bdValue = 0.0;
+                                }
+
+
+                                //TODO scale the boundary?
+                                //auto segIndex = is.boundarySegmentIndex();
+                                //bdValue = (bdValue / this->hA_boundarySum[bd_id])* this->hA_boundaryMap.at(segIndex);
+
+                                //call boundaryfluxes for computing the Riemann invariants
+                                boundaryFluxes(nxy,scvf.area(),0.2,
+                                               cellStatesLeft,cellStatesRight,bdType,bdValue);
+
+                                stateRotation(nxy,cellStatesLeft);
+                                stateRotation(nxy,cellStatesRight);
+
+                                Scalar riemannFlux[3] = {0.0};
+                                computeExactRiemann(riemannFlux,cellStatesLeft[0],cellStatesRight[0],
+                                                    cellStatesLeft[1],cellStatesRight[1],
+                                                    cellStatesLeft[2],cellStatesRight[2],insideVolVars.getGravity());
+
+                                rotateFluxBack(nxy,riemannFlux);
+
+                                //Store the computed flux of the Riemann solver
+                                this->hBoundaryFluxMap_[boundaryValues.id] += scvf.area() * riemannFlux[0];
+
+                            }
+                        }
+                    }
+                }
             }
         }
+        //TODO compute parallel sum for this->hBoundaryFluxMap_[boundaryValues.id]
+        for( auto const& [key, val] : this->hBoundaryFluxMap_)
+        {
+            std::cout << "hBoundaryFluxMap_ key " << key << " val " << val << std::endl;
+        }
+
     }
+
 
     /*!
      * \name Volume terms
@@ -582,6 +686,7 @@ private:
 
     std::map<int,double> hBoundarySegmentMap_;
     std::map<int,double> hBoundarySumMap_;
+    std::map<int,double> hBoundaryFluxMap_;
 
     std::vector<BoundaryBox> boundaryBoxesVec_;
     std::map<int,BoundaryValues> boundaryValuesMap_;
