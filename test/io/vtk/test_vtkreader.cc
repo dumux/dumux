@@ -35,9 +35,9 @@ int main(int argc, char** argv) try
 {
     Dune::MPIHelper::instance(argc, argv);
 
-    Dumux::VTUReader vtkReader("test-in.vtu");
+    Dumux::VTKReader vtkReader("test-in.vtu");
     using Grid = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>;
-    Dumux::VTUReader::Data cellData, pointData;
+    Dumux::VTKReader::Data cellData, pointData;
     Dune::GridFactory<Grid> gridFactory;
     auto grid = vtkReader.readGrid(gridFactory, cellData, pointData, /*verbose=*/true);
     const auto& gridView = grid->leafGridView();
@@ -61,7 +61,7 @@ int main(int argc, char** argv) try
         }
     }
 
-    Dumux::VTUReader::Data reorderedCellData = cellData, reorderedPointData = pointData;
+    Dumux::VTKReader::Data reorderedCellData = cellData, reorderedPointData = pointData;
     for (const auto& data : cellData)
     {
         auto& reorderedData = reorderedCellData[data.first];

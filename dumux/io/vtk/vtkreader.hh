@@ -19,10 +19,10 @@
 /*!
  * \file
  * \ingroup InputOutput
- * \brief A vtu reader using tinyxml2 as xml backend
+ * \brief A vtk file reader using tinyxml2 as xml backend
  */
-#ifndef DUMUX_IO_VTK_VTUREADER_HH
-#define DUMUX_IO_VTK_VTUREADER_HH
+#ifndef DUMUX_IO_VTK_VTKREADER_HH
+#define DUMUX_IO_VTK_VTKREADER_HH
 
 #include <iostream>
 #include <iterator>
@@ -39,9 +39,9 @@ namespace Dumux {
 
 /*!
  * \ingroup InputOutput
- * \brief A vtu reader using tinyxml2 as xml backend
+ * \brief A vtk file reader using tinyxml2 as xml backend
  */
-class VTUReader
+class VTKReader
 {
 public:
     /*!
@@ -55,7 +55,7 @@ public:
     /*!
      * \brief The contructor creates a tinyxml2::XMLDocument from file
      */
-    VTUReader(const std::string& fileName)
+    VTKReader(const std::string& fileName)
     : fileName_(fileName)
     {
         using namespace tinyxml2;
@@ -291,7 +291,7 @@ private:
         }
     }
 
-    const std::string fileName_; //!< the vtu file name
+    const std::string fileName_; //!< the vtk file name
     tinyxml2::XMLDocument doc_; //!< the xml document created from file with name fileName_
 };
 
