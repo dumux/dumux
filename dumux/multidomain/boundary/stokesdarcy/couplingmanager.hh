@@ -183,6 +183,13 @@ public:
      */
     template<std::size_t i, class Assembler, std::enable_if_t<(i == stokesCellCenterIdx || i == stokesFaceIdx), int> = 0>
     void bindCouplingContext(Dune::index_constant<i> domainI, const Element<stokesCellCenterIdx>& element, const Assembler& assembler)
+    { bindCouplingContext(domainI, element); }
+
+    /*!
+     * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Darcy information)
+     */
+    template<std::size_t i, std::enable_if_t<(i == stokesCellCenterIdx || i == stokesFaceIdx), int> = 0>
+    void bindCouplingContext(Dune::index_constant<i> domainI, const Element<stokesCellCenterIdx>& element)
     {
         stokesCouplingContext_.clear();
 
@@ -216,6 +223,12 @@ public:
      */
     template<class Assembler>
     void bindCouplingContext(Dune::index_constant<darcyIdx> domainI, const Element<darcyIdx>& element, const Assembler& assembler)
+    { bindCouplingContext(domainI, element); }
+
+    /*!
+     * \brief prepares all data and variables that are necessary to evaluate the residual of an Darcy element (i.e. Stokes information)
+     */
+    void bindCouplingContext(Dune::index_constant<darcyIdx> domainI, const Element<darcyIdx>& element)
     {
         darcyCouplingContext_.clear();
 
