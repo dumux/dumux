@@ -33,7 +33,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/isvalid.hh>
-#include <dumux/io/vtk/vtureader.hh>
+#include <dumux/io/vtk/vtkreader.hh>
 
 namespace Dumux {
 
@@ -55,12 +55,12 @@ struct hasState
  */
 template <class SolutionVector, class PvNamesFunc>
 auto loadSolutionFromVtuFile(const std::string fileName,
-                             const VTUReader::DataType& dataType,
+                             const VTKReader::DataType& dataType,
                              PvNamesFunc&& pvNamesFunc,
                              SolutionVector& sol)
 -> typename std::enable_if_t<!decltype(isValid(Detail::hasState())(sol[0]))::value, void>
 {
-    VTUReader vtu(fileName);
+    VTKReader vtu(fileName);
     using PrimaryVariables = typename SolutionVector::block_type;
     using Scalar = typename PrimaryVariables::field_type;
 
@@ -82,12 +82,12 @@ auto loadSolutionFromVtuFile(const std::string fileName,
  */
 template <class SolutionVector, class PvNamesFunc>
 auto loadSolutionFromVtuFile(const std::string fileName,
-                             const VTUReader::DataType& dataType,
+                             const VTKReader::DataType& dataType,
                              PvNamesFunc&& pvNamesFunc,
                              SolutionVector& sol)
 -> typename std::enable_if_t<decltype(isValid(Detail::hasState())(sol[0]))::value, void>
 {
-    VTUReader vtu(fileName);
+    VTKReader vtu(fileName);
     const auto vec = vtu.readData<std::vector<int>>("phase presence", dataType);
     std::unordered_set<int> states;
     for (size_t i = 0; i < sol.size(); ++i)
@@ -163,7 +163,7 @@ std::string primaryVariableName(int pvIdx)
 /*!
  * \ingroup InputOutput
  * \brief load a solution vector from file
- * \note Supports the following file extensions: *.vtu
+ * \note Supports the following file extensions: *.vtu *.vtp
  */
 template <class SolutionVector, class PvNamesFunc>
 void loadSolution(const std::string& fileName,
@@ -176,7 +176,7 @@ void loadSolution(const std::string& fileName,
     if (extension == "vtu" || extension == "vtp")
     {
         const auto dataType = discMethod == DiscretizationMethod::box
-                              ? VTUReader::DataType::pointData : VTUReader::DataType::cellData;
+                              ? VTKReader::DataType::pointData : VTKReader::DataType::cellData;
         loadSolutionFromVtuFile(fileName, dataType, pvNamesFunc, sol);
     }
     else
