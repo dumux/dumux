@@ -30,9 +30,11 @@
 #include <unordered_set>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/indices.hh>
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/isvalid.hh>
+#include <dumux/common/typetraits/vector.hh>
 #include <dumux/io/vtk/vtkreader.hh>
 
 namespace Dumux {
@@ -121,6 +123,65 @@ auto loadSolutionFromVtkFile(const std::string fileName,
 
 /*!
  * \ingroup InputOutput
+ * \brief helper function to read from a file into a solution vector
+ */
+template <class SolutionVector, class PvNamesFunc>
+auto loadSolutionFromVtkFile(const std::string fileName,
+                             const VTKReader::DataType& dataType,
+                             PvNamesFunc&& pvNamesFunc,
+                             SolutionVector& sol)
+-> typename std::enable_if_t<decltype(isMultiTypeBlockVector<SolutionVector>())::value, void>
+{}
+
+/*!
+ * \ingroup InputOutput
+ * \brief helper function to read from two files into a staggered solution vector
+ */
+template <class SolutionVector, class PvNamesFunc>
+auto loadStaggeredSolutionFromVtkFiles(const std::string fileName,
+                                       PvNamesFunc&& pvNamesFunc,
+                                       SolutionVector& sol)
+-> typename std::enable_if_t<decltype(!isMultiTypeBlockVector<SolutionVector>())::value, void>
+{}
+
+/*!
+ * \ingroup InputOutput
+ * \brief helper function to read from two files into a staggered solution vector
+ */
+template <class SolutionVector, class PvNamesFunc>
+auto loadStaggeredSolutionFromVtkFiles(const std::string baseFileName,
+                                       PvNamesFunc&& pvNamesFunc,
+                                       SolutionVector& sol)
+-> typename std::enable_if_t<decltype(isMultiTypeBlockVector<SolutionVector>())::value, void>
+{
+
+    // assume that the first component contains the cell data
+    auto& cellSol = sol[Dune::index_constant<0>{}];
+    using CellPrimaryVariables = typename std::decay_t<decltype(cellSol)>::block_type;
+    using Scalar = typename CellPrimaryVariables::field_type;
+    VTKReader cellVtk(baseFileName + ".vtu");
+    for (size_t pvIdx = 0; pvIdx < CellPrimaryVariables::dimension; ++pvIdx)
+    {
+        const auto vec = cellVtk.readData<std::vector<Scalar>>(pvNamesFunc(pvIdx),
+                                                               VTKReader::DataType::cellData);
+        for (size_t i = 0; i < cellSol.size(); ++i)
+            cellSol[i][pvIdx] = vec[i];
+    }
+
+    // assume that the second component contains the face data
+    auto& faceSol = sol[Dune::index_constant<1>{}];
+    using FacePrimaryVariables = typename std::decay_t<decltype(faceSol)>::block_type;
+    auto nameSize = baseFileName.size();
+    // assume that baseFileName contains numbers like '-000123' in the end
+    VTKReader faceVtk(baseFileName.substr(0, nameSize - 6) + "-face" + baseFileName.substr(nameSize - 6) + ".vtp");
+    const auto vec = faceVtk.readData<std::vector<Scalar>>(pvNamesFunc(CellPrimaryVariables::dimension),
+                                                           VTKReader::DataType::pointData);
+    for (size_t i = 0; i < faceSol.size(); ++i)
+        faceSol[i][0] = std::accumulate(&vec[3*i], &vec[3*(i+1)], 0.0);
+}
+
+/*!
+ * \ingroup InputOutput
  * \brief helper function to determine the primray variable names of a model with privar state
  */
 template<class ModelTraits, class FluidSystem>
@@ -129,12 +190,12 @@ std::string primaryVariableName(int pvIdx, int state)
     static auto numStates = (1 << ModelTraits::numPhases()) - 1;
     const auto paramNameWithState = "LoadSolution.PriVarNamesState" + std::to_string(state);
 
-    if (haveParam("LoadSolution.PriVarNames") && !haveParam(paramNameWithState))
+    if (hasParam("LoadSolution.PriVarNames") && !hasParam(paramNameWithState))
     {
         DUNE_THROW(Dune::NotImplemented, "please provide LoadSolution.PriVarNamesState1..." << numStates
                    << " or remove LoadSolution.PriVarNames to use default names");
     }
-    else if (haveParam(paramNameWithState))
+    else if (hasParam(paramNameWithState))
     {
         const auto pvNames = getParam<std::vector<std::string>>(paramNameWithState);
         return pvNames[pvIdx];
@@ -150,7 +211,7 @@ std::string primaryVariableName(int pvIdx, int state)
 template<class ModelTraits>
 std::string primaryVariableName(int pvIdx)
 {
-    if (haveParam("LoadSolution.PriVarNames"))
+    if (hasParam("LoadSolution.PriVarNames"))
     {
         static auto pvNames = getParam<std::vector<std::string>>("LoadSolution.PriVarNames");
         return pvNames[pvIdx];
@@ -179,6 +240,8 @@ void loadSolution(const std::string& fileName,
                               ? VTKReader::DataType::pointData : VTKReader::DataType::cellData;
         loadSolutionFromVtkFile(fileName, dataType, pvNamesFunc, sol);
     }
+    else if (extension == fileName && discMethod == DiscretizationMethod::staggered)
+        loadStaggeredSolutionFromVtkFiles(fileName, pvNamesFunc, sol);
     else
         DUNE_THROW(Dune::NotImplemented, "loadSolution for extension " << extension);
 }
