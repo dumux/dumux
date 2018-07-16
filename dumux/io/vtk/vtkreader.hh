@@ -65,7 +65,7 @@ public:
     }
 
     /*!
-     * \brief The contructor creates a tinyxml2::XMLDocument from file
+     * \brief read data from the vtk file to a container, e.g. std::vector<double>
      * \tparam Container a container type that has begin(), end(), push_back(), e.g. std::vector<>
      * \param name the name attribute of the data array to read
      * \param type the data array type
@@ -91,7 +91,8 @@ public:
     }
 
     /*!
-     * \brief Read a grid from a vtk/vtu/vtp file, without reading cell and point data
+     * \brief Read a grid from a vtk/vtu/vtp file, ignoring cell and point data
+     * \param verbose if the output should be verbose
      */
     template<class Grid>
     std::unique_ptr<Grid> readGrid(bool verbose = false) const
@@ -109,6 +110,10 @@ public:
     /*!
      * \brief Read a grid from a vtk/vtu/vtp file, reading cell and point data
      * \note the factory will be needed outside to interpret the data via the factory's insertion indices
+     * \param factory the (emtpy) grid factory
+     * \param cellData the cell data arrays to be filled
+     * \param pointData the point data arrays to be filled
+     * \param verbose if the output should be verbose
      */
     template<class Grid>
     std::unique_ptr<Grid> readGrid(Dune::GridFactory<Grid>& factory, Data& cellData, Data& pointData, bool verbose = false) const
@@ -122,6 +127,11 @@ public:
     }
 
 private:
+    /*!
+     * \brief Read a grid from a vtk/vtu/vtp file
+     * \param factory the (emtpy) grid factory
+     * \param verbose if the output should be verbose
+     */
     template<class Grid>
     void readGrid_(Dune::GridFactory<Grid>& factory, bool verbose = false) const
     {
@@ -174,6 +184,12 @@ private:
         }
     }
 
+    /*!
+     * \brief Read a grid data from a vtk/vtu/vtp file
+     * \param cellData the cell data arrays to be filled
+     * \param pointData the point data arrays to be filled
+     * \param verbose if the output should be verbose
+     */
     void readGridData_(Data& cellData, Data& pointData, bool verbose = false) const
     {
         using namespace tinyxml2;
@@ -213,6 +229,10 @@ private:
         }
     }
 
+    /*!
+     * \brief Get the piece node of the XMLDocument
+     * \note Returns nullptr if the piece node wasn't found
+     */
     const tinyxml2::XMLElement* getPieceNode_() const
     {
         using namespace tinyxml2;
@@ -230,6 +250,12 @@ private:
         return pieceNode->FirstChildElement("Piece");
     }
 
+    /*!
+     * \brief Get the piece node of the XMLDocument
+     * \param pieceNode the pieceNode of the vtk file
+     * \param type the vtk data type (cell data or point data)
+     * \note Returns nullptr if the data node wasn't found
+     */
     const tinyxml2::XMLElement* getDataNode_(const tinyxml2::XMLElement* pieceNode, const DataType& type) const
     {
         using namespace tinyxml2;
@@ -245,6 +271,12 @@ private:
         return dataNode;
     }
 
+    /*!
+     * \brief Find a data array with a specific name
+     * \param dataNode a cell or point data node
+     * \param name the name of the data array to be found
+     * \note Returns nullptr if the data array wasn't found
+     */
     const tinyxml2::XMLElement* findDataArray_(const tinyxml2::XMLElement* dataNode, const std::string& name) const
     {
         using namespace tinyxml2;
@@ -265,6 +297,11 @@ private:
         return dataArray;
     }
 
+    /*!
+     * \brief Parses the text of a data array into a container
+     * \tparam Container a container type that has begin(), end(), push_back(), e.g. std::vector<double>
+     * \param dataArray the data array node to be parsed
+     */
     template<class Container>
     Container parseDataArray_(const tinyxml2::XMLElement* dataArray) const
     {
@@ -275,7 +312,10 @@ private:
         return data;
     }
 
-    //! return the Dune::GeometryType for a given VTK geometry type
+    /*!
+     * \brief Return the Dune::GeometryType for a given VTK geometry type
+     * \param vtkCellType the vtk cell type
+     */
     Dune::GeometryType vtkToDuneGeomType_(unsigned int vtkCellType) const
     {
         switch (vtkCellType)
