@@ -257,7 +257,7 @@ public:
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(CO2Idx); }, "enthalpyN");
 #else
         vtkTemperature_.resize(numDofs, 0.0);
-        vtk.addField(vtkTemperature_, "temperature");
+        vtk.addField(vtkTemperature_, "T");
 #endif
 
         const auto& gridView = this->fvGridGeometry().gridView();

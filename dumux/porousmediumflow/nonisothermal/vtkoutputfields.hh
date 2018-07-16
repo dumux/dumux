@@ -39,7 +39,7 @@ public:
     static void init(VtkOutputModule& vtk)
     {
         IsothermalVtkOutputFields::init(vtk);
-        vtk.addVolumeVariable( [](const auto& v){ return v.temperature(); }, "temperature");
+        vtk.addVolumeVariable( [](const auto& v){ return v.temperature(); }, "T");
     }
 };
 

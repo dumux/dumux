@@ -50,7 +50,7 @@ public:
         vtk.addVolumeVariable([](const auto& v){ return v.mobility(VolumeVariables::liquidPhaseIdx); }, "mobility");
         vtk.addVolumeVariable([](const auto& v){ return v.relativePermeability(VolumeVariables::liquidPhaseIdx); }, "kr");
         vtk.addVolumeVariable([](const auto& v){ return v.porosity(); }, "porosity");
-        vtk.addVolumeVariable([](const auto& v){ return v.temperature(); }, "temperature");
+        vtk.addVolumeVariable([](const auto& v){ return v.temperature(); }, "T");
 
         static const bool gravity = getParamFromGroup<bool>(vtk.paramGroup(), "Problem.EnableGravity");
         if(gravity)
