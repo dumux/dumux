@@ -28,8 +28,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -51,6 +50,8 @@ class StaggeredFreeFlowVelocityOutput
 
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
+
+    static constexpr auto fluidSystemPhaseIdx = GET_PROP_TYPE(TypeTag, ModelTraits)::Indices::fluidSystemPhaseIdx;
 
 public:
     /*!
@@ -80,7 +81,7 @@ public:
 
     // returns the name of the phase for a given index
     static std::string phaseName(int phaseIdx)
-    { return GET_PROP_TYPE(TypeTag, FluidSystem)::phaseName(phaseIdx); }
+    { return GET_PROP_TYPE(TypeTag, FluidSystem)::phaseName(fluidSystemPhaseIdx); }
 
     // returns the number of phase velocities computed by this class
     static constexpr int numPhaseVelocities()
