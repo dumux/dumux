@@ -54,7 +54,7 @@ struct hasState
  * \brief helper function to read from a file into a solution vector
  */
 template <class SolutionVector, class PvNamesFunc>
-auto loadSolutionFromVtuFile(const std::string fileName,
+auto loadSolutionFromVtkFile(const std::string fileName,
                              const VTKReader::DataType& dataType,
                              PvNamesFunc&& pvNamesFunc,
                              SolutionVector& sol)
@@ -81,7 +81,7 @@ auto loadSolutionFromVtuFile(const std::string fileName,
  * \brief helper function to read from a file into a solution vector
  */
 template <class SolutionVector, class PvNamesFunc>
-auto loadSolutionFromVtuFile(const std::string fileName,
+auto loadSolutionFromVtkFile(const std::string fileName,
                              const VTKReader::DataType& dataType,
                              PvNamesFunc&& pvNamesFunc,
                              SolutionVector& sol)
@@ -177,7 +177,7 @@ void loadSolution(const std::string& fileName,
     {
         const auto dataType = discMethod == DiscretizationMethod::box
                               ? VTKReader::DataType::pointData : VTKReader::DataType::cellData;
-        loadSolutionFromVtuFile(fileName, dataType, pvNamesFunc, sol);
+        loadSolutionFromVtkFile(fileName, dataType, pvNamesFunc, sol);
     }
     else
         DUNE_THROW(Dune::NotImplemented, "loadSolution for extension " << extension);
