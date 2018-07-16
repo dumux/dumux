@@ -127,8 +127,6 @@ class SweTestProblem : public PorousMediumFlowProblem<TypeTag>
         std::vector<double> y;
     };
 
-    //TODO map that saves the water flux for each boundary
-
 public:
     /*!
      * \brief Constructor
@@ -242,6 +240,7 @@ public:
             if (boundaryValues.type == "discharge")
             {
                 bdValue = getBoundaryValue(time_,myBoundaryId);
+                bdValue = (bdValue / this->hBoundarySumMap_.at(boundaryValues.id)) * hBoundarySegmentMap_.at(scvf.index());
                 bdType = 1;
             }
         }else{
@@ -252,7 +251,6 @@ public:
 
         //TODO scale the boundary?
         //auto segIndex = is.boundarySegmentIndex();
-        //bdValue = (bdValue / this->hA_boundarySum[bd_id])* this->hA_boundaryMap.at(segIndex);
 
 
         //call boundaryfluxes for computing the Riemann invariants
@@ -341,38 +339,28 @@ public:
                 auto u = elemVolVars[scv].getU();
                 auto v = elemVolVars[scv].getV();
 
-                std::cout << "scv " << std::endl;
-
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
-                    // so ähnlich abfragen this->hA_boundaryMap.find(segIndex)) == this->hA_boundaryMap.end())
-
-                    std::cout << "scvf " << std::endl;
-                    std::cout << "index " <<   scvf.index() << std::endl;
-                    std::cout << "isboundary " <<   scvf.boundary() << std::endl;
-                    std::cout << "area " <<   scvf.area() << std::endl;
-
                     if (scvf.boundary()){
                        if (this->hBoundarySegmentMap_.find(scvf.index()) == this->hBoundarySegmentMap_.end())
                        {
-
-                            if (h > minHBoundary_){
+                            if (h > this->minHBoundary_){
                                 //save for segment
                                 this->hBoundarySegmentMap_[scvf.index()] = scvf.area() * h;
                                 //save for sum
-                                /*if (notGhost){
-
-                                //TDODO summe der segmente einfügen ist schon 0.0 am start.
-
-                                this->hBoundarySumMap_[] += scvf.area() * h;
-                                }*/
+                                if (isNoGhost){
+                                    auto ip = scvf.ipGlobal();
+                                    auto myBoundaryId = this->getBoundaryId(ip[0],ip[1]); //use the integration point
+                                    auto boundaryValues = this->boundaryValuesMap_.at(myBoundaryId);
+                                    this->hBoundarySumMap_[boundaryValues.id] += scvf.area() * h;
+                                }
                             }
                        }
                     }
 
                 }
             }
-        }
+        } //TODO cumpute parallel sum for this->hBoundarySumMap_[boundaryValues.id] += scvf.area() * h;
     }
 
 
@@ -576,12 +564,7 @@ public:
                 }
             }
         }
-
-        std::cout << "Debug, finished reading boundary file " << std::endl;
-        //TODO read boundaryBoxesFiles
         this->readBoundaryValuesFiles();
-        std::cout << "Debug, finished reading boundary value files " << std::endl;
-
     }
 
     int getBoundaryId(double x, double y) const
