@@ -526,14 +526,14 @@ int checkFluidSystem()
         try
         {
             val = FluidSystem::density(fs, paramCache, phaseIdx);
-        } catch (Dune::Exception e)
+        } catch (Dune::Exception& e)
         {
             collectedErrors += "error: FluidSystem::density() throws exception!\n";
         }
         try
         {
             val = FluidSystem::molarDensity(fs, paramCache, phaseIdx);
-        } catch (Dune::Exception e)
+        } catch (Dune::Exception& e)
         {
             collectedErrors += "error: FluidSystem::molarDensity() throws exception!\n";
         }
@@ -549,7 +549,7 @@ int checkFluidSystem()
         try
         {
             val = FluidSystem::enthalpy(fs, paramCache, phaseIdx);
-        } catch (Dune::NotImplemented)
+        } catch (Dune::NotImplemented&)
         {
             collectedWarnings += "warning: FluidSystem::enthalpy() is not implemented\n";
         } catch (...)
@@ -594,10 +594,10 @@ int checkFluidSystem()
             try
             {
                 val = FluidSystem::diffusionCoefficient(fs, paramCache, phaseIdx, compIdx);
-            } catch (Dune::NotImplemented)
+            } catch (Dune::NotImplemented&)
             {
                 collectedWarnings += "warning: FluidSystem::diffusionCoefficient() is not implemented\n";
-            } catch (Dune::InvalidStateException)
+            } catch (Dune::InvalidStateException&)
             {
                 collectedWarnings += "warning: FluidSystem::diffusionCoefficient() gives invalid state exception\n";
             } catch (...)
