@@ -46,12 +46,12 @@ namespace FluidSystems
  * \brief A two-phase fluid system with two components water \f$(\mathrm{H_2O})\f$
  *        Nitrogen \f$(\mathrm{N_2})\f$ for non-equilibrium models. TODO: Is this fluid system necessary??
  */
-template <class Scalar, bool useComplexRelations = true>
+template <class Scalar, class Policy = H2ON2DefaultPolicy<>>
 class H2ON2Kinetic :
-    public FluidSystems::H2ON2<Scalar, useComplexRelations>
+    public FluidSystems::H2ON2<Scalar, Policy>
 {
 private:
-    using ParentType = FluidSystems::H2ON2<Scalar, useComplexRelations>;
+    using ParentType = FluidSystems::H2ON2<Scalar, Policy>;
 
     using IdealGas = Dumux::IdealGas<Scalar>;
 public:

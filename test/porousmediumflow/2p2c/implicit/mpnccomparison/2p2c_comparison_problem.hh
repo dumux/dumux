@@ -62,7 +62,7 @@ SET_TYPE_PROP(TwoPTwoCComparisonTypeTag,
 // Set fluid configuration
 SET_TYPE_PROP(TwoPTwoCComparisonTypeTag,
               FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
+              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, SpatialParams, TwoPTwoCComparisonSpatialParams<TypeTag>);

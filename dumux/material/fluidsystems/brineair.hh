@@ -25,8 +25,9 @@
 #define DUMUX_BRINE_AIR_SYSTEM_HH
 
 #include <cassert>
-#include <dumux/material/idealgas.hh>
+#include <iomanip>
 
+#include <dumux/material/idealgas.hh>
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/components/brine.hh>
 #include <dumux/material/components/air.hh>
@@ -43,6 +44,17 @@ namespace Dumux {
 namespace FluidSystems {
 /*!
  * \ingroup Fluidsystems
+ * \brief Policy for the brine-air fluid system
+ */
+template<bool fastButSimplifiedRelations = false>
+struct BrineAirDefaultPolicy
+{
+    static constexpr bool useBrineDensityAsLiquidMixtureDensity() { return fastButSimplifiedRelations;}
+    static constexpr bool useIdealGasDensity() { return fastButSimplifiedRelations; }
+};
+
+/*!
+ * \ingroup Fluidsystems
  * \brief A compositional two-phase fluid system with a liquid and a gaseous phase
  *        and \f$H_2O\f$, \f$Air\f$ and \f$S\f$ (dissolved minerals) as components.
  *
@@ -51,11 +63,11 @@ namespace FluidSystems {
  */
 template <class Scalar,
           class H2Otype = Components::TabulatedComponent<Components::H2O<Scalar>>,
-          bool useComplexRelations=true>
+          class Policy = BrineAirDefaultPolicy<>>
 class BrineAir
-: public BaseFluidSystem<Scalar, BrineAir<Scalar, H2Otype, useComplexRelations>>
+: public BaseFluidSystem<Scalar, BrineAir<Scalar, H2Otype, Policy>>
 {
-    using ThisType = BrineAir<Scalar, H2Otype, useComplexRelations>;
+    using ThisType = BrineAir<Scalar, H2Otype, Policy>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
     using IdealGas = Dumux::IdealGas<Scalar>;
 
@@ -274,10 +286,9 @@ public:
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
                       Scalar pressMin, Scalar pressMax, unsigned nPress)
     {
-        if (useComplexRelations)
-            std::cout << "Using complex Brine-Air fluid system\n";
-        else
-            std::cout << "Using fast Brine-Air fluid system\n";
+        std::cout << "The brine-air fluid system was configured with the following policy:\n";
+        std::cout << " - use brine density as liquid mixture density: " << std::boolalpha << Policy::useBrineDensityAsLiquidMixtureDensity() << "\n";
+        std::cout << " - use ideal gas density: " << std::boolalpha << Policy::useIdealGasDensity() << std::endl;
 
         if (H2O::isTabulated)
         {
@@ -310,7 +321,7 @@ public:
         Scalar pressure = fluidState.pressure(phaseIdx);
 
         if (phaseIdx == phase0Idx){
-            if (!useComplexRelations)
+            if (Policy::useBrineDensityAsLiquidMixtureDensity())
                 // assume pure brine
                 return Brine::liquidDensity(temperature,
                                             pressure,
@@ -326,7 +337,7 @@ public:
             }
         }
         else if (phaseIdx == phase1Idx){
-            if (!useComplexRelations)
+            if (Policy::useIdealGasDensity())
             // for the gas phase assume an ideal gas
             {
                 const Scalar averageMolarMass = fluidState.averageMolarMass(phase1Idx);
@@ -364,7 +375,7 @@ public:
         }
         else if (phaseIdx == phase1Idx)
         {
-            if (!useComplexRelations)
+            if (Policy::useIdealGasDensity())
             // for the gas phase assume an ideal gas
             { return IdealGas::molarDensity(temperature, pressure); }
 

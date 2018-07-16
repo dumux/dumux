@@ -47,7 +47,7 @@ NEW_PROP_TAG(FluidSystem);
 
 // Select the fluid system
 SET_TYPE_PROP(DensityDrivenFlowTypeTag, FluidSystem,
-              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false*/>);
+              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 SET_INT_PROP(DensityDrivenFlowTypeTag, PhaseIdx,
              GET_PROP_TYPE(TypeTag, FluidSystem)::liquidPhaseIdx);

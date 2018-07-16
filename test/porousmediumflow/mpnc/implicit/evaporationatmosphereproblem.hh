@@ -85,7 +85,7 @@ SET_TYPE_PROP(EvaporationAtmosphereTypeTag, Problem, EvaporationAtmosphereProble
 // Set fluid configuration
 SET_TYPE_PROP(EvaporationAtmosphereTypeTag,
               FluidSystem,
-              FluidSystems::H2ON2Kinetic<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
+              FluidSystems::H2ON2Kinetic<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 //! Set the default pressure formulation: either pw first or pn first
 SET_PROP(EvaporationAtmosphereTypeTag, PressureFormulation)

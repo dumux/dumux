@@ -26,6 +26,7 @@
 #define DUMUX_H2O_N2_O2_FLUID_SYSTEM_HH
 
 #include <cassert>
+#include <iomanip>
 
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
@@ -45,6 +46,19 @@
 
 namespace Dumux {
 namespace FluidSystems {
+/*!
+ * \ingroup Fluidsystems
+ * \brief Policy for the H2O-N2-O2 fluid system
+ */
+template<bool fastButSimplifiedRelations = false>
+struct H2ON2O2DefaultPolicy
+{
+    static constexpr bool useH2ODensityAsLiquidMixtureDensity() { return fastButSimplifiedRelations; }
+    static constexpr bool useIdealGasDensity() { return fastButSimplifiedRelations; }
+    static constexpr bool useN2ViscosityAsGasMixtureViscosity() { return fastButSimplifiedRelations; }
+    static constexpr bool useN2HeatConductivityAsGasMixtureHeatConductivity() { return fastButSimplifiedRelations; }
+    static constexpr bool useIdealGasHeatCapacities() { return fastButSimplifiedRelations; }
+};
 
 /*!
  * \ingroup Fluidsystems
@@ -56,11 +70,11 @@ namespace FluidSystems {
  * Also remember to initialize tabulated components (FluidSystem::init()), while this
  * is not necessary for non-tabularized ones.
  */
-template <class Scalar, bool useComplexRelations = true>
+template <class Scalar, class Policy = H2ON2O2DefaultPolicy<>>
 class H2ON2O2
-    : public BaseFluidSystem<Scalar, H2ON2O2<Scalar, useComplexRelations> >
+    : public BaseFluidSystem<Scalar, H2ON2O2<Scalar, Policy> >
 {
-    using ThisType = H2ON2O2<Scalar, useComplexRelations>;
+    using ThisType = H2ON2O2<Scalar, Policy>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
 
     using IdealGas = Dumux::IdealGas<Scalar>;
@@ -404,10 +418,12 @@ public:
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
                      Scalar pressMin, Scalar pressMax, unsigned nPress)
     {
-        if (useComplexRelations)
-            std::cout << "Using complex H2O-N2-O2 fluid system\n";
-        else
-            std::cout << "Using fast H2O-N2-O2 fluid system\n";
+        std::cout << "The H2O-N2-O2 fluid system was configured with the following policy:\n";
+        std::cout << " - use H2O density as liquid mixture density: " << std::boolalpha << Policy::useH2ODensityAsLiquidMixtureDensity() << "\n";
+        std::cout << " - use ideal gas density: " << std::boolalpha << Policy::useIdealGasDensity() << "\n";
+        std::cout << " - use N2 viscosity as gas mixture viscosity: " << std::boolalpha << Policy::useN2ViscosityAsGasMixtureViscosity() << "\n";
+        std::cout << " - use N2 heat conductivity as gas mixture heat conductivity: " << std::boolalpha << Policy::useN2HeatConductivityAsGasMixtureHeatConductivity() << "\n";
+        std::cout << " - use ideal gas heat capacities: " << std::boolalpha << Policy::useIdealGasHeatCapacities() << std::endl;
 
         if (H2O::isTabulated)
         {
@@ -422,7 +438,7 @@ public:
      *        the partial pressures of all components, return its
      *        density \f$\mathrm{[kg/m^3]}\f$.
      *
-     * If useComplexRelations == true, we apply Eq. (7)
+     * If Policy::useH2ODensityAsLiquidMixtureDensity() == false, we apply Eq. (7)
      * in Class et al. (2002a) \cite A3:class:2002b <BR>
      * for the liquid density.
      *
@@ -440,7 +456,7 @@ public:
 
         // liquid phase
         if (phaseIdx == liquidPhaseIdx) {
-            if (!useComplexRelations)
+            if (Policy::useH2ODensityAsLiquidMixtureDensity())
                 // assume pure water
                 return H2O::liquidDensity(T, p);
             else
@@ -457,7 +473,7 @@ public:
 
         // gas phase
         using std::max;
-        if (!useComplexRelations)
+        if (Policy::useIdealGasDensity())
             // for the gas phase assume an ideal gas
             return IdealGas::molarDensity(T, p)
                    * fluidState.averageMolarMass(gasPhaseIdx);
@@ -496,7 +512,7 @@ public:
         }
         else
         {
-            if (!useComplexRelations)
+            if (Policy::useIdealGasDensity())
             {   //assume ideal gas
                 return IdealGas::molarDensity(T,p);
             }
@@ -536,7 +552,7 @@ public:
         }
 
         // gas phase
-        if (!useComplexRelations)
+        if (Policy::useN2ViscosityAsGasMixtureViscosity())
         {
             // assume pure nitrogen for the gas phase
             return N2::gasViscosity(T, p);
@@ -803,7 +819,7 @@ public:
         {
             Scalar lambdaPureN2 = N2::gasThermalConductivity(temperature, pressure);
             Scalar lambdaPureO2 = O2::gasThermalConductivity(temperature, pressure);
-            if (useComplexRelations)
+            if (!Policy::useN2HeatConductivityAsGasMixtureHeatConductivity())
             {
                 Scalar xN2 = fluidState.moleFraction(phaseIdx, N2Idx);
                 Scalar xO2 = fluidState.moleFraction(phaseIdx, O2Idx);
@@ -840,7 +856,7 @@ public:
         Scalar c_pO2;
         Scalar c_pH2O;
         // let the water and nitrogen components do things their own way
-        if (useComplexRelations) {
+        if (!Policy::useIdealGasHeatCapacities()) {
             c_pN2 = N2::gasHeatCapacity(fluidState.temperature(phaseIdx),
                                         fluidState.pressure(phaseIdx)
                                         * fluidState.moleFraction(phaseIdx, N2Idx));

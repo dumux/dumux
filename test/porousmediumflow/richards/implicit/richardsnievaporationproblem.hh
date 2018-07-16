@@ -60,7 +60,7 @@ SET_TYPE_PROP(RichardsNIEvaporationTypeTag, Problem,
               RichardsNIEvaporationProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(RichardsNIEvaporationTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(RichardsNIEvaporationTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(RichardsNIEvaporationTypeTag, SpatialParams, RichardsNISpatialParams<TypeTag>);

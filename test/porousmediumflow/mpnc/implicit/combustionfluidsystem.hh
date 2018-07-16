@@ -45,11 +45,11 @@ namespace FluidSystems {
  * \brief A two-phase fluid system with water as sole component.
  *           Values are taken from Shi & Wang, A numerical investigation of transpiration cooling with liquid coolant phase change, Transport in Porous Media, 2011
  */
-template <class Scalar, bool useComplexRelations = false>
+template <class Scalar>
 class CombustionFluidsystem
-    : public BaseFluidSystem<Scalar, CombustionFluidsystem<Scalar, useComplexRelations> >
+    : public BaseFluidSystem<Scalar, CombustionFluidsystem<Scalar> >
 {
-    using ThisType = CombustionFluidsystem<Scalar, useComplexRelations>;
+    using ThisType = CombustionFluidsystem<Scalar>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
 
     // convenience using declarations

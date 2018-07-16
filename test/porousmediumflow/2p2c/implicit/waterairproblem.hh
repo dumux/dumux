@@ -59,7 +59,7 @@ SET_TYPE_PROP(WaterAirTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(WaterAirTypeTag, Problem, WaterAirProblem<TypeTag>);
 
 // Set the wetting phase
-SET_TYPE_PROP(WaterAirTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
+SET_TYPE_PROP(WaterAirTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(WaterAirTypeTag, SpatialParams, WaterAirSpatialParams<TypeTag>);

@@ -26,6 +26,7 @@
 #define DUMUX_H2O_AIR_SYSTEM_HH
 
 #include <cassert>
+#include <iomanip>
 
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/fluidsystems/base.hh>
@@ -40,6 +41,17 @@
 
 namespace Dumux {
 namespace FluidSystems {
+/*!
+ * \ingroup Fluidsytems
+ * \brief Policy for the H2O-air fluid system
+ */
+template<bool fastButSimplifiedRelations = false>
+struct H2OAirDefaultPolicy
+{
+    static constexpr bool useH2ODensityAsLiquidMixtureDensity() { return fastButSimplifiedRelations; }
+    static constexpr bool useIdealGasDensity() { return fastButSimplifiedRelations; }
+    static constexpr bool useAirViscosityAsGasMixtureViscosity() { return fastButSimplifiedRelations; }
+};
 
 /*!
  * \ingroup Fluidsystems
@@ -54,12 +66,12 @@ namespace FluidSystems {
  */
 template <class Scalar,
           class H2Otype = Components::TabulatedComponent<Components::H2O<Scalar> >,
-          bool useComplexRelations = true,
+          class Policy = H2OAirDefaultPolicy<>,
           bool useKelvinVaporPressure = false>
 class H2OAir
-: public BaseFluidSystem<Scalar, H2OAir<Scalar, H2Otype, useComplexRelations> >
+: public BaseFluidSystem<Scalar, H2OAir<Scalar, H2Otype, Policy> >
 {
-    using ThisType = H2OAir<Scalar,H2Otype, useComplexRelations>;
+    using ThisType = H2OAir<Scalar,H2Otype, Policy>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
     using IdealGas = Dumux::IdealGas<Scalar>;
 
@@ -340,10 +352,10 @@ public:
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
                      Scalar pressMin, Scalar pressMax, unsigned nPress)
     {
-        if (useComplexRelations)
-            std::cout << "Using complex H2O-Air fluid system\n";
-        else
-            std::cout << "Using fast H2O-Air fluid system\n";
+        std::cout << "The H2O-air fluid system was configured with the following policy:\n";
+        std::cout << " - use H2O density as liquid mixture density: " << std::boolalpha << Policy::useH2ODensityAsLiquidMixtureDensity() << "\n";
+        std::cout << " - use ideal gas density: " << std::boolalpha << Policy::useIdealGasDensity() << "\n";
+        std::cout << " - use air viscosity as gas mixture viscosity: " << std::boolalpha << Policy::useAirViscosityAsGasMixtureViscosity() << std::endl;
 
         if (H2O::isTabulated)
         {
@@ -358,7 +370,7 @@ public:
      *        the partial pressures of all components, return its
      *        density \f$\mathrm{[kg/m^3]}\f$.
      *
-     * If useComplexRelations == true, we apply Eq. (7)
+     * If Policy::useH2ODensityAsLiquidMixtureDensity() == false, we apply Eq. (7)
      * in Class et al. (2002a) \cite A3:class:2002b <BR>
      * for the liquid density.
      *
@@ -377,7 +389,7 @@ public:
 
         if (phaseIdx == phase0Idx)
         {
-            if (!useComplexRelations)
+            if (Policy::useH2ODensityAsLiquidMixtureDensity())
                 // assume pure water
                 return H2O::liquidDensity(T, p);
             else
@@ -392,7 +404,7 @@ public:
         }
         else if (phaseIdx == gasPhaseIdx)
         {
-            if (!useComplexRelations)
+            if (Policy::useIdealGasDensity())
                 // for the gas phase assume an ideal gas
             {
                 const Scalar averageMolarMass = fluidState.averageMolarMass(gasPhaseIdx);
@@ -431,7 +443,7 @@ public:
         }
         else if (phaseIdx == phase1Idx)
         {
-            if (!useComplexRelations)
+            if (Policy::useIdealGasDensity())
                 // for the gas phase assume an ideal gas
             { return IdealGas::molarDensity(T, p); }
 
@@ -470,7 +482,7 @@ public:
         }
         else if (phaseIdx == gasPhaseIdx)
         {
-            if(!useComplexRelations){
+            if(Policy::useAirViscosityAsGasMixtureViscosity()){
                 return Air::gasViscosity(T, p);
             }
             else //using a complicated version of this fluid system

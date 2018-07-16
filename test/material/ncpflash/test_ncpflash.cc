@@ -152,7 +152,7 @@ void completeReferenceFluidState(FluidState &fs,
 int main()
 {
     using Scalar = double;
-    using FluidSystem = Dumux::FluidSystems::H2ON2<Scalar, false>;
+    using FluidSystem = Dumux::FluidSystems::H2ON2<Scalar, Dumux::FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>;
     using CompositionalFluidState = Dumux::CompositionalFluidState<Scalar, FluidSystem>;
 
     enum { numPhases = FluidSystem::numPhases };

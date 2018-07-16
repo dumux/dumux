@@ -243,7 +243,9 @@ SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSw
 SET_PROP(Richards, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::H2OAir<Scalar, Components::SimpleH2O<Scalar>, false>;
+    using type = FluidSystems::H2OAir<Scalar,
+                                      Components::SimpleH2O<Scalar>,
+                                      FluidSystems::H2OAirDefaultPolicy</*fastButSimplifiedRelations=*/true>>;
 };
 
 /*!
