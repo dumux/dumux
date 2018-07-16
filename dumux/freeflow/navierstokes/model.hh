@@ -103,6 +103,12 @@ struct NavierStokesModelTraits
 
     //! the indices
     using Indices = NavierStokesIndices<dim()>;
+
+    //! return the name of the primary variables
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        return pvIdx == 0 ? "p" : "faceVelocity";
+    }
 };
 
 /*!

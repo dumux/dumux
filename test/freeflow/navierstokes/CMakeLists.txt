@@ -70,7 +70,20 @@ dune_add_test(NAME test_channel_navierstokes
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/channel-navierstokes-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes-00002.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes")
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes -Vtk.WriteFaceData 1")
+
+dune_add_test(NAME test_channel_navierstokes_restart
+              SOURCES test_channel.cc
+              COMPILE_DEFINITIONS ENABLE_NAVIERSTOKES=1
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/channel-navierstokes-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes_restart-00001.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes -Vtk.WriteFaceData 1 -TimeLoop.DtInitial 1 -Restart.Time 1 -Restart.File test_channel_navierstokes-00001 -Problem.Name test_channel_navierstokes_restart")
+
+# the restart test has to run after the test that produces the corresponding vtu file
+set_tests_properties(test_channel_navierstokes_restart PROPERTIES DEPENDS test_channel_navierstokes)
 
 dune_add_test(NAME test_stokes_donea
               SOURCES test_donea.cc
