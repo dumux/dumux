@@ -24,7 +24,6 @@
 #ifndef DUMUX_MATERIAL_FLUID_STATE_ADAPTER_HH
 #define DUMUX_MATERIAL_FLUID_STATE_ADAPTER_HH
 
-#include <array>
 #include <dune/common/exceptions.hh>
 
 namespace Dumux {
@@ -102,6 +101,12 @@ public:
 
     Scalar pressure(int phaseIdx) const
     { return fluidState_.pressure(AdapterPolicy::phaseIdx(phaseIdx)); }
+
+    Scalar partialPressure(int phaseIdx, int compIdx) const
+    {
+        assert(FluidSystem::isGas(phaseIdx));
+        return pressure(phaseIdx)*moleFraction(phaseIdx, compIdx);
+    }
 
     Scalar temperature(int phaseIdx) const
     { return fluidState_.temperature(AdapterPolicy::phaseIdx(phaseIdx)); }
