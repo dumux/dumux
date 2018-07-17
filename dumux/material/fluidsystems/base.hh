@@ -41,6 +41,9 @@ template <class ScalarType, class Implementation>
 class BaseFluidSystem
 {
 public:
+    //! export the scalar type
+    using Scalar = ScalarType;
+
     //! The type of parameter cache objects
     using ParameterCache = NullParameterCache;
 
