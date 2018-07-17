@@ -38,12 +38,9 @@ namespace Dumux
  */
 template <class Traits, class NSVolumeVariables>
 class LowReKEpsilonVolumeVariables
-:  public RANSVolumeVariables< Traits, LowReKEpsilonVolumeVariables<Traits, NSVolumeVariables> >
-,  public NSVolumeVariables
+:  public RANSVolumeVariables<Traits, NSVolumeVariables>
 {
-    using ThisType = LowReKEpsilonVolumeVariables<Traits, NSVolumeVariables>;
-    using RANSParentType = RANSVolumeVariables<Traits, ThisType>;
-    using NavierStokesParentType = NSVolumeVariables;
+    using RANSParentType = RANSVolumeVariables<Traits, NSVolumeVariables>;
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
@@ -71,7 +68,7 @@ public:
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        NavierStokesParentType::update(elemSol, problem, element, scv);
+        RANSParentType::updateNavierStokesVolVars(elemSol, problem, element, scv);
         updateRANSProperties(elemSol, problem, element, scv);
     }
 
@@ -98,34 +95,11 @@ public:
         storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementID()];
         stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementID()];
         if (problem.useStoredEddyViscosity_)
-            dynamicEddyViscosity_ = problem.storedDynamicEddyViscosity_[RANSParentType::elementID()];
+            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementID()]);
         else
-            dynamicEddyViscosity_ = calculateEddyViscosity();
-        calculateEddyDiffusivity(problem);
-    }
-
-    /*!
-     * \brief Return the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow
-     */
-    Scalar dynamicEddyViscosity() const
-    { return dynamicEddyViscosity_; }
-
-    /*!
-     * \brief Return the effective dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
-     *        control volume.
-     */
-    Scalar effectiveViscosity() const
-    { return NavierStokesParentType::viscosity() + dynamicEddyViscosity(); }
-
-    /*!
-     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
-     *        of the fluid-flow in the sub-control volume.
-     */
-    template<bool eB = enableEnergyBalance, typename std::enable_if_t<eB, int> = 0>
-    Scalar effectiveThermalConductivity() const
-    {
-        return NavierStokesParentType::thermalConductivity()
-               + RANSParentType::eddyThermalConductivity();
+            RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity());
+        RANSParentType::calculateEddyDiffusivity(problem);
+        RANSParentType::calculateEddyThermalConductivity(problem);
     }
 
     /*!
@@ -134,18 +108,7 @@ public:
     Scalar calculateEddyViscosity()
     {
         return cMu() * fMu() * turbulentKineticEnergy() * turbulentKineticEnergy()
-               / dissipationTilde() *  NavierStokesParentType::density();
-    }
-
-    /*!
-     * \brief Calculates the eddy diffusivity \f$\mathrm{[m^2/s]}\f$ based
-     *        on the kinematic eddy viscosity and the turbulent schmidt number
-     */
-    template<class Problem>
-    void calculateEddyDiffusivity(const Problem& problem)
-    {
-        eddyDiffusivity_ = RANSParentType::kinematicEddyViscosity()
-                           / problem.turbulentSchmidtNumber();
+               / dissipationTilde() *  RANSParentType::density();
     }
 
     /*!
@@ -258,26 +221,7 @@ public:
                 * exp(-0.5 * RANSParentType::yPlus());
     }
 
-    /*!
-     * \brief Returns the eddy diffusivity \f$\mathrm{[m^2/s]}\f$
-     */
-    Scalar eddyDiffusivity() const
-    { return eddyDiffusivity_; }
-
-     /*!
-     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
-     *
-     * \param compIIdx the index of the component which diffusive
-     * \param compJIdx the index of the component with respect to which compIIdx diffuses
-     */
-    Scalar effectiveDiffusivity(int compIIdx, int compJIdx = fluidSystemPhaseIdx) const
-    {
-        return NavierStokesParentType::diffusionCoefficient(compIIdx, compJIdx) + eddyDiffusivity();
-    }
-
 protected:
-    Scalar dynamicEddyViscosity_ = 0.0;
-    Scalar eddyDiffusivity_ = 0.0;
     Scalar turbulentKineticEnergy_ = 0.0;
     Scalar dissipationTilde_ = 0.0;
     Scalar storedTurbulentKineticEnergy_ = 0.0;

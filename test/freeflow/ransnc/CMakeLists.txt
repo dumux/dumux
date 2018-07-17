@@ -14,7 +14,7 @@ dune_add_test(NAME test_flatplate_kepsilon2cni_twolayer
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_kepsilon2cni.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00036.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00033.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_kepsilon2cni
                                        test_flatplate2cni.input")
 
@@ -24,7 +24,7 @@ dune_add_test(NAME test_flatplate_kepsilon2cni_wallfunction
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_kepsilon2cni_wallfunction.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni_wallfunction-00025.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni_wallfunction-00024.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_kepsilon2cni
                                        test_flatplate2cni_wallfunction.input")
 
@@ -39,7 +39,7 @@ dune_add_test(NAME test_flatplate_komega2cni
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_komega2cni.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00034.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00032.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_komega2cni
                                        test_flatplate2cni.input
                                        -Newton.TargetSteps 12")
@@ -56,7 +56,7 @@ dune_add_test(NAME test_flatplate_lowrekepsilon2cni
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_lowrekepsilon2cni.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00033.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00032.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_lowrekepsilon2cni test_flatplate2cni.input")
 target_compile_definitions(test_flatplate_lowrekepsilon2cni PUBLIC "LOWREKEPSILON=1" "NONISOTHERMAL=1")
 
@@ -71,7 +71,7 @@ dune_add_test(NAME test_flatplate_oneeq2cni
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_oneeq2cni.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00034.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00031.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_oneeq2cni test_flatplate2cni.input")
 target_compile_definitions(test_flatplate_oneeq2cni PUBLIC "ONEEQ=1" "NONISOTHERMAL=1")
 
@@ -90,6 +90,6 @@ dune_add_test(NAME test_flatplate_zeroeq2cni
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_flatplate_zeroeq2cni.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00034.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_flatplate2cni-00032.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_flatplate_zeroeq2cni test_flatplate2cni.input")
 target_compile_definitions(test_flatplate_zeroeq2cni PUBLIC "NONISOTHERMAL=1")

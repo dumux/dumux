@@ -32,33 +32,44 @@
 
 namespace Dumux
 {
-
-// forward declaration
-template <class Traits, class Impl, bool enableEnergyBalance>
-class RANSVolumeVariablesImplementation;
-
-/*!
- * \ingroup RANSModel
- * \brief Volume variables for the single-phase Reynolds-Averaged Navier-Stokes models.
- *        The class is specialized for isothermal and non-isothermal models.
- */
-template <class Traits, class Impl>
-using RANSVolumeVariables = RANSVolumeVariablesImplementation<Traits, Impl, Traits::ModelTraits::enableEnergyBalance()>;
-
 /*!
  * \ingroup RANSModel
  * \brief Volume variables for the isothermal single-phase Reynolds-Averaged Navier-Stokes models.
  */
-template <class Traits, class Impl>
-class RANSVolumeVariablesImplementation<Traits, Impl, false>
+template <class Traits, class NSVolumeVariables>
+class RANSVolumeVariables
+: public NSVolumeVariables
 {
+    using NavierStokesParentType = NSVolumeVariables;
+
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
     enum { dimWorld = Traits::ModelTraits::dim() };
     using DimVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
+    static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
+    static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
+
 public:
+
+    /*!
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
+    void updateNavierStokesVolVars(const ElementSolution &elemSol,
+                                   const Problem &problem,
+                                   const Element &element,
+                                   const SubControlVolume& scv)
+    {
+        NavierStokesParentType::update(elemSol, problem, element, scv);
+    }
 
     /*!
      * \brief Update all turbulent quantities for a given control volume
@@ -153,20 +164,102 @@ public:
     { return uPlus_; }
 
     /*!
+     * \brief Return the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow within the
+     *        control volume.
+     */
+    Scalar dynamicEddyViscosity() const
+    { return dynamicEddyViscosity_; }
+
+    /*!
+     * \brief Return the effective dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
+     *        control volume.
+     */
+    Scalar effectiveViscosity() const
+    { return NavierStokesParentType::viscosity() + dynamicEddyViscosity(); }
+
+    /*!
      * \brief Return the kinematic eddy viscosity \f$\mathrm{[m^2/s]}\f$ of the flow within the
      *        control volume.
      */
     Scalar kinematicEddyViscosity() const
-    { return asImp_().dynamicEddyViscosity() / asImp_().density(); }
+    { return dynamicEddyViscosity() / NavierStokesParentType::density(); }
 
     /*!
      * \brief Return the kinematic viscosity \f$\mathrm{[m^2/s]}\f$ of the fluid within the
      *        control volume.
      */
     Scalar kinematicViscosity() const
-    { return asImp_().viscosity() / asImp_().density(); }
+    { return NavierStokesParentType::viscosity() / NavierStokesParentType::density(); }
+
+    /*!
+     * \brief Calculates the eddy diffusivity \f$\mathrm{[m^2/s]}\f$ based
+     *        on the kinematic eddy viscosity and the turbulent Schmidt number
+     */
+    template<class Problem>
+    void calculateEddyDiffusivity(const Problem& problem)
+    {
+        eddyDiffusivity_ = kinematicEddyViscosity()
+                           / problem.turbulentSchmidtNumber();
+    }
+
+    /*!
+     * \brief Calculates the eddy thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ based
+     *        on the kinematic eddy viscosity and the turbulent Prandtl number
+     */
+    template<class Problem, bool eB = enableEnergyBalance, typename std::enable_if_t<eB, int> = 0>
+    void calculateEddyThermalConductivity(const Problem& problem)
+    {
+        eddyThermalConductivity_ = kinematicEddyViscosity()
+                                   * NavierStokesParentType::density()
+                                   * NavierStokesParentType::heatCapacity()
+                                   / problem.turbulentPrandtlNumber();
+    }
+
+    //! \brief Eddy thermal conductivity is zero for isothermal model
+    template<class Problem, bool eB = enableEnergyBalance, typename std::enable_if_t<!eB, int> = 0>
+    void calculateEddyThermalConductivity(const Problem& problem)
+    { eddyThermalConductivity_ = 0.0; }
+
+    /*!
+     * \brief Returns the eddy diffusivity \f$\mathrm{[m^2/s]}\f$
+     */
+    Scalar eddyDiffusivity() const
+    { return eddyDiffusivity_; }
+
+    /*!
+     * \brief Returns the eddy thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
+     */
+    Scalar eddyThermalConductivity() const
+    { return eddyThermalConductivity_; }
+
+     /*!
+     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+     *
+     * \param compIIdx the index of the component which diffusive
+     * \param compJIdx the index of the component with respect to which compIIdx diffuses
+     */
+    Scalar effectiveDiffusivity(int compIIdx, int compJIdx = fluidSystemPhaseIdx) const
+    {
+        return NavierStokesParentType::diffusionCoefficient(compIIdx, compJIdx) + eddyDiffusivity();
+    }
+
+    /*!
+     * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
+     *        of the fluid-flow in the sub-control volume.
+     */
+    template<bool eB = enableEnergyBalance, typename std::enable_if_t<eB, int> = 0>
+    Scalar effectiveThermalConductivity() const
+    {
+        return NavierStokesParentType::thermalConductivity() + eddyThermalConductivity();
+    }
 
 protected:
+    /*!
+     * \brief Sets the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$
+     */
+    Scalar setDynamicEddyViscosity_(Scalar value)
+    { return dynamicEddyViscosity_  = value; }
+
     DimVector velocity_;
     DimVector velocityMaximum_;
     DimMatrix velocityGradients_;
@@ -177,67 +270,9 @@ protected:
     Scalar uStar_;
     Scalar yPlus_;
     Scalar uPlus_;
-
-    const Impl &asImp_() const { return *static_cast<const Impl*>(this); }
-    Impl &asImp_() { return *static_cast<Impl*>(this); }
-};
-
-/*!
- * \ingroup RANSModel
- * \brief Volume variables for the non-isothermal single-phase Reynolds-Averaged Navier-Stokes models.
- */
-template <class Traits, class Impl>
-class RANSVolumeVariablesImplementation<Traits, Impl, true>
-: public RANSVolumeVariablesImplementation<Traits, Impl, false>
-{
-    using ParentType = RANSVolumeVariablesImplementation<Traits, Impl, false>;
-    using Scalar = typename Traits::PrimaryVariables::value_type;
-
-public:
-
-    /*!
-     * \brief Update all turbulent quantities for a given control volume
-     *
-     * Wall related quantities are stored and the calculateEddyViscosity(...)
-     * function of the turbulence model implementation is called.
-     *
-     * \param elemSol A vector containing all primary variables connected to the element
-     * \param problem The object specifying the problem which ought to be simulated
-     * \param element An element which contains part of the control volume
-     * \param scv The sub-control volume
-     */
-    template<class ElementSolution, class Problem, class Element, class SubControlVolume>
-    void updateRANSProperties(const ElementSolution &elemSol,
-                              const Problem &problem,
-                              const Element &element,
-                              const SubControlVolume& scv)
-    {
-        ParentType::updateRANSProperties(elemSol, problem, element, scv);
-        calculateEddyThermalConductivity(problem);
-    }
-
-    /*!
-     * \brief Calculates the eddy thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ based
-     *        on the kinematic eddy viscosity and the turbulent prandtl number
-     */
-    template<class Problem>
-    void calculateEddyThermalConductivity(const Problem& problem)
-    {
-        eddyThermalConductivity_ = ParentType::kinematicEddyViscosity()
-                                   * ParentType::asImp_().density()
-                                   * ParentType::asImp_().heatCapacity()
-                                   / problem.turbulentPrandtlNumber();
-    }
-
-    /*!
-     * \brief Returns the eddy thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
-     *        of the flow in the sub-control volume.
-     */
-    Scalar eddyThermalConductivity() const
-    { return eddyThermalConductivity_; }
-
-protected:
-    Scalar eddyThermalConductivity_;
+    Scalar dynamicEddyViscosity_ = 0.0;
+    Scalar eddyDiffusivity_ = 0.0;
+    Scalar eddyThermalConductivity_ = 0.0;
 };
 }
 
