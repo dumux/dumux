@@ -28,6 +28,9 @@
 #ifndef DUMUX_CHECK_FLUIDSYSTEM_HH
 #define DUMUX_CHECK_FLUIDSYSTEM_HH
 
+#include <exception>
+#include <string>
+
 #include <dune/common/classname.hh>
 
 // include all fluid systems in dumux-stable
@@ -523,25 +526,25 @@ int checkFluidSystem()
         try
         {
             val = FluidSystem::density(fs, paramCache, phaseIdx);
-        } catch (Dune::Exception& e)
+        } catch (const std::exception& e)
         {
-            collectedErrors += "error: FluidSystem::density() throws exception!\n";
+            collectedErrors += "error: FluidSystem::density() throws exception: " + std::string(e.what()) + "\n";
         }
         try
         {
             val = FluidSystem::molarDensity(fs, paramCache, phaseIdx);
-        } catch (Dune::Exception& e)
+        } catch (const std::exception& e)
         {
-            collectedErrors += "error: FluidSystem::molarDensity() throws exception!\n";
+            collectedErrors += "error: FluidSystem::molarDensity() throws exception: " + std::string(e.what()) + "\n";
         }
         fs.allowPressure(true);
         fs.allowDensity(true);
         try
         {
             val = FluidSystem::viscosity(fs, paramCache, phaseIdx);
-        } catch (...)
+        } catch (const std::exception& e)
         {
-            collectedErrors += "error: FluidSystem::viscosity() throws exception!\n";
+            collectedErrors += "error: FluidSystem::viscosity() throws exception: " + std::string(e.what()) + "\n";
         }
         try
         {
@@ -549,9 +552,9 @@ int checkFluidSystem()
         } catch (Dune::NotImplemented&)
         {
             collectedWarnings += "warning: FluidSystem::enthalpy() is not implemented\n";
-        } catch (...)
+        } catch (const std::exception& e)
         {
-            collectedErrors += "error: FluidSystem::enthalpy() throws exception!\n";
+            collectedErrors += "error: FluidSystem::enthalpy() throws exception: " + std::string(e.what()) + "\n";
         }
         try
         {
@@ -559,9 +562,9 @@ int checkFluidSystem()
         } catch (Dune::NotImplemented&)
         {
             collectedWarnings += "warning: FluidSystem::heatCapacity() is not implemented\n";
-        } catch (...)
+        } catch (const std::exception& e)
         {
-            collectedErrors += "error: FluidSystem::heatCapacity() throws exception!\n";
+            collectedErrors += "error: FluidSystem::heatCapacity() throws exception: " + std::string(e.what()) + "\n";
         }
         try
         {
@@ -569,9 +572,9 @@ int checkFluidSystem()
         } catch (Dune::NotImplemented&)
         {
             collectedWarnings += "warning: FluidSystem::thermalConductivity() is not implemented\n";
-        } catch (...)
+        } catch (const std::exception& e)
         {
-            collectedErrors += "error: FluidSystem::thermalConductivity() throws exception!\n";
+            collectedErrors += "error: FluidSystem::thermalConductivity() throws exception: " + std::string(e.what()) + "\n";
         }
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
@@ -583,9 +586,9 @@ int checkFluidSystem()
             } catch (Dune::NotImplemented&)
             {
                 collectedWarnings += "warning: FluidSystem::fugacityCoefficient() is not implemented\n";
-            } catch (...)
+            } catch (const std::exception& e)
             {
-                collectedErrors += "error: FluidSystem::fugacityCoefficient() throws exception!\n";
+                collectedErrors += "error: FluidSystem::fugacityCoefficient() throws exception: " + std::string(e.what()) + "\n";
             }
             fs.allowComposition(true);
             try
@@ -597,9 +600,9 @@ int checkFluidSystem()
             } catch (Dune::InvalidStateException&)
             {
                 collectedWarnings += "warning: FluidSystem::diffusionCoefficient() gives invalid state exception\n";
-            } catch (...)
+            } catch (const std::exception& e)
             {
-                collectedErrors += "error: FluidSystem::diffusionCoefficient() throws exception!\n";
+                collectedErrors += "error: FluidSystem::diffusionCoefficient() throws exception: " + std::string(e.what()) + "\n";
             }
             for (int comp2Idx = 0; comp2Idx < numComponents; ++comp2Idx)
             {
@@ -612,9 +615,9 @@ int checkFluidSystem()
                 } catch (Dune::InvalidStateException&)
                 {
                     collectedWarnings += "warning: FluidSystem::binaryDiffusionCoefficient() gives invalid state exception\n";
-                } catch (...)
+                } catch (const std::exception& e)
                 {
-                    collectedErrors += "error: FluidSystem::binaryDiffusionCoefficient() throws exception!\n";
+                    collectedErrors += "error: FluidSystem::binaryDiffusionCoefficient() throws exception: " + std::string(e.what()) + "\n";
                 }
             }
         }
