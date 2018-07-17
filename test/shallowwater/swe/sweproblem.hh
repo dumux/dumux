@@ -339,20 +339,30 @@ public:
                 auto u = elemVolVars[scv].getU();
                 auto v = elemVolVars[scv].getV();
 
+                std::cout << "h " << std::endl;
+                std::cout << h << std::endl;
+
+
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
                     if (scvf.boundary()){
                        if (this->hBoundarySegmentMap_.find(scvf.index()) == this->hBoundarySegmentMap_.end())
                        {
+                            std::cout << "debug1 " << std::endl;
+
                             if (h > this->minHBoundary_){
-                                //save for segment
                                 this->hBoundarySegmentMap_[scvf.index()] = scvf.area() * h;
+
                                 //save for sum
                                 if (isNoGhost){
                                     auto ip = scvf.ipGlobal();
                                     auto myBoundaryId = this->getBoundaryId(ip[0],ip[1]); //use the integration point
-                                    auto boundaryValues = this->boundaryValuesMap_.at(myBoundaryId);
-                                    this->hBoundarySumMap_[boundaryValues.id] += scvf.area() * h;
+                                    //if not no-flow
+                                    if (myBoundaryId > 0)
+                                    {
+                                        auto boundaryValues = this->boundaryValuesMap_.at(myBoundaryId);
+                                        this->hBoundarySumMap_[boundaryValues.id] += scvf.area() * h;
+                                    }
                                 }
                             }
                        }
@@ -361,6 +371,8 @@ public:
                 }
             }
         } //TODO cumpute parallel sum for this->hBoundarySumMap_[boundaryValues.id] += scvf.area() * h;
+                            std::cout << "debug end " << std::endl;
+
     }
 
 
@@ -452,33 +464,29 @@ public:
                                         bdValue = getBoundaryValue(time_,myBoundaryId);
                                         bdType = 1;
                                     }
-                                }else{
-                                    bdType = 0;
-                                    bdValue = 0.0;
+
+
+                                    //TODO scale the boundary?
+                                    //auto segIndex = is.boundarySegmentIndex();
+                                    //bdValue = (bdValue / this->hA_boundarySum[bd_id])* this->hA_boundaryMap.at(segIndex);
+
+                                    //call boundaryfluxes for computing the Riemann invariants
+                                    boundaryFluxes(nxy,scvf.area(),0.2,
+                                                   cellStatesLeft,cellStatesRight,bdType,bdValue);
+
+                                    stateRotation(nxy,cellStatesLeft);
+                                    stateRotation(nxy,cellStatesRight);
+
+                                    Scalar riemannFlux[3] = {0.0};
+                                    computeExactRiemann(riemannFlux,cellStatesLeft[0],cellStatesRight[0],
+                                                        cellStatesLeft[1],cellStatesRight[1],
+                                                        cellStatesLeft[2],cellStatesRight[2],insideVolVars.getGravity());
+
+                                    rotateFluxBack(nxy,riemannFlux);
+
+                                    //Store the computed flux of the Riemann solver
+                                    this->hBoundaryFluxMap_[boundaryValues.id] += scvf.area() * riemannFlux[0];
                                 }
-
-
-                                //TODO scale the boundary?
-                                //auto segIndex = is.boundarySegmentIndex();
-                                //bdValue = (bdValue / this->hA_boundarySum[bd_id])* this->hA_boundaryMap.at(segIndex);
-
-                                //call boundaryfluxes for computing the Riemann invariants
-                                boundaryFluxes(nxy,scvf.area(),0.2,
-                                               cellStatesLeft,cellStatesRight,bdType,bdValue);
-
-                                stateRotation(nxy,cellStatesLeft);
-                                stateRotation(nxy,cellStatesRight);
-
-                                Scalar riemannFlux[3] = {0.0};
-                                computeExactRiemann(riemannFlux,cellStatesLeft[0],cellStatesRight[0],
-                                                    cellStatesLeft[1],cellStatesRight[1],
-                                                    cellStatesLeft[2],cellStatesRight[2],insideVolVars.getGravity());
-
-                                rotateFluxBack(nxy,riemannFlux);
-
-                                //Store the computed flux of the Riemann solver
-                                this->hBoundaryFluxMap_[boundaryValues.id] += scvf.area() * riemannFlux[0];
-
                             }
                         }
                     }
