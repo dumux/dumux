@@ -306,23 +306,9 @@ public:
     {
         if (compIdx == H2OIdx)
         {
+            // simplified version of Eq 2.29 in Vishal Jambhekar's Promo
             const Scalar temperature = fluidState.temperature(H2OIdx);
-            const Scalar salinity = fluidState.massFraction(phase0Idx, NaClIdx);
-            Scalar ps = H2O::vaporPressure(temperature); // vapor pressure of pure water
-            Scalar pi = 0;
-
-            // Here we have hard coded the solubility limit for NaCl
-            // TODO where to put the solubility limit?
-            if (salinity < 0.26)
-                // simplified version of Eq 2.29 in Vishal Jambhekar's Promo
-                pi = (Constants<Scalar>::R * temperature * std::log(1- salinity));
-            else
-                pi = (Constants<Scalar>::R * temperature * std::log(0.74));
-
-            // Kelvin's law for reduction in saturation vapor pressure due to osmotic potential
-            using std::exp;
-            ps *= exp((pi)/(Constants<Scalar>::R*temperature));
-            return ps;
+            return H2O::vaporPressure(temperature)/fluidState.massFraction(phase0Idx, H2OIdx);
         }
         else if (compIdx == NaClIdx)
             DUNE_THROW(Dune::NotImplemented, "NaCl::vaporPressure(t)");
