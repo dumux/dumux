@@ -139,25 +139,25 @@ public:
     /*!
      * \brief Returns the critical temperature in \f$\mathrm{[K]}\f$ of the component
      */
-    static Scalar criticalTemperature()
+    static Scalar criticalTemperature(int compIdx = 0)
     {  return Component::criticalTemperature(); }
 
     /*!
      * \brief Returns the critical pressure in \f$\mathrm{[Pa]}\f$ of the component
      */
-    static Scalar criticalPressure()
+    static Scalar criticalPressure(int compIdx = 0)
     {  return Component::criticalPressure(); }
 
     /*!
      * \brief Returns the temperature in \f$\mathrm{[K]}\f$ at the component's triple point.
      */
-    static Scalar tripleTemperature()
+    static Scalar tripleTemperature(int compIdx = 0)
     {  return Component::tripleTemperature(); }
 
     /*!
      * \brief Returns the pressure in \f$\mathrm{[Pa]}\f$ at the component's triple point.
      */
-    static Scalar triplePressure()
+    static Scalar triplePressure(int compIdx = 0)
     { return Component::triplePressure(); }
 
     /*!
