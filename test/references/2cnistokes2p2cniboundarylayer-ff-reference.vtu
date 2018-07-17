@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="48" NumberOfPoints="63">
-      <PointData Scalars="temperature" Vectors="v">
-        <DataArray type="Float32" Name="temperature" NumberOfComponents="1" format="ascii">
+      <PointData Scalars="T" Vectors="v">
+        <DataArray type="Float32" Name="T" NumberOfComponents="1" format="ascii">
           295.785 295.777 298.15 298.141 295.769 298.133 295.763 298.124 295.757 298.115 295.751 298.106
           295.748 298.101 298.15 298.15 298.15 298.15 298.15 298.15 298.15 298.15 298.15 298.15
           298.15 298.15 298.15 298.15 298.15 298.15 298.15 298.15 298.15 298.15 298.15 298.15

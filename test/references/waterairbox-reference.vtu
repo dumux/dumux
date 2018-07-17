@@ -6748,7 +6748,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1
         </DataArray>
-        <DataArray type="Float32" Name="temperature" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="T" NumberOfComponents="1" format="ascii">
           313 312.999 312.981 312.981 312.999 312.981 312.999 312.981 312.999 312.981 312.999 312.981
           312.999 312.981 312.999 312.981 312.999 312.981 313 312.981 313 312.981 313 312.981
           313 312.981 313 312.981 313 312.981 313 312.982 313 312.982 313 312.982

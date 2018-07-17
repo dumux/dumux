@@ -33,7 +33,7 @@
         <DataArray type="Float32" Name="precipVolFrac_CaOH2" NumberOfComponents="1" format="ascii">
           0.0943089 0.0943089 0.0943089 0.0943089 0.0943089 0.0943089
         </DataArray>
-        <DataArray type="Float32" Name="temperature" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="T" NumberOfComponents="1" format="ascii">
           573.15 573.15 573.15 573.15 573.15 573.15
         </DataArray>
         <DataArray type="Float32" Name="permeability" NumberOfComponents="1" format="ascii">
