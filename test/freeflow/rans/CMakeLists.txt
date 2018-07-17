@@ -1,7 +1,5 @@
 add_input_file_links()
-dune_symlink_to_source_files(FILES laufer_re50000.csv laufer_re50000_u+y+.csv
-                                   pdelab-kepsilon_twolayers.csv pdelab-kepsilon_wallfunction.csv
-                                   pdelab-komega.csv pdelab-lowrekepsilon.csv pdelab-zeroeq.csv pdelab-oneeq.csv)
+dune_symlink_to_source_files(FILES laufer_re50000.csv laufer_re50000_u+y+.csv)
 
 add_executable(test_pipe_laufer_kepsilon EXCLUDE_FROM_ALL test_pipe_laufer.cc)
 target_compile_definitions(test_pipe_laufer_kepsilon PUBLIC "KEPSILON=1")
