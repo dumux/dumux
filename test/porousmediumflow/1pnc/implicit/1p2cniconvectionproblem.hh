@@ -37,6 +37,7 @@
 #include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
+#include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/components/h2o.hh>
 #include "1pnctestspatialparams.hh"
@@ -65,9 +66,12 @@ SET_TYPE_PROP(OnePTwoCNIConvectionTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(OnePTwoCNIConvectionTypeTag, Problem, OnePTwoCNIConvectionProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(OnePTwoCNIConvectionTypeTag,
-              FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_PROP(OnePTwoCNIConvectionTypeTag, FluidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
+    using type = FluidSystems::OnePAdapter<H2ON2, H2ON2::liquidPhaseIdx>;
+};
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePTwoCNIConvectionTypeTag, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
@@ -129,9 +133,13 @@ class OnePTwoCNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
         pressureIdx = Indices::pressureIdx,
         temperatureIdx = Indices::temperatureIdx,
 
-        // equation indices
-        contiH2OIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx,
-        contiN2Idx = Indices::conti0EqIdx + FluidSystem::N2Idx,
+        // component indices
+        H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx),
+        N2Idx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::N2Idx),
+
+        // indices of the equations
+        contiH2OEqIdx = Indices::conti0EqIdx + H2OIdx,
+        contiN2EqIdx = Indices::conti0EqIdx + N2Idx,
         energyEqIdx = Indices::energyEqIdx
     };
 
@@ -295,8 +303,8 @@ public:
 
         if(globalPos[0] < eps_)
         {
-             flux[contiH2OIdx] = -darcyVelocity_*elemVolVars[scv].molarDensity();
-             flux[contiN2Idx] = -darcyVelocity_*elemVolVars[scv].molarDensity()*elemVolVars[scv].moleFraction(0, FluidSystem::N2Idx);
+             flux[contiH2OEqIdx] = -darcyVelocity_*elemVolVars[scv].molarDensity();
+             flux[contiN2EqIdx] = -darcyVelocity_*elemVolVars[scv].molarDensity()*elemVolVars[scv].moleFraction(0, N2Idx);
              flux[energyEqIdx] = -darcyVelocity_
                                  *elemVolVars[scv].density()
                                  *IapwsH2O::liquidEnthalpy(temperatureHigh_, elemVolVars[scv].pressure());
@@ -345,7 +353,7 @@ private:
     {
         PrimaryVariables priVars;
         priVars[pressureIdx] = pressureLow_; // initial condition for the pressure
-        priVars[FluidSystem::N2Idx] = 1e-10;  // initial condition for the N2 molefraction
+        priVars[N2Idx] = 1e-10;  // initial condition for the N2 molefraction
         priVars[temperatureIdx] = temperatureLow_;
         return priVars;
     }
