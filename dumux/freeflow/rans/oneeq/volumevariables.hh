@@ -26,7 +26,6 @@
 #define DUMUX_ONEEQ_VOLUME_VARIABLES_HH
 
 #include <dumux/common/parameters.hh>
-#include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/freeflow/rans/volumevariables.hh>
 
 namespace Dumux
@@ -46,12 +45,7 @@ class OneEqVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
     using DimVector = Dune::FieldVector<Scalar, Traits::ModelTraits::dim()>;
 
-    static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
-    static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
-
 public:
-    //! export the underlying fluid system
-    using FluidSystem = typename Traits::FluidSystem;
     //! export the indices type
     using Indices = typename Traits::ModelTraits::Indices;
 

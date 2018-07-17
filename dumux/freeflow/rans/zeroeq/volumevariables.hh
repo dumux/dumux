@@ -46,10 +46,6 @@ class ZeroEqVolumeVariables
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
 public:
-    //! export the underlying fluid system
-    using FluidSystem = typename Traits::FluidSystem;
-    //! export the fluid state type
-    using FluidState = typename Traits::FluidState;
     //! export the indices type
     using Indices = typename Traits::ModelTraits::Indices;
 
