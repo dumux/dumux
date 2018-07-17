@@ -87,11 +87,9 @@ public:
 
         // residual saturations
         fineMaterialParams_.setSwr(0.1);
-        fineMaterialParams_.setSwrx(0.12);  //Total liquid Residual Saturation
         fineMaterialParams_.setSnr(0.09);   //Residual of NAPL if there is no water
         fineMaterialParams_.setSgr(0.01);
         coarseMaterialParams_.setSwr(0.1);
-        coarseMaterialParams_.setSwrx(0.12);
         coarseMaterialParams_.setSnr(0.09);
         coarseMaterialParams_.setSgr(0.01);
 

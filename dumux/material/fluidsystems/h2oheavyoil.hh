@@ -37,8 +37,9 @@ namespace Dumux {
 namespace FluidSystems {
 
 /*!
- * \brief A compositional fluid with water and heavy oil
- *        components in both, the liquid and the gas phase.
+ * \ingroup Fluidsystems
+ * \brief A compositional fluid system with water and heavy oil
+ *        components in both the liquid and the gas phase.
  */
 template <class Scalar,
           class H2OType = Dumux::Components::TabulatedComponent<Dumux::Components::H2O<Scalar> > >
@@ -355,7 +356,8 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "non-existent diffusion coefficient for phase index " << phaseIdx);
     }
 
-     /* Henry coefficients
+    /*!
+     * \brief Henry coefficients \f$[N/m^2]\f$ of a component in a phase.
      */
     template <class FluidState>
     static Scalar henryCoefficient(const FluidState &fluidState,
@@ -366,20 +368,20 @@ public:
         assert(0 <= compIdx  && compIdx < numComponents);
 
         const Scalar T = fluidState.temperature(phaseIdx);
-        const Scalar p = fluidState.pressure(phaseIdx);
 
         if (compIdx == NAPLIdx && phaseIdx == wPhaseIdx)
-            return Dumux::BinaryCoeff::H2O_HeavyOil::henryOilInWater(T)/p;
+            return Dumux::BinaryCoeff::H2O_HeavyOil::henryOilInWater(T);
 
         else if (phaseIdx == nPhaseIdx && compIdx == H2OIdx)
-            return Dumux::BinaryCoeff::H2O_HeavyOil::henryWaterInOil(T)/p;
+            return Dumux::BinaryCoeff::H2O_HeavyOil::henryWaterInOil(T);
 
         else
             DUNE_THROW(Dune::InvalidStateException, "non-existent henry coefficient for phase index " << phaseIdx
                                                      << " and component index " << compIdx);
     }
 
-     /*  partial pressures in the gas phase, taken from saturation vapor pressures
+    /*!
+     * \brief Partial pressures in the gas phase, taken from saturation vapor pressures.
      */
     template <class FluidState>
     static Scalar partialPressureGas(const FluidState &fluidState, int phaseIdx,
@@ -396,7 +398,8 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "non-existent component index " << compIdx);
     }
 
-     /*  inverse vapor pressures, taken from inverse saturation vapor pressures
+    /*!
+     * \brief Inverse vapor pressures, taken from inverse saturation vapor pressures
      */
     template <class FluidState>
     static Scalar inverseVaporPressureCurve(const FluidState &fluidState,
@@ -418,11 +421,10 @@ public:
 
     /*!
      * \brief Given all mole fractions in a phase, return the specific
-     *        phase enthalpy [J/kg].
-     */
-    /*!
+     *        phase enthalpy\f$\mathrm{[J/kg]}\f$.
      *  \todo This system neglects the contribution of gas-molecules in the liquid phase.
-     *        This contribution is probably not big. Somebody would have to find out the enthalpy of solution for this system. ...
+     *        This contribution is probably not big.
+     *        Somebody would have to find out the enthalpy of solution for this system. ...
      */
     using Base::enthalpy;
     template <class FluidState>
@@ -458,6 +460,14 @@ public:
         DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2ONAPL::heatCapacity()");
     }
 
+    /*!
+     * \brief Thermal conductivity of a fluid phase \f$\mathrm{[W/(m K)]}\f$.
+     *
+     * Use the conductivity of water (wPhase and gPhase) and oil (nPhase) as a first approximation.
+     *
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     */
     using Base::thermalConductivity;
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
@@ -480,10 +490,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
-private:
-
 };
-
 } // end namespace FluidSystems
 } // end namespace Dumux
 
