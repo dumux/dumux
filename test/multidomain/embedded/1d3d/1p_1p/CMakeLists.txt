@@ -55,18 +55,21 @@ dune_add_test(NAME test_embedded_1d3d_1p1p_tpfatpfa_cylindersources
               SOURCES test_1p_1p.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueCCTypeTag LOWDIMTYPETAG=BloodFlowCCTypeTag COUPLINGMODE=EmbeddedCouplingMode::cylindersources
               COMMAND ./test_embedded_1d3d_1p1p_tpfatpfa_cylindersources
+              CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS test_1p_1p.input)
 
 dune_add_test(NAME test_embedded_1d3d_1p1p_tpfatpfa_line
               SOURCES test_1p_1p.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueCCTypeTag LOWDIMTYPETAG=BloodFlowCCTypeTag COUPLINGMODE=EmbeddedCouplingMode::line
               COMMAND ./test_embedded_1d3d_1p1p_tpfatpfa_line
+              CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS test_1p_1p.input)
 
 dune_add_test(NAME test_embedded_1d3d_1p1p_tpfatpfa_kernel
               SOURCES test_1p_1p.cc
               COMPILE_DEFINITIONS BULKTYPETAG=TissueCCTypeTag LOWDIMTYPETAG=BloodFlowCCTypeTag COUPLINGMODE=EmbeddedCouplingMode::kernel
               COMMAND ./test_embedded_1d3d_1p1p_tpfatpfa_kernel
+              CMAKE_GUARD dune-foamgrid_FOUND
               CMD_ARGS test_1p_1p.input)
 
 dune_symlink_to_source_files(FILES "grids" "test_1p_1p.input")
