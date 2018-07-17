@@ -220,6 +220,21 @@ public:
         DUNE_THROW(Dune::NotImplemented, "When using the Beavers-Joseph-Saffman boundary condition, the alpha value must be returned in the acutal problem");
     }
 
+    //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph-Saffman condition is used
+    const Scalar bjsVelocity(const SubControlVolumeFace& scvf,
+                             const SubControlVolumeFace& normalFace,
+                             const Scalar& localSubFaceIdx,
+                             const Scalar& velocitySelf) const
+    {
+        // du/dy = alpha/sqrt(K) * u_boundary
+        // du/dy = (u_center - u_boundary) / deltaY
+        // u_boundary = u_center / (alpha/sqrt(K)*deltaY + 1)
+        using std::sqrt;
+        const Scalar K = asImp_().permeability(normalFace);
+        const Scalar alpha = asImp_().alphaBJ(normalFace);
+        return velocitySelf / (alpha / sqrt(K) * scvf.pairData(localSubFaceIdx).parallelDistance + 1.0);
+    }
+
 private:
 
     //! Returns the implementation of the problem (i.e. static polymorphism)

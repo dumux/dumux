@@ -391,7 +391,7 @@ private:
         {
             const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
             if (isBJS)
-                return bjsVelocity_(problem, scvf, normalFace, localSubFaceIdx, velocitySelf);
+                return problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, velocitySelf);
             return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
         };
 
@@ -507,7 +507,7 @@ private:
         {
             const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
             if (isBJS)
-                return bjsVelocity_(problem, scvf, normalFace, localSubFaceIdx, innerParallelVelocity);
+                return problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, innerParallelVelocity);
             return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
         };
 
@@ -593,22 +593,6 @@ private:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         return harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
-    }
-
-    //! helper function to evaluate the slip velocity on the boundary when the Beavers-Joseph-Saffman condition is used
-    Scalar bjsVelocity_(const Problem& problem,
-                        const SubControlVolumeFace& scvf,
-                        const SubControlVolumeFace& normalFace,
-                        const Scalar& localSubFaceIdx,
-                        const Scalar& velocitySelf)
-    {
-        // du/dy = alpha/sqrt(K) * u_boundary
-        // du/dy = (u_center - u_boundary) / deltaY
-        // u_boundary = u_center / (alpha/sqrt(K)*deltaY + 1)
-        using std::sqrt;
-        const Scalar K = problem.permeability(normalFace);
-        const Scalar alpha = problem.alphaBJ(normalFace);
-        return velocitySelf / (alpha / sqrt(K) * scvf.pairData(localSubFaceIdx).parallelDistance + 1.0);
     }
 };
 
