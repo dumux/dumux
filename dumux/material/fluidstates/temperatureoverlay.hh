@@ -34,12 +34,15 @@ namespace Dumux {
  *        temperatures and takes all other quantities from an other
  *        fluid state.
  */
-template <class Scalar, class FluidState>
+template <class FluidState>
 class TemperatureOverlayFluidState
 {
 public:
-    enum { numPhases = FluidState::numPhases };
-    enum { numComponents = FluidState::numComponents };
+    static constexpr int numPhases = FluidState::numPhases;
+    static constexpr int numComponents = FluidState::numComponents;
+
+    //! export the scalar type
+    using Scalar = typename FluidState::Scalar;
 
     /*!
      * \brief Constructor

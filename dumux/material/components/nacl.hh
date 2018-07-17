@@ -43,7 +43,6 @@ namespace Components {
 template <class Scalar>
 class NaCl
 : public Components::Base<Scalar, NaCl<Scalar> >
-, public Components::Liquid<Scalar, NaCl<Scalar> >
 , public Components::Solid<Scalar, NaCl<Scalar> >
 {
 public:
@@ -61,16 +60,6 @@ public:
     static Scalar molarMass()
     {
         return 58.4428e-3 ;
-    }
-
-    /*!
-     * \brief The diffusion Coefficient \f$\mathrm{[m^2/s]}\f$ of NaCl in water.
-     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
-     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
-    {
-        return 2e-9;
     }
 
     /*!
@@ -105,8 +94,6 @@ public:
     {
         return 6.49;
     }
-
-
 };
 
 } // end namespace Components

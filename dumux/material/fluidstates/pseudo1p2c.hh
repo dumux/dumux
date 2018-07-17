@@ -39,15 +39,17 @@ namespace Dumux {
  *  The "flash" calculation routines are in the sequential flash constrain solver, see
  *  CompositionalFlash .
  */
-template <class Scalar, class FluidSystem>
+template <class ScalarType, class FluidSystem>
 class PseudoOnePTwoCFluidState
 {
 
 public:
-    enum {
-        numPhases = FluidSystem::numPhases,
-        numComponents = FluidSystem::numComponents
-    };
+    static constexpr int numPhases = FluidSystem::numPhases;
+    static constexpr int numComponents = FluidSystem::numComponents;
+
+    //! export the scalar type
+    using Scalar = ScalarType;
+
     enum {
         phase0Idx = FluidSystem::phase0Idx,
         phase1Idx = FluidSystem::phase1Idx,
@@ -56,7 +58,6 @@ public:
         comp1Idx = FluidSystem::comp1Idx
     };
 
-public:
     /*! \name Acess functions */
     //@{
     /*!

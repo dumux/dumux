@@ -1,0 +1,15 @@
+[TimeLoop]
+DtInitial = 1    # [s]
+TEnd = 10000000  # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 200 50
+Cells = 20 5
+
+[Problem]
+Name = saltwaterintrusion # name passed to the output routines
+EnableGravity = true # enable gravity
+
+[Vtk]
+AddVelocity = true # enable velocity output

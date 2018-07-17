@@ -29,6 +29,7 @@
 // include all fluid systems in dumux-stable
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidsystems/base.hh>
+#include <dumux/material/fluidsystems/brine.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>
@@ -104,15 +105,15 @@ int main()
         success += checkFluidState<Scalar>(nonEquilibriumMassFluidState);
 
         // PressureOverlayFluidState
-        PressureOverlayFluidState<Scalar, BaseFluidState> pressureOverlayFluidState(baseFs);
+        PressureOverlayFluidState<BaseFluidState> pressureOverlayFluidState(baseFs);
         success += checkFluidState<Scalar>(pressureOverlayFluidState);
 
         // SaturationOverlayFluidState
-        SaturationOverlayFluidState<Scalar, BaseFluidState> saturationOverlayFluidState(baseFs);
+        SaturationOverlayFluidState<BaseFluidState> saturationOverlayFluidState(baseFs);
         success += checkFluidState<Scalar>(saturationOverlayFluidState);
 
         // TemperatureOverlayFluidState
-        TemperatureOverlayFluidState<Scalar, BaseFluidState> temperatureOverlayFluidState(baseFs);
+        TemperatureOverlayFluidState<BaseFluidState> temperatureOverlayFluidState(baseFs);
         success += checkFluidState<Scalar>(temperatureOverlayFluidState);
     }
 
@@ -129,6 +130,11 @@ int main()
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // base
+
+    // Brine
+    {   using H2OType = Components::SimpleH2O<Scalar>;
+        using FluidSystem = FluidSystems::Brine<Scalar, H2OType>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // Brine -- Air
     {   using H2OType = Components::SimpleH2O<Scalar>;
