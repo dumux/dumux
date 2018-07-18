@@ -60,7 +60,9 @@ class OnePAdapter
                 DUNE_THROW(Dune::InvalidStateException, "Only phase " << phase << " is available!");
         }
 
-        // the main component has to be index 0 so we swap the main component with the first component
+        // the main component is currently excepted to have the same index as it's phase
+        // (see Fluidsystems::Base::getMainComponent for more information)
+        // so we swap the main component with the first component
         // this mapping works in both ways since we are only swapping components
         static constexpr int compIdx(int compIdx)
         {
