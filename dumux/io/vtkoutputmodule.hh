@@ -39,7 +39,6 @@
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
 #include <dune/grid/common/partitionset.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/typetraits/typetraits.hh>
 #include <dumux/discretization/methods.hh>
@@ -49,35 +48,6 @@
 #include "velocityoutput.hh"
 
 namespace Dumux {
-
-
-template<class ...Dummy>
-class VtkOutputModule;
-
-template<class TypeTag>
-class DUNE_DEPRECATED_MSG("Use VtkOutputModule<GridVariables, SolutionVector> instead!") VtkOutputModule<TypeTag>
- : public VtkOutputModule<typename GET_PROP_TYPE(TypeTag, GridVariables),
-                          typename GET_PROP_TYPE(TypeTag, SolutionVector)>
-{
-    using ParentType = VtkOutputModule<typename GET_PROP_TYPE(TypeTag, GridVariables),
-                                       typename GET_PROP_TYPE(TypeTag, SolutionVector)>;
-public:
-    using ParentType::ParentType;
-
-    template<class Problem, class FVGridGeometry, class GridVariables, class SolutionVector>
-    DUNE_DEPRECATED_MSG("Use VtkOutputModule(gridVariables, sol, name) instead!")
-    VtkOutputModule(const Problem& problem,
-                    const FVGridGeometry& fvGridGeometry,
-                    const GridVariables& gridVariables,
-                    const SolutionVector& sol,
-                    const std::string& name,
-                    const std::string& paramGroup = "",
-                    Dune::VTK::DataMode dm = Dune::VTK::conforming,
-                    bool verbose = true)
-    : ParentType(gridVariables, sol, name, paramGroup, dm,
-                 (fvGridGeometry.gridView().comm().rank() == 0 && verbose))
-    {}
-};
 
 /*!
  * \ingroup InputOutput
