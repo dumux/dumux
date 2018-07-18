@@ -220,6 +220,23 @@ public:
         return MultiPhaseFluidSystem::enthalpy(adaptFluidState(fluidState), phase);
     }
 
+    /*!
+     * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in a specific phase
+     * \param fluidState An arbitrary fluid state
+     * \param phaseIdx The index of the fluid phase to consider
+     * \param compIdx The index of the component to consider
+     *
+     */
+    template <class FluidState>
+    static Scalar componentEnthalpy(const FluidState &fluidState,
+                                    int phaseIdx,
+                                    int compIdx)
+    {
+        assert(phaseIdx == 0);
+        return MultiPhaseFluidSystem::componentEnthalpy(adaptFluidState(fluidState), phase,
+                                                        AdapterPolicy::compIdx(compIdx));
+    }
+
     using Base::viscosity;
     /*!
      * \brief The dynamic liquid viscosity \f$\mathrm{[N/m^3*s]}\f$ of the pure component.
