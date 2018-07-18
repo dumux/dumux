@@ -6,9 +6,9 @@ dune_add_test(NAME test_stokes1p2cdarcy2p2chorizontal
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_stokes1p2cdarcy2p2chorizontal_stokes-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_stokes1p2cdarcy2p2chorizontal_stokes-00039.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_stokes1p2cdarcy2p2chorizontal_stokes-00040.vtu
                                      ${CMAKE_SOURCE_DIR}/test/references/test_stokes1p2cdarcy2p2chorizontal_darcy-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_stokes1p2cdarcy2p2chorizontal_darcy-00039.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_stokes1p2cdarcy2p2chorizontal_darcy-00040.vtu
 
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes1p2cdarcy2p2chorizontal test_stokes1p2cdarcy2p2chorizontal.input")
 
