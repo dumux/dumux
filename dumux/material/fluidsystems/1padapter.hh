@@ -47,18 +47,15 @@ class OnePAdapter
     using ThisType = OnePAdapter<MPFluidSystem, phase>;
     using Base = BaseFluidSystem<typename MPFluidSystem::Scalar, ThisType>;
 
+    static_assert(phase < MPFluidSystem::numPhases, "Phase does not exist in multi-phase fluidsystem!");
+
     struct AdapterPolicy
     {
         using FluidSystem = MPFluidSystem;
 
         // the phase index is always zero, other phases than the chosen phase should never be called
         static int phaseIdx(int mpFluidPhaseIdx)
-        {
-            if (mpFluidPhaseIdx == phase)
-                return 0;
-            else
-                DUNE_THROW(Dune::InvalidStateException, "Only phase " << phase << " is available!");
-        }
+        { return 0; }
 
         // the main component is currently excepted to have the same index as it's phase
         // (see Fluidsystems::Base::getMainComponent for more information)
