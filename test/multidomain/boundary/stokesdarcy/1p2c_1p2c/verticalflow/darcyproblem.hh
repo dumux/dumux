@@ -33,6 +33,7 @@
 
 #include "./../1pspatialparams.hh"
 
+#include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 
@@ -49,10 +50,12 @@ NEW_TYPE_TAG(DarcyOnePTwoCTypeTag, INHERITS_FROM(CCTpfaModel, OnePNC));
 SET_TYPE_PROP(DarcyOnePTwoCTypeTag, Problem, Dumux::DarcySubProblem<TypeTag>);
 
 // The fluid system
-SET_TYPE_PROP(DarcyOnePTwoCTypeTag, FluidSystem, FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-// Use water as phase
-SET_INT_PROP(DarcyOnePTwoCTypeTag, PhaseIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::liquidPhaseIdx);
+SET_PROP(DarcyOnePTwoCTypeTag, FluidSystem)
+{
+  using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+  static constexpr auto phaseIdx = H2OAir::liquidPhaseIdx; // simulate the water phase
+  using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
+};
 
 // Use moles
 SET_BOOL_PROP(DarcyOnePTwoCTypeTag, UseMoles, true);

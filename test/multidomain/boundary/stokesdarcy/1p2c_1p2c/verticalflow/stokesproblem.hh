@@ -26,6 +26,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -41,11 +42,13 @@ namespace Properties
 {
 NEW_TYPE_TAG(StokesOnePTwoCTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
 
-// Set the fluid system
-SET_TYPE_PROP(StokesOnePTwoCTypeTag, FluidSystem, FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-// Use water as phase
-SET_INT_PROP(StokesOnePTwoCTypeTag, PhaseIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::liquidPhaseIdx);
+// The fluid system
+SET_PROP(StokesOnePTwoCTypeTag, FluidSystem)
+{
+  using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+  static constexpr auto phaseIdx = H2OAir::liquidPhaseIdx; // simulate the water phase
+  using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
+};
 
 // Set the grid type
 SET_TYPE_PROP(StokesOnePTwoCTypeTag, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);

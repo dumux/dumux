@@ -391,7 +391,7 @@ public:
                 continue;
 
             Scalar schmidtNumber = elemVolVars[scvf.insideScvIdx()].kinematicViscosity()
-                                   / elemVolVars[scvf.insideScvIdx()].diffusionCoefficient(compIdx);
+                                   / elemVolVars[scvf.insideScvIdx()].diffusionCoefficient(0, compIdx);
             Scalar moleToMassConversionFactor = useMoles
                                                 ? 1.0 : FluidSystem::molarMass(compIdx);
             wallFunctionFlux[compIdx] +=

@@ -70,8 +70,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered >
     static_assert(ModelTraits::numPhases() == 1, "Only one phase allowed supported!");
 
     enum {
-        conti0EqIdx = Indices::conti0EqIdx,
-        mainCompIdx = Indices::mainCompIdx,
+        conti0EqIdx = Indices::conti0EqIdx
     };
 
 public:
@@ -97,7 +96,7 @@ public:
 
         for(int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            if(compIdx == mainCompIdx)
+            if(compIdx == FluidSystem::getMainComponent(0))
                 continue;
 
             // get equation index
@@ -120,7 +119,7 @@ public:
         }
 
         const Scalar cumulativeFlux = std::accumulate(flux.begin(), flux.end(), 0.0);
-        flux[mainCompIdx] = - cumulativeFlux;
+        flux[FluidSystem::getMainComponent(0)] = - cumulativeFlux;
 
         // Fick's law (for binary systems) states that the net flux of moles within the bulk phase has to be zero:
         // If a given amount of molecules A travel into one direction, the same amount of molecules B have to
@@ -146,7 +145,7 @@ public:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
         const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-        const Scalar insideD = insideVolVars.effectiveDiffusivity(compIdx);
+        const Scalar insideD = insideVolVars.effectiveDiffusivity(0, compIdx);
         const Scalar ti = calculateOmega_(insideDistance, insideD, insideVolVars.extrusionFactor());
 
         if(scvf.boundary())
@@ -156,7 +155,7 @@ public:
             const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
             const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-            const Scalar outsideD = outsideVolVars.effectiveDiffusivity(compIdx);
+            const Scalar outsideD = outsideVolVars.effectiveDiffusivity(0, compIdx);
             const Scalar tj = calculateOmega_(outsideDistance, outsideD, outsideVolVars.extrusionFactor());
 
             tij = scvf.area()*(ti * tj)/(ti + tj);

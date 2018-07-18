@@ -49,7 +49,6 @@ class RANSVolumeVariables
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
     static constexpr bool enableEnergyBalance = Traits::ModelTraits::enableEnergyBalance();
-    static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
 
 public:
 
@@ -232,13 +231,13 @@ public:
     Scalar eddyThermalConductivity() const
     { return eddyThermalConductivity_; }
 
-     /*!
-     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
-     *
-     * \param compIIdx the index of the component which diffusive
-     * \param compJIdx the index of the component with respect to which compIIdx diffuses
-     */
-    Scalar effectiveDiffusivity(int compIIdx, int compJIdx = fluidSystemPhaseIdx) const
+    /*!
+    * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+    *
+    * \param compIIdx the index of the component which diffusive
+    * \param compJIdx the index of the component with respect to which compIIdx diffuses
+    */
+    Scalar effectiveDiffusivity(int compIIdx, int compJIdx) const
     {
         return NavierStokesParentType::diffusionCoefficient(compIIdx, compJIdx) + eddyDiffusivity();
     }

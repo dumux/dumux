@@ -56,12 +56,13 @@ public:
             vtk.addVolumeVariable([j](const auto& v){ return v.moleFraction(j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
             if (j != phaseIdx)
             {
-                vtk.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+                vtk.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(0, j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+
+                if (ModelTraits::usesTurbulenceModel())
+                // the eddy diffusivity is recalculated for an arbitrary component which is not the phase component
+                vtk.addVolumeVariable([j](const auto& v){ return v.effectiveDiffusivity(0, j) - v.diffusionCoefficient(0, j); }, "D_t");
             }
         }
-        if (ModelTraits::usesTurbulenceModel())
-            // the eddy diffusivity is recalculated for an arbitrary component which is not the phase component
-            vtk.addVolumeVariable([](const auto& v){ return v.effectiveDiffusivity(1-phaseIdx) - v.diffusionCoefficient(1-phaseIdx); }, "D_t");
     }
 };
 

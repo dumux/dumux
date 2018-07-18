@@ -26,6 +26,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 
 #include <dumux/freeflow/navierstokes/problem.hh>
@@ -49,11 +50,13 @@ NEW_TYPE_TAG(StokesOnePTwoCTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, Navier
 // Set the grid type
 SET_TYPE_PROP(StokesOnePTwoCTypeTag, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
-// set the fluid system
-SET_TYPE_PROP(StokesOnePTwoCTypeTag, FluidSystem, FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-// set phase index (air)
-SET_INT_PROP(StokesOnePTwoCTypeTag, PhaseIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::gasPhaseIdx);
+// The fluid system
+SET_PROP(StokesOnePTwoCTypeTag, FluidSystem)
+{
+  using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+  static constexpr auto phaseIdx = H2OAir::gasPhaseIdx; // simulate the water phase
+  using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
+};
 
 SET_INT_PROP(StokesOnePTwoCTypeTag, ReplaceCompEqIdx, 3);
 
@@ -107,9 +110,6 @@ class StokesSubProblem : public NavierStokesProblem<TypeTag>
 
     static constexpr bool useMoles = GET_PROP_TYPE(TypeTag, ModelTraits)::useMoles();
 
-    static constexpr auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr auto transportCompIdx = 1 - phaseIdx;
-
 public:
     StokesSubProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, std::shared_ptr<CouplingManager> couplingManager)
     : ParentType(fvGridGeometry, "Stokes"), eps_(1e-6), couplingManager_(couplingManager)
@@ -127,10 +127,6 @@ public:
      * \name Problem parameters
      */
     // \{
-
-
-    bool shouldWriteRestartFile() const
-    { return false; }
 
    /*!
      * \brief Return the temperature within the domain in [K].
@@ -178,18 +174,10 @@ public:
             values.setNeumann(Indices::conti0EqIdx + 1);
         }
 
-        if (onUpperBoundary_(globalPos))
-        {
-            values.setDirichlet(Indices::velocityXIdx);
-            values.setDirichlet(Indices::velocityYIdx);
-            values.setNeumann(Indices::conti0EqIdx);
-            values.setNeumann(Indices::conti0EqIdx + 1);
-        }
-
         if (onRightBoundary_(globalPos))
         {
             values.setDirichlet(Indices::pressureIdx);
-            values.setOutflow(Indices::conti0EqIdx);
+            values.setOutflow(Indices::conti0EqIdx + 1);
 
 #if NONISOTHERMAL
             values.setOutflow(Indices::energyBalanceIdx);
@@ -242,17 +230,17 @@ public:
         FluidState fluidState;
         updateFluidStateForBC_(fluidState, elemVolVars[scv].pressure());
 
-        const Scalar density = useMoles ? fluidState.molarDensity(phaseIdx) : fluidState.density(phaseIdx);
+        const Scalar density = useMoles ? fluidState.molarDensity(0) : fluidState.density(0);
         const Scalar xVelocity = xVelocity_(globalPos);
 
         if (onLeftBoundary_(globalPos))
         {
             // rho*v*X at inflow
-            values[Indices::conti0EqIdx] = -xVelocity * density * refMoleFrac();
-            values[Indices::conti0EqIdx + 1] = -xVelocity * density * (1.0 - refMoleFrac());
+            values[Indices::conti0EqIdx + 1] = -xVelocity * density * refMoleFrac();
+            values[Indices::conti0EqIdx] = -xVelocity * density * (1.0 - refMoleFrac());
 
 #if NONISOTHERMAL
-            values[Indices::energyBalanceIdx] = -xVelocity * fluidState.density(phaseIdx) * fluidState.enthalpy(phaseIdx);
+            values[Indices::energyBalanceIdx] = -xVelocity * fluidState.density(0) * fluidState.enthalpy(0);
 #endif
         }
 
@@ -301,11 +289,11 @@ public:
         FluidState fluidState;
         updateFluidStateForBC_(fluidState, refPressure());
 
-        const Scalar density = FluidSystem::density(fluidState, phaseIdx);
+        const Scalar density = FluidSystem::density(fluidState, 0);
 
         PrimaryVariables values(0.0);
         values[Indices::pressureIdx] = refPressure() + density*this->gravity()[1]*(globalPos[1] - this->fvGridGeometry().bBoxMin()[1]);
-        values[Indices::conti0EqIdx] = refMoleFrac();
+        values[Indices::conti0EqIdx + 1] = refMoleFrac();
         values[Indices::velocityXIdx] = xVelocity_(globalPos);
 
 #if NONISOTHERMAL
@@ -373,22 +361,22 @@ private:
     void updateFluidStateForBC_(FluidState& fluidState, const Scalar pressure) const
     {
         fluidState.setTemperature(refTemperature());
-        fluidState.setPressure(phaseIdx, pressure);
-        fluidState.setSaturation(phaseIdx, 1.0);
-        fluidState.setMoleFraction(phaseIdx, transportCompIdx, refMoleFrac());
-        fluidState.setMoleFraction(phaseIdx, phaseIdx, 1.0 - refMoleFrac());
+        fluidState.setPressure(0, pressure);
+        fluidState.setSaturation(0, 1.0);
+        fluidState.setMoleFraction(0, 1, refMoleFrac());
+        fluidState.setMoleFraction(0, 0, 1.0 - refMoleFrac());
 
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState, phaseIdx);
+        paramCache.updatePhase(fluidState, 0);
 
-        const Scalar density = FluidSystem::density(fluidState, paramCache, phaseIdx);
-        fluidState.setDensity(phaseIdx, density);
+        const Scalar density = FluidSystem::density(fluidState, paramCache, 0);
+        fluidState.setDensity(0, density);
 
-        const Scalar molarDensity = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
-        fluidState.setMolarDensity(phaseIdx, molarDensity);
+        const Scalar molarDensity = FluidSystem::molarDensity(fluidState, paramCache, 0);
+        fluidState.setMolarDensity(0, molarDensity);
 
-        const Scalar enthalpy = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
-        fluidState.setEnthalpy(phaseIdx, enthalpy);
+        const Scalar enthalpy = FluidSystem::enthalpy(fluidState, paramCache, 0);
+        fluidState.setEnthalpy(0, enthalpy);
     }
 
     //! \brief set the profile of the inflow velocity (horizontal direction)

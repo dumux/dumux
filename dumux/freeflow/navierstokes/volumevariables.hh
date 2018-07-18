@@ -41,8 +41,6 @@ class NavierStokesVolumeVariables : public FreeFlowVolumeVariables< Traits, Navi
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
-    static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
-
 public:
     //! export the underlying fluid system
     using FluidSystem = typename Traits::FluidSystem;
@@ -83,43 +81,43 @@ public:
         const Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
-        fluidState.setPressure(fluidSystemPhaseIdx, elemSol[0][Indices::pressureIdx]);
+        fluidState.setPressure(0, elemSol[0][Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the
         // immiscible multi-phase models, so we have to set it here...
-        fluidState.setSaturation(fluidSystemPhaseIdx, 1.0);
+        fluidState.setSaturation(0, 1.0);
 
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState, fluidSystemPhaseIdx);
+        paramCache.updateAll(fluidState);
 
-        Scalar value = FluidSystem::density(fluidState, paramCache, fluidSystemPhaseIdx);
-        fluidState.setDensity(fluidSystemPhaseIdx, value);
+        Scalar value = FluidSystem::density(fluidState, paramCache, 0);
+        fluidState.setDensity(0, value);
 
-        value = FluidSystem::molarDensity(fluidState, paramCache, fluidSystemPhaseIdx);
-        fluidState.setMolarDensity(fluidSystemPhaseIdx, value);
+        value = FluidSystem::molarDensity(fluidState, paramCache, 0);
+        fluidState.setMolarDensity(0, value);
 
-        value = FluidSystem::viscosity(fluidState, paramCache, fluidSystemPhaseIdx);
-        fluidState.setViscosity(fluidSystemPhaseIdx, value);
+        value = FluidSystem::viscosity(fluidState, paramCache, 0);
+        fluidState.setViscosity(0, value);
 
         // compute and set the enthalpy
         value = ParentType::enthalpy(fluidState, paramCache);
-        fluidState.setEnthalpy(fluidSystemPhaseIdx, value);
+        fluidState.setEnthalpy(0, value);
     }
 
     /*!
      * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      */
-    Scalar pressure(int phaseIdx = fluidSystemPhaseIdx) const
-    { return fluidState_.pressure(fluidSystemPhaseIdx); }
+    Scalar pressure(int phaseIdx = 0) const
+    { return fluidState_.pressure(0); }
 
     /*!
      * \brief Return the mass density \f$\mathrm{[kg/m^3]}\f$ of a given phase within the
      *        control volume.
      */
-    Scalar density(int phaseIdx = fluidSystemPhaseIdx) const
-    { return fluidState_.density(fluidSystemPhaseIdx); }
+    Scalar density(int phaseIdx = 0) const
+    { return fluidState_.density(0); }
 
     /*!
      * \brief Return temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
@@ -135,26 +133,26 @@ public:
      * \brief Returns the mass density of a given phase within the
      *        control volume.
      */
-    Scalar molarDensity(int phaseIdx = fluidSystemPhaseIdx) const
+    Scalar molarDensity(int phaseIdx = 0) const
     {
-        return fluidState_.molarDensity(fluidSystemPhaseIdx);
+        return fluidState_.molarDensity(0);
     }
 
     /*!
      * \brief Returns the molar mass of a given phase within the
      *        control volume.
      */
-    Scalar molarMass(int phaseIdx = fluidSystemPhaseIdx) const
+    Scalar molarMass(int phaseIdx = 0) const
     {
-        return fluidState_.averageMolarMass(fluidSystemPhaseIdx);
+        return fluidState_.averageMolarMass(0);
     }
 
     /*!
      * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
      */
-    Scalar viscosity(int phaseIdx = fluidSystemPhaseIdx) const
-    { return fluidState_.viscosity(fluidSystemPhaseIdx); }
+    Scalar viscosity(int phaseIdx = 0) const
+    { return fluidState_.viscosity(0); }
 
     /*!
      * \brief Return the effective dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the

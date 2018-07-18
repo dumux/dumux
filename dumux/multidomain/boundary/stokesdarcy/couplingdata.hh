@@ -71,6 +71,49 @@ struct StokesDarcyCouplingOptions
 
 };
 
+/*!
+ * \ingroup MultiDomain
+ * \ingroup BoundaryCoupling
+ * \ingroup StokesDarcyCoupling
+ * \brief This structs helps to check if the two sub models use the same fluidsystem.
+ * \tparam FSFF The free-flow fluidsystem
+ * \tparam FSFF The porous-medium flow fluidsystem
+ * \tparam numPhasesPM The number of phases used in the porous-medium flow model.
+ */
+template<class FSFF, class FSPM, int numPhasesPM>
+struct IsSameFluidSystem;
+
+/*!
+ * \ingroup MultiDomain
+ * \ingroup BoundaryCoupling
+ * \ingroup StokesDarcyCoupling
+ * \brief This structs helps to check if the two sub models use the same fluidsystem.
+ *        Specialization for single-phase porous-medium models.
+ * \tparam FSFF The free-flow fluidsystem
+ * \tparam FSFF The porous-medium flow fluidsystem
+ */
+template<class FSFF, class FSPM>
+struct IsSameFluidSystem<FSFF, FSPM, 1>
+{
+    static constexpr bool value = std::is_same<FSFF, FSPM>::value;
+};
+
+/*!
+ * \ingroup MultiDomain
+ * \ingroup BoundaryCoupling
+ * \ingroup StokesDarcyCoupling
+ * \brief This structs helps to check if the two sub models use the same fluidsystem.
+ *        Specialization for two-phase porous-medium models.
+ * \tparam FSFF The free-flow fluidsystem
+ * \tparam FSFF The porous-medium flow fluidsystem
+ */
+template<class FSFF, class FSPM>
+struct IsSameFluidSystem<FSFF, FSPM, 2>
+{
+    static constexpr bool value = std::is_same<typename FSFF::MultiPhaseFluidSystem, FSPM>::value;
+};
+
+
 template<class MDTraits, class CouplingManager, bool enableEnergyBalance, bool isCompositional>
 class StokesDarcyCouplingDataImplementation;
 
@@ -106,15 +149,25 @@ class StokesDarcyCouplingDataImplementationBase
     template<std::size_t id> using VolumeVariables  = typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVolumeVariables)::VolumeVariables;
     template<std::size_t id> using Problem  = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
     template<std::size_t id> using FluidSystem  = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FluidSystem);
+    template<std::size_t id> using ModelTraits  = typename GET_PROP_TYPE(SubDomainTypeTag<id>, ModelTraits);
 
     static constexpr auto stokesIdx = CouplingManager::stokesIdx;
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
+
+
+
+
+
+
 
     static constexpr int enableEnergyBalance = GET_PROP_TYPE(SubDomainTypeTag<stokesIdx>, ModelTraits)::enableEnergyBalance();
     static_assert(GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, ModelTraits)::enableEnergyBalance() == enableEnergyBalance,
                   "All submodels must both be either isothermal or non-isothermal");
 
-    static_assert(std::is_same<FluidSystem<stokesIdx>, FluidSystem<darcyIdx>>::value,
+    static_assert(IsSameFluidSystem<FluidSystem<stokesIdx>,
+                                    FluidSystem<darcyIdx>,
+                                    GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, ModelTraits)::numPhases()
+                                    >::value,
                   "All submodels must use the same fluid system");
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
@@ -122,10 +175,32 @@ class StokesDarcyCouplingDataImplementationBase
 public:
     StokesDarcyCouplingDataImplementationBase(const CouplingManager& couplingmanager): couplingManager_(couplingmanager) {}
 
-    /*!
-     * \brief Export the phase index used by the Stokes model.
-     */
-    static constexpr auto stokesPhaseIdx = Indices<stokesIdx>::fluidSystemPhaseIdx;
+    template<std::size_t i, bool hasAdapter = (ModelTraits<darcyIdx>::numPhases() > 1), std::enable_if_t<!hasAdapter, int> = 0>
+    static constexpr auto couplingPhaseIdx(Dune::index_constant<i>, int coupledPhaseIdx = 0)
+    { return 0; }
+
+    template<bool hasAdapter = (ModelTraits<darcyIdx>::numPhases() > 1), std::enable_if_t<hasAdapter, int> = 0>
+    static constexpr auto couplingPhaseIdx(Dune::index_constant<stokesIdx>, int coupledPhaseIdx = 0)
+    { return 0; }
+
+    template<bool hasAdapter = (ModelTraits<darcyIdx>::numPhases() > 1), std::enable_if_t<hasAdapter, int> = 0>
+    static constexpr auto couplingPhaseIdx(Dune::index_constant<darcyIdx>, int coupledPhaseIdx = 0)
+    { return FluidSystem<stokesIdx>::multiphaseFluidsystemPhaseIdx; }
+
+
+
+
+    template<std::size_t i, bool hasAdapter = (ModelTraits<darcyIdx>::numPhases() > 1), std::enable_if_t<!hasAdapter, int> = 0>
+    static constexpr auto couplingCompIdx(Dune::index_constant<i>, int coupledCompdIdx)
+    { return coupledCompdIdx; }
+
+    template<bool hasAdapter = (ModelTraits<darcyIdx>::numPhases() > 1), std::enable_if_t<hasAdapter, int> = 0>
+    static constexpr auto couplingCompIdx(Dune::index_constant<stokesIdx>, int coupledCompdIdx)
+    { return coupledCompdIdx; }
+
+    template<bool hasAdapter = (ModelTraits<darcyIdx>::numPhases() > 1), std::enable_if_t<hasAdapter, int> = 0>
+    static constexpr auto couplingCompIdx(Dune::index_constant<darcyIdx>, int coupledCompdIdx)
+    { return FluidSystem<stokesIdx>::compIdx(coupledCompdIdx); }
 
     /*!
      * \brief Returns a reference to the coupling manager.
@@ -159,9 +234,10 @@ public:
 
         Scalar momentumFlux(0.0);
         const auto& stokesContext = couplingManager_.stokesCouplingContext(scvf);
+        const auto darcyPhaseIdx = couplingPhaseIdx(darcyIdx);
 
         // - p_pm * n_pm = p_pm * n_ff
-        const Scalar darcyPressure = stokesContext.volVars.pressure(stokesPhaseIdx);
+        const Scalar darcyPressure = stokesContext.volVars.pressure(darcyPhaseIdx);
 
         if(numPhasesDarcy > 1)
         {
@@ -170,7 +246,7 @@ public:
         else // use pressure reconstruction for single phase models
         {
             const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf();
-            const Scalar pressureInterFace = scvf.directionSign() * velocity * stokesContext.volVars.viscosity(stokesPhaseIdx)/darcyPermeability(scvf) * (stokesContext.element.geometry().center() - scvf.center()).two_norm() + darcyPressure;
+            const Scalar pressureInterFace = scvf.directionSign() * velocity * stokesContext.volVars.viscosity(darcyPhaseIdx)/darcyPermeability(scvf) * (stokesContext.element.geometry().center() - scvf.center()).two_norm() + darcyPressure;
             momentumFlux = pressureInterFace;
         }
 
@@ -336,7 +412,7 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
 
 public:
     using ParentType::ParentType;
-    using ParentType::stokesPhaseIdx;
+    using ParentType::couplingPhaseIdx;
 
     /*!
      * \brief Returns the mass flux across the coupling boundary as seen from the Darcy domain.
@@ -347,7 +423,7 @@ public:
     {
         const auto& darcyContext = this->couplingManager().darcyCouplingContext(scvf);
         const Scalar velocity = darcyContext.velocity * scvf.unitOuterNormal();
-        const Scalar darcyDensity = darcyElemVolVars[scvf.insideScvIdx()].density(stokesPhaseIdx);
+        const Scalar darcyDensity = darcyElemVolVars[scvf.insideScvIdx()].density(couplingPhaseIdx(darcyIdx));
         const Scalar stokesDensity = darcyContext.volVars.density();
         const bool insideIsUpstream = velocity > 0.0;
 
@@ -365,7 +441,7 @@ public:
         const auto& stokesContext = this->couplingManager().stokesCouplingContext(scvf);
         const Scalar velocity = stokesElemFaceVars[scvf].velocitySelf();
         const Scalar stokesDensity = stokesElemVolVars[scvf.insideScvIdx()].density();
-        const Scalar darcyDensity = stokesContext.volVars.density(stokesPhaseIdx);
+        const Scalar darcyDensity = stokesContext.volVars.density(couplingPhaseIdx(darcyIdx));
         const bool insideIsUpstream = sign(velocity) == scvf.directionSign();
 
         return massFlux_(velocity * scvf.directionSign(), stokesDensity, darcyDensity, insideIsUpstream);
@@ -446,8 +522,8 @@ private:
         const auto& outsideScv = (*scvs(outsideFvGeometry).begin());
 
         // convective fluxes
-        const Scalar insideTerm = insideVolVars.density(stokesPhaseIdx) * insideVolVars.enthalpy(stokesPhaseIdx);
-        const Scalar outsideTerm = outsideVolVars.density(stokesPhaseIdx) * outsideVolVars.enthalpy(stokesPhaseIdx);
+        const Scalar insideTerm = insideVolVars.density(couplingPhaseIdx(domainI)) * insideVolVars.enthalpy(couplingPhaseIdx(domainI));
+        const Scalar outsideTerm = outsideVolVars.density(couplingPhaseIdx(domainJ)) * outsideVolVars.enthalpy(couplingPhaseIdx(domainJ));
 
         flux += this->advectiveFlux(insideTerm, outsideTerm, velocity, insideIsUpstream);
 
@@ -502,7 +578,8 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
 
 public:
     using ParentType::ParentType;
-    using ParentType::stokesPhaseIdx;
+    using ParentType::couplingPhaseIdx;
+    using ParentType::couplingCompIdx;
 
     /*!
      * \brief Returns the mass flux across the coupling boundary as seen from the Darcy domain.
@@ -619,13 +696,18 @@ protected:
 
         // treat the advective fluxes
         auto insideTerm = [&](int compIdx)
-        { return moleOrMassFraction(insideVolVars, stokesPhaseIdx, compIdx) * moleOrMassDensity(insideVolVars, stokesPhaseIdx); };
+        { return moleOrMassFraction(insideVolVars, couplingPhaseIdx(domainI), compIdx) * moleOrMassDensity(insideVolVars, couplingPhaseIdx(domainI)); };
 
         auto outsideTerm = [&](int compIdx)
-        { return moleOrMassFraction(outsideVolVars, stokesPhaseIdx, compIdx) * moleOrMassDensity(outsideVolVars, stokesPhaseIdx); };
+        { return moleOrMassFraction(outsideVolVars, couplingPhaseIdx(domainJ), compIdx) * moleOrMassDensity(outsideVolVars, couplingPhaseIdx(domainJ)); };
+
 
         for(int compIdx = 0; compIdx < numComponents; ++compIdx)
-            flux[compIdx] += this->advectiveFlux(insideTerm(compIdx), outsideTerm(compIdx), velocity, insideIsUpstream);
+        {
+            const int domainICompIdx = couplingCompIdx(domainI, compIdx);
+            const int domainJCompIdx = couplingCompIdx(domainJ, compIdx);
+            flux[domainICompIdx] += this->advectiveFlux(insideTerm(domainICompIdx), outsideTerm(domainJCompIdx), velocity, insideIsUpstream);
+        }
 
         // treat the diffusive fluxes
         const auto& insideScv = insideFvGeometry.scv(scvf.insideScvIdx());
@@ -643,7 +725,7 @@ protected:
      */
     Scalar diffusionCoefficient_(const VolumeVariables<stokesIdx>& volVars, int phaseIdx, int compIdx) const
     {
-        return volVars.effectiveDiffusivity(compIdx);
+        return volVars.effectiveDiffusivity(phaseIdx, compIdx);
     }
 
     /*!
@@ -655,6 +737,16 @@ protected:
         return EffDiffModel::effectiveDiffusivity(volVars.porosity(),
                                                   volVars.saturation(phaseIdx),
                                                   volVars.diffusionCoefficient(phaseIdx, compIdx));
+    }
+
+    Scalar getComponentEnthalpy(const VolumeVariables<stokesIdx>& volVars, int phaseIdx, int compIdx) const
+    {
+        return FluidSystem<stokesIdx>::componentEnthalpy(volVars.fluidState(), 0, compIdx);
+    }
+
+    Scalar getComponentEnthalpy(const VolumeVariables<darcyIdx>& volVars, int phaseIdx, int compIdx) const
+    {
+        return FluidSystem<darcyIdx>::componentEnthalpy(volVars.fluidState(), phaseIdx, compIdx);
     }
 
     /*!
@@ -671,37 +763,41 @@ protected:
                                         const DiffusionCoefficientAveragingType diffCoeffAvgType) const
     {
         NumEqVector diffusiveFlux(0.0);
-        const Scalar avgMolarDensity = 0.5 * volVarsI.molarDensity(stokesPhaseIdx) + 0.5 *  volVarsJ.molarDensity(stokesPhaseIdx);
+        const Scalar avgMolarDensity = 0.5 * volVarsI.molarDensity(couplingPhaseIdx(domainI)) + 0.5 *  volVarsJ.molarDensity(couplingPhaseIdx(domainJ));
         const Scalar insideDistance = this->getDistance_(scvI, scvfI);
         const Scalar outsideDistance = this->getDistance_(scvJ, scvfI);
 
-        for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+        for(int compIdx = 1; compIdx < numComponents; ++compIdx)
         {
-            if(compIdx != stokesPhaseIdx)
-            {
-                const Scalar deltaMoleFrac = volVarsJ.moleFraction(stokesPhaseIdx, compIdx) - volVarsI.moleFraction(stokesPhaseIdx, compIdx);
-                const Scalar tij = this->transmissibility_(domainI,
-                                                           domainJ,
-                                                           insideDistance,
-                                                           outsideDistance,
-                                                           diffusionCoefficient_(volVarsI, stokesPhaseIdx, compIdx) * volVarsI.extrusionFactor(),
-                                                           diffusionCoefficient_(volVarsJ, stokesPhaseIdx, compIdx) * volVarsJ.extrusionFactor(),
-                                                           diffCoeffAvgType);
-                diffusiveFlux[compIdx] += -avgMolarDensity * tij * deltaMoleFrac;
-            }
+            const int domainICompIdx = couplingCompIdx(domainI, compIdx);
+            const int domainJCompIdx = couplingCompIdx(domainJ, compIdx);
+
+            assert(FluidSystem<i>::componentName(domainICompIdx) == FluidSystem<j>::componentName(domainJCompIdx));
+
+            const Scalar deltaMoleFrac = volVarsJ.moleFraction(couplingPhaseIdx(domainJ), domainJCompIdx) - volVarsI.moleFraction(couplingPhaseIdx(domainI), domainICompIdx);
+            const Scalar tij = this->transmissibility_(domainI,
+                                                       domainJ,
+                                                       insideDistance,
+                                                       outsideDistance,
+                                                       diffusionCoefficient_(volVarsI, couplingPhaseIdx(domainI), domainICompIdx) * volVarsI.extrusionFactor(),
+                                                       diffusionCoefficient_(volVarsJ, couplingPhaseIdx(domainJ), domainJCompIdx) * volVarsJ.extrusionFactor(),
+                                                       diffCoeffAvgType);
+            diffusiveFlux[domainICompIdx] += -avgMolarDensity * tij * deltaMoleFrac;
         }
 
         const Scalar cumulativeFlux = std::accumulate(diffusiveFlux.begin(), diffusiveFlux.end(), 0.0);
-        diffusiveFlux[stokesPhaseIdx] = -cumulativeFlux;
+        diffusiveFlux[couplingCompIdx(domainI, 0)] = -cumulativeFlux;
+
 
         if(!useMoles)
         {
             //convert everything to a mass flux
             for(int compIdx = 0; compIdx < numComponents; ++compIdx)
-                diffusiveFlux[compIdx] *= FluidSystem<darcyIdx>::molarMass(compIdx);
+                diffusiveFlux[compIdx] *= FluidSystem<i>::molarMass(compIdx);
         }
 
         return diffusiveFlux;
+        // return NumEqVector(0);
     }
 
     /*!
@@ -725,8 +821,8 @@ protected:
         const auto& outsideScv = (*scvs(outsideFvGeometry).begin());
 
         // convective fluxes
-        const Scalar insideTerm = insideVolVars.density(stokesPhaseIdx) * insideVolVars.enthalpy(stokesPhaseIdx);
-        const Scalar outsideTerm = outsideVolVars.density(stokesPhaseIdx) * outsideVolVars.enthalpy(stokesPhaseIdx);
+        const Scalar insideTerm = insideVolVars.density(couplingPhaseIdx(domainI)) * insideVolVars.enthalpy(couplingPhaseIdx(domainI));
+        const Scalar outsideTerm = outsideVolVars.density(couplingPhaseIdx(domainJ)) * outsideVolVars.enthalpy(couplingPhaseIdx(domainJ));
 
         flux += this->advectiveFlux(insideTerm, outsideTerm, velocity, insideIsUpstream);
 
@@ -736,16 +832,19 @@ protected:
 
         for (int compIdx = 0; compIdx < diffusiveFlux.size(); ++compIdx)
         {
-            const bool insideDiffFluxIsUpstream = std::signbit(diffusiveFlux[compIdx]);
+            const int domainICompIdx = couplingCompIdx(domainI, compIdx);
+            const int domainJCompIdx = couplingCompIdx(domainJ, compIdx);
+
+            const bool insideDiffFluxIsUpstream = std::signbit(diffusiveFlux[domainICompIdx]);
             const Scalar componentEnthalpy = insideDiffFluxIsUpstream ?
-                                             FluidSystem<i>::componentEnthalpy(insideVolVars.fluidState(), stokesPhaseIdx, compIdx)
-                                           : FluidSystem<j>::componentEnthalpy(outsideVolVars.fluidState(), stokesPhaseIdx, compIdx);
+                                             getComponentEnthalpy(insideVolVars, couplingPhaseIdx(domainI), domainICompIdx)
+                                           : getComponentEnthalpy(outsideVolVars, couplingPhaseIdx(domainJ), domainJCompIdx);
 
             // always use a mass-based calculation for the energy balance
             if (useMoles)
-                diffusiveFlux[compIdx] *= FluidSystem<i>::molarMass(compIdx);
+                diffusiveFlux[domainICompIdx] *= FluidSystem<i>::molarMass(domainICompIdx);
 
-            flux += diffusiveFlux[compIdx] * componentEnthalpy;
+            flux += diffusiveFlux[domainICompIdx] * componentEnthalpy;
         }
 
         return flux;
