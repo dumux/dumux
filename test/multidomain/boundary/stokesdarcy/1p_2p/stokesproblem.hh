@@ -26,6 +26,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 
+#include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>
@@ -53,15 +54,15 @@ SET_TYPE_PROP(StokesOnePTypeTag, Grid, Dune::YaspGrid<2, Dune::EquidistantOffset
 SET_PROP(StokesOnePTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using H2OType = Dumux::Components::SimpleH2O<Scalar>;
-    using H2OPhase = Dumux::FluidSystems::OnePLiquid<Scalar, H2OType>;
-    using AirType = Dumux::Components::TabulatedComponent<Components::Air<Scalar>, false >;
-    using AirPhase = Dumux::FluidSystems::OnePGas<Scalar, AirType>;
-    using type = FluidSystems::TwoPImmiscible<Scalar, H2OPhase, AirPhase> ;
-};
+    using H2OType = Components::SimpleH2O<Scalar>;
+    using H2OPhase = FluidSystems::OnePLiquid<Scalar, H2OType>;
+    using AirType = Components::TabulatedComponent<Components::Air<Scalar>, false >;
+    using AirPhase = FluidSystems::OnePGas<Scalar, AirType>;
+    using TwoPFluidSystem = FluidSystems::TwoPImmiscible<Scalar, H2OPhase, AirPhase> ;
 
-// consider air as phase
-SET_INT_PROP(StokesOnePTypeTag, PhaseIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::phase1Idx);
+    static constexpr auto phaseIdx = 1; // simulate the air phase
+    using type = FluidSystems::OnePAdapter<TwoPFluidSystem, phaseIdx>;
+};
 
 // Set the problem property
 SET_TYPE_PROP(StokesOnePTypeTag, Problem, Dumux::StokesSubProblem<TypeTag> );

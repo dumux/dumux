@@ -43,7 +43,6 @@ class FreeflowNCVolumeVariables : public FreeFlowVolumeVariables< Traits, Freefl
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
-    static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
     static constexpr int numComponents = Traits::ModelTraits::numComponents();
 
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
@@ -77,6 +76,7 @@ public:
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
+
         for (unsigned int compIIdx = 0; compIIdx < numComponents; ++compIIdx)
         {
             for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
@@ -87,7 +87,7 @@ public:
                     diffCoefficient_[compIIdx][compJIdx]
                         = FluidSystem::binaryDiffusionCoefficient(fluidState_,
                                                                   paramCache,
-                                                                  fluidSystemPhaseIdx,
+                                                                  0,
                                                                   compIIdx,
                                                                   compJIdx);
                 }
@@ -106,65 +106,62 @@ public:
                                    FluidState& fluidState)
     {
         fluidState.setTemperature(ParentType::temperature(elemSol, problem, element, scv));
-        fluidState.setPressure(fluidSystemPhaseIdx, elemSol[0][Indices::pressureIdx]);
+        fluidState.setPressure(0, elemSol[0][Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the
         // immiscible multi-phase models, so we have to set it here...
-        fluidState.setSaturation(fluidSystemPhaseIdx, 1.0);
+        fluidState.setSaturation(0, 1.0);
 
         Scalar sumFracMinorComp = 0.0;
 
-        for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+        for(int compIdx = 1; compIdx < numComponents; ++compIdx)
         {
-            if(compIdx == Indices::mainCompIdx)
-                continue;
-
             // temporary add 1.0 to remove spurious differences in mole fractions
             // which are below the numerical accuracy
             Scalar moleOrMassFraction = elemSol[0][Indices::conti0EqIdx+compIdx] + 1.0;
             moleOrMassFraction = moleOrMassFraction - 1.0;
             if(useMoles)
-                fluidState.setMoleFraction(fluidSystemPhaseIdx, compIdx, moleOrMassFraction);
+                fluidState.setMoleFraction(0, compIdx, moleOrMassFraction);
             else
-                fluidState.setMassFraction(fluidSystemPhaseIdx, compIdx, moleOrMassFraction);
+                fluidState.setMassFraction(0, compIdx, moleOrMassFraction);
             sumFracMinorComp += moleOrMassFraction;
         }
         if(useMoles)
-            fluidState.setMoleFraction(fluidSystemPhaseIdx, Indices::mainCompIdx, 1.0 - sumFracMinorComp);
+            fluidState.setMoleFraction(0, 0, 1.0 - sumFracMinorComp);
         else
-            fluidState.setMassFraction(fluidSystemPhaseIdx, Indices::mainCompIdx, 1.0 - sumFracMinorComp);
+            fluidState.setMassFraction(0, 0, 1.0 - sumFracMinorComp);
 
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState, fluidSystemPhaseIdx);
+        paramCache.updateAll(fluidState);
 
-        Scalar value = FluidSystem::density(fluidState, paramCache, fluidSystemPhaseIdx);
-        fluidState.setDensity(fluidSystemPhaseIdx, value);
+        Scalar value = FluidSystem::density(fluidState, paramCache, 0);
+        fluidState.setDensity(0, value);
 
-        value = FluidSystem::molarDensity(fluidState, paramCache, fluidSystemPhaseIdx);
-        fluidState.setMolarDensity(fluidSystemPhaseIdx, value);
+        value = FluidSystem::molarDensity(fluidState, paramCache, 0);
+        fluidState.setMolarDensity(0, value);
 
-        value = FluidSystem::viscosity(fluidState, paramCache, fluidSystemPhaseIdx);
-        fluidState.setViscosity(fluidSystemPhaseIdx, value);
+        value = FluidSystem::viscosity(fluidState, paramCache, 0);
+        fluidState.setViscosity(0, value);
 
         // compute and set the enthalpy
         const Scalar h = ParentType::enthalpy(fluidState, paramCache);
-        fluidState.setEnthalpy(fluidSystemPhaseIdx, h);
+        fluidState.setEnthalpy(0, h);
     }
 
     /*!
      * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      */
-    Scalar pressure(int phaseIdx = fluidSystemPhaseIdx) const
-    { return fluidState_.pressure(fluidSystemPhaseIdx); }
+    Scalar pressure(int phaseIdx = 0) const
+    { return fluidState_.pressure(0); }
 
     /*!
      * \brief Return the mass density \f$\mathrm{[kg/m^3]}\f$ of a given phase within the
      *        control volume.
      */
-    Scalar density(int phaseIdx = fluidSystemPhaseIdx) const
-    { return fluidState_.density(fluidSystemPhaseIdx); }
+    Scalar density(int phaseIdx = 0) const
+    { return fluidState_.density(0); }
 
     /*!
      * \brief Return temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
@@ -187,8 +184,8 @@ public:
      * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
      */
-    Scalar viscosity(int phaseIdx = fluidSystemPhaseIdx) const
-    { return fluidState_.viscosity(fluidSystemPhaseIdx); }
+    Scalar viscosity(int phaseIdx = 0) const
+    { return fluidState_.viscosity(0); }
 
     /*!
      * \brief Returns the mass fraction of a component in the phase \f$\mathrm{[-]}\f$
@@ -198,7 +195,7 @@ public:
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     {
-        return fluidState_.massFraction(fluidSystemPhaseIdx, compIdx);
+        return fluidState_.massFraction(0, compIdx);
     }
 
     /*!
@@ -208,7 +205,7 @@ public:
      */
     Scalar massFraction(int compIdx) const
     {
-        return fluidState_.massFraction(fluidSystemPhaseIdx, compIdx);
+        return fluidState_.massFraction(0, compIdx);
     }
 
     /*!
@@ -219,7 +216,7 @@ public:
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     {
-        return fluidState_.moleFraction(fluidSystemPhaseIdx, compIdx);
+        return fluidState_.moleFraction(0, compIdx);
     }
 
     /*!
@@ -229,15 +226,15 @@ public:
      */
     Scalar moleFraction(int compIdx) const
     {
-        return fluidState_.moleFraction(fluidSystemPhaseIdx, compIdx);
+        return fluidState_.moleFraction(0, compIdx);
     }
 
     /*!
      * \brief Returns the mass density of a given phase \f$\mathrm{[kg/m^3]}\f$
      */
-    Scalar molarDensity(int phaseIdx = fluidSystemPhaseIdx) const
+    Scalar molarDensity(int phaseIdx = 0) const
     {
-        return fluidState_.molarDensity(fluidSystemPhaseIdx);
+        return fluidState_.molarDensity(0);
     }
 
     /*!
@@ -250,29 +247,30 @@ public:
         return FluidSystem::molarMass(compIdx);
     }
 
-     /*!
-     * \brief Returns the diffusion coefficient \f$\mathrm{[m^2/s]}\f$
-     *
-     * \param compIIdx the index of the component which diffusive
-     * \param compJIdx the index of the component with respect to which compIIdx diffuses
-     */
-    Scalar diffusionCoefficient(int compIIdx, int compJIdx = fluidSystemPhaseIdx) const
-    {
-        if (compIIdx == compJIdx)
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for fluidSystemPhaseIdx = compIdx");
-        return diffCoefficient_[compIIdx][compJIdx];
-    }
+    /*!
+    * \brief Returns the diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+    *
+    * \param compIIdx the index of the component which diffusive
+    * \param compJIdx the index of the component with respect to which compIIdx diffuses
+    */
+   Scalar diffusionCoefficient(int compIIdx, int compJIdx = 0) const
+   {
+       if (compIIdx == compJIdx)
+           DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for compIIdx = compJIdx");
+       return diffCoefficient_[compIIdx][compJIdx];
+   }
 
-     /*!
-     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
-     *
-     * \param compIIdx the index of the component which diffusive
-     * \param compJIdx the index of the component with respect to which compIIdx diffuses
-     */
-    Scalar effectiveDiffusivity(int compIIdx, int compJIdx = fluidSystemPhaseIdx) const
-    {
-        return diffusionCoefficient(compIIdx, compJIdx);
-    }
+    /*!
+    * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$
+    *
+    * \param compIIdx the index of the component which diffusive
+    * \param compJIdx the index of the component with respect to which compIIdx diffuses
+    */
+   Scalar effectiveDiffusivity(int compIIdx, int compJIdx = 0) const
+   {
+       return diffusionCoefficient(compIIdx, compJIdx);
+   }
+
 
     /*!
      * \brief Return the fluid state of the control volume.
@@ -282,7 +280,7 @@ public:
 
 protected:
     FluidState fluidState_;
-    std::array<std::array<Scalar, numComponents>, numComponents> diffCoefficient_;
+    std::array<std::array<Scalar, numComponents>, numComponents> diffCoefficient_ = {};
 };
 
 } // end namespace Dumux

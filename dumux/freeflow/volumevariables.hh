@@ -137,7 +137,6 @@ class FreeFlowVolumeVariablesImplementation<Traits, Impl, true>
 {
     using ParentType = FreeFlowVolumeVariablesImplementation<Traits, Impl, false>;
     using Scalar = typename Traits::PrimaryVariables::value_type;
-    static constexpr int fluidSystemPhaseIdx = Traits::ModelTraits::Indices::fluidSystemPhaseIdx;
 
 public:
     //! export the type used for the primary variables
@@ -171,28 +170,28 @@ public:
      * \brief Returns the total internal energy of a phase in the
      *        sub-control volume.
      */
-    Scalar internalEnergy(int phaseIdx = fluidSystemPhaseIdx) const
-    { return ParentType::asImp_().fluidState().internalEnergy(fluidSystemPhaseIdx); }
+    Scalar internalEnergy(int phaseIdx = 0) const
+    { return ParentType::asImp_().fluidState().internalEnergy(0); }
 
     /*!
      * \brief Returns the total enthalpy of a phase in the sub-control
      *        volume.
      */
-    Scalar enthalpy(int phaseIdx = fluidSystemPhaseIdx) const
-    { return ParentType::asImp_().fluidState().enthalpy(fluidSystemPhaseIdx); }
+    Scalar enthalpy(int phaseIdx = 0) const
+    { return ParentType::asImp_().fluidState().enthalpy(0); }
 
     /*!
      * \brief Returns the component enthalpy \f$\mathrm{[J/(kg*K)]}\f$ in the sub-control volume.
      */
     Scalar componentEnthalpy(unsigned int compIdx) const
-    { return FluidSystem::componentEnthalpy(ParentType::asImp_().fluidState(), fluidSystemPhaseIdx, compIdx); }
+    { return FluidSystem::componentEnthalpy(ParentType::asImp_().fluidState(), 0, compIdx); }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
      *        of the fluid phase in the sub-control volume.
      */
     Scalar thermalConductivity() const
-    { return FluidSystem::thermalConductivity(ParentType::asImp_().fluidState(), fluidSystemPhaseIdx); }
+    { return FluidSystem::thermalConductivity(ParentType::asImp_().fluidState(), 0); }
 
     /*!
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
@@ -208,7 +207,7 @@ public:
      *        in the sub-control volume.
      */
     Scalar heatCapacity() const
-    { return FluidSystem::heatCapacity(ParentType::asImp_().fluidState(), fluidSystemPhaseIdx); }
+    { return FluidSystem::heatCapacity(ParentType::asImp_().fluidState(), 0); }
 
     //! The temperature is a primary variable for non-isothermal models
     template<class ElemSol, class Problem, class Element, class Scv>
@@ -226,7 +225,7 @@ public:
     static Scalar enthalpy(const FluidState& fluidState,
                            const ParameterCache& paramCache)
     {
-        return FluidSystem::enthalpy(fluidState, paramCache, fluidSystemPhaseIdx);
+        return FluidSystem::enthalpy(fluidState, paramCache, 0);
     }
 };
 }

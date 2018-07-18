@@ -27,6 +27,7 @@
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/freeflow/turbulenceproperties.hh>
 
@@ -81,16 +82,16 @@ namespace Properties
   #endif
 #endif
 
-NEW_PROP_TAG(FluidSystem);
+// The fluid system
+SET_PROP(FlatPlateNCTestTypeTag, FluidSystem)
+{
+  using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+  static constexpr auto phaseIdx = H2OAir::gasPhaseIdx; // simulate the air phase
+  using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
+};
 
-// Select the fluid system
-SET_TYPE_PROP(FlatPlateNCTestTypeTag, FluidSystem,
-              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-SET_INT_PROP(FlatPlateNCTestTypeTag, PhaseIdx,
-             GET_PROP_TYPE(TypeTag, FluidSystem)::gasPhaseIdx);
-
-SET_INT_PROP(FlatPlateNCTestTypeTag, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, PhaseIdx));
+// replace the main component balance eq with a total balance eq
+SET_INT_PROP(FlatPlateNCTestTypeTag, ReplaceCompEqIdx, 0);
 
 // Set the grid type
 SET_TYPE_PROP(FlatPlateNCTestTypeTag, Grid,
@@ -158,9 +159,8 @@ class FlatPlateNCTestProblem : public ZeroEqProblem<TypeTag>
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
     static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
-    static const unsigned int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr auto transportEqIdx = Indices::conti0EqIdx;
-    static constexpr auto transportCompIdx = Indices::conti0EqIdx;
+    static constexpr auto transportEqIdx = Indices::conti0EqIdx + 1;
+    static constexpr auto transportCompIdx = Indices::conti0EqIdx + 1;
 
 public:
     FlatPlateNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -171,6 +171,7 @@ public:
         FluidSystem::init();
         Dumux::TurbulenceProperties<Scalar, dimWorld, true> turbulenceProperties;
         FluidState fluidState;
+        const auto phaseIdx = 0;
         fluidState.setPressure(phaseIdx, 1e5);
         fluidState.setTemperature(temperature());
         fluidState.setMassFraction(phaseIdx, phaseIdx, 1.0);
