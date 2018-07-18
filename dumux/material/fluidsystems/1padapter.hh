@@ -99,8 +99,9 @@ public:
     /*!
      * \brief Initialize the fluid system's static parameters generically
      */
-    static void init()
-    { MultiPhaseFluidSystem::init(); }
+    template<class ...Args>
+    static void init(Args&&... args)
+    { MultiPhaseFluidSystem::init(std::forward<Args>(args)...); }
 
     /****************************************
      * Fluid phase related static parameters
