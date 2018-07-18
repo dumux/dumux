@@ -50,7 +50,7 @@ class LiquidPhaseTwoC
 public:
     using ParameterCache = NullParameterCache;
 
-    static constexpr int numPhases = 2; //!< Number of phases in the fluid system
+    static constexpr int numPhases = 1; //!< Number of phases in the fluid system
     static constexpr int numComponents = 2; //!< Number of components in the fluid system
 
     static constexpr int liquidPhaseIdx = 0; //!< index of the liquid phase
@@ -64,8 +64,7 @@ public:
     /*!
     * \brief Initialize the fluid system's static parameters generically
     */
-    static void init()
-    {}
+    static void init() {}
 
     /****************************************
      * Fluid phase related static parameters
