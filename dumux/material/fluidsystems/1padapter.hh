@@ -85,6 +85,8 @@ public:
 
     //! export the wrapped MultiPhaseFluidSystem type
     using MultiPhaseFluidSystem = MPFluidSystem;
+    //! the index of the phase we choose from the multi-phase fluid system
+    static constexpr int multiphaseFluidsystemPhaseIdx = phase;
 
     //! number of phases in the fluid system
     static constexpr int numPhases = 1;
