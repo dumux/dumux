@@ -153,7 +153,9 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
 
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables,
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables,
+    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
                                        x, problem->name(), "", Dune::VTK::conforming);
 
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields

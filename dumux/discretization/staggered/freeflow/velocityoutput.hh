@@ -24,80 +24,66 @@
 #ifndef DUMUX_STAGGERED_FF_VELOCITYOUTPUT_HH
 #define DUMUX_STAGGERED_FF_VELOCITYOUTPUT_HH
 
-#include <dune/common/fvector.hh>
-#include <dumux/common/properties.hh>
+#include <dumux/io/velocityoutput.hh>
 #include <dumux/common/parameters.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
  * \brief Velocity output for staggered free-flow models
  */
-template<class TypeTag>
-class StaggeredFreeFlowVelocityOutput
+template<class GridVariables, class SolutionVector>
+class StaggeredFreeFlowVelocityOutput : public VelocityOutput<GridVariables>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-
+    using ParentType = VelocityOutput<GridVariables>;
+    using FVGridGeometry = typename GridVariables::GridGeometry;
+    using Scalar = typename GridVariables::Scalar;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using ElementVolumeVariables = typename GridVariables::GridVolumeVariables::LocalView;
+    using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
+    using VolumeVariables = typename GridVariables::VolumeVariables;
+    using FluidSystem = typename VolumeVariables::FluidSystem;
+    using GridView = typename FVGridGeometry::GridView;
+    // TODO: should be possible to get this somehow
+    using Problem = typename std::decay_t<decltype(std::declval<GridVolumeVariables>().problem())>;
     using Element = typename GridView::template Codim<0>::Entity;
     using CoordScalar = typename GridView::ctype;
 
 public:
+    using VelocityVector = typename ParentType::VelocityVector;
+
     /*!
      * \brief Constructor initializes the static data with the initial solution.
      *
-     * \param problem The problem
-     * \param fvGridGeometry The fvGridGeometry
      * \param gridVariables The gridVariables
      * \param sol The solution vector
      */
-    StaggeredFreeFlowVelocityOutput(const Problem& problem,
-                                    const FVGridGeometry& fvGridGeometry,
-                                    const GridVariables& gridVariables,
-                                    const SolutionVector& sol)
-    : problem_(problem)
-    , fvGridGeometry_(fvGridGeometry)
-    , gridVariables_(gridVariables)
+    StaggeredFreeFlowVelocityOutput(const GridVariables& gridVariables, const SolutionVector& sol)
+    : gridVariables_(gridVariables)
     , sol_(sol)
     {
         // check if velocity vectors shall be written to the VTK file
-        velocityOutput_ = getParamFromGroup<bool>(problem.paramGroup(), "Vtk.AddVelocity");
+        enableOutput_ = getParamFromGroup<bool>(gridVariables.curGridVolVars().problem().paramGroup(), "Vtk.AddVelocity");
     }
 
     //! Returns whether to enable the velocity output or not
-    bool enableOutput()
-    { return velocityOutput_; }
+    bool enableOutput() const override { return enableOutput_; }
 
-    // returns the name of the phase for a given index
-    static std::string phaseName(int phaseIdx)
-    { return GET_PROP_TYPE(TypeTag, FluidSystem)::phaseName(phaseIdx); }
+    //! returns the phase name of a given phase index
+    std::string phaseName(int phaseIdx) const override { return FluidSystem::phaseName(phaseIdx); }
 
-    // returns the number of phase velocities computed by this class
-    static constexpr int numPhaseVelocities()
-    { return GET_PROP_TYPE(TypeTag, ModelTraits)::numPhases(); }
-
-    //! Return the problem boundary types
-    auto problemBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
-    { return problem_.boundaryTypes(element, scvf); }
+    //! returns the number of phases
+    int numPhases() const override { return VolumeVariables::numPhases(); }
 
     //! Calculate the velocities for the scvs in the element
     //! We assume the local containers to be bound to the complete stencil
-    template<class VelocityVector>
     void calculateVelocity(VelocityVector& velocity,
                            const ElementVolumeVariables& elemVolVars,
                            const FVElementGeometry& fvGeometry,
                            const Element& element,
-                           int phaseIdx)
+                           int phaseIdx) const override
     {
         auto elemFaceVars = localView(gridVariables_.curGridFaceVars());
         elemFaceVars.bindElement(element, fvGeometry, sol_);
@@ -114,11 +100,10 @@ public:
     }
 
 private:
-    const Problem& problem_;
-    const FVGridGeometry& fvGridGeometry_;
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;
-    bool velocityOutput_;
+
+    bool enableOutput_;
 };
 
 } // end namespace Dumux

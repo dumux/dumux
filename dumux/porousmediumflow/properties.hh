@@ -74,7 +74,9 @@ SET_BOOL_PROP(PorousMediumFlow, SolutionDependentHeatConduction, true);
 SET_TYPE_PROP(PorousMediumFlow, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
 
 //! Velocity output
-SET_TYPE_PROP(PorousMediumFlow, VelocityOutput, PorousMediumFlowVelocityOutput<TypeTag>);
+SET_TYPE_PROP(PorousMediumFlow, VelocityOutput,
+    PorousMediumFlowVelocityOutput<typename GET_PROP_TYPE(TypeTag, GridVariables),
+                                   typename GET_PROP_TYPE(TypeTag, FluxVariables)>);
 
 //! By default, we set an empty primary variables switch
 SET_TYPE_PROP(PorousMediumFlow, PrimaryVariableSwitch, NoPrimaryVariableSwitch);

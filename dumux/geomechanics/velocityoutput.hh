@@ -23,9 +23,9 @@
 #ifndef DUMUX_GEOMECHANICS_VELOCITYOUTPUT_HH
 #define DUMUX_GEOMECHANICS_VELOCITYOUTPUT_HH
 
-#include <string>
 
 #include <dune/common/exceptions.hh>
+#include <dumux/io/velocityoutput.hh>
 
 namespace Dumux {
 
@@ -36,29 +36,18 @@ namespace Dumux {
  *        we simply define this here in order to be able to reuse the
  *        VtkOutputModule which expects a VelocityOutput class.
  */
+template<class GridVariables>
 class GeomechanicsVelocityOutput
+: public VelocityOutput<GridVariables>
 {
 public:
     //! The constructor
     template< typename... Args >
-    GeomechanicsVelocityOutput(Args&&... args) {}
+    GeomechanicsVelocityOutput(Args&&... args)
+    { DUNE_THROW(Dune::NotImplemented, "Velocity output for geomechanical models."); }
 
     //! Output is currently disabled (not implemented)
-    static constexpr bool enableOutput()
-    { return false; }
-
-    //! There is always only one solid phase
-    static constexpr int numPhaseVelocities()
-    { return 1; }
-
-    //! Returns the name of phase for which velocity is computed
-    static std::string phaseName(int phaseIdx)
-    { DUNE_THROW(Dune::NotImplemented, "Velocity output for geomechanical models."); }
-
-    //! Calculate the velocities for the scvs in the element
-    template< typename... Args >
-    void calculateVelocity(Args... args)
-    { DUNE_THROW(Dune::NotImplemented, "Velocity output for geomechanical models."); }
+    bool enableOutput() const override { return false; }
 };
 
 } // end namespace Dumux

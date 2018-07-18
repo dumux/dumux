@@ -270,8 +270,10 @@ int main(int argc, char** argv) try
 
     // intialize the vtk output module
     const auto bulkDM = BulkFVGridGeometry::discMethod == DiscretizationMethod::box ? Dune::VTK::nonconforming : Dune::VTK::conforming;
-    VtkOutputModule<BulkProblemTypeTag> bulkVtkWriter(*bulkProblem, *bulkFvGridGeometry, *bulkGridVariables, x[bulkId], bulkProblem->name(), "Bulk", bulkDM);
-    VtkOutputModule<LowDimProblemTypeTag> lowDimVtkWriter(*lowDimProblem, *lowDimFvGridGeometry, *lowDimGridVariables, x[lowDimId], lowDimProblem->name(), "LowDim");
+    using BulkSolutionVector = std::decay_t<decltype(x[bulkId])>;
+    using LowDimSolutionVector = std::decay_t<decltype(x[lowDimId])>;
+    VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, x[bulkId], bulkProblem->name(), "Bulk", bulkDM);
+    VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, x[lowDimId], lowDimProblem->name(), "LowDim");
 
     // container for the output of the exact solutions
     std::vector<typename GET_PROP_TYPE(BulkProblemTypeTag, Scalar)> bulkExact;

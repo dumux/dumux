@@ -348,14 +348,16 @@ int main(int argc, char** argv) try
     const bool outputVtk = getParam<bool>("Problem.EnableVtkOutput", true);
 
     // intialize the vtk output module
-    VtkOutputModule<BulkTypeTag> bulkVtkWriter(*bulkProblem, *bulkFvGridGeometry, *bulkGridVariables, sol[bulkIdx], bulkProblem->name());
+    using BulkSolutionVector = std::decay_t<decltype(sol[bulkIdx])>;
+    VtkOutputModule<BulkGridVariables, BulkSolutionVector> bulkVtkWriter(*bulkGridVariables, sol[bulkIdx], bulkProblem->name());
     GET_PROP_TYPE(BulkTypeTag, VtkOutputFields)::init(bulkVtkWriter);
-    if (outputVtk) bulkVtkWriter.write(0.0);
+    bulkVtkWriter.write(0.0);
 
-    VtkOutputModule<LowDimTypeTag> lowDimVtkWriter(*lowDimProblem, *lowDimFvGridGeometry, *lowDimGridVariables, sol[lowDimIdx], lowDimProblem->name());
+    using LowDimSolutionVector = std::decay_t<decltype(sol[lowDimIdx])>;
+    VtkOutputModule<LowDimGridVariables, LowDimSolutionVector> lowDimVtkWriter(*lowDimGridVariables, sol[lowDimIdx], lowDimProblem->name());
     GET_PROP_TYPE(LowDimTypeTag, VtkOutputFields)::init(lowDimVtkWriter);
     lowDimProblem->addVtkOutputFields(lowDimVtkWriter);
-    if (outputVtk) lowDimVtkWriter.write(0.0);
+    lowDimVtkWriter.write(0.0);
 
     // instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);

@@ -173,7 +173,7 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     using FractureGrid = FRACTUREGRIDTYPE;
-    BoxDfmVtkOutputModule<TypeTag, FractureGrid> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name(), "", Dune::VTK::nonconforming);
+    BoxDfmVtkOutputModule<GridVariables, SolutionVector, FractureGrid> vtkWriter(*gridVariables, x, problem->name(), "", Dune::VTK::nonconforming);
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 

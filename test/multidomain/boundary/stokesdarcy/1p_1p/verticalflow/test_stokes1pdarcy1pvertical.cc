@@ -161,11 +161,15 @@ int main(int argc, char** argv) try
     const auto stokesName = getParam<std::string>("Problem.Name") + "_" + stokesProblem->name();
     const auto darcyName = getParam<std::string>("Problem.Name") + "_" + darcyProblem->name();
 
-    StaggeredVtkOutputModule<StokesTypeTag> stokesVtkWriter(*stokesProblem, *stokesFvGridGeometry, *stokesGridVariables, stokesSol, stokesName);
+    StaggeredVtkOutputModule<StokesGridVariables, typename GET_PROP_TYPE(StokesTypeTag, SolutionVector)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesName);
     GET_PROP_TYPE(StokesTypeTag, VtkOutputFields)::init(stokesVtkWriter);
+    using StokesVelocityOutput = typename GET_PROP_TYPE(StokesTypeTag, VelocityOutput);
+    stokesVtkWriter.addVelocityOutput(std::make_shared<StokesVelocityOutput>(*stokesGridVariables, stokesSol));
     stokesVtkWriter.write(0.0);
 
-    VtkOutputModule<DarcyTypeTag> darcyVtkWriter(*darcyProblem, *darcyFvGridGeometry, *darcyGridVariables, sol[darcyIdx], darcyName);
+    VtkOutputModule<DarcyGridVariables, typename GET_PROP_TYPE(DarcyTypeTag, SolutionVector)> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx], darcyName);
+    using DarcyVelocityOutput = typename GET_PROP_TYPE(DarcyTypeTag, VelocityOutput);
+    darcyVtkWriter.addVelocityOutput(std::make_shared<DarcyVelocityOutput>(*darcyGridVariables));
     GET_PROP_TYPE(DarcyTypeTag, VtkOutputFields)::init(darcyVtkWriter);
     darcyVtkWriter.write(0.0);
 

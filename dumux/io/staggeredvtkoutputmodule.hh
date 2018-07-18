@@ -41,14 +41,12 @@ template<class ...Dummy>
 class StaggeredVtkOutputModule;
 
 template<class TypeTag>
-class DUNE_DEPRECATED_MSG("Use StaggeredVtkOutputModule<GridVariables, SolutionVector, VelocityOutput> instead!") StaggeredVtkOutputModule<TypeTag>
+class DUNE_DEPRECATED_MSG("Use StaggeredVtkOutputModule<GridVariables, SolutionVector> instead!") StaggeredVtkOutputModule<TypeTag>
 : public StaggeredVtkOutputModule<typename GET_PROP_TYPE(TypeTag, GridVariables),
-                                  typename GET_PROP_TYPE(TypeTag, SolutionVector),
-                                  typename GET_PROP_TYPE(TypeTag, VelocityOutput)>
+                                  typename GET_PROP_TYPE(TypeTag, SolutionVector)>
 {
     using ParentType = StaggeredVtkOutputModule<typename GET_PROP_TYPE(TypeTag, GridVariables),
-                                                typename GET_PROP_TYPE(TypeTag, SolutionVector),
-                                                typename GET_PROP_TYPE(TypeTag, VelocityOutput)>;
+                                                typename GET_PROP_TYPE(TypeTag, SolutionVector)>;
 public:
     using ParentType::ParentType;
 
@@ -73,13 +71,12 @@ public:
  *
  * \tparam GridVariables The grid variables
  * \tparam SolutionVector The solution vector
- * \tparam VelocityOutput The velocity output nodule
  */
-template<class GridVariables, class SolutionVector, class VelocityOutput>
-class StaggeredVtkOutputModule<GridVariables, SolutionVector, VelocityOutput>
-: public VtkOutputModule<GridVariables, SolutionVector, VelocityOutput>
+template<class GridVariables, class SolutionVector>
+class StaggeredVtkOutputModule<GridVariables, SolutionVector>
+: public VtkOutputModule<GridVariables, SolutionVector>
 {
-    using ParentType = VtkOutputModule<GridVariables, SolutionVector, VelocityOutput>;
+    using ParentType = VtkOutputModule<GridVariables, SolutionVector>;
     using FVGridGeometry = typename GridVariables::GridGeometry;
     using GridView = typename FVGridGeometry::GridView;
     using Scalar = typename GridVariables::Scalar;
