@@ -34,15 +34,12 @@ namespace Dumux {
  *
  * \tparam phaseIdx The index of the fluid phase in the fluid system
  */
-template<int phaseIdx>
 struct OnePNCIndices
 {
     //! Reference index for mass conservation equation.
     static constexpr int conti0EqIdx = 0;
     //! Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static constexpr int pressureIdx = phaseIdx;
-    //! The index of the fluid phase in the fluid system
-    static constexpr int fluidSystemPhaseIdx = phaseIdx;
+    static constexpr int pressureIdx = 0;
 };
 
 } // end namespace Dumux

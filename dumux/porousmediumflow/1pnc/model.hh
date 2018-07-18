@@ -82,12 +82,11 @@ namespace Dumux {
  *        consider a single-phase with multiple components.
  *
  * \tparam nComp the number of components to be considered.
- * \tparam fluidSystemPhaseIdx The index of the fluid phase in the fluid system
  */
-template<int nComp, int fluidSystemPhaseIdx, bool useM, int repCompEqIdx = nComp>
+template<int nComp, bool useM, int repCompEqIdx = nComp>
 struct OnePNCModelTraits
 {
-    using Indices = OnePNCIndices<fluidSystemPhaseIdx>;
+    using Indices = OnePNCIndices;
 
     static constexpr int numEq() { return nComp; }
     static constexpr int numPhases() { return 1; }
@@ -145,7 +144,7 @@ SET_PROP(OnePNC, ModelTraits)
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
 public:
-    using type = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx), GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using type = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
 
 
@@ -155,7 +154,8 @@ public:
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  *        This can be done in the problem.
  */
-SET_PROP(OnePNC, FluidState){
+SET_PROP(OnePNC, FluidState)
+{
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -171,8 +171,8 @@ SET_TYPE_PROP(OnePNC, EffectiveDiffusivityModel,
 //! Use mole fractions in the balance equations by default
 SET_BOOL_PROP(OnePNC, UseMoles, true);
 
-SET_INT_PROP(OnePNC, PhaseIdx, 0); //!< The default phase index
-SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>);        //!< The local residual function
+//! The local residual function
+SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
 
 //! Set the volume variables property
 SET_PROP(OnePNC, VolumeVariables)
@@ -187,6 +187,8 @@ private:
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
     static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
     static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
+    static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
 
     using Traits = OnePNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
@@ -213,7 +215,7 @@ SET_PROP(OnePNCNI, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-    using IsothermalTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, PhaseIdx), GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using IsothermalTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };

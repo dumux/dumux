@@ -455,34 +455,39 @@ public:
         Scalar p = fluidState.pressure(phaseIdx);
 
         // liquid phase
-        if (phaseIdx == liquidPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx)
+        {
+            // assume pure water
             if (Policy::useH2ODensityAsLiquidMixtureDensity())
-                // assume pure water
                 return H2O::liquidDensity(T, p);
+
+            // See: Eq. (7) in Class et al. (2002a)
+            // This assumes each gas molecule displaces exactly one
+            // molecule in the liquid.
             else
-            {
-                // See: Eq. (7) in Class et al. (2002a)
-                // This assumes each gas molecule displaces exactly one
-                // molecule in the liquid.
                 return H2O::liquidMolarDensity(T, p)
                        * (fluidState.moleFraction(liquidPhaseIdx, H2OIdx)*H2O::molarMass()
                           + fluidState.moleFraction(liquidPhaseIdx, N2Idx)*N2::molarMass()
                           + fluidState.moleFraction(liquidPhaseIdx, O2Idx)*O2::molarMass());
-            }
         }
 
         // gas phase
-        using std::max;
-        if (Policy::useIdealGasDensity())
-            // for the gas phase assume an ideal gas
-            return IdealGas::molarDensity(T, p)
-                   * fluidState.averageMolarMass(gasPhaseIdx);
+        else if (phaseIdx == gasPhaseIdx)
+        {
 
-        // assume ideal mixture: steam, nitrogen and oxygen don't "see" each
-        // other
-        return H2O::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, H2OIdx))
-               + N2::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, N2Idx))
-               + O2::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, O2Idx));
+            // for the gas phase assume an ideal gas
+            using std::max;
+            if (Policy::useIdealGasDensity())
+                return IdealGas::molarDensity(T, p) * fluidState.averageMolarMass(gasPhaseIdx);
+
+            // assume ideal mixture: steam, nitrogen and oxygen don't "see" each other
+            else
+                return H2O::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, H2OIdx))
+                       + N2::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, N2Idx))
+                       + O2::gasDensity(T, fluidState.partialPressure(gasPhaseIdx, O2Idx));
+        }
+
+        DUNE_THROW(Dune::InvalidStateException, "Unknown phase index " << phaseIdx);
     }
 
     using Base::molarDensity;

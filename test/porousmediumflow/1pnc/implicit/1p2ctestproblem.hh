@@ -39,16 +39,17 @@
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
+
 #include "1pnctestspatialparams.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template <class TypeTag>
 class OnePTwoCTestProblem;
 
-namespace Properties
-{
+namespace Properties {
+
 NEW_TYPE_TAG(OnePTwoCTestTypeTag, INHERITS_FROM(OnePNC));
 NEW_TYPE_TAG(OnePTwoCTestBoxTypeTag, INHERITS_FROM(BoxModel, OnePTwoCTestTypeTag));
 NEW_TYPE_TAG(OnePTwoCTestCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePTwoCTestTypeTag));
@@ -65,9 +66,12 @@ SET_TYPE_PROP(OnePTwoCTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(OnePTwoCTestTypeTag, Problem, OnePTwoCTestProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(OnePTwoCTestTypeTag,
-              FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
+SET_PROP(OnePTwoCTestTypeTag, FluidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
+    using type = FluidSystems::OnePAdapter<H2ON2, H2ON2::liquidPhaseIdx>;
+};
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePTwoCTestTypeTag, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
@@ -125,9 +129,13 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
 
+        // component indices
+        H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx),
+        N2Idx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::N2Idx),
+
         // indices of the equations
-        contiH2OEqIdx = Indices::conti0EqIdx + FluidSystem::H2OIdx,
-        contiN2EqIdx = Indices::conti0EqIdx + FluidSystem::N2Idx
+        contiH2OEqIdx = Indices::conti0EqIdx + H2OIdx,
+        contiN2EqIdx = Indices::conti0EqIdx + N2Idx
     };
 
     //! property that defines whether mole or mass fractions are used
@@ -202,7 +210,7 @@ public:
         // condition for the N2 molefraction at left boundary
         if (globalPos[0] < eps_ )
         {
-            values[FluidSystem::N2Idx] = 2.0e-5;
+            values[N2Idx] = 2.0e-5;
         }
 
         return values;
@@ -248,8 +256,8 @@ public:
         if(isBox && useNitscheTypeBc_)
         {
             flux[contiH2OEqIdx] = (volVars.pressure() - dirichletPressure) * 1e7;
-            flux[contiN2EqIdx] = flux[contiH2OEqIdx]  * (useMoles ? volVars.moleFraction(0, FluidSystem::N2Idx) :
-                                                                    volVars.massFraction(0, FluidSystem::N2Idx));
+            flux[contiN2EqIdx] = flux[contiH2OEqIdx]  * (useMoles ? volVars.moleFraction(0, N2Idx) :
+                                                                    volVars.massFraction(0, N2Idx));
             return flux;
         }
 
@@ -296,7 +304,7 @@ public:
         flux[contiH2OEqIdx] = tpfaFlux;
 
         // emulate an outflow condition for the component transport on the right side
-        flux[contiN2EqIdx] = tpfaFlux  * (useMoles ? volVars.moleFraction(0, FluidSystem::N2Idx) : volVars.massFraction(0, FluidSystem::N2Idx));
+        flux[contiN2EqIdx] = tpfaFlux  * (useMoles ? volVars.moleFraction(0, N2Idx) : volVars.massFraction(0, N2Idx));
 
         return flux;
     }
@@ -341,7 +349,7 @@ private:
     {
         PrimaryVariables priVars;
         priVars[pressureIdx] = 2e5 - 1e5*globalPos[0]; // initial condition for the pressure
-        priVars[FluidSystem::N2Idx] = 0.0;  // initial condition for the N2 molefraction
+        priVars[N2Idx] = 0.0;  // initial condition for the N2 molefraction
         return priVars;
     }
         static constexpr Scalar eps_ = 1e-6;

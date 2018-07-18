@@ -27,23 +27,23 @@
 #include <string>
 #include "nullparametercache.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+namespace FluidSystems {
 
-namespace FluidSystems
-
-{
-   /*!
-    * \ingroup Fluidsystems
-    * \brief Fluid system base class.
-    *
-    * \note Always derive your fluid system from this class to be sure
-    *       that all basic functionality is available!
-    */
-   template <class Scalar, class Implementation>
+/*!
+* \ingroup Fluidsystems
+* \brief Fluid system base class.
+*
+* \note Always derive your fluid system from this class to be sure
+*       that all basic functionality is available!
+*/
+template <class ScalarType, class Implementation>
 class BaseFluidSystem
 {
 public:
+    //! export the scalar type
+    using Scalar = ScalarType;
+
     //! The type of parameter cache objects
     using ParameterCache = NullParameterCache;
 
@@ -60,8 +60,11 @@ public:
      * \brief Get the main component of a given phase if possible
      *
      * \param phaseIdx The index of the fluid phase to consider
-     * \note This method has to can throw at compile time if the fluid system doesn't assume a
+     * \note This method has to can assert at compile time if the fluid system doesn't assume a
      *       main phase. Then using e.g. Fick's law will fail compiling.
+     * \todo Unfortunately we currently still have the assumption in some volume variables (e.g. 1pnc, 2pnc)
+     *       that the main component index of a phase is equal to the phase index of that phase. This means
+     *       changing this only works if the volume variables are written accordingly.
      */
     static constexpr int getMainComponent(int phaseIdx)
     { return phaseIdx; }

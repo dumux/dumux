@@ -28,18 +28,19 @@
 
 // include all fluid systems in dumux-stable
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/fluidsystems/brine.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>
-#include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/h2on2kinetic.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
-#include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/spe5.hh>
 
 // include all fluid states
@@ -202,6 +203,17 @@ int main()
 
     // spe5
     {   using FluidSystem = FluidSystems::Spe5<Scalar>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+
+    // 1p adapter
+    {   using FluidSystem = FluidSystems::OnePAdapter<FluidSystems::TwoPImmiscible<Scalar, Gas, Liquid>, 0>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::OnePAdapter<FluidSystems::TwoPImmiscible<Scalar, Gas, Liquid>, 1>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
+        using FluidSystem = FluidSystems::OnePAdapter<FluidSystems::H2OAir<Scalar, H2OType>, 0>;
+        success += checkFluidSystem<Scalar, FluidSystem>(); }
+    {   using FluidSystem = FluidSystems::OnePAdapter<FluidSystems::H2ON2O2<Scalar>, 1>;
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     return success;

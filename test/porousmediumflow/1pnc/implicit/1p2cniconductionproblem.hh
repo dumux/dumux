@@ -37,6 +37,7 @@
 #include <dumux/porousmediumflow/1pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
+#include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/components/h2o.hh>
 #include "1pnctestspatialparams.hh"
@@ -65,9 +66,12 @@ SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, Problem, OnePTwoCNIConductionProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(OnePTwoCNIConductionTypeTag,
-              FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_PROP(OnePTwoCNIConductionTypeTag, FluidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using H2ON2 = FluidSystems::H2ON2<Scalar, FluidSystems::H2ON2DefaultPolicy</*simplified=*/true>>;
+    using type = FluidSystems::OnePAdapter<H2ON2, H2ON2::liquidPhaseIdx>;
+};
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
@@ -126,6 +130,8 @@ class OnePTwoCNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
         temperatureIdx = Indices::temperatureIdx,
+
+        N2Idx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::N2Idx)
     };
 
     //! property that defines whether mole or mass fractions are used
@@ -304,7 +310,7 @@ private:
     {
         PrimaryVariables priVars;
         priVars[pressureIdx] = 1e5; // initial condition for the pressure
-        priVars[FluidSystem::N2Idx] = 1e-5;  // initial condition for the N2 molefraction
+        priVars[N2Idx] = 1e-5;  // initial condition for the N2 molefraction
         priVars[temperatureIdx] = 290.;
         return priVars;
     }

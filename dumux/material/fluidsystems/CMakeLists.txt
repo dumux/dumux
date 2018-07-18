@@ -1,4 +1,5 @@
 install(FILES
+1padapter.hh
 1pgas.hh
 1pliquid.hh
 2p1c.hh

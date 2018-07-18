@@ -19,50 +19,89 @@
 /*!
  * \file
  * \ingroup Fluidsystems
- * \brief @copybrief Dumux::FluidSystems::OnePLiquid
+ * \brief @copybrief Dumux::FluidSystems::OnePAdapter
  */
-#ifndef DUMUX_LIQUID_PHASE_HH
-#define DUMUX_LIQUID_PHASE_HH
+#ifndef DUMUX_FLUIDSYTEMS_ONEP_ADAPTER_HH
+#define DUMUX_FLUIDSYTEMS_ONEP_ADAPTER_HH
 
 #include <cassert>
-#include <limits>
 
 #include <dune/common/exceptions.hh>
 
 #include <dumux/material/fluidsystems/base.hh>
-#include <dumux/material/components/componenttraits.hh>
+#include <dumux/material/fluidstates/adapter.hh>
 
 namespace Dumux {
 namespace FluidSystems {
 
 /*!
  * \ingroup Fluidsystems
- * \brief A liquid phase consisting of a single component
+ * \brief An adapter for multi-phase fluid systems to be used with compositional one-phase models
+ * \tparam MPFluidSystem the multi-phase fluid system to be adapted
+ * \tparam phase the index of the phase we choose from the multi-phase fluid system
  */
-template <class Scalar, class ComponentT>
-class OnePLiquid
-: public BaseFluidSystem<Scalar, OnePLiquid<Scalar, ComponentT> >
+template <class MPFluidSystem, int phase = 0>
+class OnePAdapter
+: public BaseFluidSystem<typename MPFluidSystem::Scalar, OnePAdapter<MPFluidSystem, phase>>
 {
-    using ThisType = OnePLiquid<Scalar, ComponentT>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using ThisType = OnePAdapter<MPFluidSystem, phase>;
+    using Base = BaseFluidSystem<typename MPFluidSystem::Scalar, ThisType>;
 
-    static_assert(ComponentTraits<ComponentT>::hasLiquidState, "The component does not implement a liquid state!");
+    struct AdapterPolicy
+    {
+        using FluidSystem = MPFluidSystem;
+
+        // the phase index is always zero, other phases than the chosen phase should never be called
+        static int phaseIdx(int mpFluidPhaseIdx)
+        {
+            if (mpFluidPhaseIdx == phase)
+                return 0;
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Only phase " << phase << " is available!");
+        }
+
+        // the main component is currently excepted to have the same index as it's phase
+        // (see Fluidsystems::Base::getMainComponent for more information)
+        // so we swap the main component with the first component
+        // this mapping works in both ways since we are only swapping components
+        static constexpr int compIdx(int compIdx)
+        {
+            if (compIdx == 0)
+                return phase;
+            else if (compIdx == phase)
+                return 0;
+            else
+                return compIdx;
+        }
+    };
+
+    template<class FluidState>
+    static auto adaptFluidState(const FluidState& fluidState)
+    { return FluidStateAdapter<FluidState, AdapterPolicy>(fluidState); }
 
 public:
-    using Component = ComponentT;
+    using Scalar = typename Base::Scalar;
     using ParameterCache = NullParameterCache;
 
-    static constexpr int numPhases = 1;  //!< Number of phases in the fluid system
-    static constexpr int numComponents = 1; //!< Number of components in the fluid system
+    //! export the wrapped MultiPhaseFluidSystem type
+    using MultiPhaseFluidSystem = MPFluidSystem;
 
+    //! number of phases in the fluid system
+    static constexpr int numPhases = 1;
+    //! number of components has to be the same as in the multi-phase fluid system as the composition needs to be defined
+    static constexpr int numComponents = MultiPhaseFluidSystem::numComponents;
+    //! number of components has to be the same as in the multi-phase fluid system as the composition needs to be defined
     static constexpr int phase0Idx = 0; //!< index of the only phase
-    static constexpr int comp0Idx = 0; //!< index of the only component
+
+    //! convert a component index of the multi-phase component index to the actual component index
+    static constexpr int compIdx(int multiPhaseFluidSystemCompIdx)
+    { return AdapterPolicy::compIdx(multiPhaseFluidSystemCompIdx); }
 
     /*!
      * \brief Initialize the fluid system's static parameters generically
      */
     static void init()
-    { }
+    { MultiPhaseFluidSystem::init(); }
 
     /****************************************
      * Fluid phase related static parameters
@@ -73,21 +112,21 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      */
     static std::string phaseName(int phaseIdx = 0)
-    { return Component::name(); }
+    { return MultiPhaseFluidSystem::phaseName(phase); }
 
     /*!
      * \brief A human readable name for the component.
      *
      * \param compIdx The index of the component to consider
      */
-    static std::string componentName(int compIdx = 0)
-    { return Component::name(); }
+    static std::string componentName(int compIdx)
+    { return MultiPhaseFluidSystem::componentName(AdapterPolicy::compIdx(compIdx)); }
 
     /*!
      * \brief A human readable name for the component.
      */
     static std::string name()
-    { return Component::name(); }
+    { return MultiPhaseFluidSystem::phaseName(phase); }
 
     /*!
      * \brief There is only one phase, so not mass transfer between phases can occur
@@ -99,7 +138,7 @@ public:
      * \brief Returns whether the fluid is a liquid
      */
     static constexpr bool isLiquid(int phaseIdx = 0)
-    { return true; }
+    { return MultiPhaseFluidSystem::isLiquid(phase); }
 
     /*!
      * \brief Returns true if and only if a fluid phase is assumed to
@@ -116,79 +155,41 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      */
     static constexpr bool isIdealMixture(int phaseIdx = 0)
-    { return true; }
+    { return MultiPhaseFluidSystem::isIdealMixture(phase); }
 
     /*!
      * \brief Returns true if the fluid is assumed to be compressible
      */
     static constexpr bool isCompressible(int phaseIdx = 0)
-    { return Component::liquidIsCompressible(); }
+    { return MultiPhaseFluidSystem::isCompressible(phase); }
 
     /*!
      * \brief Returns true if the fluid viscosity is constant
      */
     static constexpr bool viscosityIsConstant(int phaseIdx = 0)
-    { return Component::liquidViscosityIsConstant(); }
+    { return MultiPhaseFluidSystem::viscosityIsConstant(phase); }
 
     /*!
      * \brief Returns true if the fluid is assumed to be an ideal gas
      */
     static constexpr bool isIdealGas(int phaseIdx = 0)
-    { return false; /* we're a liquid! */ }
+    { return MultiPhaseFluidSystem::isIdealGas(phase); }
 
     /*!
      * \brief The mass in \f$\mathrm{[kg]}\f$ of one mole of the component.
      */
-    static Scalar molarMass(int compIdx = 0)
-    {  return Component::molarMass(); }
-
-    /*!
-     * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of the component
-     */
-    static Scalar criticalTemperature(int compIdx = 0)
-    {  return Component::criticalTemperature(); }
-
-    /*!
-     * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of the component
-     */
-    static Scalar criticalPressure(int compIdx = 0)
-    {  return Component::criticalPressure(); }
-
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at the component's triple point.
-     */
-    static Scalar tripleTemperature(int compIdx = 0)
-    {  return Component::tripleTemperature(); }
-
-    /*!
-     * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at the component's triple point.
-     */
-    static Scalar triplePressure(int compIdx = 0)
-    { return Component::triplePressure(); }
-
-    /*!
-     * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of the component at a given
-     *        temperature.
-     */
-    static Scalar vaporPressure(Scalar T)
-    {  return Component::vaporPressure(T); }
-
-    /*!
-     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure and temperature.
-     */
-    static Scalar density(Scalar temperature, Scalar pressure)
-    {  return Component::liquidDensity(temperature, pressure); }
+    static Scalar molarMass(int compIdx)
+    {  return MultiPhaseFluidSystem::molarMass(AdapterPolicy::compIdx(compIdx)); }
 
     using Base::density;
     /*!
      * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure and temperature.
      */
     template <class FluidState>
-    static Scalar density(const FluidState &fluidState,
-                          const int phaseIdx)
+    static Scalar density(const FluidState &fluidState, int phaseIdx = 0)
     {
-        return density(fluidState.temperature(phaseIdx),
-                       fluidState.pressure(phaseIdx));
+        assert(phaseIdx == 0);
+        return MultiPhaseFluidSystem::density(adaptFluidState(fluidState), phase);
     }
 
     using Base::molarDensity;
@@ -202,64 +203,32 @@ public:
      * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{M_\alpha} \;.\f]
      */
     template <class FluidState>
-    static Scalar molarDensity(const FluidState &fluidState, const int phaseIdx)
+    static Scalar molarDensity(const FluidState &fluidState, int phaseIdx = 0)
     {
-        return molarDensity(fluidState.temperature(phaseIdx),
-                            fluidState.pressure(phaseIdx));
+        assert(phaseIdx == 0);
+        return MultiPhaseFluidSystem::molarDensity(adaptFluidState(fluidState), phase);
     }
-
-    /*!
-     * \brief The density \f$\mathrm{[kg/m^3]}\f$ of the component at a given pressure and temperature.
-     */
-    static Scalar molarDensity(Scalar temperature, Scalar pressure)
-    {  return Component::liquidMolarDensity(temperature, pressure); }
-
-    /*!
-     * \brief The pressure \f$\mathrm{[Pa]}\f$ of the component at a given density and temperature.
-     */
-    static Scalar pressure(Scalar temperature, Scalar density)
-    {  return Component::liquidPressure(temperature, density); }
-
-    /*!
-     * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ the pure component as a liquid.
-     */
-    static const Scalar enthalpy(Scalar temperature, Scalar pressure)
-    {  return Component::liquidEnthalpy(temperature, pressure); }
 
     using Base::enthalpy;
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ the pure component as a liquid.
      */
     template <class FluidState>
-    static Scalar enthalpy(const FluidState &fluidState,
-                           const int phaseIdx)
+    static Scalar enthalpy(const FluidState &fluidState, int phaseIdx = 0)
     {
-        return enthalpy(fluidState.temperature(phaseIdx),
-                        fluidState.pressure(phaseIdx));
+        assert(phaseIdx == 0);
+        return MultiPhaseFluidSystem::enthalpy(adaptFluidState(fluidState), phase);
     }
-
-    /*!
-     * \brief Specific internal energy \f$\mathrm{[J/kg]}\f$ the pure component as a liquid.
-     */
-    static const Scalar internalEnergy(Scalar temperature, Scalar pressure)
-    { return Component::liquidInternalEnergy(temperature, pressure); }
-
-    /*!
-     * \brief The dynamic liquid viscosity \f$\mathrm{[N/m^3*s]}\f$ of the pure component.
-     */
-    static Scalar viscosity(Scalar temperature, Scalar pressure)
-    {  return Component::liquidViscosity(temperature, pressure); }
 
     using Base::viscosity;
     /*!
      * \brief The dynamic liquid viscosity \f$\mathrm{[N/m^3*s]}\f$ of the pure component.
      */
     template <class FluidState>
-    static Scalar viscosity(const FluidState &fluidState,
-                            const int phaseIdx)
+    static Scalar viscosity(const FluidState &fluidState, int phaseIdx = 0)
     {
-        return viscosity(fluidState.temperature(phaseIdx),
-                         fluidState.pressure(phaseIdx));
+        assert(phaseIdx == 0);
+        return MultiPhaseFluidSystem::viscosity(adaptFluidState(fluidState), phase);
     }
 
     using Base::fugacityCoefficient;
@@ -275,16 +244,9 @@ public:
                                       int phaseIdx,
                                       int compIdx)
     {
-        assert(0 <= phaseIdx  && phaseIdx < numPhases);
-        assert(0 <= compIdx  && compIdx < numComponents);
-
-        if (phaseIdx == compIdx)
-            // We could calculate the real fugacity coefficient of
-            // the component in the fluid. Probably that's not worth
-            // the effort, since the fugacity coefficient of the other
-            // component is infinite anyway...
-            return 1.0;
-        return std::numeric_limits<Scalar>::infinity();
+        assert(phaseIdx == 0);
+        return MultiPhaseFluidSystem::fugacityCoefficient(adaptFluidState(fluidState), phase,
+                                                          AdapterPolicy::compIdx(compIdx));
     }
 
     using Base::diffusionCoefficient;
@@ -300,7 +262,9 @@ public:
                                        int phaseIdx,
                                        int compIdx)
     {
-        DUNE_THROW(Dune::InvalidStateException, "Not applicable: Diffusion coefficients");
+        assert(phaseIdx == 0);
+        return MultiPhaseFluidSystem::diffusionCoefficient(adaptFluidState(fluidState), phase,
+                                                           AdapterPolicy::compIdx(compIdx));
     }
 
     using Base::binaryDiffusionCoefficient;
@@ -318,14 +282,11 @@ public:
                                              int compIIdx,
                                              int compJIdx)
     {
-        DUNE_THROW(Dune::InvalidStateException, "Not applicable: Binary diffusion coefficients");
+        assert(phaseIdx == 0);
+        return MultiPhaseFluidSystem::binaryDiffusionCoefficient(adaptFluidState(fluidState), phase,
+                                                                 AdapterPolicy::compIdx(compIIdx),
+                                                                 AdapterPolicy::compIdx(compJIdx));
     }
-
-    /*!
-     * \brief Thermal conductivity of the fluid \f$\mathrm{[W/(m K)]}\f$.
-     */
-    static Scalar thermalConductivity(Scalar temperature, Scalar pressure)
-    { return Component::liquidThermalConductivity(temperature, pressure); }
 
     using Base::thermalConductivity;
     /*!
@@ -333,17 +294,11 @@ public:
      */
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
-                                      const int phaseIdx)
+                                      int phaseIdx = 0)
     {
-        return thermalConductivity(fluidState.temperature(phaseIdx),
-                                   fluidState.pressure(phaseIdx));
+        assert(phaseIdx == 0);
+        return MultiPhaseFluidSystem::thermalConductivity(adaptFluidState(fluidState), phase);
     }
-
-    /*!
-     * \brief Specific isobaric heat capacity of the fluid \f$\mathrm{[J/(kg K)]}\f$.
-     */
-    static Scalar heatCapacity(Scalar temperature, Scalar pressure)
-    { return Component::liquidHeatCapacity(temperature, pressure); }
 
     using Base::heatCapacity;
     /*!
@@ -351,10 +306,10 @@ public:
      */
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
-                               const int phaseIdx)
+                               int phaseIdx = 0)
     {
-        return heatCapacity(fluidState.temperature(phaseIdx),
-                            fluidState.pressure(phaseIdx));
+        assert(phaseIdx == 0);
+        return MultiPhaseFluidSystem::heatCapacity(adaptFluidState(fluidState), phase);
     }
 };
 
