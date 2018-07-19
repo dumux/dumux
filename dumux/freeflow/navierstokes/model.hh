@@ -72,9 +72,8 @@ namespace Dumux {
  * \brief Traits for the Navier-Stokes model
  *
  * \tparam dimension The dimension of the problem
- * \tparam fluidSystemPhaseIdx The the index of the phase used for the fluid system
  */
-template<int dimension, int fluidSystemPhaseIdx>
+template<int dimension>
 struct NavierStokesModelTraits
 {
     //! The dimension of the model
@@ -103,7 +102,7 @@ struct NavierStokesModelTraits
     static constexpr bool usesTurbulenceModel() { return false; }
 
     //! the indices
-    using Indices = NavierStokesIndices<dim(), fluidSystemPhaseIdx>;
+    using Indices = NavierStokesIndices<dim()>;
 };
 
 /*!
@@ -156,12 +155,8 @@ SET_PROP(NavierStokes, ModelTraits)
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr auto dim = GridView::dimension;
-    static constexpr auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-
-    static_assert(phaseIdx >= 0 && phaseIdx < GET_PROP_TYPE(TypeTag, FluidSystem)::numPhases,
-                  "PhaseIdx must be non-negative and smaller than the number of phases");
 public:
-    using type = NavierStokesModelTraits<dim, phaseIdx>;
+    using type = NavierStokesModelTraits<dim>;
 };
 
 /*!
@@ -222,8 +217,7 @@ SET_PROP(NavierStokesNI, ModelTraits)
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr auto dim = GridView::dimension;
-    static constexpr auto fluidSystemPhaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    using IsothermalTraits = NavierStokesModelTraits<dim, fluidSystemPhaseIdx>;
+    using IsothermalTraits = NavierStokesModelTraits<dim>;
 public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };

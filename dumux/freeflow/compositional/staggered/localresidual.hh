@@ -52,11 +52,11 @@ class FreeflowNCResidualImpl<TypeTag, DiscretizationMethod::staggered>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
 
     using CellCenterResidual = CellCenterPrimaryVariables;
 
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
     static constexpr int numComponents =ModelTraits::numComponents();
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
@@ -85,13 +85,13 @@ public:
             const Scalar massOrMoleFraction = useMoles ? volVars.moleFraction(compIdx) : volVars.massFraction(compIdx);
             const Scalar s =  density * massOrMoleFraction;
 
-            if (eqIdx != Indices::replaceCompEqIdx)
+            if (eqIdx != ModelTraits::replaceCompEqIdx())
                 storage[eqIdx] += s;
         }
 
         // in case one balance is substituted by the total mass balance
-        if(Indices::replaceCompEqIdx < numComponents)
-            storage[Indices::replaceCompEqIdx] = density;
+        if(ModelTraits::replaceCompEqIdx() < numComponents)
+            storage[ModelTraits::replaceCompEqIdx()] = density;
 
         EnergyLocalResidual::fluidPhaseStorage(storage, volVars);
 

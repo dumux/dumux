@@ -33,7 +33,7 @@ namespace Dumux
  * \ingroup FreeflowNCModel
  * \brief Adds vtk output fields specific to the FreeflowNC model
  */
-template<class BaseVtkOutputFields, class ModelTraits, class FVGridGeometry, class FluidSystem, int phaseIdx>
+template<class BaseVtkOutputFields, class ModelTraits, class FVGridGeometry, class FluidSystem>
 class FreeflowNCVtkOutputFields
 {
 
@@ -52,15 +52,16 @@ public:
     {
         for (int j = 0; j < FluidSystem::numComponents; ++j)
         {
-            vtk.addVolumeVariable([j](const auto& v){ return v.massFraction(j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            vtk.addVolumeVariable([j](const auto& v){ return v.moleFraction(j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
-            if (j != phaseIdx)
-            {
-                vtk.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(0, j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
+            vtk.addVolumeVariable([j](const auto& v){ return v.massFraction(j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(0));
+            vtk.addVolumeVariable([j](const auto& v){ return v.moleFraction(j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(0));
 
-                if (ModelTraits::usesTurbulenceModel())
+            if (j != FluidSystem::getMainComponent(0))
+            {
+                vtk.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(0, j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(0));
+
                 // the eddy diffusivity is recalculated for an arbitrary component which is not the phase component
-                vtk.addVolumeVariable([j](const auto& v){ return v.effectiveDiffusivity(0, j) - v.diffusionCoefficient(0, j); }, "D_t");
+                if (ModelTraits::usesTurbulenceModel())
+                    vtk.addVolumeVariable([j](const auto& v){ return v.effectiveDiffusivity(0, j) - v.diffusionCoefficient(0, j); }, "D_t");
             }
         }
     }

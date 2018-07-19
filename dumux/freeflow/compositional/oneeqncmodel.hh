@@ -59,12 +59,11 @@ NEW_TYPE_TAG(OneEqNC, INHERITS_FROM(NavierStokesNC));
  *
  * \tparam dimension The dimension of the problem
  * \tparam nComp The number of components to be considered
- * \tparam fluidSystemPhaseIdx The the index of the phase used for the fluid system
- * \tparam replaceCompEqIdx The index of the component balance equation that should be replaced by a total mass/mole balance
  * \tparam useM Use molar or mass balances
+ * \tparam replaceCompEqIdx The index of the component balance equation that should be replaced by a total mass/mole balance
  */
-template<int dimension, int nComp, int fluidSystemPhaseIdx, int replaceCompEqIdx, bool useMoles>
-struct OneEqNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, fluidSystemPhaseIdx, replaceCompEqIdx, useMoles>
+template<int dimension, int nComp, bool useMoles, int replaceCompEqIdx>
+struct OneEqNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, useMoles, replaceCompEqIdx>
 {
     //! There are as many momentum balance equations as dimensions
     //! and as many balance equations as components.
@@ -74,7 +73,7 @@ struct OneEqNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, fluidSys
     static constexpr bool usesTurbulenceModel() { return true; }
 
     //! the indices
-    using Indices = FreeflowNCIndices<dimension, numEq(), fluidSystemPhaseIdx, replaceCompEqIdx, OneEqIndices<dimension, nComp, fluidSystemPhaseIdx>>;
+    using Indices = OneEqIndices<dimension, nComp>;
 };
 
 //!< states some specifics of the isothermal multi-component one-equation model
@@ -85,11 +84,10 @@ private:
     static constexpr int dimension = GridView::dimension;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int numComponents = FluidSystem::numComponents;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
 public:
-    using type = OneEqNCModelTraits<dimension, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
+    using type = OneEqNCModelTraits<dimension, numComponents, useMoles, replaceCompEqIdx>;
 };
 
 //! Set the volume variables property
@@ -132,10 +130,9 @@ private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     using SinglePhaseVtkOutputFields = OneEqVtkOutputFields<FVGridGeometry>;
 public:
-    using type = FreeflowNCVtkOutputFields<SinglePhaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem, phaseIdx>;
+    using type = FreeflowNCVtkOutputFields<SinglePhaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem>;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -153,10 +150,9 @@ private:
     static constexpr int dim = GridView::dimension;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int numComponents = FluidSystem::numComponents;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    using IsothermalModelTraits = OneEqNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    using IsothermalModelTraits = OneEqNCModelTraits<dim, numComponents, useMoles, replaceCompEqIdx>;
 public:
     using type = FreeflowNIModelTraits<IsothermalModelTraits>;
 };
@@ -201,11 +197,10 @@ private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     using BaseVtkOutputFields = OneEqVtkOutputFields<FVGridGeometry>;
     using NonIsothermalFields = FreeflowNonIsothermalVtkOutputFields<BaseVtkOutputFields, ModelTraits>;
 public:
-    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem, phaseIdx>;
+    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem>;
 };
 
 // \}

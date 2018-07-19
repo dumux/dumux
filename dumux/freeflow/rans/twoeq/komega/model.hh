@@ -90,10 +90,9 @@ namespace Properties {
  * \brief Traits for the k-omega model
  *
  * \tparam dimension The dimension of the problem
- * \tparam fluidSystemPhaseIdx The the index of the phase used for the fluid system
  */
-template<int dimension, int fluidSystemPhaseIdx>
-struct KOmegaModelTraits : RANSModelTraits<dimension, fluidSystemPhaseIdx>
+template<int dimension>
+struct KOmegaModelTraits : RANSModelTraits<dimension>
 {
     //! The dimension of the model
     static constexpr int dim() { return dimension; }
@@ -106,7 +105,7 @@ struct KOmegaModelTraits : RANSModelTraits<dimension, fluidSystemPhaseIdx>
     static constexpr int numComponents() { return 1; }
 
     //! The indices
-    using Indices = KOmegaIndices<dim(), numComponents(), fluidSystemPhaseIdx>;
+    using Indices = KOmegaIndices<dim(), numComponents()>;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -122,9 +121,8 @@ SET_PROP(KOmega, ModelTraits)
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr int dim = GridView::dimension;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 public:
-    using type = KOmegaModelTraits<dim, phaseIdx>;
+    using type = KOmegaModelTraits<dim>;
 };
 
 //! The flux variables
@@ -183,8 +181,7 @@ SET_PROP(KOmegaNI, ModelTraits)
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr int dim = GridView::dimension;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    using IsothermalTraits = KOmegaModelTraits<dim, phaseIdx>;
+    using IsothermalTraits = KOmegaModelTraits<dim>;
 public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };

@@ -387,7 +387,7 @@ public:
         // component mass fluxes
         for (int compIdx = 0; compIdx < ModelTraits::numComponents(); ++compIdx)
         {
-            if (Indices::replaceCompEqIdx == compIdx)
+            if (ModelTraits::replaceCompEqIdx() == compIdx)
                 continue;
 
             Scalar schmidtNumber = elemVolVars[scvf.insideScvIdx()].kinematicViscosity()
@@ -405,9 +405,9 @@ public:
                     + pFunction(schmidtNumber, asImp_().turbulentSchmidtNumber()));
         }
 
-        if (Indices::replaceCompEqIdx < ModelTraits::numComponents())
+        if (ModelTraits::replaceCompEqIdx() < ModelTraits::numComponents())
         {
-            wallFunctionFlux[Indices::replaceCompEqIdx] =
+            wallFunctionFlux[ModelTraits::replaceCompEqIdx()] =
                 -std::accumulate(wallFunctionFlux.begin(), wallFunctionFlux.end(), 0.0);
         }
 

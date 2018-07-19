@@ -57,8 +57,8 @@ NEW_TYPE_TAG(KEpsilonNC, INHERITS_FROM(NavierStokesNC));
  * \ingroup FreeflowNCModel
  * \brief Traits for the low-Reynolds k-epsilon multi-component model
  */
-template<int dimension, int nComp, int phaseIdx, int replaceCompEqIdx, bool useMoles>
-struct KEpsilonNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, phaseIdx, replaceCompEqIdx, useMoles>
+template<int dimension, int nComp, bool useMoles, int replaceCompEqIdx>
+struct KEpsilonNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, useMoles, replaceCompEqIdx>
 {
     //! There are as many momentum balance equations as dimensions
     //! and as many balance equations as components.
@@ -68,7 +68,7 @@ struct KEpsilonNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, phase
     static constexpr bool usesTurbulenceModel() { return true; }
 
     //! the indices
-    using Indices = FreeflowNCIndices<dimension, numEq(), phaseIdx, replaceCompEqIdx, KEpsilonIndices<dimension, nComp, phaseIdx>>;
+    using Indices = KEpsilonIndices<dimension, nComp>;
 };
 
 //!< states some specifics of the isothermal multi-component low-Reynolds k-epsilon model
@@ -79,11 +79,10 @@ private:
     static constexpr int dimension = GridView::dimension;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int numComponents = FluidSystem::numComponents;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
 public:
-    using type = KEpsilonNCModelTraits<dimension, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
+    using type = KEpsilonNCModelTraits<dimension, numComponents, useMoles, replaceCompEqIdx>;
 };
 
 //! Set the volume variables property
@@ -126,10 +125,9 @@ private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     using SinglePhaseVtkOutputFields = KEpsilonVtkOutputFields<FVGridGeometry>;
 public:
-    using type = FreeflowNCVtkOutputFields<SinglePhaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem, phaseIdx>;
+    using type = FreeflowNCVtkOutputFields<SinglePhaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem>;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -147,10 +145,9 @@ private:
     static constexpr int dim = GridView::dimension;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int numComponents = FluidSystem::numComponents;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    using IsothermalModelTraits = KEpsilonNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    using IsothermalModelTraits = KEpsilonNCModelTraits<dim, numComponents, useMoles, replaceCompEqIdx>;
 public:
     using type = FreeflowNIModelTraits<IsothermalModelTraits>;
 };
@@ -195,11 +192,10 @@ private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     using BaseVtkOutputFields = KEpsilonVtkOutputFields<FVGridGeometry>;
     using NonIsothermalFields = FreeflowNonIsothermalVtkOutputFields<BaseVtkOutputFields, ModelTraits>;
 public:
-    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem, phaseIdx>;
+    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem>;
 };
 
 // \}

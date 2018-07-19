@@ -99,10 +99,9 @@ namespace Properties {
  * \brief Traits for the low-Reynolds k-epsilon model
  *
  * \tparam dimension The dimension of the problem
- * \tparam fluidSystemPhaseIdx The the index of the phase used for the fluid system
  */
-template<int dimension, int fluidSystemPhaseIdx>
-struct LowReKEpsilonModelTraits : RANSModelTraits<dimension, fluidSystemPhaseIdx>
+template<int dimension>
+struct LowReKEpsilonModelTraits : RANSModelTraits<dimension>
 {
     //! The dimension of the model
     static constexpr int dim() { return dimension; }
@@ -115,7 +114,7 @@ struct LowReKEpsilonModelTraits : RANSModelTraits<dimension, fluidSystemPhaseIdx
     static constexpr int numComponents() { return 1; }
 
     //! the indices
-    using Indices = LowReKEpsilonIndices<dim(), numComponents(), fluidSystemPhaseIdx>;
+    using Indices = LowReKEpsilonIndices<dim(), numComponents()>;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -131,9 +130,8 @@ SET_PROP(LowReKEpsilon, ModelTraits)
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr int dim = GridView::dimension;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 public:
-    using type = LowReKEpsilonModelTraits<dim, phaseIdx>;
+    using type = LowReKEpsilonModelTraits<dim>;
 };
 
 //! The flux variables
@@ -191,8 +189,7 @@ SET_PROP(LowReKEpsilonNI, ModelTraits)
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr int dim = GridView::dimension;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    using IsothermalTraits = LowReKEpsilonModelTraits<dim, phaseIdx>;
+    using IsothermalTraits = LowReKEpsilonModelTraits<dim>;
 public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };
