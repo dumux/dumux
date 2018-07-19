@@ -101,7 +101,7 @@ public:
 
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
 
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
@@ -112,30 +112,30 @@ public:
                 PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
                 auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
                 // NOTE: first update the turbulence quantities
-                storedDissipation_[elementID] = elemSol[0][Indices::dissipationEqIdx];
-                storedTurbulentKineticEnergy_[elementID] = elemSol[0][Indices::turbulentKineticEnergyEqIdx];
+                storedDissipation_[elementIdx] = elemSol[0][Indices::dissipationEqIdx];
+                storedTurbulentKineticEnergy_[elementIdx] = elemSol[0][Indices::turbulentKineticEnergyEqIdx];
                 // NOTE: then update the volVars
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
-                storedDynamicEddyViscosity_[elementID] = volVars.calculateEddyViscosity(*this);
+                storedDynamicEddyViscosity_[elementIdx] = volVars.calculateEddyViscosity(*this);
             }
         }
 
         // calculate cell-centered gradients
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
 
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
-                unsigned backwardNeighbor = ParentType::neighborID_[elementID][dimIdx][0];
-                unsigned forwardNeighbor = ParentType::neighborID_[elementID][dimIdx][1];
-                storedTurbulentKineticEnergyGradient_[elementID][dimIdx]
+                unsigned backwardNeighbor = ParentType::neighborIdx_[elementIdx][dimIdx][0];
+                unsigned forwardNeighbor = ParentType::neighborIdx_[elementIdx][dimIdx][1];
+                storedTurbulentKineticEnergyGradient_[elementIdx][dimIdx]
                     = (storedTurbulentKineticEnergy_[forwardNeighbor]
                           - storedTurbulentKineticEnergy_[backwardNeighbor])
                       / (ParentType::cellCenter_[forwardNeighbor][dimIdx]
                           - ParentType::cellCenter_[backwardNeighbor][dimIdx]);
-                storedDissipationGradient_[elementID][dimIdx]
+                storedDissipationGradient_[elementIdx][dimIdx]
                     = (storedDissipation_[forwardNeighbor]
                           - storedDissipation_[backwardNeighbor])
                       / (ParentType::cellCenter_[forwardNeighbor][dimIdx]

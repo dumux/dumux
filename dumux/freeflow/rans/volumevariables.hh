@@ -92,27 +92,27 @@ public:
         using std::sqrt;
 
         // calculate characteristic properties of the turbulent flow
-        elementID_ = problem.fvGridGeometry().elementMapper().index(element);
-        wallElementID_ = problem.wallElementID_[elementID_];
-        wallDistance_ = problem.wallDistance_[elementID_];
-        velocity_ = problem.velocity_[elementID_];
-        velocityMaximum_ = problem.velocityMaximum_[wallElementID_];
-        velocityGradients_ = problem.velocityGradients_[elementID_];
-        const auto flowNormalAxis = problem.flowNormalAxis_[elementID_];
-        const auto wallNormalAxis = problem.wallNormalAxis_[elementID_];
-        uStar_ = sqrt(problem.kinematicViscosity_[wallElementID_]
-                      * abs(problem.velocityGradients_[wallElementID_][flowNormalAxis][wallNormalAxis]));
+        elementIdx_ = problem.fvGridGeometry().elementMapper().index(element);
+        wallElementIdx_ = problem.wallElementIdx_[elementIdx_];
+        wallDistance_ = problem.wallDistance_[elementIdx_];
+        velocity_ = problem.velocity_[elementIdx_];
+        velocityMaximum_ = problem.velocityMaximum_[wallElementIdx_];
+        velocityGradients_ = problem.velocityGradients_[elementIdx_];
+        const auto flowNormalAxis = problem.flowNormalAxis_[elementIdx_];
+        const auto wallNormalAxis = problem.wallNormalAxis_[elementIdx_];
+        uStar_ = sqrt(problem.kinematicViscosity_[wallElementIdx_]
+                      * abs(problem.velocityGradients_[wallElementIdx_][flowNormalAxis][wallNormalAxis]));
         uStar_ = max(uStar_, 1e-10); // zero values lead to numerical problems in some turbulence models
-        yPlus_ = wallDistance_ * uStar_ / problem.kinematicViscosity_[elementID_];
+        yPlus_ = wallDistance_ * uStar_ / problem.kinematicViscosity_[elementIdx_];
         uPlus_ = velocity_[flowNormalAxis] / uStar_;
         karmanConstant_ = problem.karmanConstant();
     }
 
     /*!
-     * \brief Return the element ID of the control volume.
+     * \brief Return the element Idx of the control volume.
      */
-    unsigned int elementID() const
-    { return elementID_; }
+    unsigned int elementIdx() const
+    { return elementIdx_; }
 
     /*!
      * \brief Return the velocity vector \f$\mathrm{[m/s]}\f$ at the control volume center.
@@ -262,8 +262,8 @@ protected:
     DimVector velocity_;
     DimVector velocityMaximum_;
     DimMatrix velocityGradients_;
-    std::size_t elementID_;
-    std::size_t wallElementID_;
+    std::size_t elementIdx_;
+    std::size_t wallElementIdx_;
     Scalar wallDistance_;
     Scalar karmanConstant_;
     Scalar uStar_;

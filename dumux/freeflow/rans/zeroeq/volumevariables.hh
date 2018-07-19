@@ -83,7 +83,7 @@ public:
                               const SubControlVolume& scv)
     {
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
-        additionalRoughnessLength_ = problem.additionalRoughnessLength_[RANSParentType::elementID()];
+        additionalRoughnessLength_ = problem.additionalRoughnessLength_[RANSParentType::elementIdx()];
         yPlusRough_ = wallDistanceRough() * RANSParentType::uStar() / RANSParentType::kinematicViscosity();
         RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity(elemSol, problem, element, scv, problem.eddyViscosityModel_));
         RANSParentType::calculateEddyDiffusivity(problem);
@@ -110,8 +110,8 @@ public:
         using std::exp;
         using std::sqrt;
         Scalar kinematicEddyViscosity = 0.0;
-        unsigned int flowNormalAxis = problem.flowNormalAxis_[RANSParentType::elementID()];
-        unsigned int wallNormalAxis = problem.wallNormalAxis_[RANSParentType::elementID()];
+        unsigned int flowNormalAxis = problem.flowNormalAxis_[RANSParentType::elementIdx()];
+        unsigned int wallNormalAxis = problem.wallNormalAxis_[RANSParentType::elementIdx()];
         Scalar velGrad = abs(RANSParentType::velocityGradients()[flowNormalAxis][wallNormalAxis]);
 
         if (modelName.compare("none") == 0)
@@ -132,7 +132,7 @@ public:
         }
         else if (modelName.compare("baldwinLomax") == 0)
         {
-            kinematicEddyViscosity = problem.kinematicEddyViscosity_[RANSParentType::elementID()];
+            kinematicEddyViscosity = problem.kinematicEddyViscosity_[RANSParentType::elementIdx()];
         }
         else
         {

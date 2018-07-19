@@ -83,25 +83,25 @@ public:
                               const SubControlVolume& scv)
     {
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
-        isMatchingPoint_ = problem.isMatchingPoint(RANSParentType::elementID());
-        inNearWallRegion_ = problem.inNearWallRegion(RANSParentType::elementID());
+        isMatchingPoint_ = problem.isMatchingPoint(RANSParentType::elementIdx());
+        inNearWallRegion_ = problem.inNearWallRegion(RANSParentType::elementIdx());
         turbulentKineticEnergy_ = elemSol[0][Indices::turbulentKineticEnergyIdx];
         dissipation_ = elemSol[0][Indices::dissipationIdx];
-        storedDissipation_ = problem.storedDissipation_[RANSParentType::elementID()];
-        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementID()];
-        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementID()];
-        const Scalar uStarNominal = problem.uStarNominal(RANSParentType::elementID());
-        const auto flowNormalAxis = problem.flowNormalAxis_[RANSParentType::elementID()];
-        yPlusNominal_ = RANSParentType::wallDistance() * uStarNominal / problem.kinematicViscosity_[RANSParentType::elementID()];
+        storedDissipation_ = problem.storedDissipation_[RANSParentType::elementIdx()];
+        storedTurbulentKineticEnergy_ = problem.storedTurbulentKineticEnergy_[RANSParentType::elementIdx()];
+        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementIdx()];
+        const Scalar uStarNominal = problem.uStarNominal(RANSParentType::elementIdx());
+        const auto flowNormalAxis = problem.flowNormalAxis_[RANSParentType::elementIdx()];
+        yPlusNominal_ = RANSParentType::wallDistance() * uStarNominal / problem.kinematicViscosity_[RANSParentType::elementIdx()];
         uPlusNominal_ = RANSParentType::velocity()[flowNormalAxis] / uStarNominal;
         cMu_ = problem.cMu();
         if (problem.useStoredEddyViscosity_)
-            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementID()]);
+            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementIdx()]);
         else
             RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity());
         if (inNearWallRegion_)
         {
-            RANSParentType::setDynamicEddyViscosity_(problem.zeroEqDynamicEddyViscosity_[RANSParentType::elementID()]);
+            RANSParentType::setDynamicEddyViscosity_(problem.zeroEqDynamicEddyViscosity_[RANSParentType::elementIdx()]);
         }
         RANSParentType::calculateEddyDiffusivity(problem);
         RANSParentType::calculateEddyThermalConductivity(problem);

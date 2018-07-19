@@ -92,7 +92,7 @@ public:
 
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
 
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
@@ -103,12 +103,12 @@ public:
                 PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
                 auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
                 // NOTE: first update the turbulence quantities
-                storedDissipationTilde_[elementID] = elemSol[0][Indices::dissipationEqIdx];
-                storedTurbulentKineticEnergy_[elementID] = elemSol[0][Indices::turbulentKineticEnergyEqIdx];
+                storedDissipationTilde_[elementIdx] = elemSol[0][Indices::dissipationEqIdx];
+                storedTurbulentKineticEnergy_[elementIdx] = elemSol[0][Indices::turbulentKineticEnergyEqIdx];
                 // NOTE: then update the volVars
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
-                storedDynamicEddyViscosity_[elementID] = volVars.calculateEddyViscosity();
+                storedDynamicEddyViscosity_[elementIdx] = volVars.calculateEddyViscosity();
             }
         }
     }

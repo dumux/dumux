@@ -308,9 +308,9 @@ public:
         PrimaryVariables values(initialAtPos(globalPos));
 #if KOMEGA
         using std::pow;
-        unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-        const auto wallDistance = ParentType::wallDistance_[elementID];
-        values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementID]
+        unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto wallDistance = ParentType::wallDistance_[elementIdx];
+        values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementIdx]
                                             / (ParentType::betaOmega() * pow(wallDistance, 2));
 #endif
         return values;
