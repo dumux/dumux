@@ -291,22 +291,66 @@ public:
             fvGeometry.bindElement(element);
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                unsigned int normDim = scvf.directionIndex();
-                if (scvf.boundary() && asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::velocity(normDim)))
+                // adapt calculations for Dirichlet condition
+                unsigned int scvfNormDim = scvf.directionIndex();
+                if (scvf.boundary())
                 {
                     for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
                     {
-                        // face Value
+                        if (!asImp_().boundaryTypes(element, scvf).isDirichlet(Indices::velocity(velIdx)))
+                            continue;
+
                         Scalar dirichletVelocity = asImp_().dirichlet(element, scvf)[Indices::velocity(velIdx)];
 
-                        unsigned int neighborID = neighborID_[elementID][normDim][0];
-                        if (scvf.center()[normDim] < cellCenter_[elementID][normDim])
-                            neighborID = neighborID_[elementID][normDim][1];
+                        unsigned int neighborID = neighborID_[elementID][scvfNormDim][0];
+                        if (scvf.center()[scvfNormDim] < cellCenter_[elementID][scvfNormDim])
+                            neighborID = neighborID_[elementID][scvfNormDim][1];
 
-                        velocityGradients_[elementID][velIdx][normDim]
+                        velocityGradients_[elementID][velIdx][scvfNormDim]
                             = (velocity_[neighborID][velIdx] - dirichletVelocity)
-                              / (cellCenter_[neighborID][normDim] - scvf.center()[normDim]);
+                              / (cellCenter_[neighborID][scvfNormDim] - scvf.center()[scvfNormDim]);
                     }
+                }
+
+                // Calculate the BJS-velocity by accounting for all sub faces.
+                std::vector<int> bjsNumFaces(dim, 0);
+                std::vector<unsigned int> bjsNeighbor(dim, 0);
+                DimVector bjsVelocityAverage(0.0);
+                DimVector normalNormCoordinate(0.0);
+                unsigned int velIdx = Indices::velocity(scvfNormDim);
+                const int numSubFaces = scvf.pairData().size();
+                for(int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
+                {
+                    const auto& normalFace = fvGeometry.scvf(scvf.insideScvIdx(), scvf.pairData()[localSubFaceIdx].localNormalFaceIdx);
+
+                    // adapt calculations for Beavers-Joseph-Saffman condition
+                    unsigned int normalNormDim = normalFace.directionIndex();
+                    if (normalFace.boundary() && (asImp_().boundaryTypes(element, normalFace).isBJS(Indices::velocity(velIdx))))
+                    {
+                        unsigned int neighborID = neighborID_[elementID][normalNormDim][0];
+                        if (normalFace.center()[normalNormDim] < cellCenter_[elementID][normalNormDim])
+                            neighborID = neighborID_[elementID][normalNormDim][1];
+
+                        bjsVelocityAverage[normalNormDim] += ParentType::bjsVelocity(scvf, normalFace, localSubFaceIdx, velocity_[elementID][velIdx]);
+                        if (bjsNumFaces[normalNormDim] > 0 && neighborID != bjsNeighbor[normalNormDim])
+                            DUNE_THROW(Dune::InvalidStateException, "Two different neighborID should not occur");
+                        bjsNeighbor[normalNormDim] = neighborID;
+                        normalNormCoordinate[normalNormDim] = normalFace.center()[normalNormDim];
+                        bjsNumFaces[normalNormDim]++;
+                    }
+                }
+                for (unsigned dirIdx = 0; dirIdx < dim; ++dirIdx)
+                {
+                    if (bjsNumFaces[dirIdx] == 0)
+                        continue;
+
+                    unsigned int neighborID = bjsNeighbor[dirIdx];
+                    bjsVelocityAverage[dirIdx] /= bjsNumFaces[dirIdx];
+
+                    velocityGradients_[elementID][velIdx][dirIdx]
+                        = (velocity_[neighborID][velIdx] - bjsVelocityAverage[dirIdx])
+                          / (cellCenter_[neighborID][dirIdx] - normalNormCoordinate[dirIdx]);
+
                 }
             }
         }
