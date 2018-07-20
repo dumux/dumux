@@ -566,7 +566,7 @@ class StokesDarcyCouplingDataImplementation<MDTraits, CouplingManager, enableEne
     template<std::size_t id> using FluidSystem  = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FluidSystem);
 
     static constexpr auto numComponents = GET_PROP_TYPE(SubDomainTypeTag<stokesIdx>, ModelTraits)::numComponents();
-    static constexpr auto replaceCompEqIdx = GET_PROP_TYPE(SubDomainTypeTag<stokesIdx>, ModelTraits)::Indices::replaceCompEqIdx;
+    static constexpr auto replaceCompEqIdx = GET_PROP_TYPE(SubDomainTypeTag<stokesIdx>, ModelTraits)::replaceCompEqIdx();
     static constexpr bool useMoles = GET_PROP_TYPE(SubDomainTypeTag<stokesIdx>, ModelTraits)::useMoles();
 
     static_assert(GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, ModelTraits)::numComponents() == numComponents, "Submodels must use same number of components");

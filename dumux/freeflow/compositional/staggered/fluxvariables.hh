@@ -52,11 +52,11 @@ class FreeflowNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
 public:
-    static constexpr auto numComponents = GET_PROP_TYPE(TypeTag, ModelTraits)::numComponents();
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr auto numComponents = ModelTraits::numComponents();
+    static constexpr bool useMoles = ModelTraits::useMoles();
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
     /*!
@@ -88,9 +88,9 @@ public:
         flux += MolecularDiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
 
         // in case one balance is substituted by the total mass balance
-        if (Indices::replaceCompEqIdx < numComponents)
+        if (ModelTraits::replaceCompEqIdx() < numComponents)
         {
-            flux[Indices::replaceCompEqIdx] = std::accumulate(flux.begin(), flux.end(), 0.0);
+            flux[ModelTraits::replaceCompEqIdx()] = std::accumulate(flux.begin(), flux.end(), 0.0);
         }
 
         return flux;

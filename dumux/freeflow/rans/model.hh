@@ -67,10 +67,9 @@ SET_BOOL_PROP(RANS, EnableInertiaTerms, true); //!< Explicitly force the conside
  * \brief Traits for the Reynolds-averaged Navier-Stokes model
  *
  * \tparam dimension The dimension of the problem
- * \tparam fluidSystemPhaseIdx The the index of the phase used for the fluid system
  */
-template<int dimension, int fluidSystemPhaseIdx>
-struct RANSModelTraits : NavierStokesModelTraits<dimension, fluidSystemPhaseIdx>
+template<int dimension>
+struct RANSModelTraits : NavierStokesModelTraits<dimension>
 {
     //! The model does include a turbulence model
     static constexpr bool usesTurbulenceModel() { return true; }
@@ -82,12 +81,8 @@ SET_PROP(RANS, ModelTraits)
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr int dim = GridView::dimension;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-
-    static_assert(phaseIdx >= 0 && phaseIdx < GET_PROP_TYPE(TypeTag, FluidSystem)::numPhases,
-                  "PhaseIdx must be non-negative and smaller than the number of phases");
 public:
-    using type = RANSModelTraits<dim, phaseIdx>;
+    using type = RANSModelTraits<dim>;
 };
 
 //! The specific vtk output fields
@@ -112,9 +107,8 @@ SET_PROP(RANSNI, ModelTraits)
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView;
     static constexpr int dim = GridView::dimension;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
-    using IsothermalTraits = RANSModelTraits<dim, phaseIdx>;
+    using IsothermalTraits = RANSModelTraits<dim>;
 public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };

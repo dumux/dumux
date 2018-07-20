@@ -60,7 +60,6 @@
 #include <dumux/discretization/fourierslaw.hh>
 
 #include "volumevariables.hh"
-#include "indices.hh"
 #include "localresidual.hh"
 #include "fluxvariables.hh"
 #include "vtkoutputfields.hh"
@@ -79,12 +78,11 @@ namespace Dumux {
  *
  * \tparam dimension The dimension of the problem
  * \tparam nComp The number of components to be considered
- * \tparam fluidSystemPhaseIdx The the index of the phase used for the fluid system
- * \tparam replaceCompEqIdx The index of the component balance equation that should be replaced by a total mass/mole balance
  * \tparam useM Use molar or mass balances
+ * \tparam repCompEqIdx The index of the component balance equation that should be replaced by a total mass/mole balance
  */
-template<int dimension, int nComp, int fluidSystemPhaseIdx, int replaceCompEqIdx, bool useM>
-struct NavierStokesNCModelTraits : NavierStokesModelTraits<dimension, fluidSystemPhaseIdx>
+template<int dimension, int nComp, bool useM, int repCompEqIdx = nComp>
+struct NavierStokesNCModelTraits : NavierStokesModelTraits<dimension>
 {
     //! There are as many momentum balance equations as dimensions
     //! and as many balance equations as components.
@@ -99,8 +97,11 @@ struct NavierStokesNCModelTraits : NavierStokesModelTraits<dimension, fluidSyste
     //! The one-phase model has no molecular diffusion
     static constexpr bool enableMolecularDiffusion() { return true; }
 
+    //! Index of of a component balance eq. to be replaced by a total mass/mole balance
+    static constexpr int replaceCompEqIdx() { return repCompEqIdx; }
+
     //! the indices
-    using Indices = FreeflowNCIndices<dimension, numEq(), fluidSystemPhaseIdx, replaceCompEqIdx, NavierStokesIndices<dimension, fluidSystemPhaseIdx>>;
+    using Indices = NavierStokesIndices<dimension>;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -130,18 +131,13 @@ private:
     static constexpr int dim = GridView::dimension;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int numComponents = FluidSystem::numComponents;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-
-    static_assert(phaseIdx >= 0 && phaseIdx < FluidSystem::numPhases,
-                  "PhaseIdx must be non-negative and smaller than the number of phases");
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
 
 public:
-    using type = NavierStokesNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
+    using type = NavierStokesNCModelTraits<dim, numComponents, useMoles, replaceCompEqIdx>;
 };
 
-SET_INT_PROP(NavierStokesNC, PhaseIdx, 0); //!< Defines the phaseIdx
 SET_BOOL_PROP(NavierStokesNC, UseMoles, false); //!< Defines whether molar (true) or mass (false) density is used
 SET_INT_PROP(NavierStokesNC, ReplaceCompEqIdx, 0); //<! Set the ReplaceCompEqIdx to 0 by default
 SET_BOOL_PROP(NavierStokesNC, EnableInertiaTerms, true); //!< Consider inertia terms by default
@@ -177,10 +173,9 @@ private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     using BaseVtkOutputFields = NavierStokesVtkOutputFields<FVGridGeometry>;
 public:
-    using type = FreeflowNCVtkOutputFields<BaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem, phaseIdx>;
+    using type = FreeflowNCVtkOutputFields<BaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem>;
 };
 
 /*!
@@ -213,10 +208,9 @@ private:
     static constexpr int dim = GridView::dimension;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static constexpr int numComponents = FluidSystem::numComponents;
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    using IsothermalModelTraits = NavierStokesNCModelTraits<dim, numComponents, phaseIdx, replaceCompEqIdx, useMoles>;
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    using IsothermalModelTraits = NavierStokesNCModelTraits<dim, numComponents, useMoles, replaceCompEqIdx>;
 public:
     using type = FreeflowNIModelTraits<IsothermalModelTraits>;
 };
@@ -228,11 +222,10 @@ private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     using BaseVtkOutputFields = NavierStokesVtkOutputFields<FVGridGeometry>;
     using NonIsothermalFields = FreeflowNonIsothermalVtkOutputFields<BaseVtkOutputFields, ModelTraits>;
 public:
-    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem, phaseIdx>;
+    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem>;
 };
 
 //! Use Fourier's Law as default heat conduction type
