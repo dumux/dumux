@@ -152,7 +152,7 @@ protected:
                                                       elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            unsigned int elementID = problem.fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = problem.fvGridGeometry().elementMapper().index(element);
             const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
             const auto& insideVolVars = elemVolVars[insideScv];
 
@@ -160,14 +160,14 @@ protected:
             if (insideVolVars.inNearWallRegion())
             {
                 residual[Indices::turbulentKineticEnergyEqIdx - cellCenterOffset]
-                    = insideVolVars.turbulentKineticEnergy() - problem.turbulentKineticEnergyWallFunction(elementID);
+                    = insideVolVars.turbulentKineticEnergy() - problem.turbulentKineticEnergyWallFunction(elementIdx);
             }
 
             // fixed value for the dissipation
             if (insideVolVars.inNearWallRegion() || insideVolVars.isMatchingPoint())
             {
                 residual[Indices::dissipationEqIdx - cellCenterOffset]
-                    = insideVolVars.dissipation() - problem.dissipationWallFunction(elementID);
+                    = insideVolVars.dissipation() - problem.dissipationWallFunction(elementIdx);
             }
         }
     }

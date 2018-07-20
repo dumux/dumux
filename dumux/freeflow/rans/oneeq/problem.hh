@@ -96,7 +96,7 @@ public:
 
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
 
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
@@ -107,26 +107,26 @@ public:
                 PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
                 auto elemSol = elementSolution<typename FVGridGeometry::LocalView>(std::move(priVars));
                 // NOTE: first update the turbulence quantities
-                storedViscosityTilde_[elementID] = elemSol[0][Indices::viscosityTildeIdx];
+                storedViscosityTilde_[elementIdx] = elemSol[0][Indices::viscosityTildeIdx];
                 // NOTE: then update the volVars
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
-                storedDynamicEddyViscosity_[elementID] = volVars.calculateEddyViscosity();
+                storedDynamicEddyViscosity_[elementIdx] = volVars.calculateEddyViscosity();
             }
         }
 
         // calculate cell-center-averaged velocity gradients, maximum, and minimum values
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
 
             for (unsigned int dimIdx = 0; dimIdx < Grid::dimension; ++dimIdx)
             {
-                storedViscosityTildeGradient_[elementID][dimIdx]
-                    = (storedViscosityTilde_[ParentType::neighborID_[elementID][dimIdx][1]]
-                          - storedViscosityTilde_[ParentType::neighborID_[elementID][dimIdx][0]])
-                      / (ParentType::cellCenter_[ParentType::neighborID_[elementID][dimIdx][1]][dimIdx]
-                          - ParentType::cellCenter_[ParentType::neighborID_[elementID][dimIdx][0]][dimIdx]);
+                storedViscosityTildeGradient_[elementIdx][dimIdx]
+                    = (storedViscosityTilde_[ParentType::neighborIdx_[elementIdx][dimIdx][1]]
+                          - storedViscosityTilde_[ParentType::neighborIdx_[elementIdx][dimIdx][0]])
+                      / (ParentType::cellCenter_[ParentType::neighborIdx_[elementIdx][dimIdx][1]][dimIdx]
+                          - ParentType::cellCenter_[ParentType::neighborIdx_[elementIdx][dimIdx][0]][dimIdx]);
             }
 
             auto fvGeometry = localView(this->fvGridGeometry());
@@ -139,13 +139,13 @@ public:
                     // face Value
                     Scalar dirichletViscosityTilde = asImp_().dirichlet(element, scvf)[Indices::viscosityTildeIdx];
 
-                    unsigned int neighborID = ParentType::neighborID_[elementID][normDim][0];
-                    if (scvf.center()[normDim] < ParentType::cellCenter_[elementID][normDim])
-                        neighborID = ParentType::neighborID_[elementID][normDim][1];
+                    unsigned int neighborIdx = ParentType::neighborIdx_[elementIdx][normDim][0];
+                    if (scvf.center()[normDim] < ParentType::cellCenter_[elementIdx][normDim])
+                        neighborIdx = ParentType::neighborIdx_[elementIdx][normDim][1];
 
-                    storedViscosityTildeGradient_[elementID][normDim]
-                        = (storedViscosityTilde_[neighborID] - dirichletViscosityTilde)
-                          / (ParentType::cellCenter_[neighborID][normDim] - scvf.center()[normDim]);
+                    storedViscosityTildeGradient_[elementIdx][normDim]
+                        = (storedViscosityTilde_[neighborIdx] - dirichletViscosityTilde)
+                          / (ParentType::cellCenter_[neighborIdx][normDim] - scvf.center()[normDim]);
                 }
             }
         }

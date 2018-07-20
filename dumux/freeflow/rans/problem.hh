@@ -92,9 +92,9 @@ public:
         calledUpdateStaticWallProperties = true;
 
         // update size and initial values of the global vectors
-        wallElementID_.resize(this->fvGridGeometry().elementMapper().size());
+        wallElementIdx_.resize(this->fvGridGeometry().elementMapper().size());
         wallDistance_.resize(this->fvGridGeometry().elementMapper().size(), std::numeric_limits<Scalar>::max());
-        neighborID_.resize(this->fvGridGeometry().elementMapper().size());
+        neighborIdx_.resize(this->fvGridGeometry().elementMapper().size());
         cellCenter_.resize(this->fvGridGeometry().elementMapper().size(), GlobalPosition(0.0));
         velocity_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
         velocityMaximum_.resize(this->fvGridGeometry().elementMapper().size(), DimVector(0.0));
@@ -141,8 +141,8 @@ public:
         // search for shortest distance to wall for each element
         for (const auto& element : elements(gridView))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            cellCenter_[elementID] = element.geometry().center();
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            cellCenter_[elementIdx] = element.geometry().center();
             for (unsigned int i = 0; i < wallPositions.size(); ++i)
             {
                 static const int problemWallNormalAxis
@@ -158,26 +158,26 @@ public:
                 GlobalPosition global = element.geometry().center();
                 global -= wallPositions[i];
                 // second and argument ensures to use only aligned elements
-                if (abs(global[searchAxis]) < wallDistance_[elementID]
+                if (abs(global[searchAxis]) < wallDistance_[elementIdx]
                     && abs(global[searchAxis]) < global.two_norm() + 1e-8
                     && abs(global[searchAxis]) > global.two_norm() - 1e-8)
                 {
-                    wallDistance_[elementID] = abs(global[searchAxis]);
-                    wallElementID_[elementID] = wallElements[i];
-                    wallNormalAxis_[elementID] = searchAxis;
-                    sandGrainRoughness_[elementID] = asImp_().sandGrainRoughnessAtPos(wallPositions[i]);
+                    wallDistance_[elementIdx] = abs(global[searchAxis]);
+                    wallElementIdx_[elementIdx] = wallElements[i];
+                    wallNormalAxis_[elementIdx] = searchAxis;
+                    sandGrainRoughness_[elementIdx] = asImp_().sandGrainRoughnessAtPos(wallPositions[i]);
                 }
             }
         }
 
-        // search for neighbor IDs
+        // search for neighbor Idxs
         for (const auto& element : elements(gridView))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
-                neighborID_[elementID][dimIdx][0] = elementID;
-                neighborID_[elementID][dimIdx][1] = elementID;
+                neighborIdx_[elementIdx][dimIdx][0] = elementIdx;
+                neighborIdx_[elementIdx][dimIdx][1] = elementIdx;
             }
 
             for (const auto& intersection : intersections(gridView, element))
@@ -185,18 +185,18 @@ public:
                 if (intersection.boundary())
                     continue;
 
-                unsigned int neighborID = this->fvGridGeometry().elementMapper().index(intersection.outside());
+                unsigned int neighborIdx = this->fvGridGeometry().elementMapper().index(intersection.outside());
                 for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
                 {
-                    if (abs(cellCenter_[elementID][dimIdx] - cellCenter_[neighborID][dimIdx]) > 1e-8)
+                    if (abs(cellCenter_[elementIdx][dimIdx] - cellCenter_[neighborIdx][dimIdx]) > 1e-8)
                     {
-                        if (cellCenter_[elementID][dimIdx] > cellCenter_[neighborID][dimIdx])
+                        if (cellCenter_[elementIdx][dimIdx] > cellCenter_[neighborIdx][dimIdx])
                         {
-                            neighborID_[elementID][dimIdx][0] = neighborID;
+                            neighborIdx_[elementIdx][dimIdx][0] = neighborIdx;
                         }
-                        if (cellCenter_[elementID][dimIdx] < cellCenter_[neighborID][dimIdx])
+                        if (cellCenter_[elementIdx][dimIdx] < cellCenter_[neighborIdx][dimIdx])
                         {
-                            neighborID_[elementID][dimIdx][1] = neighborID;
+                            neighborIdx_[elementIdx][dimIdx][1] = neighborIdx;
                         }
                     }
                 }
@@ -235,7 +235,7 @@ public:
         {
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
 
             // calculate velocities
             DimVector velocityTemp(0.0);
@@ -246,44 +246,44 @@ public:
                 velocityTemp[scvf.directionIndex()] += numericalSolutionFace;
             }
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
-                velocity_[elementID][dimIdx] = velocityTemp[dimIdx] * 0.5; // faces are equidistant to cell center
+                velocity_[elementIdx][dimIdx] = velocityTemp[dimIdx] * 0.5; // faces are equidistant to cell center
         }
 
         // calculate cell-center-averaged velocity gradients, maximum, and minimum values
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementID = wallElementID_[elementID];
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int wallElementIdx = wallElementIdx_[elementIdx];
 
             Scalar maxVelocity = 0.0;
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
                 {
-                    velocityGradients_[elementID][velIdx][dimIdx]
-                        = (velocity_[neighborID_[elementID][dimIdx][1]][velIdx]
-                              - velocity_[neighborID_[elementID][dimIdx][0]][velIdx])
-                          / (cellCenter_[neighborID_[elementID][dimIdx][1]][dimIdx]
-                              - cellCenter_[neighborID_[elementID][dimIdx][0]][dimIdx]);
+                    velocityGradients_[elementIdx][velIdx][dimIdx]
+                        = (velocity_[neighborIdx_[elementIdx][dimIdx][1]][velIdx]
+                              - velocity_[neighborIdx_[elementIdx][dimIdx][0]][velIdx])
+                          / (cellCenter_[neighborIdx_[elementIdx][dimIdx][1]][dimIdx]
+                              - cellCenter_[neighborIdx_[elementIdx][dimIdx][0]][dimIdx]);
                 }
 
-                if (abs(velocity_[elementID][dimIdx]) > abs(velocityMaximum_[wallElementID][dimIdx]))
+                if (abs(velocity_[elementIdx][dimIdx]) > abs(velocityMaximum_[wallElementIdx][dimIdx]))
                 {
-                    velocityMaximum_[wallElementID][dimIdx] = velocity_[elementID][dimIdx];
+                    velocityMaximum_[wallElementIdx][dimIdx] = velocity_[elementIdx][dimIdx];
                 }
-                if (abs(velocity_[elementID][dimIdx]) < abs(velocityMinimum_[wallElementID][dimIdx]))
+                if (abs(velocity_[elementIdx][dimIdx]) < abs(velocityMinimum_[wallElementIdx][dimIdx]))
                 {
-                    velocityMinimum_[wallElementID][dimIdx] = velocity_[elementID][dimIdx];
+                    velocityMinimum_[wallElementIdx][dimIdx] = velocity_[elementIdx][dimIdx];
                 }
 
                 if (0 <= flowNormalAxis && flowNormalAxis < dim)
                 {
-                    flowNormalAxis_[elementID] = flowNormalAxis;
+                    flowNormalAxis_[elementIdx] = flowNormalAxis;
                 }
-                else if (abs(maxVelocity) < abs(velocity_[elementID][dimIdx]))
+                else if (abs(maxVelocity) < abs(velocity_[elementIdx][dimIdx]))
                 {
-                    maxVelocity = abs(velocity_[elementID][dimIdx]);
-                    flowNormalAxis_[elementID] = dimIdx;
+                    maxVelocity = abs(velocity_[elementIdx][dimIdx]);
+                    flowNormalAxis_[elementIdx] = dimIdx;
                 }
             }
 
@@ -302,13 +302,13 @@ public:
 
                         Scalar dirichletVelocity = asImp_().dirichlet(element, scvf)[Indices::velocity(velIdx)];
 
-                        unsigned int neighborID = neighborID_[elementID][scvfNormDim][0];
-                        if (scvf.center()[scvfNormDim] < cellCenter_[elementID][scvfNormDim])
-                            neighborID = neighborID_[elementID][scvfNormDim][1];
+                        unsigned int neighborIdx = neighborIdx_[elementIdx][scvfNormDim][0];
+                        if (scvf.center()[scvfNormDim] < cellCenter_[elementIdx][scvfNormDim])
+                            neighborIdx = neighborIdx_[elementIdx][scvfNormDim][1];
 
-                        velocityGradients_[elementID][velIdx][scvfNormDim]
-                            = (velocity_[neighborID][velIdx] - dirichletVelocity)
-                              / (cellCenter_[neighborID][scvfNormDim] - scvf.center()[scvfNormDim]);
+                        velocityGradients_[elementIdx][velIdx][scvfNormDim]
+                            = (velocity_[neighborIdx][velIdx] - dirichletVelocity)
+                              / (cellCenter_[neighborIdx][scvfNormDim] - scvf.center()[scvfNormDim]);
                     }
                 }
 
@@ -327,14 +327,14 @@ public:
                     unsigned int normalNormDim = normalFace.directionIndex();
                     if (normalFace.boundary() && (asImp_().boundaryTypes(element, normalFace).isBJS(Indices::velocity(velIdx))))
                     {
-                        unsigned int neighborID = neighborID_[elementID][normalNormDim][0];
-                        if (normalFace.center()[normalNormDim] < cellCenter_[elementID][normalNormDim])
-                            neighborID = neighborID_[elementID][normalNormDim][1];
+                        unsigned int neighborIdx = neighborIdx_[elementIdx][normalNormDim][0];
+                        if (normalFace.center()[normalNormDim] < cellCenter_[elementIdx][normalNormDim])
+                            neighborIdx = neighborIdx_[elementIdx][normalNormDim][1];
 
-                        bjsVelocityAverage[normalNormDim] += ParentType::bjsVelocity(scvf, normalFace, localSubFaceIdx, velocity_[elementID][velIdx]);
-                        if (bjsNumFaces[normalNormDim] > 0 && neighborID != bjsNeighbor[normalNormDim])
-                            DUNE_THROW(Dune::InvalidStateException, "Two different neighborID should not occur");
-                        bjsNeighbor[normalNormDim] = neighborID;
+                        bjsVelocityAverage[normalNormDim] += ParentType::bjsVelocity(scvf, normalFace, localSubFaceIdx, velocity_[elementIdx][velIdx]);
+                        if (bjsNumFaces[normalNormDim] > 0 && neighborIdx != bjsNeighbor[normalNormDim])
+                            DUNE_THROW(Dune::InvalidStateException, "Two different neighborIdx should not occur");
+                        bjsNeighbor[normalNormDim] = neighborIdx;
                         normalNormCoordinate[normalNormDim] = normalFace.center()[normalNormDim];
                         bjsNumFaces[normalNormDim]++;
                     }
@@ -344,12 +344,12 @@ public:
                     if (bjsNumFaces[dirIdx] == 0)
                         continue;
 
-                    unsigned int neighborID = bjsNeighbor[dirIdx];
+                    unsigned int neighborIdx = bjsNeighbor[dirIdx];
                     bjsVelocityAverage[dirIdx] /= bjsNumFaces[dirIdx];
 
-                    velocityGradients_[elementID][velIdx][dirIdx]
-                        = (velocity_[neighborID][velIdx] - bjsVelocityAverage[dirIdx])
-                          / (cellCenter_[neighborID][dirIdx] - normalNormCoordinate[dirIdx]);
+                    velocityGradients_[elementIdx][velIdx][dirIdx]
+                        = (velocity_[neighborIdx][velIdx] - bjsVelocityAverage[dirIdx])
+                          / (cellCenter_[neighborIdx][dirIdx] - normalNormCoordinate[dirIdx]);
 
                 }
             }
@@ -358,23 +358,23 @@ public:
         // calculate or call all secondary variables
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
 
             Dune::FieldMatrix<Scalar, GridView::dimension, GridView::dimension> stressTensor(0.0);
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
                 {
-                    stressTensor[dimIdx][velIdx] = 0.5 * velocityGradients_[elementID][dimIdx][velIdx]
-                                                   + 0.5 * velocityGradients_[elementID][velIdx][dimIdx];
+                    stressTensor[dimIdx][velIdx] = 0.5 * velocityGradients_[elementIdx][dimIdx][velIdx]
+                                                   + 0.5 * velocityGradients_[elementIdx][velIdx][dimIdx];
               }
             }
-            stressTensorScalarProduct_[elementID] = 0.0;
+            stressTensorScalarProduct_[elementIdx] = 0.0;
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
                 {
-                    stressTensorScalarProduct_[elementID] += stressTensor[dimIdx][velIdx] * stressTensor[dimIdx][velIdx];
+                    stressTensorScalarProduct_[elementIdx] += stressTensor[dimIdx][velIdx] * stressTensor[dimIdx][velIdx];
                 }
             }
 
@@ -383,16 +383,16 @@ public:
             {
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
                 {
-                    vorticityTensor[dimIdx][velIdx] = 0.5 * velocityGradients_[elementID][dimIdx][velIdx]
-                                                      - 0.5 * velocityGradients_[elementID][velIdx][dimIdx];
+                    vorticityTensor[dimIdx][velIdx] = 0.5 * velocityGradients_[elementIdx][dimIdx][velIdx]
+                                                      - 0.5 * velocityGradients_[elementIdx][velIdx][dimIdx];
               }
             }
-            vorticityTensorScalarProduct_[elementID] = 0.0;
+            vorticityTensorScalarProduct_[elementIdx] = 0.0;
             for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
                 for (unsigned int velIdx = 0; velIdx < dim; ++velIdx)
                 {
-                    vorticityTensorScalarProduct_[elementID] += vorticityTensor[dimIdx][velIdx] * vorticityTensor[dimIdx][velIdx];
+                    vorticityTensorScalarProduct_[elementIdx] += vorticityTensor[dimIdx][velIdx] * vorticityTensor[dimIdx][velIdx];
                 }
             }
 
@@ -409,7 +409,7 @@ public:
 
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
-                kinematicViscosity_[elementID] = volVars.viscosity() / volVars.density();
+                kinematicViscosity_[elementIdx] = volVars.viscosity() / volVars.density();
             }
         }
     }
@@ -466,9 +466,9 @@ public:
 
 public:
     bool calledUpdateStaticWallProperties = false;
-    std::vector<unsigned int> wallElementID_;
+    std::vector<unsigned int> wallElementIdx_;
     std::vector<Scalar> wallDistance_;
-    std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborID_;
+    std::vector<std::array<std::array<unsigned int, 2>, dim>> neighborIdx_;
     std::vector<GlobalPosition> cellCenter_;
     std::vector<DimVector> velocity_;
     std::vector<DimVector> velocityMaximum_;

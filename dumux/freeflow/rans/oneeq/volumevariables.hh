@@ -86,12 +86,12 @@ public:
     {
         RANSParentType::updateRANSProperties(elemSol, problem, element, scv);
         viscosityTilde_ = elemSol[0][Indices::viscosityTildeIdx];
-        storedViscosityTilde_ = problem.storedViscosityTilde_[RANSParentType::elementID()];
-        storedViscosityTildeGradient_ = problem.storedViscosityTildeGradient_[RANSParentType::elementID()];
-        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementID()];
-        vorticityTensorScalarProduct_ = problem.vorticityTensorScalarProduct_[RANSParentType::elementID()];
+        storedViscosityTilde_ = problem.storedViscosityTilde_[RANSParentType::elementIdx()];
+        storedViscosityTildeGradient_ = problem.storedViscosityTildeGradient_[RANSParentType::elementIdx()];
+        stressTensorScalarProduct_ = problem.stressTensorScalarProduct_[RANSParentType::elementIdx()];
+        vorticityTensorScalarProduct_ = problem.vorticityTensorScalarProduct_[RANSParentType::elementIdx()];
         if (problem.useStoredEddyViscosity_)
-            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementID()]);
+            RANSParentType::setDynamicEddyViscosity_(problem.storedDynamicEddyViscosity_[RANSParentType::elementIdx()]);
         else
             RANSParentType::setDynamicEddyViscosity_(calculateEddyViscosity());
         RANSParentType::calculateEddyDiffusivity(problem);

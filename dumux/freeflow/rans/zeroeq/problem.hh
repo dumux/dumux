@@ -108,7 +108,7 @@ public:
         bool printedRangeWarning = false;
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
 
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
@@ -127,26 +127,26 @@ public:
                 VolumeVariables volVars;
                 volVars.update(elemSol, asImp_(), element, scv);
 
-                Scalar ksPlus = this->sandGrainRoughness_[elementID] * volVars.uStar() / volVars.kinematicViscosity();
+                Scalar ksPlus = this->sandGrainRoughness_[elementIdx] * volVars.uStar() / volVars.kinematicViscosity();
                 if (ksPlus > 0 && eddyViscosityModel_.compare("baldwinLomax") == 0)
                 {
                     DUNE_THROW(Dune::NotImplemented, "Roughness is not implemented for the Baldwin-Lomax model.");
                 }
                 if (ksPlus > 2000.)
                 {
-                    std::cout << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << this->cellCenter_[this->wallElementID_[elementID]]
+                    std::cout << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << this->cellCenter_[this->wallElementIdx_[elementIdx]]
                               << " is not in the valid range (ksPlus < 2000),"
                               << " for high ksPlus values the roughness function reaches a turning point."<< std::endl;
                     DUNE_THROW(Dune::InvalidStateException, "Unphysical roughness behavior.");
                 }
                 else if (ksPlus > 0.0 && ksPlus < 4.535 && !printedRangeWarning)
                 {
-                    Dune::dinfo << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << this->cellCenter_[this->wallElementID_[elementID]]
+                    Dune::dinfo << "info: equivalent sand grain roughness ks+=" << ksPlus << " at " << this->cellCenter_[this->wallElementIdx_[elementIdx]]
                                 << " is not in the valid range (ksPlus > 4.535) and now set to 0.0"<< std::endl;
                     ksPlus = 0.0;
                     printedRangeWarning = true;
                 }
-                additionalRoughnessLength_[elementID] = 0.9 / (volVars.uStar() / volVars.kinematicViscosity())
+                additionalRoughnessLength_[elementIdx] = 0.9 / (volVars.uStar() / volVars.kinematicViscosity())
                                                         * (sqrt(ksPlus) - ksPlus * exp(-ksPlus / 6.0));
             }
         }
@@ -185,82 +185,82 @@ public:
         // (1) calculate inner viscosity and Klebanoff function
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementID = this->wallElementID_[elementID];
-            Scalar wallDistance = this->wallDistance_[elementID] + additionalRoughnessLength_[elementID];
-            unsigned int flowNormalAxis = this->flowNormalAxis_[elementID];
-            unsigned int wallNormalAxis = this->wallNormalAxis_[elementID];
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
+            Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
+            unsigned int flowNormalAxis = this->flowNormalAxis_[elementIdx];
+            unsigned int wallNormalAxis = this->wallNormalAxis_[elementIdx];
 
-            Scalar omegaAbs = abs(this->velocityGradients_[elementID][flowNormalAxis][wallNormalAxis]
-                                  - this->velocityGradients_[elementID][wallNormalAxis][flowNormalAxis]);
-            Scalar uStar = sqrt(this->kinematicViscosity_[wallElementID]
-                                * abs(this->velocityGradients_[wallElementID][flowNormalAxis][wallNormalAxis]));
-            Scalar yPlus = wallDistance * uStar / this->kinematicViscosity_[elementID];
+            Scalar omegaAbs = abs(this->velocityGradients_[elementIdx][flowNormalAxis][wallNormalAxis]
+                                  - this->velocityGradients_[elementIdx][wallNormalAxis][flowNormalAxis]);
+            Scalar uStar = sqrt(this->kinematicViscosity_[wallElementIdx]
+                                * abs(this->velocityGradients_[wallElementIdx][flowNormalAxis][wallNormalAxis]));
+            Scalar yPlus = wallDistance * uStar / this->kinematicViscosity_[elementIdx];
             Scalar mixingLength = this->karmanConstant() * wallDistance * (1.0 - exp(-yPlus / aPlus));
-            kinematicEddyViscosityInner[elementID] = mixingLength * mixingLength * omegaAbs;
+            kinematicEddyViscosityInner[elementIdx] = mixingLength * mixingLength * omegaAbs;
 
             Scalar f = wallDistance * omegaAbs * (1.0 - exp(-yPlus / aPlus));
-            if (f > storedFMax[wallElementID])
+            if (f > storedFMax[wallElementIdx])
             {
-                storedFMax[wallElementID] = f;
-                storedYFMax[wallElementID] = wallDistance;
+                storedFMax[wallElementIdx] = f;
+                storedYFMax[wallElementIdx] = wallDistance;
             }
         }
 
         // (2) calculate outer viscosity
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementID = this->wallElementID_[elementID];
-            Scalar wallDistance = this->wallDistance_[elementID] + additionalRoughnessLength_[elementID];
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
+            Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
 
             Scalar maxVelocityNorm = 0.0;
             Scalar minVelocityNorm = 0.0;
             for (unsigned dimIdx = 0; dimIdx < dim; ++dimIdx)
             {
-                maxVelocityNorm += this->velocityMaximum_[wallElementID][dimIdx]
-                                   * this->velocityMaximum_[wallElementID][dimIdx];
-                minVelocityNorm += this->velocityMinimum_[wallElementID][dimIdx]
-                                   * this->velocityMinimum_[wallElementID][dimIdx];
+                maxVelocityNorm += this->velocityMaximum_[wallElementIdx][dimIdx]
+                                   * this->velocityMaximum_[wallElementIdx][dimIdx];
+                minVelocityNorm += this->velocityMinimum_[wallElementIdx][dimIdx]
+                                   * this->velocityMinimum_[wallElementIdx][dimIdx];
             }
             Scalar deltaU = sqrt(maxVelocityNorm) - sqrt(minVelocityNorm);
-            Scalar yFMax = storedYFMax[wallElementID];
-            Scalar fMax = storedFMax[wallElementID];
+            Scalar yFMax = storedYFMax[wallElementIdx];
+            Scalar fMax = storedFMax[wallElementIdx];
             Scalar fWake = min(yFMax * fMax, cWake * yFMax * deltaU * deltaU / fMax);
             Scalar fKleb = 1.0 / (1.0 + 5.5 * pow(cKleb * wallDistance / yFMax, 6.0));
-            kinematicEddyViscosityOuter[elementID] = k * cCP * fWake * fKleb;
+            kinematicEddyViscosityOuter[elementIdx] = k * cCP * fWake * fKleb;
 
-            kinematicEddyViscosityDifference[elementID]
-              = kinematicEddyViscosityInner[elementID] - kinematicEddyViscosityOuter[elementID];
+            kinematicEddyViscosityDifference[elementIdx]
+              = kinematicEddyViscosityInner[elementIdx] - kinematicEddyViscosityOuter[elementIdx];
         }
 
         // (3) switching point
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementID = this->wallElementID_[elementID];
-            Scalar wallDistance = this->wallDistance_[elementID] + additionalRoughnessLength_[elementID];
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
+            Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
 
             // checks if sign switches, by multiplication
-            Scalar check = kinematicEddyViscosityDifference[wallElementID] * kinematicEddyViscosityDifference[elementID];
+            Scalar check = kinematicEddyViscosityDifference[wallElementIdx] * kinematicEddyViscosityDifference[elementIdx];
             if (check < 0 // means sign has switched
-                && switchingPosition[wallElementID] > wallDistance)
+                && switchingPosition[wallElementIdx] > wallDistance)
             {
-                switchingPosition[wallElementID] = wallDistance;
+                switchingPosition[wallElementIdx] = wallDistance;
             }
         }
 
         // (4) finally determine eddy viscosity
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            unsigned int elementID = this->fvGridGeometry().elementMapper().index(element);
-            unsigned int wallElementID = this->wallElementID_[elementID];
-            Scalar wallDistance = this->wallDistance_[elementID] + additionalRoughnessLength_[elementID];
+            unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+            unsigned int wallElementIdx = this->wallElementIdx_[elementIdx];
+            Scalar wallDistance = this->wallDistance_[elementIdx] + additionalRoughnessLength_[elementIdx];
 
-            kinematicEddyViscosity_[elementID] = kinematicEddyViscosityInner[elementID];
-            if (wallDistance >= switchingPosition[wallElementID])
+            kinematicEddyViscosity_[elementIdx] = kinematicEddyViscosityInner[elementIdx];
+            if (wallDistance >= switchingPosition[wallElementIdx])
             {
-                kinematicEddyViscosity_[elementID] = kinematicEddyViscosityOuter[elementID];
+                kinematicEddyViscosity_[elementIdx] = kinematicEddyViscosityOuter[elementIdx];
             }
         }
     }
