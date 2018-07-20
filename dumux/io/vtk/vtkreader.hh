@@ -28,9 +28,11 @@
 #include <iterator>
 #include <algorithm>
 #include <memory>
+#include <type_traits>
 #include <unordered_map>
 
 #include <dune/common/exceptions.hh>
+#include <dune/grid/common/capabilities.hh>
 #include <dune/grid/io/file/vtk/common.hh>
 #include <dumux/io/xml/tinyxml2.h>
 #include <dune/grid/common/gridfactory.hh>
@@ -55,7 +57,7 @@ public:
     /*!
      * \brief The contructor creates a tinyxml2::XMLDocument from file
      */
-    VTKReader(const std::string& fileName)
+    explicit VTKReader(const std::string& fileName)
     : fileName_(fileName)
     {
         using namespace tinyxml2;
@@ -97,6 +99,8 @@ public:
     template<class Grid>
     std::unique_ptr<Grid> readGrid(bool verbose = false) const
     {
+        static_assert(!Dune::Capabilities::isCartesian<Grid>::v, "Grid reader only supports unstructured grid implementations");
+
         if (verbose) std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
 
         // make a grid factory
@@ -118,6 +122,8 @@ public:
     template<class Grid>
     std::unique_ptr<Grid> readGrid(Dune::GridFactory<Grid>& factory, Data& cellData, Data& pointData, bool verbose = false) const
     {
+        static_assert(!Dune::Capabilities::isCartesian<Grid>::v, "Grid reader only supports unstructured grid implementations");
+
         if (verbose) std::cout << "Reading " << Grid::dimension << "d grid from vtk file " << fileName_ << "." << std::endl;
 
         readGrid_(factory, verbose);
@@ -145,14 +151,14 @@ private:
         if (pointsNode == nullptr)
             DUNE_THROW(Dune::IOError, "Couldn't get data array of points in " << fileName_ << ".");
 
-        using Point = Dune::FieldVector<double, 3>;
-        std::vector<Point> points;
+        using Point3D = Dune::FieldVector<double, 3>;
+        std::vector<Point3D> points3D;
         std::stringstream dataStream(pointsNode->GetText());
-        std::istream_iterator<Point> it(dataStream);
-        std::copy(it, std::istream_iterator<Point>(), std::back_inserter(points));
+        std::istream_iterator<Point3D> it(dataStream);
+        std::copy(it, std::istream_iterator<Point3D>(), std::back_inserter(points3D));
 
-        if (Grid::dimensionworld < 3)
-            DUNE_THROW(Dune::NotImplemented, "VTKReader for dimworld < 3");
+        // adapt point dimensions if grid dimension is smaller than 3
+        auto points = adaptPointDimension_<Grid::dimensionworld>(std::move(points3D));
 
         if (verbose) std::cout << "Found " << points.size() << " vertices." << std::endl;
 
@@ -161,27 +167,61 @@ private:
             factory.insertVertex(std::move(point));
 
         const XMLElement* cellsNode = pieceNode->FirstChildElement("Cells");
-        const XMLElement* connectivityNode = findDataArray_(cellsNode, "connectivity");
-        const XMLElement* offsetsNode = findDataArray_(cellsNode, "offsets");
-        const XMLElement* typesNode = findDataArray_(cellsNode, "types");
-
-        const auto connectivity = parseDataArray_<std::vector<unsigned int>>(connectivityNode);
-        const auto offsets = parseDataArray_<std::vector<unsigned int>>(offsetsNode);
-        const auto types = parseDataArray_<std::vector<unsigned int>>(typesNode);
-
-        if (verbose) std::cout << "Found " << offsets.size() << " element." << std::endl;
-
-        unsigned int lastOffset = 0;
-        for (unsigned int i = 0; i < offsets.size(); ++i)
+        const XMLElement* linesNode = pieceNode->FirstChildElement("Lines");
+        if (cellsNode)
         {
-            const auto geomType = vtkToDuneGeomType_(types[i]);
-            unsigned int offset = offsets[i];
-            std::vector<unsigned int> corners; corners.resize(offset-lastOffset);
-            for (unsigned int j = 0; j < offset-lastOffset; ++j)
-                corners[Dune::VTK::renumber(geomType, j)] = connectivity[lastOffset+j];
-            factory.insertElement(geomType, std::move(corners));
-            lastOffset = offset;
+            const XMLElement* connectivityNode = findDataArray_(cellsNode, "connectivity");
+            const XMLElement* offsetsNode = findDataArray_(cellsNode, "offsets");
+            const XMLElement* typesNode = findDataArray_(cellsNode, "types");
+
+            const auto connectivity = parseDataArray_<std::vector<unsigned int>>(connectivityNode);
+            const auto offsets = parseDataArray_<std::vector<unsigned int>>(offsetsNode);
+            const auto types = parseDataArray_<std::vector<unsigned int>>(typesNode);
+
+            if (verbose) std::cout << "Found " << offsets.size() << " element." << std::endl;
+
+            unsigned int lastOffset = 0;
+            for (unsigned int i = 0; i < offsets.size(); ++i)
+            {
+                const auto geomType = vtkToDuneGeomType_(types[i]);
+                unsigned int offset = offsets[i];
+                std::vector<unsigned int> corners; corners.resize(offset-lastOffset);
+                for (unsigned int j = 0; j < offset-lastOffset; ++j)
+                    corners[Dune::VTK::renumber(geomType, j)] = connectivity[lastOffset+j];
+                factory.insertElement(geomType, std::move(corners));
+                lastOffset = offset;
+            }
         }
+        // for poly data
+        else if (linesNode)
+        {
+            // sanity check
+            if (Grid::dimension != 1)
+                DUNE_THROW(Dune::IOError, "Grid expects dimension " << Grid::dimension
+                                           << " but " << fileName_ << " contains a 1D grid.");
+
+            const XMLElement* connectivityNode = findDataArray_(linesNode, "connectivity");
+            const XMLElement* offsetsNode = findDataArray_(linesNode, "offsets");
+
+            const auto connectivity = parseDataArray_<std::vector<unsigned int>>(connectivityNode);
+            const auto offsets = parseDataArray_<std::vector<unsigned int>>(offsetsNode);
+
+            if (verbose) std::cout << "Found " << offsets.size() << " element." << std::endl;
+
+            unsigned int lastOffset = 0;
+            for (unsigned int i = 0; i < offsets.size(); ++i)
+            {
+                const auto geomType = Dune::GeometryTypes::line;
+                unsigned int offset = offsets[i];
+                std::vector<unsigned int> corners; corners.resize(offset-lastOffset);
+                for (unsigned int j = 0; j < offset-lastOffset; ++j)
+                    corners[Dune::VTK::renumber(geomType, j)] = connectivity[lastOffset+j];
+                factory.insertElement(geomType, std::move(corners));
+                lastOffset = offset;
+            }
+        }
+        else
+            DUNE_THROW(Dune::IOError, "No Cells or Lines element found in " << fileName_);
     }
 
     /*!
@@ -330,6 +370,22 @@ private:
             default: DUNE_THROW(Dune::NotImplemented, "VTK cell type " << vtkCellType);
         }
     }
+
+    template<int dim, std::enable_if_t<(dim < 3), int> = 0>
+    std::vector<Dune::FieldVector<double, dim>>
+    adaptPointDimension_(std::vector<Dune::FieldVector<double, 3>>&& points3D) const
+    {
+        std::vector<Dune::FieldVector<double, dim>> points(points3D.size());
+        for (std::size_t i = 0; i < points.size(); ++i)
+            for (int j = 0; j < dim; ++j)
+                points[i][j] = points3D[i][j];
+        return points;
+    }
+
+    template<int dim, std::enable_if_t<(dim == 3), int> = 0>
+    std::vector<Dune::FieldVector<double, dim>>
+    adaptPointDimension_(std::vector<Dune::FieldVector<double, 3>>&& points3D) const
+    { return points3D; }
 
     const std::string fileName_; //!< the vtk file name
     tinyxml2::XMLDocument doc_; //!< the xml document created from file with name fileName_
