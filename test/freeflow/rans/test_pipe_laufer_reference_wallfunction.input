@@ -30,5 +30,4 @@ TargetSteps = 5
 MaxRelativeShift = 1e-5
 
 [Vtk]
-AddVelocity = true
 WriteFaceData = true

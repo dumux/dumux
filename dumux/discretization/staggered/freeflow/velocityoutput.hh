@@ -65,7 +65,8 @@ public:
     , sol_(sol)
     {
         // check if velocity vectors shall be written to the VTK file
-        enableOutput_ = getParamFromGroup<bool>(gridVariables.curGridVolVars().problem().paramGroup(), "Vtk.AddVelocity");
+        // enable per default
+        enableOutput_ = getParamFromGroup<bool>(gridVariables.curGridVolVars().problem().paramGroup(), "Vtk.AddVelocity", true);
     }
 
     //! Returns whether to enable the velocity output or not
@@ -103,7 +104,7 @@ private:
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;
 
-    bool enableOutput_;
+    bool enableOutput_ = true;
 };
 
 } // end namespace Dumux
