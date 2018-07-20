@@ -61,9 +61,14 @@ class LowReKEpsilonProblem : public RANSProblem<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
 public:
-    //! The constructor sets the gravity, if desired by the user.
-    LowReKEpsilonProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+
+    /*
+     * \brief The constructor
+     * \param fvGridGeometry The finite volume grid geometry
+     * \param paramGroup The parameter group in which to look for runtime parameters first (default is "")
+     */
+    LowReKEpsilonProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup)
     {
         useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", true);
     }
