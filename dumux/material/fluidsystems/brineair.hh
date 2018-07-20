@@ -117,11 +117,18 @@ private:
     {
         using FluidSystem = Brine;
 
-        static constexpr int phaseIdx(int brinePhaseIdx) { return liquidPhaseIdx; }
-        static constexpr int compIdx(int brineCompIdx) { return compMap[brineCompIdx]; }
 
-    private:
-        static constexpr std::array<int, Brine::numComponents> compMap{ {H2OIdx, NaClIdx} };
+        static constexpr int phaseIdx(int brinePhaseIdx) { return liquidPhaseIdx; }
+        static constexpr int compIdx(int brineCompIdx)
+        {
+            switch (brineCompIdx)
+            {
+                assert(brineCompIdx == Brine::H2OIdx || brineCompIdx == Brine::NaClIdx);
+                case Brine::H2OIdx: return H2OIdx;
+                case Brine::NaClIdx: return NaClIdx;
+                default: return 0; // this will never be reached, only needed to suppress compiler warning
+            }
+        }
     };
 
     template<class FluidState>
