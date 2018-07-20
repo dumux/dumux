@@ -1002,25 +1002,62 @@ inline void print_(const std::string &typeTagName,
     if (indent == "")
         os << indent << "Properties for " << canonicalTypeTagNameToName_(typeTagName) << ":";
     else
-        os << indent << "Inherited from " << canonicalTypeTagNameToName_(typeTagName) << ":";
+        os << std::endl << indent << "Inherited from " << canonicalTypeTagNameToName_(typeTagName) << ":";
     const PropertyRegistry::KeyList &keys =
         PropertyRegistry::getKeys(typeTagName);
     PropertyRegistry::KeyList::const_iterator it = keys.begin();
     bool somethingPrinted = false;
+    std::string currentFile;
     for (; it != keys.end(); ++it) {
         const PropertyRegistryKey &key = it->second;
         if (printedProperties.count(key.propertyName()) > 0)
             continue; // property already printed
+        if (key.fileDefined() != currentFile)
+        {
+            currentFile = key.fileDefined();
+            os << std::endl << indent << "defined in " << currentFile << ":" << std::endl;
+        }
         if (!somethingPrinted) {
-            os << "\n";
             somethingPrinted = true;
         }
         os << indent << "  "
            << key.propertyKind() << " " << key.propertyName();
         if (key.propertyKind() != "opaque")
-            os << " = '" << key.propertyValue() << "'";
-        os << " defined at " << key.fileDefined()
-           << ":" << key.lineDefined()
+        {
+            // remove unnecessary parts from the property value string
+            auto propertyValue = key.propertyValue();
+            std::string propertyClutter = "typename ::Dumux::Properties::GetProperty<TypeTag, ::Dumux::Properties::PTag::";
+            const auto originalClutter = propertyClutter;
+            auto startPos = propertyValue.find(propertyClutter);
+            if (startPos == std::string::npos)
+            {
+                propertyClutter = propertyClutter.substr(9);
+                startPos = propertyValue.find(propertyClutter);
+            }
+            while (startPos != std::string::npos)
+            {
+                propertyValue.erase(startPos, propertyClutter.size());
+
+                startPos = propertyValue.find(">::p::type");
+                if (startPos != std::string::npos)
+                    propertyValue.erase(startPos, 10);
+
+                startPos = propertyValue.find(">::p::value");
+                if (startPos != std::string::npos)
+                    propertyValue.erase(startPos, 11);
+
+                propertyClutter = originalClutter;
+                startPos = propertyValue.find(propertyClutter);
+                if (startPos == std::string::npos)
+                {
+                    propertyClutter = propertyClutter.substr(9);
+                    startPos = propertyValue.find(propertyClutter);
+                }
+            }
+
+            os << " = '" << propertyValue << "'";
+        }
+        os << " at line " << key.lineDefined()
            << "\n";
         printedProperties.insert(key.propertyName());
     };
@@ -1036,10 +1073,16 @@ inline void print_(const std::string &typeTagName,
     }
 }
 
+template <class TypeTag>
+class TypeTagAncestors;
+
 //! \internal
 template <class TypeTag>
 void print(std::ostream &os = std::cout)
 {
+    TypeTagAncestors<TypeTag>::addAncestors();
+    TypeTagAncestors<TypeTag>::print(os);
+
     std::set<std::string> printedProps;
     print_(Dune::className<TypeTag>(), os, "", printedProps);
 
@@ -1111,6 +1154,8 @@ public:
     static void print(std::ostream& os)
     {
         const auto& a = ancestors();
+
+        os << "TypeTag tree:" << std::endl;
 
         std::vector<size_t> colSizes;
         for (size_t i = 0; i < a.size(); ++i)
