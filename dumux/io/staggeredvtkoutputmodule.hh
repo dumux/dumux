@@ -37,33 +37,6 @@ namespace Dumux {
 template<class Scalar, class GlobalPosition>
 class PointCloudVtkWriter;
 
-template<class ...Dummy>
-class StaggeredVtkOutputModule;
-
-template<class TypeTag>
-class DUNE_DEPRECATED_MSG("Use StaggeredVtkOutputModule<GridVariables, SolutionVector> instead!") StaggeredVtkOutputModule<TypeTag>
-: public StaggeredVtkOutputModule<typename GET_PROP_TYPE(TypeTag, GridVariables),
-                                  typename GET_PROP_TYPE(TypeTag, SolutionVector)>
-{
-    using ParentType = StaggeredVtkOutputModule<typename GET_PROP_TYPE(TypeTag, GridVariables),
-                                                typename GET_PROP_TYPE(TypeTag, SolutionVector)>;
-public:
-    using ParentType::ParentType;
-
-    template<class Problem, class FVGridGeometry, class GridVariables, class SolutionVector>
-    DUNE_DEPRECATED_MSG("Use StaggeredVtkOutputModule(gridVariables, sol, name) instead!")
-    StaggeredVtkOutputModule(const Problem& problem,
-                             const FVGridGeometry& fvGridGeometry,
-                             const GridVariables& gridVariables,
-                             const SolutionVector& sol,
-                             const std::string& name,
-                             const std::string& paramGroup = "",
-                             Dune::VTK::DataMode dm = Dune::VTK::conforming,
-                             bool verbose = true)
-    : ParentType(gridVariables, sol, name, paramGroup, dm, verbose) {}
-
-};
-
 /*!
  * \ingroup InputOutput
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format
@@ -73,7 +46,7 @@ public:
  * \tparam SolutionVector The solution vector
  */
 template<class GridVariables, class SolutionVector>
-class StaggeredVtkOutputModule<GridVariables, SolutionVector>
+class StaggeredVtkOutputModule
 : public VtkOutputModule<GridVariables, SolutionVector>
 {
     using ParentType = VtkOutputModule<GridVariables, SolutionVector>;
