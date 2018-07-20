@@ -32,6 +32,7 @@
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 #include <dumux/material/components/cao2h2.hh>
@@ -40,7 +41,6 @@
 #include "thermochemspatialparams.hh"
 #include "thermochemreaction.hh"
 #include "modifiedcao.hh"
-
 
 namespace Dumux {
 
@@ -55,16 +55,15 @@ NEW_TYPE_TAG(ThermoChemBoxTypeTag, INHERITS_FROM(BoxModel, ThermoChemTypeTag));
 SET_TYPE_PROP(ThermoChemTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ThermoChemTypeTag, Problem, ThermoChemProblem<TypeTag>);
-// Set fluid configuration
 
+// The fluid system
 SET_PROP(ThermoChemTypeTag, FluidSystem)
-{ /*private:*/
+{
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::H2ON2<Scalar>;
+    using H2ON2 = FluidSystems::H2ON2<Scalar>;
+    static constexpr auto phaseIdx = H2ON2::gasPhaseIdx; // simulate the air phase
+    using type = FluidSystems::OnePAdapter<H2ON2, phaseIdx>;
 };
-
-// set phase index (gas)
-SET_INT_PROP(ThermoChemTypeTag, PhaseIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::gasPhaseIdx);
 
 SET_PROP(ThermoChemTypeTag, SolidSystem)
 {
@@ -125,7 +124,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     {
         // Indices of the primary variables
         pressureIdx = Indices::pressureIdx, //gas-phase pressure
-        H2OIdx = FluidSystem::H2OIdx, // mole fraction water
+        H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx), // mole fraction water
 
         CaOIdx = FluidSystem::numComponents,
         CaO2H2Idx = FluidSystem::numComponents+1,
