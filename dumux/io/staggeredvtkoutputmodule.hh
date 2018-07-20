@@ -29,8 +29,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/pointcloudvtkwriter.hh>
 #include <dumux/io/vtksequencewriter.hh>
-
-#include <dune/common/deprecated.hh>
+#include <dumux/discretization/staggered/freeflow/velocityoutput.hh>
 
 namespace Dumux {
 
@@ -96,6 +95,8 @@ public:
                       gridVariables.curGridVolVars().problem().fvGridGeometry().gridView().comm().size() )
 
     {
+        // enable velocity output per default
+        this->addVelocityOutput(std::make_shared<StaggeredFreeFlowVelocityOutput<GridVariables, SolutionVector>>(gridVariables, sol));
         writeFaceVars_ = getParamFromGroup<bool>(paramGroup, "Vtk.WriteFaceData", false);
         coordinatesInitialized_ = false;
     }
