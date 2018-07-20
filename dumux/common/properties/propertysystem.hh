@@ -994,10 +994,9 @@ const std::string getDiagnostic(std::string propTagName)
     return result;
 }
 
-std::string::iterator findStartPosAndClutter_(const std::string& propertyValue, std::string& clutter)
+std::string::size_type findStartPosAndClutter_(const std::string& propertyValue, std::string& clutter)
 {
-    static const std::string originalClutter
-      = "typename ::Dumux::Properties::GetProperty<TypeTag, ::Dumux::Properties::PTag::";
+    clutter = "typename ::Dumux::Properties::GetProperty<TypeTag, ::Dumux::Properties::PTag::";
     auto startPos = propertyValue.find(clutter);
     if (startPos == std::string::npos)
     {
