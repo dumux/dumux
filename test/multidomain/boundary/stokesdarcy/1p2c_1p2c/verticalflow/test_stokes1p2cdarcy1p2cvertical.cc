@@ -194,8 +194,6 @@ int main(int argc, char** argv) try
 
     StaggeredVtkOutputModule<StokesGridVariables, typename GET_PROP_TYPE(StokesTypeTag, SolutionVector)> stokesVtkWriter(*stokesGridVariables, stokesSol, stokesName);
     GET_PROP_TYPE(StokesTypeTag, VtkOutputFields)::init(stokesVtkWriter);
-    using StokesVelocityOutput = typename GET_PROP_TYPE(StokesTypeTag, VelocityOutput);
-    stokesVtkWriter.addVelocityOutput(std::make_shared<StokesVelocityOutput>(*stokesGridVariables, stokesSol));
     stokesVtkWriter.write(0.0);
 
     VtkOutputModule<DarcyGridVariables, typename GET_PROP_TYPE(DarcyTypeTag, SolutionVector)> darcyVtkWriter(*darcyGridVariables, sol[darcyIdx], darcyName);

@@ -153,8 +153,6 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
-    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables, x));
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.addField(problem->getDeltaRho(), "deltaRho");
     vtkWriter.write(0.0);

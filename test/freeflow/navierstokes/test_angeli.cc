@@ -155,9 +155,7 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
-    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables, x));
     vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");
     vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact");
     vtkWriter.addFaceField(problem->getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
