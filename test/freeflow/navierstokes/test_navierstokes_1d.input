@@ -17,4 +17,3 @@ MaxRelativeShift = 1e-9
 
 [Vtk]
 WriteFaceData = false
-AddVelocity = true

@@ -164,6 +164,10 @@ public:
     GridVolumeVariables& prevGridVolVars()
     { return prevGridVolVars_; }
 
+    //! return the finite volume grid geometry
+    const GridGeometry& fvGridGeometry() const
+    { return *fvGridGeometry_; }
+
 protected:
 
     std::shared_ptr<const GridGeometry> fvGridGeometry_; //!< pointer to the constant grid geometry

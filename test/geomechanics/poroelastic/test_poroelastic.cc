@@ -145,8 +145,8 @@ int main(int argc, char** argv) try
 
     // intialize the vtk output module and output fields
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    using VtkOutputModule = VtkOutputModule<TypeTag>;
-    VtkOutputModule vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    using VtkOutputModule = Dumux::VtkOutputModule<GridVariables, SolutionVector>;
+    VtkOutputModule vtkWriter(*gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter);
 
     // also, add exact solution to the output

@@ -29,6 +29,7 @@
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/pointcloudvtkwriter.hh>
 #include <dumux/io/vtksequencewriter.hh>
+#include <dumux/discretization/staggered/freeflow/velocityoutput.hh>
 
 namespace Dumux {
 
@@ -40,24 +41,20 @@ class PointCloudVtkWriter;
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format
  *        Specialization for staggered grids with dofs on faces.
  *
- * \tparam TypeTag The TypeTag of the problem implementation
- * \tparam phaseIdxOffset Used for single-phase problems to retrieve the right phase name
+ * \tparam GridVariables The grid variables
+ * \tparam SolutionVector The solution vector
  */
-template<typename TypeTag, int phaseIdxOffset = 0>
-class StaggeredVtkOutputModule : public VtkOutputModule<TypeTag, phaseIdxOffset>
+template<class GridVariables, class SolutionVector>
+class StaggeredVtkOutputModule
+: public VtkOutputModule<GridVariables, SolutionVector>
 {
-    friend class VtkOutputModule<TypeTag, phaseIdxOffset>;
-    using ParentType = VtkOutputModule<TypeTag, phaseIdxOffset>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using ParentType = VtkOutputModule<GridVariables, SolutionVector>;
+    using FVGridGeometry = typename GridVariables::GridGeometry;
+    using GridView = typename FVGridGeometry::GridView;
+    using Scalar = typename GridVariables::Scalar;
+    using FaceVariables = typename GridVariables::GridFaceVariables::FaceVariables;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-
 
     enum { dim = GridView::dimension };
 
@@ -85,26 +82,22 @@ class StaggeredVtkOutputModule : public VtkOutputModule<TypeTag, phaseIdxOffset>
 
 public:
 
-    StaggeredVtkOutputModule(const Problem& problem,
-                    const FVGridGeometry& fvGridGeometry,
-                    const GridVariables& gridVariables,
-                    const SolutionVector& sol,
-                    const std::string& name,
-                    const std::string& paramGroup = "",
-                    Dune::VTK::DataMode dm = Dune::VTK::conforming,
-                    bool verbose = true)
-    : ParentType(problem, fvGridGeometry, gridVariables, sol, name, paramGroup, dm, verbose)
-    , problem_(problem)
-    , gridGeom_(fvGridGeometry)
-    , gridVariables_(gridVariables)
-    , sol_(sol)
+    StaggeredVtkOutputModule(const GridVariables& gridVariables,
+                             const SolutionVector& sol,
+                             const std::string& name,
+                             const std::string& paramGroup = "",
+                             Dune::VTK::DataMode dm = Dune::VTK::conforming,
+                             bool verbose = true)
+    : ParentType(gridVariables, sol, name, paramGroup, dm, verbose)
     , faceWriter_(std::make_shared<PointCloudVtkWriter<Scalar, GlobalPosition>>(coordinates_))
-    , sequenceWriter_(faceWriter_, problem.name() + "-face", "","",
-                      fvGridGeometry.gridView().comm().rank(),
-                      fvGridGeometry.gridView().comm().size() )
+    , sequenceWriter_(faceWriter_, name + "-face", "","",
+                      gridVariables.curGridVolVars().problem().fvGridGeometry().gridView().comm().rank(),
+                      gridVariables.curGridVolVars().problem().fvGridGeometry().gridView().comm().size() )
 
     {
-        writeFaceVars_ = getParamFromGroup<bool>(problem.paramGroup(), "Vtk.WriteFaceData", false);
+        // enable velocity output per default
+        this->addVelocityOutput(std::make_shared<StaggeredFreeFlowVelocityOutput<GridVariables, SolutionVector>>(gridVariables, sol));
+        writeFaceVars_ = getParamFromGroup<bool>(paramGroup, "Vtk.WriteFaceData", false);
         coordinatesInitialized_ = false;
     }
 
@@ -118,7 +111,7 @@ public:
     //! \param name The name of the vtk field
     void addFaceField(const std::vector<Scalar>& v, const std::string& name)
     {
-        if (v.size() == this->gridGeom_.gridView().size(1))
+        if (v.size() == this->fvGridGeometry().gridView().size(1))
             faceFieldScalarDataInfo_.emplace_back(v, name);
         else
             DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
@@ -129,7 +122,7 @@ public:
     //! \param name The name of the vtk field
     void addFaceField(const std::vector<DimVector>& v, const std::string& name)
     {
-        if (v.size() == this->gridGeom_.gridView().size(1))
+        if (v.size() == this->fvGridGeometry().gridView().size(1))
             faceFieldVectorDataInfo_.emplace_back(v, name);
         else
             DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
@@ -167,10 +160,10 @@ private:
     //! Update the coordinates (the face centers)
     void updateCoordinates_()
     {
-        coordinates_.resize(gridGeom_.numFaceDofs());
-        for(auto&& facet : facets(gridGeom_.gridView()))
+        coordinates_.resize(this->fvGridGeometry().numFaceDofs());
+        for(auto&& facet : facets(this->fvGridGeometry().gridView()))
         {
-            const int dofIdxGlobal = gridGeom_.gridView().indexSet().index(facet);
+            const int dofIdxGlobal = this->fvGridGeometry().gridView().indexSet().index(facet);
             coordinates_[dofIdxGlobal] = facet.geometry().center();
         }
         coordinatesInitialized_ = true;
@@ -180,7 +173,7 @@ private:
      //! \param time The current time
     void getFaceDataAndWrite_(const Scalar time)
     {
-        const auto numPoints = gridGeom_.numFaceDofs();
+        const auto numPoints = this->fvGridGeometry().numFaceDofs();
 
         // make sure not to iterate over the same dofs twice
         std::vector<bool> dofVisited(numPoints, false);
@@ -199,15 +192,15 @@ private:
         if(!faceVarVectorDataInfo_.empty())
             faceVarVectorData.resize(faceVarVectorDataInfo_.size(), std::vector<DimVector>(numPoints));
 
-        for (const auto& element : elements(gridGeom_.gridView(), Dune::Partitions::interior))
+        for (const auto& element : elements(this->fvGridGeometry().gridView(), Dune::Partitions::interior))
         {
-            auto fvGeometry = localView(gridGeom_);
-            auto elemFaceVars = localView(gridVariables_.curGridFaceVars());
+            auto fvGeometry = localView(this->fvGridGeometry());
+            auto elemFaceVars = localView(this->gridVariables().curGridFaceVars());
 
             if (!faceVarScalarDataInfo_.empty() || !faceVarVectorDataInfo_.empty())
             {
                 fvGeometry.bind(element);
-                elemFaceVars.bindElement(element, fvGeometry, sol_);
+                elemFaceVars.bindElement(element, fvGeometry, this->sol());
 
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
@@ -255,11 +248,6 @@ private:
         coordinatesInitialized_ = false;
     }
 
-
-    const Problem& problem_;
-    const FVGridGeometry& gridGeom_;
-    const GridVariables& gridVariables_;
-    const SolutionVector& sol_;
 
     std::shared_ptr<PointCloudVtkWriter<Scalar, GlobalPosition>> faceWriter_;
 

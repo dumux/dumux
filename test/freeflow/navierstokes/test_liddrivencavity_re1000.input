@@ -25,7 +25,6 @@ MaxRelativeShift = 1e-8
 NumericDifference.BaseEpsilon = 1e-8
 
 [Vtk]
-AddVelocity = true
 WriteFaceData = false
 
 [Implicit]

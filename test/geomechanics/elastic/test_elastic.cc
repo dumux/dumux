@@ -101,7 +101,7 @@ int main(int argc, char** argv) try
     gridVariables->init(x);
 
     // intialize the vtk output module and add displacement
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     vtkWriter.addField(x, "u");
 
     // also, add exact solution to the output

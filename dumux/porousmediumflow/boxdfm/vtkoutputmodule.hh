@@ -44,26 +44,17 @@ namespace Dumux {
  *
  * \tparam TypeTag The TypeTag of the problem implementation
  * \tparam FractureGrid The Type used for the lower-dimensional grid
- * \tparam phaseIdxOffset Used for single-phase problems to retrieve the right phase name
  *
  * Handles the output of scalar and vector fields to VTK formatted file for multiple
  * variables and timesteps. Certain predefined fields can be registered on
  * initialization and/or be turned on/off using the designated properties. Additionally
  * non-standardized scalar and vector fields can be added to the writer manually.
  */
-template<class TypeTag, class FractureGrid, int phaseIdxOffset = 0>
-class BoxDfmVtkOutputModule : public VtkOutputModule<TypeTag, phaseIdxOffset>
+template<class GridVariables, class SolutionVector, class FractureGrid>
+class BoxDfmVtkOutputModule : public VtkOutputModule<GridVariables, SolutionVector>
 {
-    using ParentType = VtkOutputModule<TypeTag, phaseIdxOffset>;
-
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    static constexpr int numPhases = ModelTraits::numPhases();
-
+    using ParentType = VtkOutputModule<GridVariables, SolutionVector>;
+    using FVGridGeometry = typename GridVariables::GridGeometry;
     using VV = typename GridVariables::VolumeVariables;
     using FluidSystem = typename VV::FluidSystem;
     using Scalar = typename GridVariables::Scalar;
@@ -93,18 +84,16 @@ class BoxDfmVtkOutputModule : public VtkOutputModule<TypeTag, phaseIdxOffset>
 public:
 
     //! The constructor
-    BoxDfmVtkOutputModule(const Problem& problem,
-                          const FVGridGeometry& fvGridGeometry,
-                          const GridVariables& gridVariables,
+    BoxDfmVtkOutputModule(const GridVariables& gridVariables,
                           const SolutionVector& sol,
                           const std::string& name,
                           const std::string& paramGroup = "",
                           Dune::VTK::DataMode dm = Dune::VTK::conforming,
                           bool verbose = true)
-    : ParentType(problem, fvGridGeometry, gridVariables, sol, name, paramGroup, dm, verbose)
+    : ParentType(gridVariables, sol, name, paramGroup, dm, verbose)
     {
         // create the fracture grid and all objects needed on it
-        initializeFracture(fvGridGeometry);
+        initializeFracture(gridVariables.fvGridGeometry());
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -144,8 +133,7 @@ private:
         //////////////////////////////////////////////////////////////
 
         // instatiate the velocity output
-        VelocityOutput velocityOutput(this->problem(), this->fvGridGeometry(), this->gridVariables(), this->sol());
-        std::array<std::vector<GlobalPosition>, numPhases> velocity;
+        std::vector<typename ParentType::VelocityOutput::VelocityVector> velocity;
 
         // process rank
         static bool addProcessRank = getParamFromGroup<bool>(this->paramGroup(), "Vtk.AddProcessRank");
@@ -166,7 +154,7 @@ private:
         if (!volVarScalarDataInfo.empty()
             || !volVarVectorDataInfo.empty()
             || !this->fields().empty()
-            || velocityOutput.enableOutput()
+            || this->velocityOutput().enableOutput()
             || addProcessRank)
         {
             const auto numCells = gridView.size(0);
@@ -185,8 +173,8 @@ private:
                 volVarVectorDataFracture.resize(volVarVectorDataInfo.size(), std::vector<GlobalPosition>(numFractureVert));
             }
 
-            if (velocityOutput.enableOutput())
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            if (this->velocityOutput().enableOutput())
+                for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numPhases(); ++phaseIdx)
                     velocity[phaseIdx].resize(numDofs);
 
             // maybe allocate space for the process rank
@@ -201,7 +189,7 @@ private:
 
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
-                if (velocityOutput.enableOutput())
+                if (this->velocityOutput().enableOutput())
                 {
                     fvGeometry.bind(element);
                     elemVolVars.bind(element, fvGeometry, this->sol());
@@ -237,9 +225,9 @@ private:
                 }
 
                 // velocity output
-                if (velocityOutput.enableOutput())
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                        velocityOutput.calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
+                if (this->velocityOutput().enableOutput())
+                    for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numPhases(); ++phaseIdx)
+                        this->velocityOutput().calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
 
                 //! the rank
                 if (addProcessRank)
@@ -266,11 +254,11 @@ private:
             }
 
             // the velocity field
-            if (velocityOutput.enableOutput())
+            if (this->velocityOutput().enableOutput())
             {
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numPhases(); ++phaseIdx)
                     this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().vertexMapper(), velocity[phaseIdx],
-                                                                "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                                "velocity_" + std::string(this->velocityOutput().phaseName(phaseIdx)) + " (m/s)",
                                                                 /*numComp*/dimWorld, /*codim*/dim).get() );
             }
 
@@ -312,8 +300,7 @@ private:
         //////////////////////////////////////////////////////////////
 
         // instatiate the velocity output
-        VelocityOutput velocityOutput(this->problem(), this->fvGridGeometry(), this->gridVariables(), this->sol());
-        std::array<std::vector<GlobalPosition>, numPhases> velocity;
+        std::vector<typename ParentType::VelocityOutput::VelocityVector> velocity;
 
         // process rank
         static bool addProcessRank = getParamFromGroup<bool>(this->paramGroup(), "Vtk.AddProcessRank");
@@ -336,7 +323,7 @@ private:
         if (!volVarScalarDataInfo.empty()
             || !volVarVectorDataInfo.empty()
             || !this->fields().empty()
-            || velocityOutput.enableOutput()
+            || this->velocityOutput().enableOutput()
             || addProcessRank)
         {
             const auto numCells = gridView.size(0);
@@ -355,8 +342,8 @@ private:
                 volVarVectorDataFracture.resize(volVarVectorDataInfo.size(), VectorDataContainer(numFractureCells));
             }
 
-            if (velocityOutput.enableOutput())
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            if (this->velocityOutput().enableOutput())
+                for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numPhases(); ++phaseIdx)
                     velocity[phaseIdx].resize(numDofs);
 
             // maybe allocate space for the process rank
@@ -378,7 +365,7 @@ private:
 
                 // If velocity output is enabled we need to bind to the whole stencil
                 // otherwise element-local data is sufficient
-                if (velocityOutput.enableOutput())
+                if (this->velocityOutput().enableOutput())
                 {
                     fvGeometry.bind(element);
                     elemVolVars.bind(element, fvGeometry, this->sol());
@@ -416,9 +403,9 @@ private:
                 }
 
                 // velocity output
-                if (velocityOutput.enableOutput())
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                        velocityOutput.calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
+                if (this->velocityOutput().enableOutput())
+                    for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numPhases(); ++phaseIdx)
+                        this->velocityOutput().calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
 
                 //! the rank
                 if (addProcessRank)
@@ -451,11 +438,11 @@ private:
             }
 
             // the velocity field
-            if (velocityOutput.enableOutput())
+            if (this->velocityOutput().enableOutput())
             {
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                for (int phaseIdx = 0; phaseIdx < this->velocityOutput().numPhases(); ++phaseIdx)
                     this->sequenceWriter().addVertexData( Field(gridView, this->fvGridGeometry().vertexMapper(), velocity[phaseIdx],
-                                                                "velocity_" + std::string(FluidSystem::phaseName(phaseIdx+phaseIdxOffset)) + " (m/s)",
+                                                                "velocity_" + std::string(this->velocityOutput().phaseName(phaseIdx)) + " (m/s)",
                                                                 /*numComp*/dimWorld, /*codim*/dim).get() );
             }
 

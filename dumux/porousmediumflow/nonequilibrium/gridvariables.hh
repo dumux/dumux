@@ -76,7 +76,7 @@ public:
     {
         // instatiate the velocity output
         using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
-        VelocityOutput velocityOutput(*problem_, *this->fvGridGeometry_, *this, curSol);
+        VelocityOutput velocityOutput(*this);
 
         using Scalar = typename SolutionVector::field_type;
         using VelocityVector = typename Dune::FieldVector<Scalar, dimWorld>;

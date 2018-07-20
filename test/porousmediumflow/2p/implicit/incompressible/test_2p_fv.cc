@@ -151,9 +151,10 @@ int main(int argc, char** argv) try
 
     // use non-conforming output for the test with interface solver
     const auto ncOutput = getParam<bool>("Problem.UseNonConformingOutput", false);
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name(), "",
-                                       (ncOutput ? Dune::VTK::nonconforming : Dune::VTK::conforming));
-
+    VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name(), "",
+                                                             ncOutput ? Dune::VTK::nonconforming : Dune::VTK::conforming);
+    using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+    vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 

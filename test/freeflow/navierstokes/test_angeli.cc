@@ -153,8 +153,8 @@ int main(int argc, char** argv) try
     gridVariables->init(x, xOld);
 
     // intialize the vtk output module
+    StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    StaggeredVtkOutputModule<TypeTag, GET_PROP_VALUE(TypeTag, PhaseIdx)> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");
     vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact");

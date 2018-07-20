@@ -28,6 +28,3 @@ NumericDifferenceMethod = 0
 MaxSteps = 10
 TargetSteps = 8
 MaxRelativeShift = 1e-5
-
-[Vtk]
-AddVelocity = true

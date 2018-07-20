@@ -47,7 +47,7 @@ SET_TYPE_PROP(Geomechanics, FluxVariablesCache, StressVariablesCache< typename G
                                                                       typename GET_PROP_TYPE(TypeTag, FVGridGeometry) >);
 
 //! The (currently empty) velocity output
-SET_TYPE_PROP(Geomechanics, VelocityOutput, GeomechanicsVelocityOutput);
+SET_TYPE_PROP(Geomechanics, VelocityOutput, GeomechanicsVelocityOutput<typename GET_PROP_TYPE(TypeTag, GridVariables)>);
 
 //! The solid state must be inert
 SET_PROP(Geomechanics, SolidState)

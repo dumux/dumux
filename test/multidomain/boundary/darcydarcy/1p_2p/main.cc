@@ -208,11 +208,13 @@ int main(int argc, char** argv) try
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
-    VtkOutputModule<SubTypeTag0> vtkWriter0(*problem0, *fvGridGeometry0, *gridVariables0, sol[domain0Idx], problem0->name());
+    using SolutionVector0 = std::decay_t<decltype(sol[domain0Idx])>;
+    VtkOutputModule<GridVariables0, SolutionVector0> vtkWriter0(*gridVariables0, sol[domain0Idx], problem0->name());
     GET_PROP_TYPE(SubTypeTag0, VtkOutputFields)::init(vtkWriter0);
     vtkWriter0.write(0.0);
 
-    VtkOutputModule<SubTypeTag1> vtkWriter1(*problem1, *fvGridGeometry1, *gridVariables1, sol[domain1Idx], problem1->name());
+    using SolutionVector1 = std::decay_t<decltype(sol[domain1Idx])>;
+    VtkOutputModule<GridVariables1, SolutionVector1> vtkWriter1(*gridVariables1, sol[domain1Idx], problem1->name());
     GET_PROP_TYPE(SubTypeTag1, VtkOutputFields)::init(vtkWriter1);
     vtkWriter1.write(0.0);
 
