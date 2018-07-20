@@ -34,8 +34,8 @@ namespace Dumux {
  *
  * It contains simple and advanced reaction kinetics according to Nagel et al. (2014).
  */
-class ThermoChemReaction
-{
+class ThermoChemReaction {
+
 public:
     /*!
      * \brief evaluates the reaction kinetics (see Nagel et al. 2014)
@@ -47,6 +47,7 @@ public:
         using FluidSystem = typename VolumeVariables::FluidSystem;
         using SolidSystem = typename VolumeVariables::SolidSystem;
 
+        static constexpr auto H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx);
         static constexpr int cPhaseIdx = SolidSystem::comp0Idx;
         static constexpr int hPhaseIdx = SolidSystem::comp1Idx;
 
@@ -58,12 +59,12 @@ public:
 
         Scalar moleFractionVapor = 1e-3;
 
-        if(volVars.moleFraction(FluidSystem::gasPhaseIdx, FluidSystem::H2OIdx) > 1e-3)
-            moleFractionVapor = volVars.moleFraction(FluidSystem::gasPhaseIdx, FluidSystem::H2OIdx);
+        if(volVars.moleFraction(0, H2OIdx) > 1e-3)
+            moleFractionVapor = volVars.moleFraction(0, H2OIdx);
 
-        if(volVars.moleFraction(FluidSystem::gasPhaseIdx, FluidSystem::H2OIdx) >= 1.0) moleFractionVapor = 1;
+        if(volVars.moleFraction(0, H2OIdx) >= 1.0) moleFractionVapor = 1;
 
-        Scalar pV = volVars.pressure(FluidSystem::gasPhaseIdx) *moleFractionVapor;
+        Scalar pV = volVars.pressure(0) *moleFractionVapor;
         Scalar vaporPressure = pV*1.0e-5;
         Scalar pFactor = log(vaporPressure);
 
@@ -166,6 +167,7 @@ public:
         using FluidSystem = typename VolumeVariables::FluidSystem;
         using SolidSystem = typename VolumeVariables::SolidSystem;
 
+        static constexpr auto H2OIdx = FluidSystem::compIdx(FluidSystem::MultiPhaseFluidSystem::H2OIdx);
         static constexpr int cPhaseIdx = SolidSystem::comp0Idx;
         static constexpr int hPhaseIdx = SolidSystem::comp1Idx;
 
@@ -177,12 +179,12 @@ public:
 
         Scalar moleFractionVapor = 1e-3;
 
-        if(volVars.moleFraction(FluidSystem::gasPhaseIdx, FluidSystem::H2OIdx) > 1e-3)
-            moleFractionVapor = volVars.moleFraction(FluidSystem::gasPhaseIdx, FluidSystem::H2OIdx);
+        if(volVars.moleFraction(0, H2OIdx) > 1e-3)
+            moleFractionVapor = volVars.moleFraction(0, H2OIdx);
 
-        if(volVars.moleFraction(FluidSystem::gasPhaseIdx, FluidSystem::H2OIdx) >= 1.0) moleFractionVapor = 1;
+        if(volVars.moleFraction(0, H2OIdx) >= 1.0) moleFractionVapor = 1;
 
-        Scalar pV = volVars.pressure(FluidSystem::gasPhaseIdx) *moleFractionVapor;
+        Scalar pV = volVars.pressure(0) *moleFractionVapor;
         Scalar vaporPressure = pV*1.0e-5;
         Scalar pFactor = log(vaporPressure);
 
@@ -209,7 +211,7 @@ public:
 
          //discharge or hydration
         if (T < Teq){
-            Scalar massFracH2O_fPhase = volVars.massFraction(FluidSystem::gasPhaseIdx, FluidSystem::H2OIdx);
+            Scalar massFracH2O_fPhase = volVars.massFraction(0, H2OIdx);
             Scalar krh = 0.2;
 
             Scalar rHydration = - massFracH2O_fPhase* (volVars.solidComponentDensity(hPhaseIdx)- realSolidDensityAverage)
