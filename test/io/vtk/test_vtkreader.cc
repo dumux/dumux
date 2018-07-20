@@ -26,20 +26,32 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
+
+#include <dune/grid/yaspgrid.hh>
+
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
+#endif
+
+#if HAVE_DUNE_FOAMGRID
+#include <dune/foamgrid/foamgrid.hh>
+#endif
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/io/vtk/vtureader.hh>
+#include <dumux/io/vtk/vtkreader.hh>
 
 int main(int argc, char** argv) try
 {
     Dune::MPIHelper::instance(argc, argv);
 
-    Dumux::VTKReader vtkReader("test-in.vtu");
-    using Grid = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>;
+    if (argc != 3)
+        DUNE_THROW(Dune::IOError, "Needs two arguments, the vtk file name and an output file base name");
+
+    auto vtkReader = std::make_shared<Dumux::VTKReader>(std::string(argv[1]));
+    using Grid = GRIDTYPE;
     Dumux::VTKReader::Data cellData, pointData;
     Dune::GridFactory<Grid> gridFactory;
-    auto grid = vtkReader.readGrid(gridFactory, cellData, pointData, /*verbose=*/true);
+    auto grid = vtkReader->readGrid(gridFactory, cellData, pointData, /*verbose=*/true);
     const auto& gridView = grid->leafGridView();
 
     std::cout << "Successfully read a grid with "
@@ -81,7 +93,7 @@ int main(int argc, char** argv) try
         vtkWriter.addCellData(data.second, data.first);
     for (const auto& data : reorderedPointData)
         vtkWriter.addVertexData(data.second, data.first);
-    vtkWriter.write("test-out");
+    vtkWriter.write(std::string(argv[2]));
 
     return 0;
 }
