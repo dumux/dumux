@@ -98,12 +98,11 @@ namespace Dumux {
  *
  * \tparam nComp the number of components to be considered.
  * \tparam useMol whether to use mass or mole balances
- * \tparam fluidSystemPhaseIdx The index of the fluid phase in the fluid system
  */
-template<int nComp, bool useMol, int fluidSystemPhaseIdx, int repCompEqIdx = nComp>
+template<int nComp, bool useMol, int repCompEqIdx = nComp>
 struct RichardsNCModelTraits
 {
-    using Indices = RichardsNCIndices<fluidSystemPhaseIdx>;
+    using Indices = RichardsNCIndices;
 
     static constexpr int numEq() { return nComp; }
     static constexpr int numPhases() { return 1; }
@@ -139,7 +138,7 @@ SET_PROP(RichardsNC, ModelTraits)
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    using type = RichardsNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, PhaseIdx), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using type = RichardsNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
 
  //! The default phase index to access the fluid system
@@ -218,7 +217,7 @@ SET_PROP(RichardsNCNI, ModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using IsothermalTraits = RichardsNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, PhaseIdx), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using IsothermalTraits = RichardsNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
