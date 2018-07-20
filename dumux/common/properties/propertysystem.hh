@@ -994,6 +994,20 @@ const std::string getDiagnostic(std::string propTagName)
     return result;
 }
 
+std::string::iterator findStartPosAndClutter_(const std::string& propertyValue, std::string& clutter)
+{
+    static const std::string originalClutter
+      = "typename ::Dumux::Properties::GetProperty<TypeTag, ::Dumux::Properties::PTag::";
+    auto startPos = propertyValue.find(clutter);
+    if (startPos == std::string::npos)
+    {
+        clutter = clutter.substr(9);
+        startPos = propertyValue.find(clutter);
+    }
+
+    return startPos;
+}
+
 inline void print_(const std::string &typeTagName,
                    std::ostream &os,
                    const std::string &indent,
@@ -1026,14 +1040,8 @@ inline void print_(const std::string &typeTagName,
         {
             // remove unnecessary parts from the property value string
             auto propertyValue = key.propertyValue();
-            std::string propertyClutter = "typename ::Dumux::Properties::GetProperty<TypeTag, ::Dumux::Properties::PTag::";
-            const auto originalClutter = propertyClutter;
-            auto startPos = propertyValue.find(propertyClutter);
-            if (startPos == std::string::npos)
-            {
-                propertyClutter = propertyClutter.substr(9);
-                startPos = propertyValue.find(propertyClutter);
-            }
+            std::string propertyClutter;
+            auto startPos = findStartPosAndClutter_(propertyValue, propertyClutter);
             while (startPos != std::string::npos)
             {
                 propertyValue.erase(startPos, propertyClutter.size());
@@ -1046,13 +1054,7 @@ inline void print_(const std::string &typeTagName,
                 if (startPos != std::string::npos)
                     propertyValue.erase(startPos, 11);
 
-                propertyClutter = originalClutter;
-                startPos = propertyValue.find(propertyClutter);
-                if (startPos == std::string::npos)
-                {
-                    propertyClutter = propertyClutter.substr(9);
-                    startPos = propertyValue.find(propertyClutter);
-                }
+                startPos = findStartPosAndClutter_(propertyValue, propertyClutter);
             }
 
             os << " = '" << propertyValue << "'";
