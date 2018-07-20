@@ -239,15 +239,15 @@ int main(int argc, char** argv) try
         ransSol[ransFaceIdx] = sol[ransFaceIdx];
         ransProblem->updateDynamicWallProperties(ransSol);
 
+        // advance to the time loop to the next step
+        timeLoop->advanceTimeStep();
+
         // post time step treatment of Darcy problem
         darcyProblem->postTimeStep(sol[darcyIdx], *darcyGridVariables);
 
         // advance grid variables to the next time step
         ransGridVariables->advanceTimeStep();
         darcyGridVariables->advanceTimeStep();
-
-        // advance to the time loop to the next step
-        timeLoop->advanceTimeStep();
 
         // write vtk output
         ransVtkWriter.write(timeLoop->time());

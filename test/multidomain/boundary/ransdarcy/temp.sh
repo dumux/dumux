@@ -1,0 +1,5 @@
+./test_zeroeq1p2cnidarcy2p2cni   test_rans1p2cnidarcy2p2cni.input -Problem.Name test_zeroeq1p2cnidarcy2p2cni
+./test_oneeq1p2cnidarcy2p2cni    test_rans1p2cnidarcy2p2cni.input -Problem.Name test_oneeq1p2cnidarcy2p2cni
+./test_kepsilon1p2cnidarcy2p2cni test_rans1p2cnidarcy2p2cni.input -Problem.Name test_kepsilon1p2cnidarcy2p2cni
+./test_komega1p2cnidarcy2p2cni   test_rans1p2cnidarcy2p2cni.input -Problem.Name test_komega1p2cnidarcy2p2cni
+./test_lowrekepsilon1p2cnidarcy2p2cni test_rans1p2cnidarcy2p2cni.input -Problem.Name test_lowrekepsilon1p2cnidarcy2p2cni

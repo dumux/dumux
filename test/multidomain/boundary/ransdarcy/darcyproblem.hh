@@ -155,6 +155,8 @@ public:
         evaluateInterfaceFluxes(curSol, gridVariables);
 
         gnuplotStorage_.resetPlot();
+        if (timeLoop_->time() < getParam<Scalar>("TimeLoop.TEnd"))
+            gnuplotStorage_.setCreateImage(false);
         gnuplotStorage_.setDatafileSeparator(';');
         gnuplotStorage_.setXlabel("time [d]");
         gnuplotStorage_.setXRange(0.0, getParam<Scalar>("TimeLoop.TEnd") / 86400);
@@ -167,8 +169,13 @@ public:
 
         gnuplotStorage_.addFileToPlot(storageFileName_, "using ($1/86400):4 with lines title 'evaporation rate'");
         gnuplotStorage_.addFileToPlot(storageFileName_, "using ($1/86400):3 axes x1y2 with lines title 'cumulative mass loss'");
+        gnuplotStorage_.addFileToPlot("storage_test_kepsilon1p2cnidarcy2p2cni_darcy.csv", "using ($1/86400):4 with lines title 'kepsilon'");
+        gnuplotStorage_.addFileToPlot("storage_test_komega1p2cnidarcy2p2cni_darcy.csv", "using ($1/86400):4 with lines title 'komega'");
+        gnuplotStorage_.addFileToPlot("storage_test_lowrekepsilon1p2cnidarcy2p2cni_darcy.csv", "using ($1/86400):4 with lines title 'lowrekepsilon'");
+        gnuplotStorage_.addFileToPlot("storage_test_oneeq1p2cnidarcy2p2cni_darcy.csv", "using ($1/86400):4 with lines title 'oneeq'");
+        gnuplotStorage_.addFileToPlot("storage_test_zeroeq1p2cnidarcy2p2cni_darcy.csv", "using ($1/86400):4 with lines title 'zeroeq'");
         if (plotStorage_)
-            gnuplotStorage_.plot("temp");
+            gnuplotStorage_.plot("evapRate_");
     }
 
     template<class SolutionVector, class GridVariables>
@@ -258,6 +265,7 @@ public:
         }
 
         gnuplotInterfaceFluxes_.resetPlot();
+        gnuplotInterfaceFluxes_.setCreateImage(false);
         gnuplotInterfaceFluxes_.setXlabel("x-position [m]");
         gnuplotInterfaceFluxes_.setXRange(this->fvGridGeometry().bBoxMin()[0], this->fvGridGeometry().bBoxMax()[0]);
         gnuplotInterfaceFluxes_.setYlabel("flux [kg/(m^2 s)]");

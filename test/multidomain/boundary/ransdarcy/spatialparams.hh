@@ -75,8 +75,8 @@ public:
         params_.setVgAlpha(getParam<Scalar>("Darcy.SpatialParams.VgAlpha"));
         params_.setVgn(getParam<Scalar>("Darcy.SpatialParams.VgN"));
         Scalar threshold = 0.01 * (1.0 - params_.swr() - params_.snr());
-        params_.setPcLowSw(std::max(threshold,getParam<Scalar>("Darcy.SpatialParams.PcLowSw", 0.0)));
-        params_.setPcHighSw(std::min(1.0-threshold,getParam<Scalar>("Darcy.SpatialParams.PcHighSw", 1.0)));
+        params_.setPcLowSw(getParam<Scalar>("Darcy.SpatialParams.PcLowSw", threshold));
+        params_.setPcHighSw(getParam<Scalar>("Darcy.SpatialParams.PcHighSw", 1.0-threshold));
     }
 
     /*!

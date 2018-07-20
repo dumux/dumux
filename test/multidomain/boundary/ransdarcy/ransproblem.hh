@@ -34,14 +34,14 @@
 #include <dumux/freeflow/compositional/oneeqncmodel.hh>
 #include <dumux/freeflow/rans/oneeq/problem.hh>
 #elif KEPSILON
-#include <dumux/freeflow/compositional/oneeqncmodel.hh>
-#include <dumux/freeflow/rans/oneeq/problem.hh>
+#include <dumux/freeflow/compositional/kepsilonncmodel.hh>
+#include <dumux/freeflow/rans/twoeq/kepsilon/problem.hh>
 #elif KOMEGA
-#include <dumux/freeflow/compositional/oneeqncmodel.hh>
-#include <dumux/freeflow/rans/oneeq/problem.hh>
+#include <dumux/freeflow/compositional/komegancmodel.hh>
+#include <dumux/freeflow/rans/twoeq/komega/problem.hh>
 #elif LOWREKEPSILON
-#include <dumux/freeflow/compositional/oneeqncmodel.hh>
-#include <dumux/freeflow/rans/oneeq/problem.hh>
+#include <dumux/freeflow/compositional/lowrekepsilonncmodel.hh>
+#include <dumux/freeflow/rans/twoeq/lowrekepsilon/problem.hh>
 #else
 #include <dumux/freeflow/compositional/zeroeqncmodel.hh>
 #include <dumux/freeflow/rans/zeroeq/problem.hh>
@@ -57,11 +57,11 @@ namespace Properties
 #if ONEEQ
 NEW_TYPE_TAG(RANSTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNCNI));
 #elif KEPSILON
-NEW_TYPE_TAG(RANSTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNCNI));
+NEW_TYPE_TAG(RANSTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNCNI));
 #elif KOMEGA
-NEW_TYPE_TAG(RANSTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNCNI));
+NEW_TYPE_TAG(RANSTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNCNI));
 #elif LOWREKEPSILON
-NEW_TYPE_TAG(RANSTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNCNI));
+NEW_TYPE_TAG(RANSTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNCNI));
 #else
 NEW_TYPE_TAG(RANSTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI));
 #endif
@@ -101,17 +101,17 @@ class FreeFlowSubProblem : public OneEqProblem<TypeTag>
 {
     using ParentType = OneEqProblem<TypeTag>;
 #elif KEPSILON
-class FreeFlowSubProblem : public OneEqProblem<TypeTag>
+class FreeFlowSubProblem : public KEpsilonProblem<TypeTag>
 {
-    using ParentType = OneEqProblem<TypeTag>;
+    using ParentType = KEpsilonProblem<TypeTag>;
 #elif KOMEGA
-class FreeFlowSubProblem : public OneEqProblem<TypeTag>
+class FreeFlowSubProblem : public KOmegaProblem<TypeTag>
 {
-    using ParentType = OneEqProblem<TypeTag>;
+    using ParentType = KOmegaProblem<TypeTag>;
 #elif LOWREKEPSILON
-class FreeFlowSubProblem : public OneEqProblem<TypeTag>
+class FreeFlowSubProblem : public LowReKEpsilonProblem<TypeTag>
 {
-    using ParentType = OneEqProblem<TypeTag>;
+    using ParentType = LowReKEpsilonProblem<TypeTag>;
 #else
 class FreeFlowSubProblem : public ZeroEqProblem<TypeTag>
 {
@@ -126,6 +126,7 @@ class FreeFlowSubProblem : public ZeroEqProblem<TypeTag>
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
@@ -150,7 +151,7 @@ public:
     {
         inletVelocity_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletVelocity");
         inletPressure_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletPressure");
-        inletMoleFrac_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletMoleFrac");
+        auto inletMassFrac = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletMassFrac");
         inletTemperature_ = getParamFromGroup<Scalar>(this->paramGroup(), "Problem.InletTemperature");
 
         diffCoeffAvgType_ = StokesDarcyCouplingOptions::stringToEnum(DiffusionCoefficientAveragingType{},
@@ -159,23 +160,24 @@ public:
         Dumux::TurbulenceProperties<Scalar, FVGridGeometry::GridView::dimensionworld, true> turbulenceProperties;
         FluidState fluidState;
         fluidState.setPressure(0, inletPressure_);
-        fluidState.setMoleFraction(0, 1, inletMoleFrac_);
-        fluidState.setMoleFraction(0, 0, 1.0 - inletMoleFrac_);
+        fluidState.setMassFraction(0, 1, inletMassFrac);
+        fluidState.setMassFraction(0, 0, 1.0 - inletMassFrac);
         fluidState.setTemperature(inletTemperature_);
+        inletMoleFrac_ = fluidState.moleFraction(0, 1);
         Scalar density = FluidSystem::density(fluidState, 0);
         Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, 0) / density;
-        Scalar radius = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
+        Scalar charLength = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
         // ideally the viscosityTilde parameter as inflow for the Spalart-Allmaras model should be zero
         viscosityTilde_ = getParam<Scalar>("Problem.InletViscosityTilde",
-                                           1e-3 * turbulenceProperties.viscosityTilde(inletVelocity_, radius*2.0, kinematicViscosity, true));
+                                           1e-3 * turbulenceProperties.viscosityTilde(inletVelocity_, charLength, kinematicViscosity, true));
         turbulentKineticEnergy_ = getParam<Scalar>("Problem.InletTurbulentKineticEnergy",
-                                                   turbulenceProperties.turbulentKineticEnergy(inletVelocity_, radius*2.0, kinematicViscosity, true));
+                                                   turbulenceProperties.turbulentKineticEnergy(inletVelocity_, charLength, kinematicViscosity, true));
 #if KOMEGA
         dissipation_ = getParam<Scalar>("Problem.InletDissipationRate",
-                                        turbulenceProperties.dissipationRate(inletVelocity_, radius*2.0, kinematicViscosity, true));
+                                        turbulenceProperties.dissipationRate(inletVelocity_, charLength, kinematicViscosity, true));
 #else
         dissipation_ = getParam<Scalar>("Problem.InletDissipation",
-                                        turbulenceProperties.dissipation(inletVelocity_, radius*2.0, kinematicViscosity, true));
+                                        turbulenceProperties.dissipation(inletVelocity_, charLength, kinematicViscosity, true));
 #endif
         std::cout << std::endl;
     }
@@ -219,8 +221,13 @@ public:
 
         const auto& globalPos = scvf.center();
 
+#if LOWREKEPSILON || KEPSILON || KOMEGA
+        bTypes.setDirichlet(Indices::turbulentKineticEnergyIdx);
+        bTypes.setDirichlet(Indices::dissipationIdx);
+#endif
+
 #if ONEEQ
-            bTypes.setDirichlet(Indices::viscosityTildeIdx);
+        bTypes.setDirichlet(Indices::viscosityTildeIdx);
 #endif
 
         if (onLeftBoundary_(globalPos))
@@ -250,6 +257,10 @@ public:
             bTypes.setDirichlet(Indices::pressureIdx);
             bTypes.setOutflow(Indices::conti0EqIdx + 1);
             bTypes.setOutflow(Indices::energyBalanceIdx);
+#if LOWREKEPSILON || KEPSILON || KOMEGA
+            bTypes.setOutflow(Indices::turbulentKineticEnergyEqIdx);
+            bTypes.setOutflow(Indices::dissipationEqIdx);
+#endif
 #if ONEEQ
             bTypes.setOutflow(Indices::viscosityTildeIdx);
 #endif
@@ -263,20 +274,46 @@ public:
             bTypes.setCouplingNeumann(Indices::momentumYBalanceIdx);
             bTypes.setBJS(Indices::momentumXBalanceIdx);
         }
+
+#if KOMEGA
+        // set a fixed dissipation (omega) in one cell
+        if (isOnWall(globalPos))
+            bTypes.setDirichletCell(Indices::dissipationIdx);
+#endif
+
         return bTypes;
     }
 
-    /*!
-     * \brief Evaluate the boundary conditions for a Dirichlet control volume.
-     *
-     * \param element The element
-     * \param scvf The subcontrolvolume face
-     */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& pos) const
+     /*!
+      * \brief Evaluate the boundary conditions for a dirichlet values at the boundary.
+      *
+      * \param element The finite element
+      * \param scvf the sub control volume face
+      * \note used for cell-centered discretization schemes
+      */
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
-        PrimaryVariables values(0.0);
-        values = initialAtPos(pos);
+        return initialAtPos(scvf.ipGlobal());
+    }
 
+     /*!
+      * \brief Evaluate the boundary conditions for fixed values at cell centers
+      *
+      * \param element The finite element
+      * \param scv the sub control volume
+      * \note used for cell-centered discretization schemes
+      */
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
+    {
+        const auto globalPos = scv.center();
+        PrimaryVariables values(initialAtPos(globalPos));
+#if KOMEGA
+        using std::pow;
+        unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
+        const auto wallDistance = ParentType::wallDistance_[elementIdx];
+        values[Indices::dissipationEqIdx] = 6.0 * ParentType::kinematicViscosity_[elementIdx]
+                                            / (ParentType::betaOmega() * pow(wallDistance, 2));
+#endif
         return values;
     }
 
@@ -352,6 +389,16 @@ public:
 
         if(onLowerBoundary_(globalPos))
             values[Indices::velocityXIdx] = 0.0;
+
+#if LOWREKEPSILON || KEPSILON || KOMEGA
+        values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
+        values[Indices::dissipationIdx] = dissipation_;
+        if (isOnWall(globalPos))
+        {
+            values[Indices::turbulentKineticEnergyIdx] = 0.0;
+            values[Indices::dissipationIdx] = 0.0;
+        }
+#endif
 
 #if ONEEQ
         values[Indices::viscosityTildeIdx] = viscosityTilde_;
