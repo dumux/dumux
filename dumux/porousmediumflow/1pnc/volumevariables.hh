@@ -330,7 +330,6 @@ protected:
     SolidState solidState_;
 
 private:
-    Scalar porosity_; //!< Effective porosity within the control volume
     PermeabilityType permeability_; //!< Effective permeability within the control volume
     Dune::FieldVector<Scalar, numFluidComps> diffCoeff_; //!< Binary diffusion coefficients
 };
