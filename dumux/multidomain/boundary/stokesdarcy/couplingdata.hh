@@ -76,26 +76,15 @@ struct StokesDarcyCouplingOptions
  * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief This structs helps to check if the two sub models use the same fluidsystem.
- * \tparam FSFF The free-flow fluidsystem
- * \tparam FSFF The porous-medium flow fluidsystem
- * \tparam numPhasesPM The number of phases used in the porous-medium flow model.
+ *        Specialization for the case of using an adapter only for the free-flow model.
+ * \tparam FFFS The free-flow fluidsystem
+ * \tparam PMFS The porous-medium flow fluidsystem
  */
-template<class FSFF, class FSPM, int numPhasesPM>
-struct IsSameFluidSystem;
-
-/*!
- * \ingroup MultiDomain
- * \ingroup BoundaryCoupling
- * \ingroup StokesDarcyCoupling
- * \brief This structs helps to check if the two sub models use the same fluidsystem.
- *        Specialization for single-phase porous-medium models.
- * \tparam FSFF The free-flow fluidsystem
- * \tparam FSFF The porous-medium flow fluidsystem
- */
-template<class FSFF, class FSPM>
-struct IsSameFluidSystem<FSFF, FSPM, 1>
+template<class FFFS, class PMFS>
+struct IsSameFluidSystem
 {
-    static constexpr bool value = std::is_same<FSFF, FSPM>::value;
+    static_assert(FFFS::numPhases == 1, "Only single-phase fluidsystems may be used for free flow.");
+    static constexpr bool value = std::is_same<typename FFFS::MultiPhaseFluidSystem, PMFS>::value;
 };
 
 /*!
@@ -103,16 +92,94 @@ struct IsSameFluidSystem<FSFF, FSPM, 1>
  * \ingroup BoundaryCoupling
  * \ingroup StokesDarcyCoupling
  * \brief This structs helps to check if the two sub models use the same fluidsystem.
- *        Specialization for two-phase porous-medium models.
- * \tparam FSFF The free-flow fluidsystem
- * \tparam FSFF The porous-medium flow fluidsystem
+ * \tparam FS The fluidsystem
  */
-template<class FSFF, class FSPM>
-struct IsSameFluidSystem<FSFF, FSPM, 2>
+template<class FS>
+struct IsSameFluidSystem<FS, FS>
 {
-    static constexpr bool value = std::is_same<typename FSFF::MultiPhaseFluidSystem, FSPM>::value;
+    static_assert(FS::numPhases == 1, "Only single-phase fluidsystems may be used for free flow.");
+    static constexpr bool value = std::is_same<FS, FS>::value; // always true
 };
 
+/*!
+ * \ingroup MultiDomain
+ * \ingroup BoundaryCoupling
+ * \ingroup StokesDarcyCoupling
+ * \brief Helper struct to choose the correct index for phases and components. This is need if the porous-medium-flow model
+          features more fluid phases than the free-flow model.
+ * \tparam stokesIdx The domain index of the free-flow model.
+ * \tparam darcyIdx The domain index of the porous-medium-flow model.
+ * \tparam FFFS The free-flow fluidsystem.
+ * \tparam hasAdapter Specifies whether an adapter class for the fluidsystem is used.
+ */
+template<std::size_t stokesIdx, std::size_t darcyIdx, class FFFS, bool hasAdapter>
+struct IndexHelper;
+
+/*!
+ * \ingroup MultiDomain
+ * \ingroup BoundaryCoupling
+ * \ingroup StokesDarcyCoupling
+ * \brief Helper struct to choose the correct index for phases and components. This is need if the porous-medium-flow model
+          features more fluid phases than the free-flow model. Specialization for the case that no adapter is used.
+ * \tparam stokesIdx The domain index of the free-flow model.
+ * \tparam darcyIdx The domain index of the porous-medium-flow model.
+ * \tparam FFFS The free-flow fluidsystem.
+ */
+template<std::size_t stokesIdx, std::size_t darcyIdx, class FFFS>
+struct IndexHelper<stokesIdx, darcyIdx, FFFS, false>
+{
+    /*!
+     * \brief No adapter is used, just return the input index.
+     */
+    template<std::size_t i>
+    static constexpr auto couplingPhaseIdx(Dune::index_constant<i>, int coupledPhaseIdx = 0)
+    { return coupledPhaseIdx; }
+
+    /*!
+     * \brief No adapter is used, just return the input index.
+     */
+    template<std::size_t i>
+    static constexpr auto couplingCompIdx(Dune::index_constant<i>, int coupledCompdIdx)
+    { return coupledCompdIdx; }
+};
+
+/*!
+ * \ingroup MultiDomain
+ * \ingroup BoundaryCoupling
+ * \ingroup StokesDarcyCoupling
+ * \brief Helper struct to choose the correct index for phases and components. This is need if the porous-medium-flow model
+          features more fluid phases than the free-flow model. Specialization for the case that a adapter is used.
+ * \tparam stokesIdx The domain index of the free-flow model.
+ * \tparam darcyIdx The domain index of the porous-medium-flow model.
+ * \tparam FFFS The free-flow fluidsystem.
+ */
+template<std::size_t stokesIdx, std::size_t darcyIdx, class FFFS>
+struct IndexHelper<stokesIdx, darcyIdx, FFFS, true>
+{
+    /*!
+     * \brief The free-flow model always uses phase index 0.
+     */
+    static constexpr auto couplingPhaseIdx(Dune::index_constant<stokesIdx>, int coupledPhaseIdx = 0)
+    { return 0; }
+
+    /*!
+     * \brief The phase index of the porous-medium-flow model is given by the adapter fluidsytem (i.e., user input).
+     */
+    static constexpr auto couplingPhaseIdx(Dune::index_constant<darcyIdx>, int coupledPhaseIdx = 0)
+    { return FFFS::multiphaseFluidsystemPhaseIdx; }
+
+    /*!
+     * \brief The free-flow model does not need any change of the component index.
+     */
+    static constexpr auto couplingCompIdx(Dune::index_constant<stokesIdx>, int coupledCompdIdx)
+    { return coupledCompdIdx; }
+
+    /*!
+     * \brief The component index of the porous-medium-flow model is mapped by the adapter fluidsytem.
+     */
+    static constexpr auto couplingCompIdx(Dune::index_constant<darcyIdx>, int coupledCompdIdx)
+    { return FFFS::compIdx(coupledCompdIdx); }
+};
 
 template<class MDTraits, class CouplingManager, bool enableEnergyBalance, bool isCompositional>
 class StokesDarcyCouplingDataImplementation;
@@ -154,20 +221,15 @@ class StokesDarcyCouplingDataImplementationBase
     static constexpr auto stokesIdx = CouplingManager::stokesIdx;
     static constexpr auto darcyIdx = CouplingManager::darcyIdx;
 
-
-
-
-
-
+    static constexpr bool adapterUsed = ModelTraits<darcyIdx>::numPhases() > 1;
+    using IndexHelper = Dumux::IndexHelper<stokesIdx, darcyIdx, FluidSystem<stokesIdx>, adapterUsed>;
 
     static constexpr int enableEnergyBalance = GET_PROP_TYPE(SubDomainTypeTag<stokesIdx>, ModelTraits)::enableEnergyBalance();
     static_assert(GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, ModelTraits)::enableEnergyBalance() == enableEnergyBalance,
                   "All submodels must both be either isothermal or non-isothermal");
 
     static_assert(IsSameFluidSystem<FluidSystem<stokesIdx>,
-                                    FluidSystem<darcyIdx>,
-                                    GET_PROP_TYPE(SubDomainTypeTag<darcyIdx>, ModelTraits)::numPhases()
-                                    >::value,
+                                    FluidSystem<darcyIdx>>::value,
                   "All submodels must use the same fluid system");
 
     using DiffusionCoefficientAveragingType = typename StokesDarcyCouplingOptions::DiffusionCoefficientAveragingType;
@@ -175,32 +237,19 @@ class StokesDarcyCouplingDataImplementationBase
 public:
     StokesDarcyCouplingDataImplementationBase(const CouplingManager& couplingmanager): couplingManager_(couplingmanager) {}
 
-    template<std::size_t i, bool hasAdapter = (ModelTraits<darcyIdx>::numPhases() > 1), std::enable_if_t<!hasAdapter, int> = 0>
-    static constexpr auto couplingPhaseIdx(Dune::index_constant<i>, int coupledPhaseIdx = 0)
-    { return 0; }
+    /*!
+     * \brief Returns the corresponding phase index needed for coupling.
+     */
+    template<std::size_t i>
+    static constexpr auto couplingPhaseIdx(Dune::index_constant<i> id, int coupledPhaseIdx = 0)
+    { return IndexHelper::couplingPhaseIdx(id, coupledPhaseIdx); }
 
-    template<bool hasAdapter = (ModelTraits<darcyIdx>::numPhases() > 1), std::enable_if_t<hasAdapter, int> = 0>
-    static constexpr auto couplingPhaseIdx(Dune::index_constant<stokesIdx>, int coupledPhaseIdx = 0)
-    { return 0; }
-
-    template<bool hasAdapter = (ModelTraits<darcyIdx>::numPhases() > 1), std::enable_if_t<hasAdapter, int> = 0>
-    static constexpr auto couplingPhaseIdx(Dune::index_constant<darcyIdx>, int coupledPhaseIdx = 0)
-    { return FluidSystem<stokesIdx>::multiphaseFluidsystemPhaseIdx; }
-
-
-
-
-    template<std::size_t i, bool hasAdapter = (ModelTraits<darcyIdx>::numPhases() > 1), std::enable_if_t<!hasAdapter, int> = 0>
-    static constexpr auto couplingCompIdx(Dune::index_constant<i>, int coupledCompdIdx)
-    { return coupledCompdIdx; }
-
-    template<bool hasAdapter = (ModelTraits<darcyIdx>::numPhases() > 1), std::enable_if_t<hasAdapter, int> = 0>
-    static constexpr auto couplingCompIdx(Dune::index_constant<stokesIdx>, int coupledCompdIdx)
-    { return coupledCompdIdx; }
-
-    template<bool hasAdapter = (ModelTraits<darcyIdx>::numPhases() > 1), std::enable_if_t<hasAdapter, int> = 0>
-    static constexpr auto couplingCompIdx(Dune::index_constant<darcyIdx>, int coupledCompdIdx)
-    { return FluidSystem<stokesIdx>::compIdx(coupledCompdIdx); }
+    /*!
+     * \brief Returns the corresponding component index needed for coupling.
+     */
+    template<std::size_t i>
+    static constexpr auto couplingCompIdx(Dune::index_constant<i> id, int coupledCompdIdx)
+    { return IndexHelper::couplingCompIdx(id, coupledCompdIdx); }
 
     /*!
      * \brief Returns a reference to the coupling manager.
