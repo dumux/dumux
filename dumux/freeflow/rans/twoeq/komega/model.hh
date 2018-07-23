@@ -152,6 +152,10 @@ private:
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
+    static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
+    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
+
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
     using NSVolVars = NavierStokesVolumeVariables<Traits>;
 public:
@@ -194,6 +198,10 @@ private:
     using FSY = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+
+    static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
+    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
 
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
     using NSVolVars = NavierStokesVolumeVariables<Traits>;

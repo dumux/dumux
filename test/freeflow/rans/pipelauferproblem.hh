@@ -141,7 +141,6 @@ class PipeLauferProblem : public ZeroEqProblem<TypeTag>
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
 
-    static const unsigned int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static constexpr auto dimWorld = FVGridGeometry::GridView::dimensionworld;
 
 public:
@@ -161,10 +160,10 @@ public:
         FluidSystem::init();
         Dumux::TurbulenceProperties<Scalar, dimWorld, true> turbulenceProperties;
         FluidState fluidState;
-        fluidState.setPressure(phaseIdx, 1e5);
+        fluidState.setPressure(0, 1e5);
         fluidState.setTemperature(inletTemperature_);
-        Scalar density = FluidSystem::density(fluidState, phaseIdx);
-        Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, phaseIdx) / density;
+        Scalar density = FluidSystem::density(fluidState, 0);
+        Scalar kinematicViscosity = FluidSystem::viscosity(fluidState, 0) / density;
         Scalar diameter = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
         // ideally the viscosityTilde parameter as inflow for the Spalart-Allmaras model should be zero
         viscosityTilde_ = getParam<Scalar>("Problem.InletViscosityTilde",

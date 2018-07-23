@@ -145,7 +145,6 @@ NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes));
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_INT_PROP(NavierStokes, PhaseIdx, 0); //!< The default phase index
 SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true); //!< Consider inertia terms by default
 SET_BOOL_PROP(NavierStokes, NormalizePressure, true); //!< Normalize the pressure term in the momentum balance by default
 
@@ -185,8 +184,9 @@ private:
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
-    static_assert(!FSY::isMiscible(),
-                  "The Navier-Stokes model only works with immiscible fluid systems.");
+    static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
+    static_assert(!FSY::isMiscible(), "The Navier-Stokes model only works with immiscible fluid systems.");
 
     using Traits = NavierStokesVolumeVariablesTraits<PV, FSY, FST, MT>;
 public:

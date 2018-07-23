@@ -141,9 +141,6 @@ public:
     using type = RichardsNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
 
- //! The default phase index to access the fluid system
-SET_INT_PROP(RichardsNC, PhaseIdx, 0);
-
 //! Define that per default mole fractions are used in the balance equations
 SET_BOOL_PROP(RichardsNC, UseMoles, true);
 
@@ -165,6 +162,11 @@ private:
     using FST = typename GET_PROP_TYPE(TypeTag, FluidState);
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
+
+    static_assert(FSY::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid system");
+    static_assert(FST::numComponents == MT::numComponents(), "Number of components mismatch between model and fluid state");
+    static_assert(FSY::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid system");
+    static_assert(FST::numPhases == MT::numPhases(), "Number of phases mismatch between model and fluid state");
 
     using Traits = RichardsVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:

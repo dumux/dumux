@@ -30,10 +30,9 @@
 #include <dumux/common/properties/model.hh>
 #include <dumux/discretization/fourierslaw.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
+
 //! Type tag for free-flow models
 NEW_TYPE_TAG(FreeFlow, INHERITS_FROM(ModelProperties));
 

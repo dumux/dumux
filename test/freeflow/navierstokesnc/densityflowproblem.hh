@@ -28,31 +28,31 @@
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
 
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
 #include <dumux/freeflow/navierstokes/problem.hh>
 
 
-namespace Dumux
-{
+namespace Dumux {
+
 template <class TypeTag>
 class DensityDrivenFlowProblem;
 
-namespace Properties
-{
+namespace Properties {
+
 NEW_TYPE_TAG(DensityDrivenFlowTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
 
-NEW_PROP_TAG(FluidSystem);
-
 // Select the fluid system
-SET_TYPE_PROP(DensityDrivenFlowTypeTag, FluidSystem,
-              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_PROP(DensityDrivenFlowTypeTag, FluidSystem)
+{
+    using H2OAir = FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>;
+    static constexpr int phaseIdx = H2OAir::liquidPhaseIdx;
+    using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
+};
 
-SET_INT_PROP(DensityDrivenFlowTypeTag, PhaseIdx,
-             GET_PROP_TYPE(TypeTag, FluidSystem)::liquidPhaseIdx);
-
-SET_INT_PROP(DensityDrivenFlowTypeTag, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, PhaseIdx));
+SET_INT_PROP(DensityDrivenFlowTypeTag, ReplaceCompEqIdx, 0);
 
 // Set the grid type
 SET_TYPE_PROP(DensityDrivenFlowTypeTag, Grid, Dune::YaspGrid<2>);

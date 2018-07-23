@@ -46,8 +46,6 @@ namespace Properties {
 
 NEW_TYPE_TAG(MaxwellStefanNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
 
-NEW_PROP_TAG(FluidSystem);
-
 SET_INT_PROP(MaxwellStefanNCTestTypeTag, ReplaceCompEqIdx, 0);
 
 // Set the grid type
@@ -76,7 +74,8 @@ SET_TYPE_PROP(MaxwellStefanNCTestTypeTag, MolecularDiffusionType, MaxwellStefans
  * \todo doc me!
  */
 template<class TypeTag>
-class MaxwellStefanFluidSystem: public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar),MaxwellStefanFluidSystem<TypeTag>>
+class MaxwellStefanFluidSystem
+: public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar), MaxwellStefanFluidSystem<TypeTag>>
 
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
