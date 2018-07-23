@@ -21,6 +21,6 @@ TemperatureLow = 312.15 # [Pa] lower temperature limit for tabularization
 TemperatureHigh = 314.15 # [Pa] upper temperature limit for tabularization
 
 [LoadSolution]
-PriVarNamesState1 = pw x_w^N2
-PriVarNamesState2 = pw x_n^H2O
-PriVarNamesState3 = pw Sn
+PriVarNamesState1 = p_w x^N2_w
+PriVarNamesState2 = p_w x^H2O_n
+PriVarNamesState3 = p_w S_n

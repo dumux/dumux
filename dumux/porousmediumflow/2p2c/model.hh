@@ -108,12 +108,12 @@ struct TwoPTwoCModelTraits : public TwoPNCModelTraits</*numComps=*/2, useMol, /*
     {
         static const std::string xString = useMol ? "x" : "X";
         static const std::array<std::string, 3> p0s1SwitchedPvNames = {{
-            xString + "_" + FluidSystem::phaseName(0) + "^" + FluidSystem::componentName(1),
-            xString + "_" + FluidSystem::phaseName(1) + "^" + FluidSystem::componentName(0),
+            xString + "^" + FluidSystem::componentName(1) + "_" + FluidSystem::phaseName(0),
+            xString + "^" + FluidSystem::componentName(0) + "_" + FluidSystem::phaseName(1),
             "S_n"}};
         static const std::array<std::string, 3> p1s0SwitchedPvNames = {{
-            xString + "_" + FluidSystem::phaseName(0) + "^" + FluidSystem::componentName(1),
-            xString + "_" + FluidSystem::phaseName(1) + "^" + FluidSystem::componentName(0),
+            xString + "^" + FluidSystem::componentName(1) + "_" + FluidSystem::phaseName(0),
+            xString + "^" + FluidSystem::componentName(0) + "_" + FluidSystem::phaseName(1),
             "S_w"}};
 
         switch (formulation)

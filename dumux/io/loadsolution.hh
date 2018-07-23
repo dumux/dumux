@@ -138,10 +138,10 @@ auto loadSolutionFromVtkFile(const std::string fileName,
  * \brief helper function to read from two files into a staggered solution vector
  */
 template <class SolutionVector, class PvNamesFunc>
-auto loadStaggeredSolutionFromVtkFiles(const std::string fileName,
+auto loadStaggeredSolutionFromVtkFiles(const std::string baseFileName,
                                        PvNamesFunc&& pvNamesFunc,
                                        SolutionVector& sol)
--> typename std::enable_if_t<decltype(!isMultiTypeBlockVector<SolutionVector>())::value, void>
+-> typename std::enable_if_t<!decltype(isMultiTypeBlockVector<SolutionVector>())::value, void>
 {}
 
 /*!
