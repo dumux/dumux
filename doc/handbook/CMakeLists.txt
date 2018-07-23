@@ -26,7 +26,9 @@ set(TEX_IMAGES
   PNG/cc_disc.png
   PNG/dumux_strucutre_flowchart_horizontal_explained.png
   PNG/dunedesign.png
-  ../logo/dumux_logo_hires_whitebg.png)
+  ../logo/dumux_logo_hires_whitebg.png
+  PNG/dalton1.png
+  PNG/dalton2.png)
 
 dune_add_latex_document(0_dumux-handbook.tex
   BIBFILES dumux-handbook.bib
