@@ -204,7 +204,7 @@ public:
         }
     }
 
-    /*!
+        /*!
      * \brief Update the dynamic (solution dependent) relations to the walls
      *
      * The basic function calcuates the cell-centered velocities and
@@ -214,6 +214,23 @@ public:
      * \param curSol The solution vector.
      */
     void updateDynamicWallProperties(const SolutionVector& curSol)
+    {
+        updateDynamicWallProperties(curSol, [](auto& x){});
+    }
+
+
+
+    /*!
+     * \brief Update the dynamic (solution dependent) relations to the walls
+     *
+     * The basic function calcuates the cell-centered velocities and
+     * the respective gradients.
+     * Further, the kinematic viscosity at the wall is stored.
+     *
+     * \param curSol The solution vector.
+     */
+    template<class ContexHelper>
+    void updateDynamicWallProperties(const SolutionVector& curSol, ContexHelper contexHelper)
     {
         using std::abs;
         using std::max;
@@ -289,6 +306,10 @@ public:
 
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
+
+            // bind the coupling context in case the free flow model is coupled to another domain
+            contexHelper(element);
+
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 // adapt calculations for Dirichlet condition

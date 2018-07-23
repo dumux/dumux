@@ -100,9 +100,22 @@ public:
      *
      * \param curSol The solution vector.
      */
+
     void updateDynamicWallProperties(const SolutionVector& curSol)
     {
-        ParentType::updateDynamicWallProperties(curSol);
+        updateDynamicWallProperties(curSol, [](auto& x){});
+    }
+    /*!
+     * \brief Update the dynamic (solution dependent) relations to the walls
+     *
+     * This calculates the roughness related properties
+     *
+     * \param curSol The solution vector.
+     */
+    template<class ContexHelper>
+    void updateDynamicWallProperties(const SolutionVector& curSol, ContexHelper contextHelper)
+    {
+        ParentType::updateDynamicWallProperties(curSol, contextHelper);
 
         // calculate additional roughness
         bool printedRangeWarning = false;
