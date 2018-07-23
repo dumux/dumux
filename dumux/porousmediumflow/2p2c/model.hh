@@ -130,20 +130,20 @@ struct TwoPTwoCModelTraits
     {
         const std::string xString = useMoles() ? "x" : "X";
         const std::vector<std::string> p0s1SwitchedPvNames = {
-            xString + "_" + FluidSystem::phaseName(0) + "^" + FluidSystem::componentName(1),
-            xString + "_" + FluidSystem::phaseName(1) + "^" + FluidSystem::componentName(0),
-            "Sn"};
+            xString + "^" + FluidSystem::componentName(1) + "_" + FluidSystem::phaseName(0),
+            xString + "^" + FluidSystem::componentName(0) + "_" + FluidSystem::phaseName(1),
+            "S_n"};
         const std::vector<std::string> p1s0SwitchedPvNames = {
-            xString + "_" + FluidSystem::phaseName(0) + "^" + FluidSystem::componentName(1),
-            xString + "_" + FluidSystem::phaseName(1) + "^" + FluidSystem::componentName(0),
-            "Sw"};
+            xString + "^" + FluidSystem::componentName(1) + "_" + FluidSystem::phaseName(0),
+            xString + "^" + FluidSystem::componentName(0) + "_" + FluidSystem::phaseName(1),
+            "S_w"};
 
         switch (priVarFormulation())
         {
         case TwoPFormulation::p0s1:
-            return pvIdx == 0 ? "pw" : p0s1SwitchedPvNames[state-1];
+            return pvIdx == 0 ? "p_w" : p0s1SwitchedPvNames[state-1];
         case TwoPFormulation::p1s0:
-            return pvIdx == 0 ? "pn" : p1s0SwitchedPvNames[state-1];
+            return pvIdx == 0 ? "p_n" : p1s0SwitchedPvNames[state-1];
         }
     }
 };

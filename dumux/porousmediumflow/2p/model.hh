@@ -102,9 +102,9 @@ struct TwoPModelTraits
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         if (priVarFormulation() == TwoPFormulation::p0s1)
-            return pvIdx == 0 ? "pw" : "Sn";
+            return pvIdx == 0 ? "p_w" : "S_n";
         else
-            return pvIdx == 0 ? "pn" : "Sw";
+            return pvIdx == 0 ? "p_n" : "S_w";
     }
 };
 
