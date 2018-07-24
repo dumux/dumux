@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from math import *
+import os.path
 import subprocess
 import sys
 
@@ -20,6 +21,10 @@ for i in range(2, len(sys.argv)):
 
 # loop over the different permeability ratios
 for permIndex in range(0, len(k)):
+    # check whether executable exists
+    if not os.path.isfile(execName):
+        sys.exit(77)
+
     # remove the old log file
     subprocess.call(['rm', execName + '.log'])
     print("Removed old log file (" + execName + '.log' + ")!")
