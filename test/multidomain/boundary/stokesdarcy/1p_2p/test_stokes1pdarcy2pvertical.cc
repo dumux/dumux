@@ -49,6 +49,14 @@
 
 #include <dumux/multidomain/boundary/stokesdarcy/couplingmanager.hh>
 
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
+#include <dumux/material/fluidsystems/1pliquid.hh>
+#include <dumux/material/fluidsystems/1pgas.hh>
+#include <dumux/material/components/air.hh>
+#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/tabulatedcomponent.hh>
+#include <dumux/material/fluidsystems/1padapter.hh>
+
 #include "darcyproblem.hh"
 #include "stokesproblem.hh"
 
@@ -65,6 +73,30 @@ SET_PROP(DarcyTwoPTypeTag, CouplingManager)
 {
     using Traits = StaggeredMultiDomainTraits<TTAG(StokesOnePTypeTag), TTAG(StokesOnePTypeTag), TypeTag>;
     using type = Dumux::StokesDarcyCouplingManager<Traits>;
+};
+
+template<class TypeTag>
+struct CouplingFluidSystem
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using H2OType = Dumux::Components::SimpleH2O<Scalar>;
+    using H2OPhase = Dumux::FluidSystems::OnePLiquid<Scalar, H2OType>;
+    using AirType = Dumux::Components::TabulatedComponent<Components::Air<Scalar>, false >;
+    using AirPhase = Dumux::FluidSystems::OnePGas<Scalar, AirType>;
+    using type = FluidSystems::TwoPImmiscible<Scalar, H2OPhase, AirPhase> ;
+};
+
+// the fluid system for the free-flow model
+SET_PROP(StokesOnePTypeTag, FluidSystem)
+{
+    static constexpr auto phaseIdx = 1; // simulate the air phase
+    using type = FluidSystems::OnePAdapter<typename CouplingFluidSystem<TypeTag>::type, phaseIdx>;
+};
+
+// the fluid system for the Darcy model
+SET_PROP(DarcyTwoPTypeTag, FluidSystem)
+{
+    using type = typename CouplingFluidSystem<TypeTag>::type;
 };
 
 } // end namespace Properties
