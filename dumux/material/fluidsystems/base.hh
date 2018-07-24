@@ -25,6 +25,7 @@
 #define DUMUX_BASE_FLUID_SYSTEM_HH
 
 #include <string>
+#include <dumux/common/typetraits/typetraits.hh>
 #include "nullparametercache.hh"
 
 namespace Dumux {
@@ -84,8 +85,12 @@ public:
     /*!
      * \brief Returns whether the fluids are miscible
      */
+    template<class T = Implementation>
     static constexpr bool isMiscible()
-    { return Implementation::isMiscible(); }
+    {
+        static_assert(AlwaysFalse<T>::value, "Mandatory function not implemented: isMiscible()");
+        return true;
+    }
 
     /*!
      * \brief Returns true if and only if a fluid phase is assumed to

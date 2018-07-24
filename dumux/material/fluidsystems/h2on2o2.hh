@@ -209,6 +209,12 @@ public:
         return false; // not a gas
     }
 
+    /*!
+     * \brief Returns whether the fluids are miscible
+     */
+    static constexpr bool isMiscible()
+    { return true; }
+
     /****************************************
      * Component related static parameters
      ****************************************/
