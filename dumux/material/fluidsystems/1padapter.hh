@@ -36,7 +36,7 @@ namespace FluidSystems {
 
 /*!
  * \ingroup Fluidsystems
- * \brief An adapter for multi-phase fluid systems to be used with compositional one-phase models
+ * \brief An adapter for multi-phase fluid systems to be used with (compositional) one-phase models
  * \tparam MPFluidSystem the multi-phase fluid system to be adapted
  * \tparam phase the index of the phase we choose from the multi-phase fluid system
  */
@@ -87,8 +87,9 @@ public:
 
     //! number of phases in the fluid system
     static constexpr int numPhases = 1;
-    //! number of components has to be the same as in the multi-phase fluid system as the composition needs to be defined
-    static constexpr int numComponents = MultiPhaseFluidSystem::numComponents;
+    //! for compositional models, the number of components has to be the same as in the multi-phase fluid system as the composition needs to be defined,
+    //! while for non-compositional models, the number of components must equal the number of phases (1 in this case)
+    static constexpr int numComponents = MultiPhaseFluidSystem::isMiscible() ? MultiPhaseFluidSystem::numComponents : numPhases;
     //! number of components has to be the same as in the multi-phase fluid system as the composition needs to be defined
     static constexpr int phase0Idx = 0; //!< index of the only phase
 
