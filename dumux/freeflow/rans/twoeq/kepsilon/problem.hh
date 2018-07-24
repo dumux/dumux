@@ -312,7 +312,7 @@ public:
     {
         unsigned int elementIdx = asImp_().fvGridGeometry().elementMapper().index(element);
         auto bcTypes = asImp_().boundaryTypes(element, localSubFace);
-        return asImp_().isOnWall(localSubFace.center())
+        return asImp_().isOnWall(localSubFace)
                && bcTypes.isDirichlet(eqIdx)
                && isMatchingPoint(elementIdx);
     }

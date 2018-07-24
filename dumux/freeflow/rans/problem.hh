@@ -110,25 +110,24 @@ public:
         std::vector<unsigned int> wallElements;
         std::vector<GlobalPosition> wallPositions;
         std::vector<unsigned int> wallNormalAxisTemp;
-        auto& gridView(this->fvGridGeometry().gridView());
+
+        const auto gridView = this->fvGridGeometry().gridView();
+        auto fvGeometry = localView(this->fvGridGeometry());
+
         for (const auto& element : elements(gridView))
         {
-            for (const auto& intersection : intersections(gridView, element))
+            fvGeometry.bindElement(element);
+            for (const auto& scvf : scvfs(fvGeometry))
             {
                 // only search for walls at a global boundary
-                if (!intersection.boundary())
+                if (!scvf.boundary())
                     continue;
 
-                GlobalPosition global = intersection.geometry().center();
-                if (asImp_().isOnWall(global))
+                if (asImp_().isOnWall(scvf))
                 {
                     wallElements.push_back(this->fvGridGeometry().elementMapper().index(element));
-                    wallPositions.push_back(global);
-                    for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
-                    {
-                        if (abs(intersection.centerUnitOuterNormal()[dimIdx]) > 1e-8)
-                            wallNormalAxisTemp.push_back(dimIdx);
-                    }
+                    wallPositions.push_back(scvf.center());
+                    wallNormalAxisTemp.push_back(scvf.directionIndex());
                 }
             }
         }
@@ -418,11 +417,21 @@ public:
     }
 
     /*!
+     * \brief Returns whether a given sub control volume face is on a wall
+     *
+     * \param scvf The sub control volume face.
+     */
+    bool isOnWall(const SubControlVolumeFace& scvf) const
+    {
+        return asImp_().isOnWallAtPos(scvf.center());
+    }
+
+    /*!
      * \brief Returns whether a given point is on a wall
      *
      * \param globalPos The position in global coordinates.
      */
-    bool isOnWall(const GlobalPosition &globalPos) const
+    bool isOnWallAtPos(const GlobalPosition &globalPos) const
     {
         // Throw an exception if no walls are implemented
         DUNE_THROW(Dune::InvalidStateException,

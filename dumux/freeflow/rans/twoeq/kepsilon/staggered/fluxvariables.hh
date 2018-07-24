@@ -154,7 +154,7 @@ public:
         const auto bcTypes = problem.boundaryTypes(element, scvf);
         if (!(scvf.boundary() && (bcTypes.isOutflow(Indices::turbulentKineticEnergyEqIdx)
                                   || bcTypes.isSymmetry()
-                                  || problem.isOnWall(scvf.center()))))
+                                  || problem.isOnWall(scvf))))
         {
             if (!(insideVolVars.isMatchingPoint() && outsideVolVars.isMatchingPoint())
                 || !(insideVolVars.isMatchingPoint() && outsideVolVars.inNearWallRegion())

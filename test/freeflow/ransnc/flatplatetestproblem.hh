@@ -266,7 +266,7 @@ public:
             values.setOutflow(Indices::viscosityTildeIdx);
 #endif
         }
-        else if(isOnWall(globalPos))
+        else if(isOnWallAtPos(globalPos))
         {
             values.setDirichlet(Indices::velocityXIdx);
             values.setDirichlet(Indices::velocityYIdx);
@@ -316,7 +316,7 @@ public:
                 values[transportCompIdx] = 1e-3;
             }
 #if NONISOTHERMAL
-            if (isOnWall(globalPos))
+            if (isOnWallAtPos(globalPos))
             {
                 values[Indices::temperatureIdx] += 30.;
             }
@@ -370,14 +370,14 @@ public:
 
         // block velocity profile
         values[Indices::velocityXIdx] = 0.0;
-        if (!isOnWall(globalPos))
+        if (!isOnWallAtPos(globalPos))
             values[Indices::velocityXIdx] =  inletVelocity_;
         values[Indices::velocityYIdx] = 0.0;
 
 #if KEPSILON || KOMEGA || LOWREKEPSILON
         values[Indices::turbulentKineticEnergyEqIdx] = turbulentKineticEnergy_;
         values[Indices::dissipationEqIdx] = dissipation_;
-        if (isOnWall(globalPos))
+        if (isOnWallAtPos(globalPos))
         {
             values[Indices::turbulentKineticEnergyEqIdx] = 0.0;
             values[Indices::dissipationEqIdx] = 0.0;
@@ -386,7 +386,7 @@ public:
 
 #if ONEEQ
         values[Indices::viscosityTildeIdx] = viscosityTilde_;
-        if (isOnWall(globalPos))
+        if (isOnWallAtPos(globalPos))
         {
             values[Indices::viscosityTildeIdx] = 0.0;
         }
@@ -407,7 +407,7 @@ public:
         return timeLoop_->time();
     }
 
-    bool isOnWall(const GlobalPosition& globalPos) const
+    bool isOnWallAtPos(const GlobalPosition& globalPos) const
     {
         return globalPos[1] < eps_;
     }
