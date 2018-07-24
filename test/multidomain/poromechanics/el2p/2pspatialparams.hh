@@ -1,0 +1,153 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 2 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ * \ingroup MultiDomain
+ * \ingroup TwoPTests
+ * \ingroup PoroElastic
+ * \brief The spatial parameters class for the two-phase sub problem in the el2p test problem
+ */
+#ifndef DUMUX_2P_TEST_SPATIALPARAMS_HH
+#define DUMUX_2P_TEST_SPATIALPARAMS_HH
+
+#include <dumux/discretization/elementsolution.hh>
+
+#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/spatialparams/gstatrandomfield.hh>
+#include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
+#include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
+
+namespace Dumux {
+
+/*!
+ * \ingroup MultiDomain
+ * \ingroup TwoPTests
+ * \ingroup PoroElastic
+ * \brief The spatial parameters class for the two-phase sub problem in the el2p test problem
+ */
+template<class TypeTag>
+class TwoPSpatialParams : public FVSpatialParams< typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                      typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                      TwoPSpatialParams<TypeTag> >
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+
+    using ThisType = TwoPSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
+
+public:
+    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+    using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
+    using MaterialLawParams = typename MaterialLaw::Params;
+    // export permeability type
+    using PermeabilityType = Scalar;
+
+    TwoPSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
+    , initPermeability_(getParam<Scalar>("SpatialParams.Permeability"))
+    , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
+    {
+      myMaterialParams_.setSwr(0.0);
+      myMaterialParams_.setSnr(0.0);
+      myMaterialParams_.setVgAlpha(0.0005);
+      myMaterialParams_.setVgn(4.);
+    }
+
+    //! Return the porosity for a sub-control volume
+    template<class ElementSolution>
+    Scalar porosity(const Element& element,
+                    const SubControlVolume& scv,
+                    const ElementSolution& elemSol) const
+    {
+        static constexpr auto poroMechId = CouplingManager::poroMechId;
+
+        const auto& poroMechGridGeom = couplingManagerPtr_->template problem<poroMechId>().fvGridGeometry();
+        const auto poroMechElemSol = elementSolution(element, couplingManagerPtr_->curSol()[poroMechId], poroMechGridGeom);
+
+        // evaluate the deformation-dependent porosity at the scv center
+        return PorosityDeformation<Scalar>::evaluatePorosity(poroMechGridGeom, element, scv.center(), poroMechElemSol, initPorosity_);
+    }
+
+    //! Function for defining the (intrinsic) permeability \f$[m^2]\f$.
+     template< class ElementSolution >
+     PermeabilityType permeability(const Element& element,
+                                   const SubControlVolume& scv,
+                                   const ElementSolution& elemSol) const
+     {
+         PermeabilityKozenyCarman<PermeabilityType> permLaw;
+         return permLaw.evaluatePermeability(initPermeability_, initPorosity_, porosity(element, scv, elemSol));
+     }
+
+    /*!
+     * \brief Returns the parameter object for the Brooks-Corey material law.
+     *        In this test, we use element-wise distributed material parameters.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the material parameters object
+     */
+    template<class ElementSolution>
+    const MaterialLawParams& materialLawParams(const Element& element,
+                                               const SubControlVolume& scv,
+                                               const ElementSolution& elemSol) const
+    {
+        // do not use different parameters in the test with inverted wettability
+        return myMaterialParams_;
+    }
+
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The global position
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    {
+        return FluidSystem::phase0Idx;
+    }
+
+    //! sets the pointer to the coupling manager.
+    void setCouplingManager(std::shared_ptr<const CouplingManager> cm)
+    { couplingManagerPtr_ = cm; }
+
+    //! returns reference to the coupling manager.
+    const CouplingManager& couplingManager() const
+    { return *couplingManagerPtr_; }
+
+private:
+    std::shared_ptr<const CouplingManager> couplingManagerPtr_;
+    Scalar initPermeability_;
+    Scalar initPorosity_;
+
+    MaterialLawParams myMaterialParams_;
+};
+
+} // end namespace Dumux
+
+#endif
