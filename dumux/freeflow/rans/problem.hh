@@ -265,6 +265,9 @@ public:
                               - velocity_[neighborIdx_[elementIdx][dimIdx][0]][velIdx])
                           / (cellCenter_[neighborIdx_[elementIdx][dimIdx][1]][dimIdx]
                               - cellCenter_[neighborIdx_[elementIdx][dimIdx][0]][dimIdx]);
+                    if (abs(cellCenter_[neighborIdx_[elementIdx][dimIdx][1]][dimIdx]
+                            - cellCenter_[neighborIdx_[elementIdx][dimIdx][0]][dimIdx]) < 1e-8)
+                        velocityGradients_[elementIdx][velIdx][dimIdx] = 0.0;
                 }
 
                 if (abs(velocity_[elementIdx][dimIdx]) > abs(velocityMaximum_[wallElementIdx][dimIdx]))
