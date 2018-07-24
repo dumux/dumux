@@ -88,11 +88,41 @@ public:
             for (const auto& scv : scvs(this->fvGeometry()))
                 res[scv.dofIndex()] += residual[scv.localDofIndex()];
         }
-        else
+        else if (!this->elementIsGhost())
         {
             const auto residual = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables, partialReassembler); // forward to the internal implementation
             for (const auto& scv : scvs(this->fvGeometry()))
                 res[scv.dofIndex()] += residual[scv.localDofIndex()];
+        }
+        else
+        {
+            using GridGeometry = typename GridVariables::GridGeometry;
+            using GridView = typename GridGeometry::GridView;
+            static constexpr auto dim = GridView::dimension;
+
+            int numVerticesLocal = this->element().subEntities(dim);
+
+            for (int i = 0; i < numVerticesLocal; ++i) {
+                auto vertex = this->element().template subEntity<dim>(i);
+
+                if (vertex.partitionType() == Dune::InteriorEntity ||
+                    vertex.partitionType() == Dune::BorderEntity)
+                {
+                    // do not change the non-ghost vertices
+                    continue;
+                }
+
+                // set main diagonal entries for the vertex
+                int vIdx = this->assembler().fvGridGeometry().vertexMapper().index(vertex);
+
+                typedef typename JacobianMatrix::block_type BlockType;
+                BlockType &J = jac[vIdx][vIdx];
+                for (int j = 0; j < BlockType::rows; ++j)
+                    J[j][j] = 1.0;
+
+                // set residual for the vertex
+                res[vIdx] = 0;
+            }
         }
 
         auto applyDirichlet = [&] (const auto& scvI,
