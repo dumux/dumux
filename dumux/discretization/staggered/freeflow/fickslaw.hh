@@ -19,7 +19,7 @@
 /*!
  * \file
  * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ *        diffusive molar fluxes due to molecular diffusion with Fick's law.
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FICKS_LAW_HH
@@ -118,19 +118,11 @@ public:
             flux[compIdx] = avgDensity * tij * (insideMoleFraction - outsideMoleFraction);
         }
 
-        const Scalar cumulativeFlux = std::accumulate(flux.begin(), flux.end(), 0.0);
-        flux[FluidSystem::getMainComponent(0)] = - cumulativeFlux;
-
         // Fick's law (for binary systems) states that the net flux of moles within the bulk phase has to be zero:
         // If a given amount of molecules A travel into one direction, the same amount of molecules B have to
-        // go into the opposite direction. This, however, means that the net mass flux whithin the bulk phase
-        // (given different molecular weigths of A and B) does not have to be zero. We account for this:
-        if(!useMoles)
-        {
-            //convert everything to a mass flux
-            for(int compIdx = 0; compIdx < numComponents; ++compIdx)
-                flux[compIdx] *= FluidSystem::molarMass(compIdx);
-        }
+        // go into the opposite direction.
+        const Scalar cumulativeFlux = std::accumulate(flux.begin(), flux.end(), 0.0);
+        flux[FluidSystem::getMainComponent(0)] = - cumulativeFlux;
 
         return flux;
     }

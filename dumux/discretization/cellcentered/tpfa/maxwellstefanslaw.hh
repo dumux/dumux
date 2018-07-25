@@ -19,7 +19,7 @@
 /*!
  * \file
  * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ *        diffusive molar fluxes due to molecular diffusion with Maxwell Stefan
  */
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_MAXWELL_STEFAN_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_MAXWELL_STEFAN_LAW_HH

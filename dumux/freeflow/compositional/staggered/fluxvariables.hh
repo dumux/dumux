@@ -52,6 +52,7 @@ class FreeflowNCFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
 public:
@@ -73,6 +74,8 @@ public:
     {
         CellCenterPrimaryVariables flux(0.0);
 
+        const auto diffusiveFluxes = MolecularDiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
+
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             auto upwindTerm = [compIdx](const auto& volVars)
@@ -83,9 +86,9 @@ public:
             };
 
             flux[compIdx] = ParentType::advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTerm);
-        }
 
-        flux += MolecularDiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
+            flux[compIdx] += useMoles ? diffusiveFluxes[compIdx] : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
+        }
 
         // in case one balance is substituted by the total mass balance
         if (ModelTraits::replaceCompEqIdx() < numComponents)

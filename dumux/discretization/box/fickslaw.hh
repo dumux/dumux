@@ -19,7 +19,7 @@
 /*!
  * \file
  * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ *        diffusive molar fluxes due to molecular diffusion with Fick's law.
  */
 #ifndef DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
