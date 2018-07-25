@@ -85,7 +85,8 @@ public:
     {
         using FluidSystem = typename VolumeVariables::FluidSystem;
         static_assert(FluidSystem::numPhases == 2, "ThermalConductivitySomerton only works for two-phase fluid systems!");
-        static_assert(FluidSystem::isGas(0) || FluidSystem::isGas(1), "ThermalConductivitySomerton only works if one phase is gaseous and one is liquid!");
+        static_assert((FluidSystem::isGas(0) && !FluidSystem::isGas(1)) || (!FluidSystem::isGas(0) && FluidSystem::isGas(1)),
+                     "ThermalConductivitySomerton only works if one phase is gaseous and one is liquid!");
 
         constexpr int liquidPhaseIdx = FluidSystem::isGas(0) ? 1 : 0;
         constexpr int gasPhaseIdx = FluidSystem::isGas(0) ? 0 : 1;
