@@ -185,7 +185,7 @@ public:
      */
     // \{
 
-    bool isOnWall(const GlobalPosition &globalPos) const
+    bool isOnWallAtPos(const GlobalPosition &globalPos) const
     {
         return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_
                || globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
@@ -260,7 +260,7 @@ public:
 #endif
 #if KOMEGA
             // set a fixed dissipation (omega) in one cell
-            if (isOnWall(globalPos))
+            if (isOnWallAtPos(globalPos))
                 values.setDirichletCell(Indices::dissipationIdx);
 #endif
 #if ONEEQ
@@ -285,7 +285,7 @@ public:
         if (time() > 10.0)
         {
             values[Indices::temperatureIdx] = inletTemperature_;
-            if (isOnWall(globalPos))
+            if (isOnWallAtPos(globalPos))
             {
                 values[Indices::temperatureIdx] = wallTemperature_;
             }
@@ -327,14 +327,14 @@ public:
         values[Indices::velocityXIdx] = time() > initializationTime_
                                         ? inletVelocity_
                                         : time() / initializationTime_ * inletVelocity_;
-        if (isOnWall(globalPos))
+        if (isOnWallAtPos(globalPos))
         {
             values[Indices::velocityXIdx] = 0.0;
         }
 
 #if NONISOTHERMAL
         values[Indices::temperatureIdx] = inletTemperature_;
-        if (isOnWall(globalPos))
+        if (isOnWallAtPos(globalPos))
         {
             values[Indices::temperatureIdx] = wallTemperature_;
         }
@@ -343,7 +343,7 @@ public:
 #if LOWREKEPSILON || KEPSILON || KOMEGA
         values[Indices::turbulentKineticEnergyIdx] = turbulentKineticEnergy_;
         values[Indices::dissipationIdx] = dissipation_;
-        if (isOnWall(globalPos))
+        if (isOnWallAtPos(globalPos))
         {
             values[Indices::turbulentKineticEnergyIdx] = 0.0;
             values[Indices::dissipationIdx] = 0.0;
@@ -352,7 +352,7 @@ public:
 
 #if ONEEQ
         values[Indices::viscosityTildeIdx] = viscosityTilde_;
-        if (isOnWall(globalPos))
+        if (isOnWallAtPos(globalPos))
         {
             values[Indices::viscosityTildeIdx] = 0.0;
         }
