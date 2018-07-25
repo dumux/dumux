@@ -250,9 +250,7 @@ public:
             // of the "MiscibleMultiPhaseComposition" constraint solver
             if(useConstraintSolver)
                 MiscibleMultiPhaseComposition::solve(fluidState,
-                                                     paramCache,
-                                                     /*setViscosity=*/true,
-                                                     /*setEnthalpy=*/false);
+                                                     paramCache);
             // ... or calculated explicitly this way ...
             else
             {
@@ -299,9 +297,7 @@ public:
             if (useConstraintSolver)
                 ComputeFromReferencePhase::solve(fluidState,
                                                  paramCache,
-                                                 phase1Idx,
-                                                 /*setViscosity=*/true,
-                                                 /*setEnthalpy=*/false);
+                                                 phase1Idx);
             // ... or calculated explicitly this way ...
             else
             {
@@ -349,9 +345,7 @@ public:
             if (useConstraintSolver)
                 ComputeFromReferencePhase::solve(fluidState,
                                                  paramCache,
-                                                 phase0Idx,
-                                                 /*setViscosity=*/true,
-                                                 /*setEnthalpy=*/false);
+                                                 phase0Idx);
             // ... or calculated explicitly this way ...
             else
             {
@@ -387,11 +381,11 @@ public:
                 fluidState.setDensity(phaseIdx, rho);
                 Scalar rhoMolar = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
                 fluidState.setMolarDensity(phaseIdx, rhoMolar);
-                const Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
-                fluidState.setViscosity(phaseIdx,mu);
             }
 
             // compute and set the enthalpy
+            const Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+            fluidState.setViscosity(phaseIdx,mu);
             Scalar h = EnergyVolVars::enthalpy(fluidState, paramCache, phaseIdx);
             fluidState.setEnthalpy(phaseIdx, h);
         }

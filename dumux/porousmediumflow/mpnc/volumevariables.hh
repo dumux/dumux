@@ -728,8 +728,6 @@ public:
             equilFluidState.assign(actualFluidState) ;
             ConstraintSolver::solve(equilFluidState,
                                     paramCache,
-                                    /*setViscosity=*/false,
-                                    /*setEnthalpy=*/false) ;
 
             // Setting the equilibrium composition (in a kinetic model not necessarily the same as the actual mole fraction)
             for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx){

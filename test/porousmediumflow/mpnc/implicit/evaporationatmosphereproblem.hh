@@ -323,9 +323,7 @@ public:
 
         // This solves the system of equations defining x=x(p,T)
         ConstraintSolver::solve(fluidState,
-                                dummyCache,
-                                /*setViscosity=*/false,
-                                /*setEnthalpy=*/false) ;
+                                dummyCache) ;
 
         // Now let's make the air phase less than fully saturated with water
         fluidState.setMoleFraction(gasPhaseIdx, wCompIdx, fluidState.moleFraction(gasPhaseIdx, wCompIdx)*percentOfEquil_ ) ;
@@ -480,9 +478,7 @@ private:
          // This solves the system of equations defining x=x(p,T)
         ParameterCache dummyCache;
         ConstraintSolver::solve(equilibriumFluidState,
-                                dummyCache,
-                                /*setViscosity=*/false,
-                                /*setEnthalpy=*/false) ;
+                                dummyCache) ;
 
         FluidState dryFluidState(equilibriumFluidState);
         // Now let's make the air phase less than fully saturated with vapor

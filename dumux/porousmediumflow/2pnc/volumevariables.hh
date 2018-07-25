@@ -262,8 +262,6 @@ public:
 
             MiscibleMultiPhaseComposition::solve(fluidState,
                                                  paramCache,
-                                                 /*setViscosity=*/true,
-                                                 /*setEnthalpy=*/false,
                                                  knownPhaseIdx);
         }
         else if (phasePresence == secondPhaseOnly)
@@ -291,9 +289,7 @@ public:
             // of the "ComputeFromReferencePhase" constraint solver
             ComputeFromReferencePhase::solve(fluidState,
                                              paramCache,
-                                             phase1Idx,
-                                             /*setViscosity=*/true,
-                                             /*setEnthalpy=*/false);
+                                             phase1Idx);
         }
         else if (phasePresence == firstPhaseOnly)
         {
@@ -321,9 +317,7 @@ public:
             // of the "ComputeFromReferencePhase" constraint solver
             ComputeFromReferencePhase::solve(fluidState,
                                              paramCache,
-                                             phase0Idx,
-                                             /*setViscosity=*/true,
-                                             /*setEnthalpy=*/false);
+                                             phase0Idx);
         }
         paramCache.updateAll(fluidState);
         for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)

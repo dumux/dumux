@@ -143,9 +143,7 @@ void completeReferenceFluidState(FluidState &fs,
     typename FluidSystem::ParameterCache paramCache;
     ComputeFromReferencePhase::solve(fs,
                                      paramCache,
-                                     refPhaseIdx,
-                                     /*setViscosity=*/false,
-                                     /*setEnthalpy=*/false);
+                                     refPhaseIdx);
 }
 
 
@@ -251,9 +249,7 @@ int main()
 
     FluidSystem::ParameterCache paramCache;
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
-    MiscibleMultiPhaseComposition::solve(fsRef, paramCache,
-                                         /*setViscosity=*/false,
-                                         /*setEnthalpy=*/false);
+    MiscibleMultiPhaseComposition::solve(fsRef, paramCache);
 
     // check the flash calculation
     checkNcpFlash<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams);
@@ -284,9 +280,7 @@ int main()
                       + (pc[gasPhaseIdx] - pc[liquidPhaseIdx]));
 
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
-    MiscibleMultiPhaseComposition::solve(fsRef, paramCache,
-                                         /*setViscosity=*/false,
-                                         /*setEnthalpy=*/false);
+    MiscibleMultiPhaseComposition::solve(fsRef, paramCache);
 
 
     // check the flash calculation

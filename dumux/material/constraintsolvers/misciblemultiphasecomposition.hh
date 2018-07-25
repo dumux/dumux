@@ -54,8 +54,6 @@ namespace Dumux {
  * - composition in mole and mass fractions and molarities of *all* phases
  * - mean molar masses of *all* phases
  * - fugacity coefficients of *all* components in *all* phases
- * - if the setViscosity parameter is true, also dynamic viscosities of *all* phases
- * - if the setEnthalpy parameter is true, also specific enthalpies of *all* phases
  */
 template <class Scalar, class FluidSystem>
 class MiscibleMultiPhaseComposition
@@ -78,14 +76,10 @@ public:
      *
      * \param fluidState A container with the current (physical) state of the fluid
      * \param paramCache A container for iterative calculation of fluid composition
-     * \param setViscosity Should the viscosity be set in the fluidstate?
-     * \param setEnthalpy Should the enthalpy be set in the fluidstate?
      */
     template <class FluidState, class ParameterCache>
     static void solve(FluidState &fluidState,
                       ParameterCache &paramCache,
-                      bool setViscosity,
-                      bool setEnthalpy,
                       int knownPhaseIdx = 0)
     {
 #ifndef NDEBUG
@@ -205,16 +199,6 @@ public:
 
             value = FluidSystem::molarDensity(fluidState, paramCache, phaseIdx);
             fluidState.setMolarDensity(phaseIdx, value);
-
-            if (setViscosity) {
-                value = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
-                fluidState.setViscosity(phaseIdx, value);
-            }
-
-            if (setEnthalpy) {
-                value = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
-                fluidState.setEnthalpy(phaseIdx, value);
-            }
         }
     }
 };
