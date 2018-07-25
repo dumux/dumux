@@ -392,7 +392,7 @@ public:
         // get some references for convenience
         auto& couplingManager = this->couplingManager();
         const auto& element = this->element();
-        const auto& curSol = this->curSol()[domainId];
+        const auto& curSol = this->curSol();
         auto&& fvGeometry = this->fvGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& curElemFaceVars = this->curElemFaceVars();

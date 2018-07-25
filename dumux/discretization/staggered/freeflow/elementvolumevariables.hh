@@ -31,6 +31,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dumux/discretization/staggered/elementsolution.hh>
+#include <dumux/common/typetraits/vector.hh>
 
 namespace Dumux {
 
@@ -103,7 +104,7 @@ private:
 template<class GVV>
 class StaggeredElementVolumeVariables<GVV, /*cachingEnabled*/false>
 {
-    using Indices = typename GVV::Indices; //TODO: get them out of the volvars
+    using PrimaryVariables = typename GVV::VolumeVariables::PrimaryVariables;
 
 public:
     //! export type of the grid volume variables
@@ -117,8 +118,19 @@ public:
     : gridVolVarsPtr_(&gridVolVars) {}
 
     //! Binding of an element, prepares the volume variables within the element stencil
+    //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
+    template<class FVElementGeometry, class ...Args>
+    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+              const FVElementGeometry& fvGeometry,
+              const Dune::MultiTypeBlockVector<Args...>& sol)
+    {
+        // forward to the actual method
+        bind(element, fvGeometry, sol[FVElementGeometry::FVGridGeometry::cellCenterIdx()]);
+    }
+
+    //! Binding of an element, prepares the volume variables within the element stencil
     //! called by the local jacobian to prepare element assembly
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>(), int> = 0>
     void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
@@ -128,7 +140,7 @@ public:
         const auto& problem = gridVolVars().problem();
         const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
         const auto globalI = fvGridGeometry.elementMapper().index(element);
-        const auto map = fvGridGeometry.connectivityMap();
+        const auto& map = fvGridGeometry.connectivityMap();
         constexpr auto cellCenterIdx = FVElementGeometry::FVGridGeometry::cellCenterIdx();
         const auto& connectivityMapI = map(cellCenterIdx, cellCenterIdx, globalI);
         const auto numDofs = connectivityMapI.size();
@@ -140,16 +152,13 @@ public:
         volVarIndices_.resize(numDofs);
         int localIdx = 0;
 
-        using CellCenterPrimaryVariables = typename SolutionVector::value_type;
-
         // Update the volume variables of the element at hand and the neighboring elements
         for (auto globalJ : connectivityMapI)
         {
             const auto& elementJ = fvGridGeometry.element(globalJ);
             auto&& scvJ = fvGeometry.scv(globalJ);
-            CellCenterPrimaryVariables priVars(0.0);
-            priVars = sol[cellCenterIdx][globalJ];
-            auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
+
+            const auto elemSol = makeElementSolutionFromCellCenterPrivars<PrimaryVariables>(sol[globalJ]);
             volumeVariables_[localIdx].update(elemSol,
                                               problem,
                                               elementJ,
@@ -168,7 +177,7 @@ public:
             volumeVariables_.resize(localIdx+1);
             volVarIndices_.resize(localIdx+1);
 
-            auto boundaryPriVars = GVV::Traits::getBoundaryPriVars(problem, sol, element, scvf);
+            auto boundaryPriVars = gridVolVars().getBoundaryPriVars(problem, sol, element, scvf);
             auto elemSol = elementSolution<FVElementGeometry>(std::move(boundaryPriVars));
             volumeVariables_[localIdx].update(elemSol,
                                               problem,
@@ -179,26 +188,34 @@ public:
         }
     }
 
+    //! Binding of an element, prepares the volume variables within the element stencil
+    //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
+    template<class FVElementGeometry, class ...Args>
+    void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+                     const FVElementGeometry& fvGeometry,
+                     const Dune::MultiTypeBlockVector<Args...>& sol)
+    {
+        // forward to the actual method
+        bindElement(element, fvGeometry, sol[FVElementGeometry::FVGridGeometry::cellCenterIdx()]);
+    }
+
     //! Binding of an element, prepares only the volume variables of the element.
     //! Specialization for Staggered models
-    template<class FVElementGeometry, class SolutionVector>
+    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>(), int> = 0>
     void bindElement(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
         clear();
 
-        const auto eIdx = fvGeometry.fvGridGeometry().elementMapper().index(element);
+        const auto globalI = fvGeometry.fvGridGeometry().elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
 
         // update the volume variables of the element
-        auto&& scv = fvGeometry.scv(eIdx);
-        using CellCenterPrimaryVariables = typename SolutionVector::value_type;
-        CellCenterPrimaryVariables priVars(0.0);
-        constexpr auto cellCenterIdx = FVElementGeometry::FVGridGeometry::cellCenterIdx();
-        priVars = sol[cellCenterIdx][eIdx];
-        auto elemSol = elementSolution<FVElementGeometry>(std::move(priVars));
+        auto&& scv = fvGeometry.scv(globalI);
+
+        const auto elemSol = makeElementSolutionFromCellCenterPrivars<PrimaryVariables>(sol[globalI]);
         volumeVariables_[0].update(elemSol,
                                    gridVolVars().problem(),
                                    element,

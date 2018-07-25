@@ -227,6 +227,7 @@ class StaggeredGridVolumeVariables<Traits, /*cachingEnabled*/false>
 {
     using ThisType = StaggeredGridVolumeVariables<Traits, false>;
     using Problem = typename Traits::Problem;
+    using PrimaryVariables = typename Traits::VolumeVariables::PrimaryVariables;
 
 public:
     //! export the type of the VolumeVariables
@@ -245,6 +246,14 @@ public:
 
     const Problem& problem() const
     { return *problemPtr_;}
+
+    //! Returns the primary  variales used for the boundary volVars and checks for admissable
+    //! combinations for boundary conditions.
+    template<class... Args>
+    PrimaryVariables getBoundaryPriVars(Args&&... args) const
+    {
+        return Traits::getBoundaryPriVars(std::forward<Args>(args)...);
+    }
 
 private:
 
