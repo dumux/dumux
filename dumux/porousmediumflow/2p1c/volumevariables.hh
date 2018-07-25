@@ -31,6 +31,7 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/volumevariables.hh>
+#include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
 
 namespace Dumux {
@@ -52,18 +53,32 @@ class TwoPOneCVolumeVariables
     using Idx = typename Traits::ModelTraits::Indices;
     static constexpr int numFluidComps = ParentType::numComponents();
 
-    enum {
+    // primary variable indices
+    enum
+    {
         numPhases = Traits::ModelTraits::numPhases(),
         switchIdx = Idx::switchIdx,
         pressureIdx = Idx::pressureIdx
     };
 
-    // present phases
-    enum {
+    // component indices
+    enum
+    {
+        comp0Idx = FS::comp0Idx,
+        liquidPhaseIdx = FS::liquidPhaseIdx,
+        gasPhaseIdx = FS::gasPhaseIdx
+    };
+
+    // phase presence indices
+    enum
+    {
         twoPhases = Idx::twoPhases,
         liquidPhaseOnly  = Idx::liquidPhaseOnly,
         gasPhaseOnly  = Idx::gasPhaseOnly,
     };
+
+    // formulations
+    static constexpr auto formulation = Traits::ModelTraits::priVarFormulation();
 
 public:
     //! The type of the object returned by the fluidState() method
@@ -77,10 +92,13 @@ public:
     //! export type of solid system
     using SolidSystem = typename Traits::SolidSystem;
 
-    // set liquid phase as wetting phase: TODO make this more flexible
-    static constexpr int wPhaseIdx = FluidSystem::liquidPhaseIdx;
-    // set gas phase as non-wetting phase: TODO make this more flexible
-    static constexpr int nPhaseIdx = FluidSystem::gasPhaseIdx;
+    //! return the two-phase formulation used here
+    static constexpr TwoPFormulation priVarFormulation() { return formulation; }
+
+    // check for permissive combinations
+    static_assert(Traits::ModelTraits::numPhases() == 2, "NumPhases set in the model is not two!");
+    static_assert(Traits::ModelTraits::numComponents() == 1, "NumComponents set in the model is not one!");
+    static_assert((formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0), "Chosen TwoPFormulation not supported!");
 
     /*!
      * \brief Update all quantities for a given control volume
@@ -106,6 +124,7 @@ public:
         /////////////
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
@@ -134,57 +153,64 @@ public:
 
     //! Update the fluidstate
     template<class ElemSol, class Problem, class Element, class Scv>
-    static void completeFluidState(const ElemSol& elemSol,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const Scv& scv,
-                                   FluidState& fluidState,
-                                   SolidState& solidState)
+    void completeFluidState(const ElemSol& elemSol,
+                            const Problem& problem,
+                            const Element& element,
+                            const Scv& scv,
+                            FluidState& fluidState,
+                            SolidState& solidState)
     {
 
         // capillary pressure parameters
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        fluidState.setWettingPhase(wPhaseIdx);
 
         const auto& priVars = elemSol[scv.localDofIndex()];
         const auto phasePresence = priVars.state();
 
-        // get saturations
-        Scalar sw(0.0);
-        Scalar sg(0.0);
+        // set the saturations
         if (phasePresence == twoPhases)
         {
-            sw = priVars[switchIdx];
-            sg = 1.0 - sw;
+            if (formulation == TwoPFormulation::p0s1)
+            {
+                fluidState.setSaturation(gasPhaseIdx, priVars[switchIdx]);
+                fluidState.setSaturation(liquidPhaseIdx, 1.0 - priVars[switchIdx]);
+            }
+            else
+            {
+                fluidState.setSaturation(liquidPhaseIdx, priVars[switchIdx]);
+                fluidState.setSaturation(gasPhaseIdx, 1.0 - priVars[switchIdx]);
+            }
         }
         else if (phasePresence == liquidPhaseOnly)
         {
-            sw = 1.0;
-            sg = 0.0;
+            fluidState.setSaturation(liquidPhaseIdx, 1.0);
+            fluidState.setSaturation(gasPhaseIdx, 0.0);
         }
         else if (phasePresence == gasPhaseOnly)
         {
-            sw = 0.0;
-            sg = 1.0;
+            fluidState.setSaturation(liquidPhaseIdx, 0.0);
+            fluidState.setSaturation(gasPhaseIdx, 1.0);
         }
-        else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-        Valgrind::CheckDefined(sg);
+        else
+            DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
 
-        fluidState.setSaturation(wPhaseIdx, sw);
-        fluidState.setSaturation(nPhaseIdx, sg);
-
-        // get gas phase pressure
-        const Scalar pg = priVars[pressureIdx];
-
-        // calculate capillary pressure
+        // set pressures of the fluid phases
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const Scalar pc = MaterialLaw::pc(materialParams, sw);
-
-        // set wetting phase pressure
-        const Scalar pw = pg - pc;
-
-        //set pressures
-        fluidState.setPressure(wPhaseIdx, pw);
-        fluidState.setPressure(nPhaseIdx, pg);
+        pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
+        if (formulation == TwoPFormulation::p0s1)
+        {
+            fluidState.setPressure(liquidPhaseIdx, priVars[pressureIdx]);
+            fluidState.setPressure(gasPhaseIdx, (wPhaseIdx == liquidPhaseIdx) ? priVars[pressureIdx] + pc_
+                                                                              : priVars[pressureIdx] - pc_);
+        }
+        else
+        {
+            fluidState.setPressure(gasPhaseIdx, priVars[pressureIdx]);
+            fluidState.setPressure(liquidPhaseIdx, (wPhaseIdx == liquidPhaseIdx) ? priVars[pressureIdx] - pc_
+                                                                                 : priVars[pressureIdx] + pc_);
+        }
 
         // get temperature
         Scalar temperature;
@@ -306,7 +332,7 @@ public:
      *        in \f$[kg/(m*s^2)=N/m^2=Pa]\f$.
      */
     Scalar capillaryPressure() const
-    { return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); }
+    { return pc_; }
 
     /*!
      * \brief Returns the average porosity within the control volume.
@@ -324,14 +350,17 @@ public:
      * \brief Returns the vapor temperature \f$T_{vap}(p_n)\f$ of the fluid within the control volume.
      */
     Scalar vaporTemperature() const
-    { return FluidSystem::vaporTemperature(fluidState_, wPhaseIdx);}
+    { return FluidSystem::vaporTemperature(fluidState_, liquidPhaseIdx);}
 
 protected:
     FluidState fluidState_;
     SolidState solidState_;
 
 private:
-    PermeabilityType permeability_; //!> Effective permeability within the control volume
+    Scalar pc_;                     //!< The capillary pressure
+    PermeabilityType permeability_; //!< Effective permeability within the control volume
+
+    //!< Relative permeability within the control volume
     std::array<Scalar, numPhases> relativePermeability_;
 };
 

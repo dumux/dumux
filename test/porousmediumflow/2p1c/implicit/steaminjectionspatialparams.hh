@@ -84,6 +84,8 @@ public:
     InjectionProblemSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
+        gasWetting_ = getParam<bool>("SpatialParams.GasWetting", false);
+
         // set Van Genuchten Parameters
         materialParams_.setSwr(0.1);
         materialParams_.setSnr(0.0);
@@ -128,7 +130,23 @@ public:
         return materialParams_;
     }
 
+    /*!
+     * \brief Function for defining which phase is to be considered as the wetting phase.
+     *
+     * \return the wetting phase index
+     * \param globalPos The position of the center of the element
+     */
+    template<class FluidSystem>
+    int wettingPhaseAtPos(const GlobalPosition& globalPos) const
+    {
+        if (gasWetting_)
+            return FluidSystem::gasPhaseIdx;
+        else
+            return FluidSystem::liquidPhaseIdx;
+    }
+
 private:
+    bool gasWetting_;
     MaterialLawParams materialParams_;
 };
 

@@ -65,6 +65,7 @@
 #include <dumux/material/fluidstates/compositional.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
+#include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
@@ -84,6 +85,7 @@ namespace Dumux {
  * \brief Specifies a number properties of models
  *        considering two phases with water as a single component.
  */
+template<TwoPFormulation f>
 struct TwoPOneCModelTraits
 {
     using Indices = TwoPOneCIndices;
@@ -96,15 +98,17 @@ struct TwoPOneCModelTraits
     static constexpr bool enableMolecularDiffusion() { return false; }
     static constexpr bool enableEnergyBalance() { return false; }
 
+    static constexpr TwoPFormulation priVarFormulation() { return f; }
+
     template <class FluidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
-        if (pvIdx == 0)
-            return "p_n";
-        else if (state == Indices::twoPhases)
-            return "S_w";
+        if (priVarFormulation() == TwoPFormulation::p0s1)
+            return (pvIdx == 0) ? "p_w" :
+                                  (state == Indices::twoPhases) ? "S_n" : "T";
         else
-            return "T";
+            return (pvIdx == 0) ? "p_n" :
+                                  (state == Indices::twoPhases) ? "S_w" : "T";
     }
 };
 
@@ -155,6 +159,10 @@ private:
 public:
      using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
+
+//! Set the default formulation to pw-sn
+SET_PROP(TwoPOneCNI, Formulation)
+{ static constexpr TwoPFormulation value = TwoPFormulation::p1s0; };
 
 //! Do not block spurious flows by default.
 SET_BOOL_PROP(TwoPOneCNI, UseBlockingOfSpuriousFlow, false);
@@ -209,8 +217,9 @@ private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numComponents == 1, "Only fluid systems with 1 component are supported by the 2p1cni model!");
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p1cni model!");
+    using Traits = TwoPOneCModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>;
 public:
-    using type = PorousMediumFlowNIModelTraits<TwoPOneCModelTraits>;
+    using type = PorousMediumFlowNIModelTraits< Traits >;
 };
 
 //! The non-isothermal vtk output fields.

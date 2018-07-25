@@ -63,6 +63,9 @@ protected:
         using FluidSystem = typename VolumeVariables::FluidSystem;
         using Indices = typename VolumeVariables::Indices;
 
+        static constexpr auto formulation = VolumeVariables::priVarFormulation();
+        static_assert( (formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0),
+                        "Chosen TwoPFormulation not supported!");
 
         // evaluate primary variable switch
         bool wouldSwitch = false;
@@ -72,7 +75,7 @@ protected:
         // check if a primary var switch is necessary
         if (phasePresence == Indices::twoPhases)
         {
-            Scalar Smin = 0;
+            Scalar Smin = 0.0;
             if (this->wasSwitched_[dofIdxGlobal])
                 Smin = -0.01;
 
@@ -81,10 +84,12 @@ protected:
                 wouldSwitch = true;
                 // gas phase disappears
                 if (this->verbosity() > 1)
-                    std::cout << "Gas phase (" << FluidSystem::phaseName(FluidSystem::gasPhaseIdx) << ") disappears at dof " << dofIdxGlobal
+                    std::cout << "Gas phase (" << FluidSystem::phaseName(FluidSystem::gasPhaseIdx)
+                              << ") disappears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos
                               << ", S_" << FluidSystem::phaseName(FluidSystem::gasPhaseIdx) << ": "
-                              << volVars.saturation(FluidSystem::gasPhaseIdx) << std::endl;
+                              << volVars.saturation(FluidSystem::gasPhaseIdx)
+                              << std::endl;
                 newPhasePresence = Indices::liquidPhaseOnly;
 
                 priVars[Indices::switchIdx] = volVars.fluidState().temperature();
@@ -94,10 +99,12 @@ protected:
                 wouldSwitch = true;
                 // water phase disappears
                 if (this->verbosity() > 1)
-                    std::cout << "Liquid phase (" << FluidSystem::phaseName(FluidSystem::liquidPhaseIdx) << ") disappears at dof " << dofIdxGlobal
+                    std::cout << "Liquid phase (" << FluidSystem::phaseName(FluidSystem::liquidPhaseIdx)
+                              << ") disappears at dof " << dofIdxGlobal
                               << ", coordinates: " << globalPos
                               << ", S_" << FluidSystem::phaseName(FluidSystem::liquidPhaseIdx) << ": "
-                              << volVars.saturation(FluidSystem::liquidPhaseIdx) << std::endl;
+                              << volVars.saturation(FluidSystem::liquidPhaseIdx)
+                              << std::endl;
                 newPhasePresence = Indices::gasPhaseOnly;
 
                 priVars[Indices::switchIdx] = volVars.fluidState().temperature();
@@ -116,18 +123,19 @@ protected:
                 wouldSwitch = true;
                 // gas phase appears
                 if (this->verbosity() > 1)
-                    std::cout << "Gas phase (" << FluidSystem::phaseName(FluidSystem::gasPhaseIdx) << ") appears at dof " << dofIdxGlobal
-                              << ", coordinates: " << globalPos  << std::endl;
-
-               newPhasePresence = Indices::twoPhases;
-               priVars[Indices::switchIdx] = 0.9999; // liquid phase saturation
+                    std::cout << "Gas phase (" << FluidSystem::phaseName(FluidSystem::gasPhaseIdx)
+                              << ") appears at dof " << dofIdxGlobal
+                              << ", coordinates: " << globalPos
+                              << std::endl;
+                newPhasePresence = Indices::twoPhases;
+                if (formulation == TwoPFormulation::p1s0)
+                    priVars[Indices::switchIdx] = 0.9999; // liquid phase saturation
+                else
+                    priVars[Indices::switchIdx] = 0.0001;
             }
         }
-
-
         else if (phasePresence == Indices::gasPhaseOnly)
         {
-
             const Scalar temp = volVars.fluidState().temperature();
             const Scalar tempVap = volVars.vaporTemperature();
 
@@ -140,7 +148,10 @@ protected:
                               << ", coordinates: " << globalPos  << std::endl;
 
                newPhasePresence = Indices::twoPhases;
-               priVars[Indices::switchIdx] = 0.0001; //arbitrary small value
+               if (formulation == TwoPFormulation::p1s0)
+                   priVars[Indices::switchIdx] = 0.0001;
+               else
+                   priVars[Indices::switchIdx] = 0.9999;
             }
     }
         priVars.setState(newPhasePresence);
