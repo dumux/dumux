@@ -83,14 +83,14 @@ public:
     { return false; }
 
     /*!
-     * \brief Return whether a phase is liquid
+     * \brief Return whether a phase is gaseous
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static constexpr bool isLiquid(int phaseIdx)
+    static constexpr bool isGas(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        return phaseIdx == liquidPhaseIdx;
+        return phaseIdx == gasPhaseIdx;
     }
 
     /*!

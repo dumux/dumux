@@ -105,18 +105,18 @@ public:
     { return false; }
 
     /*!
-     * \brief Return whether a phase is liquid
+     * \brief Return whether a phase is gaseous
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static constexpr bool isLiquid(int phaseIdx)
+    static constexpr bool isGas(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
         switch (phaseIdx)
         {
-            case wPhaseIdx: return WettingFluid::isLiquid(); break;
-            case nPhaseIdx: return NonwettingFluid::isLiquid(); break;
-            case gPhaseIdx: return Gas::isLiquid(); break;
+            case wPhaseIdx: return WettingFluid::isGas(); break;
+            case nPhaseIdx: return NonwettingFluid::isGas(); break;
+            case gPhaseIdx: return Gas::isGas(); break;
         }
     }
 
@@ -288,7 +288,7 @@ public:
     {
         // two gaseous phases at once do not make sense physically!
         // (But two liquids are fine)
-        static_assert(WettingFluid::isLiquid() && NonwettingFluid::isLiquid() && !Gas::isLiquid(), "There can only be one gaseous phase!");
+        static_assert(!WettingFluid::isGas() && !NonwettingFluid::isGas() && Gas::isGas(), "There can only be one gaseous phase!");
     }
 
     /*!
@@ -306,7 +306,7 @@ public:
                      Scalar pressMin, Scalar pressMax, unsigned nPress)
     {
         // two gaseous phases at once do not make sense physically!
-        static_assert(WettingFluid::isLiquid() && NonwettingFluid::isLiquid() && !Gas::isLiquid(), "There can only be one gaseous phase!");
+        static_assert(!WettingFluid::isGas() && !NonwettingFluid::isGas() && Gas::isGas(), "There can only be one gaseous phase!");
 
         if (WettingFluid::Component::isTabulated)
         {

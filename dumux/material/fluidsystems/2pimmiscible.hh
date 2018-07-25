@@ -60,7 +60,7 @@ class TwoPImmiscible
     static_assert((Fluid0::numComponents == 1), "Fluid0 has more than one component");
     static_assert((Fluid1::numComponents == 1), "Fluid1 has more than one component");
     // two gaseous phases at once do not make sense physically! (but two liquids are fine)
-    static_assert(Fluid0::isLiquid() || Fluid1::isLiquid(), "One phase has to be a liquid!");
+    static_assert(!Fluid0::isGas() || !Fluid1::isGas(), "One phase has to be a liquid!");
 
     using ThisType = TwoPImmiscible<Scalar, Fluid0, Fluid1>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
@@ -98,16 +98,16 @@ public:
     { return false; }
 
     /*!
-     * \brief Return whether a phase is liquid
+     * \brief Return whether a phase is gaseous
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static constexpr bool isLiquid(int phaseIdx)
+    static constexpr bool isGas(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
         if (phaseIdx == phase0Idx)
-            return Fluid0::isLiquid();
-        return Fluid1::isLiquid();
+            return Fluid0::isGas();
+        return Fluid1::isGas();
     }
 
     /*!

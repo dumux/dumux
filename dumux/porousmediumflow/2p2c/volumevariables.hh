@@ -110,7 +110,7 @@ public:
 
     // The computations in the explicit composition update most probably assume a liquid-gas interface with
     // liquid as first phase. TODO: is this really needed? The constraint solver does the job anyway, doesn't it?
-    static_assert(useConstraintSolver || (FluidSystem::isLiquid(phase0Idx) && !FluidSystem::isLiquid(phase1Idx)),
+    static_assert(useConstraintSolver || (!FluidSystem::isGas(phase0Idx) && FluidSystem::isGas(phase1Idx)),
                    "Explicit composition calculation has to be re-checked for NON-liquid-gas equilibria");
 
     /*!

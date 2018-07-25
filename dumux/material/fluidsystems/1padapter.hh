@@ -136,10 +136,10 @@ public:
     { return false; }
 
     /*!
-     * \brief Returns whether the fluid is a liquid
+     * \brief Returns whether the fluid is gaseous
      */
-    static constexpr bool isLiquid(int phaseIdx = 0)
-    { return MultiPhaseFluidSystem::isLiquid(phase); }
+    static constexpr bool isGas(int phaseIdx = 0)
+    { return MultiPhaseFluidSystem::isGas(phase); }
 
     /*!
      * \brief Returns true if and only if a fluid phase is assumed to
