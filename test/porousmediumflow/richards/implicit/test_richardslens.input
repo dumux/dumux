@@ -11,5 +11,5 @@ Name = richardslens
 EnableGravity = 1 # enable gravity
 
 [Newton]
-TargetSteps = 18 # set the "desireable" number of newton iterations of a time step
+TargetSteps = 18 # set the "desirable" number of Newton iterations of a time step
 EnableChop = true # chop for better convergence
