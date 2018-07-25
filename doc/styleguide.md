@@ -1,5 +1,13 @@
 # Style guide
 
+## General formatting
+
+* Use 4 spaces indent (no tabs, not 2 spaces)
+* _Trailing whitespace_: source files may not contain trailing whitespace to reduce the amount of noise in diffs and during merges.
+* In contrast to the remainder of the coding style guidelines, these code formatting rules are (partially) enforced automatically with a pre-commit hook. Due to the distributed nature of git, this hook can only check your commits once they arrive in the central repository, so it is important to make your local git repository check your commits as well. The dunecontrol script will automatically install such a pre-commit hook for you.
+
+
+
 ## C++
 
 ### Documentation
@@ -176,6 +184,14 @@ bool here = true;
 ### Property system
 
 * Prefer class templates with regular template arguments over class templates with a `TypeTag` as template argument
+
+### Exception
+
+* The use of exceptions for error handling is encouraged
+* There is a variety of DuMux and Dune-specific exceptions you can throw
+* All derive (possibly indirectly) from the class `Dune::Exception` in dune-common.
+
+
 
 ## Files and folders
 
