@@ -49,11 +49,18 @@ public:
         for (int i = 0; i < VolumeVariables::numPhases(); ++i)
             for (int j = 0; j < VolumeVariables::numComponents(); ++j)
                 vtk.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },
-                                      "x^"+ FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i));
+                                    "x^"+ FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i));
 
-        for (int j = 0; j < VolumeVariables::numComponents(); ++j)
-            vtk.addVolumeVariable([j](const auto& v){ return v.molarity(FluidSystem::phase0Idx,j); },
-                                  "m^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(FluidSystem::phase0Idx));
+        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+            vtk.addVolumeVariable([i](const auto& v){ return v.molarDensity(i); },
+                                    "rhoMolar_" + FluidSystem::phaseName(i));
+
+        if (VolumeVariables::numComponents() < 3){
+            for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+                for (int j = 0; j < VolumeVariables::numComponents(); ++j)
+                    vtk.addVolumeVariable([i,j](const auto& v){ return v.massFraction(i,j); },
+                                    "X^"+ FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i));
+        }
 
         vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phasePresence");
     }

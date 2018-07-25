@@ -96,36 +96,11 @@
 
 #include "indices.hh"
 #include "volumevariables.hh"
-#include "primaryvariableswitch.hh"
-#include "vtkoutputfields.hh"
+#include <dumux/porousmediumflow/2pnc/primaryvariableswitch.hh>
+#include <dumux/porousmediumflow/2pnc/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/2pnc/model.hh>
 
 namespace Dumux {
-
-/*!
- * \ingroup TwoPTwoCModel
- * \brief Specifies a number properties of two-phase two-component models.
- *
- * \tparam f The two-phase formulation used
- * \tparam useM Boolean to specify if moles or masses are balanced
- */
-template<TwoPFormulation f, bool useM, int repCompEqIdx = 2>
-struct TwoPTwoCModelTraits
-{
-    using Indices = TwoPTwoCIndices;
-
-    static constexpr int numEq() { return 2; }
-    static constexpr int numPhases() { return 2; }
-    static constexpr int numComponents() { return 2; }
-    static constexpr int replaceCompEqIdx() { return repCompEqIdx; }
-
-    static constexpr bool useMoles() { return useM; }
-    static constexpr bool enableAdvection() { return true; }
-    static constexpr bool enableMolecularDiffusion() { return true; }
-    static constexpr bool enableEnergyBalance() { return false; }
-
-    static constexpr TwoPFormulation priVarFormulation() { return f; }
-};
-
 /*!
  * \ingroup TwoPTwoCModel
  * \brief Traits class for the two-phase two-component model.
@@ -156,7 +131,7 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(TwoPTwoC, INHERITS_FROM(PorousMediumFlow));
+NEW_TYPE_TAG(TwoPTwoC, INHERITS_FROM(TwoPNC));
 NEW_TYPE_TAG(TwoPTwoCNI, INHERITS_FROM(TwoPTwoC));
 
 //////////////////////////////////////////////////////////////////
@@ -174,50 +149,11 @@ private:
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
 
 public:
-    using type = TwoPTwoCModelTraits< GET_PROP_VALUE(TypeTag, Formulation),
-                                      GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx) >;
+    using type = TwoPNCModelTraits<2, GET_PROP_VALUE(TypeTag, UseMoles), true, GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
-
-//! Set the vtk output fields specific to this model
-SET_TYPE_PROP(TwoPTwoC, VtkOutputFields, TwoPTwoCVtkOutputFields);
-
-/*!
- * \brief The fluid state which is used by the volume variables to
- *        store the thermodynamic state. This should be chosen
- *        appropriately for the model ((non-)isothermal, equilibrium, ...).
- *        This can be done in the problem.
- */
-SET_PROP(TwoPTwoC, FluidState)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-public:
-    using type = CompositionalFluidState<Scalar, FluidSystem>;
-};
-
-//! Set the default formulation to pw-sn
-SET_PROP(TwoPTwoC, Formulation)
-{ static constexpr TwoPFormulation value = TwoPFormulation::p0s1; };
-
-//! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);
-
-//! Use the compositional local residual operator
-SET_TYPE_PROP(TwoPTwoC, LocalResidual, CompositionalLocalResidual<TypeTag>);
 
 //! The primary variable switch for the 2p2c model
-SET_TYPE_PROP(TwoPTwoC, PrimaryVariableSwitch, TwoPTwoCPrimaryVariableSwitch);
-
-//! The primary variables vector for the 2p2c model
-SET_PROP(TwoPTwoC, PrimaryVariables)
-{
-private:
-    using PrimaryVariablesVector = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                     GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>;
-public:
-    using type = SwitchablePrimaryVariables<PrimaryVariablesVector, int>;
-};
+SET_TYPE_PROP(TwoPTwoC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);
 
 //! Use the 2p2c VolumeVariables
 SET_PROP(TwoPTwoC, VolumeVariables)
@@ -237,13 +173,6 @@ private:
 public:
     using type = TwoPTwoCVolumeVariables<Traits>;
 };
-
-//! Use the model after Millington (1961) for the effective diffusivity
-SET_TYPE_PROP(TwoPTwoC, EffectiveDiffusivityModel,
-             DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-//! Use mole fractions in the balance equations by default
-SET_BOOL_PROP(TwoPTwoC, UseMoles, true);
 
 //! Determines whether the constraint solver is used
 SET_BOOL_PROP(TwoPTwoC, UseConstraintSolver, true);
@@ -268,14 +197,13 @@ private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
-    using Traits = TwoPTwoCModelTraits< GET_PROP_VALUE(TypeTag, Formulation),
-                                        GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using Traits = TwoPNCModelTraits< 2, GET_PROP_VALUE(TypeTag, UseMoles), true, GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 public:
     using type = PorousMediumFlowNIModelTraits< Traits >;
 };
 
 //! Set non-isothermal output fields
-SET_TYPE_PROP(TwoPTwoCNI, VtkOutputFields, EnergyVtkOutputFields<TwoPTwoCVtkOutputFields>);
+SET_TYPE_PROP(TwoPTwoCNI, VtkOutputFields, EnergyVtkOutputFields<TwoPNCVtkOutputFields>);
 
 } // end namespace Properties
 } // end namespace Dumux
