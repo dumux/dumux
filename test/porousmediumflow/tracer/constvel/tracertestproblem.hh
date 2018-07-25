@@ -74,7 +74,7 @@ SET_BOOL_PROP(TracerTest, UseMoles, USEMOLES);
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
-class TracerFluidSystem : public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar),
+class TracerFluidSystem : public FluidSystems::Base<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                TracerFluidSystem<TypeTag>>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -124,13 +124,13 @@ public:
     }
 
     /*!
-     * \copydoc BaseFluidSystem::isCompressible
+     * \copydoc Base::isCompressible
      */
     static constexpr bool isCompressible(int phaseIdx)
     { return false; }
 
      /*!
-     * \copydoc BaseFluidSystem::viscosityIsConstant
+     * \copydoc Base::viscosityIsConstant
      */
     static constexpr bool viscosityIsConstant(int phaseIdx)
     { return true; }

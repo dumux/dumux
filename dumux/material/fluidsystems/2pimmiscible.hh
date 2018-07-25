@@ -53,7 +53,7 @@ namespace FluidSystems {
  */
 template <class Scalar, class Fluid0, class Fluid1>
 class TwoPImmiscible
-: public BaseFluidSystem<Scalar, TwoPImmiscible<Scalar, Fluid0, Fluid1> >
+: public Base<Scalar, TwoPImmiscible<Scalar, Fluid0, Fluid1> >
 {
     static_assert((Fluid0::numPhases == 1), "Fluid0 has more than one phase");
     static_assert((Fluid1::numPhases == 1), "Fluid1 has more than one phase");
@@ -63,7 +63,7 @@ class TwoPImmiscible
     static_assert(Fluid0::isLiquid() || Fluid1::isLiquid(), "One phase has to be a liquid!");
 
     using ThisType = TwoPImmiscible<Scalar, Fluid0, Fluid1>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
 public:
     static constexpr int numPhases = 2; //!< Number of phases in the fluid system

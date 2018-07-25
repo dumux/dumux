@@ -67,7 +67,7 @@ SET_TYPE_PROP(MaxwellStefanTestTypeTag, MolecularDiffusionType, MaxwellStefansLa
 //! A simple fluid system with one MaxwellStefan component
 template<class TypeTag>
 class H2N2CO2FluidSystem
-: public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar), H2N2CO2FluidSystem<TypeTag>>
+: public FluidSystems::Base<typename GET_PROP_TYPE(TypeTag, Scalar), H2N2CO2FluidSystem<TypeTag>>
 
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

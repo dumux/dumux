@@ -69,10 +69,10 @@ template <class Scalar,
           class H2Otype = Components::TabulatedComponent<Components::H2O<Scalar>>,
           class Policy = BrineAirDefaultPolicy<>>
 class BrineAir
-: public BaseFluidSystem<Scalar, BrineAir<Scalar, H2Otype, Policy>>
+: public Base<Scalar, BrineAir<Scalar, H2Otype, Policy>>
 {
     using ThisType = BrineAir<Scalar, H2Otype, Policy>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
     using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:

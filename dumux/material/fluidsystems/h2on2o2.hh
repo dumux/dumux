@@ -72,10 +72,10 @@ struct H2ON2O2DefaultPolicy
  */
 template <class Scalar, class Policy = H2ON2O2DefaultPolicy<>>
 class H2ON2O2
-    : public BaseFluidSystem<Scalar, H2ON2O2<Scalar, Policy> >
+    : public Base<Scalar, H2ON2O2<Scalar, Policy> >
 {
     using ThisType = H2ON2O2<Scalar, Policy>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
     using IdealGas = Dumux::IdealGas<Scalar>;
     using Constants = Dumux::Constants<Scalar>;

@@ -41,10 +41,10 @@ namespace FluidSystems {
  *        two components, which are H2O and NaCl.
  */
 template< class Scalar, class H2OType = Components::TabulatedComponent<Dumux::Components::H2O<Scalar>> >
-class Brine : public BaseFluidSystem< Scalar, Brine<Scalar, H2OType>>
+class Brine : public Base< Scalar, Brine<Scalar, H2OType>>
 {
     using ThisType = Brine<Scalar, H2OType>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
 public:
     //! export the involved components

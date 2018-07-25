@@ -40,10 +40,10 @@ namespace FluidSystems {
  */
 template <class Scalar, class ComponentType>
 class TwoPOneC
-    : public BaseFluidSystem<Scalar, TwoPOneC<Scalar, ComponentType> >
+    : public Base<Scalar, TwoPOneC<Scalar, ComponentType> >
 {
     using ThisType = TwoPOneC<Scalar, ComponentType>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
     using Component = ComponentType;
 
 public:
