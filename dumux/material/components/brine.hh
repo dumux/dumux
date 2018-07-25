@@ -24,12 +24,11 @@
 #ifndef DUMUX_BRINE_HH
 #define DUMUX_BRINE_HH
 
+#include <cmath>
 
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/nacl.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
-
-#include <cmath>
 
 #include <dumux/material/components/base.hh>
 #include <dumux/material/components/liquid.hh>
