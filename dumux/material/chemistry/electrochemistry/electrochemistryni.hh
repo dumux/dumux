@@ -66,7 +66,7 @@ public:
      */
     template<class SourceValues>
     static void reactionSource(SourceValues &values, Scalar currentDensity,
-                               const std::string& paramGroup)
+                               const std::string& paramGroup = "")
     {
         //correction to account for actually relevant reaction area
         //current density has to be devided by the half length of the box
