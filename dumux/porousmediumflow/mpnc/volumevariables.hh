@@ -713,38 +713,38 @@ public:
 
 //          // For using the ... other way of calculating equilibrium
 //          THIS IS ONLY FOR silencing Valgrind but is not used in this model
-            for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx)
-                for (int compIdx = 0; compIdx < numFluidComps; ++compIdx) {
-                    const Scalar phi = FluidSystem::fugacityCoefficient(actualFluidState,
+        for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx)
+            for (int compIdx = 0; compIdx < numFluidComps; ++compIdx) {
+                const Scalar phi = FluidSystem::fugacityCoefficient(actualFluidState,
                                                                         paramCache,
                                                                         phaseIdx,
                                                                         compIdx);
-                    actualFluidState.setFugacityCoefficient(phaseIdx,
+                actualFluidState.setFugacityCoefficient(phaseIdx,
                                                       compIdx,
                                                       phi);
             }
 
-            FluidState equilFluidState; // the fluidState *on the interface* i.e. chemical equilibrium
-            equilFluidState.assign(actualFluidState) ;
-            ConstraintSolver::solve(equilFluidState,
-                                    paramCache,
+        FluidState equilFluidState; // the fluidState *on the interface* i.e. chemical equilibrium
+        equilFluidState.assign(actualFluidState) ;
+        ConstraintSolver::solve(equilFluidState,
+                                    paramCache) ;
 
-            // Setting the equilibrium composition (in a kinetic model not necessarily the same as the actual mole fraction)
-            for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx){
-                for (int compIdx=0; compIdx< numFluidComps; ++ compIdx){
-                    xEquil_[phaseIdx][compIdx] = equilFluidState.moleFraction(phaseIdx, compIdx);
-                }
+        // Setting the equilibrium composition (in a kinetic model not necessarily the same as the actual mole fraction)
+        for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx){
+            for (int compIdx=0; compIdx< numFluidComps; ++ compIdx){
+                xEquil_[phaseIdx][compIdx] = equilFluidState.moleFraction(phaseIdx, compIdx);
             }
-
-            // compute densities of all phases
-            for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx){
-                const Scalar rho = FluidSystem::density(actualFluidState, paramCache, phaseIdx);
-                actualFluidState.setDensity(phaseIdx, rho);
-                const Scalar rhoMolar = FluidSystem::molarDensity(actualFluidState, paramCache, phaseIdx);
-                actualFluidState.setMolarDensity(phaseIdx, rhoMolar);
-            }
-
         }
+
+        // compute densities of all phases
+        for(int phaseIdx=0; phaseIdx<numPhases(); ++phaseIdx){
+            const Scalar rho = FluidSystem::density(actualFluidState, paramCache, phaseIdx);
+            actualFluidState.setDensity(phaseIdx, rho);
+            const Scalar rhoMolar = FluidSystem::molarDensity(actualFluidState, paramCache, phaseIdx);
+            actualFluidState.setMolarDensity(phaseIdx, rhoMolar);
+        }
+
+    }
 
     /*!
      * \brief The mole fraction we would have in the case of chemical equilibrium /
