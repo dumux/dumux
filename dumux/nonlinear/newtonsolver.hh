@@ -214,7 +214,7 @@ public:
      * \brief Run the Newton method to solve a non-linear system.
      *        The solver is responsible for all the strategic decisions.
      */
-    void solve(SolutionVector& uCurrentIter, std::shared_ptr<ConvergenceWriter>& convWriter = nullptr)
+    void solve(SolutionVector& uCurrentIter, std::shared_ptr<ConvergenceWriter> convWriter = nullptr)
     {
         const bool converged = solve_(uCurrentIter, convWriter);
         if (!converged)
@@ -646,7 +646,7 @@ private:
      * \brief Run the Newton method to solve a non-linear system.
      *        The solver is responsible for all the strategic decisions.
      */
-    bool solve_(SolutionVector& uCurrentIter, std::shared_ptr<ConvergenceWriter>& convWriter = nullptr)
+    bool solve_(SolutionVector& uCurrentIter, std::shared_ptr<ConvergenceWriter> convWriter = nullptr)
     {
         // the given solution is the initial guess
         SolutionVector uLastIter(uCurrentIter);
