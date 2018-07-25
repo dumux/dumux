@@ -24,11 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FV_ELEMENT_GEOMETRY_HH
 
-#include <vector>
-
-#include <dune/common/iteratorrange.hh>
-
-#include <dumux/discretization/scvandscvfiterators.hh>
+#include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 
 namespace Dumux {
 
@@ -41,330 +37,27 @@ namespace Dumux {
  * \tparam enableFVGridGeometryCache if the grid geometry is cached or not
  */
 template<class GG, bool enableFVGridGeometryCache>
-class StaggeredFVElementGeometry;
-
-/*!
- * \ingroup StaggeredDiscretization
- * \brief Class for the finite volume geometry vector for staggered models
- *        This locally builds up the sub control volumes and sub control volume faces
- *        for each element. Specialization in case the FVElementGeometries are stored globally.
- *        In this case we just forward internally to the global object.
- */
-template<class GG>
-class StaggeredFVElementGeometry<GG, true>
+class StaggeredFVElementGeometry : public CCTpfaFVElementGeometry<GG, enableFVGridGeometryCache>
 {
-    using ThisType = StaggeredFVElementGeometry<GG, true>;
-    using GridView = typename GG::GridView;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
-
+    using ParentType = CCTpfaFVElementGeometry<GG, enableFVGridGeometryCache>;
+    using IndexType = typename GG::GridView::IndexSet::IndexType;
 public:
-    //! export type of subcontrol volume
-    using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
     using SubControlVolumeFace = typename GG::SubControlVolumeFace;
-    //! export type of finite volume grid geometry
-    using FVGridGeometry = GG;
 
-    //! Constructor
-    StaggeredFVElementGeometry(const FVGridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry) {}
+    using ParentType::ParentType;
 
     //! Constructor getting a auxiliary cell center of face specific FvGridGeometry type.
     //! Needed for the multi-domain framework.
     template<class CellCenterOrFaceFVGridGeometry>
     StaggeredFVElementGeometry(const CellCenterOrFaceFVGridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry.actualfvGridGeometry()) {}
+    : ParentType(fvGridGeometry.actualfvGridGeometry()) {}
 
-    //! Get an elment sub control volume with a global scv index
-    //! We separate element and neighbor scvs to speed up mapping
-    const SubControlVolume& scv(IndexType scvIdx) const
+    //! Get a sub control volume face with an element index and a local scvf index
+    const SubControlVolumeFace& scvf(IndexType eIdx, IndexType localScvfIdx) const
     {
-        return fvGridGeometry().scv(scvIdx);
+        return this->fvGridGeometry().scvf(eIdx, localScvfIdx);
     }
-
-    //! Get an element sub control volume face with a global scvf index
-    //! We separate element and neighbor scvfs to speed up mapping
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
-    {
-        return fvGridGeometry().scvf(scvfIdx);
-    }
-
-    const SubControlVolumeFace& scvf(IndexType eIdx ,IndexType localScvfIdx) const
-    {
-        return fvGridGeometry().scvf(eIdx, localScvfIdx);
-    }
-
-    //! iterator range for sub control volumes. Iterates over
-    //! all scvs of the bound element (not including neighbor scvs)
-    //! This is a free function found by means of ADL
-    //! To iterate over all sub control volumes of this FVElementGeometry use
-    //! for (auto&& scv : scvs(fvGeometry))
-    friend inline auto scvs(const StaggeredFVElementGeometry& fvGeometry)
-    {
-        using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
-        return Dune::IteratorRange<ScvIterator>(ScvIterator(fvGeometry.scvIndices_.begin(), fvGeometry),
-                                                ScvIterator(fvGeometry.scvIndices_.end(), fvGeometry));
-    }
-
-    //! iterator range for sub control volumes faces. Iterates over
-    //! all scvfs of the bound element (not including neighbor scvfs)
-    //! This is a free function found by means of ADL
-    //! To iterate over all sub control volume faces of this FVElementGeometry use
-    //! for (auto&& scvf : scvfs(fvGeometry))
-    friend inline auto scvfs(const StaggeredFVElementGeometry& fvGeometry)
-    {
-        const auto& g = fvGeometry.fvGridGeometry();
-        const auto scvIdx = fvGeometry.scvIndices_[0];
-        using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
-        return Dune::IteratorRange<ScvfIterator>(ScvfIterator(g.scvfIndicesOfScv(scvIdx).begin(), fvGeometry),
-                                                 ScvfIterator(g.scvfIndicesOfScv(scvIdx).end(), fvGeometry));
-    }
-
-    //! number of sub control volumes in this fv element geometry
-    std::size_t numScv() const
-    {
-        return scvIndices_.size();
-    }
-
-    //! number of sub control volumes in this fv element geometry
-    std::size_t numScvf() const
-    {
-        return fvGridGeometry().scvfIndicesOfScv(scvIndices_[0]).size();
-    }
-
-    //! Binding of an element, called by the local jacobian to prepare element assembly
-    void bind(const Element& element)
-    {
-        this->bindElement(element);
-    }
-
-    //! Bind only element-local
-    void bindElement(const Element& element)
-    {
-        elementPtr_ = &element;
-        scvIndices_ = std::vector<IndexType>({fvGridGeometry().elementMapper().index(*elementPtr_)});
-    }
-
-    //! The global finite volume geometry we are a restriction of
-    const FVGridGeometry& fvGridGeometry() const
-    { return *fvGridGeometryPtr_; }
-
-private:
-
-    const Element* elementPtr_;
-    std::vector<IndexType> scvIndices_;
-    const FVGridGeometry* fvGridGeometryPtr_;
-};
-
-/*!
- * \ingroup StaggeredDiscretization
- * \brief Class for the finite volume geometry vector for staggered models
- *        This locally builds up the sub control volumes and sub control volume faces
- *        for each element. Specialization in case the FVElementGeometries are not stored globally.
- */
-template<class GG>
-class StaggeredFVElementGeometry<GG, false>
-{
-    using ThisType = StaggeredFVElementGeometry<GG, false>;
-    using GridView = typename GG::GridView;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
-
-public:
-    //! export type of subcontrol volume
-    using SubControlVolume = typename GG::SubControlVolume;
-    //! export type of subcontrol volume face
-    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
-    //! export type of finite volume grid geometry
-    using FVGridGeometry = GG;
-
-    //! Constructor
-    StaggeredFVElementGeometry(const FVGridGeometry& fvGridGeometry)
-    : fvGridGeometryPtr_(&fvGridGeometry) {}
-
-    //! Get an elment sub control volume with a global scv index
-    //! We separate element and neighbor scvs to speed up mapping
-    const SubControlVolume& scv(IndexType scvIdx) const
-    {
-        if (scvIdx == scvIndices_[0])
-            return scvs_[0];
-        else
-            return neighborScvs_[findLocalIndex(scvIdx, neighborScvIndices_)];
-    }
-
-    //! Get an element sub control volume face with a global scvf index
-    //! We separate element and neighbor scvfs to speed up mapping
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
-    {
-        auto it = std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx);
-        if (it != scvfIndices_.end())
-            return scvfs_[std::distance(scvfIndices_.begin(), it)];
-        else
-            return neighborScvfs_[findLocalIndex(scvfIdx, neighborScvfIndices_)];
-    }
-
-    //! iterator range for sub control volumes. Iterates over
-    //! all scvs of the bound element (not including neighbor scvs)
-    //! This is a free function found by means of ADL
-    //! To iterate over all sub control volumes of this FVElementGeometry use
-    //! for (auto&& scv : scvs(fvGeometry))
-    friend inline Dune::IteratorRange<typename std::vector<SubControlVolume>::const_iterator>
-    scvs(const ThisType& g)
-    {
-        using Iter = typename std::vector<SubControlVolume>::const_iterator;
-        return Dune::IteratorRange<Iter>(g.scvs_.begin(), g.scvs_.end());
-    }
-
-    //! iterator range for sub control volumes faces. Iterates over
-    //! all scvfs of the bound element (not including neighbor scvfs)
-    //! This is a free function found by means of ADL
-    //! To iterate over all sub control volume faces of this FVElementGeometry use
-    //! for (auto&& scvf : scvfs(fvGeometry))
-    friend inline Dune::IteratorRange<typename std::vector<SubControlVolumeFace>::const_iterator>
-    scvfs(const ThisType& g)
-    {
-        using Iter = typename std::vector<SubControlVolumeFace>::const_iterator;
-        return Dune::IteratorRange<Iter>(g.scvfs_.begin(), g.scvfs_.end());
-    }
-
-    //! number of sub control volumes in this fv element geometry
-    std::size_t numScv() const
-    { return scvs_.size(); }
-
-    //! number of sub control volumes in this fv element geometry
-    std::size_t numScvf() const
-    { return scvfs_.size(); }
-
-    //! Binding of an element preparing the geometries of the whole stencil
-    //! called by the local jacobian to prepare element assembly
-    void bind(const Element& element)
-    {
-        bindElement(element);
-        for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
-        {
-            neighborScvs_.reserve(element.subEntities(1));
-            neighborScvfIndices_.reserve(element.subEntities(1));
-            if (intersection.neighbor())
-                makeNeighborGeometries(intersection.outside());
-        }
-    }
-
-    //! Binding of an element preparing the geometries only inside the element
-    void bindElement(const Element& element)
-    {
-        clear();
-        elementPtr_ = &element;
-        makeElementGeometries(element);
-    }
-
-    //! The global finite volume geometry we are a restriction of
-    const FVGridGeometry& fvGridGeometry() const
-    { return *fvGridGeometryPtr_; }
-
-private:
-
-    //! create scvs and scvfs of the bound element
-    void makeElementGeometries(const Element& element)
-    {
-        auto eIdx = fvGridGeometry().problem_().elementMapper().index(element);
-        scvs_.emplace_back(element.geometry(), eIdx);
-        scvIndices_.emplace_back(eIdx);
-
-        const auto& scvFaceIndices = fvGridGeometry().scvfIndicesOfScv(eIdx);
-        const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdx);
-
-        int scvfCounter = 0;
-        for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
-        {
-            if (intersection.neighbor() || intersection.boundary())
-            {
-                scvfs_.emplace_back(intersection,
-                                    intersection.geometry(),
-                                    scvFaceIndices[scvfCounter],
-                                    std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]})
-                                    );
-
-                scvfIndices_.emplace_back(scvFaceIndices[scvfCounter]);
-                scvfCounter++;
-            }
-        }
-    }
-
-    //! create the necessary scvs and scvfs of the neighbor elements to the bound elements
-    void makeNeighborGeometries(const Element& element)
-    {
-        // create the neighbor scv
-        auto eIdx = fvGridGeometry().problem_().elementMapper().index(element);
-        neighborScvs_.emplace_back(element.geometry(), eIdx);
-        neighborScvIndices_.push_back(eIdx);
-
-        const auto& scvFaceIndices = fvGridGeometry().scvfIndicesOfScv(eIdx);
-        const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdx);
-
-        int scvfCounter = 0;
-        for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
-        {
-            if (intersection.neighbor())
-            {
-                // only create subcontrol faces where the outside element is the bound element
-                if (intersection.outside() == *elementPtr_)
-                {
-                    neighborScvfs_.emplace_back(intersection,
-                                                intersection.geometry(),
-                                                scvFaceIndices[scvfCounter],
-                                                std::vector<IndexType>({eIdx, neighborVolVarIndices[scvfCounter]})
-                                                );
-
-                    neighborScvfIndices_.push_back(scvFaceIndices[scvfCounter]);
-                }
-                // always increase local counter
-                scvfCounter++;
-            }
-            else if (intersection.boundary())
-            {
-                scvfCounter++;
-            }
-        }
-    }
-
-    const IndexType findLocalIndex(const IndexType idx,
-                                   const std::vector<IndexType>& indices) const
-    {
-        auto it = std::find(indices.begin(), indices.end(), idx);
-        assert(it != indices.end() && "Could not find the scv/scvf! Make sure to properly bind this class!");
-        return std::distance(indices.begin(), it);
-
-    }
-
-    void clear()
-    {
-        scvIndices_.clear();
-        scvfIndices_.clear();
-        scvs_.clear();
-        scvfs_.clear();
-
-        neighborScvIndices_.clear();
-        neighborScvfIndices_.clear();
-        neighborScvs_.clear();
-        neighborScvfs_.clear();
-    }
-
-    // the bound element
-    const Element* elementPtr_;
-
-    const FVGridGeometry* fvGridGeometryPtr_;
-
-    // local storage after binding an element
-    std::vector<IndexType> scvIndices_;
-    std::vector<IndexType> scvfIndices_;
-    std::vector<SubControlVolume> scvs_;
-    std::vector<SubControlVolumeFace> scvfs_;
-
-    std::vector<IndexType> neighborScvIndices_;
-    std::vector<IndexType> neighborScvfIndices_;
-    std::vector<SubControlVolume> neighborScvs_;
-    std::vector<SubControlVolumeFace> neighborScvfs_;
 };
 
 } // end namespace
