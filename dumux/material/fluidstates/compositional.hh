@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cmath>
 #include <type_traits>
+#include <cassert>
 
 #include <dune/common/exceptions.hh>
 
