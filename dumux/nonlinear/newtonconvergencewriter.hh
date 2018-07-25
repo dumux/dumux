@@ -45,14 +45,14 @@ struct ConvergenceWriterInterface
 /*!
  * \ingroup Nonlinear
  * \brief Writes the intermediate solutions for every Newton iteration
- * \note To use this create a unique_ptr to an instance of this class in the main file
+ * \note To use this create a shared_ptr to an instance of this class in the main file
  *       and pass it to newton.solve(x, convergencewriter). You can use the reset method
  *       to write out multiple Newton solves with a unique id, if you don't call use all
  *       Newton iterations just come after each other in the pvd file.
  */
 // template <class Scalar, class GridView, int numEq>
 template <class GridView, class SolutionVector>
-class NewtonConvergenceWriter : virtual public ConvergenceWriterInterface<SolutionVector>
+class NewtonConvergenceWriter : public ConvergenceWriterInterface<SolutionVector>
 {
     static constexpr auto numEq = SolutionVector::block_type::dimension;
     using Scalar = typename SolutionVector::block_type::value_type;
