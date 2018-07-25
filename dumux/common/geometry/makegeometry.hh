@@ -24,6 +24,7 @@
 
 #include <vector>
 #include <array>
+#include <limits>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/geometry/multilineargeometry.hh>
@@ -34,17 +35,39 @@ namespace Dumux {
 
 //! Checks if four points lie within the same plane.
 template<class CoordScalar>
-bool pointsAreCoplanar(const std::vector<Dune::FieldVector<CoordScalar, 3>>& points, CoordScalar eps = 1e-20)
+bool pointsAreCoplanar(const std::vector<Dune::FieldVector<CoordScalar, 3>>& points, const CoordScalar scale)
 {
     assert(points.size() == 4);
     // (see "Real-Time Collision Detection" by Christer Ericson)
     Dune::FieldMatrix<CoordScalar, 4, 4> M;
     for(int i = 0; i < 3; ++i )
         M[i] = {points[0][i], points[1][i], points[2][i], points[3][i]};
-    M[3] = {1.0, 1.0, 1.0, 1.0};
+    M[3] = {1.0*scale, 1.0*scale, 1.0*scale, 1.0*scale};
 
     using std::abs;
-    return abs(M.determinant()) < eps;
+    return abs(M.determinant()) < 1.5e-7*scale*scale*scale*scale;
+}
+
+//! Checks if four points lie within the same plane.
+template<class CoordScalar>
+bool pointsAreCoplanar(const std::vector<Dune::FieldVector<CoordScalar, 3>>& points)
+{
+    Dune::FieldVector<CoordScalar, 3> bBoxMin(std::numeric_limits<CoordScalar>::max());
+    Dune::FieldVector<CoordScalar, 3> bBoxMax(std::numeric_limits<CoordScalar>::lowest());
+    for (const auto& p : points)
+    {
+        for (int i=0; i<3; i++)
+        {
+            using std::min;
+            using std::max;
+            bBoxMin[i] = min(bBoxMin[i], p[i]);
+            bBoxMax[i] = max(bBoxMax[i], p[i]);
+        }
+    }
+
+    const auto size = (bBoxMax - bBoxMin).two_norm();
+
+    return pointsAreCoplanar(points, size);
 }
 
 /*!
@@ -127,8 +150,24 @@ auto makeDuneQuadrilaterial(const std::vector<Dune::FieldVector<CoordScalar, 3>>
     if(!enableSanityCheck)
         return GeometryType(Dune::GeometryTypes::quadrilateral, points);
 
+    // compute size
+    Dune::FieldVector<CoordScalar, 3> bBoxMin(std::numeric_limits<CoordScalar>::max());
+    Dune::FieldVector<CoordScalar, 3> bBoxMax(std::numeric_limits<CoordScalar>::lowest());
+    for (const auto& p : points)
+    {
+        for (int i=0; i<3; i++)
+        {
+            using std::min;
+            using std::max;
+            bBoxMin[i] = min(bBoxMin[i], p[i]);
+            bBoxMax[i] = max(bBoxMax[i], p[i]);
+        }
+    }
+
+    const auto size = (bBoxMax - bBoxMin).two_norm();
+
     // otherwise, perform a number of checks and corrections
-    if(!pointsAreCoplanar(points))
+    if(!pointsAreCoplanar(points, size))
         DUNE_THROW(Dune::InvalidStateException, "Points do not lie within a plane");
 
     // make sure points conform with dune ordering
@@ -140,8 +179,8 @@ auto makeDuneQuadrilaterial(const std::vector<Dune::FieldVector<CoordScalar, 3>>
 
     const auto quadrilateral = GeometryType(Dune::GeometryTypes::quadrilateral, corners);
 
-    const auto eps = 1e-20;
-    if(quadrilateral.volume() < eps)
+    const auto eps = 1e-7;
+    if(quadrilateral.volume() < eps*size*size)
         DUNE_THROW(Dune::InvalidStateException, "Something went wrong, geometry has area of zero");
 
     return quadrilateral;
