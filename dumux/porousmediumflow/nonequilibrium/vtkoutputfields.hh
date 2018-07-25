@@ -43,7 +43,7 @@ public:
         for (int i = 0; i < ModelTraits::numEnergyEqFluid(); ++i)
             vtk.addVolumeVariable( [i](const auto& v){ return v.temperatureFluid(i); }, "T_" + FluidSystem::phaseName(i) );
         for (int i = 0; i < ModelTraits::numEnergyEqSolid(); ++i)
-            vtk.addVolumeVariable( [i](const auto& v){ return v.temperatureSolid(); }, "T_solid" );
+            vtk.addVolumeVariable( [i](const auto& v){ return v.temperatureSolid(); }, "T_Solid" );
         for (int i = 0; i < ModelTraits::numPhases(); ++i){
             vtk.addVolumeVariable( [i](const auto& v){ return v.reynoldsNumber(i); }, "reynoldsNumber_" + FluidSystem::phaseName(i) );
             vtk.addVolumeVariable( [i](const auto& v){ return v.nusseltNumber(i); }, "nusseltNumber_" + FluidSystem::phaseName(i) );
