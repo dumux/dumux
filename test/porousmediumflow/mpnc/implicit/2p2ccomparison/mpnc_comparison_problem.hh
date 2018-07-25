@@ -275,10 +275,8 @@ private:
          using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
         ParameterCache paramCache;
-        MiscibleMultiPhaseComposition::solve(fs,
-                                            paramCache,
-                                            /*setViscosity=*/true,
-                                            /*setEnthalpy=*/false);
+        MiscibleMultiPhaseComposition::solve(fs, paramCache);
+
         ///////////
         // assign the primary variables
         ///////////

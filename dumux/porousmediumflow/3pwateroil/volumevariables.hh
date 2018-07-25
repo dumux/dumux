@@ -34,9 +34,10 @@
 
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
-#include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 #include <dumux/material/solidstates/updatesolidvolumefractions.hh>
+
+#include <dumux/common/valgrind.hh>
+#include <dumux/common/exceptions.hh>
 
 namespace Dumux {
 

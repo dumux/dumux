@@ -465,9 +465,7 @@ private:
         ParameterCache paramCache;
         ComputeFromReferencePhase::solve(fluidState,
                                          paramCache,
-                                         refPhaseIdx,
-                                         /*setViscosity=*/false,
-                                         /*setEnthalpy=*/false);
+                                         refPhaseIdx);
 
         //////////////////////////////////////
         // Set fugacities

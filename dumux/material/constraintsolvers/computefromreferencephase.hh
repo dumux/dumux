@@ -71,10 +71,6 @@ namespace Dumux {
  * - mean molar masses of *all* phases \f$M_\alpha\f$, \f$M_\beta\f$
  * - fugacity coefficients of *all* components in *all* phases
  *   \f$\Phi^\kappa_\alpha\f$, \f$\Phi^\kappa_\beta\f$
- * - if the setViscosity parameter is true, also dynamic viscosities of *all* phases
- *   \f$\mu_\alpha\f$, \f$\mu_\beta\f$
- * - if the setEnthalpy parameter is true, also specific enthalpies and internal energies of *all* phases
- *   \f$h_\alpha\f$, \f$h_\beta\f$, \f$u_\alpha\f$, \f$u_\beta\f$
  */
 template <class Scalar, class FluidSystem>
 class ComputeFromReferencePhase
@@ -107,24 +103,15 @@ public:
      * - composition in mole and mass fractions and molaries of *all* phases
      * - mean molar masses of *all* phases
      * - fugacity coefficients of *all* components in *all* phases
-     * - if the setViscosity parameter is true, also dynamic viscosities of *all* phases
-     * - if the setEnthalpy parameter is true, also specific enthalpies and internal energies of *all* phases
      *
      * \param fluidState Thermodynamic state of the fluids
      * \param paramCache  Container for cache parameters
      * \param refPhaseIdx The phase index of the reference phase
-     * \param setViscosity Specify whether the dynamic viscosity of
-     *                     each phase should also be set.
-     * \param setEnthalpy Specify whether the specific
-     *                    enthalpy/internal energy of each phase
-     *                    should also be set.
      */
     template <class FluidState, class ParameterCache>
     static void solve(FluidState &fluidState,
                       ParameterCache &paramCache,
-                      int refPhaseIdx,
-                      bool setViscosity,
-                      bool setEnthalpy)
+                      int refPhaseIdx)
     {
         ComponentVector fugVec;
 
@@ -139,18 +126,6 @@ public:
                                    FluidSystem::molarDensity(fluidState,
                                                              paramCache,
                                                              refPhaseIdx));
-
-        if (setEnthalpy)
-            fluidState.setEnthalpy(refPhaseIdx,
-                                   FluidSystem::enthalpy(fluidState,
-                                                         paramCache,
-                                                         refPhaseIdx));
-
-        if (setViscosity)
-            fluidState.setViscosity(refPhaseIdx,
-                                    FluidSystem::viscosity(fluidState,
-                                                           paramCache,
-                                                           refPhaseIdx));
 
         // compute the fugacities of all components in the reference phase
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
@@ -172,18 +147,6 @@ public:
 
             CompositionFromFugacities::guessInitial(fluidState, paramCache, phaseIdx, fugVec);
             CompositionFromFugacities::solve(fluidState, paramCache, phaseIdx, fugVec);
-
-            if (setViscosity)
-                fluidState.setViscosity(phaseIdx,
-                                        FluidSystem::viscosity(fluidState,
-                                                               paramCache,
-                                                               phaseIdx));
-
-            if (setEnthalpy)
-                fluidState.setEnthalpy(phaseIdx,
-                                       FluidSystem::enthalpy(fluidState,
-                                                             paramCache,
-                                                             phaseIdx));
         }
     }
 };

@@ -209,9 +209,7 @@ public:
             // constraint solver ...
             if (useConstraintSolver) {
                 MiscibleMultiPhaseComposition::solve(fluidState_,
-                                                     paramCache,
-                                                     /*setViscosity=*/true,
-                                                     /*setEnthalpy=*/false);
+                                                     paramCache);
             }
             // ... or calculated explicitly this way ...
             // please note that we experienced some problems with un-regularized
@@ -293,9 +291,7 @@ public:
             {
                 ComputeFromReferencePhase::solve(fluidState_,
                                                  paramCache,
-                                                 wPhaseIdx,
-                                                 /*setViscosity=*/true,
-                                                 /*setEnthalpy=*/false);
+                                                 wPhaseIdx);
             }
             // ... or calculated explicitly this way ...
             else {
@@ -368,9 +364,7 @@ public:
             // of the "ComputeFromReferencePhase" constraint solver
             ComputeFromReferencePhase::solve(fluidState_,
                                              paramCache,
-                                             gPhaseIdx,
-                                             /*setViscosity=*/true,
-                                             /*setEnthalpy=*/false);
+                                             gPhaseIdx);
         }
         else if (phasePresence == wnPhaseOnly) {
             // only water and NAPL phases are present
@@ -392,9 +386,7 @@ public:
             // of the "ComputeFromReferencePhase" constraint solver
             ComputeFromReferencePhase::solve(fluidState_,
                                              paramCache,
-                                             wPhaseIdx,
-                                             /*setViscosity=*/true,
-                                             /*setEnthalpy=*/false);
+                                             wPhaseIdx);
         }
         else if (phasePresence == gPhaseOnly) {
             // only the gas phase is present, gas phase composition is
@@ -416,9 +408,7 @@ public:
             {
                 ComputeFromReferencePhase::solve(fluidState_,
                                                  paramCache,
-                                                 gPhaseIdx,
-                                                 /*setViscosity=*/true,
-                                                 /*setEnthalpy=*/false);
+                                                 gPhaseIdx);
             }
             // ... or calculated explicitly this way ...
             else {
@@ -484,9 +474,7 @@ public:
             {
                 ComputeFromReferencePhase::solve(fluidState_,
                                                  paramCache,
-                                                 gPhaseIdx,
-                                                 /*setViscosity=*/true,
-                                                 /*setEnthalpy=*/false);
+                                                 gPhaseIdx);
             }
             // ... or calculated explicitly this way ...
             else {

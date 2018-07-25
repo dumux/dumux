@@ -358,9 +358,7 @@ private:
         ParameterCache paramCache;
         ComputeFromReferencePhase::solve(fs,
                                          paramCache,
-                                         refPhaseIdx,
-                                         /*setViscosity=*/false,
-                                         /*setEnthalpy=*/false);
+                                         refPhaseIdx);
 
         ///////////
         // assign the primary variables
