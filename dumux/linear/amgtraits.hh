@@ -34,6 +34,26 @@
 
 #include <dumux/discretization/methods.hh>
 
+// TODO: The following is a temporary solution to make the parallel AMG work
+// for UGGrid. Once it is resolved upstream
+// (https://gitlab.dune-project.org/core/dune-grid/issues/78),
+// it should be guarded by a DUNE_VERSION macro and removed later.
+#include <dune/grid/uggrid.hh>
+
+namespace Dune {
+namespace Capabilities {
+
+#if HAVE_UG
+template<int dim, int codim>
+struct canCommunicate<UGGrid<dim>, codim>
+{
+  static const bool v = true;
+};
+#endif
+
+} // namespace Capabilities
+} // namespace Dune
+
 namespace Dumux {
 
 //! The implementation is specialized for the different discretizations
