@@ -86,9 +86,9 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
         if (phaseIdx == phase0Idx)
-            return Fluid0::phaseName();
+            return Fluid0::isGas() ? "gas"+Fluid0::phaseName() : "liq"+Fluid0::phaseName();
         else
-            return Fluid1::phaseName();
+            return Fluid1::isGas() ? "gas"+Fluid1::phaseName() : "liq"+Fluid1::phaseName();
     }
 
     /*!
