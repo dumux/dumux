@@ -10,7 +10,7 @@ here are many easy things that you can do, like
 If you decide to contribute code please read this contribution guide.
 
 ## Style guide
-When contributing code to DuMu<sup>x</sup> please follow the [styleguide](doc/styleguide.md). Your work will enjoy much smoother sailing if stick to it with your changes. DuMu<sup>x</sup> is a pretty large project, and a consistent way of doing things really helps a lot when trying to find your way around the code.
+When contributing code to DuMu<sup>x</sup> please follow the [style guide](doc/styleguide.md). Your work will enjoy much smoother sailing if stick to it with your changes. DuMu<sup>x</sup> is a pretty large project, and a consistent way of doing things really helps a lot when trying to find your way around the code.
 
 ## Contributing
 
@@ -29,17 +29,20 @@ DuMu<sup>x</sup> mailing list.
 
 ## Git
 * Use git to your advantage!
-* Check out this (great tutorial)[https://www.atlassian.com/git/tutorials/setting-up-a-repository] in order to learn how to use it
+* Check out this [great tutorial](https://www.atlassian.com/git/tutorials/setting-up-a-repository) in order to learn how to use it
+* Also check out [Dune's git best practices](https://www.dune-project.org/doc/guides/git_best_practices/)
 * Everything should compile after every single commit
 * Make small commits with changes limited to a single issue / change
 * Format commit messages as follows
-```
-[topic] Brief description of the change
 
-Long description containing the status quo,
-the changes the commit introduces and why.
-```
-where `topic` is usually a foldername, `[assembly]`, a model `[2p2c]`, or any other topic, e.g. `[cmake]`.
+    ```
+    [topic] Brief description of the change
+
+    Long description containing the status quo,
+    the changes the commit introduces and why.
+    ```
+
+    where `topic` is usually a foldername, `[assembly]`, a model `[2p2c]`, or any other topic, e.g. `[cmake]`.
 
 * Use `git rebase -i master` to update branches to the changes on the master branch
 * feature branches should be called `feature/my-bla-feature`
