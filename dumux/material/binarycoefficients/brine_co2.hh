@@ -102,7 +102,7 @@ public:
         Scalar A = computeA_(temperature, pg);
 
         /* salinity: conversion from mass fraction to mol fraction */
-        const Scalar x_NaCl = salinityToMolFrac_(salinity);
+        const Scalar x_NaCl = salinityToMoleFrac_(salinity);
 
         // if both phases are present the mole fractions in each phase can be calculate
         // with the mutual solubility function
@@ -198,7 +198,7 @@ private:
      *
      * \param salinity the salinity \f$\mathrm{[kg \ NaCl / kg \ solution]}\f$
      */
-    static Scalar salinityToMolFrac_(Scalar salinity) {
+    static Scalar salinityToMoleFrac_(Scalar salinity) {
 
         const Scalar Mw = H2O::molarMass(); /* molecular weight of water [kg/mol] */
         const Scalar Ms = 58.8e-3; /* molecular weight of NaCl  [kg/mol] */
