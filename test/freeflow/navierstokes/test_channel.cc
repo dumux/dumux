@@ -145,11 +145,11 @@ int main(int argc, char** argv) try
 
         auto fileNameCell = getParam<std::string>("Restart.FileCell");
         loadSolution(fileNameCell, FVGridGeometry::discMethod,
-                     primaryVariableNameCell<ModelTraits>, x[Dune::index_constant<0>{}]);
+                     primaryVariableNameCell<ModelTraits>, x[Dune::index_constant<0>{}], *fvGridGeometry);
 
         auto fileNameFace = getParam<std::string>("Restart.FileFace");
         loadSolution(fileNameFace, FVGridGeometry::discMethod,
-                     primaryVariableNameFace<ModelTraits>, x[Dune::index_constant<1>{}]);
+                     primaryVariableNameFace<ModelTraits>, x[Dune::index_constant<1>{}], *fvGridGeometry);
     }
     else
         problem->applyInitialSolution(x);

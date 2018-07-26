@@ -138,7 +138,7 @@ int main(int argc, char** argv) try
     {
         using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
         auto fileName = getParam<std::string>("Restart.File");
-        loadSolution(fileName, FVGridGeometry::discMethod, primaryVariableName<ModelTraits>, x);
+        loadSolution(fileName, FVGridGeometry::discMethod, primaryVariableName<ModelTraits>, x, *fvGridGeometry);
     }
     else
         problem->applyInitialSolution(x);

@@ -51,15 +51,61 @@ struct hasState
 
 } // end namespace Detail
 
+template <class FieldType, class Container, class GridView, int codim>
+class LoadSolutionDataHandle
+: public Dune::CommDataHandleIF< LoadSolutionDataHandle<FieldType, Container, GridView, codim>,
+                                 FieldType >
+{
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+
+public:
+    LoadSolutionDataHandle(Container &container,
+                           const GridView &gridView)
+    : mapper_(gridView, Dune::mcmgLayout(Dune::Codim<codim>()))
+    , container_(container)
+    {}
+
+    bool contains(int dim, int cd) const
+    { return cd == codim; }
+
+    bool fixedsize(int dim, int cd) const
+    { return true; }
+
+    template<class EntityType>
+    size_t size (const EntityType &e) const
+    { return 1; }
+
+    template<class MessageBufferImp, class EntityType>
+    void gather(MessageBufferImp &buff, const EntityType &e) const
+    {
+        int vIdx = mapper_.index(e);
+        buff.write(container_[vIdx]);
+    }
+
+    template<class MessageBufferImp, class EntityType>
+    void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
+    {
+        int vIdx = mapper_.index(e);
+
+        FieldType tmp;
+        buff.read(tmp);
+        container_[vIdx] = tmp;
+    }
+
+private:
+    ElementMapper mapper_;
+    Container &container_;
+};
+
 /*!
  * \ingroup InputOutput
- * \brief helper function to read from a file into a solution vector
+ * \brief read from a sequential file into a solution vector without state
  */
 template <class SolutionVector, class PvNamesFunc>
-auto loadSolutionFromVtkFile(const std::string fileName,
-                             const VTKReader::DataType& dataType,
-                             PvNamesFunc&& pvNamesFunc,
-                             SolutionVector& sol)
+auto loadSolutionFromSequentialVtkFile(const std::string fileName,
+                                       const VTKReader::DataType& dataType,
+                                       PvNamesFunc&& pvNamesFunc,
+                                       SolutionVector& sol)
 -> typename std::enable_if_t<!decltype(isValid(Detail::hasState())(sol[0]))::value, void>
 {
     VTKReader vtu(fileName);
@@ -80,13 +126,73 @@ auto loadSolutionFromVtkFile(const std::string fileName,
 
 /*!
  * \ingroup InputOutput
- * \brief helper function to read from a file into a solution vector
+ * \brief read from a parallel file into a solution vector without state
+ */
+template <class SolutionVector, class PvNamesFunc, class FVGridGeometry>
+auto loadSolutionFromParallelVtkFile(const std::string fileName,
+                                     const VTKReader::DataType& dataType,
+                                     PvNamesFunc&& pvNamesFunc,
+                                     SolutionVector& sol,
+                                     const FVGridGeometry& fvGridGeometry)
+-> typename std::enable_if_t<!decltype(isValid(Detail::hasState())(sol[0]))::value, void>
+{
+    VTKReader vtu(fileName);
+    using PrimaryVariables = typename SolutionVector::block_type;
+    using Scalar = typename PrimaryVariables::field_type;
+    using GridView = typename FVGridGeometry::GridView;
+    static constexpr auto dim = GridView::dimension;
+
+    for (size_t pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
+    {
+        const auto pvName = pvNamesFunc(pvIdx);
+        auto vec = vtu.readData<std::vector<Scalar>>(pvName, dataType);
+        if (vec.size() != sol.size() && fvGridGeometry.gridView().comm().size() == 1)
+        {
+            DUNE_THROW(Dune::IOError, "Size mismatch between solution vector and read data ("
+                                      << sol.size() << " != " << vec.size() << ")");
+        }
+
+        std::vector<bool> visited;
+        if (dataType == VTKReader::DataType::pointData)
+        {
+            visited.resize(fvGridGeometry.gridView().size(dim), false);
+        }
+
+        std::size_t i = 0;
+        for (const auto& element : elements(fvGridGeometry.gridView(), Dune::Partitions::interior))
+        {
+            if (dataType == VTKReader::DataType::cellData)
+            {
+                auto eIdx = fvGridGeometry.elementMapper().index(element);
+                sol[eIdx][pvIdx] = vec[i];
+                ++i;
+            }
+            else
+            {
+                for (int vIdxLocal = 0; vIdxLocal < element.subEntities(dim); ++vIdxLocal)
+                {
+                    auto vIdxGlobal = fvGridGeometry.vertexMapper().subIndex(element, vIdxLocal, dim);
+                    if (!visited[vIdxGlobal])
+                    {
+                        sol[vIdxGlobal][pvIdx] = vec[i];
+                        ++i;
+                        visited[vIdxGlobal] = true;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/*!
+ * \ingroup InputOutput
+ * \brief read from a sequential file into a solution vector with state
  */
 template <class SolutionVector, class PvNamesFunc>
-auto loadSolutionFromVtkFile(const std::string fileName,
-                             const VTKReader::DataType& dataType,
-                             PvNamesFunc&& pvNamesFunc,
-                             SolutionVector& sol)
+auto loadSolutionFromSequentialVtkFile(const std::string fileName,
+                                       const VTKReader::DataType& dataType,
+                                       PvNamesFunc&& pvNamesFunc,
+                                       SolutionVector& sol)
 -> typename std::enable_if_t<decltype(isValid(Detail::hasState())(sol[0]))::value, void>
 {
     VTKReader vtu(fileName);
@@ -119,6 +225,21 @@ auto loadSolutionFromVtkFile(const std::string fileName,
                 sol[i][pvIdx] = switchedPvsSol[sol[i].state()][i];
         }
     }
+}
+
+/*!
+ * \ingroup InputOutput
+ * \brief read from a parallel file into a solution vector with state
+ */
+template <class SolutionVector, class PvNamesFunc, class FVGridGeometry>
+auto loadSolutionFromParallelVtkFile(const std::string fileName,
+                                     const VTKReader::DataType& dataType,
+                                     PvNamesFunc&& pvNamesFunc,
+                                     SolutionVector& sol,
+                                     const FVGridGeometry& fvGridGeometry)
+-> typename std::enable_if_t<decltype(isValid(Detail::hasState())(sol[0]))::value, void>
+{
+    DUNE_THROW(Dune::NotImplemented, "reading solution with state from a parallel Vtk file");
 }
 
 /*!
@@ -223,25 +344,56 @@ std::string primaryVariableNameFace(int pvIdx)
  * \brief load a solution vector from file
  * \note Supports the following file extensions: *.vtu *.vtp
  */
-template <class SolutionVector, class PvNamesFunc>
+template <class SolutionVector, class PvNamesFunc, class FVGridGeometry>
 void loadSolution(const std::string& fileName,
                   DiscretizationMethod discMethod,
                   PvNamesFunc&& pvNamesFunc,
-                  SolutionVector& sol)
+                  SolutionVector& sol,
+                  const FVGridGeometry& fvGridGeometry)
 {
     const auto extension = fileName.substr(fileName.find_last_of(".") + 1);
+    auto dataType = discMethod == DiscretizationMethod::box ?
+                    VTKReader::DataType::pointData : VTKReader::DataType::cellData;
 
     if (extension == "vtu" || extension == "vtp")
     {
-        auto dataType = discMethod == DiscretizationMethod::box ?
-                        VTKReader::DataType::pointData : VTKReader::DataType::cellData;
         if (discMethod == DiscretizationMethod::staggered && extension == "vtp")
             dataType = VTKReader::DataType::pointData;
 
-        loadSolutionFromVtkFile(fileName, dataType, pvNamesFunc, sol);
+        loadSolutionFromSequentialVtkFile(fileName, dataType, pvNamesFunc, sol);
+    }
+    else if (extension == "pvtu" || extension == "pvtp")
+    {
+        if (discMethod == DiscretizationMethod::staggered)
+            DUNE_THROW(Dune::NotImplemented, "reading staggered solution from a parallel Vtk file");
+
+        loadSolutionFromParallelVtkFile(fileName, dataType, pvNamesFunc, sol, fvGridGeometry);
     }
     else
         DUNE_THROW(Dune::NotImplemented, "loadSolution for extension " << extension);
+
+    // synchronize values on ghost and overlap dofs
+    if (fvGridGeometry.gridView().comm().size() > 1)
+    {
+        using PrimaryVariables = typename SolutionVector::block_type;
+        using GridView = typename FVGridGeometry::GridView;
+        if (dataType == VTKReader::DataType::cellData)
+        {
+            LoadSolutionDataHandle<PrimaryVariables, SolutionVector, GridView, 0>
+              dataHandle(sol, fvGridGeometry.gridView());
+            fvGridGeometry.gridView().communicate(dataHandle,
+                                                  Dune::InteriorBorder_All_Interface,
+                                                  Dune::ForwardCommunication);
+        }
+        else
+        {
+            LoadSolutionDataHandle<PrimaryVariables, SolutionVector, GridView, GridView::dimension>
+              dataHandle(sol, fvGridGeometry.gridView());
+            fvGridGeometry.gridView().communicate(dataHandle,
+                                                  Dune::InteriorBorder_All_Interface,
+                                                  Dune::ForwardCommunication);
+        }
+    }
 }
 
 } // namespace Dumux
