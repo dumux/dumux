@@ -146,11 +146,6 @@ auto loadSolutionFromParallelVtkFile(const std::string fileName,
     {
         const auto pvName = pvNamesFunc(pvIdx);
         auto vec = vtu.readData<std::vector<Scalar>>(pvName, dataType);
-        if (vec.size() != sol.size() && fvGridGeometry.gridView().comm().size() == 1)
-        {
-            DUNE_THROW(Dune::IOError, "Size mismatch between solution vector and read data ("
-                                      << sol.size() << " != " << vec.size() << ")");
-        }
 
         std::vector<bool> visited;
         if (dataType == VTKReader::DataType::pointData)
@@ -239,7 +234,60 @@ auto loadSolutionFromParallelVtkFile(const std::string fileName,
                                      const FVGridGeometry& fvGridGeometry)
 -> typename std::enable_if_t<decltype(isValid(Detail::hasState())(sol[0]))::value, void>
 {
-    DUNE_THROW(Dune::NotImplemented, "reading solution with state from a parallel Vtk file");
+    VTKReader vtu(fileName);
+
+    // get states at dof locations
+    const auto stateAtDof = vtu.readData<std::vector<int>>("phase presence", dataType);
+
+    // determine which states are present
+    std::unordered_set<int> states;
+    for (size_t i = 0; i < sol.size(); ++i)
+        states.insert(stateAtDof[i]);
+
+    // declare a vector to determine which vertices have been visited already
+    std::vector<bool> visited;
+    using GridView = typename FVGridGeometry::GridView;
+    static constexpr auto dim = GridView::dimension;
+    if (dataType == VTKReader::DataType::pointData)
+        visited.resize(fvGridGeometry.gridView().size(dim));
+
+    using PrimaryVariables = typename SolutionVector::block_type;
+    using Scalar = typename PrimaryVariables::field_type;
+    for (size_t pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
+    {
+        std::unordered_map<int, std::vector<Scalar>> switchedPvsSol;
+        for (const auto& state : states)
+            switchedPvsSol[state] = vtu.readData<std::vector<Scalar>>(pvNamesFunc(pvIdx, state), dataType);
+
+        std::fill(visited.begin(), visited.end(), false);
+        std::size_t i = 0;
+        for (const auto& element : elements(fvGridGeometry.gridView(), Dune::Partitions::interior))
+        {
+            if (dataType == VTKReader::DataType::cellData)
+            {
+                auto eIdx = fvGridGeometry.elementMapper().index(element);
+                auto state = stateAtDof[i];
+                sol[eIdx].setState(state);
+                sol[eIdx][pvIdx] = switchedPvsSol[state][i];
+                ++i;
+            }
+            else
+            {
+                for (int vIdxLocal = 0; vIdxLocal < element.subEntities(dim); ++vIdxLocal)
+                {
+                    auto vIdxGlobal = fvGridGeometry.vertexMapper().subIndex(element, vIdxLocal, dim);
+                    if (!visited[vIdxGlobal])
+                    {
+                        auto state = stateAtDof[i];
+                        sol[vIdxGlobal].setState(state);
+                        sol[vIdxGlobal][pvIdx] = switchedPvsSol[state][i];
+                        visited[vIdxGlobal] = true;
+                        ++i;
+                    }
+                }
+            }
+        }
+    }
 }
 
 /*!
