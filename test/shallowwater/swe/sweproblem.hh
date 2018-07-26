@@ -240,8 +240,15 @@ public:
             if (boundaryValues.type == "discharge")
             {
                 bdValue = getBoundaryValue(time_,myBoundaryId);
-                bdValue = (bdValue / this->hBoundarySumMap_.at(boundaryValues.id)) * hBoundarySegmentMap_.at(scvf.index());
-                bdType = 1;
+                using std::abs;
+                if (abs(bdValue) != 0.0)
+                {
+                    bdValue = (bdValue / this->hBoundarySumMap_.at(boundaryValues.id)) * hBoundarySegmentMap_.at(scvf.index());
+                    bdType = 1;
+                }else{
+                    bdType = 0;
+                    bdValue = 0.0;
+                }
             }
         }else{
             bdType = 0;
@@ -339,17 +346,11 @@ public:
                 auto u = elemVolVars[scv].getU();
                 auto v = elemVolVars[scv].getV();
 
-                std::cout << "h " << std::endl;
-                std::cout << h << std::endl;
-
-
                 for (auto&& scvf : scvfs(fvGeometry))
                 {
                     if (scvf.boundary()){
                        if (this->hBoundarySegmentMap_.find(scvf.index()) == this->hBoundarySegmentMap_.end())
                        {
-                            std::cout << "debug1 " << std::endl;
-
                             if (h > this->minHBoundary_){
                                 this->hBoundarySegmentMap_[scvf.index()] = scvf.area() * h;
 
@@ -371,8 +372,6 @@ public:
                 }
             }
         } //TODO cumpute parallel sum for this->hBoundarySumMap_[boundaryValues.id] += scvf.area() * h;
-                            std::cout << "debug end " << std::endl;
-
     }
 
 
@@ -519,15 +518,15 @@ public:
     {
         PrimaryVariables values(0.0);
 
-        values[massBalanceIdx] = 0.001;
+        values[massBalanceIdx] = 0.5;
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
 
-        auto someInitSol = element.geometry().center();
-        if (someInitSol[0] < 10.001)
-        {
-            values[massBalanceIdx] = 4.0;
-        }
+        //auto someInitSol = element.geometry().center();
+        //if (someInitSol[0] < 10.001)
+        //{
+        //    values[massBalanceIdx] = 0.5
+        //}
 
         return values;
     };
