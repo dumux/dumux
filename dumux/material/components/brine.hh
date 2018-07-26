@@ -129,8 +129,7 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static const Scalar gasEnthalpy(Scalar temperature,
-                                    Scalar pressure)
+    static const Scalar gasEnthalpy(Scalar temperature, Scalar pressure)
     { return H2O::gasEnthalpy(temperature, pressure); }
 
     /*!
