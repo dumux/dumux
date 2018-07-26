@@ -80,6 +80,13 @@ private:
                                       };
 
             vtk.addFaceVariable(faceVelocityVector, "faceVelocity");
+
+            auto faceNormalVelocity = [](const auto& faceVars)
+                                      {
+                                          return faceVars.velocitySelf();
+                                      };
+
+            vtk.addFaceVariable(faceNormalVelocity, "v");
         }
     }
 };
