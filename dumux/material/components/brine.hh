@@ -423,6 +423,18 @@ public:
         assert(mu_brine > 0.0);
         return mu_brine/1000.0;
     }
+
+    /*!
+     * \brief Thermal conductivity of a brine \f$\mathrm{[W/(m K)]}\f$.
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *
+     * \todo TODO: For the thermal conductivity the salinity contribution is
+     *       neglected. This contribution is probably not big, but somebody
+     *       would have to find out its influence.
+     */
+    static Scalar liquidThermalConductivity(Scalar temperature, Scalar pressure)
+    { return H2O::liquidThermalConductivity(temperature, pressure); }
 };
 
 /*!
