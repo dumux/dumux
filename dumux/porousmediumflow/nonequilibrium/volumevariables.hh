@@ -68,10 +68,14 @@ class NonEquilibriumVolumeVariablesImplementation< Traits,
 
     using ModelTraits = typename Traits::ModelTraits;
     using Indices = typename ModelTraits::Indices;
+    using FS = typename Traits::FluidSystem;
     static constexpr auto numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
     static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
 
-    static_assert((numEnergyEqFluid < 2), "This model is a specialization for a energy transfer of a fluid mixture and a solid");
+    static constexpr auto phase0Idx = FS::phase0Idx;
+    static constexpr auto phase1Idx = FS::phase1Idx;
+    static constexpr auto sPhaseIdx = FS::numPhases;
+    static_assert((numEnergyEqFluid < 3), "this model only has interfacial area relationships for maximum 2 fluids with one solid");
 
     using DimLessNum = DimensionlessNumbers<Scalar>;
 
@@ -97,7 +101,9 @@ public:
 
         ParameterCache paramCache;
         paramCache.updateAll(this->fluidState());
-        updateInterfacialArea(elemSol, this->fluidState(), paramCache, problem, element, scv);
+        updateDimLessNumbers(elemSol, this->fluidState(), paramCache, problem, element, scv);
+        if (numEnergyEqFluid == 2)
+            updateInterfacialArea(elemSol, this->fluidState(), paramCache, problem, element, scv);
     }
 
     /*!
@@ -111,7 +117,7 @@ public:
      * \param scv The sub-control volume
      */
     template<class ElemSol, class Problem, class Element, class Scv>
-    void updateInterfacialArea(const ElemSol& elemSol,
+    void updateDimLessNumbers(const ElemSol& elemSol,
                                const FluidState& fluidState,
                                const ParameterCache& paramCache,
                                const Problem& problem,
@@ -136,13 +142,87 @@ public:
             const auto thermalConductivity = FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
             const auto porosity            = this->porosity();
 
-            reynoldsNumber_[phaseIdx] = DimLessNum::reynoldsNumber(darcyMagVelocity, characteristicLength_, kinematicViscosity);
+            reynoldsNumber_[phaseIdx] = DimLessNum::reynoldsNumber(darcyMagVelocity, characteristicLength_,kinematicViscosity);
             prandtlNumber_[phaseIdx]  = DimLessNum::prandtlNumber(dynamicViscosity, heatCapacity, thermalConductivity);
             nusseltNumber_[phaseIdx]  = DimLessNum::nusseltNumberForced(reynoldsNumber_[phaseIdx],
                                                                         prandtlNumber_[phaseIdx],
                                                                         porosity,
                                                                         ModelTraits::nusseltFormulation());
         }
+    }
+
+        /*!
+     * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache The parameter cache corresponding to the fluid state
+     * \param problem The problem to be solved
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateInterfacialArea(const ElemSol& elemSol,
+                               const FluidState& fluidState,
+                               const ParameterCache& paramCache,
+                               const Problem& problem,
+                               const Element& element,
+                               const Scv& scv)
+    {
+        // obtain (standard) material parameters (needed for the residual saturations)
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+
+        //obtain parameters for interfacial area constitutive relations
+        const auto& aWettingNonWettingSurfaceParams =problem.spatialParams().aWettingNonWettingSurfaceParams(element, scv, elemSol);
+        const auto& aNonWettingSolidSurfaceParams =problem.spatialParams().aNonWettingSolidSurfaceParams(element, scv, elemSol);
+
+        const Scalar pc = fluidState.pressure(phase1Idx) - fluidState.pressure(phase0Idx);
+        const Scalar Sw = fluidState.saturation(phase0Idx);
+
+        Scalar awn;
+
+        using AwnSurface = typename Problem::SpatialParams::AwnSurface;
+        awn = AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams, Sw, pc );
+        interfacialArea_[phase0Idx][phase1Idx] = awn;
+        interfacialArea_[phase1Idx][phase0Idx] = interfacialArea_[phase0Idx][phase1Idx];
+        interfacialArea_[phase0Idx][phase0Idx] = 0.;
+
+        using AnsSurface = typename Problem::SpatialParams::AnsSurface;
+        Scalar ans = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams,Sw, pc);
+
+        // Switch for using a a_{wn} relations that has some "maximum capillary pressure" as parameter            // That value is obtained by regularization of the pc(Sw) function.
+#if USE_PCMAX
+        const Scalar pcMax = problem.spatialParams().pcMax(element, scv, elemSol);
+        //I know the solid surface from the pore network. But it is more consistent to use the fitvalue.
+        using AnsSurface = typename Problem::SpatialParams::AnsSurface;
+        solidSurface_ = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams, /*Sw=*/0., pcMax);
+
+        const Scalar aws = solidSurface_ - ans;
+        interfacialArea_[phase0Idx][sPhaseIdx] = aws;
+        interfacialArea_[sPhaseIdx][phase0Idx] = interfacialArea_[phase0Idx][sPhaseIdx];
+        interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.;
+#else
+        using AwsSurface = typename Problem::SpatialParams::AwsSurface;
+        const auto& aWettingSolidSurfaceParams = problem.spatialParams().aWettingSolidSurfaceParams(element, scv, elemSol);
+        const auto aws = AwsSurface::interfacialArea(aWettingSolidSurfaceParams,materialParams, Sw, pc);
+        interfacialArea_[phase0Idx][sPhaseIdx] = aws ;
+        interfacialArea_[sPhaseIdx][phase0Idx] = interfacialArea_[phase0Idx][sPhaseIdx];
+        interfacialArea_[sPhaseIdx][sPhaseIdx] = 0.;
+#endif
+        interfacialArea_[phase1Idx][sPhaseIdx] = ans;
+        interfacialArea_[sPhaseIdx][phase1Idx] = interfacialArea_[phase1Idx][sPhaseIdx];
+        interfacialArea_[phase1Idx][phase1Idx] = 0.;
+    }
+
+    /*!
+     * \brief The specific interfacial area between two fluid phases [m^2 / m^3]
+     * \note This is _only_ required by the kinetic mass/energy modules
+     */
+    const Scalar interfacialArea(const unsigned int phaseIIdx, const unsigned int phaseJIdx) const
+    {
+        // there is no interfacial area between a phase and itself
+        assert(phaseIIdx not_eq phaseJIdx);
+        return interfacialArea_[phaseIIdx][phaseJIdx];
     }
 
     //! access function Reynolds Number
@@ -168,6 +248,7 @@ private:
     Scalar factorEnergyTransfer_;
     Scalar factorMassTransfer_;
     Scalar solidSurface_ ;
+    Scalar interfacialArea_[ModelTraits::numPhases()+numEnergyEqSolid][ModelTraits::numPhases()+numEnergyEqSolid];
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -389,24 +470,6 @@ public:
         const Scalar Sw = fluidState.saturation(phase0Idx);
 
         Scalar awn;
-
-        // TODO can we delete this??? awn is overwritten anyway!
-#define AwnRegul 0
-        // This regularizes the interfacial area between the fluid phases.
-        // This makes sure, that
-        // a) some saturation cannot be lost: Never leave two phase region.
-        // b) We cannot leave the fit region: no crazy (e.g. negative) values possible
-
-        // const Scalar Swr =  aWettingNonWettingSurfaceParams.Swr() ;
-        // const Scalar Snr =  aWettingNonWettingSurfaceParams.Snr() ;
-
-        // this just leads to a stalling newton error as soon as this kicks in.
-        // May be a spline or sth like this would help, but I do not which derivatives
-        // to specify.
-#if AwnRegul
-        if(Sw < 5e-3 ) // or Sw > (1.-1e-5 )
-            awn = 0. ; // 10.; //
-#endif
 
         using AwnSurface = typename Problem::SpatialParams::AwnSurface;
         awn = AwnSurface::interfacialArea(aWettingNonWettingSurfaceParams, materialParams, Sw, pc );
