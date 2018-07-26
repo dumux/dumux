@@ -623,13 +623,13 @@ int checkFluidSystem()
         }
     }
 
-    // test for phaseName(), isLiquid() and isIdealGas()
+    // test for phaseName(), isGas() and isIdealGas()
     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
     {
         std::string
         DUNE_UNUSED name = FluidSystem::phaseName(phaseIdx);
         bool DUNE_UNUSED
-        bVal = FluidSystem::isLiquid(phaseIdx);
+        bVal = FluidSystem::isGas(phaseIdx);
         bVal = FluidSystem::isIdealGas(phaseIdx);
     }
 

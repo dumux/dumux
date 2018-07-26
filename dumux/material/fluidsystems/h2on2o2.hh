@@ -131,17 +131,6 @@ public:
     }
 
     /*!
-     * \brief Return whether a phase is liquid
-     *
-     * \param phaseIdx The index of the fluid phase to consider
-     */
-    static bool isLiquid(int phaseIdx)
-    {
-        assert(0 <= phaseIdx && phaseIdx < numPhases);
-        return phaseIdx != gasPhaseIdx;
-    }
-
-    /*!
      * \brief Return whether a phase is gaseous
      *
      * \param phaseIdx The index of the fluid phase to consider

@@ -98,8 +98,8 @@ public:
     /*!
      * \brief Returns whether the fluid is a liquid
      */
-    static constexpr bool isLiquid(int phaseIdx = 0)
-    { return true; }
+    static constexpr bool isGas(int phaseIdx = 0)
+    { return false; }
 
     /*!
      * \brief Returns true if and only if a fluid phase is assumed to
