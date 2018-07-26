@@ -52,10 +52,10 @@ template<class Scalar,
          class BrineRawComponent = Components::Brine<Scalar, Components::H2O<Scalar> >,
          class Brinetype = Components::TabulatedComponent<BrineRawComponent> >
 class BrineCO2
-: public BaseFluidSystem<Scalar, BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype> >
+: public Base<Scalar, BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype> >
 {
     using ThisType = BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
 
     using Brine_CO2 = BinaryCoeff::Brine_CO2<Scalar, CO2Table>;
@@ -610,7 +610,7 @@ public:
 
     using Base::heatCapacity;
     /*!
-     * \copybrief BaseFluidSystem::heatCapacity
+     * \copybrief Base::heatCapacity
      *
      * \note We employ the heat capacity of the pure phases.
      *

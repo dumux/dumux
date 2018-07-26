@@ -51,10 +51,10 @@ namespace FluidSystems {
 template <class Scalar,
           class H2OType = Components::TabulatedComponent<Components::H2O<Scalar> > >
 class H2OAirMesitylene
-    : public BaseFluidSystem<Scalar, H2OAirMesitylene<Scalar, H2OType> >
+    : public Base<Scalar, H2OAirMesitylene<Scalar, H2OType> >
 {
     using ThisType = H2OAirMesitylene<Scalar, H2OType>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
 public:
     using NAPL = Components::Mesitylene<Scalar>;

@@ -56,7 +56,7 @@ namespace FluidSystems {
  */
 template <class Scalar, class WettingFluid, class NonwettingFluid, class Gas>
 class ThreePImmiscible
-: public BaseFluidSystem<Scalar, ThreePImmiscible<Scalar, WettingFluid, NonwettingFluid, Gas> >
+: public Base<Scalar, ThreePImmiscible<Scalar, WettingFluid, NonwettingFluid, Gas> >
 {
     static_assert((WettingFluid::numPhases == 1), "WettingFluid has more than one phase");
     static_assert((NonwettingFluid::numPhases == 1), "NonwettingFluid has more than one phase");
@@ -66,7 +66,7 @@ class ThreePImmiscible
     static_assert((Gas::numComponents == 1), "Gas has more than one component");
 
     using ThisType = ThreePImmiscible<Scalar, WettingFluid, NonwettingFluid, Gas>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 public:
     /****************************************
      * Fluid phase related static parameters

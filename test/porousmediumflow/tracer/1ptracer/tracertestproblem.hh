@@ -67,7 +67,7 @@ SET_BOOL_PROP(TracerTestCCTypeTag, SolutionDependentMolecularDiffusion, false);
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
-class TracerFluidSystem : public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar),
+class TracerFluidSystem : public FluidSystems::Base<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                TracerFluidSystem<TypeTag>>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

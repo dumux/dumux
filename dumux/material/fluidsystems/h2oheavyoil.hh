@@ -44,10 +44,10 @@ namespace FluidSystems {
 template <class Scalar,
           class H2OType = Dumux::Components::TabulatedComponent<Dumux::Components::H2O<Scalar> > >
 class H2OHeavyOil
-    : public BaseFluidSystem<Scalar, H2OHeavyOil<Scalar, H2OType> >
+    : public Base<Scalar, H2OHeavyOil<Scalar, H2OType> >
 {
     using ThisType = H2OHeavyOil<Scalar, H2OType>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
 public:
     using HeavyOil = Dumux::Components::HeavyOil<Scalar>;

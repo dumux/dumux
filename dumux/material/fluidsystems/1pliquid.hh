@@ -41,10 +41,10 @@ namespace FluidSystems {
  */
 template <class Scalar, class ComponentT>
 class OnePLiquid
-: public BaseFluidSystem<Scalar, OnePLiquid<Scalar, ComponentT> >
+: public Base<Scalar, OnePLiquid<Scalar, ComponentT> >
 {
     using ThisType = OnePLiquid<Scalar, ComponentT>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
     static_assert(ComponentTraits<ComponentT>::hasLiquidState, "The component does not implement a liquid state!");
 

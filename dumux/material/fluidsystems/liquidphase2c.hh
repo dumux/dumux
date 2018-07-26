@@ -41,10 +41,10 @@ namespace FluidSystems {
  */
 template <class Scalar, class MainComponent, class SecondComponent>
 class LiquidPhaseTwoC
-: public BaseFluidSystem<Scalar, LiquidPhaseTwoC<Scalar, MainComponent, SecondComponent> >
+: public Base<Scalar, LiquidPhaseTwoC<Scalar, MainComponent, SecondComponent> >
 {
     using ThisType = LiquidPhaseTwoC<Scalar, MainComponent, SecondComponent>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
     using BinaryCoefficients = BinaryCoeff::H2O_Component<Scalar, SecondComponent>;
 
 public:

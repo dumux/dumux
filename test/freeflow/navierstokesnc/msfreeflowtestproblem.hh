@@ -75,12 +75,12 @@ SET_TYPE_PROP(MaxwellStefanNCTestTypeTag, MolecularDiffusionType, MaxwellStefans
  */
 template<class TypeTag>
 class MaxwellStefanFluidSystem
-: public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar), MaxwellStefanFluidSystem<TypeTag>>
+: public FluidSystems::Base<typename GET_PROP_TYPE(TypeTag, Scalar), MaxwellStefanFluidSystem<TypeTag>>
 
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ThisType = MaxwellStefanFluidSystem<TypeTag>;
-    using Base = FluidSystems::BaseFluidSystem<Scalar, ThisType>;
+    using Base = FluidSystems::Base<Scalar, ThisType>;
 
 public:
     //! The number of phases

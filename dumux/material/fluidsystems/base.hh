@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup Fluidsystems
- * \brief @copybrief Dumux::FluidSystems::BaseFluidSystem
+ * \brief @copybrief Dumux::FluidSystems::Base
  */
 #ifndef DUMUX_BASE_FLUID_SYSTEM_HH
 #define DUMUX_BASE_FLUID_SYSTEM_HH
@@ -39,7 +39,7 @@ namespace FluidSystems {
 *       that all basic functionality is available!
 */
 template <class ScalarType, class Implementation>
-class BaseFluidSystem
+class Base
 {
 public:
     //! export the scalar type

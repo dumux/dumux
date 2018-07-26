@@ -42,10 +42,10 @@ namespace FluidSystems {
  */
 template <class MPFluidSystem, int phase = 0>
 class OnePAdapter
-: public BaseFluidSystem<typename MPFluidSystem::Scalar, OnePAdapter<MPFluidSystem, phase>>
+: public Base<typename MPFluidSystem::Scalar, OnePAdapter<MPFluidSystem, phase>>
 {
     using ThisType = OnePAdapter<MPFluidSystem, phase>;
-    using Base = BaseFluidSystem<typename MPFluidSystem::Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<typename MPFluidSystem::Scalar, ThisType>;
 
     static_assert(phase < MPFluidSystem::numPhases, "Phase does not exist in multi-phase fluidsystem!");
 

@@ -69,10 +69,10 @@ template <class Scalar,
           class Policy = H2OAirDefaultPolicy<>,
           bool useKelvinVaporPressure = false>
 class H2OAir
-: public BaseFluidSystem<Scalar, H2OAir<Scalar, H2Otype, Policy> >
+: public Base<Scalar, H2OAir<Scalar, H2Otype, Policy> >
 {
     using ThisType = H2OAir<Scalar,H2Otype, Policy>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
     using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:

@@ -41,10 +41,10 @@ namespace FluidSystems {
  */
 template <class Scalar, class ComponentT>
 class OnePGas
-: public BaseFluidSystem<Scalar, OnePGas<Scalar, ComponentT> >
+: public Base<Scalar, OnePGas<Scalar, ComponentT> >
 {
     using ThisType = OnePGas<Scalar, ComponentT>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
     static_assert(ComponentTraits<ComponentT>::hasGasState, "The component does not implement a gas state!");
 

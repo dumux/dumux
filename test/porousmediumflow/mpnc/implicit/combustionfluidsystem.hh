@@ -47,10 +47,10 @@ namespace FluidSystems {
  */
 template <class Scalar>
 class CombustionFluidsystem
-    : public BaseFluidSystem<Scalar, CombustionFluidsystem<Scalar> >
+    : public Base<Scalar, CombustionFluidsystem<Scalar> >
 {
     using ThisType = CombustionFluidsystem<Scalar>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Base = Dumux::FluidSystems::Base<Scalar, ThisType>;
 
     // convenience using declarations
     using IdealGas = Dumux::IdealGas<Scalar>;
