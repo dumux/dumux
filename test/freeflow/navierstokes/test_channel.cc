@@ -142,8 +142,14 @@ int main(int argc, char** argv) try
     if (restartTime > 0)
     {
         using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-        auto fileName = getParam<std::string>("Restart.File");
-        loadSolution(fileName, FVGridGeometry::discMethod, primaryVariableName<ModelTraits>, x);
+
+        auto fileNameCell = getParam<std::string>("Restart.FileCell");
+        loadSolution(fileNameCell, FVGridGeometry::discMethod,
+                     primaryVariableNameCell<ModelTraits>, x[Dune::index_constant<0>{}]);
+
+        auto fileNameFace = getParam<std::string>("Restart.FileFace");
+        loadSolution(fileNameFace, FVGridGeometry::discMethod,
+                     primaryVariableNameFace<ModelTraits>, x[Dune::index_constant<1>{}]);
     }
     else
         problem->applyInitialSolution(x);
