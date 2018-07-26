@@ -31,6 +31,7 @@
 #include <type_traits>
 #include <unordered_map>
 
+#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/capabilities.hh>
 #include <dune/grid/io/file/vtk/common.hh>
@@ -60,10 +61,13 @@ public:
     explicit VTKReader(const std::string& fileName)
     : fileName_(fileName)
     {
+        if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+            getSequentialNameFromParallelName_();
+
         using namespace tinyxml2;
-        const auto eResult = doc_.LoadFile(fileName.c_str());
+        const auto eResult = doc_.LoadFile(fileName_.c_str());
         if (eResult != XML_SUCCESS)
-            DUNE_THROW(Dune::IOError, "Couldn't open XML file " << fileName << ".");
+            DUNE_THROW(Dune::IOError, "Couldn't open XML file " << fileName_ << ".");
     }
 
     /*!
@@ -133,6 +137,52 @@ public:
     }
 
 private:
+    /*!
+     * \brief get sequential Vtk filename from a parallel one
+     */
+    void getSequentialNameFromParallelName_()
+    {
+        using namespace tinyxml2;
+
+        const auto eResult = doc_.LoadFile(fileName_.c_str());
+        if (eResult != XML_SUCCESS)
+            DUNE_THROW(Dune::IOError, "Couldn't open XML file " << fileName_ << ".");
+
+        const XMLElement* pieceNode = doc_.FirstChildElement("VTKFile");
+        if (pieceNode == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't get 'VTKFile' node in " << fileName_ << ".");
+
+        pieceNode = pieceNode->FirstChildElement("PUnstructuredGrid");
+        if (pieceNode == nullptr)
+            pieceNode = doc_.FirstChildElement("VTKFile")->FirstChildElement("PPolyData");
+        if (pieceNode == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't get 'PUnstructuredGrid' or 'PPolyData' node in " << fileName_ << ".");
+
+        pieceNode = pieceNode->FirstChildElement("Piece");
+        const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+        for (int rank = 0; rank < comm.size(); ++rank)
+        {
+            if (pieceNode == nullptr)
+                DUNE_THROW(Dune::IOError, "Couldn't get 'Piece' node for rank "
+                                          << rank << " in " << fileName_ << ".");
+
+            const char *seqName = pieceNode->Attribute("Source");
+
+            if (seqName == nullptr)
+                DUNE_THROW(Dune::IOError, "Couldn't get 'Source' attribute of a 'Piece' node in " << fileName_);
+
+            if (comm.rank() == rank)
+            {
+                fileName_ = seqName;
+                break;
+            }
+
+            pieceNode = pieceNode->NextSiblingElement("Piece");
+        }
+
+        doc_.Clear();
+    }
+
     /*!
      * \brief Read a grid from a vtk/vtu/vtp file
      * \param factory the (emtpy) grid factory
@@ -387,7 +437,7 @@ private:
     adaptPointDimension_(std::vector<Dune::FieldVector<double, 3>>&& points3D) const
     { return points3D; }
 
-    const std::string fileName_; //!< the vtk file name
+    std::string fileName_; //!< the vtk file name
     tinyxml2::XMLDocument doc_; //!< the xml document created from file with name fileName_
 };
 
