@@ -43,6 +43,7 @@ namespace Components {
  *
  * \tparam Scalar The type used for scalar values
  * \tparam H2O Static polymorphism: the Brine class can access all properties of the H2O class
+ * \note This is an implementation of brine as a pseudo-component with a constant salinity.
  */
 template <class Scalar,
           class H2O_Tabulated = Components::TabulatedComponent<Components::H2O<Scalar>>>
@@ -53,7 +54,8 @@ class Brine
 {
 public:
     using H2O = Components::TabulatedComponent<Dumux::Components::H2O<Scalar>>;
-    //HACK: If salinity is a pseudo-component, a constat value is used
+
+    // The constant salinity
     static Scalar constantSalinity;
 
     //! The ideal gas constant \f$\mathrm{[J/mol/K]}\f$
