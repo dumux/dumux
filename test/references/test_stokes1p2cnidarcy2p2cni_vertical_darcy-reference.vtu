@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="400" NumberOfPoints="441">
-      <CellData Scalars="S_n" Vectors="velocity_liquid (m/s)">
-        <DataArray type="Float32" Name="S_n" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="S_Air" Vectors="velocity_Water (m/s)">
+        <DataArray type="Float32" Name="S_Air" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -39,7 +39,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="S_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_Water" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -75,7 +75,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="p_n" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_Air" NumberOfComponents="1" format="ascii">
           100001 100001 100001 100001 100001 100001 100001 100001 100001 100001 100001 100001
           100001 100001 100001 100001 100001 100001 100001 100001 100003 100003 100003 100003
           100003 100003 100003 100003 100003 100003 100003 100003 100003 100003 100003 100003
@@ -111,7 +111,7 @@
           100044 100044 100044 100044 100044 100044 100044 100044 100044 100044 100044 100044
           100044 100044 100044 100044
         </DataArray>
-        <DataArray type="Float32" Name="p_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_Water" NumberOfComponents="1" format="ascii">
           96317 96317 96317 96317 96317 96317 96317 96317 96317 96317 96317 96317
           96317 96317 96317 96317 96317 96317 96317 96317 96319.2 96319.2 96319.2 96319.2
           96319.2 96319.2 96319.2 96319.2 96319.2 96319.2 96319.2 96319.2 96319.2 96319.2 96319.2 96319.2
@@ -327,7 +327,7 @@
           55022.5 55022.5 55022.5 55022.5 55022.5 55022.6 55022.6 55022.5 55022.5 55022.5 55022.5 55022.5
           55022.5 55022.5 55022.5 55022.5
         </DataArray>
-        <DataArray type="Float32" Name="X_liquid^H2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="X_Water^H2O" NumberOfComponents="1" format="ascii">
           -1.68053e-15 -1.7702e-15 -1.91706e-15 -2.07822e-15 -2.22191e-15 -2.33429e-15 -2.41475e-15 -2.46839e-15 -2.50086e-15 -2.51612e-15 -2.51609e-15 -2.50078e-15
           -2.46827e-15 -2.41462e-15 -2.33417e-15 -2.22181e-15 -2.07813e-15 -1.91699e-15 -1.77016e-15 -1.6805e-15 -2.317e-15 -2.44948e-15 -2.66466e-15 -2.89815e-15
           -3.10382e-15 -3.26287e-15 -3.37574e-15 -3.45058e-15 -3.49576e-15 -3.51698e-15 -3.51694e-15 -3.49564e-15 -3.45041e-15 -3.37556e-15 -3.2627e-15 -3.10367e-15
@@ -363,7 +363,7 @@
           -4.0517e-15 -4.36073e-15 -4.5633e-15 -4.70411e-15 -4.79686e-15 -4.84339e-15 -4.84319e-15 -4.79623e-15 -4.70265e-15 -4.56262e-15 -4.36047e-15 -4.05151e-15
           -3.48232e-15 -2.26867e-15 -5.23427e-17 -5.9388e-17
         </DataArray>
-        <DataArray type="Float32" Name="X_liquid^Air" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="X_Water^Air" NumberOfComponents="1" format="ascii">
           1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05
           1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05
           1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05
@@ -471,7 +471,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="x_liquid^H2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x_Water^H2O" NumberOfComponents="1" format="ascii">
           -2.70151e-15 -2.84566e-15 -3.08173e-15 -3.3408e-15 -3.5718e-15 -3.75245e-15 -3.88179e-15 -3.96802e-15 -4.02021e-15 -4.04474e-15 -4.04469e-15 -4.02008e-15
           -3.96783e-15 -3.88158e-15 -3.75226e-15 -3.57163e-15 -3.34067e-15 -3.08163e-15 -2.84559e-15 -2.70146e-15 -3.72465e-15 -3.93763e-15 -4.28353e-15 -4.65887e-15
           -4.98949e-15 -5.24517e-15 -5.42661e-15 -5.54692e-15 -5.61955e-15 -5.65366e-15 -5.65359e-15 -5.61936e-15 -5.54666e-15 -5.42632e-15 -5.2449e-15 -4.98926e-15
@@ -507,7 +507,7 @@
           -6.51324e-15 -7.01002e-15 -7.33565e-15 -7.56201e-15 -7.71111e-15 -7.78591e-15 -7.78559e-15 -7.7101e-15 -7.55967e-15 -7.33456e-15 -7.00961e-15 -6.51294e-15
           -5.59795e-15 -3.64696e-15 -8.41426e-17 -9.54682e-17
         </DataArray>
-        <DataArray type="Float32" Name="x_liquid^Air" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x_Water^Air" NumberOfComponents="1" format="ascii">
           1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05
           1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50468e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05
           1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05 1.50471e-05
@@ -723,7 +723,7 @@
           293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15 293.15
           293.15 293.15 293.15 293.15
         </DataArray>
-        <DataArray type="Float32" Name="velocity_liquid (m/s)" NumberOfComponents="3" format="ascii">
+        <DataArray type="Float32" Name="velocity_Water (m/s)" NumberOfComponents="3" format="ascii">
           -0 -0 0 -0 -0 0 -0 -0 0 -0 -0 0
           -0 -0 0 -0 -0 0 -0 -0 0 -0 -0 0
           -0 -0 0 0 -0 0 0 -0 0 0 -0 0

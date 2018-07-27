@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="3667" NumberOfPoints="3794">
-      <PointData Scalars="S_n">
-        <DataArray type="Float32" Name="S_n" NumberOfComponents="1" format="ascii">
+      <PointData Scalars="S_CO2">
+        <DataArray type="Float32" Name="S_CO2" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0.241166 0.0303768 0 0 0 0
           0 0 0 0 0 0 0.339238 0.176353 0 0.358135 0.216743 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -322,7 +322,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0
         </DataArray>
-        <DataArray type="Float32" Name="S_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_Brine" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 0.758834 0.969623 1 1 1 1
           1 1 1 1 1 1 0.660762 0.823647 1 0.641865 0.783257 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -641,7 +641,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1
         </DataArray>
-        <DataArray type="Float32" Name="p_n" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_CO2" NumberOfComponents="1" format="ascii">
           1.39005e+07 1.38742e+07 1.39018e+07 1.38783e+07 1.38711e+07 1.38856e+07 1.39049e+07 1.38759e+07 1.38434e+07 1.38535e+07 1.38533e+07 1.38648e+07
           1.38512e+07 1.38333e+07 1.38374e+07 1.38136e+07 1.38148e+07 1.38598e+07 1.38934e+07 1.38756e+07 1.38458e+07 1.38815e+07 1.38664e+07 1.38299e+07
           1.3813e+07 1.37903e+07 1.37881e+07 1.37625e+07 1.38189e+07 1.3791e+07 1.38003e+07 1.37695e+07 1.3781e+07 1.37542e+07 1.37618e+07 1.37398e+07
@@ -960,7 +960,7 @@
           1.16707e+07 1.16903e+07 1.17096e+07 1.16991e+07 1.16785e+07 1.16681e+07 1.16621e+07 1.16563e+07 1.16595e+07 1.16581e+07 1.1642e+07 1.16365e+07
           1.16232e+07 1.1627e+07
         </DataArray>
-        <DataArray type="Float32" Name="p_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_Brine" NumberOfComponents="1" format="ascii">
           1.38905e+07 1.38642e+07 1.38918e+07 1.38683e+07 1.38611e+07 1.38756e+07 1.38933e+07 1.38657e+07 1.38334e+07 1.38435e+07 1.38433e+07 1.38548e+07
           1.38412e+07 1.38233e+07 1.38274e+07 1.38036e+07 1.38048e+07 1.38498e+07 1.38809e+07 1.38645e+07 1.38358e+07 1.38689e+07 1.3855e+07 1.38199e+07
           1.3803e+07 1.37803e+07 1.37781e+07 1.37525e+07 1.38089e+07 1.3781e+07 1.37903e+07 1.37595e+07 1.3771e+07 1.37442e+07 1.37518e+07 1.37298e+07
@@ -1598,7 +1598,7 @@
           10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000
           10000 10000
         </DataArray>
-        <DataArray type="Float32" Name="rho_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_Brine" NumberOfComponents="1" format="ascii">
           1066.31 1066.1 1072.62 1066.9 1066.03 1066.04 1073.55 1073.3 1066.05 1066.03 1066.15 1066.02
           1066.01 1066.02 1066 1066.02 1066.04 1067.25 1073.93 1073.41 1070.68 1074.03 1073.46 1066.43
           1066.09 1066.04 1066.06 1066.06 1066 1066.01 1065.99 1066 1065.98 1065.99 1065.97 1065.99
@@ -1917,7 +1917,7 @@
           1066.42 1066.4 1066.39 1066.38 1066.4 1066.39 1066.36 1066.38 1066.38 1066.41 1066.4 1066.38
           1066.4 1066.4
         </DataArray>
-        <DataArray type="Float32" Name="rho_n" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_CO2" NumberOfComponents="1" format="ascii">
           709.214 709.663 702.858 709.149 709.579 709.799 708.952 703.473 709.498 709.279 709.577 709.283
           708.908 708.844 708.528 708.396 708.947 708.359 716.298 705.559 705.145 718.067 706.424 709.46
           709.462 708.445 708.967 708.457 708.03 707.879 707.536 707.353 707.046 706.857 706.557 706.426
@@ -2236,7 +2236,7 @@
           672.022 672.2 672.126 671.662 671.705 671.214 670.052 670.374 670.738 671.519 670.886 670.013
           670.23 670.334
         </DataArray>
-        <DataArray type="Float32" Name="mob_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_Brine" NumberOfComponents="1" format="ascii">
           1252.49 1250.44 1264.28 1251.57 1250.45 1250.71 388.415 1108.13 1249.3 1250.19 1249.63 1250.7
           1250.76 1250.01 1250.79 1249.88 1248.94 1252.17 211.666 553.338 1257.43 186.079 445.798 1248.73
           1247.92 1248.69 1247.64 1247.36 1250.81 1249.75 1250.81 1249.68 1250.78 1249.85 1250.75 1249.94
@@ -2555,7 +2555,7 @@
           1199.38 1200.17 1201.29 1201.34 1200.2 1200.3 1201.5 1200.78 1200.47 1199.39 1199.37 1200.21
           1199.23 1199.32
         </DataArray>
-        <DataArray type="Float32" Name="mob_n" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_CO2" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 496.194 1.13122 0 0 0 0
           0 0 0 0 0 0 1278.49 203.128 0 1480.25 367.565 0
           0 0 0 0 0 0 0 0 0 0 0 0

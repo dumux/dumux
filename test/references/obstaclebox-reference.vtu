@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="384" NumberOfPoints="425">
-      <PointData Scalars="S_w">
-        <DataArray type="Float32" Name="S_w" NumberOfComponents="1" format="ascii">
+      <PointData Scalars="S_Water">
+        <DataArray type="Float32" Name="S_Water" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -41,7 +41,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="S_n" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_Nitrogen" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -79,7 +79,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="p_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_Water" NumberOfComponents="1" format="ascii">
           100000 100043 100000 100023 100062 100039 100072 100046 100005 100002 100002 100000
           100002 100000 100002 100000 100018 100015 100575 100543 100604 100574 100667 100637
           100767 100736 100908 100875 101097 101063 101344 101306 101659 101618 102057 102010
@@ -117,7 +117,7 @@
           99945.1 99962.7 99980.8 100000 100023 100051 100083 100120 100161 100204 100248 100292
           100331 100365 100392 100408 100414
         </DataArray>
-        <DataArray type="Float32" Name="p_n" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_Nitrogen" NumberOfComponents="1" format="ascii">
           100000 100043 100000 100023 100062 100039 100072 100046 100005 100002 100002 100000
           100002 100000 100002 100000 100018 100015 100575 100543 100604 100574 100667 100637
           100767 100736 100908 100875 101097 101063 101344 101306 101659 101618 102057 102010
@@ -155,7 +155,7 @@
           99945.1 99962.7 99980.8 100000 100023 100051 100083 100120 100161 100204 100248 100292
           100331 100365 100392 100408 100414
         </DataArray>
-        <DataArray type="Float32" Name="rho_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_Water" NumberOfComponents="1" format="ascii">
           997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048
           997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048
           997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.049 997.049
@@ -193,7 +193,7 @@
           997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048 997.048
           997.048 997.048 997.048 997.048 997.048
         </DataArray>
-        <DataArray type="Float32" Name="rho_n" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_Nitrogen" NumberOfComponents="1" format="ascii">
           1.12601 1.12649 1.12601 1.12627 1.12671 1.12645 1.12682 1.12653 1.12607 1.12604 1.12603 1.12601
           1.12603 1.12601 1.12603 1.12602 1.12622 1.12619 1.13249 1.13213 1.13281 1.13248 1.13353 1.13318
           1.13465 1.1343 1.13624 1.13587 1.13837 1.13798 1.14115 1.14072 1.14469 1.14423 1.14917 1.14864
@@ -231,7 +231,7 @@
           1.12539 1.12559 1.1258 1.12602 1.12628 1.12659 1.12695 1.12737 1.12782 1.12831 1.12881 1.1293
           1.12974 1.13013 1.13042 1.13061 1.13067
         </DataArray>
-        <DataArray type="Float32" Name="lambda_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_Water" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -269,7 +269,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="lambda_n" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_Nitrogen" NumberOfComponents="1" format="ascii">
           56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7
           56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7
           56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7 56746.7
@@ -345,7 +345,7 @@
           0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3
           0.3 0.3 0.3 0.3 0.3
         </DataArray>
-        <DataArray type="Float32" Name="x^H2O_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^H2O_Water" NumberOfComponents="1" format="ascii">
           0.315483 0.315617 0.315483 0.315555 0.315678 0.315604 0.31571 0.315627 0.315498 0.31549 0.315488 0.315483
           0.315488 0.315483 0.315488 0.315483 0.31554 0.315531 0.317297 0.317197 0.317388 0.317293 0.317587 0.317492
           0.317902 0.317803 0.318347 0.318244 0.318944 0.318835 0.319722 0.319604 0.320717 0.320586 0.321983 0.321833
@@ -383,7 +383,7 @@
           0.315309 0.315365 0.315422 0.315484 0.315557 0.315643 0.315745 0.315862 0.31599 0.316127 0.316266 0.316402
           0.316528 0.316636 0.316718 0.31677 0.316788
         </DataArray>
-        <DataArray type="Float32" Name="x^N2_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^N2_Water" NumberOfComponents="1" format="ascii">
           1.14721e-05 1.1477e-05 1.14721e-05 1.14747e-05 1.14792e-05 1.14765e-05 1.14804e-05 1.14774e-05 1.14727e-05 1.14724e-05 1.14723e-05 1.14721e-05
           1.14723e-05 1.14721e-05 1.14723e-05 1.14721e-05 1.14742e-05 1.14739e-05 1.15381e-05 1.15344e-05 1.15414e-05 1.15379e-05 1.15486e-05 1.15452e-05
           1.15601e-05 1.15565e-05 1.15763e-05 1.15725e-05 1.1598e-05 1.1594e-05 1.16263e-05 1.1622e-05 1.16624e-05 1.16577e-05 1.17081e-05 1.17027e-05
@@ -421,7 +421,7 @@
           1.14658e-05 1.14678e-05 1.14699e-05 1.14722e-05 1.14748e-05 1.1478e-05 1.14817e-05 1.14859e-05 1.14906e-05 1.14955e-05 1.15006e-05 1.15056e-05
           1.15101e-05 1.1514e-05 1.1517e-05 1.15189e-05 1.15196e-05
         </DataArray>
-        <DataArray type="Float32" Name="x^H2O_n" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^H2O_Nitrogen" NumberOfComponents="1" format="ascii">
           0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01
           0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01
           0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.0100004 0.0100003
@@ -459,7 +459,7 @@
           0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01
           0.01 0.01 0.01 0.01 0.01
         </DataArray>
-        <DataArray type="Float32" Name="x^N2_n" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^N2_Nitrogen" NumberOfComponents="1" format="ascii">
           0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99
           0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99
           0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99 0.99
