@@ -32,8 +32,11 @@
 #include <dumux/porousmediumflow/2pnc/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
+#ifdef NONISOTHERMAL
+#include <dumux/material/chemistry/electrochemistry/electrochemistryni.hh>
+#else
 #include <dumux/material/chemistry/electrochemistry/electrochemistry.hh>
-
+#endif
 #include "fuelcellspatialparams.hh"
 
 namespace Dumux {
@@ -46,9 +49,14 @@ template <class TypeTag>
 class FuelCellProblem;
 
 namespace Properties {
+#ifdef NONISOTHERMAL
+NEW_TYPE_TAG(FuelCellTypeTag, INHERITS_FROM(TwoPNCNI));
+NEW_TYPE_TAG(FuelCellNIBoxTypeTag, INHERITS_FROM(BoxModel, FuelCellTypeTag));
+#else
 NEW_TYPE_TAG(FuelCellTypeTag, INHERITS_FROM(TwoPNC));
 NEW_TYPE_TAG(FuelCellBoxTypeTag, INHERITS_FROM(BoxModel, FuelCellTypeTag));
 NEW_TYPE_TAG(FuelCellCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FuelCellTypeTag));
+#endif
 
 // Set the grid type
 SET_TYPE_PROP(FuelCellTypeTag, Grid, Dune::YaspGrid<2>);
@@ -101,8 +109,11 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     // Select the electrochemistry method
+#ifdef NONISOTHERMAL
+    using ElectroChemistry = typename Dumux::ElectroChemistryNI<Scalar, Indices, FluidSystem, FVGridGeometry, ElectroChemistryModel::Ochs>;
+#else
     using ElectroChemistry = typename Dumux::ElectroChemistry<Scalar, Indices, FluidSystem, FVGridGeometry, ElectroChemistryModel::Ochs>;
-
+#endif
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     static constexpr bool isBox = FVGridGeometry::discMethod == DiscretizationMethod::box;
@@ -218,6 +229,9 @@ public:
             priVars[Indices::pressureIdx] = pn;
             priVars[Indices::switchIdx] = 0.3;//Sw for bothPhases
             priVars[Indices::switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
+#ifdef NONISOTHERMAL
+            priVars[Indices::temperatureIdx] = 293.15;
+#endif
         }
 
         return priVars;
@@ -309,6 +323,9 @@ private:
         priVars[Indices::pressureIdx] = pn;
         priVars[Indices::switchIdx] = 0.3;//Sw for bothPhases
         priVars[Indices::switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
+#ifdef NONISOTHERMAL
+        priVars[Indices::temperatureIdx] = 293.15;
+#endif
 
         return priVars;
     }
