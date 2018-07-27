@@ -161,6 +161,13 @@ public:
     auto& vy = *writer.allocateManagedBuffer(numVert);
     auto& vz = *writer.allocateManagedBuffer(numVert);
 
+    //exact solution
+    auto& uxExact = *writer.allocateManagedBuffer(numVert);
+    auto& uyExact = *writer.allocateManagedBuffer(numVert);
+    auto& uzExact = *writer.allocateManagedBuffer(numVert);
+    auto& pExact  = *writer.allocateManagedBuffer(numVert);
+    auto& velocityExact = *writer.template allocateManagedBuffer<Scalar, dim> (numVert);
+
     auto& velocity = *writer.template allocateManagedBuffer<Scalar, dim> (numVert);
 
     auto& p = *writer.allocateManagedBuffer(numVert);
@@ -207,10 +214,6 @@ public:
         IpData ipData(eg, eg.local(eg.center()), fe.localBasis());
         SecondaryVariables secVars;
 
-        ElementSolution elemSol(numLocalDofs);
-
-        secVars.update(elemSol, this->problem_(), element, ipData);
-
         for (unsigned int i = 0; i < numLocalDofs; ++i)
         {
             // only proceed for vertex dofs
@@ -218,10 +221,8 @@ public:
                 continue;
 
             const auto dofIdxGlobal = localIndexSet.index(i);
+            const auto& dofSol = sol[dofIdxGlobal];
 
-
-
-            const auto dofSol = sol[dofIdxGlobal];
             vx[dofIdxGlobal] = dofSol[Indices::v(0)];
             velocity[dofIdxGlobal][Indices::v(0)] = dofSol[Indices::v(0)];
             if (dim >= 2){
@@ -233,33 +234,46 @@ public:
                velocity[dofIdxGlobal][Indices::v(2)] = dofSol[Indices::v(2)];
             }
 
-            // final velocity
-          //  velocity[dofIdxGlobal] = secVars.velocity();
+            //analytical solution
+            const auto vertexPos = element.template subEntity</*codim=*/dim>(fe.localCoefficients().localKey(i).subEntity()).geometry().center();
+            const auto exactSolAtPos = this->problem_().analyticalSolution(vertexPos);
+            uxExact[dofIdxGlobal] = exactSolAtPos[Indices::v(0)];
+            velocityExact[dofIdxGlobal][Indices::v(0)] = exactSolAtPos[Indices::v(0)];
+            if (dim >= 2){
+                uyExact[dofIdxGlobal] = exactSolAtPos[Indices::v(1)];
+                velocityExact[dofIdxGlobal][Indices::v(1)] = exactSolAtPos[Indices::v(1)];
+            }
+            if (dim >= 3){
+                uzExact[dofIdxGlobal] = exactSolAtPos[Indices::v(2)];
+                velocityExact[dofIdxGlobal][Indices::v(2)] = exactSolAtPos[Indices::v(2)];
+            }
+
+            pExact[dofIdxGlobal] = exactSolAtPos[Indices::pressureIdx];
+
+
 
             // compute the stress tensor and add to container
             p[dofIdxGlobal] = dofSol[dim];
-
-            elemSol[i] = std::move(dofSol);
         }
-
-
-
-
-
-
-
     }
 
 
     writer.attachDofData(vx, "vx", true);
-    if (dim >= 2)
+    writer.attachDofData(uxExact, "vxExact", true);
+    if (dim >= 2){
         writer.attachDofData(vy, "vy", true);
-    if (dim == 3)
+        writer.attachDofData(uyExact, "vyExact", true);
+    }
+    if (dim == 3){
         writer.attachDofData(vz, "vz", true);
+        writer.attachDofData(uzExact, "vzExact", true);
+    }
 
     writer.attachDofData(p, "p", true);
+    writer.attachDofData(pExact, "pExact", true);
 
     writer.attachVertexData(velocity, "v", dim);
+    writer.attachVertexData(velocityExact, "vExact", dim);
 
 
 /*        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
