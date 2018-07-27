@@ -121,6 +121,43 @@ struct ThreePThreeCModelTraits
 
     static constexpr bool useConstraintSolver() { return useCS; }
     static constexpr bool useMoles() { return useMol; }
+
+    template <class FluidSystem>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        switch (state) {
+            case Indices::threePhases:
+                const std::vector<std::string> s1 = {"p_g",
+                                                     "S_w",
+                                                     "S_n"};
+                return s1[pvIdx];
+            case Indices::wPhaseOnly:
+                const std::vector<std::string> s2 = {"p_g",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::gCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::wPhaseIdx),
+                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::wPhaseIdx)};
+                return s2[pvIdx];
+            case Indices::gnPhaseOnly:
+                const std::vector<std::string> s3 = {"p_g",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::wCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx),
+                                                     "S_n"};
+                return s3[pvIdx];
+            case Indices::wnPhaseOnly:
+                const std::vector<std::string> s4 = {"p_g",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::gCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::wPhaseIdx),
+                                                     "S_n"};
+                return s4[pvIdx];
+            case Indices::gPhaseOnly:
+                const std::vector<std::string> s5 = {"p_g",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::wCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx),
+                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx)};
+                return s5[pvIdx];
+            case Indices::wgPhaseOnly:
+                const std::vector<std::string> s6 = {"p_g",
+                                                     "S_w",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx)};
+                return s6[pvIdx];
+        }
+    }
 };
 
 /*!

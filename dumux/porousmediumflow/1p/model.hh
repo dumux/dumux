@@ -77,7 +77,7 @@ struct OnePModelTraits
 
     static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
-        return "pressure";
+        return "p";
     }
 };
 

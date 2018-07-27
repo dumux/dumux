@@ -3,7 +3,7 @@
   <PolyData>
     <Piece NumberOfLines="80" NumberOfPoints="81">
       <CellData Scalars="pressure">
-        <DataArray type="Float32" Name="pressure" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
           121426 121162 120897 120633 120369 120105 119841 119576 119312 119048 118783 118518
           118253 117988 117722 117456 117189 116921 116653 116385 116116 115846 115577 115307
           115037 114766 114496 114225 113954 113683 113413 113142 112871 112600 112329 112058
@@ -12,7 +12,7 @@
           105284 105013 104742 104471 104200 103929 103658 103387 103116 102845 102574 102303
           102032 101761 101490 101219 100948 100677 100406 100135
         </DataArray>
-        <DataArray type="Float32" Name="temperature" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="T" NumberOfComponents="1" format="ascii">
           291 291 291 291 290.999 290.996 290.991 290.981 290.965 290.94 290.906 290.861
           290.805 290.74 290.667 290.59 290.512 290.436 290.363 290.297 290.238 290.188 290.145 290.11
           290.083 290.061 290.044 290.032 290.023 290.016 290.011 290.008 290.006 290.004 290.003 290.002

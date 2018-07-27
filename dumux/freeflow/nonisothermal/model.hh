@@ -62,6 +62,23 @@ struct FreeflowNIModelTraits : public IsothermalTraits
     static constexpr bool enableEnergyBalance() { return true; }
     //! the indices
     using Indices = FreeflowNonIsothermalIndices<typename IsothermalTraits::Indices, numEq()>;
+
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        if (pvIdx < numEq() - 1)
+            return IsothermalTraits::primaryVariableName(pvIdx, state);
+        else
+            return "T";
+    }
+
+    template <class FluidSystem>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        if (pvIdx < numEq() - 1)
+            return IsothermalTraits::template primaryVariableName<FluidSystem>(pvIdx, state);
+        else
+            return "T";
+    }
 };
 
 } // end  namespace Dumux

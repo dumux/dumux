@@ -80,7 +80,16 @@ struct PorousMediumFlowNIModelTraits : public IsothermalTraits
         if (pvIdx < numEq() - 1)
             return IsothermalTraits::primaryVariableName(pvIdx, state);
         else
-            return "temperature";
+            return "T";
+    }
+
+    template <class FluidSystem>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        if (pvIdx < numEq() - 1)
+            return IsothermalTraits::template primaryVariableName<FluidSystem>(pvIdx, state);
+        else
+            return "T";
     }
 };
 
