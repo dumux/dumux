@@ -339,7 +339,7 @@ protected:
         for (unsigned int i = 0; i < numLocalDofs; ++i)
             this->updateGlobalJacobian_(matrix, localIndexSet.index(i), dofIdxGlobal, pvIdx, partialDeriv[i]);
 
-//printmatrix(std::cout, matrix, "locJacMatrix", "", 7, 0);
+//printmatrix(std::cout, matrix, "locJacMatrix", "", 6, 0);
 
     }
 

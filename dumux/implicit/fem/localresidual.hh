@@ -408,7 +408,10 @@ int count = 0;
             {
                 for (unsigned int i = 0; i < numLocalDofs; ++i)
                 {
-        //    std::cout <<"Index i: "<< i << "    Index eqIdx: " << eqIdx <<std::endl;
+//            std::cout <<"femLocRes localDof i: "<< i << "    Index eqIdx: " << eqIdx <<std::endl;
+//            std::cout <<"femLocRes curSecVarsPressure: " << curSecVars.pressure() << std::endl;
+//            std::cout <<"femLocRes prevSecVarsPressure: " << prevSecVars.pressure() << std::endl;
+
         //  std::cout <<"LocResstorage[eqIdx]: "<< storage[eqIdx] <<std::endl;
         //  std::cout <<"LocRessource[eqIdx]: "<< source[eqIdx] <<std::endl;
         //  std::cout <<"LocResflux[eqIdx]: "<< flux[eqIdx] <<std::endl;
@@ -416,9 +419,6 @@ int count = 0;
         //  std::cout <<"stabTerms[eqIdx]: "<< stabTerms[eqIdx] <<std::endl;
         //  std::cout <<"FemLocResqWeight: "<< qWeight <<std::endl;
                     residual_[i][eqIdx] += (storage[eqIdx] - source[eqIdx])*ipData.shapeValues(i)*qWeight;
-                if(eqIdx==2){residual_[i][eqIdx] -= (curSecVars.penaltyEps()*curSecVars.pressure()*ipData.shapeValues(i))*qWeight;}
-//              if(eqIdx==2){residual_[i][eqIdx] -= (curSecVars.penaltyEpsTimesP(curSecVars.velocity()))*ipData.shapeValues(i)*qWeight;}
-
                     residual_[i][eqIdx] -= (flux[eqIdx]*ipData.shapeGradients(i))*qWeight;
                     residual_[i][eqIdx] += stabTerms[eqIdx];
         //  printvector(std::cout, residual_, "LocResresidual", "");
@@ -495,6 +495,7 @@ int count = 0;
                             residual_[i][eqIdx] += ipData.shapeValues(i)*qWeight*neumannFlux[eqIdx];
             }
         }
+//std::cout << "impLocresEvalNeumann " << std::endl;
     }
 
   private:

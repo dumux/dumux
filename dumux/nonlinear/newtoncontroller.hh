@@ -377,8 +377,8 @@ public:
                 initialResidual_ = std::sqrt(norm2);
             }
 
-                //printmatrix(std::cout, A, "A", "", 6, 0);
-                //printvector(std::cout, b, "b", "");
+//                printmatrix(std::cout, A, "A", "", 6, 0);
+//                printvector(std::cout, b, "b", "");
 
 
             int converged = linearSolver_.solve(A, x, b);

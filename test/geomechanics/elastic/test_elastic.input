@@ -5,7 +5,7 @@ TEnd = 1e3 # [s]
 [Grid]
 LowerLeft = 0 0       # first corner
 UpperRight = 1.0 1.0  # second corner
-Cells = 6 6           # 32 cells in x and 32 in y direction
+Cells = 7 7           # 32 cells in x and 32 in y direction
 
 [Stokes]
 StabilizationAlpha = 0.0 # a stabilization factor. Set negative for stabilization and to zero for no stabilization

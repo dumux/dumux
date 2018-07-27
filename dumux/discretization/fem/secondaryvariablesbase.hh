@@ -69,9 +69,14 @@ public:
         {
         //std::cout << "secVarsBaseElemSolSizeCounter_i: " << i << std::endl;
             PrimaryVariables tmp(elemSol[i]);
-
+//printvector(std::cout, tmp, "secVarsBaseTmp","");
             tmp *= ipData.shapeValues()[i];
+//printvector(std::cout, tmp, "secVarsBasePostTmp","");
             priVars_ += tmp;
+//multiply mass pressure by -1
+//printvector(std::cout, priVars_, "secVarsBasePriVars","");
+
+//if(priVars_[2] < 0){priVars_[2]*=-1;}
 
         //printvector(std::cout, priVars_, "secVarsBasePriVars_","");
         }

@@ -34,13 +34,6 @@
 #include <dumux/implicit/model.hh>
 #include "properties.hh"
 
-//non-existent volumevariables
-//#include "volumevariables.hh"
-
-//non-existent fluxvariables
-//#include "fluxvariables.hh"
-
-
 
 namespace Dumux
 {
@@ -130,30 +123,13 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     const SecondaryVariables& secVars,
     const ElementSolution& elemSol) const
     {
-        PrimaryVariables storage(secVars.density());
+
+    PrimaryVariables storage(0.0);
 
     for (int dir = 0; dir < dim; ++dir)
-        storage[Indices::momentum(dir)] *= secVars.velocity()[dir];
+        storage[Indices::momentum(dir)] += secVars.velocity()[dir];
 
-
-//std::cout <<  "myLocResCurSecVarsPressure: " << secVars.pressure() << std::endl;
-
-        //        PrimaryVariables storage(0.0);
-        //
-        //        for (int dir = 0; dir < dim; ++dir)
-        //        storage[Indices::momentum(dir)] = secVars.velocity()[dir];
-        //
-        //        storage *= secVars.density();
-
-
-        //std::cout << "MyLocResdensityStorage: " << secVars.density() << std::endl;
-        //std::cout << "pressureStorage: " << secVars.pressure() << std::endl;
-        //printvector(std::cout, secVars.velocity(), "MyLocResStorageVelocity: ","");
-        //printvector(std::cout, secVars.velocity(), "MyLocResStorageVelocity: ","");
-//printvector(std::cout, storage, "MyLocStorage: ","");
-
-
-        return storage; //changed from void to PrimaryVariables as its required in geomechanics
+    return storage; //changed from void to PrimaryVariables as its required in geomechanics
     }
 
     /*!
@@ -180,9 +156,6 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     StressTensor gradV(0.0);
     for (int dir = 0; dir < dim; ++dir){
         for (unsigned int i = 0; i < elemSol.size(); ++i){
-    //std::cout << "myLocRes i: " << i << std::endl;
-    //printvector(std::cout, ipData.shapeGradients(i), "myLocResShapeGradients(i)", "");
-
             gradV[dir].axpy(elemSol[i][Indices::momentum(dir)], ipData.shapeGradients(i));
         }
     }
@@ -200,116 +173,62 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     sigma *= secVars.dynamicViscosity();
 
 
-
-        //std::cout << secVars.pressure() << std::endl;
-
-//printmatrix(std::cout, sigma, "MyLocResSigmaPrePressure", "");
-
-/********************
-    for(int i=0; i<dim; i++){
-        sigma[i][i] -= secVars.pressure();
-    }
-*********************/
-
     Scalar divV(0.0);
-    for (int dir = 0; dir < dim; ++dir){
-        for (unsigned int i = 0; i < elemSol.size(); ++i){
-    //std::cout << "myLocRes i: " << i << std::endl;
-    //printvector(std::cout, ipData.shapeGradients(i), "myLocResShapeGradients(i)", "");
-
+    for (unsigned int i = 0; i < elemSol.size(); ++i){
+        for (int dir = 0; dir < dim; ++dir){
             divV += ipData.shapeGradients(i)[dir]*elemSol[i][Indices::momentum(dir)];
         }
     }
 
-    //arithmetisches Mittel aus 4 DOFs?
-    divV /= 4;
 
     Scalar eps = secVars.penaltyEps();
-//    Scalar eps = secVars.penaltyEpsTimesP(secVars.velocity());
-//    eps = eps / abs(secVars.pressure());
-//
-//std::cout << "myLocResPressure:" << abs(secVars.pressure()) << std::endl;
-//
-//std::cout << "myLocResEps:" << eps << std::endl;
 
     divV /= eps;
+
+
+//  mit dichte multiplizieren?
+    //divV *= secVars.density();
 
     for(int i=0; i<dim; i++){
         sigma[i][i] += divV;
     }
 
 
-//printmatrix(std::cout, sigma, "MyLocResSigmaPostPressure", "");
+//calculate advective term
+//  StressTensor advTerm(0.0);
+//	for(unsigned int i = 0; i < elemSol.size(); ++i){
+//		advTerm[0][0] =  elemSol[i][0]*elemSol[i][0]*ipData.shapeValues(i)[0]*ipData.shapeValues(i)[0];
+//		advTerm[1][0] =  elemSol[i][0]*elemSol[i][1]*ipData.shapeValues(i)[0]*ipData.shapeValues(i)[1];
+//		advTerm[0][1] =  elemSol[i][1]*elemSol[i][0]*ipData.shapeValues(i)[1]*ipData.shapeValues(i)[0];
+//		advTerm[0][0] =  elemSol[i][1]*elemSol[i][1]*ipData.shapeValues(i)[1]*ipData.shapeValues(i)[1];
+//	}
 
-
-        //      //add advective term
-        //      StressTensor advTerm(0.0);
-        //      for (int dir = 0; dir < dim; ++dir){
-        //          for (unsigned int i = 0; i < elemSol.size(); ++i){
-        //              advTerm[dir].axpy(elemSol[i][Indices::momentum(dir)]*elemSol[i][Indices::momentum(dir)], ipData.shapeValues(i));
-        //          }
-        //       }
-        //
-        //       advTerm *= secVars.density();
-
-        //printmatrix(std::cout, flux, "fluxVor", "");
 
     for(int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; ++momentumIdx)
     {
         for(int col=0; col<dim; col++)
         {
-            flux[momentumIdx][col]= -sigma[momentumIdx][col];//+advTerm[momentumIdx][col];
+            //add diffusive term
+            flux[momentumIdx][col] -= sigma[momentumIdx][col];
+
+            //add advective term
+//            flux[momentumIdx][col] += advTerm[momentumIdx][col];
         }
     }
 
-//printmatrix(std::cout, flux, "MyLocResfluxNachAdvDiff", "");
 
 
-        //mass Balance
-        //TODO: update secVars
-        //   PrimaryVariables myPriVars_(0.0);
-        //            for (unsigned int i = 0; i < elemSol.size(); ++i)
-        //            {
-        //    //std::cout << "secVarsBaseElemSolSizeCounter_i: " << i << std::endl;
-        //                PrimaryVariables tmp(elemSol[i]);
-        //
-        //                tmp *= ipData.shapeValues()[i];
-        //                myPriVars_ += tmp;
-        //
-        //    //printvector(std::cout, priVars_, "secVarsBasePriVars_","");
-        //            }
-        //
-        //            // set the extrusion factor
-        //     //       extrusionFactor_ = problem.extrusionFactor(element, myPriVars_);
-        //
-        //            DimVector velocityU(0.0);
-        //
-        //            for (int dir = 0; dir < dim; ++dir)
-        //                 velocityU[Indices::momentum(dir)] = myPriVars_[dir];
+    auto velocityU = secVars.velocity();
 
-
-
-
-   auto velocityU = secVars.velocity();
-//   velocityU[0] = flux[0][0];
-//   velocityU[1] = flux[1][1];
-
-
-
-//printvector(std::cout, velocityU, "MyLocResFluxVelocityU: ","");
-
-    velocityU *= secVars.density();
+//How to handle density in mass balance: eliminate before penalty eps or include?
+//    velocityU *= secVars.density();
 
     //add massBalance to flux
     for(int col=0; col<dim; col++)
     {
-         flux[dim][col]= velocityU[col];
+         flux[dim][col]+= velocityU[col];
     }
 
-        //printmatrix(std::cout, flux, "MyLocResflux", "");
-
-        //flux *= -1;    //weil in implicit/fem/localresidual: ... -flux
-        //printmatrix(std::cout, flux, "fluxNachMass", "");
 
 
     return flux;
@@ -333,11 +252,15 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     const ElementSolution& elemSol)
     {
     PrimaryVariables source(0.0);
-        //    source = problem.sourceAtPos(ipData.ipGlobal());
 
     source += ParentType::computeSource(element, ipData, secVars, elemSol);
 
-        //printvector(std::cout, source, "MyLocRessourceEnd: ","");
+
+    //add penalty function as source term
+    Scalar epsTimesP = secVars.penaltyEps();
+    epsTimesP*= secVars.pressure();
+    source[dim] += epsTimesP;
+
     return source;
     }
 

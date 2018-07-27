@@ -37,7 +37,7 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include "elasticspatialparams.hh"
 //?
-#include <dumux/geomechanics/elastic/model.hh>
+//#include <dumux/geomechanics/elastic/model.hh>
 
 //variated to stokes_fem from stokes model
 #include <dumux/freeflow/stokes_fem/model.hh>
@@ -232,8 +232,10 @@ public:
             values[pressureIdx] = x * (1.0-x); // p(x,y) = x(1-x) [Donea2003]
             values[velocityXIdx] = x*x * (1.0 - x)*(1.0 - x) * (2.0*y - 6.0*y*y + 4.0*y*y*y);
             values[velocityYIdx] = -1.0*y*y * (1.0 - y)*(1.0 - y) * (2.0*x - 6.0*x*x + 4.0*x*x*x);
+//            values[velocityXIdx] = 0;
+//            values[velocityYIdx] = 0;
 
-//printvector(std::cout, values, "valuesAnalytical","");
+//printvector(std::cout, values, "stokesFemTestProblemValuesAnalytical","");
 
 
             return values;
@@ -298,36 +300,36 @@ public:
         }
 
 
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-            {
-                PrimaryVariables neumannPrim(0.0);
-                Scalar x = globalPos[0];
-                Scalar y = globalPos[1];
-
-                if(onLeftBoundary_(globalPos)){
-
-            }
-
-
-                if(onRightBoundary_(globalPos)){
-                    neumannPrim[velocityXIdx] = 0.05;
-                    neumannPrim[velocityYIdx] = 0;
-                    neumannPrim[pressureIdx] = -0.5;
-                }
-
-
-                if(onUpperBoundary_(globalPos)){
-                    neumannPrim[pressureIdx] = 0;
-                }
-
-
-                if(onLowerBoundary_(globalPos)){
-                    neumannPrim[pressureIdx] = 0;
-                }
-
-                //return analyticalSolution(globalPos);
-                return neumannPrim;
-            }
+//    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
+//            {
+//                PrimaryVariables neumannPrim(0.0);
+//                Scalar x = globalPos[0];
+//                Scalar y = globalPos[1];
+//
+//                if(onLeftBoundary_(globalPos)){
+//
+//            }
+//
+//
+//                if(onRightBoundary_(globalPos)){
+//                    neumannPrim[velocityXIdx] = 0.05;
+//                    neumannPrim[velocityYIdx] = 0;
+//                    neumannPrim[pressureIdx] = -0.5;
+//                }
+//
+//
+//                if(onUpperBoundary_(globalPos)){
+//                    neumannPrim[pressureIdx] = 0;
+//                }
+//
+//
+//                if(onLowerBoundary_(globalPos)){
+//                    neumannPrim[pressureIdx] = 0;
+//                }
+//
+//                //return analyticalSolution(globalPos);
+//                return neumannPrim;
+//            }
 
 
 

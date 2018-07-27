@@ -224,6 +224,52 @@ public:
     { return velocity_; }
 
 
+
+
+    Scalar epsGeneral(DimVector velocity, Scalar pressure) const {
+    Scalar eps(0.0),k(0.0), normU(0.0);
+
+    //set specific k, usually 1e-9 < k < 1e-3
+    k = 1e-3;
+
+    //calculate norm of velocity U
+    for(int i=0; i<dim; i++){
+        normU += velocity[i]*velocity[i];
+    }
+    normU = sqrt(normU);
+
+//    	normU = velocity.two_norm2();
+
+//    std::cout << "mySecVars normU: " << normU <<  std::endl;
+//    std::cout << "mySecVars pressure: " << pressure << std::endl;
+
+
+    if(pressure < 1e-13 || normU < 1e-26){
+        std::cout << "mySecVars pressure or vel. too small" << std::endl;
+        std::cout << "1e-3  " << std::endl;
+        return 1e-3;
+    }
+    else{
+//        std::cout << "mySecVars pressure or vel. large enough" << std::endl;
+
+//    		std::cout << "mySecVars abs(pressure): " << abs(pressure) << std::endl;
+//    		std::cout << "mySecVars eps: " << k*normU/abs(pressure) << std::endl;
+        //absolute value of pressure
+        if(pressure < 0){
+        pressure *= -1;
+     }
+//    		std::cout << "mySecVars normU: " << normU <<  std::endl;
+//    		std::cout << "mySecVars pressure: " << pressure << std::endl;
+//    		std::cout << "mySecVars eps: " << k*normU/pressure << std::endl;
+
+     return k*normU/pressure;
+     }
+
+    }
+
+
+
+
     Scalar penaltyEps() const
     {
         return 1e-3;

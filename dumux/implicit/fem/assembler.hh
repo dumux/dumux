@@ -150,6 +150,8 @@ private:
                             // value of dirichlet BC
                             const auto diriValues = this->problem_().dirichlet(element, is, globalPos);
 
+//printvector(std::cout, diriValues, "impFemAssemblerDiriValues","");
+
                             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                             {
                                 if (bcTypes.isDirichlet(eqIdx))
@@ -158,6 +160,9 @@ private:
                                     auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
                                     auto& residual = this->residual()[dofIdxGlobal][eqIdx];
                                     residual = this->model_().curSol()[dofIdxGlobal][eqIdx] - diriValues[pvIdx];
+//                           std::cout << "impFemAssemblerPvIdx: " << pvIdx << std::endl;
+//                           std::cout << "impFemAssemblerDiriValues[pvIdx]: " << diriValues[pvIdx] << std::endl;
+//                           this->residual()[dofIdxGlobal][eqIdx] = this->model_().curSol()[dofIdxGlobal][eqIdx] - diriValues[pvIdx];
 //std::cout << residual << std::endl;
 
 //std::cout << std::endl;

@@ -1,1 +1,2 @@
 add_executable(test_stokesfem test_stokesfem test_stokesfem.cc)
+add_executable(test_stokesfem2 test_stokesfem2 test_stokesfem2.cc)

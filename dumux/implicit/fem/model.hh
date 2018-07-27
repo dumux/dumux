@@ -132,7 +132,7 @@ public:
     Scalar globalResidual(SolutionVector &residual)
     {
         residual = 0;
-
+std::cout << "femModel globalResidual: " << std::endl;
         const auto& curSol = asImp_().curSol();
         const auto& prevSol = asImp_().prevSol();
 
