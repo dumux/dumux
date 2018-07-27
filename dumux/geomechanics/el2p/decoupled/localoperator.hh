@@ -252,11 +252,20 @@ public:
             // for box with rectangular elements, pw, sn etc are interpolated
             for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
             {
+                #if PROBLEM_IS_CC==1
+                pw += model_.problem().getpw(eg.entity(), fvGeometry, 0) * q[scvIdx];
+                sn += model_.problem().getSn(eg.entity(), fvGeometry, 0) * q[scvIdx];
+
+                rhon += model_.problem().getRhon(eg.entity(), fvGeometry, 0) * q[scvIdx];
+                rhow += model_.problem().getRhow(eg.entity(), fvGeometry, 0) * q[scvIdx];
+
+                #else
                 pw += model_.problem().getpw(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
                 sn += model_.problem().getSn(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
 
                 rhon += model_.problem().getRhon(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
                 rhow += model_.problem().getRhow(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
+                #endif
 
                 ux += x(lfsu.child(0),scvIdx) * q[scvIdx];
                 if (dim > 1)

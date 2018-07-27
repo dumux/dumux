@@ -30,6 +30,8 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
+#include <dumux/io/plotmateriallaw.hh>
+
 // #include <dumux/geomechanics/viscoel2p/model.hh>
 
 namespace Dumux
@@ -78,6 +80,9 @@ class TwoPAntonioSpatialParams : public ImplicitSpatialParams<TypeTag>
         dimWorld=GridView::dimensionworld,
     };
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
+
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
 
@@ -99,17 +104,20 @@ public:
         Kinit_ = Scalar(0.0); // init permeability
         KFault_ = Scalar(0.0); // Fault permeability
         KMatrix_ = Scalar(0.0); // Matrix permeability
+        KCaprock_ = Scalar(0.0); // Matrix permeability
         for (int i = 0; i < dim; i++){
             Kinit_[i][i] = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.Kinit);
             KFault_[i][i] = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.KFault);
             KMatrix_[i][i] = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.KMatrix);
+            KCaprock_[i][i] = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.KCaprock);
         }
 
         // Tolerance for fault zone geometry
         spatialTolarance_ = GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.SpatialTolerance);
 
         // porosities [-]
-        phi_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.Phi);
+        phiMatrix_  = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.PhiMatrix);
+        phiCaprock_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.PhiCaprock);
 
         // rock density [kg/m^3]
         rockDensity_ = 2260.0;
@@ -131,6 +139,7 @@ public:
 
         poreCompFault_ = GET_RUNTIME_PARAM(TypeTag, Scalar,ElasticParameters.PoreCompFault);
         poreCompMatrix_ = GET_RUNTIME_PARAM(TypeTag, Scalar,ElasticParameters.PoreCompMatrix);
+        poreCompCaprock_ = GET_RUNTIME_PARAM(TypeTag, Scalar,ElasticParameters.PoreCompCaprock);
 
         faultAngle_ = 90 + GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.FaultAngle);
 
@@ -153,7 +162,7 @@ public:
         alpha_ = 1.0 / (19.9e3);
 
         // residual saturations
-        MaterialParams_.setSwr(0.30);
+        MaterialParams_.setSwr(0.20);
         MaterialParams_.setSnr(0.05);
 
         MaterialParams_.setVgAlpha(alpha_);
@@ -161,7 +170,53 @@ public:
 
         MaterialParams_.setKrwHighSw(0.99);
 
+        //////////////////////////////////////
+
+        MaterialParams2_.setSwr(0.30);
+        MaterialParams2_.setSnr(0.05);
+
+        MaterialParams2_.setVgAlpha(alpha_);
+        MaterialParams2_.setVgn(n_);
+
+        MaterialParams2_.setKrwHighSw(0.99);
+
+        plotFluidMatrixInteractions_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Output,
+                                                                    PlotFluidMatrixInteractions);
+
      }
+
+
+    /*!
+     * \brief This is called from the problem and creates a gnuplot output
+     *        of e.g the pc-Sw curve
+     */
+    void plotMaterialLaw()
+    {
+        PlotMaterialLaw<TypeTag> plotMaterialLaw;
+        GnuplotInterface<Scalar> gnuplot(plotFluidMatrixInteractions_);
+        gnuplot.setOpenPlotWindow(plotFluidMatrixInteractions_);
+        plotMaterialLaw.addpcswcurve(gnuplot, MaterialParams_, 0.2, 1.0, "fine", "w lp");
+        gnuplot.setOption("set xrange [0:1]");
+        gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+        gnuplot.plot("pc-Sw");
+
+//         gnuplot.resetAll();
+//         plotMaterialLaw.addkrcurves(gnuplot, fineMaterialParams_, 0.2, 1.0, "fine");
+//         plotMaterialLaw.addkrcurves(gnuplot, coarseMaterialParams_, 0.2, 1.0, "coarse");
+//         gnuplot.plot("kr");
+//
+//         gnuplot.resetAll();
+//         PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
+//         plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, finePorosity_, 0.0, 1.0, "fine");
+//         plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, coarsePorosity_, 0.0, 1.0, "coarse");
+//         gnuplot.plot("deff");
+//
+//         gnuplot.resetAll();
+//         PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel;
+//         plotThermalConductivityModel.addlambdaeffcurve(gnuplot, finePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "fine");
+//         plotThermalConductivityModel.addlambdaeffcurve(gnuplot, coarsePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "coarse");
+//         gnuplot.plot("lambdaeff");
+    }
 
     ~TwoPAntonioSpatialParams()
     {}
@@ -191,19 +246,19 @@ public:
                     const FVElementGeometry &fvGeometry,
                     int scvIdx) const
     {
-        GlobalPosition center = element.geometry().center();
+        GlobalPosition globalPos = element.geometry().center();
 
-        if (isInFault_(center, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
+        if (isInFault_(globalPos, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
         {
-            return phi_;
+            return phiMatrix_;
         }
-//             else if (xCoord > 487.5 && xCoord < 512.5 &&
-//                      yCoord > 987.5   && yCoord < 1012.5)
-//             {
-//                 return KFault_;
-//             }
+
+        else if (isCaprock_(globalPos,  xCaprockBottom_,  yCaprockBottom_, xCaprockTop_, yCaprockTop_))
+        {
+            return phiCaprock_;
+        }
         else
-            return phi_;
+            return phiMatrix_;
 
     }
 
@@ -212,19 +267,19 @@ public:
      *
      * \param globalPos The global position of the vertex
      */
-    double porosity(const GlobalPosition& globalPos) const
+    double porosityAtPos(const GlobalPosition& globalPos) const
     {
         if (isInFault_(globalPos, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
         {
-                return phi_;
+                return phiMatrix_;
         }
-//             else if (xCoord > 487.5 && xCoord < 512.5 &&
-//                      yCoord > 987.5   && yCoord < 1012.5)
-//             {
-//                 return KFault_;
-//             }
+
+        else if (isCaprock_(globalPos,  xCaprockBottom_,  yCaprockBottom_, xCaprockTop_, yCaprockTop_))
+        {
+            return phiCaprock_;
+        }
         else
-            return phi_;
+            return phiMatrix_;
 
     }
     /*!
@@ -243,29 +298,14 @@ public:
                                        const FVElementGeometry &fvGeometry,
                                        int scvIdx) const
     {
-        if(episode_ <= 1)
-            return Kinit_; // intrinsic permeability applied during initialization
-        else
-        {
-            GlobalPosition center = element.geometry().center();
+        GlobalPosition globalPos = element.geometry().center();
 
-            if (isInFault_(center, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
-            {
-                return KFault_;
-            }
-//             else if (xCoord > 487.5 && xCoord < 512.5 &&
-//                      yCoord > 987.5   && yCoord < 1012.5)
-//             {
-//                 return KFault_;
-//             }
-            else
-                return KMatrix_;
-        }
+        return intrinsicPermeabilityAtPos(globalPos);
     }
 
     const DimMatrix intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        if(episode_ <= 1)
+        if(episode_ < 1)
             return Kinit_; // intrinsic permeability applied during initialization
         else
         {
@@ -273,11 +313,11 @@ public:
             {
                 return KFault_;
             }
-//             else if (xCoord > 487.5 && xCoord < 512.5 &&
-//                      yCoord > 987.5   && yCoord < 1012.5)
-//             {
-//                 return KFault_;
-//             }
+
+            else if (isCaprock_(globalPos,  xCaprockBottom_,  yCaprockBottom_, xCaprockTop_, yCaprockTop_))
+            {
+                return KCaprock_;
+            }
             else
                 return KMatrix_;
         }
@@ -326,29 +366,36 @@ public:
         // Lame parameters
         Dune::FieldVector<Scalar, 3> param;
 
-        GlobalPosition center = element.geometry().center();
+        GlobalPosition globalPos = element.geometry().center();
 
-        if (isInFault_(center, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
+        if (isInFault_(globalPos, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
         {
 //             std::cout << "I am here!" << std::endl;
             param[0] = lambdaFault_;
             param[1] = muFault_;
             param[2] = poreCompFault_;
         }
-        else if (isInFault_(center, xFaultBottom2_, yFaultBottom2_, xFaultTop2_, yFaultTop2_))
-        {
-//             std::cout << "I am here!" << std::endl;
-            param[0] = lambdaFault_ * 0.5;
-            param[1] = muFault_ * 0.5;
-            param[2] = poreCompFault_ * 0.5;
-
-        }
+//         else if (isInFault_(center, xFaultBottom2_, yFaultBottom2_, xFaultTop2_, yFaultTop2_))
+//         {
+// //             std::cout << "I am here!" << std::endl;
+//             param[0] = lambdaFault_ * 0.5;
+//             param[1] = muFault_ * 0.5;
+//             param[2] = poreCompFault_ * 0.5;
+//
+//         }
 //             else if (xCoord > 487.5 && xCoord < 512.5 &&
 //                      yCoord > 987.5   && yCoord < 1012.5)
 //             {
 //                 param[0] = Efault_;
 //                 param[1] = Bfault_;
 //             }
+        else if (isCaprock_(globalPos,  xCaprockBottom_,  yCaprockBottom_, xCaprockTop_, yCaprockTop_))
+        {
+            param[0] = lambdaMatrix_;
+            param[1] = muMatrix_;
+            param[2] = poreCompCaprock_;
+        }
+
         else
         {
             param[0] = lambdaMatrix_;
@@ -375,9 +422,9 @@ public:
         // Lame parameters
         Dune::FieldVector<Scalar, 2> failureCurveParams;
 
-        GlobalPosition center = element.geometry().center();
+        GlobalPosition globalPos = element.geometry().center();
 
-        if (isInFault_(center, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
+        if (isInFault_(globalPos, xFaultBottom_, yFaultBottom_, xFaultTop_, yFaultTop_))
         {
 
             failureCurveParams[0] = frictionAngleFault_;
@@ -426,6 +473,13 @@ public:
         return MaterialParams_;
     }
 
+    const MaterialLawParams& materialLawParams2(const Element &element,
+                                               const FVElementGeometry &fvGeometry,
+                                               int scvIdx) const
+    {
+        return MaterialParams2_;
+    }
+
 private:
     bool isInFault_(const GlobalPosition &globalPos,
                     const Scalar xFaultBottom,
@@ -455,8 +509,7 @@ private:
 
         if (deltaYBottom < tanAngle * deltaXBottom + spatialTolarance_ &&
             deltaYBottom > tanAngle * deltaXBottom - spatialTolarance_ &&
-//             yCoord <  20 &&
-//             yCoord > -20 &&
+            std::abs(yCoord) <  500 + eps_ &&
             deltaYBottom > yFaultBottom &&
             deltaYBottom < yFaultTop)
         {
@@ -464,10 +517,32 @@ private:
         }
         else if (deltaYTop < tanAngle * deltaXTop + spatialTolarance_ &&
             deltaYTop > tanAngle * deltaXTop - spatialTolarance_ &&
-//             yCoord <  20 &&
-//             yCoord > -20 &&
+            std::abs(yCoord) <  500 + eps_ &&
             deltaYTop > yFaultBottom &&
             deltaYTop < yFaultTop)
+        {
+            return true;
+        }
+        else
+            return false;
+    }
+
+    bool isCaprock_(const GlobalPosition &globalPos,
+                    const Scalar xCaprockBottom,
+                    const Scalar yCaprockBottom,
+                    const Scalar xCaprockTop,
+                    const Scalar yCaprockTop) const
+    {
+        // x-Values of cell centers at the bottom: 320.3, 322.8, 325.3, 327.8
+        // x-Values of cell centers at the top:    672.2, 674.7, 677.2, 679.7
+
+        Scalar xCoord = globalPos[0];
+        Scalar yCoord = std::abs(globalPos[1]);
+
+        if (xCoord < xCaprockTop + eps_ &&
+            xCoord > xCaprockBottom - eps_  &&
+            yCoord < yCaprockTop + eps_ &&
+            yCoord > yCaprockBottom - eps_  )
         {
             return true;
         }
@@ -478,17 +553,17 @@ private:
 
 
     Scalar spatialTolarance_;
-    Dune::FieldMatrix<Scalar,dim,dim> KFault_, KMatrix_, Kinit_;
+    Dune::FieldMatrix<Scalar,dim,dim> KFault_, KMatrix_, Kinit_, KCaprock_;
     Scalar layerBottom_;
     Scalar rockDensity_;
-    Scalar phi_, phiInit_;
+    Scalar phiMatrix_, phiCaprock_;
     Scalar lambda_;
     Scalar mu_;
     Scalar Ematrix_, Efault_;
     Scalar nuMatrix_, nuFault_;
     Scalar lambdaMatrix_ ,lambdaFault_;
     Scalar muMatrix_, muFault_;
-    Scalar poreCompFault_, poreCompMatrix_;
+    Scalar poreCompFault_, poreCompMatrix_, poreCompCaprock_;
     Scalar faultAngle_;
     Scalar frictionAngleMatrix_, frictionAngleFault_;
     Scalar cohesionMatrix_, cohesionFault_;
@@ -497,9 +572,12 @@ private:
     Scalar deltaSigma_;
     Scalar BrooksCoreyLambda_, m_, alpha_, n_;
     MaterialLawParams MaterialParams_;
+    MaterialLawParams MaterialParams2_;
     static constexpr Scalar eps_ = 3e-6;
     int episode_;
     bool anyFailure_;
+
+    bool plotFluidMatrixInteractions_;
 
     // x-Values of cell centers at the bottom: 320.3, 322.8, 325.3, 327.8
     // x-Values of cell centers at the top:    672.2, 674.7, 677.2, 679.7
@@ -514,6 +592,12 @@ private:
 
     Scalar xFaultBottom2_ =  325.3;
     Scalar yFaultBottom2_ = -1000.0;
+
+    Scalar xCaprockTop_ =  2000;
+    Scalar yCaprockTop_ =  200;
+
+    Scalar xCaprockBottom_ =  0.0;
+    Scalar yCaprockBottom_ =   50;
 
 };
 }

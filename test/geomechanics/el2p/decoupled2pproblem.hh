@@ -317,6 +317,10 @@ public:
 
         episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthInit);
 
+
+        if (GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Output, PlotFluidMatrixInteractions))
+            this->spatialParams().plotMaterialLaw();
+
 //         eps_ = 3e-6;
 //         brineDensity_ = 1000;
     }

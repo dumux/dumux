@@ -282,6 +282,8 @@ public:
         ScalarField &Pcrtens = *writer.allocateManagedBuffer(numElements);
         ScalarField &Pcrshe = *writer.allocateManagedBuffer(numElements);
 
+        ScalarField &volumetricStrain = *writer.allocateManagedBuffer(numElements);
+
         // initialize cell stresses, cell-wise hydraulic parameters and cell pressure with zero
 
 
@@ -319,6 +321,8 @@ public:
 
             Pcrtens[eIdx] = Scalar(0.0);
             Pcrshe[eIdx] = Scalar(0.0);
+
+            volumetricStrain[eIdx] = Scalar(0.0);
         }
 
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
@@ -369,6 +373,16 @@ public:
             {
                 unsigned int vIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dim);
 
+                #if PROBLEM_IS_CC==1
+                pw[vIdxGlobal] = this->problem_().getpw(element, fvGeometry, 0);
+                pn[vIdxGlobal] = this->problem_().getpn(element, fvGeometry, 0);
+                pc[vIdxGlobal] = this->problem_().getpc(element, fvGeometry, 0);
+                sw[vIdxGlobal] = this->problem_().getSw(element, fvGeometry, 0);
+                sn[vIdxGlobal] = this->problem_().getSn(element, fvGeometry, 0);
+                rhoW[vIdxGlobal] = this->problem_().getRhow(element, fvGeometry, 0);
+                rhoN[vIdxGlobal] = this->problem_().getRhon(element, fvGeometry, 0);
+
+                #else
                 pw[vIdxGlobal] = this->problem_().getpw(element, fvGeometry, scvIdx);
                 pn[vIdxGlobal] = this->problem_().getpn(element, fvGeometry, scvIdx);
                 pc[vIdxGlobal] = this->problem_().getpc(element, fvGeometry, scvIdx);
@@ -377,13 +391,7 @@ public:
                 rhoW[vIdxGlobal] = this->problem_().getRhow(element, fvGeometry, scvIdx);
                 rhoN[vIdxGlobal] = this->problem_().getRhon(element, fvGeometry, scvIdx);
 
-//                 pw[vIdxGlobal] = this->problem_().getpw(element, fvGeometry, 0);
-//                 pn[vIdxGlobal] = this->problem_().getpn(element, fvGeometry, 0);
-//                 pc[vIdxGlobal] = this->problem_().getpc(element, fvGeometry, 0);
-//                 sw[vIdxGlobal] = this->problem_().getSw(element, fvGeometry, 0);
-//                 sn[vIdxGlobal] = this->problem_().getSn(element, fvGeometry, 0);
-//                 rhoW[vIdxGlobal] = this->problem_().getRhow(element, fvGeometry, 0);
-//                 rhoN[vIdxGlobal] = this->problem_().getRhon(element, fvGeometry, 0);
+                #endif
 
 
                 // the following lines are correct for rock mechanics sign convention
@@ -418,6 +426,9 @@ public:
                                             + pw[vIdxGlobal] * sw[vIdxGlobal]);
 
                 effPorosity[eIdx] += elemVolVars[scvIdx].effPorosity;
+
+                volumetricStrain[eIdx] += elemVolVars[scvIdx].volumetricStrain;
+
             }
 
             effKx[eIdx] = effKx[eIdx]/ numScv;
@@ -425,6 +436,8 @@ public:
             effectivePressure[eIdx] = effectivePressure[eIdx]/ numScv;
 
             effPorosity[eIdx] = effPorosity[eIdx] / numScv;
+
+            volumetricStrain[eIdx] = volumetricStrain[eIdx] / numScv;
 
             const auto geometry = element.geometry();
 
@@ -458,6 +471,8 @@ public:
             const Dune::FieldVector<Scalar, 3> lameParams =    this->problem_().spatialParams().lameParams(element,fvGeometry, 0);
             const Scalar lambda = lameParams[0];
             const Scalar mu = lameParams[1];
+
+            B[eIdx] = lambda + 2.0/3.0*mu;
 
             // calculate strain tensor
             Dune::FieldMatrix<RF, dim, dim> epsilon;
@@ -701,6 +716,7 @@ public:
         writer.attachCellData(B, "B");
         writer.attachCellData(nu, "nu");
 
+        writer.attachCellData(volumetricStrain, "volumetricStrain");
 
     }
 

@@ -103,6 +103,9 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
+
+        std::cout << "isBox = " << isBox << std::endl;
+
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
         typedef Dune::BlockVector<Dune::FieldVector<double, dimWorld> > VectorField;
 
@@ -181,7 +184,7 @@ public:
                     (*poroNode)[dofIdxGlobal] += elemVolVars[scvIdx].effPorosity();
 //                     (*poroElement)[eIdx] += elemVolVars[scvIdx].effPorosity();
                     (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
-                    (*poreCompr)[dofIdxGlobal] = this->problem_().spatialParams().lameParams(element, fvGeometry, scvIdx)[3];
+                    (*poreCompr)[dofIdxGlobal] = this->problem_().spatialParams().lameParams(element, fvGeometry, scvIdx)[2];
                     (*Kintr)[dofIdxGlobal] = this->problem_().spatialParams().intrinsicPermeability(element, fvGeometry, scvIdx)[0][0];
                 }
 
