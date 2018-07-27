@@ -135,6 +135,14 @@ struct RichardsModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return enableDiff; }
     static constexpr bool enableEnergyBalance() { return false; }
+
+    static std::string primaryVariableName(int pvIdx, int state)
+    {
+        if (state == Indices::gasPhaseOnly)
+            return "x^w_n";
+        else
+            return "p_w";
+    }
 };
 
 /*!

@@ -102,6 +102,18 @@ struct NavierStokesNCModelTraits : NavierStokesModelTraits<dimension>
 
     //! the indices
     using Indices = NavierStokesIndices<dimension>;
+
+    //! return the names of the primary variables in cells
+    template <class FluidSystem>
+    static std::string primaryVariableNameCell(int pvIdx = 0, int state = 0)
+    {
+        const std::string xString = useMoles() ? "x" : "X";
+        if (pvIdx == 0)
+            return NavierStokesModelTraits<dimension>::primaryVariableNameCell(pvIdx, state);
+        else
+            return xString + "^" + FluidSystem::componentName(pvIdx)
+                   + "_" + FluidSystem::phaseName(0);
+    }
 };
 
 ///////////////////////////////////////////////////////////////////////////

@@ -84,6 +84,13 @@ struct TracerModelTraits
     static constexpr bool enableEnergyBalance() { return false; }
 
     static constexpr bool useMoles() { return useMol; }
+
+    template <class FluidSystem>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        const std::string xString = useMoles() ? "x" : "X";
+        return xString + "^" + FluidSystem::componentName(pvIdx);
+    }
 };
 
 /*!

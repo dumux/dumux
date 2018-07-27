@@ -106,6 +106,20 @@ struct KOmegaModelTraits : RANSModelTraits<dimension>
 
     //! The indices
     using Indices = KOmegaIndices<dim(), numComponents()>;
+
+    //! return the names of the primary variables in cells
+    static std::string primaryVariableNameCell(int pvIdx, int state = 0)
+    {
+        using ParentType = RANSModelTraits<dimension>;
+        switch (pvIdx) {
+            case 0:
+                return ParentType::primaryVariableNameCell(pvIdx, state);
+            case 1:
+                return "k";
+            default:
+                return "omega";
+        }
+    }
 };
 
 ///////////////////////////////////////////////////////////////////////////
