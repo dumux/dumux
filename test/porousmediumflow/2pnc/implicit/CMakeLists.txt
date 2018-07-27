@@ -37,14 +37,14 @@ dune_add_test(NAME test_cc2pnc_fickslaw
                                ${CMAKE_CURRENT_BINARY_DIR}/test_cc2pnc_fickslaw-00026.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pnc_fickslaw test_2pnc_diffusion.input -Problem.Name test_cc2pnc_fickslaw")
 
-dune_add_test(NAME test_2pnc_box_ni
-              SOURCES test_2pnc_fvni.cc
+dune_add_test(NAME test_2pncni_box
+              SOURCES test_2pncni_fv.cc
               COMPILE_DEFINITIONS TYPETAG=FuelCellNIBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/fuelcell2pncboxni-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/fuelcell_box_ni-00015.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_box_ni -ParameterFile test_2pnc_fv.input -Problem.Name fuelcell_box_ni")
+                               ${CMAKE_CURRENT_BINARY_DIR}/fuelcell_ni_box-00015.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncni_box -ParameterFile test_2pnc_fv.input -Problem.Name fuelcell_ni_box")
 
 #install sources
 install(FILES
