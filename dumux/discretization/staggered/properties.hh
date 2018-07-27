@@ -32,6 +32,7 @@
 
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fvproperties.hh>
+#include <dumux/discretization/fluxvariablescaching.hh>
 
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
 #include <dumux/assembly/staggeredlocalresidual.hh>
@@ -78,8 +79,9 @@ private:
     static constexpr auto enableCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FluxVariablesCacheFiller = FluxVariablesCaching::EmptyCacheFiller;
 public:
-    using type = StaggeredGridFluxVariablesCache<Problem, FluxVariablesCache, enableCache>;
+    using type = StaggeredGridFluxVariablesCache<Problem, FluxVariablesCache, FluxVariablesCacheFiller, enableCache>;
 };
 
 //! Set the face solution type
