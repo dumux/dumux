@@ -27,6 +27,12 @@
 #define DUMUX_RICHARDS_LENSPROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
@@ -55,8 +61,13 @@ NEW_TYPE_TAG(RichardsLensTypeTag, INHERITS_FROM(Richards));
 NEW_TYPE_TAG(RichardsLensBoxTypeTag, INHERITS_FROM(BoxModel, RichardsLensTypeTag));
 NEW_TYPE_TAG(RichardsLensCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsLensTypeTag));
 
+#ifndef GRIDTYPE
 // Use 2d YaspGrid
 SET_TYPE_PROP(RichardsLensTypeTag, Grid, Dune::YaspGrid<2>);
+#else
+// Use GRIDTYPE from CMakeLists.txt
+SET_TYPE_PROP(RichardsLensTypeTag, Grid, GRIDTYPE);
+#endif
 
 // Set the physical problem to be solved
 SET_TYPE_PROP(RichardsLensTypeTag, Problem, RichardsLensProblem<TypeTag>);
@@ -193,15 +204,7 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        // use initial values as boundary conditions
-        if (!onInlet_(globalPos))
-            return initial_(globalPos);
-        else
-        {
-            PrimaryVariables values(0.0);
-            values.setState(bothPhases);
-            return values;
-        }
+        return initial_(globalPos);
     }
 
     /*!

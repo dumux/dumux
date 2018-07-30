@@ -1,40 +1,17 @@
 add_input_file_links()
 
+# isothermal tests
 add_executable(test_richards_tpfa EXCLUDE_FROM_ALL test_richardslens_fv.cc)
 target_compile_definitions(test_richards_tpfa PUBLIC TYPETAG=RichardsLensCCTypeTag)
 
 add_executable(test_richards_box EXCLUDE_FROM_ALL test_richardslens_fv.cc)
 target_compile_definitions(test_richards_box PUBLIC TYPETAG=RichardsLensBoxTypeTag)
 
-dune_add_test(NAME test_richards_box_parallel
-              TARGET test_richards_box
-              CMAKE_GUARD MPI_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
-                       --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference-parallel.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_box_parallel-00008.vtu
-                               ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_box_parallel-00008.pvtu
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_box test_richardslens.input -Problem.Name test_richards_box_parallel -Grid.Overlap 0")
-
-
-dune_add_test(NAME test_richards_tpfa_parallel
-              TARGET test_richards_tpfa
-              CMAKE_GUARD MPI_FOUND
-              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
-                      --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference-parallel.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_tpfa_parallel-00007.vtu
-                              ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_tpfa_parallel-00007.pvtu
-                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa test_richardslens.input -Problem.Name test_richards_tpfa_parallel -Grid.Overlap 1")
-
-# isothermal tests
 dune_add_test(TARGET test_richards_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_richards_box-00008.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_richards_box-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_box test_richardslens.input -Problem.Name test_richards_box")
 
 dune_add_test(TARGET test_richards_tpfa
@@ -43,6 +20,69 @@ dune_add_test(TARGET test_richards_tpfa
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa-00007.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa test_richardslens.input -Problem.Name test_richards_tpfa")
+
+dune_add_test(NAME test_richards_box_parallel_yasp
+              TARGET test_richards_box
+              CMAKE_GUARD MPI_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+                       --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference-parallel.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_box_parallel_yasp-00007.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_box_parallel_yasp-00007.pvtu
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_box test_richardslens.input -Problem.Name test_richards_box_parallel_yasp -Grid.Overlap 0")
+
+
+dune_add_test(NAME test_richards_tpfa_parallel_yasp
+              TARGET test_richards_tpfa
+              CMAKE_GUARD MPI_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+                      --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference-parallel.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_tpfa_parallel_yasp-00007.vtu
+                              ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_tpfa_parallel_yasp-00007.pvtu
+                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa test_richardslens.input -Problem.Name test_richards_tpfa_parallel_yasp -Grid.Overlap 1")
+
+dune_add_test(NAME test_richards_box_parallel_ug
+              SOURCES test_richardslens_fv.cc
+              CMAKE_GUARD "( MPI_FOUND AND HAVE_UG )"
+              COMPILE_DEFINITIONS TYPETAG=RichardsLensBoxTypeTag GRIDTYPE=Dune::UGGrid<2>
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+                       --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_box_parallel_ug-00007.pvtu
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_box_parallel_ug test_richardslens.input -Problem.Name test_richards_box_parallel_ug")
+
+dune_add_test(NAME test_richards_tpfa_parallel_ug
+              SOURCES test_richardslens_fv.cc
+              CMAKE_GUARD "( MPI_FOUND AND HAVE_UG )"
+              COMPILE_DEFINITIONS TYPETAG=RichardsLensCCTypeTag GRIDTYPE=Dune::UGGrid<2>
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+                       --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_tpfa_parallel_ug-00007.pvtu
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa_parallel_ug test_richardslens.input -Problem.Name test_richards_tpfa_parallel_ug")
+
+dune_add_test(NAME test_richards_box_parallel_alu
+              SOURCES test_richardslens_fv.cc
+              CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
+              COMPILE_DEFINITIONS TYPETAG=RichardsLensBoxTypeTag GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+                       --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_box_parallel_alu-00007.pvtu
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_box_parallel_alu test_richardslens.input -Problem.Name test_richards_box_parallel_alu")
+
+dune_add_test(NAME test_richards_tpfa_parallel_alu
+              SOURCES test_richardslens_fv.cc
+              CMAKE_GUARD "( MPI_FOUND AND dune-alugrid_FOUND )"
+              COMPILE_DEFINITIONS TYPETAG=RichardsLensCCTypeTag GRIDTYPE=Dune::ALUGrid<2,2,Dune::cube,Dune::nonconforming>
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100}
+                       --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_tpfa_parallel_alu-00007.pvtu
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa_parallel_alu test_richardslens.input -Problem.Name test_richards_tpfa_parallel_alu")
 
 # comparison to analytical solution - only with cc
 dune_add_test(SOURCES test_ccrichardsanalytical.cc

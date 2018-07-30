@@ -44,6 +44,8 @@ class RichardsLensSpatialParams
     using ThisType = RichardsLensSpatialParams<FVGridGeometry, Scalar>;
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
     using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
@@ -60,7 +62,7 @@ public:
     {
 
         lensLowerLeft_ = {1.0, 2.0};
-        lensUpperRight_ = {4.1, 3.1};
+        lensUpperRight_ = {4.0, 3.0};
 
         // residual saturations
         lensMaterialParams_.setSwr(0.18);
@@ -107,7 +109,17 @@ public:
      *
      * \param globalPos A global coordinate vector
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
+    template<class ElementSolution>
+    const MaterialLawParams& materialLawParams(const Element& element,
+                                               const SubControlVolume& scv,
+                                               const ElementSolution& elemSol) const
+    {
+        const auto& globalPos = scv.dofPosition();
+
+        return materialLawParamsAtPos(globalPos);
+    }
+
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
         if (isInLens_(globalPos))
             return lensMaterialParams_;
@@ -124,7 +136,7 @@ private:
         return true;
     }
 
-    static constexpr Scalar eps_ = 1.5e-7;
+    static constexpr Scalar eps_ = 1e-6;
 
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
