@@ -134,7 +134,7 @@ public:
         std::shared_ptr<LinearOperator> fop;
         std::shared_ptr<ScalarProduct> sp;
         static const int dofCodim = AmgTraits::dofCodim;
-        static const bool isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v;
+        static const bool isParallel = AmgTraits::isParallel;
         prepareLinearAlgebra_<Matrix, Vector, isParallel>(A, b, rank, comm, fop, sp);
 
         using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
