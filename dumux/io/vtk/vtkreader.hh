@@ -59,14 +59,12 @@ public:
      * \brief The contructor creates a tinyxml2::XMLDocument from file
      */
     explicit VTKReader(const std::string& fileName)
-    : fileName_(fileName)
     {
-        if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
-            getSequentialNameFromParallelName_();
+        fileName_ = Dune::MPIHelper::getCollectiveCommunication().size() > 1 ?
+                        getProcessFileName_(fileName) : fileName;
 
-        using namespace tinyxml2;
         const auto eResult = doc_.LoadFile(fileName_.c_str());
-        if (eResult != XML_SUCCESS)
+        if (eResult != tinyxml2::XML_SUCCESS)
             DUNE_THROW(Dune::IOError, "Couldn't open XML file " << fileName_ << ".");
     }
 
@@ -138,49 +136,36 @@ public:
 
 private:
     /*!
-     * \brief get sequential Vtk filename from a parallel one
+     * \brief get the vtk filename for the current processor
      */
-    void getSequentialNameFromParallelName_()
+    std::string getProcessFileName_(const std::string& pvtkFileName)
     {
         using namespace tinyxml2;
 
-        const auto eResult = doc_.LoadFile(fileName_.c_str());
+        XMLDocument pDoc;
+        const auto eResult = pDoc.LoadFile(pvtkFileName.c_str());
         if (eResult != XML_SUCCESS)
-            DUNE_THROW(Dune::IOError, "Couldn't open XML file " << fileName_ << ".");
+            DUNE_THROW(Dune::IOError, "Couldn't open XML file " << pvtkFileName << ".");
 
-        const XMLElement* pieceNode = doc_.FirstChildElement("VTKFile");
+        // get the first piece node
+        const XMLElement* pieceNode = getPieceNode_(pDoc, pvtkFileName);
         if (pieceNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get 'VTKFile' node in " << fileName_ << ".");
+            DUNE_THROW(Dune::IOError, "Couldn't get 'Piece' node in " << pvtkFileName << ".");
 
-        pieceNode = pieceNode->FirstChildElement("PUnstructuredGrid");
-        if (pieceNode == nullptr)
-            pieceNode = doc_.FirstChildElement("VTKFile")->FirstChildElement("PPolyData");
-        if (pieceNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get 'PUnstructuredGrid' or 'PPolyData' node in " << fileName_ << ".");
-
-        pieceNode = pieceNode->FirstChildElement("Piece");
-        const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
-        for (int rank = 0; rank < comm.size(); ++rank)
+        const auto myrank = Dune::MPIHelper::getCollectiveCommunication().rank();
+        for (int rank = 0; rank < myrank; ++rank)
         {
-            if (pieceNode == nullptr)
-                DUNE_THROW(Dune::IOError, "Couldn't get 'Piece' node for rank "
-                                          << rank << " in " << fileName_ << ".");
-
-            const char *seqName = pieceNode->Attribute("Source");
-
-            if (seqName == nullptr)
-                DUNE_THROW(Dune::IOError, "Couldn't get 'Source' attribute of a 'Piece' node in " << fileName_);
-
-            if (comm.rank() == rank)
-            {
-                fileName_ = seqName;
-                break;
-            }
-
             pieceNode = pieceNode->NextSiblingElement("Piece");
+            if (pieceNode == nullptr)
+                DUNE_THROW(Dune::IOError, "Couldn't find 'Piece' node for rank "
+                                          << rank << " in " << pvtkFileName << ".");
         }
 
-        doc_.Clear();
+        const char *vtkFileName = pieceNode->Attribute("Source");
+        if (vtkFileName == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't get 'Source' attribute of 'Piece' node no. " << myrank << " in " << pvtkFileName);
+
+        return vtkFileName;
     }
 
     /*!
@@ -324,18 +309,31 @@ private:
      * \note Returns nullptr if the piece node wasn't found
      */
     const tinyxml2::XMLElement* getPieceNode_() const
+    { return getPieceNode_(doc_, fileName_); }
+
+    /*!
+     * \brief Get the piece node an xml document
+     * \note Returns nullptr if the piece node wasn't found
+     * \param doc an xml document
+     * \param fileName a file name the doc was created from
+     */
+    const tinyxml2::XMLElement* getPieceNode_(const tinyxml2::XMLDocument& doc, const std::string& fileName) const
     {
         using namespace tinyxml2;
 
-        const XMLElement* pieceNode = doc_.FirstChildElement("VTKFile");
+        const XMLElement* pieceNode = doc.FirstChildElement("VTKFile");
         if (pieceNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get 'VTKFile' node in " << fileName_ << ".");
+            DUNE_THROW(Dune::IOError, "Couldn't get 'VTKFile' node in " << fileName << ".");
 
         pieceNode = pieceNode->FirstChildElement("UnstructuredGrid");
         if (pieceNode == nullptr)
-            pieceNode = doc_.FirstChildElement("VTKFile")->FirstChildElement("PolyData");
+            pieceNode = doc.FirstChildElement("VTKFile")->FirstChildElement("PolyData");
         if (pieceNode == nullptr)
-            DUNE_THROW(Dune::IOError, "Couldn't get 'UnstructuredGrid' or 'PolyData' node in " << fileName_ << ".");
+            pieceNode = doc.FirstChildElement("VTKFile")->FirstChildElement("PUnstructuredGrid");
+        if (pieceNode == nullptr)
+            pieceNode = doc.FirstChildElement("VTKFile")->FirstChildElement("PPolyData");
+        if (pieceNode == nullptr)
+            DUNE_THROW(Dune::IOError, "Couldn't get 'UnstructuredGrid', 'PUnstructuredGrid', 'PolyData', or 'PPolyData' node in " << fileName << ".");
 
         return pieceNode->FirstChildElement("Piece");
     }
