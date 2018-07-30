@@ -143,13 +143,14 @@ int main(int argc, char** argv) try
     {
         using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
 
-        auto fileNameCell = getParam<std::string>("Restart.FileCell");
-        loadSolution(fileNameCell, FVGridGeometry::discMethod,
-                     primaryVariableNameCell<ModelTraits>, x[Dune::index_constant<0>{}], *fvGridGeometry);
+        auto fileNameCell = getParamFromGroup<std::string>("CellCenter", "Restart.File");
+        loadSolution(x[FVGridGeometry::cellCenterIdx()], fileNameCell,
+                     [](int pvIdx){ return "p"; }, // test option with lambda
+                     *fvGridGeometry);
 
-        auto fileNameFace = getParam<std::string>("Restart.FileFace");
-        loadSolution(fileNameFace, FVGridGeometry::discMethod,
-                     primaryVariableNameFace<ModelTraits>, x[Dune::index_constant<1>{}], *fvGridGeometry);
+        auto fileNameFace = getParamFromGroup<std::string>("Face", "Restart.File");
+        loadSolution(x[FVGridGeometry::faceIdx()], fileNameFace,
+                     ModelTraits::primaryVariableNameFace, *fvGridGeometry);
     }
     else
         problem->applyInitialSolution(x);

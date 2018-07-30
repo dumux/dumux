@@ -106,8 +106,8 @@ int main(int argc, char** argv) try
     {
         using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
         using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-        auto fileName = getParam<std::string>("Restart.File");
-        loadSolution(fileName, FVGridGeometry::discMethod, primaryVariableName<ModelTraits, FluidSystem>, x, *fvGridGeometry);
+        const auto fileName = getParam<std::string>("Restart.File");
+        loadSolution(x, fileName, primaryVariableName<ModelTraits, FluidSystem>, *fvGridGeometry);
     }
     else
         problem->applyInitialSolution(x);
