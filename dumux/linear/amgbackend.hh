@@ -133,7 +133,6 @@ public:
         std::shared_ptr<Comm> comm;
         std::shared_ptr<LinearOperator> fop;
         std::shared_ptr<ScalarProduct> sp;
-        static const int dofCodim = AmgTraits::dofCodim;
         static const bool isParallel = AmgTraits::isParallel;
         prepareLinearAlgebra_<Matrix, Vector, isParallel>(A, b, rank, comm, fop, sp);
 
