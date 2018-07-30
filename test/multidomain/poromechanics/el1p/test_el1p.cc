@@ -42,9 +42,8 @@
 
 #include <dumux/geomechanics/poroelastic/couplingmanager.hh>
 
-#include <dumux/io/vtkfunction.hh>
+#include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 // set the coupling manager property in the sub-problems
 namespace Dumux {
@@ -152,18 +151,20 @@ int main(int argc, char** argv) try
     poroMechGridVariables->init(x[poroMechId]);
 
     // intialize the dune vtk writers
-    Dune::VTKWriter<typename OnePFVGridGeometry::GridView> onePVtkWriter(onePFvGridGeometry->gridView());
-    Dune::VTKWriter<typename PoroMechFVGridGeometry::GridView> poroMechVtkWriter(poroMechFvGridGeometry->gridView());
+    using OnePVtkOutputModule = Dumux::VtkOutputModule<OnePGridVariables, typename GET_PROP_TYPE(OnePTypeTag, SolutionVector)>;
+    using PoroMechVtkOutputModule = Dumux::VtkOutputModule<PoroMechGridVariables, typename GET_PROP_TYPE(PoroMechTypeTag, SolutionVector)>;
+    OnePVtkOutputModule onePVtkWriter(*onePGridVariables, x[onePId], onePProblem->name());
+    PoroMechVtkOutputModule poroMechVtkWriter(*poroMechGridVariables, x[poroMechId], poroMechProblem->name());
 
-    using VTKFunction = Dumux::Vtk::VectorP1VTKFunction< typename PoroMechFVGridGeometry::GridView,
-                                                         typename PoroMechFVGridGeometry::VertexMapper,
-                                                         decltype(x[poroMechId]) >;
-    auto displacementFunction = std::make_shared<VTKFunction>( poroMechFvGridGeometry->gridView(), poroMechFvGridGeometry->vertexMapper(),
-                                                               x[poroMechId], "u", PoroMechFVGridGeometry::GridView::dimensionworld );
+    // add output fields to writers
+    using OnePOutputFields = typename GET_PROP_TYPE(OnePTypeTag, VtkOutputFields);
+    using PoroMechOutputFields = typename GET_PROP_TYPE(PoroMechTypeTag, VtkOutputFields);
+    OnePOutputFields::init(onePVtkWriter);
+    PoroMechOutputFields::init(poroMechVtkWriter);
 
-    // add displacement/pressure to poro-elastic vtk writer and write initial solution
-    onePVtkWriter.addCellData(x[onePId], "p");
-    poroMechVtkWriter.addVertexData(displacementFunction);
+    // write initial solution
+    onePVtkWriter.write(0.0);
+    poroMechVtkWriter.write(0.0);
 
     // the assembler
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
@@ -188,8 +189,8 @@ int main(int argc, char** argv) try
     poroMechGridVariables->update(x[poroMechId]);
 
     // write vtk output
-    onePVtkWriter.write("onep");
-    poroMechVtkWriter.write("poromech");
+    onePVtkWriter.write(1.0);
+    poroMechVtkWriter.write(1.0);
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
