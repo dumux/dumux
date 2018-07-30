@@ -30,6 +30,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <type_traits>
+#include <functional>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/indices.hh>
@@ -121,10 +122,8 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
 
     for (size_t pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
     {
-        const auto pvName = pvNameFunc(pvIdx);
+        const auto pvName = pvNameFunc(pvIdx, 0);
         auto vec = vtu.readData<std::vector<Scalar>>(pvName, dataType);
-        if (vec.size() != sol.size())
-            DUNE_THROW(Dune::IOError, "Size mismatch between solution vector and read data (" << sol.size() << " != " << vec.size() << ")");
 
         if (dataType == VTKReader::DataType::cellData)
         {
@@ -181,25 +180,9 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
     using Scalar = typename PrimaryVariables::field_type;
     for (size_t pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
     {
-        // check if the primary variable is state invariant
-        bool isStateInvariant = true;
-        for (const auto& state : states)
-            isStateInvariant = isStateInvariant && pvNameFunc(pvIdx, state) == pvNameFunc(pvIdx, *states.begin());
-
         std::unordered_map<int, std::vector<Scalar>> data;
-        if (isStateInvariant)
-            data[0] = vtu.readData<std::vector<Scalar>>(pvNameFunc(pvIdx, *states.begin()), dataType);
-
-        // the primary variable changes with the state
-        // read the data for all occuring states from the file
-        else
-            for (const auto& state : states)
-                data[state] = vtu.readData<std::vector<Scalar>>(pvNameFunc(pvIdx, state), dataType);
-
-        // sanity check
-        for (const auto& d : data)
-            if (d.second.size() != sol.size())
-                DUNE_THROW(Dune::IOError, "Size mismatch between solution vector and read data (" << sol.size() << " != " << d.second.size() << ")");
+        for (const auto& state : states)
+            data[state] = vtu.readData<std::vector<Scalar>>(pvNameFunc(pvIdx, state), dataType);
 
         if (dataType == VTKReader::DataType::cellData)
         {
@@ -207,9 +190,9 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
             for (const auto& element : elements(fvGridGeometry.gridView(), Dune::Partitions::interior))
             {
                 const auto eIdx = fvGridGeometry.elementMapper().index(element);
-                const auto state = isStateInvariant ? 0 : stateAtDof[i];
+                const auto state = stateAtDof[i];
                 sol[eIdx][pvIdx] = data[state][i++];
-                sol[eIdx][pvIdx].setState(state);
+                sol[eIdx].setState(state);
             }
         }
         else
@@ -224,9 +207,9 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
                     const auto vIdxGlobal = fvGridGeometry.vertexMapper().subIndex(element, vIdxLocal, dim);
                     if (!visited[vIdxGlobal])
                     {
-                        const auto state = isStateInvariant ? 0 : stateAtDof[i];
+                        const auto state = stateAtDof[i];
                         sol[vIdxGlobal][pvIdx] = data[state][i++];
-                        sol[vIdxGlobal][pvIdx].setState(state);
+                        sol[vIdxGlobal].setState(state);
                         visited[vIdxGlobal] = true;
                     }
                 }
@@ -240,24 +223,26 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
  * \brief helper function to determine the primary variable names of a model with privar state
  * \note use this as input for the load solution function
  */
-template<class ModelTraits, class FluidSystem>
-std::string pvNameWithState(int pvIdx, int state, const std::string& paramGroup = "")
+template<class ModelTraits, class FluidSystem = void>
+std::function<std::string(int,int)> createPVNameFunctionWithState(const std::string& paramGroup = "")
 {
-    static auto numStates = (1 << ModelTraits::numPhases()) - 1;
-    const auto paramNameWithState = "LoadSolution.PriVarNamesState" + std::to_string(state);
+    return  [paramGroup](int pvIdx, int state = 0)
+            {
+                static auto numStates = (1 << ModelTraits::numPhases()) - 1;
+                const auto paramNameWithState = "LoadSolution.PriVarNamesState" + std::to_string(state);
 
-    if (hasParamInGroup(paramGroup, "LoadSolution.PriVarNames") && !hasParamInGroup(paramGroup, paramNameWithState))
-        DUNE_THROW(Dune::NotImplemented, "please provide LoadSolution.PriVarNamesState1..." << numStates
-                   << " or remove LoadSolution.PriVarNames to use the model's default primary variable names");
+                if (hasParamInGroup(paramGroup, "LoadSolution.PriVarNames") && !hasParamInGroup(paramGroup, paramNameWithState))
+                    DUNE_THROW(Dune::NotImplemented, "please provide LoadSolution.PriVarNamesState1..." << numStates
+                              << " or remove LoadSolution.PriVarNames to use the model's default primary variable names");
 
-    else if (hasParamInGroup(paramGroup, paramNameWithState))
-    {
-        static const auto pvNames = getParamFromGroup<std::vector<std::string>>(paramGroup, paramNameWithState);
-        return pvNames[pvIdx];
-    }
-
-    else
-        return ModelTraits::template primaryVariableName<FluidSystem>(pvIdx, state);
+                else if (hasParamInGroup(paramGroup, paramNameWithState))
+                {
+                    const auto pvName = getParamFromGroup<std::vector<std::string>>(paramGroup, paramNameWithState);
+                    return pvName[pvIdx];
+                }
+                else
+                    return ModelTraits::template primaryVariableName<FluidSystem>(pvIdx, state);
+            };
 }
 
 /*!
@@ -265,16 +250,16 @@ std::string pvNameWithState(int pvIdx, int state, const std::string& paramGroup 
  * \brief helper function to determine the primary variable names of a model without state
  * \note use this as input for the load solution function
  */
-template<class ModelTraits>
-std::string pvName(int pvIdx, int state, const std::string& paramGroup = "")
+template<class ModelTraits, class FluidSystem = void>
+std::function<std::string(int,int)> createPVNameFunction(const std::string& paramGroup = "")
 {
     if (hasParamInGroup(paramGroup, "LoadSolution.PriVarNames"))
     {
-        static const auto pvNames = getParamFromGroup<std::vector<std::string>>(paramGroup, "LoadSolution.PriVarNames");
-        return pvNames[pvIdx];
+        const auto pvName = getParamFromGroup<std::vector<std::string>>(paramGroup, "LoadSolution.PriVarNames");
+        return [n = std::move(pvName)](int pvIdx, int state = 0){ return n[pvIdx]; };
     }
     else
-        return ModelTraits::primaryVariableName(pvIdx, 0);
+        return [](int pvIdx, int state = 0){ return ModelTraits::template primaryVariableName<FluidSystem>(pvIdx, state); };
 }
 
 /*!

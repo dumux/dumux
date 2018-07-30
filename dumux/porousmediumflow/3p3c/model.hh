@@ -123,9 +123,10 @@ struct ThreePThreeCModelTraits
     static constexpr bool useMoles() { return useMol; }
 
     template <class FluidSystem>
-    static std::string primaryVariableName(int pvIdx, int state = 0)
+    static std::string primaryVariableName(int pvIdx, int state)
     {
-        switch (state) {
+        switch (state)
+        {
             case Indices::threePhases:
                 const std::vector<std::string> s1 = {"p_g",
                                                      "S_w",

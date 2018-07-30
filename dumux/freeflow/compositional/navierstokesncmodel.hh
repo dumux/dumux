@@ -109,7 +109,7 @@ struct NavierStokesNCModelTraits : NavierStokesModelTraits<dimension>
     {
         const std::string xString = useMoles() ? "x" : "X";
         if (pvIdx == 0)
-            return NavierStokesModelTraits<dimension>::primaryVariableNameCell(pvIdx, state);
+            return NavierStokesModelTraits<dimension>::template primaryVariableNameCell<FluidSystem>(pvIdx, state);
         else
             return xString + "^" + FluidSystem::componentName(pvIdx)
                    + "_" + FluidSystem::phaseName(0);

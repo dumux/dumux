@@ -145,7 +145,7 @@ int main(int argc, char** argv) try
 
         auto fileNameCell = getParamFromGroup<std::string>("CellCenter", "Restart.File");
         loadSolution(x[FVGridGeometry::cellCenterIdx()], fileNameCell,
-                     [](int pvIdx){ return "p"; }, // test option with lambda
+                     [](int pvIdx, int state){ return "p"; }, // test option with lambda
                      *fvGridGeometry);
 
         auto fileNameFace = getParamFromGroup<std::string>("Face", "Restart.File");

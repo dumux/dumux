@@ -63,15 +63,7 @@ struct FreeflowNIModelTraits : public IsothermalTraits
     //! the indices
     using Indices = FreeflowNonIsothermalIndices<typename IsothermalTraits::Indices, numEq()>;
 
-    static std::string primaryVariableName(int pvIdx, int state = 0)
-    {
-        if (pvIdx < numEq() - 1)
-            return IsothermalTraits::primaryVariableName(pvIdx, state);
-        else
-            return "T";
-    }
-
-    template <class FluidSystem>
+    template <class FluidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         if (pvIdx < numEq() - 1)
