@@ -180,7 +180,7 @@ def is_fuzzy_equal_node(node1, node2, absolute, relative, zeroValueThreshold, ve
                 is_equal = False
             else:
                 return False
-        if not convertedFromParallelVtu and (node1.attrib.items()) != list(node2.attrib.items()):
+        if not convertedFromParallelVtu and list(node1.attrib.items()) != list(node2.attrib.items()):
             if verbose:
                 print('Attributes differ in node: {}'.format(node1.tag))
                 is_equal = False
