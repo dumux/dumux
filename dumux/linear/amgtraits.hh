@@ -38,21 +38,33 @@
 // for UGGrid. Once it is resolved upstream
 // (https://gitlab.dune-project.org/core/dune-grid/issues/78),
 // it should be guarded by a DUNE_VERSION macro and removed later.
-#include <dune/grid/uggrid.hh>
 
-namespace Dune {
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif // HAVE_UG
+
+namespace Dumux {
+namespace Temp {
 namespace Capabilities {
+
+template<class Grid, int codim>
+struct canCommunicate
+{
+  static const bool v = false;
+};
 
 #if HAVE_UG
 template<int dim, int codim>
-struct canCommunicate<UGGrid<dim>, codim>
+struct canCommunicate<Dune::UGGrid<dim>, codim>
 {
   static const bool v = true;
 };
-#endif
+#endif // HAVE_UG
 
 } // namespace Capabilities
-} // namespace Dune
+} // namespace Temp
+} // namespace Dumux
+// end workaround
 
 namespace Dumux {
 
@@ -94,7 +106,9 @@ struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::box>
     enum {
         dofCodim = Grid::dimension,
         isNonOverlapping = true,
+        // TODO: see above for description of this workaround, remove second line if fixed upstream
         isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
+                     || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v
     };
     using MType = Matrix;
     using VType = Dune::BlockVector<Dune::FieldVector<typename Vector::block_type::value_type, Vector::block_type::dimension>>;
@@ -138,7 +152,9 @@ struct AmgTraitsImpl<Matrix, Vector, FVGridGeometry, DiscretizationMethod::cctpf
     enum {
         dofCodim = 0,
         isNonOverlapping = false,
+        // TODO: see above for description of this workaround, remove second line if fixed upstream
         isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
+                     || Dumux::Temp::Capabilities::canCommunicate<Grid, dofCodim>::v
     };
     using MType = Matrix;
     using VType = Dune::BlockVector<Dune::FieldVector<typename Vector::block_type::value_type, Vector::block_type::dimension>>;
