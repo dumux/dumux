@@ -80,7 +80,7 @@ dune_add_test(NAME test_channel_navierstokes_restart
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/channel-navierstokes-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes_restart-00001.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes -Vtk.WriteFaceData 1 -TimeLoop.DtInitial 1 -Restart.Time 1 -Restart.FileCell test_channel_navierstokes-00001.vtu -Restart.FileFace test_channel_navierstokes-face-00001.vtp  -Problem.Name test_channel_navierstokes_restart")
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes -Vtk.WriteFaceData 1 -TimeLoop.DtInitial 1 -Restart.Time 1 -CellCenter.Restart.File test_channel_navierstokes-00001.vtu -Face.Restart.File test_channel_navierstokes-face-00001.vtp  -Problem.Name test_channel_navierstokes_restart")
 
 # the restart test has to run after the test that produces the corresponding vtu file
 set_tests_properties(test_channel_navierstokes_restart PROPERTIES DEPENDS test_channel_navierstokes)
