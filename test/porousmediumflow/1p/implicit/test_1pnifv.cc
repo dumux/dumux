@@ -133,7 +133,7 @@ int main(int argc, char** argv) try
     {
         using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
         const auto fileName = getParam<std::string>("Restart.File");
-        loadSolution(x, fileName, primaryVariableName<ModelTraits>, *fvGridGeometry);
+        loadSolution(x, fileName, createPVNameFunction<ModelTraits>(), *fvGridGeometry);
     }
     else
         problem->applyInitialSolution(x);
