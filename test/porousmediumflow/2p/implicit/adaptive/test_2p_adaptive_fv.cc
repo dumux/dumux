@@ -182,11 +182,6 @@ int main(int argc, char** argv) try
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (hasParam("Restart") || hasParam("TimeLoop.Restart"))
-        restartTime = getParam<Scalar>("TimeLoop.Restart");
-
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
@@ -196,7 +191,7 @@ int main(int argc, char** argv) try
     vtkWriter.write(0.0);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
@@ -215,7 +210,7 @@ int main(int argc, char** argv) try
     timeLoop->start(); do
     {
         // refine/coarsen only after first time step
-        if (timeLoop->time() > restartTime)
+        if (timeLoop->time() > 0)
         {
             // compute refinement indicator
             indicator.calculate(x, refineTol, coarsenTol);
