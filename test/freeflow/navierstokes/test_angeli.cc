@@ -121,15 +121,10 @@ int main(int argc, char** argv) try
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
-        restartTime = getParam<Scalar>("TimeLoop.Restart");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the problem (initial and boundary conditions)

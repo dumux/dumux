@@ -102,13 +102,8 @@ int main(int argc, char** argv) try
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
-    //! check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (hasParam("Restart") || hasParam("TimeLoop.Restart"))
-        restartTime = getParam<Scalar>("TimeLoop.Restart");
-
     //! instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     //! the assembler with time loop for instationary problem
