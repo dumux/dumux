@@ -408,13 +408,13 @@ private:
     {
         switch (vtkCellType)
         {
-            case Dune::VTK::GeometryType::vertex: return Dune::GeometryTypes::vertex; break;
-            case Dune::VTK::GeometryType::line: return Dune::GeometryTypes::line; break;
-            case Dune::VTK::GeometryType::triangle: return Dune::GeometryTypes::triangle; break;
-            case Dune::VTK::GeometryType::quadrilateral: return Dune::GeometryTypes::quadrilateral; break;
-            case Dune::VTK::GeometryType::hexahedron: return Dune::GeometryTypes::hexahedron; break;
-            case Dune::VTK::GeometryType::prism: return Dune::GeometryTypes::prism; break;
-            case Dune::VTK::GeometryType::pyramid: return Dune::GeometryTypes::pyramid; break;
+            case Dune::VTK::GeometryType::vertex: return Dune::GeometryTypes::vertex;
+            case Dune::VTK::GeometryType::line: return Dune::GeometryTypes::line;
+            case Dune::VTK::GeometryType::triangle: return Dune::GeometryTypes::triangle;
+            case Dune::VTK::GeometryType::quadrilateral: return Dune::GeometryTypes::quadrilateral;
+            case Dune::VTK::GeometryType::hexahedron: return Dune::GeometryTypes::hexahedron;
+            case Dune::VTK::GeometryType::prism: return Dune::GeometryTypes::prism;
+            case Dune::VTK::GeometryType::pyramid: return Dune::GeometryTypes::pyramid;
             default: DUNE_THROW(Dune::NotImplemented, "VTK cell type " << vtkCellType);
         }
     }
