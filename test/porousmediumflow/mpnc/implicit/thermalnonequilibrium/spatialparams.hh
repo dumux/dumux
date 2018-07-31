@@ -34,12 +34,6 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/material/spatialparams/fv.hh>
 
-// material laws for interfacial area
-#include <dumux/material/fluidmatrixinteractions/2pia/efftoabslawia.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomial2ndorder.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepcmaxfct.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpswpcto3.hh>
-
 namespace Dumux {
 
 /**
@@ -74,18 +68,6 @@ public:
     //! export the material law type used
     using MaterialLaw = TwoPAdapter<wPhaseIdx, EffToAbsLaw<EffectiveLaw>>;
     using MaterialLawParams = typename MaterialLaw::Params;
-
-    //! export the types used for interfacial area calculations
-    using EffectiveIALawAws = AwnSurfacePolynomial2ndOrder<Scalar>;
-    using EffectiveIALawAwn = AwnSurfacePcMaxFct<Scalar>;
-    using EffectiveIALawAns = AwnSurfaceExpSwPcTo3<Scalar>;
-    using AwnSurface = EffToAbsLawIA<EffectiveIALawAwn, MaterialLawParams>;
-    using AwsSurface = EffToAbsLawIA<EffectiveIALawAws, MaterialLawParams>;
-    using AnsSurface = EffToAbsLawIA<EffectiveIALawAns, MaterialLawParams>;
-
-    using AwnSurfaceParams = typename AwnSurface::Params;
-    using AwsSurfaceParams = typename AwsSurface::Params;
-    using AnsSurfaceParams = typename AnsSurface::Params;
 
     CombustionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
     {

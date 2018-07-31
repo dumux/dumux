@@ -42,7 +42,7 @@ namespace Dumux {
  *        modules which require the specific interfacial area between
  *        fluid phases.
  */
-template<class Traits, class EquilibriumVolumeVariables, bool enableChemicalNonEquilibrium ,bool enableThermalNonEquilibrium>
+template<class Traits, class EquilibriumVolumeVariables, bool enableChemicalNonEquilibrium ,bool enableThermalNonEquilibrium, int numEnergyEqFluid>
 class NonEquilibriumVolumeVariablesImplementation;
 
 template<class Traits, class EquilibriumVolumeVariables>
@@ -50,16 +50,18 @@ using NonEquilibriumVolumeVariables =
       NonEquilibriumVolumeVariablesImplementation< Traits,
                                                    EquilibriumVolumeVariables,
                                                    Traits::ModelTraits::enableChemicalNonEquilibrium(),
-                                                   Traits::ModelTraits::enableThermalNonEquilibrium() >;
+                                                   Traits::ModelTraits::enableThermalNonEquilibrium(),
+                                                   Traits::ModelTraits::numEnergyEqFluid()>;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// specialization for the case of NO kinetic mass but kinetic energy transfer of a fluid mixture and solid
+// specialization for the case of NO kinetic mass but kinetic energy transfer of  two fluids and a solid
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template<class Traits, class EquilibriumVolumeVariables>
 class NonEquilibriumVolumeVariablesImplementation< Traits,
                                                    EquilibriumVolumeVariables,
                                                    false/*chemicalNonEquilibrium?*/,
-                                                   true/*thermalNonEquilibrium?*/ >
+                                                   true/*thermalNonEquilibrium?*/,
+                                                   2>
     :public EquilibriumVolumeVariables
 {
     using ParentType = EquilibriumVolumeVariables;
@@ -67,7 +69,7 @@ class NonEquilibriumVolumeVariablesImplementation< Traits,
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
     using ModelTraits = typename Traits::ModelTraits;
-    using Indices = typename ModelTraits::Indices;
+
     using FS = typename Traits::FluidSystem;
     static constexpr auto numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
     static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
@@ -75,12 +77,12 @@ class NonEquilibriumVolumeVariablesImplementation< Traits,
     static constexpr auto phase0Idx = FS::phase0Idx;
     static constexpr auto phase1Idx = FS::phase1Idx;
     static constexpr auto sPhaseIdx = FS::numPhases;
-    static_assert((numEnergyEqFluid < 3), "this model only has interfacial area relationships for maximum 2 fluids with one solid");
 
     using DimLessNum = DimensionlessNumbers<Scalar>;
 
 public:
      using FluidState = typename Traits::FluidState;
+     using Indices = typename ModelTraits::Indices;
     /*!
      * \brief Update all quantities for a given control volume
      *
@@ -102,12 +104,11 @@ public:
         ParameterCache paramCache;
         paramCache.updateAll(this->fluidState());
         updateDimLessNumbers(elemSol, this->fluidState(), paramCache, problem, element, scv);
-        if (numEnergyEqFluid == 2)
-            updateInterfacialArea(elemSol, this->fluidState(), paramCache, problem, element, scv);
+        updateInterfacialArea(elemSol, this->fluidState(), paramCache, problem, element, scv);
     }
 
     /*!
-     * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
+     * \brief Updates dimensionless numbers
      *
      * \param elemSol A vector containing all primary variables connected to the element
      * \param fluidState Container for all the secondary variables concerning the fluids
@@ -148,10 +149,11 @@ public:
                                                                         prandtlNumber_[phaseIdx],
                                                                         porosity,
                                                                         ModelTraits::nusseltFormulation());
+
         }
     }
 
-        /*!
+    /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
      *
      * \param elemSol A vector containing all primary variables connected to the element
@@ -251,6 +253,131 @@ private:
     Scalar interfacialArea_[ModelTraits::numPhases()+numEnergyEqSolid][ModelTraits::numPhases()+numEnergyEqSolid];
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// specialization for the case of NO kinetic mass but kinetic energy transfer of  a fluid mixture and a solid
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+template<class Traits, class EquilibriumVolumeVariables>
+class NonEquilibriumVolumeVariablesImplementation< Traits,
+                                                   EquilibriumVolumeVariables,
+                                                   false/*chemicalNonEquilibrium?*/,
+                                                   true/*thermalNonEquilibrium?*/,
+                                                   1>
+    :public EquilibriumVolumeVariables
+{
+    using ParentType = EquilibriumVolumeVariables;
+    using ParameterCache = typename Traits::FluidSystem::ParameterCache;
+    using Scalar = typename Traits::PrimaryVariables::value_type;
+
+    using ModelTraits = typename Traits::ModelTraits;
+    using Indices = typename ModelTraits::Indices;
+    using FS = typename Traits::FluidSystem;
+    static constexpr auto numEnergyEqFluid = ModelTraits::numEnergyEqFluid();
+    static constexpr auto numEnergyEqSolid = ModelTraits::numEnergyEqSolid();
+
+    static constexpr auto phase0Idx = FS::phase0Idx;
+    static constexpr auto phase1Idx = FS::phase1Idx;
+    static constexpr auto sPhaseIdx = FS::numPhases;
+
+    using DimLessNum = DimensionlessNumbers<Scalar>;
+
+public:
+     using FluidState = typename Traits::FluidState;
+    /*!
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void update(const ElemSol &elemSol,
+                const Problem &problem,
+                const Element &element,
+                const Scv& scv)
+    {
+        // Update parent type (also completes the fluid state)
+        ParentType::update(elemSol, problem, element, scv);
+
+        ParameterCache paramCache;
+        paramCache.updateAll(this->fluidState());
+        //only update of DimLessNumbers is necessary here, as interfacial area is easy due to only one fluid with a solid and is directly computed in localresidual
+        updateDimLessNumbers(elemSol, this->fluidState(), paramCache, problem, element, scv);
+    }
+
+    /*!
+     * \brief Updates dimensionless numbers
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache The parameter cache corresponding to the fluid state
+     * \param problem The problem to be solved
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateDimLessNumbers(const ElemSol& elemSol,
+                               const FluidState& fluidState,
+                               const ParameterCache& paramCache,
+                               const Problem& problem,
+                               const Element& element,
+                               const Scv& scv)
+    {
+        factorMassTransfer_  = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
+        factorEnergyTransfer_ = problem.spatialParams().factorEnergyTransfer(element, scv, elemSol);
+        characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
+
+        // set the dimensionless numbers and obtain respective quantities
+        const unsigned int vIdxGlobal = scv.dofIndex();
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
+        {
+            const auto darcyMagVelocity     = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, vIdxGlobal);
+            const auto dynamicViscosity     = fluidState.viscosity(phaseIdx);
+            const auto density              = fluidState.density(phaseIdx);
+            const auto kinematicViscosity   = dynamicViscosity/density;
+
+            using FluidSystem = typename Traits::FluidSystem;
+            const auto heatCapacity        = FluidSystem::heatCapacity(fluidState, paramCache, phaseIdx);
+            const auto thermalConductivity = FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
+            const auto porosity            = this->porosity();
+
+            reynoldsNumber_[phaseIdx] = DimLessNum::reynoldsNumber(darcyMagVelocity, characteristicLength_,kinematicViscosity);
+            prandtlNumber_[phaseIdx]  = DimLessNum::prandtlNumber(dynamicViscosity, heatCapacity, thermalConductivity);
+            nusseltNumber_[phaseIdx]  = DimLessNum::nusseltNumberForced(reynoldsNumber_[phaseIdx],
+                                                                        prandtlNumber_[phaseIdx],
+                                                                        porosity,
+                                                                        ModelTraits::nusseltFormulation());
+
+        }
+    }
+
+    //! access function Reynolds Number
+    const Scalar reynoldsNumber(const unsigned int phaseIdx) const { return reynoldsNumber_[phaseIdx]; }
+    //! access function Prandtl Number
+    const Scalar prandtlNumber(const unsigned int phaseIdx) const { return prandtlNumber_[phaseIdx]; }
+    //! access function Nusselt Number
+    const Scalar nusseltNumber(const unsigned int phaseIdx) const { return nusseltNumber_[phaseIdx]; }
+    //! access function characteristic length
+    const Scalar characteristicLength() const { return characteristicLength_; }
+    //! access function pre factor energy transfer
+    const Scalar factorEnergyTransfer() const { return factorEnergyTransfer_; }
+    //! access function pre factor mass transfer
+    const Scalar factorMassTransfer() const { return factorMassTransfer_; }
+
+private:
+    //! dimensionless numbers
+    Scalar reynoldsNumber_[ModelTraits::numPhases()];
+    Scalar prandtlNumber_[ModelTraits::numPhases()];
+    Scalar nusseltNumber_[ModelTraits::numPhases()];
+
+    Scalar characteristicLength_;
+    Scalar factorEnergyTransfer_;
+    Scalar factorMassTransfer_;
+    Scalar solidSurface_ ;
+    Scalar interfacialArea_[ModelTraits::numPhases()+numEnergyEqSolid][ModelTraits::numPhases()+numEnergyEqSolid];
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // specialization for the case of (only) kinetic mass transfer. Be careful, we do not test this!
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -258,7 +385,8 @@ template<class Traits, class EquilibriumVolumeVariables>
 class NonEquilibriumVolumeVariablesImplementation< Traits,
                                                    EquilibriumVolumeVariables,
                                                    true/*chemicalNonEquilibrium?*/,
-                                                   false/*thermalNonEquilibrium?*/>
+                                                   false/*thermalNonEquilibrium?*/,
+                                                   0>
     :public EquilibriumVolumeVariables
 {
     using ParentType = EquilibriumVolumeVariables;
@@ -297,10 +425,57 @@ public:
 
         ParameterCache paramCache;
         paramCache.updateAll(this->fluidState());
+        updateDimLessNumbers(elemSol, this->fluidState(), paramCache, problem, element, scv);
         updateInterfacialArea(elemSol, this->fluidState(), paramCache, problem, element, scv);
     }
 
     /*!
+     * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache The parameter cache corresponding to the fluid state
+     * \param problem The problem to be solved
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateDimLessNumbers(const ElemSol& elemSol,
+                              const FluidState& fluidState,
+                              const ParameterCache& paramCache,
+                              const Problem& problem,
+                              const Element& element,
+                              const Scv& scv)
+    {
+        factorMassTransfer_ = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
+        characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
+
+        // set the dimensionless numbers and obtain respective quantities.
+        const auto globalVertexIdx = problem.fvGridGeometry().vertexMapper().subIndex(element, scv, Element::Geometry::mydimension);
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
+        {
+            const auto darcyMagVelocity     = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
+            const auto dynamicViscosity     = fluidState.viscosity(phaseIdx);
+            const auto density              = fluidState.density(phaseIdx);
+            const auto kinematicViscosity   = dynamicViscosity/density;
+
+            // diffusion coefficient of non-wetting component in wetting phase
+            using FluidSystem = typename Traits::FluidSystem;
+            const auto diffCoeff = FluidSystem::binaryDiffusionCoefficient(fluidState,
+                                                                           paramCache,
+                                                                           phaseIdx,
+                                                                           wCompIdx,
+                                                                           nCompIdx);
+
+            reynoldsNumber_[phaseIdx] = DimLessNum::reynoldsNumber(darcyMagVelocity, characteristicLength_, kinematicViscosity);
+            schmidtNumber_[phaseIdx]  = DimLessNum::schmidtNumber(dynamicViscosity, density, diffCoeff);
+            sherwoodNumber_[phaseIdx] = DimLessNum::sherwoodNumber(reynoldsNumber_[phaseIdx],
+                                                                   schmidtNumber_[phaseIdx],
+                                                                   ModelTraits::sherwoodFormulation());
+        }
+    }
+
+     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
      *
      * \param elemSol A vector containing all primary variables connected to the element
@@ -328,33 +503,6 @@ public:
         // so far there is only a model for kinetic mass transfer between fluid phases
         using AwnSurface = typename Problem::SpatialParams::AwnSurface;
         interfacialArea_ = AwnSurface::interfacialArea(awnSurfaceParams, materialParams, Sw, pc);
-
-        factorMassTransfer_ = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
-        characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
-
-        // set the dimensionless numbers and obtain respective quantities.
-        const auto globalVertexIdx = problem.fvGridGeometry().vertexMapper().subIndex(element, scv, Element::Geometry::mydimension);
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
-        {
-            const auto darcyMagVelocity     = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, globalVertexIdx);
-            const auto dynamicViscosity     = fluidState.viscosity(phaseIdx);
-            const auto density              = fluidState.density(phaseIdx);
-            const auto kinematicViscosity   = dynamicViscosity/density;
-
-            // diffusion coefficient of non-wetting component in wetting phase
-            using FluidSystem = typename Traits::FluidSystem;
-            const auto diffCoeff = FluidSystem::binaryDiffusionCoefficient(fluidState,
-                                                                           paramCache,
-                                                                           phaseIdx,
-                                                                           wCompIdx,
-                                                                           nCompIdx);
-
-            reynoldsNumber_[phaseIdx] = DimLessNum::reynoldsNumber(darcyMagVelocity, characteristicLength_, kinematicViscosity);
-            schmidtNumber_[phaseIdx]  = DimLessNum::schmidtNumber(dynamicViscosity, density, diffCoeff);
-            sherwoodNumber_[phaseIdx] = DimLessNum::sherwoodNumber(reynoldsNumber_[phaseIdx],
-                                                                   schmidtNumber_[phaseIdx],
-                                                                   ModelTraits::sherwoodFormulation());
-        }
     }
 
     /*!
@@ -394,7 +542,8 @@ template<class Traits, class EquilibriumVolumeVariables>
 class NonEquilibriumVolumeVariablesImplementation< Traits,
                                                    EquilibriumVolumeVariables,
                                                    true/*chemicalNonEquilibrium?*/,
-                                                   true/*thermalNonEquilibrium?*/>
+                                                   true/*thermalNonEquilibrium?*/,
+                                                   2>
    :public EquilibriumVolumeVariables
 {
     using ParentType = EquilibriumVolumeVariables;
@@ -438,10 +587,66 @@ public:
 
         ParameterCache paramCache;
         paramCache.updateAll(this->fluidState());
+        updateDimLessNumbers(elemSol, this->fluidState(), paramCache, problem, element, scv);
         updateInterfacialArea(elemSol, this->fluidState(), paramCache, problem, element, scv);
     }
 
     /*!
+     * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param fluidState Container for all the secondary variables concerning the fluids
+     * \param paramCache The parameter cache corresponding to the fluid state
+     * \param problem The problem to be solved
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     */
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateDimLessNumbers(const ElemSol& elemSol,
+                              const FluidState& fluidState,
+                              const ParameterCache& paramCache,
+                              const Problem& problem,
+                              const Element& element,
+                              const Scv& scv)
+    {
+        factorMassTransfer_ = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
+        factorEnergyTransfer_ = problem.spatialParams().factorEnergyTransfer(element, scv, elemSol);
+        characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
+
+        const auto vIdxGlobal = scv.dofIndex();
+        using FluidSystem = typename Traits::FluidSystem;
+        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
+        {
+            const auto darcyMagVelocity    = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, vIdxGlobal);
+            const auto dynamicViscosity    = fluidState.viscosity(phaseIdx);
+            const auto density             = fluidState.density(phaseIdx);
+            const auto kinematicViscosity  = dynamicViscosity/density;
+            const auto heatCapacity        = FluidSystem::heatCapacity(fluidState, paramCache, phaseIdx);
+            const auto thermalConductivity = FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
+
+            // diffusion coefficient of non-wetting component in wetting phase
+            const auto porosity = this->porosity();
+            const auto diffCoeff = FluidSystem::binaryDiffusionCoefficient(fluidState,
+                                                                           paramCache,
+                                                                           phaseIdx,
+                                                                           wCompIdx,
+                                                                           nCompIdx);
+
+            reynoldsNumber_[phaseIdx] = DimLessNum::reynoldsNumber(darcyMagVelocity, characteristicLength_, kinematicViscosity);
+            prandtlNumber_[phaseIdx]  = DimLessNum::prandtlNumber(dynamicViscosity, heatCapacity, thermalConductivity);
+            schmidtNumber_[phaseIdx]  = DimLessNum::schmidtNumber(dynamicViscosity, density, diffCoeff);
+            nusseltNumber_[phaseIdx]  = DimLessNum::nusseltNumberForced(reynoldsNumber_[phaseIdx],
+                                                                        prandtlNumber_[phaseIdx],
+                                                                        porosity,
+                                                                        ModelTraits::nusseltFormulation());
+            // If Diffusion is not enabled, Sherwood is divided by zero
+            sherwoodNumber_[phaseIdx] = DimLessNum::sherwoodNumber(reynoldsNumber_[phaseIdx],
+                                                                   schmidtNumber_[phaseIdx],
+                                                                   ModelTraits::sherwoodFormulation());
+        }
+    }
+
+     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
      *
      * \param elemSol A vector containing all primary variables connected to the element
@@ -504,42 +709,6 @@ public:
         interfacialArea_[phase1Idx][sPhaseIdx] = ans;
         interfacialArea_[sPhaseIdx][phase1Idx] = interfacialArea_[phase1Idx][sPhaseIdx];
         interfacialArea_[phase1Idx][phase1Idx] = 0.;
-
-        factorMassTransfer_ = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
-        factorEnergyTransfer_ = problem.spatialParams().factorEnergyTransfer(element, scv, elemSol);
-        characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
-
-        const auto vIdxGlobal = scv.dofIndex();
-        using FluidSystem = typename Traits::FluidSystem;
-        for (int phaseIdx = 0; phaseIdx < ModelTraits::numPhases(); ++phaseIdx)
-        {
-            const auto darcyMagVelocity    = problem.gridVariables().volumeDarcyMagVelocity(phaseIdx, vIdxGlobal);
-            const auto dynamicViscosity    = fluidState.viscosity(phaseIdx);
-            const auto density             = fluidState.density(phaseIdx);
-            const auto kinematicViscosity  = dynamicViscosity/density;
-            const auto heatCapacity        = FluidSystem::heatCapacity(fluidState, paramCache, phaseIdx);
-            const auto thermalConductivity = FluidSystem::thermalConductivity(fluidState, paramCache, phaseIdx);
-
-            // diffusion coefficient of non-wetting component in wetting phase
-            const auto porosity = this->porosity();
-            const auto diffCoeff = FluidSystem::binaryDiffusionCoefficient(fluidState,
-                                                                           paramCache,
-                                                                           phaseIdx,
-                                                                           wCompIdx,
-                                                                           nCompIdx);
-
-            reynoldsNumber_[phaseIdx] = DimLessNum::reynoldsNumber(darcyMagVelocity, characteristicLength_, kinematicViscosity);
-            prandtlNumber_[phaseIdx]  = DimLessNum::prandtlNumber(dynamicViscosity, heatCapacity, thermalConductivity);
-            schmidtNumber_[phaseIdx]  = DimLessNum::schmidtNumber(dynamicViscosity, density, diffCoeff);
-            nusseltNumber_[phaseIdx]  = DimLessNum::nusseltNumberForced(reynoldsNumber_[phaseIdx],
-                                                                        prandtlNumber_[phaseIdx],
-                                                                        porosity,
-                                                                        ModelTraits::nusseltFormulation());
-            // If Diffusion is not enabled, Sherwood is divided by zero
-            sherwoodNumber_[phaseIdx] = DimLessNum::sherwoodNumber(reynoldsNumber_[phaseIdx],
-                                                                   schmidtNumber_[phaseIdx],
-                                                                   ModelTraits::sherwoodFormulation());
-        }
     }
 
     /*!

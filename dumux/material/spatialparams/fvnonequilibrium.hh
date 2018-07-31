@@ -27,12 +27,6 @@
 
 #include <dumux/material/spatialparams/fv.hh>
 
-// material laws for interfacial area
-#include <dumux/material/fluidmatrixinteractions/2pia/efftoabslawia.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepolynomial2ndorder.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfacepcmaxfct.hh>
-#include <dumux/material/fluidmatrixinteractions/2pia/awnsurfaceexpswpcto3.hh>
-
 namespace Dumux {
 
 /**
@@ -63,78 +57,6 @@ public:
     FVNonEquilibriumSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {  }
-
-    /*!\brief Return a reference to the container object for the
-     *        parametrization of the surface between wetting and non-Wetting phase.
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub control volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume */
-    template<class ElementSolution>
-    AwnSurfaceParams aWettingNonWettingSurfaceParams(const Element &element,
-                                                   const SubControlVolume &scv,
-                                                   const ElementSolution &elemSol) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide a aWettingNonWettingSurfaceParams() method.");
-    }
-
-    /*!\brief Return a reference to the container object for the
-     *        parametrization of the surface between non-Wetting and solid phase.
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub control volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume */
-    template<class ElementSolution>
-    AnsSurfaceParams aNonWettingSolidSurfaceParams(const Element &element,
-                                                 const SubControlVolume &scv,
-                                                 const ElementSolution &elemSol) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide a aNonWettingSolidSurfaceParams() method.");
-    }
-
-    /*!\brief Return a reference to the container object for the
-     *        parametrization of the surface between non-Wetting and solid phase.
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub control volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume */
-    template<class ElementSolution>
-    AwsSurfaceParams aWettingSolidSurfaceParams(const Element &element,
-                                              const SubControlVolume &scv,
-                                              const ElementSolution &elemSol) const
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-                   "The spatial parameters do not provide a aWettingSolidSurfaceParams() method.");
-    }
-
-    /*!\brief Return the maximum capillary pressure for the given pc-Sw curve
-     *
-     *        Of course physically there is no such thing as a maximum capillary pressure.
-     *        The parametrization (VG/BC) goes to infinity and physically there is only one pressure
-     *        for single phase conditions.
-     *        Here, this is used for fitting the interfacial area surface: the capillary pressure,
-     *        where the interfacial area is zero.
-     *        Technically this value is obtained as the capillary pressure of saturation zero.
-     *        This value of course only exists for the case of a regularized pc-Sw relation.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume */
-    template<class ElementSolution>
-    const Scalar pcMax(const Element &element,
-                       const SubControlVolume &scv,
-                       const ElementSolution &elemSol) const
-    {     DUNE_THROW(Dune::InvalidStateException,
-        "The spatial parameters do not provide a aNonWettingSolidSurfaceParams() method.");
-    }
-
 
     /*!\brief Return the characteristic length for the mass transfer.
      *

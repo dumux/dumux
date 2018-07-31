@@ -43,6 +43,7 @@ using FouriersLawNonEquilibrium = FouriersLawNonEquilibriumImplementation<TypeTa
 
 } // end namespace Dumux
 
+#include <dumux/discretization/cellcentered/tpfa/fourierslawnonequilibrium.hh>
 #include <dumux/discretization/box/fourierslawnonequilibrium.hh>
 
 #endif
