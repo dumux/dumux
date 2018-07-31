@@ -311,7 +311,7 @@ public:
       GlobalPosition stress;
       Scalar porosity, rockDensity, gravity;
       gravity = -this->gravity()[dimWorld-1];
-      porosity = this->spatialParams().porosity(globalPos);
+      porosity = this->spatialParams().porosityAtPos(globalPos);
       rockDensity = this->spatialParams().rockDensity(globalPos);
 
       // initial total stress field here assumed to be isotropic, lithostatic

@@ -540,7 +540,7 @@ public:
                 {
                     LocalPosition cellCenter = element.geometry().center();
 
-                    effPorosityVector_[eIdx][scvIdx] = MechanicsProblem().spatialParams().porosity(cellCenter);
+                    effPorosityVector_[eIdx][scvIdx] = MechanicsProblem().spatialParams().porosityAtPos(cellCenter);
 
                     effPermeabilityVector_[eIdx][scvIdx] = MechanicsProblem().spatialParams().intrinsicPermeabilityAtPos(cellCenter)[0][0];
 
