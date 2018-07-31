@@ -118,8 +118,8 @@ public:
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState &fluidState,
                                              int phaseIdx,
-                                             unsigned int compIIdx,
-                                             unsigned int compJIdx)
+                                             int compIIdx,
+                                             int compJIdx)
     {
         if (compIIdx > compJIdx)
         {
