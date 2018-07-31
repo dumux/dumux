@@ -166,9 +166,9 @@ public:
     { endTime_ = t; }
 
     /*!
-     * \brief Returns the current wall time (cpu time).
+     * \brief Returns the current wall clock time (cpu time).
      */
-    double wallTime() const
+    double wallClockTime() const
     {  return cpuTime_; }
 
     /*!
