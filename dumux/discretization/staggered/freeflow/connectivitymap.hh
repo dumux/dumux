@@ -162,8 +162,8 @@ private:
             auto& normalFace = fvGeometry.scvf(eIdx, data.localNormalFaceIdx);
             if(!normalFace.boundary())
             {
-                const auto outerParallelElementDofIdx = normalFace.outsideScvIdx();
-                stencil.push_back(outerParallelElementDofIdx);
+                const auto firstParallelElementDofIdx = normalFace.outsideScvIdx();
+                stencil.push_back(firstParallelElementDofIdx);
             }
         }
     }
@@ -181,16 +181,29 @@ private:
         {
             stencil.push_back(scvf.dofIndex());
             stencil.push_back(scvf.dofIndexOpposingFace());
+            const auto dofIndexPreviousFace = scvf.dofIndexPreviousFace();
+            if(dofIndexPreviousFace >= 0)
+              stencil.push_back(scvf.dofIndexPreviousFace());
+            const auto dofIndexForwardFace = scvf.dofIndexForwardFace();
+            if(dofIndexForwardFace >= 0)
+              stencil.push_back(scvf.dofIndexForwardFace());
+
         }
 
         for(const auto& data : scvf.pairData())
         {
+            // add normal dofs
             stencil.push_back(data.normalPair.first);
-            const auto outerParallelFaceDofIdx = data.outerParallelFaceDofIdx;
-            if(outerParallelFaceDofIdx >= 0)
-                stencil.push_back(outerParallelFaceDofIdx);
             if(!scvf.boundary())
                 stencil.push_back(data.normalPair.second);
+
+            // add parallel dofs
+            const auto firstParallelFaceDofIdx = data.firstParallelFaceDofIdx;
+            if(firstParallelFaceDofIdx >= 0)
+                stencil.push_back(firstParallelFaceDofIdx);
+            const auto secondParallelFaceDofIdx = data.secondParallelFaceDofIdx;
+            if(secondParallelFaceDofIdx >= 0)
+                stencil.push_back(secondParallelFaceDofIdx);
         }
     }
 

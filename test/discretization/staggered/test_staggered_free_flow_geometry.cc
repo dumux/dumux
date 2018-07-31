@@ -82,10 +82,9 @@ int main (int argc, char *argv[]) try
 
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
-
     std::cout << "Checking the FVGeometries, SCVs and SCV faces" << std::endl;
 
-    using Grid = Dune::YaspGrid<2>;
+    using Grid = Dune::YaspGrid<3>;
 
     constexpr int dim = Grid::dimension;
 
@@ -98,11 +97,11 @@ int main (int argc, char *argv[]) try
 
     // make a grid
     GlobalPosition lower(0.0);
-    GlobalPosition upper(1.0);
-    std::array<unsigned int, dim> els{{2, 4}};
+    GlobalPosition upper(10.0);
+    std::array<unsigned int, dim> els{{5, 5, 5}};
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
-    auto leafGridView = grid->leafGridView();
 
+    auto leafGridView = grid->leafGridView();
     FVGridGeometry fvGridGeometry(leafGridView);
     fvGridGeometry.update();
 
@@ -120,43 +119,78 @@ int main (int argc, char *argv[]) try
     for (const auto& element : elements(leafGridView))
     {
         auto eIdx = fvGridGeometry.elementMapper().index(element);
-        std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
-        auto fvGeometry = localView(fvGridGeometry);
-        fvGeometry.bind(element);
-
-        auto range = scvs(fvGeometry);
-        Detail::NoopFunctor<SubControlVolume> op;
-        if(0 != testForwardIterator(range.begin(), range.end(), op))
-            DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
-
-        for (auto&& scv : scvs(fvGeometry))
+        if(eIdx == 62)
         {
-            std::cout << "-- scv " << scv.dofIndex() << " center at: " << scv.center() << std::endl;
-        }
+            std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
+            auto fvGeometry = localView(fvGridGeometry);
+            fvGeometry.bind(element);
 
-        auto range2 = scvfs(fvGeometry);
-        Detail::NoopFunctor<SubControlVolumeFace> op2;
-        if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
-            DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
+            auto range = scvs(fvGeometry);
+            Detail::NoopFunctor<SubControlVolume> op;
+            if(0 != testForwardIterator(range.begin(), range.end(), op))
+                DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                std::cout << "-- scv " << scv.dofIndex() << " center at: " << scv.center() << std::endl;
+            }
+
+            auto range2 = scvfs(fvGeometry);
+            Detail::NoopFunctor<SubControlVolumeFace> op2;
+            if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
+                DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
 
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            std::cout <<  std::fixed << std::left << std::setprecision(2)
-            << "pos "<< scvf.ipGlobal()
-            << "; fIdx "  << std::setw(3)  << scvf.index()
-            << "; dofIdx (self/oppo.) " << std::setw(3) << scvf.dofIndex() << "/" << std::setw(3) <<scvf.dofIndexOpposingFace()
-            << "; dist (self/oppo.) " << std::setw(3) << scvf.selfToOppositeDistance()
-            << ", norm1 in/out " << std::setw(3) << scvf.pairData(0).normalPair.first << "/" << std::setw(3) << scvf.pairData(0).normalPair.second
-            << ", norm2 in/out " << std::setw(3) << scvf.pairData(1).normalPair.first << "/" << std::setw(3) << scvf.pairData(1).normalPair.second
-            << ", par1 " << std::setw(3)  << std::setw(3) << scvf.pairData(0).outerParallelFaceDofIdx
-            << ", par2 " << std::setw(3)  << std::setw(3) << scvf.pairData(1).outerParallelFaceDofIdx
-            << ", normDist1 " << std::setw(3) << scvf.pairData(0).normalDistance
-            << ", normDist2 " << std::setw(3) << scvf.pairData(1).normalDistance
-            << ", parDist1 " << std::setw(3) << scvf.pairData(0).parallelDistance
-            << ", parDist2 " << std::setw(3) << scvf.pairData(1).parallelDistance;
-            if (scvf.boundary()) std::cout << " (on boundary)";
-            std::cout << std::endl;
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                std::cout <<  std::fixed << std::left << std::setprecision(2)
+                << "Center pos "<< scvf.ipGlobal()
+                << " | Face Idx "  << std::setw(3)  << scvf.index();
+                if (scvf.boundary())
+                {std::cout << " (on boundary)" << "\n";}
+                else
+                {std::cout << "\n";}
+                std::cout <<  std::fixed << std::left << std::setprecision(2)
+                << "\n On Axis Dof Index: \n"
+                << " | Forward dofIdx :        " << std::setw(3) << scvf.dofIndexForwardFace()
+                << " | Self dofIdx :           " << std::setw(3) << scvf.dofIndex()
+                << " | Opposite dofIdx :       " << std::setw(3) << scvf.dofIndexOpposingFace()
+                << " | Previous dofIdx :       " << std::setw(3) << scvf.dofIndexPreviousFace() << "\n"
+                << " Normal Dof Index: \n"
+                << " | normal inner dofIdx 0 : " << std::setw(3) << scvf.pairData(0).normalPair.first
+                << " | normal outer dofIdx 0 : " << std::setw(3) << scvf.pairData(0).normalPair.second << "\n"
+                << " | normal inner dofIdx 1 : " << std::setw(3) << scvf.pairData(1).normalPair.first
+                << " | normal outer dofIdx 1 : " << std::setw(3) << scvf.pairData(1).normalPair.second << "\n"
+                << " | normal inner dofIdx 2 : " << std::setw(3) << scvf.pairData(2).normalPair.first
+                << " | normal outer dofIdx 2 : " << std::setw(3) << scvf.pairData(2).normalPair.second << "\n"
+                << " | normal inner dofIdx 3 : " << std::setw(3) << scvf.pairData(3).normalPair.first
+                << " | normal outer dofIdx 3 : " << std::setw(3) << scvf.pairData(3).normalPair.second << "\n"
+                << " Parallel Dof Index: \n"
+                << " | first Parallel 0 :      " << std::setw(3)  << std::setw(3) << scvf.pairData(0).firstParallelFaceDofIdx
+                << " | second Parallel 0 :     " << std::setw(3)  << std::setw(3) << scvf.pairData(0).secondParallelFaceDofIdx << "\n"
+                << " | first Parallel 1 :      " << std::setw(3)  << std::setw(3) << scvf.pairData(1).firstParallelFaceDofIdx
+                << " | second Parallel 1 :     " << std::setw(3)  << std::setw(3) << scvf.pairData(1).secondParallelFaceDofIdx << "\n"
+                << " | first Parallel 2 :      " << std::setw(3)  << std::setw(3) << scvf.pairData(2).firstParallelFaceDofIdx
+                << " | second Parallel 2 :     " << std::setw(3)  << std::setw(3) << scvf.pairData(2).secondParallelFaceDofIdx << "\n"
+                << " | first Parallel 3 :      " << std::setw(3)  << std::setw(3) << scvf.pairData(3).firstParallelFaceDofIdx
+                << " | second Parallel 3 :     " << std::setw(3)  << std::setw(3) << scvf.pairData(3).secondParallelFaceDofIdx << "\n"
+                << " \n Distances: \n"
+                << " | opposite To Previous Dist :    " << std::setw(3) << scvf.oppositeToPreviousDistance()
+                << " | self To Opposite Dist :        " << std::setw(3) << scvf.selfToOppositeDistance()
+                << " | forward To Self Dist :         " << std::setw(3) << scvf.forwardToSelfDistance() << "\n"
+                << " | CC Previous to Self Dist :     " << std::setw(3) << scvf.cellCenteredPreviousToSelfDistance()
+                << " | CC Self to Forward Distance :  " << std::setw(3) << scvf.cellCenteredSelfToForwardDistance() << "\n"
+                << " | CC Self to First Parallel Distance 0:  " << std::setw(3) << scvf.cellCenteredSelfToFirstParallelDistance(0)
+                << " | CC First to Second Parallel Distance 0:  " << std::setw(3) << scvf.cellCenteredFirsttoSecondParallelDistance(0) << "\n"
+                << " | CC Self to First Parallel Distance 1:  " << std::setw(3) << scvf.cellCenteredSelfToFirstParallelDistance(1)
+                << " | CC First to Second Parallel Distance 1:  " << std::setw(3) << scvf.cellCenteredFirsttoSecondParallelDistance(1) << "\n"
+                << " | CC Self to First Parallel Distance 2:  " << std::setw(3) << scvf.cellCenteredSelfToFirstParallelDistance(2)
+                << " | CC First to Second Parallel Distance 2:  " << std::setw(3) << scvf.cellCenteredFirsttoSecondParallelDistance(2) << "\n"
+                << " | CC Self to First Parallel Distance 3:  " << std::setw(3) << scvf.cellCenteredSelfToFirstParallelDistance(3)
+                << " | CC First to Second Parallel Distance 3:  " << std::setw(3) << scvf.cellCenteredFirsttoSecondParallelDistance(3) << "\n";
+                std::cout << std::endl;
+                std::cout << std::endl;
+            }
         }
     }
 }

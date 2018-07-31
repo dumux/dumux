@@ -295,11 +295,11 @@ public:
 
             // Check if there is face/element parallel to our face of interest where the dof lives on. If there is no parallel neighbor,
             // we are on a boundary where we have to check for boundary conditions.
-            if(!scvf.hasParallelNeighbor(localSubFaceIdx))
+            if(!scvf.hasFirstParallelNeighbor(localSubFaceIdx))
             {
                 // Construct a temporary scvf which corresponds to the staggered sub face, featuring the location
                 // the sub faces's center.
-                auto localSubFaceCenter = scvf.pairData(localSubFaceIdx).virtualOuterParallelFaceDofPos - normalFace.center();
+                auto localSubFaceCenter = scvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos - normalFace.center();
                 localSubFaceCenter *= 0.5;
                 localSubFaceCenter += normalFace.center();
                 const auto localSubFace = makeGhostFace_(normalFace, localSubFaceCenter);
@@ -395,8 +395,8 @@ private:
             return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
         };
 
-        const Scalar velocityParallel = scvf.hasParallelNeighbor(localSubFaceIdx)
-                                        ? faceVars.velocityParallel(localSubFaceIdx)
+        const Scalar velocityFirstParallel = scvf.hasFirstParallelNeighbor(localSubFaceIdx)
+                                        ? faceVars.velocityFirstParallel(localSubFaceIdx)
                                         : getParallelVelocityFromBoundary();
 
         // Get the volume variables of the own and the neighboring element
@@ -417,8 +417,8 @@ private:
 
         // Get the momentum that is advectively transported and account for the flow direction.
         const Scalar momentum = ownElementIsUpstream ?
-                                computeMomentum(insideVolVars, outsideVolVars, velocitySelf, velocityParallel)
-                              : computeMomentum(outsideVolVars, insideVolVars, velocityParallel, velocitySelf);
+                                computeMomentum(insideVolVars, outsideVolVars, velocitySelf, velocityFirstParallel)
+                              : computeMomentum(outsideVolVars, insideVolVars, velocityFirstParallel, velocitySelf);
 
         // Account for the orientation of the staggered normal face's outer normal vector
         // and its area (0.5 of the coinciding scfv).
@@ -511,14 +511,14 @@ private:
             return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
         };
 
-        const Scalar outerParallelVelocity = scvf.hasParallelNeighbor(localSubFaceIdx)
-                                             ? faceVars.velocityParallel(localSubFaceIdx)
+        const Scalar velocityFirstParallel = scvf.hasFirstParallelNeighbor(localSubFaceIdx)
+                                             ? faceVars.velocityFirstParallel(localSubFaceIdx)
                                              : getParallelVelocityFromBoundary();
 
         // The velocity gradient already accounts for the orientation
         // of the staggered face's outer normal vector.
-        const Scalar parallelGradient = (outerParallelVelocity - innerParallelVelocity)
-                                        / scvf.pairData(localSubFaceIdx).parallelDistance;
+        const Scalar parallelGradient = (velocityFirstParallel - innerParallelVelocity)
+                                        / scvf.cellCenteredSelfToFirstParallelDistance(localSubFaceIdx);
 
         normalDiffusiveFlux -= muAvg * parallelGradient;
 
@@ -584,7 +584,7 @@ private:
     //! helper function to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
     SubControlVolumeFace makeParallelGhostFace_(const SubControlVolumeFace& ownScvf, const int localSubFaceIdx) const
     {
-        return makeGhostFace_(ownScvf, ownScvf.pairData(localSubFaceIdx).virtualOuterParallelFaceDofPos);
+        return makeGhostFace_(ownScvf, ownScvf.pairData(localSubFaceIdx).virtualFirstParallelFaceDofPos);
     };
 
     //! helper function to get the averaged extrusion factor for a face

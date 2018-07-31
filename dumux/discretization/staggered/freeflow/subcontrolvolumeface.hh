@@ -71,8 +71,7 @@ public:
                                           const typename Intersection::Geometry& isGeometry,
                                           GridIndexType scvfIndex,
                                           const std::vector<GridIndexType>& scvIndices,
-                                          const GeometryHelper& geometryHelper
-                           )
+                                          const GeometryHelper& geometryHelper)
     : ParentType(),
       geomType_(isGeometry.type()),
       area_(isGeometry.volume()),
@@ -81,10 +80,24 @@ public:
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
       boundary_(is.boundary()),
+
+      // Degree of Freedom index for velocities (4)
+      dofIdxForwardFace_(geometryHelper.dofIndexForwardFace()),
       dofIdx_(geometryHelper.dofIndex()),
       dofIdxOpposingFace_(geometryHelper.dofIndexOpposingFace()),
+      dofIdxPreviousFace_(geometryHelper.dofIndexPreviousFace()),
+
+      // Distance between each sub control volume interface where the above velocities are saved (3)
+      oppositeToPreviousDistance_(geometryHelper.oppositeToPreviousDistance()),
       selfToOppositeDistance_(geometryHelper.selfToOppositeDistance()),
+      forwardToSelfDistance_(geometryHelper.forwardToSelfDistance()),
+
+      // Cell centered distance between cells ()
+      cellCenteredPreviousToSelfDistance_((geometryHelper.oppositeToPreviousDistance()/2.0) + (geometryHelper.selfToOppositeDistance()/2.0) ),
+      cellCenteredSelftoForwardDistance_((geometryHelper.selfToOppositeDistance()/2.0) + (geometryHelper.forwardToSelfDistance()/2.0) ),
+
       pairData_(geometryHelper.pairData()),
+      numPairs_(numPairs),
       localFaceIdx_(geometryHelper.localFaceIndex()),
       dirIdx_(geometryHelper.directionIndex()),
       outerNormalSign_(sign(unitOuterNormal_[directionIndex()])),
@@ -179,6 +192,12 @@ public:
         return Geometry(geomType_, corners_);
     }
 
+    //! The global index of the dof living on the forward face
+    const int dofIndexForwardFace() const
+    {
+        return dofIdxForwardFace_;
+    }
+
     //! The global index of the dof living on this face
     GridIndexType dofIndex() const
     {
@@ -189,6 +208,12 @@ public:
     GridIndexType dofIndexOpposingFace() const
     {
         return dofIdxOpposingFace_;
+    }
+
+    //! The global index of the dof living on the previous face
+    const int dofIndexPreviousFace() const
+    {
+        return dofIdxPreviousFace_;
     }
 
     //! The local index of this sub control volume face
@@ -203,10 +228,42 @@ public:
         return dirIdx_;
     }
 
-    //! The distance between the position of the dof itself and the one of the oppsing dof
+    //! The distance between the opposing dof and the previous dof
+    Scalar oppositeToPreviousDistance() const
+    {
+        return oppositeToPreviousDistance_;
+    }
+
+    //! The distance between the position of the dof itself and the opposing dof
     Scalar selfToOppositeDistance() const
     {
         return selfToOppositeDistance_;
+    }
+
+    //! The distance between the position of the forward dof and the dof itself
+    Scalar forwardToSelfDistance() const
+    {
+        return forwardToSelfDistance_;
+    }
+
+    Scalar cellCenteredPreviousToSelfDistance() const
+    {
+        return cellCenteredPreviousToSelfDistance_;
+    }
+
+    Scalar cellCenteredSelfToForwardDistance() const
+    {
+        return cellCenteredSelftoForwardDistance_;
+    }
+
+    Scalar cellCenteredSelfToFirstParallelDistance(const int localSubFaceIdx) const
+    {
+        return (pairData_[localSubFaceIdx].selfParallelElementDistance/2 + pairData_[localSubFaceIdx].firstParallelElementDistance/2);
+    }
+
+    Scalar cellCenteredFirsttoSecondParallelDistance(const int localSubFaceIdx) const
+    {
+        return (pairData_[localSubFaceIdx].firstParallelElementDistance/2 + pairData_[localSubFaceIdx].secondParallelElementDistance/2);
     }
 
     //! Returns whether the unitNormal of the face points in positive coordinate direction
@@ -237,18 +294,81 @@ public:
     {
         return isGhostFace_;
     }
-
-    bool hasParallelNeighbor(const int localFaceIdx) const
+    bool hasFirstParallelNeighbor(const int localSubFaceIdx) const
     {
-        return pairData_[localFaceIdx].outerParallelFaceDofIdx >= 0;
+        return !(pairData_[localSubFaceIdx].firstParallelFaceDofIdx < 0);
     }
 
-    bool hasFrontalNeighbor(const int localFaceIdx) const
+    bool hasSecondParallelNeighbor(const int localSubFaceIdx) const
     {
-        return pairData_[localFaceIdx].normalPair.second >= 0;
+        return !(pairData_[localSubFaceIdx].secondParallelFaceDofIdx < 0);
+
+    }
+
+    bool hasOuterNormal(const int localSubFaceIdx) const
+    {
+        return !(pairData_[localSubFaceIdx].normalPair.second < 0);
+    }
+
+    bool hasPreviousNeighbor() const
+    {
+      return  (dofIdxPreviousFace_ >= 0);
+    }
+
+    bool hasFrontalNeighbor() const
+    {
+        return (dofIdxForwardFace_ >= 0);
+    }
+
+    bool canSecondOrder() const
+    {
+        if( hasPreviousNeighbor() && hasFrontalNeighbor() && hasFirstParallelNeighbor() && hasSecondParallelNeighbor() )
+            return 1;
+        else
+            return 0;
     }
 
 private:
+
+    bool hasOuterNormal() const
+    {
+        std::vector<Scalar> outerNormalDofIdxs;
+        for (int i = 0; i < pairData().size() ; i++)
+        {
+            outerNormalDofIdxs.push_back(pairData_[i].normalPair.second);
+        }
+        if (std::any_of(outerNormalDofIdxs.begin(), outerNormalDofIdxs.end(), [](int j){return j < 0;}))
+            return 0;
+        else
+            return 1;
+    }
+
+    bool hasFirstParallelNeighbor() const
+    {
+        std::vector<Scalar> firstParallelDofIdxs;
+        for (int i = 0; i < pairData().size() ; i++)
+        {
+            firstParallelDofIdxs.push_back(pairData_[i].firstParallelFaceDofIdx);
+        }
+        if (std::any_of(firstParallelDofIdxs.begin(), firstParallelDofIdxs.end(), [](int j){return j < 0;}))
+            return 0;
+        else
+            return 1;
+    }
+
+    bool hasSecondParallelNeighbor() const
+    {
+        std::vector<Scalar> secondParallelDofIdxs;
+        for (int i = 0; i < pairData().size() ; i++)
+        {
+            secondParallelDofIdxs.push_back(pairData_[i].secondParallelFaceDofIdx);
+        }
+        if (std::any_of(secondParallelDofIdxs.begin(), secondParallelDofIdxs.end(), [](int j){return j < 0;}))
+          return 0;
+        else
+          return 1;
+    }
+
     Dune::GeometryType geomType_;
     std::vector<GlobalPosition> corners_;
     Scalar area_;
@@ -258,11 +378,21 @@ private:
     std::vector<GridIndexType> scvIndices_;
     bool boundary_;
 
+    int dofIdxForwardFace_;
     int dofIdx_;
     int dofIdxOpposingFace_;
+    int dofIdxPreviousFace_;
+
+    Scalar forwardToSelfDistance_;
     Scalar selfToOppositeDistance_;
+    Scalar oppositeToPreviousDistance_;
+    Scalar cellCenteredPreviousToSelfDistance_;
+    Scalar cellCenteredSelftoForwardDistance_;
+
     std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_;
+
     int localFaceIdx_;
+    int numPairs_;
     unsigned int dirIdx_;
     int outerNormalSign_;
     bool isGhostFace_;

@@ -73,6 +73,14 @@ public:
         velocitySelf_ = faceSol[scvf.dofIndex()];
         velocityOpposite_ = faceSol[scvf.dofIndexOpposingFace()];
 
+        // treat the velocity forward of the self face
+        if(scvf.hasFrontalNeighbor())
+            velocityForward_ = faceSol[scvf.dofIndexForwardFace()];
+
+        // treat the velocity previous to the opposite face
+        if(scvf.hasPreviousNeighbor())
+            velocityPrevious_ = faceSol[scvf.dofIndexPreviousFace()];
+
         // handle all sub faces
         for(int i = 0; i < scvf.pairData().size(); ++i)
         {
@@ -81,12 +89,16 @@ public:
             // treat the velocities normal to the face
             velocityNormalInside_[i] = faceSol[subFaceData.normalPair.first];
 
-            if(scvf.hasFrontalNeighbor(i))
+            if(scvf.hasOuterNormal(i))
                 velocityNormalOutside_[i] = faceSol[subFaceData.normalPair.second];
 
             // treat the velocity parallel to the face
-            if(scvf.hasParallelNeighbor(i))
-                velocityParallel_[i] = faceSol[subFaceData.outerParallelFaceDofIdx];
+            if(scvf.hasFirstParallelNeighbor(i))
+                velocityFirstParallel_[i] = faceSol[subFaceData.firstParallelFaceDofIdx];
+
+            // treat the velocity parallel to the parallel face
+            if(scvf.hasSecondParallelNeighbor(i))
+                velocitySecondParallel_[i] = faceSol[subFaceData.secondParallelFaceDofIdx];
         }
     }
 
@@ -107,13 +119,43 @@ public:
     }
 
     /*!
+    * \brief Returns the velocity at the previous face
+    *
+    * \param localSubFaceIdx The local index of the subface
+    */
+    Scalar velocityPrevious(const int localSubFaceIdx) const
+    {
+        return velocityPrevious_[localSubFaceIdx];
+    }
+
+    /*!
+    * \brief Returns the velocity at the forward face
+    *
+    * \param localSubFaceIdx The local index of the subface
+    */
+    Scalar velocityForward(const int localSubFaceIdx) const
+    {
+        return velocityForward_[localSubFaceIdx];
+    }
+
+    /*!
     * \brief Returns the velocity at the parallel face
     *
     * \param localSubFaceIdx The local index of the subface
     */
-    Scalar velocityParallel(const int localSubFaceIdx) const
+    Scalar velocityFirstParallel(const int localSubFaceIdx) const
     {
-        return velocityParallel_[localSubFaceIdx];
+        return velocityFirstParallel_[localSubFaceIdx];
+    }
+
+    /*!
+    * \brief Returns the velocity at the next parallel face
+    *
+    * \param localSubFaceIdx The local index of the subface
+    */
+    Scalar velocitySecondParallel(const int localSubFaceIdx) const
+    {
+        return velocitySecondParallel_[localSubFaceIdx];
     }
 
     /*!
@@ -138,9 +180,12 @@ public:
 
 private:
 
+    Scalar velocityForward_;
     Scalar velocitySelf_;
     Scalar velocityOpposite_;
-    std::array<Scalar, numPairs> velocityParallel_;
+    Scalar velocityPrevious_;
+    std::array<Scalar, numPairs> velocityFirstParallel_;
+    std::array<Scalar, numPairs> velocitySecondParallel_;
     std::array<Scalar, numPairs> velocityNormalInside_;
     std::array<Scalar, numPairs> velocityNormalOutside_;
 };
