@@ -88,18 +88,7 @@ public:
     TimeLoop(Scalar startTime, Scalar dt, Scalar tEnd, bool verbose = true)
     : timer_(false)
     {
-        verbose_ =
-            verbose &&
-            Dune::MPIHelper::getCollectiveCommunication().rank() == 0;
-
-        time_ = startTime;
-        endTime_ = tEnd;
-
-        timeStepSize_ = dt;
-        previousTimeStepSize_ = timeStepSize_;
-        maxTimeStepSize_ = std::numeric_limits<Scalar>::max();
-        timeStepIdx_ = 0;
-        finished_ = false;
+        reset(startTime, dt, tEnd, verbose);
     }
 
     /*!
@@ -113,7 +102,44 @@ public:
     void start()
     {
         timer_.start();
-        cpuTime_ = 0.0;
+    }
+
+    /*!
+     * \brief Tells the time loop to stop tracking the time.
+     * \return the wall clock time (CPU time) spent until now
+     */
+    double stop()
+    {
+        return timer_.stop();
+    }
+
+    /*!
+     * \brief Reset the timer
+     */
+    void resetTimer()
+    {
+        timer_.reset();
+    }
+
+    /*!
+     * \brief Reset the time loop
+     */
+    void reset(Scalar startTime, Scalar dt, Scalar tEnd, bool verbose = true)
+    {
+        verbose_ =
+            verbose &&
+            Dune::MPIHelper::getCollectiveCommunication().rank() == 0;
+
+        time_ = startTime;
+        endTime_ = tEnd;
+
+        timeStepSize_ = dt;
+        maxTimeStepSize_ = std::numeric_limits<Scalar>::max();
+        timeStepIdx_ = 0;
+        finished_ = false;
+
+        timer_.stop();
+        timer_.reset();
     }
 
     /*!
