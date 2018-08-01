@@ -192,10 +192,10 @@ public:
     { endTime_ = t; }
 
     /*!
-     * \brief Returns the current wall clock time (cpu time).
+     * \brief Returns the current wall clock time (cpu time) spend in this time loop
      */
     double wallClockTime() const
-    {  return cpuTime_; }
+    { return timer_.elapsed(); }
 
     /*!
      * \brief Set the current time step size to a given value.
