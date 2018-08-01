@@ -31,6 +31,7 @@
 #include <dune/common/timer.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/exceptions.hh>
 
 #include <dumux/common/parameters.hh>
 
@@ -134,9 +135,13 @@ public:
         endTime_ = tEnd;
 
         timeStepSize_ = dt;
+        lastTimeStepSize_ = 0.0;
         maxTimeStepSize_ = std::numeric_limits<Scalar>::max();
+        userSetMaxTimeStepSize_ = maxTimeStepSize_;
         timeStepIdx_ = 0;
         finished_ = false;
+        timeAfterLastTimeStep_ = 0.0;
+        timeStepWallClockTime_ = 0.0;
 
         timer_.stop();
         timer_.reset();
@@ -149,6 +154,12 @@ public:
     {
         timeStepIdx_++;
         time_ += timeStepSize_;
+        lastTimeStepSize_ = timeStepSize_;
+
+        // compute how long the last time step took
+        const auto cpuTime = wallClockTime();
+        timeStepWallClockTime_ = cpuTime - timeAfterLastTimeStep_;
+        timeAfterLastTimeStep_ = cpuTime;
     }
 
     /*!
@@ -189,7 +200,11 @@ public:
      * \param t The time \f$\mathrm{[s]}\f$ at which the simulation is finished
      */
     void setEndTime(Scalar t)
-    { endTime_ = t; }
+    {
+        endTime_ = t;
+        if (verbose_)
+            std::cout << "Set new end time to t = " << t << " seconds." << std::endl;
+    }
 
     /*!
      * \brief Returns the current wall clock time (cpu time) spend in this time loop
@@ -223,8 +238,9 @@ public:
     void setMaxTimeStepSize(Scalar maxDt)
     {
         using std::min;
-        maxTimeStepSize_ = maxDt;
-        timeStepSize_ = min(timeStepSize_, maxDt);
+        userSetMaxTimeStepSize_ = maxDt;
+        computeMaxTimeStepSize_();
+        timeStepSize_ = min(timeStepSize_, maxTimeStepSize_);
     }
 
     /*!
@@ -280,27 +296,28 @@ public:
      *       and other possible check points
      */
     Scalar maxTimeStepSize() const
-    { return maxTimeStepSize_; }
+    {
+        using std::min;
+        return min(userSetMaxTimeStepSize_, maxTimeStepSize_);
+    }
 
     /*!
      * \brief State info on cpu time.
+     * \note Always call this after TimeLoop::advanceTimeStep()
      */
-    void reportTimeStep()
+    void reportTimeStep() const
     {
-        auto timeStepCpuTime = timer_.elapsed();
-        cpuTime_ += timeStepCpuTime;
+        const auto cpuTime = wallClockTime();
 
         if (verbose_)
         {
             std::cout << "Time step " << timeStepIdx_ << " done in "
-                      << timeStepCpuTime << " seconds. "
-                      << "Wall time: " << cpuTime_
+                      << timeStepWallClockTime_ << " seconds. "
+                      << "Wall clock time: " << cpuTime
                       << ", time: " << time_
-                      << ", time step size: " << timeStepSize_
+                      << ", time step size: " << lastTimeStepSize_
                       << std::endl;
         }
-
-        timer_.reset();
     }
 
     /*!
@@ -309,21 +326,20 @@ public:
     template< class Communicator = Dune::CollectiveCommunication<typename Dune::MPIHelper::MPICommunicator> >
     void finalize(const Communicator& comm = Dune::MPIHelper::getCollectiveCommunication())
     {
-        timer_.stop();
-        cpuTime_ += timer_.elapsed();
+        auto cpuTime = timer_.stop();
 
         if (verbose_)
         {
-            std::cout << "Simulation took " << cpuTime_ << " seconds on "
+            std::cout << "Simulation took " << cpuTime << " seconds on "
                       << comm.size() << " processes.\n";
         }
 
         if (comm.size() > 1)
-            cpuTime_ = comm.sum(cpuTime_);
+            cpuTime = comm.sum(cpuTime);
 
         if (verbose_)
         {
-            std::cout << "The cumulative CPU time was " << cpuTime_ << " seconds.\n";
+            std::cout << "The cumulative CPU time was " << cpuTime << " seconds.\n";
         }
     }
 
@@ -347,17 +363,17 @@ private:
 
         using std::max;
         using std::min;
-
-        maxTimeStepSize_ = min(maxTimeStepSize_, max<Scalar>(0.0, endTime_ - time_));
+        maxTimeStepSize_ = min(userSetMaxTimeStepSize_, max<Scalar>(0.0, endTime_ - time_));
     }
 
     Dune::Timer timer_;
     Scalar time_;
     Scalar endTime_;
-    double cpuTime_;
 
     Scalar timeStepSize_;
-    Scalar maxTimeStepSize_;
+    Scalar lastTimeStepSize_;
+    Scalar maxTimeStepSize_, userSetMaxTimeStepSize_;
+    Scalar timeAfterLastTimeStep_, timeStepWallClockTime_;
     int timeStepIdx_;
     bool finished_;
     bool verbose_;
@@ -405,6 +421,9 @@ public:
         {
             isCheckPoint_ = false;
         }
+
+        // make sure to respect future check check points
+        this->setTimeStepSize(this->timeStepSize());
     }
 
     /*!
@@ -428,16 +447,46 @@ public:
      * \brief Set a periodic check point
      * \note You can query if we are at a time check point with isCheckPoint()
      * \param interval Set a periodic checkout every [interal] seconds
+     * \param offset time from which the periodic check points are supposed to start (simulation time)
+     *        the first checkpoint will be at time = offset.
+     * \note If offset is in the past the first checkpoint will be at the next
+     *       periodic heck point greater or equal than time
+     * \note This also updates the time step size and potentially reduces the time step size to meet the next check point
      */
-    void setPeriodicCheckPoint(Scalar interval)
+    void setPeriodicCheckPoint(Scalar interval, Scalar offset = 0.0)
     {
+        using std::signbit;
+        if (signbit(interval))
+            DUNE_THROW(Dune::InvalidStateException, "Interval has to be positive!");
+
         periodicCheckPoints_ = true;
         deltaPeriodicCheckPoint_ = interval;
+        lastPeriodicCheckPoint_ = offset;
+        while (lastPeriodicCheckPoint_ + interval - this->time() < 1e-14*interval)
+            lastPeriodicCheckPoint_ += interval;
+
         if (this->verbose())
-            std::cout << "Enabled periodic check points every " << interval << " seconds." << std::endl;
+            std::cout << "Enabled periodic check points every " << interval
+                      << " seconds with the next check point at " << lastPeriodicCheckPoint_ + interval << " seconds." << std::endl;
 
         // make sure we respect this check point on the next time step
         setTimeStepSize(this->timeStepSize());
+
+        // check if the current time point is a check point
+        if (Dune::FloatCmp::eq(this->time(), lastPeriodicCheckPoint_, 1e-8*interval))
+            isCheckPoint_ = true;
+    }
+
+    //! disable periodic check points
+    void disablePeriodicCheckPoints()
+    { periodicCheckPoints_ = false; }
+
+    //! remove all check points
+    void removeAllCheckPoints()
+    {
+        periodicCheckPoints_ = false;
+        while (!checkPoints_.empty())
+            checkPoints_.pop();
     }
 
     //! Whether now is a time checkpoint
@@ -488,19 +537,28 @@ private:
     //! Adds a check point to the queue
     void setCheckPoint_(Scalar t)
     {
+        if (t < this->time())
+        {
+            if (this->verbose())
+                std::cerr << "Couldn't insert checkpoint at t = " << t
+                          << " because that's in the past! (current simulation time is " << this->time() << ")" << std::endl;
+            return;
+        }
+
         if (!checkPoints_.empty())
         {
             if (t < checkPoints_.back())
             {
                 if (this->verbose())
-                    std::cerr << "--- Couldn't insert checkpoint as it is earlier than the last check point in the queue.\n"
-                              << "--- Checkpoints can only be inserted in ascending order." << std::endl;
+                    std::cerr << "Couldn't insert checkpoint as it is earlier than the last check point in the queue.\n"
+                              << "Checkpoints can only be inserted in ascending order." << std::endl;
+                return;
             }
-            else
-                checkPoints_.push(t);
         }
-        else
-            checkPoints_.push(t);
+
+        checkPoints_.push(t);
+        if (this->verbose())
+            std::cout << "Set check point at t = " << t << " seconds." << std::endl;
     }
 
      /*!
