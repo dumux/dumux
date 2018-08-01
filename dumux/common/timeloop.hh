@@ -259,14 +259,20 @@ public:
      * if the end time is reached.
      */
     bool finished() const
-    { return finished_ || time_ >= endTime_; }
+    {
+        using std::abs;
+        return finished_ || abs(time_-endTime_)/endTime_ < 1e-14;
+    }
 
     /*!
      * \brief Returns true if the simulation is finished after the
      *        time level is incremented by the current time step size.
      */
     bool willBeFinished() const
-    { return finished_ || time_ + timeStepSize_ >= endTime_; }
+    {
+        using std::abs;
+        return finished_ || abs(time_+timeStepSize_-endTime_)/endTime_ < 1e-14;
+    }
 
     /*!
      * \brief The current maximum time step size
