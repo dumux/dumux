@@ -221,7 +221,11 @@ public:
      * \param maxDt The new value for the maximum time step size \f$\mathrm{[s]}\f$
      */
     void setMaxTimeStepSize(Scalar maxDt)
-    { maxTimeStepSize_ = maxDt; }
+    {
+        using std::min;
+        maxTimeStepSize_ = maxDt;
+        timeStepSize_ = min(timeStepSize_, maxDt);
+    }
 
     /*!
      * \brief Returns the suggested time step length \f$\mathrm{[s]}\f$ so that we
@@ -333,7 +337,6 @@ public:
 
 private:
     //! Computes the maximum timestep size respecting end time
-    //! and possibly episodes (TODO)
     void computeMaxTimeStepSize_()
     {
         if (finished())
@@ -345,7 +348,6 @@ private:
         using std::max;
         using std::min;
 
-        // TODO check for episodes if there is an episode manager
         maxTimeStepSize_ = min(maxTimeStepSize_, max<Scalar>(0.0, endTime_ - time_));
     }
 
