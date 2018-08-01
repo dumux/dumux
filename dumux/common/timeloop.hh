@@ -236,12 +236,6 @@ public:
     { return timeStepSize_; }
 
     /*!
-     * \brief Returns the size of the previous time step \f$\mathrm{[s]}\f$.
-     */
-    Scalar previousTimeStepSize() const
-    { return previousTimeStepSize_; }
-
-    /*!
      * \brief Returns number of time steps which have been
      *        executed since the beginning of the simulation.
      */
@@ -357,7 +351,6 @@ private:
     double cpuTime_;
 
     Scalar timeStepSize_;
-    Scalar previousTimeStepSize_;
     Scalar maxTimeStepSize_;
     int timeStepIdx_;
     bool finished_;
