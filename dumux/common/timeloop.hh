@@ -219,7 +219,7 @@ public:
      * episode, the timeStep() method will take care that the step
      * size won't exceed the episode or the end of the simulation,
      * though.
-     * \note Always call this after TimeLoop::advanceTimeStep()
+     * \note Always call this after TimeLoop::advanceTimeStep() and TimeLoop::reportTimeStep()
      *
      * \param dt The new value for the time step size \f$\mathrm{[s]}\f$
      */
@@ -234,6 +234,7 @@ public:
      * \brief Set the maximum time step size to a given value.
      *
      * \param maxDt The new value for the maximum time step size \f$\mathrm{[s]}\f$
+     * \note This also updates the time step size
      */
     void setMaxTimeStepSize(Scalar maxDt)
     {
@@ -489,8 +490,10 @@ public:
             checkPoints_.pop();
     }
 
-    //! Whether now is a time checkpoint
-    //! has to be called after TimeLoop::advanceTimeStep()
+    /*!
+     * \brief Whether now is a time checkpoint
+     * \note has to be called after TimeLoop::advanceTimeStep()
+     */
     bool isCheckPoint() const
     { return isCheckPoint_; }
 
@@ -498,6 +501,7 @@ public:
      * \brief add a checkpoint to the queue
      * \note checkpoints have to be provided in ascending order
      * \param t the check point (in seconds)
+     * \note This also updates the time step size and potentially reduces the time step size to meet the next check point
      */
     void setCheckPoint(Scalar t)
     {
@@ -512,6 +516,7 @@ public:
      * \brief add checkpoints to the queue from a vector of time points
      * \note checkpoints have to be provided in ascending order
      * \param checkPoints the vector of check points
+     * \note This also updates the time step size and potentially reduces the time step size to meet the next check point
      */
     void setCheckPoint(const std::vector<Scalar>& checkPoints)
     { setCheckPoint(checkPoints.begin(), checkPoints.end()); }
@@ -521,6 +526,7 @@ public:
      * \note checkpoints have to be provided in ascending order
      * \param first iterator to the first element to be inserted
      * \param last iterator to the one-after-last element to be inserted
+     * \note This also updates the time step size and potentially reduces the time step size to meet the next check point
      */
     template<class ForwardIterator>
     void setCheckPoint(ForwardIterator first, ForwardIterator last)
