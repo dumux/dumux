@@ -398,7 +398,7 @@ public:
         Scalar xlCO2, xgCO2;
         Brine_CO2::calculateMoleFractions(temperature,
                                           pressure,
-                                          BrineRawComponent::salinity,
+                                          BrineRawComponent::constantSalinity,
                                           /*knowgasPhaseIdx=*/-1,
                                           xlCO2,
                                           xgH2O);
