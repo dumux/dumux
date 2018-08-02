@@ -447,11 +447,11 @@ public:
     /*!
      * \brief Set a periodic check point
      * \note You can query if we are at a time check point with isCheckPoint()
-     * \param interval Set a periodic checkout every [interal] seconds
+     * \param interval Set a periodic checkout every [interval] seconds
      * \param offset time from which the periodic check points are supposed to start (simulation time)
      *        the first checkpoint will be at time = offset.
-     * \note If offset is in the past the first checkpoint will be at the next
-     *       periodic heck point greater or equal than time
+     * \note If offset is in the past the first check point will be at the next
+     *       periodic check point greater or equal than time
      * \note This also updates the time step size and potentially reduces the time step size to meet the next check point
      */
     void setPeriodicCheckPoint(Scalar interval, Scalar offset = 0.0)

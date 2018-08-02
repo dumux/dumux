@@ -31,8 +31,8 @@ int main(int argc, char* argv[]) try
         if (std::abs(timeLoop.timeStepSize()-dt) > 1e-15)
             DUNE_THROW(Dune::InvalidStateException, "Wrong time step size!");
 
-        timeLoop.setMaxTimeStepSize(0.033333333333333);
-        if (std::abs(timeLoop.timeStepSize()-0.033333333333333) > 1e-15)
+        timeLoop.setMaxTimeStepSize(0.03333333333333333);
+        if (std::abs(timeLoop.timeStepSize()-0.03333333333333333) > 1e-15)
             DUNE_THROW(Dune::InvalidStateException, "Wrong time step size!");
 
         timeLoop.start(); // starts the timer
