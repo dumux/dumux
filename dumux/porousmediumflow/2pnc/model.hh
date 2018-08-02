@@ -100,11 +100,11 @@
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
 #include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
-#include <dumux/porousmediumflow/2p2c/indices.hh>
 
 #include "volumevariables.hh"
 #include "primaryvariableswitch.hh"
 #include "vtkoutputfields.hh"
+#include "indices.hh"
 
 namespace Dumux {
 
@@ -119,7 +119,7 @@ namespace Dumux {
 template<int nComp, bool useMol, bool setMoleFractionForFP, TwoPFormulation formulation, int repCompEqIdx = nComp>
 struct TwoPNCModelTraits
 {
-    using Indices = TwoPTwoCIndices;
+    using Indices = TwoPNCIndices;
 
     static constexpr int numEq() { return nComp; }
     static constexpr int numPhases() { return 2; }

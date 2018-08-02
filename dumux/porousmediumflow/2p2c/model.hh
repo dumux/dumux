@@ -94,38 +94,11 @@
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 
-#include "indices.hh"
-#include "volumevariables.hh"
-#include <dumux/porousmediumflow/2pnc/primaryvariableswitch.hh>
-#include <dumux/porousmediumflow/2pnc/vtkoutputfields.hh>
 #include <dumux/porousmediumflow/2pnc/model.hh>
 
+#include "volumevariables.hh"
+
 namespace Dumux {
-/*!
- * \ingroup TwoPTwoCModel
- * \brief Traits class for the two-phase two-component model.
- *
- * \tparam PV The type used for primary variables
- * \tparam FSY The fluid system type
- * \tparam FST The fluid state type
- * \tparam PT The type used for permeabilities
- * \tparam MT The model traits
- * \tparam useCS boolean to indicate if a constraint solver is to be used
- */
-template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT, bool useCS>
-struct TwoPTwoCVolumeVariablesTraits
-{
-    using PrimaryVariables = PV;
-    using FluidSystem = FSY;
-    using FluidState = FST;
-    using SolidSystem = SSY;
-    using SolidState = SST;
-    using PermeabilityType = PT;
-    using ModelTraits = MT;
-
-    static constexpr bool useConstraintSolver = useCS;
-};
-
 namespace Properties {
 
 //////////////////////////////////////////////////////////////////
@@ -137,23 +110,6 @@ NEW_TYPE_TAG(TwoPTwoCNI, INHERITS_FROM(TwoPTwoC));
 //////////////////////////////////////////////////////////////////
 // Property values
 //////////////////////////////////////////////////////////////////
-
-/*!
- * \brief Set the model traits property.
- */
-SET_PROP(TwoPTwoC, ModelTraits)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
-    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
-
-public:
-    using type = TwoPNCModelTraits<2, GET_PROP_VALUE(TypeTag, UseMoles), true, GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
-};
-
-//! The primary variable switch for the 2p2c model
-SET_TYPE_PROP(TwoPTwoC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);
 
 //! Use the 2p2c VolumeVariables
 SET_PROP(TwoPTwoC, VolumeVariables)
@@ -167,43 +123,45 @@ private:
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-    static constexpr bool useCS = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
+    static_assert(FSY::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p2c model!");
+    static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p2c model!");
 
-    using Traits = TwoPTwoCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT, useCS>;
+    static constexpr bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
+
+    using Traits = TwoPNCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
-    using type = TwoPTwoCVolumeVariables<Traits>;
+    using type = TwoPTwoCVolumeVariables<Traits, useConstraintSolver>;
 };
 
 //! Determines whether the constraint solver is used
 SET_BOOL_PROP(TwoPTwoC, UseConstraintSolver, true);
 
-//! Somerton is used as default model to compute the effective thermal heat conductivity
-SET_PROP(TwoPTwoCNI, ThermalConductivityModel)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = ThermalConductivitySomerton<Scalar>;
-};
-
-//////////////////////////////////////////////////////////////////
-// Property values for isothermal model required for the general non-isothermal model
-//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+// Properties for the non-isothermal 2p2c model (inherited from 2pnc)
+//////////////////////////////////////////////////////////////////////
 
 //! Set the non-isothermal model traits
 SET_PROP(TwoPTwoCNI, ModelTraits)
 {
 private:
+    //! we use the number of components specified by the fluid system here
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
-    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
-    using Traits = TwoPNCModelTraits< 2, GET_PROP_VALUE(TypeTag, UseMoles), true, GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p2c model!");
+    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p2c model!");
+    using IsothermalTraits = TwoPNCModelTraits<FluidSystem::numComponents,
+                                               GET_PROP_VALUE(TypeTag, UseMoles),
+                                               /*setMoleFractionsForFirstPhase=*/true,
+                                               GET_PROP_VALUE(TypeTag, Formulation),
+                                               GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 public:
-    using type = PorousMediumFlowNIModelTraits< Traits >;
+    using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
 //! Set non-isothermal output fields
 SET_TYPE_PROP(TwoPTwoCNI, VtkOutputFields, EnergyVtkOutputFields<TwoPNCVtkOutputFields>);
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_TYPE_PROP(TwoPTwoCNI, ThermalConductivityModel, ThermalConductivitySomerton<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 } // end namespace Properties
 } // end namespace Dumux
