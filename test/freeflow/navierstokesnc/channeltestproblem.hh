@@ -272,7 +272,7 @@ public:
                 auto ccDofIdx = scv.dofIndex();
 
                 auto elemVolVars = localView(gridVariables.curGridVolVars());
-                elemVolVars.bind(element, fvGeometry, sol);
+                elemVolVars.bindElement(element, fvGeometry, sol);
 
                 deltaP_[ccDofIdx] = elemVolVars[scv].pressure() - 1.1e5;
             }
