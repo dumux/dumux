@@ -70,7 +70,8 @@ class KOmegaProblem : public RANSProblem<TypeTag>
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    KOmegaProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry) : ParentType(fvGridGeometry)
+    KOmegaProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup)
     {
         useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(), "RANS.UseStoredEddyViscosity", false);
     }
