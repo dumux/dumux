@@ -406,8 +406,8 @@ public:
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
         if (!this->assembler().isStationaryProblem())
         {
-            this->prevElemVolVars().bindElement(element, fvGeometry, this->assembler().prevSol()[domainId]);
-            this->prevElemFaceVars().bindElement(element, fvGeometry, this->assembler().prevSol()[domainId]);
+            this->prevElemVolVars().bindElement(element, fvGeometry, this->assembler().prevSol());
+            this->prevElemFaceVars().bindElement(element, fvGeometry, this->assembler().prevSol());
         }
     }
 
