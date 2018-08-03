@@ -47,6 +47,16 @@ dune_add_test(NAME test_stokes2c_advection
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_advection-00009.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2c test_stokes2c_advection.input")
 
+dune_add_test(NAME test_stokes2c_advection_no_caching
+              SOURCES test_channel.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMPILE_DEFINITIONS ENABLECACHING=0
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-advection.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_advection-00009.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2c_advection_no_caching test_stokes2c_advection.input")
+
 add_executable(test_stokes2cni EXCLUDE_FROM_ALL test_channel.cc)
 target_compile_definitions(test_stokes2cni PUBLIC "NONISOTHERMAL=1")
 

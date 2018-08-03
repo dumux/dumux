@@ -24,6 +24,10 @@
 #ifndef DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
 #define DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
 
+#ifndef ENABLECACHING
+#define ENABLECACHING 1
+#endif
+
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
@@ -64,10 +68,10 @@ SET_TYPE_PROP(ChannelNCTestTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ChannelNCTestTypeTag, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableFVGridGeometryCache, true);
-
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(ChannelNCTestTypeTag, EnableFVGridGeometryCache, ENABLECACHING);
+SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridFluxVariablesCache, ENABLECACHING);
+SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridVolumeVariablesCache, ENABLECACHING);
+SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridFaceVariablesCache, ENABLECACHING);
 
 // Use mole fraction formulation
 #if USE_MASS
