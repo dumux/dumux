@@ -72,13 +72,27 @@ public:
     const VolumeVariables& operator [](const std::size_t scvIdx) const
     { return gridVolVars().volVars(scvIdx); }
 
-    //! For compatibility reasons with the case of not storing the vol vars.
-    //! function to be called before assembling an element, preparing the vol vars within the stencil
-    template<class FVElementGeometry, class SolutionVector>
+    //! Binding of an element, prepares the volume variables within the element stencil
+    //! called by the local jacobian to prepare element assembly. Specialization callable with MultiTypeBlockVector.
+    template<class FVElementGeometry, class ...Args>
+    void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
+              const FVElementGeometry& fvGeometry,
+              const Dune::MultiTypeBlockVector<Args...>& sol)
+    {
+        // forward to the actual method
+        bind(element, fvGeometry, sol[FVElementGeometry::FVGridGeometry::cellCenterIdx()]);
+    }
+
+    //! Binding of an element, prepares the volume variables within the element stencil
+    //! called by the local jacobian to prepare element assembly
+    template<class FVElementGeometry, class SolutionVector, typename std::enable_if_t<!isMultiTypeBlockVector<SolutionVector>(), int> = 0>
     void bind(const typename FVElementGeometry::FVGridGeometry::GridView::template Codim<0>::Entity& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
-    {}
+    {
+        // the last paramater {} is needed for the PassKey pattern which restricts acces to the ElementVolVars class
+        gridVolVars().updateBoundary_(element, fvGeometry, sol, {});
+    }
 
     //! function to prepare the vol vars within the element
     template<class FVElementGeometry, class SolutionVector>
