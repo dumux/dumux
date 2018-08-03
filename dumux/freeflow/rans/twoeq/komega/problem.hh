@@ -52,7 +52,6 @@ class KOmegaProblem : public RANSProblem<TypeTag>
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -60,14 +59,8 @@ class KOmegaProblem : public RANSProblem<TypeTag>
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Grid = typename GridView::Grid;
-    enum {
-        dim = Grid::dimension,
-      };
-    using GlobalPosition = Dune::FieldVector<Scalar, dim>;
-    using DimVector = Dune::FieldVector<Scalar, dim>;
-    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using DimVector = typename Element::Geometry::GlobalCoordinate;
 
 public:
     KOmegaProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
@@ -127,7 +120,7 @@ public:
         {
             unsigned int elementIdx = this->fvGridGeometry().elementMapper().index(element);
 
-            for (unsigned int dimIdx = 0; dimIdx < dim; ++dimIdx)
+            for (unsigned int dimIdx = 0; dimIdx < DimVector::dimension; ++dimIdx)
             {
                 unsigned backwardNeighbor = ParentType::neighborIdx_[elementIdx][dimIdx][0];
                 unsigned forwardNeighbor = ParentType::neighborIdx_[elementIdx][dimIdx][1];
