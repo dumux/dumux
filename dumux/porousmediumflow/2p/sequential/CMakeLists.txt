@@ -1,5 +1,7 @@
 add_subdirectory(diffusion)
 add_subdirectory(impes)
+add_subdirectory(pressure)
+add_subdirectory(saturation)
 add_subdirectory(transport)
 
 install(FILES
