@@ -24,6 +24,7 @@
 #ifndef DUMUX_RANS_PROBLEM_HH
 #define DUMUX_RANS_PROBLEM_HH
 
+#include <dune/common/fmatrix.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
 #include <dumux/discretization/localview.hh>
@@ -49,24 +50,22 @@ class RANSProblem : public NavierStokesProblem<TypeTag>
     using ParentType = NavierStokesProblem<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Grid = typename GridView::Grid;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using PrimaryVariables = typename VolumeVariables::PrimaryVariables;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
-    enum {
-        dim = Grid::dimension,
-      };
     using GlobalPosition = typename SubControlVolumeFace::GlobalPosition;
-    using DimVector = Dune::FieldVector<Scalar, dim>;
+
+    static constexpr auto dim = GridView::dimension;
+    using DimVector = GlobalPosition;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:

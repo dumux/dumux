@@ -65,8 +65,8 @@ class OneEqProblem : public RANSProblem<TypeTag>
 
 public:
     //! The constructor sets the gravity, if desired by the user.
-    OneEqProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry)
+    OneEqProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
+    : ParentType(fvGridGeometry, paramGroup)
     {
         useStoredEddyViscosity_ = getParamFromGroup<bool>(this->paramGroup(),
                                                           "RANS.UseStoredEddyViscosity", false);
