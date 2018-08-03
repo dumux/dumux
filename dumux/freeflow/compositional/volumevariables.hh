@@ -43,8 +43,6 @@ class FreeflowNCVolumeVariables : public FreeFlowVolumeVariables< Traits, Freefl
 
     using Scalar = typename Traits::PrimaryVariables::value_type;
 
-    static constexpr int numComponents = Traits::ModelTraits::numComponents();
-
     static constexpr bool useMoles = Traits::ModelTraits::useMoles();
 
 public:
@@ -77,9 +75,9 @@ public:
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
 
-        for (unsigned int compIIdx = 0; compIIdx < numComponents; ++compIIdx)
+        for (unsigned int compIIdx = 0; compIIdx < ParentType::numComponents(); ++compIIdx)
         {
-            for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
+            for (unsigned int compJIdx = 0; compJIdx < ParentType::numComponents(); ++compJIdx)
             {
                 // binary diffusion coefficients
                 if(compIIdx != compJIdx)
@@ -115,7 +113,7 @@ public:
 
         Scalar sumFracMinorComp = 0.0;
 
-        for(int compIdx = 1; compIdx < numComponents; ++compIdx)
+        for(int compIdx = 1; compIdx < ParentType::numComponents(); ++compIdx)
         {
             // temporary add 1.0 to remove spurious differences in mole fractions
             // which are below the numerical accuracy
@@ -280,7 +278,7 @@ public:
 
 protected:
     FluidState fluidState_;
-    std::array<std::array<Scalar, numComponents>, numComponents> diffCoefficient_ = {};
+    std::array<std::array<Scalar, ParentType::numComponents()>, ParentType::numComponents()> diffCoefficient_ = {};
 };
 
 } // end namespace Dumux

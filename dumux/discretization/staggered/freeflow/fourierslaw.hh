@@ -44,13 +44,11 @@ template <class TypeTag>
 class FouriersLawImplementation<TypeTag, DiscretizationMethod::staggered >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
     using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     enum { energyBalanceIdx = Indices::energyBalanceIdx };
@@ -64,6 +62,7 @@ public:
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
 
     //! calculate the diffusive energy fluxes
+    template<class Problem>
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -72,36 +71,34 @@ public:
     {
         Scalar flux(0.0);
 
-        if(scvf.boundary())
-        {
-            const auto bcTypes = problem.boundaryTypes(element, scvf);
-            if(bcTypes.isOutflow(Indices::energyBalanceIdx) || bcTypes.isSymmetry())
-                return flux;
-        }
+        // conductive energy flux is zero for outflow boundary conditions
+        if (scvf.boundary() && problem.boundaryTypes(element, scvf).isOutflow(Indices::energyBalanceIdx))
+            return flux;
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-        // effective conductivity tensors
-        auto insideLambda = insideVolVars.effectiveThermalConductivity();
-        auto outsideLambda = outsideVolVars.effectiveThermalConductivity();
+        const Scalar insideTemperature = insideVolVars.temperature();
+        const Scalar outsideTemperature = outsideVolVars.temperature();
 
-        // scale by extrusion factor
-        insideLambda *= insideVolVars.extrusionFactor();
-        outsideLambda *= outsideVolVars.extrusionFactor();
+        const Scalar insideLambda = insideVolVars.effectiveThermalConductivity() * insideVolVars.extrusionFactor();
+        const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
 
-        // the resulting averaged conductivity tensor
-        const auto lambda = harmonicMean(insideLambda, outsideLambda);
+        if (scvf.boundary())
+        {
+            flux = insideLambda * (insideTemperature - outsideTemperature) / insideDistance;
+        }
+        else
+        {
+            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+            const Scalar outsideLambda = outsideVolVars.effectiveThermalConductivity() * outsideVolVars.extrusionFactor();
+            const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+            const Scalar avgLambda = harmonicMean(insideLambda, outsideLambda, insideDistance, outsideDistance);
 
-        const Scalar insideTemp = insideVolVars.temperature();
-        const Scalar outsideTemp = outsideVolVars.temperature();
+            flux = avgLambda * (insideTemperature - outsideTemperature) / (insideDistance + outsideDistance);
+        }
 
-        const Scalar distance = scvf.boundary() ? (insideScv.dofPosition() - scvf.ipGlobal()).two_norm()
-                                                : (outsideScv.dofPosition() - insideScv.dofPosition()).two_norm();
-
-        flux = lambda / distance * (insideTemp - outsideTemp);
         flux *= scvf.area();
         return flux;
     }

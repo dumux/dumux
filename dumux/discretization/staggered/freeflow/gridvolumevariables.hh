@@ -25,6 +25,7 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_GRID_VOLUMEVARIABLES_HH
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/rangeutilities.hh>
 
 //! make the local view function available whenever we use this class
 #include <dumux/discretization/localview.hh>
@@ -105,6 +106,18 @@ struct StaggeredGridDefaultGridVolumeVariablesTraits
             else if(bcTypes.isOutflow(eqIdx) || bcTypes.isSymmetry() || bcTypes.isNeumann(eqIdx))
                 boundaryPriVars[eqIdx] = sol[scvf.insideScvIdx()][eqIdx - offset];
         }
+
+        // make sure that a potential outflow condition is set for all components
+        std::array<bool, VolumeVariables::numComponents() - 1> isComponentOutflow;
+        for(int compIdx = 1; compIdx < VolumeVariables::numComponents(); ++compIdx)
+        {
+            const auto eqIdx = VolumeVariables::Indices::conti0EqIdx + compIdx;
+            isComponentOutflow[compIdx -1] = bcTypes.isOutflow(eqIdx);
+        }
+
+        if(Dune::any_true(isComponentOutflow) && !Dune::all_true(isComponentOutflow))
+            DUNE_THROW(Dune::InvalidStateException, "Outflow condition must be set for all components!");
+
         return boundaryPriVars;
     }
 };

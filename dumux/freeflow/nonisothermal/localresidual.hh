@@ -152,7 +152,7 @@ public:
         ParentType::heatFlux(flux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
 
         static constexpr auto localEnergyBalanceIdx = NumEqVector::dimension - 1;
-        NumEqVector diffusiveFlux = FluxVariables::MolecularDiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
+        auto diffusiveFlux = FluxVariables::MolecularDiffusionType::flux(problem, element, fvGeometry, elemVolVars, scvf);
         for (int compIdx = 0; compIdx < FluxVariables::numComponents; ++compIdx)
         {
             const bool insideIsUpstream = scvf.directionSign() == sign(diffusiveFlux[compIdx]);

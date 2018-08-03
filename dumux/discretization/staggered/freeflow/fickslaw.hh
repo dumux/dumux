@@ -25,7 +25,7 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_FICKS_LAW_HH
 
 #include <numeric>
-#include <dune/common/float_cmp.hh>
+#include <dune/common/fvector.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -48,30 +48,20 @@ template <class TypeTag>
 class FicksLawImplementation<TypeTag, DiscretizationMethod::staggered >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using Indices = typename ModelTraits::Indices;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-
     static constexpr int numComponents = ModelTraits::numComponents();
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    using NumEqVector = Dune::FieldVector<Scalar, numComponents>;
 
-    static_assert(ModelTraits::numPhases() == 1, "Only one phase allowed supported!");
-
-    enum {
-        conti0EqIdx = Indices::conti0EqIdx
-    };
+    static_assert(ModelTraits::numPhases() == 1, "Only one phase supported!");
 
 public:
     // state the discretization method this implementation belongs to
@@ -81,90 +71,68 @@ public:
     //! We don't cache anything for this law
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
 
-    static CellCenterPrimaryVariables flux(const Problem& problem,
-                                           const Element& element,
-                                           const FVElementGeometry& fvGeometry,
-                                           const ElementVolumeVariables& elemVolVars,
-                                           const SubControlVolumeFace &scvf)
+    template<class Problem>
+    static NumEqVector flux(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace &scvf)
     {
-        CellCenterPrimaryVariables flux(0.0);
+        NumEqVector flux(0.0);
 
+        // There is no diffusion over outflow boundaries (grad x == 0).
+        // We assume that if an outflow BC is set for the first transported component, this
+        // also holds for all other components.
+        if (scvf.boundary() && problem.boundaryTypes(element, scvf).isOutflow(Indices::conti0EqIdx + 1))
+            return flux;
+
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
+        const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
         const Scalar insideMolarDensity = insideVolVars.molarDensity();
 
-        for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            if(compIdx == FluidSystem::getMainComponent(0))
+            if (compIdx == FluidSystem::getMainComponent(0))
                 continue;
 
-            // get equation index
-            const auto eqIdx = conti0EqIdx + compIdx;
-
-            if(scvf.boundary())
-            {
-                const auto bcTypes = problem.boundaryTypes(element, scvf);
-                if(bcTypes.isOutflow(eqIdx) || bcTypes.isSymmetry())
-                    return flux;
-            }
-
-            const Scalar tij = transmissibility_(fvGeometry, elemVolVars, scvf, compIdx);
             const Scalar insideMoleFraction = insideVolVars.moleFraction(compIdx);
-
-            const Scalar outsideMolarDensity = scvf.boundary() ? insideVolVars.molarDensity() : outsideVolVars.molarDensity();
-            const Scalar avgDensity = 0.5*(insideMolarDensity + outsideMolarDensity);
             const Scalar outsideMoleFraction = outsideVolVars.moleFraction(compIdx);
-            flux[compIdx] = avgDensity * tij * (insideMoleFraction - outsideMoleFraction);
+
+            const Scalar insideD = insideVolVars.effectiveDiffusivity(0, compIdx) * insideVolVars.extrusionFactor();
+
+            if (scvf.boundary())
+            {
+                flux[compIdx] = insideMolarDensity * insideD
+                                * (insideMoleFraction - outsideMoleFraction) / insideDistance;
+            }
+            else
+            {
+                const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+                const Scalar outsideD = outsideVolVars.effectiveDiffusivity(0, compIdx) * outsideVolVars.extrusionFactor();
+                const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
+                const Scalar outsideMolarDensity = outsideVolVars.molarDensity();
+
+                const Scalar avgDensity = 0.5*(insideMolarDensity + outsideMolarDensity);
+                const Scalar avgD = harmonicMean(insideD, outsideD, insideDistance, outsideDistance);
+
+                flux[compIdx] = avgDensity * avgD
+                                * (insideMoleFraction - outsideMoleFraction) / (insideDistance + outsideDistance);
+            }
         }
 
         // Fick's law (for binary systems) states that the net flux of moles within the bulk phase has to be zero:
         // If a given amount of molecules A travel into one direction, the same amount of molecules B have to
         // go into the opposite direction.
         const Scalar cumulativeFlux = std::accumulate(flux.begin(), flux.end(), 0.0);
-        flux[FluidSystem::getMainComponent(0)] = - cumulativeFlux;
+        flux[FluidSystem::getMainComponent(0)] = -cumulativeFlux;
+
+        flux *= scvf.area();
 
         return flux;
     }
-
-    static Scalar transmissibility_(const FVElementGeometry& fvGeometry,
-                                    const ElementVolumeVariables& elemVolVars,
-                                    const SubControlVolumeFace& scvf,
-                                    const int compIdx)
-    {
-        Scalar tij = 0.0;
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-
-        const Scalar insideDistance = (insideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-        const Scalar insideD = insideVolVars.effectiveDiffusivity(0, compIdx);
-        const Scalar ti = calculateOmega_(insideDistance, insideD, insideVolVars.extrusionFactor());
-
-        if(scvf.boundary())
-            tij = scvf.area() * ti;
-        else
-        {
-            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
-            const Scalar outsideDistance = (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
-            const Scalar outsideD = outsideVolVars.effectiveDiffusivity(0, compIdx);
-            const Scalar tj = calculateOmega_(outsideDistance, outsideD, outsideVolVars.extrusionFactor());
-
-            tij = scvf.area()*(ti * tj)/(ti + tj);
-        }
-        return tij;
-    }
-
-    static Scalar calculateOmega_(const Scalar distance,
-                                  const Scalar D,
-                                  const Scalar extrusionFactor)
-    {
-        Scalar omega = D / distance;
-        omega *= extrusionFactor;
-
-        return omega;
-    }
-
 };
 } // end namespace
 

@@ -225,39 +225,47 @@ protected:
             if (scvf.boundary())
             {
                 const auto bcTypes = problem.boundaryTypes(element, scvf);
-                const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
 
-                // treat Dirichlet and outflow BCs
-                FluxVariables fluxVars;
-                auto boundaryFlux = fluxVars.computeMassFlux(problem, element, fvGeometry, elemVolVars,
-                                                             elemFaceVars, scvf, elemFluxVarsCache[scvf]);
-
-                EnergyLocalResidual::heatFlux(boundaryFlux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
-
-                // treat Neumann BCs, i.e. overwrite certain fluxes by user-specified values
-                static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
-                if(bcTypes.hasNeumann())
+                // no fluxes occur over symmetry boundaries
+                if (!bcTypes.isSymmetry())
                 {
-                    for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
+                    const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
+
+                    // treat Dirichlet and outflow BCs
+                    FluxVariables fluxVars;
+                    auto boundaryFlux = fluxVars.computeMassFlux(problem, element, fvGeometry, elemVolVars,
+                                                                 elemFaceVars, scvf, elemFluxVarsCache[scvf]);
+
+                    EnergyLocalResidual::heatFlux(boundaryFlux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf);
+
+                    // treat Neumann BCs, i.e. overwrite certain fluxes by user-specified values
+                    static constexpr auto numEqCellCenter = CellCenterResidual::dimension;
+                    if(bcTypes.hasNeumann())
                     {
-                        if(bcTypes.isNeumann(eqIdx + cellCenterOffset))
+                        for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                         {
-                            boundaryFlux[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx + cellCenterOffset]
-                                                                  * extrusionFactor * scvf.area();
+                            if(bcTypes.isNeumann(eqIdx + cellCenterOffset))
+                            {
+                                boundaryFlux[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx + cellCenterOffset]
+                                                                      * extrusionFactor * scvf.area();
+                            }
                         }
                     }
-                }
-                for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
-                {
-                    // use a wall function
-                    if(problem.useWallFunction(element, scvf, eqIdx + cellCenterOffset))
-                    {
-                        boundaryFlux[eqIdx] = problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx]
-                                                                   * extrusionFactor * scvf.area();
-                    }
-                }
 
-                residual += boundaryFlux;
+                    // account for wall functions, if used
+                    for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
+                    {
+                        // use a wall function
+                        if(problem.useWallFunction(element, scvf, eqIdx + cellCenterOffset))
+                        {
+                            boundaryFlux[eqIdx] = problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx]
+                                                                       * extrusionFactor * scvf.area();
+                        }
+                    }
+
+                    // add the flux over the boundary scvf to the residual
+                    residual += boundaryFlux;
+                }
 
                 // if specified, set a fixed value at the center of a cell at the boundary
                 const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
