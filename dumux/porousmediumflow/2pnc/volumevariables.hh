@@ -449,15 +449,6 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coefficient called for phaseIdx = compIdx");
     }
 
-    /*!
-     * \brief Returns the molarity of a component in the phase
-     *
-     * \param phaseIdx the index of the fluid phase
-     * \param compIdx the index of the component
-     */
-     Scalar molarity(int phaseIdx, int compIdx) const // [moles/m^3]
-    { return fluidState_.molarity(phaseIdx, compIdx);}
-
      /*!
       * \brief Returns the mass fraction of a component in the phase
       *

@@ -61,6 +61,8 @@ protected:
         static constexpr int comp1Idx = FluidSystem::comp1Idx;
 
         static constexpr auto numComponents = VolumeVariables::numComponents();
+        static constexpr bool useMoles = VolumeVariables::useMoles();
+        static_assert(useMoles || numComponents < 3, "!useMoles is only implemented for numComponents < 3.");
         static constexpr auto numMajorComponents = VolumeVariables::numPhases();
         static constexpr auto formulation = VolumeVariables::priVarFormulation();
         static_assert( (formulation == TwoPFormulation::p0s1 || formulation == TwoPFormulation::p1s0),
@@ -95,11 +97,18 @@ protected:
                 newPhasePresence = Indices::secondPhaseOnly;
 
                 // switch not depending on formulation, switch "S0" to "x10"
-                priVars[switchIdx] = volVars.moleFraction(phase1Idx, comp0Idx);
+                if(useMoles) // mole-fraction formulation
+                    priVars[switchIdx] = volVars.moleFraction(phase1Idx, comp0Idx);
+                else // mass-fraction formulation
+                    priVars[switchIdx] = volVars.massFraction(phase1Idx, comp0Idx);
 
                 // switch all secondary components to mole fraction in non-wetting phase
-                for (int compIdx = numMajorComponents; compIdx < numComponents; ++compIdx)
-                    priVars[compIdx] = volVars.moleFraction(phase1Idx, compIdx);
+                if(useMoles) // mole-fraction formulation
+                    for (int compIdx = numMajorComponents; compIdx < numComponents; ++compIdx)
+                        priVars[compIdx] = volVars.moleFraction(phase1Idx, compIdx);
+                else // mass-fraction formulation
+                    for (int compIdx = numMajorComponents; compIdx < numComponents; ++compIdx)
+                        priVars[compIdx] = volVars.massFraction(phase1Idx, compIdx);
             }
 
             // if saturation of second phase is smaller than 0: switch
@@ -116,7 +125,10 @@ protected:
                 newPhasePresence = Indices::firstPhaseOnly;
 
                 // switch "S1" to "x01"
-                priVars[switchIdx] = volVars.moleFraction(phase0Idx, comp1Idx);
+                if(useMoles) // mole-fraction formulation
+                    priVars[switchIdx] = volVars.moleFraction(phase0Idx, comp1Idx);
+                else // mass-fraction formulation
+                    priVars[switchIdx] = volVars.massFraction(phase0Idx, comp1Idx);
             }
         }
         else if (phasePresence == Indices::secondPhaseOnly)

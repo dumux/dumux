@@ -18,19 +18,19 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup TwoPTwoCModel
- * \brief Defines the indices required for the two-phase two-component model
+ * \ingroup TwoPNCModel
+ * \brief Defines the indices required for the two-phase n-component model
  */
-#ifndef DUMUX_2P2C_INDICES_HH
-#define DUMUX_2P2C_INDICES_HH
+#ifndef DUMUX_2PNC_INDICES_HH
+#define DUMUX_2PNC_INDICES_HH
 
 namespace Dumux {
 
 /*!
- * \brief The indices for the isothermal two-phase two-component model.
- * \ingroup TwoPTwoCModel
+ * \brief The indices for the isothermal two-phase n-component model
+ * \ingroup TwoPNCModel
  */
-struct TwoPTwoCIndices
+struct TwoPNCIndices
 {
     // present phases (-> 'pseudo' primary variable)
     static constexpr int firstPhaseOnly = 1;  //!< Only the first phase (in fluid system) is present

@@ -42,7 +42,7 @@ namespace Dumux {
  * \brief Contains the quantities which are constant within a
  *        finite volume in the two-phase two-component model.
  */
-template <class Traits>
+template <class Traits, bool useConstraintSolver = true>
 class TwoPTwoCVolumeVariables
 : public PorousMediumFlowVolumeVariables<Traits>
 , public EnergyVolumeVariables<Traits, TwoPTwoCVolumeVariables<Traits> >
@@ -80,9 +80,6 @@ class TwoPTwoCVolumeVariables
 
     // formulations
     static constexpr auto formulation = ModelTraits::priVarFormulation();
-
-    // further specifications on the variables update
-    static constexpr bool useConstraintSolver = Traits::useConstraintSolver;
 
     using PermeabilityType = typename Traits::PermeabilityType;
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, typename Traits::FluidSystem>;
