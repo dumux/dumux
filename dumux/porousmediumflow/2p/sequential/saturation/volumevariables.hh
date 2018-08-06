@@ -82,23 +82,8 @@ public:
 
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
-        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
-        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-
-        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
-        const int nPhaseIdx = 1 - wPhaseIdx;
-
-        mobility_[wPhaseIdx] =
-            MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
-            / fluidState_.viscosity(wPhaseIdx);
-
-        mobility_[nPhaseIdx] =
-            MaterialLaw::krn(materialParams, fluidState_.saturation(wPhaseIdx))
-            / fluidState_.viscosity(nPhaseIdx);
-
         // porosity calculation over inert volumefraction
         updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
-        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
 
     /*!
@@ -127,13 +112,9 @@ public:
         const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
         const int nPhaseIdx = 1 - wPhaseIdx;
 
-        const auto& pw = problem.spatialParams().wettingPressure(element, scv, elemSol);
-        fluidState.setPressure(wPhaseIdx, pw);
-
         fluidState.setSaturation(wPhaseIdx, priVars[saturationIdx]);
         fluidState.setSaturation(nPhaseIdx, 1 - priVars[saturationIdx]);
         pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
-        fluidState.setPressure(nPhaseIdx, pw - pc_);
 
 
         typename FluidSystem::ParameterCache paramCache;
@@ -187,15 +168,6 @@ public:
     { return fluidState_.density(phaseIdx); }
 
     /*!
-     * \brief Returns the effective pressure of a given phase within
-     *        the control volume in \f$[kg/(m*s^2)=N/m^2=Pa]\f$.
-     *
-     * \param phaseIdx The phase index
-     */
-    Scalar pressure(int phaseIdx) const
-    { return fluidState_.pressure(phaseIdx); }
-
-    /*!
      * \brief Returns the capillary pressure within the control volume
      * in \f$[kg/(m*s^2)=N/m^2=Pa]\f$.
      */
@@ -222,35 +194,12 @@ public:
     Scalar molarDensity(const int phaseIdx) const
     { return fluidState_.molarDensity(phaseIdx); }
 
-    /*!
-     * \brief Returns the dynamic viscosity of the fluid within the
-     *        control volume in \f$\mathrm{[Pa s]}\f$.
-     *
-     * \param phaseIdx The phase index
-     */
-    Scalar viscosity(int phaseIdx) const
-    { return fluidState_.viscosity(phaseIdx); }
-
-    /*!
-     * \brief Returns the effective mobility of a given phase within
-     *        the control volume in \f$[s*m/kg]\f$.
-     *
-     * \param phaseIdx The phase index
-     */
-    Scalar mobility(int phaseIdx) const
-    { return mobility_[phaseIdx]; }
 
     /*!
      * \brief Returns the average porosity within the control volume in \f$[-]\f$.
      */
     Scalar porosity() const
     { return solidState_.porosity(); }
-
-    /*!
-     * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
-     */
-    const PermeabilityType& permeability() const
-    { return permeability_; }
 
 protected:
     FluidState fluidState_;
@@ -259,8 +208,6 @@ protected:
 private:
     Scalar pc_;
     Scalar porosity_;
-    PermeabilityType permeability_;
-    Scalar mobility_[ModelTraits::numPhases()];
 };
 
 } // end namespace Dumux
