@@ -123,9 +123,9 @@ public:
     *
     * \param localSubFaceIdx The local index of the subface
     */
-    Scalar velocityPrevious(const int localSubFaceIdx) const
+    Scalar velocityPrevious() const
     {
-        return velocityPrevious_[localSubFaceIdx];
+        return velocityPrevious_;
     }
 
     /*!
@@ -133,9 +133,9 @@ public:
     *
     * \param localSubFaceIdx The local index of the subface
     */
-    Scalar velocityForward(const int localSubFaceIdx) const
+    Scalar velocityForward() const
     {
-        return velocityForward_[localSubFaceIdx];
+        return velocityForward_;
     }
 
     /*!

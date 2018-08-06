@@ -28,6 +28,8 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/properties.hh>
 
+// #include <dumux/freeflow/higherorderapproximation.hh>
+
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include <dumux/discretization/methods.hh>
 
@@ -192,6 +194,11 @@ public:
         // The velocities of the dof at interest and the one of the opposite scvf.
         const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
         const Scalar velocityOpposite = elemFaceVars[scvf].velocityOpposite();
+        if(scvf.canSecondOrder())
+        {
+            const Scalar velocityPrevious = elemFaceVars[scvf].velocityPrevious();
+            std::cout << velocityPrevious << "\n";
+        }
 
         // The volume variables within the current element. We only require those (and none of neighboring elements)
         // because the fluxes are calculated over the staggered face at the center of the element.
@@ -213,6 +220,8 @@ public:
                 return (upwindWeight * upstreamVelocity + (1.0 - upwindWeight) * downstreamVelocity) * insideVolVars.density();
             };
 
+//             Dumux::HigherOrderApproximation<Scalar> higherOrderApproximation;
+//             higherOrderApproximation.firstOrderUpwind(downstreamVelocity, upstreamVelocity, upwindWeight, insideVolVars.density());
 
             // Get the momentum that is advectively transported and account for the flow direction.
             const Scalar momentum = selfIsUpstream ? computeMomentum(velocitySelf, velocityOpposite)

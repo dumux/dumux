@@ -142,7 +142,7 @@ private:
                                          const FVElementGeometry& fvGeometry,
                                          const SubControlVolumeFace& scvf)
     {
-        stencil.push_back(scvf.dofIndex());
+        stencil.push_back(scvf.axisData().selfDof);
     }
 
     /*
@@ -179,15 +179,28 @@ private:
         // the first entries are always the face dofIdx itself and the one of the opposing face
         if(stencil.empty())
         {
-            stencil.push_back(scvf.dofIndex());
-            stencil.push_back(scvf.dofIndexOpposingFace());
-            const auto dofIndexPreviousFace = scvf.dofIndexPreviousFace();
-            if(dofIndexPreviousFace >= 0)
-              stencil.push_back(scvf.dofIndexPreviousFace());
-            const auto dofIndexForwardFace = scvf.dofIndexForwardFace();
-            if(dofIndexForwardFace >= 0)
-              stencil.push_back(scvf.dofIndexForwardFace());
-
+            if(scvf.hasBackwardNeighbor())
+            {
+                for(int i = 0; i < scvf.axisData().inAxisBackwardDofs.size(); i++)
+                {
+                    if(scvf.axisData().inAxisBackwardDofs[i] >= 0)
+                    {
+                        stencil.push_back(scvf.axisData().inAxisBackwardDofs[i]);
+                    }
+                }
+            }
+            stencil.push_back(scvf.axisData().selfDof);
+            stencil.push_back(scvf.axisData().oppositeDof);
+            if(scvf.hasForwardNeighbor())
+            {
+                for(int i = 0; i < scvf.axisData().inAxisForwardDofs.size(); i++)
+                {
+                    if(scvf.axisData().inAxisForwardDofs[i] >= 0)
+                    {
+                        stencil.push_back(scvf.axisData().inAxisForwardDofs[i]);
+                    }
+                }
+            }
         }
 
         for(const auto& data : scvf.pairData())
@@ -198,12 +211,13 @@ private:
                 stencil.push_back(data.normalPair.second);
 
             // add parallel dofs
-            const auto firstParallelFaceDofIdx = data.firstParallelFaceDofIdx;
-            if(firstParallelFaceDofIdx >= 0)
-                stencil.push_back(firstParallelFaceDofIdx);
-            const auto secondParallelFaceDofIdx = data.secondParallelFaceDofIdx;
-            if(secondParallelFaceDofIdx >= 0)
-                stencil.push_back(secondParallelFaceDofIdx);
+            for(int i = 0; i < data.parallelDofs.size(); i++)
+            {
+                if(data.parallelDofs[i] >= 0)
+                {
+                    stencil.push_back(data.parallelDofs[i]);
+                }
+            }
         }
     }
 
