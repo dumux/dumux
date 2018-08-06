@@ -1,0 +1,21 @@
+[TimeLoop]
+DtInitial = 1# [s]
+MaxTimeStepSize = 10
+TEnd = 400 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 100 10
+Cells = 100 1
+
+[SpatialParams]
+LensLowerLeft = 20.0 0.0 # [m] coordinates of the lower left lens corner
+LensUpperRight = 40.0 1.0 # [m] coordinates of the upper right lens corner
+
+[Problem]
+Name = test_impes
+EnableGravity = false
+
+[Component]
+LiquidDensity = 1000
+LiquidKinematicViscosity = 1e-5
