@@ -80,6 +80,47 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
+        sw_ = problem.spatialParams().wettingSaturation(element, scv);
+        completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
+
+        using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+
+        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+        const int nPhaseIdx = 1 - wPhaseIdx;
+
+        mobility_[wPhaseIdx] =
+            MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
+            / fluidState_.viscosity(wPhaseIdx);
+
+        mobility_[nPhaseIdx] =
+            MaterialLaw::krn(materialParams, fluidState_.saturation(wPhaseIdx))
+            / fluidState_.viscosity(nPhaseIdx);
+
+        // porosity calculation over inert volumefraction
+        updateSolidVolumeFractions(elemSol, problem, element, scv, solidState_, numFluidComps);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+    }
+
+    /*!
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub control volume
+    */
+    template<class ElemSol, class Problem, class Element, class Scv, class Scvf>
+    void update(const ElemSol &elemSol,
+                const Problem &problem,
+                const Element &element,
+                const Scv& scv,
+                const Scvf& scvf)
+    {
+        ParentType::update(elemSol, problem, element, scv);
+
+        sw_ = problem.spatialParams().wettingSaturation(element, scv, scvf);
         completeFluidState(elemSol, problem, element, scv, fluidState_, solidState_);
 
         using MaterialLaw = typename Problem::SpatialParams::MaterialLaw;
@@ -130,9 +171,8 @@ public:
         const auto& pw = priVars[pressureIdx];
         fluidState.setPressure(wPhaseIdx, pw);
 
-        const auto& sw = problem.spatialParams().wettingSaturation(element, scv, elemSol);
-        fluidState.setSaturation(wPhaseIdx, sw);
-        fluidState.setSaturation(nPhaseIdx, 1 - sw);
+        fluidState.setSaturation(wPhaseIdx, sw_);
+        fluidState.setSaturation(nPhaseIdx, 1 - sw_);
         pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
         fluidState.setPressure(nPhaseIdx, pw - pc_);
 
@@ -261,6 +301,7 @@ protected:
 private:
     Scalar pc_;
     Scalar porosity_;
+    Scalar sw_;
     PermeabilityType permeability_;
     Scalar mobility_[ModelTraits::numPhases()];
 };

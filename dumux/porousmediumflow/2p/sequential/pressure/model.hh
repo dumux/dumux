@@ -160,8 +160,6 @@ public:
     using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
 
-//! We use darcy's law as the default for the advective fluxes
-SET_TYPE_PROP(Pressure, AdvectionType, StationaryVelocityField<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 } // end namespace Properties
 // \}
 } // end namespace Dumux
