@@ -27,6 +27,20 @@
 
 namespace Dumux {
 
+//! helper struct detecting if the volVars allow for a special boundary treatment
+template<class ElemSol, class Problem, class Element, class Scv, class Scvf>
+struct supportsBoundaryUpdates
+{
+    template<class VolumeVariables>
+    auto operator()(VolumeVariables&& v)
+    -> decltype(v.update(std::declval<ElemSol>(),
+                         std::declval<Problem>(),
+                         std::declval<Element>(),
+                         std::declval<Scv>(),
+                         std::declval<Scvf>()))
+    {}
+};
+
 /*!
  * \ingroup PorousmediumFlow
  * \brief The isothermal base class
@@ -94,6 +108,39 @@ public:
      */
     Scalar extrusionFactor() const
     { return extrusionFactor_; }
+
+    template<class VolumeVariables, class ElemSol, class Problem, class Element, class Scv, class Scvf>
+    static auto updateBoundaryVolVars_(VolumeVariables& volVars,
+                                       const ElemSol& elemSol,
+                                       const Problem& problem,
+                                       const Element& element,
+                                       const Scv& scv,
+                                       const Scvf& scvf)
+     -> typename std::enable_if_t<decltype(isValid(supportsBoundaryUpdates<ElemSol, Problem, Element, Scv, Scvf>())
+                                           (volVars))::value, void>
+     {
+         volVars.update(elemSol,
+                        problem,
+                        element,
+                        scv,
+                        scvf);
+     }
+
+     template<class VolumeVariables, class ElemSol, class Problem, class Element, class Scv, class Scvf>
+     static auto updateBoundaryVolVars_(VolumeVariables& volVars,
+                                       const ElemSol& elemSol,
+                                       const Problem& problem,
+                                       const Element& element,
+                                       const Scv& scv,
+                                       const Scvf& scvf)
+     -> typename std::enable_if_t<!decltype(isValid(supportsBoundaryUpdates<ElemSol, Problem, Element, Scv, Scvf>())
+                                            (volVars))::value, void>
+     {
+         volVars.update(elemSol,
+                        problem,
+                        element,
+                        scv);
+     }
 
 private:
     PrimaryVariables priVars_;

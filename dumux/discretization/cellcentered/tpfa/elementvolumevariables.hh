@@ -167,10 +167,13 @@ public:
 
                 volumeVariables_.resize(localIdx+1);
                 volVarIndices_.resize(localIdx+1);
-                volumeVariables_[localIdx].update(dirichletPriVars,
-                                                  problem,
-                                                  element,
-                                                  scvI);
+                VolumeVariables::updateBoundaryVolVars_(volumeVariables_[localIdx],
+                                                        dirichletPriVars,
+                                                        problem,
+                                                        element,
+                                                        scvI,
+                                                        scvf);
+
                 volVarIndices_[localIdx] = scvf.outsideScvIdx();
                 ++localIdx;
             }

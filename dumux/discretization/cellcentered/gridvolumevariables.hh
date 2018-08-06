@@ -95,10 +95,13 @@ public:
                     const auto& insideScv = fvGeometry.scv(insideScvIdx);
                     const auto dirichletPriVars = elementSolution<typename FVGridGeometry::LocalView>(problem().dirichlet(element, scvf));
 
-                    volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars,
-                                                                  problem(),
-                                                                  element,
-                                                                  insideScv);
+                    VolumeVariables::updateBoundaryVolVars_(volumeVariables_[scvf.outsideScvIdx()],
+                                                            dirichletPriVars,
+                                                            problem,
+                                                            element,
+                                                            insideScv,
+                                                            scvf);
+
                 }
             }
         }
