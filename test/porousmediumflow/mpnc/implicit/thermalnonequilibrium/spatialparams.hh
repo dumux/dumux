@@ -86,7 +86,6 @@ public:
         intrinsicPermeability_  =  (pow(characteristicLength_,2.0)  * pow(porosity_, 3.0)) / (150.0 * pow((1.0-porosity_),2.0)); // 1.69e-10 ; //
 
         factorEnergyTransfer_ = getParam<Scalar>("SpatialParams.PorousMedium.factorEnergyTransfer");
-        factorMassTransfer_ =getParam<Scalar>("SpatialParams.PorousMedium.factorMassTransfer");
         lengthPM_ = getParam<Scalar>("Grid.lengthPM");
 
         // residual saturations
@@ -177,13 +176,6 @@ public:
     const Scalar factorEnergyTransferAtPos(const  GlobalPosition & globalPos) const
     { return factorEnergyTransfer_; }
 
-
-    /*!\brief Return the pre factor the the mass transfer
-     * \param globalPos The position in global coordinates.*/
-    const Scalar factorMassTransferAtPos(const  GlobalPosition & globalPos) const
-    { return factorMassTransfer_; }
-
-
     //! Return if the tested position (input) is a specific region (right end of porous medium) in the domain
     bool inOutFlow(const GlobalPosition & globalPos) const { return globalPos[0] > (lengthPM_ - eps_) ;    }
     //! Return the length of the porous medium domain
@@ -198,7 +190,6 @@ private:
     Scalar intrinsicPermeability_ ;
     Scalar porosity_ ;
     Scalar factorEnergyTransfer_ ;
-    Scalar factorMassTransfer_ ;
     Scalar characteristicLength_ ;
     MaterialLawParams materialParams_ ;
 

@@ -125,7 +125,6 @@ public:
                                const Element& element,
                                const Scv& scv)
     {
-        factorMassTransfer_  = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
         factorEnergyTransfer_ = problem.spatialParams().factorEnergyTransfer(element, scv, elemSol);
         characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
 
@@ -237,8 +236,6 @@ public:
     const Scalar characteristicLength() const { return characteristicLength_; }
     //! access function pre factor energy transfer
     const Scalar factorEnergyTransfer() const { return factorEnergyTransfer_; }
-    //! access function pre factor mass transfer
-    const Scalar factorMassTransfer() const { return factorMassTransfer_; }
 
 private:
     //! dimensionless numbers
@@ -248,7 +245,6 @@ private:
 
     Scalar characteristicLength_;
     Scalar factorEnergyTransfer_;
-    Scalar factorMassTransfer_;
     Scalar solidSurface_ ;
     Scalar interfacialArea_[ModelTraits::numPhases()+numEnergyEqSolid][ModelTraits::numPhases()+numEnergyEqSolid];
 };
@@ -324,7 +320,6 @@ public:
                                const Element& element,
                                const Scv& scv)
     {
-        factorMassTransfer_  = problem.spatialParams().factorMassTransfer(element, scv, elemSol);
         factorEnergyTransfer_ = problem.spatialParams().factorEnergyTransfer(element, scv, elemSol);
         characteristicLength_ = problem.spatialParams().characteristicLength(element, scv, elemSol);
 
@@ -362,8 +357,6 @@ public:
     const Scalar characteristicLength() const { return characteristicLength_; }
     //! access function pre factor energy transfer
     const Scalar factorEnergyTransfer() const { return factorEnergyTransfer_; }
-    //! access function pre factor mass transfer
-    const Scalar factorMassTransfer() const { return factorMassTransfer_; }
 
 private:
     //! dimensionless numbers
@@ -373,9 +366,7 @@ private:
 
     Scalar characteristicLength_;
     Scalar factorEnergyTransfer_;
-    Scalar factorMassTransfer_;
     Scalar solidSurface_ ;
-    Scalar interfacialArea_[ModelTraits::numPhases()+numEnergyEqSolid][ModelTraits::numPhases()+numEnergyEqSolid];
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
