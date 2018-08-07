@@ -68,7 +68,7 @@ public:
     /*!
      * \brief The mass in \f$\mathrm{[kg/mol]}\f$ of one mole of CO2.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 44e-3; /* [kg/mol] */ }
 
     /*!

@@ -56,7 +56,7 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of benzene
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 0.07811; }
 
     /*!

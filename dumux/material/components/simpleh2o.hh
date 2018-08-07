@@ -63,7 +63,7 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of water.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 18e-3; }
 
     /*!
@@ -235,7 +235,7 @@ public:
     /*!
      * \brief Returns true if the gas phase is assumed to be ideal
      */
-    static bool gasIsIdeal()
+    static constexpr bool gasIsIdeal()
     { return true; }
 
     /*!

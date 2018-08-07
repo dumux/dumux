@@ -61,7 +61,7 @@ public:
     /*!
      * \brief The molar mass of Siliciumoxide which is 70 % of granite in \f$\mathrm{[kg/mol]}\f$.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     {
         return 60.08e-3;
     }

@@ -71,7 +71,7 @@ public:
      *\param salinity The mass fraction of salt in brine
      * This assumes that the salt is pure NaCl.
      */
-   static Scalar molarMass(Scalar salinity = constantSalinity)
+   static constexpr Scalar molarMass(Scalar salinity = constantSalinity)
    {
        const Scalar M1 = H2O::molarMass();
        const Scalar M2 = Components::NaCl<Scalar>::molarMass(); // molar mass of NaCl [kg/mol]
@@ -281,13 +281,13 @@ public:
     /*!
      * \brief Returns true if the gas phase is assumed to be ideal
      */
-    static bool gasIsIdeal()
+    static constexpr bool gasIsIdeal()
     { return H2O::gasIsIdeal(); }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be compressible
      */
-    static bool gasIsCompressible()
+    static constexpr bool gasIsCompressible()
     { return H2O::gasIsCompressible(); }
 
     /*!

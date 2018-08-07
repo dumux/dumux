@@ -57,7 +57,7 @@ public:
     /*!
      * \brief The molar mass of NaCl in \f$\mathrm{[kg/mol]}\f$.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     {
         return 58.4428e-3 ;
     }
