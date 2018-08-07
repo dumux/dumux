@@ -281,8 +281,7 @@ public:
      */
     bool finished() const
     {
-        using std::abs;
-        return finished_ || abs(time_-endTime_)/endTime_ < 1e-14;
+        return finished_ || endTime_-time_ < 1e-10*time_;
     }
 
     /*!
@@ -291,8 +290,7 @@ public:
      */
     bool willBeFinished() const
     {
-        using std::abs;
-        return finished_ || abs(time_+timeStepSize_-endTime_)/endTime_ < 1e-14;
+        return finished() || endTime_-time_-timeStepSize_ < 1e-10*timeStepSize_;
     }
 
     /*!
