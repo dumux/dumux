@@ -223,7 +223,7 @@ public:
     {
         // Check if the overlap size is what we expect
         if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
-            DUNE_THROW(Dune::InvalidStateException, "The satggered discretization method needs at least an overlap of 1 for parallel computations. "
+            DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
                                                      << " Set the parameter \"Grid.Overlap\" in the input file.");
     }
 
@@ -314,8 +314,7 @@ public:
                                         intersection.geometry(),
                                         scvfIdx,
                                         std::vector<IndexType>({eIdx, nIdx}),
-                                        geometryHelper
-                                        );
+                                        geometryHelper);
                     localToGlobalScvfIndices_[eIdx][localFaceIndex] = scvfIdx;
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
@@ -326,8 +325,7 @@ public:
                                         intersection.geometry(),
                                         scvfIdx,
                                         std::vector<IndexType>({eIdx, this->gridView().size(0) + numBoundaryScvf_++}),
-                                        geometryHelper
-                                        );
+                                        geometryHelper);
                     localToGlobalScvfIndices_[eIdx][localFaceIndex] = scvfIdx;
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
@@ -421,8 +419,208 @@ private:
  */
 template<class GV, class Traits>
 class StaggeredFVGridGeometry<GV, false, Traits>
+: public BaseFVGridGeometry<StaggeredFVGridGeometry<GV, false, Traits>, GV, Traits>
 {
-    // TODO: implement without caching
+    using ThisType = StaggeredFVGridGeometry<GV, false, Traits>;
+    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using IndexType = typename GV::IndexSet::IndexType;
+    using Element = typename GV::template Codim<0>::Entity;
+
+    using IntersectionMapper = typename Traits::IntersectionMapper;
+    using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
+
+public:
+    //! export discretization method
+    static constexpr DiscretizationMethod discMethod = DiscretizationMethod::staggered;
+
+    using GeometryHelper = typename Traits::GeometryHelper;
+
+    //! export the type of the fv element geometry (the local view type)
+    using LocalView = typename Traits::template LocalView<ThisType, false>;
+    //! export the type of sub control volume
+    using SubControlVolume = typename Traits::SubControlVolume;
+    //! export the type of sub control volume
+    using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the grid view type
+    using GridView = GV;
+    //! export the dof type indices
+    using DofTypeIndices = typename Traits::DofTypeIndices;
+
+    //! return a integral constant for cell center dofs
+    static constexpr auto cellCenterIdx()
+    { return typename DofTypeIndices::CellCenterIdx{}; }
+
+    //! return a integral constant for face dofs
+    static constexpr auto faceIdx()
+    { return typename DofTypeIndices::FaceIdx{}; }
+
+    using CellCenterFVGridGeometryType = CellCenterFVGridGeometry<ThisType>;
+    using FaceFVGridGeometryType = FaceFVGridGeometry<ThisType>;
+
+    using FVGridGeometryTuple = std::tuple< CellCenterFVGridGeometry<ThisType>, FaceFVGridGeometry<ThisType> >;
+
+    //! Constructor
+    StaggeredFVGridGeometry(const GridView& gridView)
+    : ParentType(gridView)
+    , intersectionMapper_(gridView)
+    {
+        // Check if the overlap size is what we expect
+        if (!CheckOverlapSize<DiscretizationMethod::staggered>::isValid(gridView))
+            DUNE_THROW(Dune::InvalidStateException, "The staggered discretization method needs at least an overlap of 1 for parallel computations. "
+                                                     << " Set the parameter \"Grid.Overlap\" in the input file.");
+    }
+
+    //! update all fvElementGeometries (do this again after grid adaption)
+    void update()
+    {
+        // clear containers (necessary after grid refinement)
+        scvfIndicesOfScv_.clear();
+        intersectionMapper_.update();
+        neighborVolVarIndices_.clear();
+
+        numScvs_ = numCellCenterDofs();
+        numScvf_ = 0;
+        numBoundaryScvf_ = 0;
+        scvfIndicesOfScv_.resize(numScvs_);
+        localToGlobalScvfIndices_.resize(numScvs_);
+        neighborVolVarIndices_.resize(numScvs_);
+
+        // Build the scvs and scv faces
+        for (const auto& element : elements(this->gridView()))
+        {
+            auto eIdx = this->elementMapper().index(element);
+
+            // the element-wise index sets for finite volume geometry
+            auto numLocalFaces = intersectionMapper_.numFaces(element);
+            std::vector<IndexType> scvfsIndexSet;
+            scvfsIndexSet.reserve(numLocalFaces);
+            localToGlobalScvfIndices_[eIdx].resize(numLocalFaces);
+
+            std::vector<IndexType> neighborVolVarIndexSet;
+            neighborVolVarIndexSet.reserve(numLocalFaces);
+
+            for (const auto& intersection : intersections(this->gridView(), element))
+            {
+                const auto localFaceIndex = intersection.indexInInside();
+                localToGlobalScvfIndices_[eIdx][localFaceIndex] = numScvf_;
+                scvfsIndexSet.push_back(numScvf_++);
+
+                if (intersection.neighbor())
+                {
+                    const auto nIdx = this->elementMapper().index(intersection.outside());
+                    neighborVolVarIndexSet.emplace_back(nIdx);
+                }
+                else
+                    neighborVolVarIndexSet.emplace_back(numScvs_ + numBoundaryScvf_++);
+            }
+
+            // Save the scvf indices belonging to this scv to build up fv element geometries fast
+            scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
+            neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
+        }
+
+        // build the connectivity map for an effecient assembly
+        connectivityMap_.update(*this);
+    }
+
+    //! The total number of sub control volumes
+    std::size_t numScv() const
+    {
+        return numScvs_;
+    }
+
+    //! The total number of sub control volume faces
+    std::size_t numScvf() const
+    {
+        return numScvf_;
+    }
+
+    //! The total number of boundary sub control volume faces
+    std::size_t numBoundaryScvf() const
+    {
+        return numBoundaryScvf_;
+    }
+
+    //! The total number of intersections
+    std::size_t numIntersections() const
+    {
+        return intersectionMapper_.numIntersections();
+    }
+
+    //! the total number of dofs
+    std::size_t numDofs() const
+    { return numCellCenterDofs() + numFaceDofs(); }
+
+    std::size_t numCellCenterDofs() const
+    { return this->gridView().size(0); }
+
+    std::size_t numFaceDofs() const
+    { return this->gridView().size(1); }
+
+    const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
+    { return scvfIndicesOfScv_[scvIdx]; }
+
+    IndexType localToGlobalScvfIndex(IndexType eIdx, IndexType localScvfIdx) const
+    {
+        return localToGlobalScvfIndices_[eIdx][localScvfIdx];
+    }
+
+    /*!
+     * \brief Returns the connectivity map of which dofs have derivatives with respect
+     *        to a given dof.
+     */
+    const ConnectivityMap &connectivityMap() const
+    { return connectivityMap_; }
+
+    //! Returns a pointer the cell center specific auxiliary class. Required for the multi-domain FVAssembler's ctor.
+    std::unique_ptr<CellCenterFVGridGeometry<ThisType>> cellCenterFVGridGeometryPtr() const
+    {
+        return std::make_unique<CellCenterFVGridGeometry<ThisType>>(this);
+    }
+
+    //! Returns a pointer the face specific auxiliary class. Required for the multi-domain FVAssembler's ctor.
+    std::unique_ptr<FaceFVGridGeometry<ThisType>> faceFVGridGeometryPtr() const
+    {
+        return std::make_unique<FaceFVGridGeometry<ThisType>>(this);
+    }
+
+    //! Return a copy of the cell center specific auxiliary class.
+    CellCenterFVGridGeometry<ThisType> cellCenterFVGridGeometry() const
+    {
+        return CellCenterFVGridGeometry<ThisType>(this);
+    }
+
+    //! Return a copy of the face specific auxiliary class.
+    FaceFVGridGeometry<ThisType> faceFVGridGeometry() const
+    {
+        return FaceFVGridGeometry<ThisType>(this);
+    }
+
+    //! Return a reference to the intersection mapper
+    const IntersectionMapper& intersectionMapper() const
+    {
+        return intersectionMapper_;
+    }
+
+    //! Return the neighbor volVar indices for all scvfs in the scv with index scvIdx
+    const std::vector<IndexType>& neighborVolVarIndices(IndexType scvIdx) const
+    { return neighborVolVarIndices_[scvIdx]; }
+
+private:
+
+    //! Information on the global number of geometries
+    IndexType numScvs_;
+    IndexType numScvf_;
+    IndexType numBoundaryScvf_;
+    std::vector<std::vector<IndexType>> localToGlobalScvfIndices_;
+    std::vector<std::vector<IndexType>> neighborVolVarIndices_;
+
+    // mappers
+    ConnectivityMap connectivityMap_;
+    IntersectionMapper intersectionMapper_;
+
+    //! vectors that store the global data
+    std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
 };
 
 } // end namespace

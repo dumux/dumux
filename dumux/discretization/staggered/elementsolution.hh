@@ -32,10 +32,10 @@ namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
- * \brief  Helper function to creater a PrimaryVariables object from CellCenterPrimaryVariables
+ * \brief  Helper function to create a PrimaryVariables object from CellCenterPrimaryVariables
  * \tparam PrimaryVariables The type of the desired primary variables object
  * \tparam CellCenterPrimaryVariables The type of the cell center (input) primary variables object
- * \param CellCenterPrimaryVariables The cell center (input) primary variables object
+ * \param cellCenterPrimaryVariables The cell center (input) primary variables object
  */
 template<class PrimaryVariables, class CellCenterPrimaryVariables>
 PrimaryVariables makePriVarsFromCellCenterPriVars(const CellCenterPrimaryVariables& cellCenterPriVars)
@@ -56,7 +56,7 @@ using StaggeredElementSolution = Dune::BlockVector<PrimaryVariables>;
 /*!
  * \ingroup StaggeredDiscretization
  * \brief  Make an element solution for staggered schemes
- * \note This is e.g. used to contruct an element solution at Dirichlet boundaries
+ * \note This is e.g. used to construct an element solution at Dirichlet boundaries
  */
 template<class FVElementGeometry, class PrimaryVariables>
 auto elementSolution(PrimaryVariables&& priVars)
@@ -64,6 +64,19 @@ auto elementSolution(PrimaryVariables&& priVars)
                     StaggeredElementSolution<PrimaryVariables>>
 {
     return StaggeredElementSolution<PrimaryVariables>({std::move(priVars)});
+}
+
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief  Helper function to create an elementSolution from cell center primary variables
+ * \tparam PrimaryVariables The type of the desired primary variables object
+ * \tparam CellCenterPrimaryVariables The type of the cell center (input) primary variables object
+ * \param cellCenterPrimaryVariables The cell center (input) primary variables object
+ */
+template<class PrimaryVariables, class CellCenterPrimaryVariables>
+StaggeredElementSolution<PrimaryVariables> makeElementSolutionFromCellCenterPrivars(const CellCenterPrimaryVariables& cellCenterPriVars)
+{
+    return StaggeredElementSolution<PrimaryVariables>({makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars)});
 }
 
 } // end namespace Dumux

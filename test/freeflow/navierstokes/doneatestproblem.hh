@@ -24,6 +24,10 @@
 #ifndef DUMUX_DONEA_TEST_PROBLEM_HH
 #define DUMUX_DONEA_TEST_PROBLEM_HH
 
+#ifndef ENABLECACHING
+#define ENABLECACHING 0
+#endif
+
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/fluidsystems/1pliquid.hh>
@@ -57,10 +61,10 @@ SET_TYPE_PROP(DoneaTestTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(DoneaTestTypeTag, Problem, Dumux::DoneaTestProblem<TypeTag> );
 
-SET_BOOL_PROP(DoneaTestTypeTag, EnableFVGridGeometryCache, true);
-
-SET_BOOL_PROP(DoneaTestTypeTag, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(DoneaTestTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(DoneaTestTypeTag, EnableFVGridGeometryCache, ENABLECACHING);
+SET_BOOL_PROP(DoneaTestTypeTag, EnableGridFluxVariablesCache, ENABLECACHING);
+SET_BOOL_PROP(DoneaTestTypeTag, EnableGridVolumeVariablesCache, ENABLECACHING);
+SET_BOOL_PROP(DoneaTestTypeTag, EnableGridFaceVariablesCache, ENABLECACHING);
 
 #if ENABLE_NAVIERSTOKES
 SET_BOOL_PROP(DoneaTestTypeTag, EnableInertiaTerms, true);

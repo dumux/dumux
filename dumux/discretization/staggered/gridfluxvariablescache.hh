@@ -36,11 +36,12 @@ namespace Dumux {
  * \tparam P The problem type
  * \tparam FVC The flux variables cache type
  */
-template<class P, class FVC>
+template<class P, class FVC, class FVCF>
 struct StaggeredDefaultGridFluxVariablesCacheTraits
 {
     using Problem = P;
     using FluxVariablesCache = FVC;
+    using FluxVariablesCacheFiller = FVCF;
 
     template<class GridFluxVariablesCache, bool cachingEnabled>
     using LocalView = StaggeredElementFluxVariablesCache<GridFluxVariablesCache, cachingEnabled>;
@@ -52,8 +53,9 @@ struct StaggeredDefaultGridFluxVariablesCacheTraits
  */
 template<class Problem,
          class FluxVariablesCache,
-         bool cachingEnabled = false,
-         class Traits = StaggeredDefaultGridFluxVariablesCacheTraits<Problem, FluxVariablesCache> >
+         class FluxVariablesCacheFiller,
+         bool EnableGridFluxVariablesCache = false,
+         class Traits = StaggeredDefaultGridFluxVariablesCacheTraits<Problem, FluxVariablesCache, FluxVariablesCacheFiller> >
 class StaggeredGridFluxVariablesCache;
 
 /*!
@@ -61,15 +63,18 @@ class StaggeredGridFluxVariablesCache;
  * \brief Flux variables cache class for staggered models.
           Specialization in case of storing the flux cache.
  */
-template<class P, class FVC, class Traits>
-class StaggeredGridFluxVariablesCache<P, FVC, true, Traits>
+template<class P, class FVC, class FVCF, class Traits>
+class StaggeredGridFluxVariablesCache<P, FVC, FVCF, true, Traits>
 {
-    using ThisType = StaggeredGridFluxVariablesCache<P, FVC, true, Traits>;
     using Problem = typename Traits::Problem;
+    using ThisType = StaggeredGridFluxVariablesCache<P, FVC, FVCF, true, Traits>;
 
 public:
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
+
+    //! export the flux variable cache filler type
+    using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
 
     //! make it possible to query if caching is enabled
     static constexpr bool cachingEnabled = true;
@@ -86,21 +91,31 @@ public:
                 const SolutionVector& sol,
                 bool forceUpdate = false)
     {
-        // fluxVarsCache_.resize(fvGridGeometry.numScvf());
-        // for (const auto& element : elements(fvGridGeometry.gridView()))
-        // {
-        //     // Prepare the geometries within the elements of the stencil
-        //     auto fvGeometry = localView(fvGridGeometry);
-        //     fvGeometry.bind(element);
-        //
-        //     auto elemVolVars = localView(gridVolVars);
-        //     elemVolVars.bind(element, fvGeometry, sol);
-        //
-        //     for (auto&& scvf : scvfs(fvGeometry))
-        //     {
-        //         fluxVarsCache_[scvf.index()].update(problem, element, fvGeometry, elemVolVars, scvf);
-        //     }
-        // }
+        // only do the update if fluxes are solution dependent or if update is forced
+        // TODO: so far, the staggered models do not use any fluxVar caches, therefore an empty cache filler
+        // is used which does not implement isSolDependent
+        if (/*FluxVariablesCacheFiller::isSolDependent ||*/ forceUpdate)
+        {
+            // instantiate helper class to fill the caches
+            // FluxVariablesCacheFiller filler(problem()); TODO: use proper ctor
+            FluxVariablesCacheFiller filler;
+
+            fluxVarsCache_.resize(fvGridGeometry.numScvf());
+            for (const auto& element : elements(fvGridGeometry.gridView()))
+            {
+                // Prepare the geometries within the elements of the stencil
+                auto fvGeometry = localView(fvGridGeometry);
+                fvGeometry.bind(element);
+
+                auto elemVolVars = localView(gridVolVars);
+                elemVolVars.bind(element, fvGeometry, sol);
+
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    filler.fill(*this, fluxVarsCache_[scvf.index()], element, fvGeometry, elemVolVars, scvf, forceUpdate);
+                }
+            }
+        }
     }
 
     const Problem& problem() const
@@ -125,30 +140,39 @@ private:
  * \brief Flux variables cache class for staggered models.
           Specialization in case of not storing the flux cache.
  */
-template<class P, class FVC, class Traits>
-class StaggeredGridFluxVariablesCache<P, FVC, false, Traits>
+template<class P, class FVC, class FVCF, class Traits>
+class StaggeredGridFluxVariablesCache<P, FVC, FVCF, false, Traits>
 {
-    using ThisType = StaggeredGridFluxVariablesCache<P, FVC, false, Traits>;
     using Problem = typename Traits::Problem;
+    using ThisType = StaggeredGridFluxVariablesCache<P, FVC, FVCF, false, Traits>;
 
 public:
     //! export the flux variable cache type
     using FluxVariablesCache = typename Traits::FluxVariablesCache;
 
+    //! export the flux variable cache filler type
+    using FluxVariablesCacheFiller = typename Traits::FluxVariablesCacheFiller;
+
     //! make it possible to query if caching is enabled
-    static constexpr bool cachingEnabled = true;
+    static constexpr bool cachingEnabled = false;
 
     //! export the type of the local view
     using LocalView = typename Traits::template LocalView<ThisType, cachingEnabled>;
 
-    // When global flux variables caching is disabled, we don't need to update the cache
-    void update(Problem& problem)
-    { problemPtr_ = &problem; }
+    StaggeredGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+
+    // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
+    template<class FVGridGeometry, class GridVolumeVariables, class SolutionVector>
+    void update(const FVGridGeometry& fvGridGeometry,
+                const GridVolumeVariables& gridVolVars,
+                const SolutionVector& sol,
+                bool forceUpdate = false) {}
+
+    const Problem& problem() const
+    { return *problemPtr_; }
 
 private:
 
-    const Problem& problem_() const
-    { return *problemPtr_; }
 
     const Problem* problemPtr_;
 };

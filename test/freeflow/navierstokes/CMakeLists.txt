@@ -72,9 +72,20 @@ dune_add_test(NAME test_channel_navierstokes
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes-00002.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes")
 
+dune_add_test(NAME test_stokes_donea_no_caching
+              SOURCES test_donea.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMPILE_DEFINITIONS ENABLECACHING=0
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/stokes-donea-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_donea-00001.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes_donea_no_caching test_stokes_donea.input")
+
 dune_add_test(NAME test_stokes_donea
               SOURCES test_donea.cc
               CMAKE_GUARD HAVE_UMFPACK
+              COMPILE_DEFINITIONS ENABLECACHING=1
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes-donea-reference.vtu

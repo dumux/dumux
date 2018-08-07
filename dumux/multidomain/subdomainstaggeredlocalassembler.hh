@@ -392,7 +392,7 @@ public:
         // get some references for convenience
         auto& couplingManager = this->couplingManager();
         const auto& element = this->element();
-        const auto& curSol = this->curSol()[domainId];
+        const auto& curSol = this->curSol();
         auto&& fvGeometry = this->fvGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& curElemFaceVars = this->curElemFaceVars();
@@ -406,8 +406,8 @@ public:
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
         if (!this->assembler().isStationaryProblem())
         {
-            this->prevElemVolVars().bindElement(element, fvGeometry, this->assembler().prevSol()[domainId]);
-            this->prevElemFaceVars().bindElement(element, fvGeometry, this->assembler().prevSol()[domainId]);
+            this->prevElemVolVars().bindElement(element, fvGeometry, this->assembler().prevSol());
+            this->prevElemFaceVars().bindElement(element, fvGeometry, this->assembler().prevSol());
         }
     }
 
