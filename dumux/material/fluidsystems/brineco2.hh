@@ -220,6 +220,21 @@ public:
 
     /*!
      * \brief Returns true if and only if a fluid phase is assumed to
+     *        be an ideal gas.
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr bool isIdealGas(int phaseIdx)
+    {
+        assert(0 <= phaseIdx && phaseIdx < numPhases);
+        // let the fluids decide
+        if (phaseIdx == gasPhaseIdx)
+            return useConstantSalinity ? (ConstantSalinityBrine::gasIsIdeal() && CO2::gasIsIdeal())
+                                       : (H2O::gasIsIdeal() && CO2::gasIsIdeal());
+        return false; // not a gas
+    }
+
+    /*!
+     * \brief Returns true if and only if a fluid phase is assumed to
      *        be an ideal mixture.
      *
      * We define an ideal mixture as a fluid phase where the fugacity
