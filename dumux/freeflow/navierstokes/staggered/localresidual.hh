@@ -302,17 +302,18 @@ protected:
             }
             else if(bcTypes.isNeumann(Indices::velocity(scvf.directionIndex())))
             {
-                // set a given Neumann flux for the face on the boundary itself
+                // the source term has already been accounted for, here we
+                // add a given Neumann flux for the face on the boundary itself ...
                 const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
-                residual = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
+                residual += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
                                            * extrusionFactor * scvf.area();
 
-                // treat the remaining (frontal and lateral) faces of the staggered control volume
+                // ... and treat the fluxes of the remaining (frontal and lateral) faces of the staggered control volume
                 residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
             }
             else if(bcTypes.isSymmetry())
             {
-                // For symmetry boundary conditions, there is no flow accross the boundary and
+                // for symmetry boundary conditions, there is no flow accross the boundary and
                 // we therefore treat it like a Dirichlet boundary conditions with zero velocity
                 const Scalar velocity = elemFaceVars[scvf].velocitySelf();
                 const Scalar fixedValue = 0.0;
@@ -320,7 +321,8 @@ protected:
             }
             else if(bcTypes.isDirichlet(Indices::pressureIdx))
             {
-                // If none of the above conditions apply, we are at an "fixed pressure" boundary for which the velocity needs to be assembled
+                // if none of the above conditions apply, we are at an "fixed pressure" boundary for which the resdiual of the momentum balance needs to be assembled
+                // as if it where inside the domain and not on the boundary (source term has already been acounted for)
                 residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
             }
             else

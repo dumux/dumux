@@ -30,6 +30,8 @@
 #include <utility>
 #include <memory>
 
+#include <dune/common/float_cmp.hh>
+#include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/multidomain/staggeredcouplingmanager.hh>
 
@@ -119,7 +121,6 @@ public:
 
     using ParentType::couplingStencil;
     using ParentType::updateCouplingContext;
-    using DarcyGridVariables = GridVariables<2>;
     using CouplingData = StokesDarcyCouplingData<MDTraits, StokesDarcyCouplingManager<MDTraits>>;
 
     //! Constructor
@@ -137,6 +138,9 @@ public:
               std::shared_ptr<const Problem<darcyIdx>> darcyProblem,
               const SolutionVector& curSol)
     {
+        if(Dune::FloatCmp::ne(stokesProblem->gravity(), darcyProblem->gravity()))
+            DUNE_THROW(Dune::InvalidStateException, "Both models must use the same gravity vector");
+
         ParentType::init(std::make_tuple(stokesProblem, stokesProblem, darcyProblem));
         this->curSol() = curSol;
         couplingData_ = std::make_shared<CouplingData>(*this);
