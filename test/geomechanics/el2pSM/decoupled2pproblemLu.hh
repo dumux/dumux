@@ -551,11 +551,17 @@ public:
 
         if (globalPos[1] > -15)
         {
-          const Scalar pc = std::max(0.0, 9.81*1000.0*(globalPos[1] -15));
+          const Scalar meterUeberGW = globalPos[1] +15;
+          const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
           const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
 
+          //std::cout << "globalPos[1]: " << globalPos[1] << std::endl;
+          //std::cout << "meterUeberGW: " << meterUeberGW << std::endl;
+          //std::cout << "pc: " << pc << std::endl;
+          //std::cout << "sw: " << sw << std::endl;
+
           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
-          values[saturationIdx] = sw;
+          values[saturationIdx] = 1-sw;
         } else
         {
           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
