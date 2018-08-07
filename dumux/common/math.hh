@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 #include <dune/common/typetraits.hh>
 #include <dune/common/fvector.hh>
@@ -488,6 +489,78 @@ bool isBetween(const Dune::FieldVector<Scalar, dim> &pos,
    else
        return false;
 }
+
+//! forward declaration of the linear interpolation policy (default)
+namespace InterpolationPolicy { struct Linear; }
+
+/*!
+ * \ingroup Common
+ * \brief a generic function to interpolate given a set of parameters and an interpolation point
+ * \param params the parameters used for interpolation (depends on the policy used)
+ * \param ip the interpolation point
+ * \param policy the interpolation policy
+ */
+template <class Policy = InterpolationPolicy::Linear, class Scalar, class Parameter>
+Scalar interpolate(Scalar ip, Parameter&& params)
+{ return Policy::interpolate(ip, std::forward<Parameter>(params)); }
+
+/*!
+ * \ingroup Common
+ * \brief Interpolation policies
+ */
+namespace InterpolationPolicy  {
+
+/*!
+ * \ingroup Common
+ * \brief interpolate linearly between two given values
+ */
+struct Linear
+{
+    /*!
+     * \brief interpolate linearly between two given values
+     * \param ip the interpolation point in [0,1]
+     * \param array with the lower and upper bound
+     */
+    template<class Scalar>
+    static constexpr Scalar interpolate(Scalar ip, const std::array<Scalar, 2>& params)
+    {
+        return params[0]*(1.0 - ip) + params[1]*ip;
+    }
+};
+
+/*!
+ * \ingroup Common
+ * \brief interpolate linearly in a piecewise linear function (tabularized function)
+ */
+struct LinearTable
+{
+    /*!
+     * \brief interpolate linearly in a piecewise linear function (tabularized function)
+     * \param ip the interpolation point
+     * \param table the table as a pair of sorted vectors (have to be same size)
+     * \note if the interpolation point is out of bounds this will return the bounds
+     */
+    template<class Scalar, class RandomAccessContainer>
+    static constexpr Scalar interpolate(Scalar ip, const std::pair<RandomAccessContainer, RandomAccessContainer>& table)
+    {
+        const auto& range = table.first;
+        const auto& values = table.second;
+
+        // check bounds
+        if (ip > range.back()) return values.back();
+        if (ip < range[0]) return values[0];
+
+        // if we are within bounds find the index of the lower bound
+        const auto lookUpIndex = std::distance(range.begin(), std::lower_bound(range.begin(), range.end(), ip));
+        if (lookUpIndex == 0)
+            return values[0];
+
+        const auto ipLinear = (ip - range[lookUpIndex-1])/(range[lookUpIndex] - range[lookUpIndex-1]);
+        return Dumux::interpolate<Linear>(ipLinear, std::array<Scalar, 2>{{values[lookUpIndex-1], values[lookUpIndex]}});
+    }
+};
+
+} // end namespace InterpolationPolicy
 
 
 /*!

@@ -31,6 +31,7 @@
 #include <config.h>
 
 #include <iostream>
+#include <utility>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/fmatrix.hh>
@@ -40,6 +41,18 @@
 
 #include <dumux/common/math.hh>
 
+namespace Test {
+
+template<class Scalar, class Table>
+void checkTableInterpolation(Scalar ip, Scalar expected, const Table& table, Scalar eps = 1e-15)
+{
+    using namespace Dumux;
+    auto interp = interpolate<InterpolationPolicy::LinearTable>(ip, table);
+    if (!Dune::FloatCmp::eq(interp, expected, eps))
+        DUNE_THROW(Dune::Exception, "Wrong interpolation, expected " << expected << " got " << interp);
+}
+
+} // end namespace Test
 
 int main() try
 {
@@ -129,6 +142,20 @@ int main() try
     static_assert(Dumux::sign(2.0) == 1, "Wrong sign!");
     static_assert(Dumux::sign(-2) == -1, "Wrong sign!");
     static_assert(Dumux::sign(-3.5) == -1, "Wrong sign!");
+
+    //////////////////////////////////////////////////////////////////
+    ///// Dumux::interpolate /////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
+    std::vector<double> a{0.0, 1.0, 2.0};
+    std::vector<double> b{-1.0, 1.0, 3.0};
+    const auto table = std::make_pair(a, b);
+
+    Test::checkTableInterpolation(-1.0, -1.0, table);
+    Test::checkTableInterpolation(+0.0, -1.0, table);
+    Test::checkTableInterpolation(0.001, -0.998, table);
+    Test::checkTableInterpolation(1.5, 2.0, table);
+    Test::checkTableInterpolation(2.0, 3.0, table);
+    Test::checkTableInterpolation(3.0, 3.0, table);
 }
 catch (Dune::Exception& e) {
     std::cerr << e << std::endl;
