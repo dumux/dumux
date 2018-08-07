@@ -200,6 +200,8 @@ class TwoP_TestProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
     typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
 
     enum {
         // Grid and world dimension
@@ -448,10 +450,12 @@ public:
         values.setAllNeumann();
 
         if ( rightBoundaryU_(globalPos)){
-
             values.setDirichlet(pressureIdx, contiWEqIdx);
             values.setDirichlet(saturationIdx, contiNEqIdx);//this part is aplied all the time
-
+         }
+        if( (initializationRun_ == true) && (onInlet_(globalPos)) ){
+            values.setDirichlet(pressureIdx, contiWEqIdx);
+            values.setDirichlet(saturationIdx, contiNEqIdx);//this part is aplied all the time
          }
 
 
@@ -469,8 +473,14 @@ public:
      */
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-        values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
-        values[saturationIdx] = 0.0;
+        if ( (initializationRun_ == true) && (onInlet_(globalPos)) ){
+          values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
+          values[saturationIdx] = 0.5;
+        } else
+        {
+          values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
+          values[saturationIdx] = 0.0;
+        }
     }
 
      void solDependentNeumann(PrimaryVariables &values,
@@ -535,9 +545,50 @@ public:
     {
         typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
 
-        // hydrostatic pressure
-        values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
-        values[saturationIdx] = 0.01;
+        const auto& materialLawParams = this->spatialParams().materialLawParams(globalPos);
+        const Scalar swr = materialLawParams.swr();
+        const Scalar snr = materialLawParams.snr();
+
+        if (globalPos[1] > -15)
+        {
+          const Scalar pc = std::max(0.0, 9.81*1000.0*(globalPos[1] -15));
+          const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
+
+          values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
+          values[saturationIdx] = sw;
+        } else
+        {
+          values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
+          values[saturationIdx] = 0.01;
+        }
+    }
+
+    static Scalar invertPcGW_(const Scalar pcIn,
+                              const MaterialLawParams &pcParams)
+    {
+        Scalar lower(0.0);
+        Scalar upper(1.0);
+        const unsigned int maxIterations = 25;
+        const Scalar bisLimit = 1.0;
+
+        Scalar sw, pcGW;
+        for (unsigned int k = 1; k <= maxIterations; k++)
+        {
+            sw = 0.5*(upper + lower);
+            pcGW = MaterialLaw::pc(pcParams, sw);
+            const Scalar delta = std::abs(pcGW - pcIn);
+            if (delta < bisLimit)
+                return sw;
+
+            if (k == maxIterations)
+                return sw;
+
+            if (pcGW > pcIn)
+                lower = sw;
+            else
+                upper = sw;
+        }
+        return sw;
     }
 
 
