@@ -130,8 +130,8 @@ public:
             restart = true;
 
         // get initial time step size for the subproblems
-        Scalar dtSubProblem1 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitialSubProblem1);
-        Scalar dtSubProblem2 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitialSubProblem2);
+        Scalar dtSubProblem1 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
+        Scalar dtSubProblem2 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
 
         // initialize the subproblem time managers
         // (this also initializes the subproblems)
@@ -192,7 +192,7 @@ public:
      */
     Scalar nextTimeStepSize(const Scalar dt)
     {
-        return dt;
+        return timeManager_.timeStepSize();
     }
 
     /*!

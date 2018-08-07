@@ -181,6 +181,8 @@ public:
 
             numIterations_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.NumIterationsInit);
 
+            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthInit);
+
 //             maxCouplingError_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
 //                                                             Scalar,
 //                                                             Problem,
@@ -350,6 +352,15 @@ public:
             try {
 
                 MechanicsProblem().spatialParams().setEpisode(ParentType::timeManager_.episodeIndex());
+
+                if (ParentType::timeManager_.time() > eps_)
+                {
+                    Scalar oldTimeStep = ParentType::timeManager_.timeStepSize();
+                    Scalar newTimeStepSize = TranspProblem().newtonController().suggestTimeStepSize(oldTimeStep);
+
+                    std::cout << "newTimeStepSize " << newTimeStepSize << std::endl;
+                    ParentType::timeManager_.setTimeStepSize(newTimeStepSize);
+                }
 
                 Scalar time = ParentType::timeManager_.time() + ParentType::timeManager_.timeStepSize();
 
