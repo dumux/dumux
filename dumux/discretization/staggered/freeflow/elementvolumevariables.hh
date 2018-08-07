@@ -90,7 +90,7 @@ public:
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
-        // the last paramater {} is needed for the PassKey pattern which restricts acces to the ElementVolVars class
+        // the last parameter {} is needed for the PassKey pattern which restricts access to the ElementVolVars class
         gridVolVars().updateBoundary_(element, fvGeometry, sol, {});
     }
 
@@ -198,7 +198,7 @@ public:
                                               element,
                                               scvI);
             volVarIndices_[localIdx] = scvf.outsideScvIdx();
-             ++localIdx;
+            ++localIdx;
         }
     }
 

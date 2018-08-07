@@ -48,7 +48,7 @@ struct StaggeredGridDefaultGridVolumeVariablesTraits
     template<class T>
     class Key { friend T; Key() {} Key(Key const&) {} };
 
-    //! Returns the primary  variales used for the boundary volVars and checks for admissable
+    //! Returns the primary variables used for the boundary volVars and checks for admissible
     //! combinations for boundary conditions.
     template<class Problem, class SolutionVector, class Element, class SubControlVolumeFace>
     static PrimaryVariables getBoundaryPriVars(const Problem& problem,
@@ -258,7 +258,7 @@ public:
     const Problem& problem() const
     { return *problemPtr_;}
 
-    //! Returns the primary  variales used for the boundary volVars and checks for admissable
+    //! Returns the primary variables used for the boundary volVars and checks for admissible
     //! combinations for boundary conditions.
     template<class... Args>
     PrimaryVariables getBoundaryPriVars(Args&&... args) const

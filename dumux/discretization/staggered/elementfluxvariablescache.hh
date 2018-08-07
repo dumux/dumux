@@ -84,7 +84,7 @@ public:
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars)
     {
-        DUNE_THROW(Dune::InvalidStateException, "In case of enabled caching, the grid flux variables cache has to be updated");
+        DUNE_THROW(Dune::InvalidStateException, "In case of enabled caching, the grid flux variables cache must not to be updated");
     }
 
     //! operators in the case of caching
