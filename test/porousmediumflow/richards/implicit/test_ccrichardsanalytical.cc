@@ -177,9 +177,9 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // write vtk output
-        if(timeLoop->willBeFinished())
-        vtkWriter.write(timeLoop->time());
+        // write vtk output only on last time step
+        if (timeLoop->finished())
+            vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
