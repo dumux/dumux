@@ -1,0 +1,87 @@
+[TimeManager]
+TInitEnd = 10000000#              0.000000001 # [s]
+TEnd =     12960000#                   155520000 # [s]
+DtInitial =  1#              0.000000001 # [s]
+EpisodeLengthInit =  10000000 #  86400 # [s]
+EpisodeLengthMainSimulation =  86400 #  86400 # [s]
+NumIterationsInit = 1
+NumIterations = 1
+MaxRelDiffPw = 1.0e-6
+
+[Newton]
+MaxSteps = 1000
+MaxAbsoluteGlobalResidual = 1.0e-5
+FirstEvalOriginalRhsIteration = 100
+
+[Grid]
+Refine = 0
+File = ./grids/Lu2D.msh
+
+[Damping]
+DampingFactor = 0.50
+Beta = 0.01
+
+[PoreCompressibility]
+UsePoreCompressibility = 0
+
+[Problem]
+Name = el2p_2pdecoupled # name passed to the output routines
+
+[FailureParameters]
+DeltaT = 0.01          # Timestep lenght of failure [s]
+DeltaSigma = 0.1e6  # Stress drop [Pa]
+RangeOfFailureInfluence = 0
+rockDensity = 2000 # [kg/m3]
+
+
+ratioResidualShearStrength_UndamagedShearStrength = 1.00
+FullHealing = 0
+
+MohrCoulombWorstCase = 0
+
+SpatialTolerance = 10 # was 3 for the fine grid
+SpatialTolerance2 = 10 # was 3 for the fine grid
+FaultAngle = -11.3099 # angle of the fault in degrees
+
+FrictionAngle = 30.0 # in degrees
+Cohesion = 15000 #[Pa]
+DilationAngle = 10
+
+[Injection]
+
+Nonwetting = 0
+
+[Fluid]
+BrineDensity = 1000
+
+[ElasticParameters]
+E = 1e7
+nu = 0.33
+PoreComp = 3.0e-9
+
+
+[TransportParameters]
+Kinit = 1.E-12  # initial permeability [m²]
+ks = 1.39e-6 #Hydraulic conductivity[m/s]
+avgRain = 3.7E-8 #[m/s] 400 mm in 150d
+
+Phi   = 0.46     # porosity
+swr = 0  # Residual water content
+n = 1.37
+alpha = 0.000163196 # [1/m] to [1/pa] = 1.6/9804.139432
+
+
+[Neumann]
+StressY = 0.0
+
+[Implicit]
+MobilityUpwindWeight = 1.0
+
+[Output]
+PlotFluidMatrixInteractions = false
+
+# [LinearSolver]
+# Verbosity = 2
+
+
+
