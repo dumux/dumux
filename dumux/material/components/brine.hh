@@ -281,13 +281,13 @@ public:
     /*!
      * \brief Returns true if the gas phase is assumed to be ideal
      */
-    static bool gasIsIdeal()
+    static constexpr bool gasIsIdeal()
     { return H2O::gasIsIdeal(); }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be compressible
      */
-    static bool gasIsCompressible()
+    static constexpr bool gasIsCompressible()
     { return H2O::gasIsCompressible(); }
 
     /*!
