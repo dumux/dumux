@@ -134,14 +134,15 @@ public:
         time_ = startTime;
         endTime_ = tEnd;
 
-        timeStepSize_ = dt;
         lastTimeStepSize_ = 0.0;
-        maxTimeStepSize_ = std::numeric_limits<Scalar>::max();
-        userSetMaxTimeStepSize_ = maxTimeStepSize_;
+        userSetMaxTimeStepSize_ = std::numeric_limits<Scalar>::max();
         timeStepIdx_ = 0;
         finished_ = false;
         timeAfterLastTimeStep_ = 0.0;
         timeStepWallClockTime_ = 0.0;
+
+        // ensure that dt is not greater than tEnd-startTime
+        setTimeStepSize(dt);
 
         timer_.stop();
         timer_.reset();
@@ -160,6 +161,9 @@ public:
         const auto cpuTime = wallClockTime();
         timeStepWallClockTime_ = cpuTime - timeAfterLastTimeStep_;
         timeAfterLastTimeStep_ = cpuTime;
+
+        // ensure that using current dt we don't exceed tEnd in next time step
+        setTimeStepSize(timeStepSize_);
     }
 
     /*!
