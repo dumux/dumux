@@ -57,7 +57,7 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of molecular nitrogen.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 28.0134e-3;}
 
     /*!

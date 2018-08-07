@@ -63,7 +63,7 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of water.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 18e-3; }
 
     /*!

@@ -57,7 +57,7 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of molecular hydrogen.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 2.01588e-3; }
 
     /*!

@@ -57,7 +57,7 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of TCE.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     {
         return 131.39e-3; // [kg/mol]
     }

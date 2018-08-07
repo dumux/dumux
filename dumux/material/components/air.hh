@@ -58,7 +58,7 @@ public:
      *
      * Taken from constrelair.hh.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 0.02896; /* [kg/mol] */ }
 
     /*!

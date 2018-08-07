@@ -56,7 +56,7 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of molecular methane.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return 16.043e-3; /* [kg/mol] */}
 
     /*!

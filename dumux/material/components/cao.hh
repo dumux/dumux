@@ -56,7 +56,7 @@ public:
     /*!
      * \brief The molar mass of CaOH2 in \f$\mathrm{[kg/mol]}\f$.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     {
         return 56.0774e-3;
     }

@@ -71,7 +71,7 @@ public:
      *\param salinity The mass fraction of salt in brine
      * This assumes that the salt is pure NaCl.
      */
-   static Scalar molarMass(Scalar salinity = constantSalinity)
+   static constexpr Scalar molarMass(Scalar salinity = constantSalinity)
    {
        const Scalar M1 = H2O::molarMass();
        const Scalar M2 = Components::NaCl<Scalar>::molarMass(); // molar mass of NaCl [kg/mol]

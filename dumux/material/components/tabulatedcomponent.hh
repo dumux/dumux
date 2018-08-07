@@ -158,7 +158,7 @@ public:
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of the component.
      */
-    static Scalar molarMass()
+    static constexpr Scalar molarMass()
     { return RawComponent::molarMass(); }
 
     /*!
