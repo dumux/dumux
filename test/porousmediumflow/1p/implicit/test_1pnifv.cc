@@ -191,7 +191,7 @@ int main(int argc, char** argv) try
         // set new dt as suggested by the newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
-        if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->willBeFinished())
+        if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->finished())
             vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());

@@ -49,7 +49,7 @@ dune_add_test(NAME test_1p2cni_conduction_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniboxconduction-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_conductiontest_box-00006.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_conductiontest_box-00005.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_conduction_box test_1p2cni_conduction_fv.input -Problem.Name 1p2cni_conductiontest_box"
                         --zeroThreshold {"velocity_w \(m/s\)":1e-9})
 
@@ -59,7 +59,7 @@ dune_add_test(NAME test_1p2cni_conduction_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccconduction-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_conductiontest_tpfa-00006.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_conductiontest_tpfa-00005.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_conduction_tpfa test_1p2cni_conduction_fv.input -Problem.Name 1p2cni_conductiontest_tpfa"
                         --zeroThreshold {"velocity_w \(m/s\)_0":1e-9})
 
@@ -71,7 +71,7 @@ dune_add_test(NAME test_1p2cni_conduction_mpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccmpfaconduction-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_conductiontest_mpfa-00006.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_conductiontest_mpfa-00005.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_conduction_mpfa test_1p2cni_conduction_fv.input -Problem.Name 1p2cni_conductiontest_mpfa -Vtk.AddVelocity false")
 
 # convection
@@ -81,7 +81,7 @@ dune_add_test(NAME test_1p2cni_convection_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniboxconvection-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_convectiontest_box-00010.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_convectiontest_box-00009.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_convection_box test_1p2cni_convection_fv.input -Problem.Name 1p2cni_convectiontest_box"
                         --zeroThreshold {"velocity_w \(m/s\)":1e-9})
 
@@ -91,7 +91,7 @@ dune_add_test(NAME test_1p2cni_convection_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccconvection-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_convectiontest_tpfa-00010.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_convectiontest_tpfa-00009.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_convection_tpfa test_1p2cni_convection_fv.input -Problem.Name 1p2cni_convectiontest_tpfa"
                         --zeroThreshold {"velocity_w \(m/s\)_0":1e-9})
 
@@ -103,5 +103,5 @@ dune_add_test(NAME test_1p2cni_convection_mpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccmpfaconvection-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_convectiontest_mpfa-00010.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_convectiontest_mpfa-00009.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_convection_mpfa test_1p2cni_convection_fv.input -Problem.Name 1p2cni_convectiontest_mpfa -Vtk.AddVelocity false")

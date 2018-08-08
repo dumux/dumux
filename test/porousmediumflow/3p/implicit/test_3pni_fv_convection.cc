@@ -193,7 +193,7 @@ int main(int argc, char** argv) try
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
         // write vtk output
-        if(timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->willBeFinished())
+        if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->finished())
             vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());
