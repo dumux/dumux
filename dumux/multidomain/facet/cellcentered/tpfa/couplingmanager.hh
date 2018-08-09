@@ -363,6 +363,32 @@ public:
         return res;
     }
 
+    template< class PartialDerivativeMatrix >
+    void addCouplingDerivatives(const PartialDerivativeMatrix& partialDerivativeMatrix,
+                                LowDimIdType domainI,
+                                const Element<lowDimId>& elementI,
+                                const FVElementGeometry<lowDimId>& fvGeometry,
+                                const ElementVolumeVariables<lowDimId>& elemVolVars,
+                                BulkIdType domainJ,
+                                const Element<bulkId>& elementJ)
+    {
+      // make sure this is called for the element for which the context was set
+      assert(lowDimContext_.isSet);
+    }
+
+    template< class PartialDerivativeMatrix >
+    void addCouplingDerivatives(const PartialDerivativeMatrix& partialDerivativeMatrix,
+                                BulkIdType domainI,
+                                const Element<bulkId>& elementI,
+                                const FVElementGeometry<bulkId>& fvGeometry,
+                                const ElementVolumeVariables<bulkId>& elemVolVars,
+                                LowDimIdType domainJ,
+                                const Element<lowDimId>& elementJ)
+    {
+      // make sure this is called for the element for which the context was set
+      assert(bulkContext_.isSet);
+    }
+
     /*!
      * \brief Computes the sources in a lower-dimensional element stemming from the bulk domain.
      */

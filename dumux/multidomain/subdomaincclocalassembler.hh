@@ -51,10 +51,10 @@ namespace Dumux {
  * \tparam Assembler the assembler type
  * \tparam Implementation the actual assembler implementation
  */
-template<std::size_t id, class TypeTag, class Assembler, class Implementation>
-class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler,Implementation, true>
+template<std::size_t id, class TypeTag, class Assembler, class Implementation, bool isImplicit = true>
+class SubDomainCCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, isImplicit>
 {
-    using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, true>;
+    using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, isImplicit>;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
@@ -115,7 +115,7 @@ public:
 
         // for the diagonal jacobian block
         const auto globalI = this->fvGeometry().fvGridGeometry().elementMapper().index(this->element());
-        res[globalI] = this->asImp_().assembleJacobianAndResidualImplInverse(jacRow[domainId], *std::get<domainId>(gridVariables));
+        res[globalI] = this->asImp_().assembleJacobianAndResidualImpl(jacRow[domainId], *std::get<domainId>(gridVariables));
 
         // for the coupling blocks
         using namespace Dune::Hybrid;
@@ -253,6 +253,68 @@ public:
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \ingroup MultiDomain
+ * \brief A base class for all explicit multidomain local assemblers
+ * \tparam id the id of the sub domain
+ * \tparam TypeTag the TypeTag
+ * \tparam Assembler the assembler type
+ * \tparam Implementation the actual assembler implementation
+ */
+template<std::size_t id, class TypeTag, class Assembler, class Implementation>
+class SubDomainCCLocalAssemblerExplicitBase : public SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, Implementation, /*implicit=*/false>
+{
+    using ParentType = SubDomainCCLocalAssemblerBase<id, TypeTag, Assembler, Implementation, /*implicit=*/false>;
+
+    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ElementResidualVector = typename ParentType::LocalResidual::ElementResidualVector;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
+    using GridView = typename FVGridGeometry::GridView;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+public:
+    //! export the domain id of this sub-domain
+    static constexpr auto domainId = Dune::index_constant<id>();
+    //! pull up constructor of parent class
+    using ParentType::ParentType;
+
+    //! prepares all necessary local views
+    void bindLocalViews()
+    {
+        // get some references for convenience
+        auto& couplingManager = this->couplingManager();
+        const auto& element = this->element();
+        const auto& curSol = this->curSol()[domainId];
+        const auto& prevSol = this->assembler().prevSol()[domainId];
+        auto&& fvGeometry = this->fvGeometry();
+        auto&& curElemVolVars = this->curElemVolVars();
+        auto&& prevElemVolVars = this->prevElemVolVars();
+        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
+
+        // bind the caches
+        couplingManager.bindCouplingContext(domainId, element, this->assembler());
+        fvGeometry.bind(element);
+
+        curElemVolVars.bind(element, fvGeometry, curSol);
+        prevElemVolVars.bind(element, fvGeometry, prevSol);
+        elemFluxVarsCache.bind(element, fvGeometry, prevElemVolVars);
+    }
+
+    using ParentType::evalLocalSourceResidual;
+    ElementResidualVector evalLocalSourceResidual(const Element& neighbor) const
+    { return this->evalLocalSourceResidual(neighbor, this->curElemVolVars()); }
+
+    /*!
+     * \brief Computes the residual
+     * \return The element residual at the current solution.
+     */
+    LocalResidualValues assembleResidualImpl()
+    { return this->elementIsGhost() ? LocalResidualValues(0.0) : this->evalLocalResidual()[0]; }
+};
+
+/*!
+ * \ingroup Assembly
+ * \ingroup CCDiscretization
+ * \ingroup MultiDomain
  * \brief The cell-centered scheme multidomain local assembler
  * \tparam id the id of the sub domain
  * \tparam TypeTag the TypeTag
@@ -303,7 +365,7 @@ public:
      * \return The element residual at the current solution.
      */
     template<class JacobianMatrixDiagBlock, class GridVariables>
-    LocalResidualValues assembleJacobianAndResidualImplInverse(JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
+    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
     {
         //////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
@@ -657,6 +719,95 @@ public:
             const auto& elementJ = this->assembler().fvGridGeometry(domainJ).element(globalJ);
             this->couplingManager().addCouplingDerivatives(A[globalI][globalJ], domainI, element, fvGeometry, curElemVolVars, domainJ, elementJ);
         }
+    }
+};
+
+
+/*!
+ * \ingroup Assembly
+ * \ingroup CCDiscretization
+ * \brief Cell-centered scheme local assembler using numeric differentiation and implicit time discretization
+ */
+template<std::size_t id, class TypeTag, class Assembler>
+class SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/false>
+: public SubDomainCCLocalAssemblerExplicitBase<id, TypeTag, Assembler,
+            SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, false> >
+{
+    using ThisType = SubDomainCCLocalAssembler<id, TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/false>;
+    using ParentType = SubDomainCCLocalAssemblerExplicitBase<id, TypeTag, Assembler, ThisType>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    enum { numEq = GET_PROP_TYPE(TypeTag, ModelTraits)::numEq() };
+    enum { dim = GridView::dimension };
+
+    static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
+    static constexpr bool enableGridVolVarsCache = GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache);
+    static constexpr int maxNeighbors = 4*(2*dim);
+    static constexpr auto domainI = Dune::index_constant<id>();
+
+public:
+    using ParentType::ParentType;
+
+    /*!
+     * \brief Computes the derivatives with respect to the given element and adds them
+     *        to the global matrix.
+     *
+     * \return The element residual at the current solution.
+     */
+    template<class JacobianMatrixDiagBlock, class GridVariables>
+    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
+    {
+        // get some aliases for convenience
+        const auto& problem = this->problem();
+        const auto& element = this->element();
+        const auto& fvGeometry = this->fvGeometry();
+        const auto& curElemVolVars = this->curElemVolVars();
+
+        // get reference to the element's current vol vars
+        const auto globalI = this->assembler().fvGridGeometry(domainI).elementMapper().index(element);
+        const auto& scv = fvGeometry.scv(globalI);
+        const auto& volVars = curElemVolVars[scv];
+
+        // if the problem is instationary, add derivative of storage term
+        this->localResidual().addStorageDerivatives(A[globalI][globalI], problem, element, fvGeometry, volVars, scv);
+
+        // return element residual
+        return this->assembleResidualImpl();
+    }
+
+    /*!
+     * \brief Computes the derivatives with respect to the given element and adds them
+     *        to the global matrix.
+     *
+     * \return The element residual at the current solution.
+     */
+    template<std::size_t otherId, class JacobianBlock, class GridVariables>
+    void assembleJacobianCoupling(Dune::index_constant<otherId> domainJ, JacobianBlock& A,
+                                  const LocalResidualValues& res, GridVariables& gridVariables)
+    {
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Calculate derivatives of all dofs in the element with respect to all dofs in the coupling stencil. //
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // get some aliases for convenience
+        const auto& element = this->element();
+        const auto& fvGeometry = this->fvGeometry();
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        auto&& curElemVolVars = this->curElemVolVars();
+
+        // get stencil informations
+        const auto globalI = fvGridGeometry.elementMapper().index(element);
+        const auto& stencil = this->couplingManager().couplingStencil(domainI, element, domainJ);
+
+        for (const auto globalJ : stencil)
+        {
+            const auto& elementJ = this->assembler().fvGridGeometry(domainJ).element(globalJ);
+            this->couplingManager().addCouplingDerivatives(A/*[globalI][globalJ]*/, domainI, element, fvGeometry, curElemVolVars, domainJ, elementJ);
+        }
+
     }
 };
 
