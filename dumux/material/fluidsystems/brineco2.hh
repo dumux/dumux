@@ -450,7 +450,8 @@ public:
         else if (phaseIdx == liquidPhaseIdx)
         {
             Scalar T = fluidState.temperature(phaseIdx);
-            Scalar p = fluidState.pressure(phaseIdx);
+            Scalar pl = fluidState.pressure(liquidPhaseIdx);
+            Scalar pg = fluidState.pressure(gasPhaseIdx);
             assert(temperature > 0);
             assert(pressure > 0);
 
@@ -459,7 +460,7 @@ public:
             Scalar xlCO2, xgCO2;
             const Scalar salinity = useConstantSalinity ? ConstantSalinityBrine::constantSalinity
                                                         : fluidState.massFraction(liquidPhaseIdx, NaClIdx);
-            Brine_CO2::calculateMoleFractions(T, p, salinity, /*knownGasPhaseIdx=*/-1, xlCO2, xgH2O);
+            Brine_CO2::calculateMoleFractions(T, pl, salinity, /*knownGasPhaseIdx=*/-1, xlCO2, xgH2O);
 
             // normalize the phase compositions
             using std::min;
@@ -470,10 +471,10 @@ public:
             xgCO2 = 1.0 - xgH2O;
 
             if (compIdx == BrineOrH2OIdx)
-                return /*phigH2O=*/1.0*xgH2O/xlH2O;
+                return (xgH2O/xlH2O)*(pg/pl);
 
             else if (compIdx == CO2Idx)
-                return /*phigCO2=*/1.0*xgCO2/xlCO2;
+                return (xgCO2/xlCO2)*(pg/pl);
 
             // NaCl is assumed to stay in the liquid!
             else if (!useConstantSalinity && compIdx == NaClIdx)
