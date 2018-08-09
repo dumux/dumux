@@ -73,8 +73,7 @@ dune_add_test(NAME test_channel_navierstokes
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes -Vtk.WriteFaceData 1")
 
 dune_add_test(NAME test_channel_navierstokes_restart
-              SOURCES test_channel.cc
-              COMPILE_DEFINITIONS ENABLE_NAVIERSTOKES=1
+              TARGET test_channel_navierstokes
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy

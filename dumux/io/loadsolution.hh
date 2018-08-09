@@ -134,6 +134,15 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
                 sol[eIdx][pvIdx] = vec[i++];
             }
         }
+        // for staggered face data (which is written out as VTK point data) we just read in the vector
+        else if (dataType == VTKReader::DataType::pointData && FVGridGeometry::discMethod == DiscretizationMethod::staggered)
+        {
+            if (sol.size() != vec.size())
+                DUNE_THROW(Dune::InvalidStateException, "Solution size (" << sol.size() << ") does not match input size (" << vec.size() << ")!");
+
+            for (std::size_t i = 0; i < sol.size(); ++i)
+                sol[i][pvIdx] = vec[i];
+        }
         else
         {
             std::size_t i = 0;
