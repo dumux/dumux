@@ -62,7 +62,7 @@ public:
                                     "X^"+ FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i));
         }
 
-        vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phasePresence");
+        vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phase presence");
     }
 };
 

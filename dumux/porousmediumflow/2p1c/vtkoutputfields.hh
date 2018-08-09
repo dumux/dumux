@@ -42,7 +42,7 @@ public:
         TwoPVtkOutputFields::init(vtk);
 
         // output additional to TwoP output:
-        vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phasePresence");
+        vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phase presence");
     }
 };
 
