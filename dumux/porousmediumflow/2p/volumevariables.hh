@@ -170,8 +170,8 @@ public:
             }
             else
             {
-                fluidState.setSaturation(phase1Idx, priVars[saturationIdx]);
-                fluidState.setSaturation(phase0Idx, 1 - priVars[saturationIdx]);
+                fluidState.setSaturation(phase0Idx, priVars[saturationIdx]);
+                fluidState.setSaturation(phase1Idx, 1 - priVars[saturationIdx]);
                 pc_ = MaterialLaw::pc(materialParams, fluidState.saturation(wPhaseIdx));
                 fluidState.setPressure(phase0Idx, priVars[pressureIdx] - pc_);
             }
