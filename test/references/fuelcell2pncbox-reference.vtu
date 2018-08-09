@@ -273,7 +273,7 @@
           38.8036 38.8036 38.8036 38.8036 38.8036 38.8036 38.8036 38.8036 38.8036 38.8036 38.8036 38.8036
           38.8036 38.8036 38.8036 38.8036 38.8036 38.8036 38.8036 38.8036 38.8036 38.8036
         </DataArray>
-        <DataArray type="Float32" Name="phasePresence" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="phase presence" NumberOfComponents="1" format="ascii">
           3 3 3 3 3 3 3 3 3 3 3 3
           3 3 3 3 3 3 3 3 3 3 3 3
           3 3 3 3 3 3 3 3 3 3 3 3

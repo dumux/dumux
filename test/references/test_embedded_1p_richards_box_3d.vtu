@@ -1863,7 +1863,7 @@
           0.0615345 0.0615069 0.0614296 0.0613184 0.0611974 0.0610956 0.0610401 0.0610476 0.0611155 0.061221 0.0613301 0.0614103
           0.0614396
         </DataArray>
-        <DataArray type="Float32" Name="phasePresence" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="phase presence" NumberOfComponents="1" format="ascii">
           3 3 3 3 3 3 3 3 3 3 3 3
           3 3 3 3 3 3 3 3 3 3 3 3
           3 3 3 3 3 3 3 3 3 3 3 3
