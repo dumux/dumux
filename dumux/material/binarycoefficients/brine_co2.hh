@@ -51,7 +51,8 @@ public:
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure) {
+    static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
+    {
         //Diffusion coefficient of water in the CO2 phase
         Scalar const PI=3.141593;
         Scalar const k = 1.3806504e-23; // Boltzmann constant
@@ -61,7 +62,6 @@ public:
         Scalar D = k / (c * PI * R_h) * (temperature / mu);
         return D;
     }
-    ;
 
     /*!
      * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ of CO2 in the brine phase.
@@ -69,11 +69,11 @@ public:
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure) {
+    static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
+    {
         //Diffusion coefficient of CO2 in the brine phase
         return 2e-9;
     }
-    ;
 
     /*!
      * \brief Returns the _mol_ (!) fraction of CO2 in the liquid
@@ -102,11 +102,12 @@ public:
         Scalar A = computeA_(temperature, pg);
 
         /* salinity: conversion from mass fraction to mol fraction */
-        const Scalar x_NaCl = salinityToMolFrac_(salinity);
+        const Scalar x_NaCl = salinityToMoleFrac_(salinity);
 
         // if both phases are present the mole fractions in each phase can be calculate
         // with the mutual solubility function
-        if (knownPhaseIdx < 0) {
+        if (knownPhaseIdx < 0)
+        {
             Scalar molalityNaCl = molFracToMolality_(x_NaCl); // molality of NaCl //CHANGED
             Scalar m0_CO2 = molalityCO2inPureWater_(temperature, pg); // molality of CO2 in pure water
             Scalar gammaStar = activityCoefficient_(temperature, pg, molalityNaCl);// activity coefficient of CO2 in brine
@@ -118,19 +119,14 @@ public:
         // if only liquid phase is present the mole fraction of CO2 in brine is given and
         // and the virtual equilibrium mole fraction of water in the non-existing gas phase can be estimated
         // with the mutual solubility function
-        if (knownPhaseIdx == lPhaseIdx) {
+        if (knownPhaseIdx == lPhaseIdx)
             ygH2O = A * (1 - xlCO2 - x_NaCl);
-
-        }
 
         // if only gas phase is present the mole fraction of water in the gas phase is given and
         // and the virtual equilibrium mole fraction of CO2 in the non-existing liquid phase can be estimated
         // with the mutual solubility function
-        if (knownPhaseIdx == gPhaseIdx) {
-            //y_H2o = fluidstate.
+        if (knownPhaseIdx == gPhaseIdx)
             xlCO2 = 1 - x_NaCl - ygH2O / A;
-        }
-
     }
 
     /*!
@@ -140,8 +136,8 @@ public:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar fugacityCoefficientCO2(Scalar T, Scalar pg) {
-
+    static Scalar fugacityCoefficientCO2(Scalar T, Scalar pg)
+    {
         Scalar V = 1 / (CO2::gasDensity(T, pg) / CO2::molarMass()) * 1.e6; // molar volume in cm^3/mol
         Scalar pg_bar = pg / 1.e5; // gas phase pressure in bar
         Scalar a_CO2 = (7.54e7 - 4.13e4 * T); // mixture parameter of  Redlich-Kwong equation
@@ -159,7 +155,6 @@ public:
 
         phiCO2 = exp(lnPhiCO2); // fugacity coefficient of CO2
         return phiCO2;
-
     }
 
     /*!
@@ -169,8 +164,8 @@ public:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar fugacityCoefficientH2O(Scalar T, Scalar pg) {
-
+    static Scalar fugacityCoefficientH2O(Scalar T, Scalar pg)
+    {
         Scalar V = 1 / (CO2::gasDensity(T, pg) / CO2::molarMass()) * 1.e6; // molar volume in cm^3/mol
         Scalar pg_bar = pg / 1.e5; // gas phase pressure in bar
         Scalar a_CO2 = (7.54e7 - 4.13e4 * T);// mixture parameter of  Redlich-Kwong equation
@@ -180,9 +175,9 @@ public:
         static const Scalar R = IdealGas::R * 10.; // ideal gas constant with unit bar cm^3 /(K mol)
         Scalar lnPhiH2O, phiH2O;
 
-    using std::log;
-    using std::pow;
-    using std::exp;
+        using std::log;
+        using std::pow;
+        using std::exp;
         lnPhiH2O = log(V / (V - b_CO2)) + b_H2O / (V - b_CO2) - 2 * a_CO2_H2O
                 / (R * pow(T, 1.5) * b_CO2) * log((V + b_CO2) / V) + a_CO2
                 * b_H2O / (R * pow(T, 1.5) * b_CO2 * b_CO2) * (log((V + b_CO2)
@@ -195,30 +190,29 @@ public:
 private:
     /*!
      * \brief Returns the molality of NaCl \f$\mathrm{[mol \ NaCl / kg \ water]}\f$  for a given mole fraction
-     *
      * \param salinity the salinity \f$\mathrm{[kg \ NaCl / kg \ solution]}\f$
      */
-    static Scalar salinityToMolFrac_(Scalar salinity) {
-
-        const Scalar Mw = H2O::molarMass(); /* molecular weight of water [kg/mol] */
-        const Scalar Ms = 58.8e-3; /* molecular weight of NaCl  [kg/mol] */
+    static Scalar salinityToMoleFrac_(Scalar salinity)
+    {
+        const Scalar Mw = H2O::molarMass(); // molecular weight of water [kg/mol]
+        const Scalar Ms = 58.8e-3;          // molecular weight of NaCl  [kg/mol]
 
         const Scalar X_NaCl = salinity;
-        /* salinity: conversion from mass fraction to mol fraction */
+        // salinity: conversion from mass fraction to mol fraction
         const Scalar x_NaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
         return x_NaCl;
     }
 
     /*!
-     * \brief Returns the molality of NaCl \f$\mathrm{(mol \ NaCl / kg \ water)}\f$ for a given mole fraction \f$\mathrm{(mol \ NaCl / mol\  solution)}\f$
+     * \brief Returns the molality of NaCl \f$\mathrm{(mol \ NaCl / kg \ water)}\f$
+     *        for a given mole fraction \f$\mathrm{(mol \ NaCl / mol\  solution)}\f$
      *
      * \param x_NaCl mole fraction of NaCL in brine \f$\mathrm{[mol/mol]}\f$
      */
-    static Scalar molFracToMolality_(Scalar x_NaCl) {
-
+    static Scalar molFracToMolality_(Scalar x_NaCl)
+    {
         // conversion from mol fraction to molality (dissolved CO2 neglected)
         const Scalar mol_NaCl = 55.508 * x_NaCl / (1 - x_NaCl);
-
         return mol_NaCl;
     }
 
@@ -229,7 +223,8 @@ private:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar molalityCO2inPureWater_(Scalar temperature, Scalar pg) {
+    static Scalar molalityCO2inPureWater_(Scalar temperature, Scalar pg)
+    {
         Scalar A = computeA_(temperature, pg); // according to Spycher, Pruess and Ennis-King (2003)
         Scalar B = computeB_(temperature, pg); // according to Spycher, Pruess and Ennis-King (2003)
         Scalar yH2OinGas = (1 - B) / (1. / A - B); // equilibrium mol fraction of H2O in the gas phase
@@ -247,8 +242,8 @@ private:
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      * \param molalityNaCl molality of NaCl \f$\mathrm{(mol \ NaCl / kg \ water)}\f$
      */
-    static Scalar activityCoefficient_(Scalar temperature, Scalar pg,
-            Scalar molalityNaCl) {
+    static Scalar activityCoefficient_(Scalar temperature, Scalar pg, Scalar molalityNaCl)
+    {
         Scalar lambda = computeLambda_(temperature, pg); // lambda_{CO2-Na+}
         Scalar xi = computeXi_(temperature, pg); // Xi_{CO2-Na+-Cl-}
         Scalar lnGammaStar = 2 * lambda * molalityNaCl + xi * molalityNaCl
@@ -266,7 +261,8 @@ private:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar computeA_(Scalar T, Scalar pg) {
+    static Scalar computeA_(Scalar T, Scalar pg)
+    {
         Scalar deltaP = pg / 1e5 - 1; // pressure range [bar] from p0 = 1bar to pg[bar]
         const Scalar v_av_H2O = 18.1; // average partial molar volume of H2O [cm^3/mol]
         const Scalar R = IdealGas::R * 10;
@@ -276,7 +272,6 @@ private:
         using std::exp;
         Scalar A = k0_H2O / (phi_H2O * pg_bar) * exp(deltaP * v_av_H2O / (R * T));
         return A;
-
     }
 
     /*!
@@ -287,7 +282,8 @@ private:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar computeB_(Scalar T, Scalar pg) {
+    static Scalar computeB_(Scalar T, Scalar pg)
+    {
         Scalar deltaP = pg / 1e5 - 1; // pressure range [bar] from p0 = 1bar to pg[bar]
         const Scalar v_av_CO2 = 32.6; // average partial molar volume of CO2 [cm^3/mol]
         const Scalar R = IdealGas::R * 10;
@@ -307,7 +303,8 @@ private:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar computeLambda_(Scalar T, Scalar pg) {
+    static Scalar computeLambda_(Scalar T, Scalar pg)
+    {
         Scalar lambda;
         static const Scalar c[6] = { -0.411370585, 6.07632013E-4, 97.5347708,
                 -0.0237622469, 0.0170656236, 1.41335834E-5 };
@@ -327,7 +324,8 @@ private:
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      */
-    static Scalar computeXi_(Scalar T, Scalar pg) {
+    static Scalar computeXi_(Scalar T, Scalar pg)
+    {
         Scalar xi;
         static const Scalar c[4] = { 3.36389723E-4, -1.98298980E-5,
                 2.12220830E-3, -5.24873303E-3 };
@@ -344,7 +342,8 @@ private:
      * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      * \param T the temperature \f$\mathrm{[K]}\f$
      */
-    static Scalar equilibriumConstantCO2_(Scalar T) {
+    static Scalar equilibriumConstantCO2_(Scalar T)
+    {
         Scalar TinC = T - 273.15; //temperature in °C
         static const Scalar c[3] = { 1.189, 1.304e-2, -5.446e-5 };
         Scalar logk0_CO2 = c[0] + c[1] * TinC + c[2] * TinC * TinC;
@@ -359,7 +358,8 @@ private:
      * Given in Spycher, Pruess and Ennis-King (2003) \cite spycher2003 <BR>
      * \param T the temperature \f$\mathrm{[K]}\f$
      */
-    static Scalar equilibriumConstantH2O_(Scalar T) {
+    static Scalar equilibriumConstantH2O_(Scalar T)
+    {
         Scalar TinC = T - 273.15; //temperature in °C
         static const Scalar c[4] = { -2.209, 3.097e-2, -1.098e-4, 2.048e-7 };
         Scalar logk0_H2O = c[0] + c[1] * TinC + c[2] * TinC * TinC + c[3]
@@ -368,7 +368,6 @@ private:
         Scalar k0_H2O = pow(10, logk0_H2O);
         return k0_H2O;
     }
-
 };
 
 /*!

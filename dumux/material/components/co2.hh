@@ -120,6 +120,12 @@ public:
     { return CO2Tables::tabulatedEnthalpy.maxTemp(); /* [K] */ }
 
     /*!
+     * \brief Returns true if the gas phase is assumed to be ideal
+     */
+    static constexpr bool gasIsIdeal()
+    { return false; }
+
+    /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure CO2
      *        at a given temperature.
      * \param T the temperature \f$\mathrm{[K]}\f$

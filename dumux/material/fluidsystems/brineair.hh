@@ -117,7 +117,6 @@ private:
     {
         using FluidSystem = Brine;
 
-
         static constexpr int phaseIdx(int brinePhaseIdx) { return liquidPhaseIdx; }
         static constexpr int compIdx(int brineCompIdx)
         {
