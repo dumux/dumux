@@ -111,6 +111,44 @@ struct ThreePWaterOilModelTraits
     static constexpr bool enableEnergyBalance() { return false; }
 
     static constexpr bool onlyGasPhaseCanDisappear() { return onlyGasPhase; }
+
+    template <class FluidSystem>
+    static std::string primaryVariableName(int pvIdx, int state)
+    {
+        switch (state)
+        {
+            case Indices::threePhases:
+                const std::vector<std::string> s1 = {"p_g",
+                                                     "S_w",
+                                                     "S_n"};
+                return s1[pvIdx];
+            case Indices::wPhaseOnly:
+                const std::vector<std::string> s2 = {"p_w",
+                                                     "T",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::wPhaseIdx)};
+                return s2[pvIdx];
+            case Indices::gnPhaseOnly:
+                const std::vector<std::string> s3 = {"p_g",
+                                                     "S_n",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::wCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::nPhaseIdx)};
+                return s3[pvIdx];
+            case Indices::wnPhaseOnly:
+                const std::vector<std::string> s4 = {"p_w",
+                                                     "T",
+                                                     "S_n"};
+                return s4[pvIdx];
+            case Indices::gPhaseOnly:
+                const std::vector<std::string> s5 = {"p_g",
+                                                     "T",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx)};
+                return s5[pvIdx];
+            case Indices::wgPhaseOnly:
+                const std::vector<std::string> s6 = {"p_g",
+                                                     "S_w",
+                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx)};
+                return s6[pvIdx];
+        }
+    }
 };
 
 /*!

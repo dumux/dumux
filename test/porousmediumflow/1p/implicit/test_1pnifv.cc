@@ -51,6 +51,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/loadsolution.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -122,10 +123,20 @@ int main(int argc, char** argv) try
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
+    // check if we are about to restart a previously interrupted simulation
+    Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
+
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     SolutionVector x(fvGridGeometry->numDofs());
-    problem->applyInitialSolution(x);
+    if (restartTime > 0)
+    {
+        using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+        const auto fileName = getParam<std::string>("Restart.File");
+        loadSolution(x, fileName, createPVNameFunction<ModelTraits>(), *fvGridGeometry);
+    }
+    else
+        problem->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables
@@ -140,7 +151,7 @@ int main(int argc, char** argv) try
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
-    vtkWriter.write(0.0);
+    vtkWriter.write(restartTime);
 
     // output every vtkOutputInterval time step
     const int vtkOutputInterval = getParam<int>("Problem.OutputInterval");

@@ -104,7 +104,7 @@ struct OneEqModelTraits : RANSModelTraits<dimension>
     static constexpr int dim() { return dimension; }
 
     //! There are as many momentum balance equations as dimensions,
-    //! one mass balance equation and two turbulent transport equations
+    //! one mass balance equation and one turbulent transport equation
     static constexpr int numEq() { return dim()+1+1; }
 
     //! The number of components
@@ -112,6 +112,17 @@ struct OneEqModelTraits : RANSModelTraits<dimension>
 
     //! the indices
     using Indices = OneEqIndices<dim(), numComponents()>;
+
+    //! return the names of the primary variables in cells
+    template <class FluidSystem = void>
+    static std::string primaryVariableNameCell(int pvIdx, int state = 0)
+    {
+        using ParentType = RANSModelTraits<dimension>;
+        if (pvIdx == 0)
+            return ParentType::template primaryVariableNameCell<FluidSystem>(pvIdx, state);
+        else
+            return "nu_tilde";
+    }
 };
 
 ///////////////////////////////////////////////////////////////////////////

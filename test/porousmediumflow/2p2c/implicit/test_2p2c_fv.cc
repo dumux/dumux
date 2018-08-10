@@ -47,6 +47,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/loadsolution.hh>
 
 // the problem definitions
 #include "injectionproblem.hh"
@@ -89,17 +90,6 @@ int main(int argc, char** argv) try
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
-    // the solution vector
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(fvGridGeometry->numDofs());
-    problem->applyInitialSolution(x);
-    auto xOld = x;
-
-    // the grid variables
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
-    gridVariables->init(x, xOld);
-
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
@@ -107,9 +97,27 @@ int main(int argc, char** argv) try
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
-        restartTime = getParam<Scalar>("TimeLoop.Restart");
+    Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
+
+    // the solution vector
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    SolutionVector x(fvGridGeometry->numDofs());
+    if (restartTime > 0)
+    {
+        using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+        const auto fileName = getParam<std::string>("Restart.File");
+        const auto pvName = createPVNameFunctionWithState<ModelTraits, FluidSystem>();
+        loadSolution(x, fileName, pvName, *fvGridGeometry);
+    }
+    else
+        problem->applyInitialSolution(x);
+    auto xOld = x;
+
+    // the grid variables
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    gridVariables->init(x, xOld);
 
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
@@ -117,7 +125,7 @@ int main(int argc, char** argv) try
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
-    vtkWriter.write(0.0);
+    vtkWriter.write(restartTime);
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);

@@ -134,6 +134,39 @@ struct TwoPNCModelTraits
     static constexpr bool setMoleFractionsForFirstPhase() { return setMoleFractionForFP; }
 
     static constexpr TwoPFormulation priVarFormulation() { return formulation; }
+
+    template <class FluidSystem>
+    static std::string primaryVariableName(int pvIdx, int state)
+    {
+        const std::string xString = useMoles() ? "x" : "X";
+
+        std::string phaseNameSecComps;
+        if (state == Indices::firstPhaseOnly
+            || (state == Indices::bothPhases && setMoleFractionsForFirstPhase()))
+            phaseNameSecComps = FluidSystem::phaseName(FluidSystem::phase0Idx);
+        else
+            phaseNameSecComps = FluidSystem::phaseName(FluidSystem::phase1Idx);
+
+        if (pvIdx > 1)
+            return xString + "^" + FluidSystem::componentName(pvIdx) + "_" + phaseNameSecComps;
+
+        const std::vector<std::string> p0s1SwitchedPvNames = {
+            xString + "^" + FluidSystem::componentName(FluidSystem::comp1Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase0Idx),
+            xString + "^" + FluidSystem::componentName(FluidSystem::comp0Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase1Idx),
+            "S_n"};
+        const std::vector<std::string> p1s0SwitchedPvNames = {
+            xString + "^" + FluidSystem::componentName(FluidSystem::comp1Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase0Idx),
+            xString + "^" + FluidSystem::componentName(FluidSystem::comp0Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase1Idx),
+            "S_w"};
+
+        switch (priVarFormulation())
+        {
+        case TwoPFormulation::p0s1:
+            return pvIdx == 0 ? "p_w" : p0s1SwitchedPvNames[state-1];
+        case TwoPFormulation::p1s0:
+            return pvIdx == 0 ? "p_n" : p1s0SwitchedPvNames[state-1];
+        }
+    }
 };
 
 /*!

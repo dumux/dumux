@@ -95,6 +95,17 @@ struct TwoPOneCModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return false; }
     static constexpr bool enableEnergyBalance() { return false; }
+
+    template <class FluidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state)
+    {
+        if (pvIdx == 0)
+            return "p_n";
+        else if (state == Indices::twoPhases)
+            return "S_w";
+        else
+            return "T";
+    }
 };
 
 /*!

@@ -77,28 +77,55 @@
 #ifndef DUMUX_2P2C_MODEL_HH
 #define DUMUX_2P2C_MODEL_HH
 
-#include <dune/common/fvector.hh>
+#include <array>
 
 // property forward declarations
 #include <dumux/common/properties.hh>
-#include <dumux/porousmediumflow/properties.hh>
-#include <dumux/porousmediumflow/2p/formulation.hh>
-#include <dumux/porousmediumflow/nonisothermal/model.hh>
-#include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
-
-#include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
-#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
-
-#include <dumux/porousmediumflow/compositional/localresidual.hh>
-#include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 
 #include <dumux/porousmediumflow/2pnc/model.hh>
+#include <dumux/porousmediumflow/2p/formulation.hh>
+#include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
 #include "volumevariables.hh"
 
 namespace Dumux {
+
+/*!
+ * \ingroup TwoPTwoCModel
+ * \brief Specifies a number properties of two-phase two-component models.
+ *
+ * \tparam f The two-phase formulation used
+ * \tparam useM Boolean to specify if moles or masses are balanced
+ * \tparam replCompEqIdx the equation which is replaced by the total mass balance (none if replCompEqIdx >= numComponents)
+ */
+template<TwoPFormulation formulation, bool useMol, int replCompEqIdx = 2>
+struct TwoPTwoCModelTraits : public TwoPNCModelTraits</*numComps=*/2, useMol, /*setMFracForFirstPhase=*/true, formulation, replCompEqIdx>
+{
+    template <class FluidSystem>
+    static std::string primaryVariableName(int pvIdx, int state)
+    {
+        static const std::string xString = useMol ? "x" : "X";
+        static const std::array<std::string, 3> p0s1SwitchedPvNames = {{
+            xString + "^" + FluidSystem::componentName(1) + "_" + FluidSystem::phaseName(0),
+            xString + "^" + FluidSystem::componentName(0) + "_" + FluidSystem::phaseName(1),
+            "S_n"}};
+        static const std::array<std::string, 3> p1s0SwitchedPvNames = {{
+            xString + "^" + FluidSystem::componentName(1) + "_" + FluidSystem::phaseName(0),
+            xString + "^" + FluidSystem::componentName(0) + "_" + FluidSystem::phaseName(1),
+            "S_w"}};
+
+        switch (formulation)
+        {
+        case TwoPFormulation::p0s1:
+            return pvIdx == 0 ? "p_w" : p0s1SwitchedPvNames[state-1];
+        case TwoPFormulation::p1s0:
+            return pvIdx == 0 ? "p_n" : p1s0SwitchedPvNames[state-1];
+        }
+    }
+};
+
 namespace Properties {
 
 //////////////////////////////////////////////////////////////////
@@ -110,6 +137,22 @@ NEW_TYPE_TAG(TwoPTwoCNI, INHERITS_FROM(TwoPTwoC));
 //////////////////////////////////////////////////////////////////
 // Property values
 //////////////////////////////////////////////////////////////////
+
+/*!
+ * \brief Set the model traits property.
+ */
+SET_PROP(TwoPTwoC, ModelTraits)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p-2c model!");
+    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p-2c model!");
+
+public:
+    using type = TwoPTwoCModelTraits< GET_PROP_VALUE(TypeTag, Formulation),
+                                      GET_PROP_VALUE(TypeTag, UseMoles),
+                                      GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx) >;
+};
 
 //! Use the 2p2c VolumeVariables
 SET_PROP(TwoPTwoC, VolumeVariables)
@@ -148,11 +191,9 @@ private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static_assert(FluidSystem::numComponents == 2, "Only fluid systems with 2 components are supported by the 2p2c model!");
     static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p2c model!");
-    using IsothermalTraits = TwoPNCModelTraits<FluidSystem::numComponents,
-                                               GET_PROP_VALUE(TypeTag, UseMoles),
-                                               /*setMoleFractionsForFirstPhase=*/true,
-                                               GET_PROP_VALUE(TypeTag, Formulation),
-                                               GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using IsothermalTraits = TwoPTwoCModelTraits<GET_PROP_VALUE(TypeTag, Formulation),
+                                                 GET_PROP_VALUE(TypeTag, UseMoles),
+                                                 GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };

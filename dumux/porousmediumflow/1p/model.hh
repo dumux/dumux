@@ -74,6 +74,12 @@ struct OnePModelTraits
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return false; }
     static constexpr bool enableEnergyBalance() { return false; }
+
+    template <class FluidSystem = void>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
+    {
+        return "p";
+    }
 };
 
 /*!

@@ -32,7 +32,6 @@ dune_add_test(NAME test_richards_box_parallel_yasp
                                ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_box_parallel_yasp-00007.pvtu
                        --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_box test_richardslens.input -Problem.Name test_richards_box_parallel_yasp -Grid.Overlap 0")
 
-
 dune_add_test(NAME test_richards_tpfa_parallel_yasp
               TARGET test_richards_tpfa
               CMAKE_GUARD MPI_FOUND
@@ -43,6 +42,22 @@ dune_add_test(NAME test_richards_tpfa_parallel_yasp
                               ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_tpfa_parallel_yasp-00007.pvtu
                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa test_richardslens.input -Problem.Name test_richards_tpfa_parallel_yasp -Grid.Overlap 1")
+
+# TODO: there is a small difference because of the precision loss when writing and reading to and from vtk with single precision
+# This is why we need a bit higher saturation threshold since pc-sw is very sensitive to pressure for saturations close to 0
+dune_add_test(NAME test_richards_tpfa_parallel_yasp_restart
+              TARGET test_richards_tpfa
+              CMAKE_GUARD MPI_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100,"S_w":1e-3,"water content":1e-3}
+                      --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference-parallel.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_tpfa_parallel_yasp_restart-00004.vtu
+                              ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-test_richards_tpfa_parallel_yasp_restart-00004.pvtu
+                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa test_richardslens.input -Problem.Name test_richards_tpfa_parallel_yasp_restart -Grid.Overlap 1 -Restart.Time 536.797 -Restart.File s0002-test_richards_tpfa_parallel_yasp-00003.pvtu -TimeLoop.DtInitial 408.68")
+
+# the restart test has to run after the test that produces the corresponding vtu file
+set_tests_properties(test_richards_tpfa_parallel_yasp_restart PROPERTIES DEPENDS test_richards_tpfa_parallel_yasp)
 
 dune_add_test(NAME test_richards_box_parallel_ug
               SOURCES test_richardslens_fv.cc

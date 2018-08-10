@@ -74,6 +74,15 @@ struct PorousMediumFlowNIModelTraits : public IsothermalTraits
     static constexpr bool enableEnergyBalance() { return true; }
     //! The indices related to the non-isothermal model
     using Indices = EnergyIndices< typename IsothermalTraits::Indices, numEq()>;
+
+    template <class FluidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        if (pvIdx < numEq() - 1)
+            return IsothermalTraits::template primaryVariableName<FluidSystem>(pvIdx, state);
+        else
+            return "T";
+    }
 };
 
 } // end namespace Dumux

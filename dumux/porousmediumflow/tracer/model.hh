@@ -16,8 +16,6 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_TRACER_MODEL_HH
-#define DUMUX_TRACER_MODEL_HH
 
 /*!
  * \file
@@ -49,6 +47,9 @@
  * Note that the tracer model is always considered non-isothermal.
  * The velocity output is fully compatible with the tracer model if you want to write the velocity field to vtk.
 */
+
+#ifndef DUMUX_TRACER_MODEL_HH
+#define DUMUX_TRACER_MODEL_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/material/spatialparams/fv1p.hh>
@@ -84,6 +85,13 @@ struct TracerModelTraits
     static constexpr bool enableEnergyBalance() { return false; }
 
     static constexpr bool useMoles() { return useMol; }
+
+    template <class FluidSystem>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        const std::string xString = useMoles() ? "x" : "X";
+        return xString + "^" + FluidSystem::componentName(pvIdx);
+    }
 };
 
 /*!
