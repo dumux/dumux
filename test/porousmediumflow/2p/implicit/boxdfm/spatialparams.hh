@@ -63,16 +63,12 @@ public:
         // residual saturations
         matrixMaterialParams_.setSwr(0.18);
         matrixMaterialParams_.setSnr(0.0);
-        lensMaterialParams_.setSwr(0.28);
-        lensMaterialParams_.setSnr(0.0);
         fractureMaterialParams_.setSwr(0.05);
         fractureMaterialParams_.setSnr(0.0);
 
         // parameters for the Brooks-Corey law
         matrixMaterialParams_.setPe(1e4);
         matrixMaterialParams_.setLambda(2);
-        lensMaterialParams_.setPe(5e4);
-        lensMaterialParams_.setLambda(2);
         fractureMaterialParams_.setPe(1e3);
         fractureMaterialParams_.setLambda(2);
     }
@@ -92,9 +88,7 @@ public:
                                   const ElementSolution& elemSol) const
     {
         if (scv.isOnFracture())
-            return 5e-8;
-        else if (isInLens_(element.geometry().center()))
-            return 1e-13;
+            return 5e-10;
         else
             return 1e-12;
     }
@@ -131,8 +125,6 @@ public:
     {
         if (scv.isOnFracture())
             return fractureMaterialParams_;
-        else if (isInLens_(element.geometry().center()))
-            return lensMaterialParams_;
         else
             return matrixMaterialParams_;
     }
@@ -159,21 +151,7 @@ public:
     { return materialInterfaceParams_; }
 
 private:
-    bool isInLens_(const GlobalPosition& globalPos) const
-    {
-        bool isInLens = true;
-        if ( globalPos[dimWorld-1] > 0.5 || globalPos[dimWorld-1] < 0.25 )
-            isInLens = false;
-
-        for (int dir = 0; dir < dimWorld-1; ++dir)
-            if (globalPos[dir] < 0.25 || globalPos[dir] > 0.75)
-                isInLens = false;
-
-        return isInLens;
-    }
-
     MaterialLawParams matrixMaterialParams_;
-    MaterialLawParams lensMaterialParams_;
     MaterialLawParams fractureMaterialParams_;
 
     // Determines the parameters associated with the dofs at material interfaces

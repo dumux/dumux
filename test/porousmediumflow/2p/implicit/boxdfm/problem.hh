@@ -44,16 +44,15 @@
 #include "spatialparams.hh"
 
 #ifndef GRIDTYPE
-#define GRIDTYPE Dune::YaspGrid<2>
+#define GRIDTYPE Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming>;
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declarations
 template<class TypeTag> class TwoPTestProblem;
 
-namespace Properties
-{
+namespace Properties {
 
 // we need to derive first from twop and then from the box-dfm Model
 // because the flux variables cache type of TwoP is overwritten in BoxDfmModel
@@ -169,7 +168,7 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
-        if (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_ || globalPos[dimWorld-1] < 0.25)
+        if (globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_ || globalPos[0] < 1e-6)
             values.setAllDirichlet();
         return values;
     }
@@ -183,7 +182,12 @@ public:
      * \param globalPos The global position
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-    { return initialAtPos(globalPos); }
+    {
+        auto values = initialAtPos(globalPos);
+        if (globalPos[0] < 1e-6)
+            values[saturationDNAPLIdx] = 0.5;
+        return values;
+    }
 
     /*!
      * \brief Evaluate the boundary conditions for a neumann
@@ -197,11 +201,7 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      */
     NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
-    {
-        NumEqVector fluxes(0.0);
-        if (isInInjectionPatch_(globalPos)) fluxes[contiDNAPLEqIdx] = -0.04; // kg / s / m^2
-        return fluxes;
-    }
+    { return NumEqVector(0.0); }
 
     /*!
      * \brief Evaluates the initial values for a control volume
@@ -210,30 +210,18 @@ public:
      *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
-    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values;
-        values[pressureH2OIdx] = 1e5 + 9.81*1000*(1.0-globalPos[dimWorld-1]);
+
+        // pressure gradient from left to right
+        values[pressureH2OIdx] = 2e5 - 1e5*globalPos[0]/this->fvGridGeometry().bBoxMax()[0];
         values[saturationDNAPLIdx] = 0;
         return values;
     }
 
     //! Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
     Scalar temperature() const { return 293.15; /* 10°C */ }
-
-private:
-    bool isInInjectionPatch_(const GlobalPosition& globalPos) const
-    {
-        bool isInPatch = true;
-        if ( !(globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps_) )
-            isInPatch = false;
-
-        for (int dir = 0; dir < dimWorld-1; ++dir)
-            if (globalPos[dir] < 0.25 || globalPos[dir] > 0.5)
-                isInPatch = false;
-
-        return isInPatch;
-    }
 };
 
 } // end namespace Dumux

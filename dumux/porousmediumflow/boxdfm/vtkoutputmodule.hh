@@ -84,16 +84,18 @@ class BoxDfmVtkOutputModule : public VtkOutputModule<GridVariables, SolutionVect
 public:
 
     //! The constructor
+    template< class FractureGridAdapter >
     BoxDfmVtkOutputModule(const GridVariables& gridVariables,
                           const SolutionVector& sol,
                           const std::string& name,
+                          const FractureGridAdapter& fractureGridAdapter,
                           const std::string& paramGroup = "",
                           Dune::VTK::DataMode dm = Dune::VTK::conforming,
                           bool verbose = true)
     : ParentType(gridVariables, sol, name, paramGroup, dm, verbose)
     {
         // create the fracture grid and all objects needed on it
-        initializeFracture(gridVariables.fvGridGeometry());
+        initializeFracture(fractureGridAdapter);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -477,8 +479,10 @@ private:
     }
 
     //! Creates the lower-dimensional fracture grid, index maps and writers
-    void initializeFracture(const FVGridGeometry& fvGridGeometry)
+    template< class FractureGridAdapter >
+    void initializeFracture(const FractureGridAdapter& fractureGridAdapter)
     {
+        const auto& fvGridGeometry = this->fvGridGeometry();
         const auto& gridView = fvGridGeometry.gridView();
         Dune::GridFactory<FractureGrid> gridFactory;
 
@@ -487,11 +491,10 @@ private:
         vertexToFractureVertexIdx_.resize(gridView.size(dim));
         for (const auto& v : vertices(gridView))
         {
-            const auto vIdxGlobal = fvGridGeometry.vertexMapper().index(v);
-            if (fvGridGeometry.dofOnFracture(vIdxGlobal))
+            if (fractureGridAdapter.isOnFacetGrid(v))
             {
                 gridFactory.insertVertex(v.geometry().center());
-                vertexToFractureVertexIdx_[vIdxGlobal] = fracVertexCount++;
+                vertexToFractureVertexIdx_[fvGridGeometry.vertexMapper().index(v)] = fracVertexCount++;
             }
         }
 
@@ -499,8 +502,6 @@ private:
         std::size_t fractureElementCount = 0;
         fractureElementMap_.resize(gridView.size(0));
         std::set< std::pair<IndexType, unsigned int> > handledFacets;
-        auto vertIsOnFracture = [&fvGridGeometry] (auto idx) { return fvGridGeometry.dofOnFracture(idx); };
-
         for (const auto& element : elements(gridView))
         {
             const auto eIdxGlobal = fvGridGeometry.elementMapper().index(element);
@@ -521,7 +522,7 @@ private:
 
                 // determine if this is a fracture facet & if it has to be inserted
                 bool insertFacet = false;
-                if ( std::all_of(isVertexIndices.begin(), isVertexIndices.end(), vertIsOnFracture) )
+                if (fractureGridAdapter.composeFacetElement(isVertexIndices))
                 {
                     insertFacet = true;
                     if (!is.boundary())

@@ -342,8 +342,7 @@ private:
             }
 
             // maybe add fracture scvs & scvfs
-            auto isOnFracture = [&] (auto idx) { return this->fvGridGeometry().dofOnFracture(idx); };
-            if ( std::all_of(isVertexIndices.begin(), isVertexIndices.end(), isOnFracture) )
+            if (this->fvGridGeometry().isOnFracture(element, intersection))
             {
                 // add fracture scv for each vertex of intersection
                 const auto curNumScvs = scvs_.size();
