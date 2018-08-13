@@ -452,8 +452,9 @@ public:
             Scalar T = fluidState.temperature(phaseIdx);
             Scalar pl = fluidState.pressure(liquidPhaseIdx);
             Scalar pg = fluidState.pressure(gasPhaseIdx);
-            assert(temperature > 0);
-            assert(pressure > 0);
+
+            assert(T > 0);
+            assert(pl > 0 && pg > 0);
 
             // calulate the equilibrium composition for given T & p
             Scalar xlH2O, xgH2O;
@@ -500,8 +501,9 @@ public:
     {
         Scalar T = fluidState.temperature(phaseIdx);
         Scalar p = fluidState.pressure(phaseIdx);
-        assert(temperature > 0);
-        assert(pressure > 0);
+
+        assert(T > 0);
+        assert(p > 0);
 
         Scalar xgH2O;
         Scalar xlCO2;
