@@ -144,7 +144,7 @@ public:
               const SolutionVector& curSol)
     {
         this->updateSolution(curSol);
-        problemTuple_ = std::make_tuple(bulkProblem, lowDimProblem);
+        this->setSubProblems(std::make_tuple(bulkProblem, lowDimProblem));
 
         integrationOrder_ = getParam<int>("MixedDimension.IntegrationOrder", 1);
         asImp_().computePointSourceData(integrationOrder_);
@@ -178,7 +178,7 @@ public:
     {
         static_assert(i != j, "A domain cannot be coupled to itself!");
 
-        const auto eIdx = problem(domainI).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
         if (couplingStencils(domainI).count(eIdx))
             return couplingStencils(domainI).at(eIdx);
         else
@@ -214,8 +214,8 @@ public:
         residual.resize(fvGeometry.numScv());
         for (const auto& scv : scvs(fvGeometry))
         {
-            auto couplingSource = problem(domainI).scvPointSources(element, fvGeometry, curElemVolVars, scv);
-            couplingSource += problem(domainI).source(element, fvGeometry, curElemVolVars, scv);
+            auto couplingSource = this->problem(domainI).scvPointSources(element, fvGeometry, curElemVolVars, scv);
+            couplingSource += this->problem(domainI).source(element, fvGeometry, curElemVolVars, scv);
             couplingSource *= -scv.volume()*curElemVolVars[scv].extrusionFactor();
             residual[scv.indexInElement()] = couplingSource;
         }
@@ -248,8 +248,8 @@ public:
         this->preComputeVertexIndices(bulkIdx);
         this->preComputeVertexIndices(lowDimIdx);
 
-        const auto& bulkFvGridGeometry = problem(bulkIdx).fvGridGeometry();
-        const auto& lowDimFvGridGeometry = problem(lowDimIdx).fvGridGeometry();
+        const auto& bulkFvGridGeometry = this->problem(bulkIdx).fvGridGeometry();
+        const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).fvGridGeometry();
 
         // intersect the bounding box trees
         glueGrids();
@@ -355,7 +355,7 @@ public:
 
         // make stencils unique
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(problemTuple_)), [&](const auto domainIdx)
+        forEach(integralRange(std::integral_constant<std::size_t, MDTraits::numSubDomains>{}), [&](const auto domainIdx)
         {
             for (auto&& stencil : this->couplingStencils(domainIdx))
             {
@@ -378,13 +378,8 @@ public:
 
     //! Return a reference to the bulk problem
     template<std::size_t id>
-    const Problem<id>& problem(Dune::index_constant<id> domainIdx) const
-    { return *std::get<id>(problemTuple_); }
-
-    //! Return a reference to the bulk problem
-    template<std::size_t id>
     const GridView<id>& gridView(Dune::index_constant<id> domainIdx) const
-    { return problem(domainIdx).fvGridGeometry().gridView(); }
+    { return this->problem(domainIdx).fvGridGeometry().gridView(); }
 
     //! Return data for a bulk point source with the identifier id
     PrimaryVariables<bulkIdx> bulkPriVars(std::size_t id) const
@@ -443,10 +438,10 @@ protected:
             for (const auto& element : elements(gridView(domainIdx)))
             {
                 constexpr int dim = GridView<domainIdx>::dimension;
-                const auto eIdx = problem(domainIdx).fvGridGeometry().elementMapper().index(element);
+                const auto eIdx = this->problem(domainIdx).fvGridGeometry().elementMapper().index(element);
                 this->vertexIndices(domainIdx, eIdx).resize(element.subEntities(dim));
                 for (int i = 0; i < element.subEntities(dim); ++i)
-                    this->vertexIndices(domainIdx, eIdx)[i] = problem(domainIdx).fvGridGeometry().vertexMapper().subIndex(element, i, dim);
+                    this->vertexIndices(domainIdx, eIdx)[i] = this->problem(domainIdx).fvGridGeometry().vertexMapper().subIndex(element, i, dim);
             }
         }
     }
@@ -485,8 +480,8 @@ protected:
     //! compute the intersections between the two grids
     void glueGrids()
     {
-        const auto& bulkFvGridGeometry = problem(bulkIdx).fvGridGeometry();
-        const auto& lowDimFvGridGeometry = problem(lowDimIdx).fvGridGeometry();
+        const auto& bulkFvGridGeometry = this->problem(bulkIdx).fvGridGeometry();
+        const auto& lowDimFvGridGeometry = this->problem(lowDimIdx).fvGridGeometry();
 
         // intersect the bounding box trees
         glue_->build(bulkFvGridGeometry.boundingBoxTree(),
@@ -505,11 +500,6 @@ protected:
         }
         return avgDist;
     }
-
-    //! Return a reference to the bulk problem
-    template<std::size_t id>
-    Problem<id>& problem(Dune::index_constant<id> domainIdx)
-    { return *std::get<id>(problemTuple_); }
 
     //! Return reference to point source data vector member
     std::vector<PointSourceData>& pointSourceData()
@@ -554,8 +544,6 @@ protected:
     std::size_t idCounter_ = 0;
 
 private:
-
-    std::tuple<std::shared_ptr<Problem<0>>, std::shared_ptr<Problem<1>>> problemTuple_;
 
     //! the point source in both domains
     std::tuple<std::vector<PointSource<bulkIdx>>, std::vector<PointSource<lowDimIdx>>> pointSources_;
