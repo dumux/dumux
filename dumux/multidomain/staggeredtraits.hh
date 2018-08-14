@@ -87,15 +87,11 @@ private:
     using Indices = std::make_index_sequence<numSubDomains>;
 
     template<std::size_t id>
-    using SolutionSubVector = std::conditional_t</*if*/(id < 2),
-                                                    std::conditional_t</*if*/(id == 0),
-                                                                          typename GET_PROP_TYPE(SubDomainTypeTag<0>, CellCenterSolutionVector),
-                                                                       /*else*/
-                                                                          typename GET_PROP_TYPE(SubDomainTypeTag<0>, FaceSolutionVector)>,
-                                                 /*else*/
-                                                    typename GET_PROP_TYPE(SubDomainTypeTag<id>, SolutionVector) >;
-
-
+    using SolutionSubVector = std::conditional_t<(id < 2),
+                                                 std::conditional_t<(id == 0),
+                                                                    typename GET_PROP_TYPE(SubDomainTypeTag<0>, CellCenterSolutionVector),
+                                                                    typename GET_PROP_TYPE(SubDomainTypeTag<0>, FaceSolutionVector)>,
+                                                 typename GET_PROP_TYPE(SubDomainTypeTag<id>, SolutionVector)>;
 
     template<std::size_t id>
     using SubDomainScalar = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Scalar);
@@ -106,30 +102,33 @@ private:
 
     template<std::size_t id>
     using SubDomainFVGridGeometry = std::shared_ptr<std::conditional_t<(id < 2),
-                                                    std::conditional_t<(id == 0), typename GET_PROP_TYPE(SubDomainTypeTag<0>, FVGridGeometry)::CellCenterFVGridGeometryType,
-                                                                                  typename GET_PROP_TYPE(SubDomainTypeTag<0>, FVGridGeometry)::FaceFVGridGeometryType>,
-                                                     typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry)>>;
+                                                                       std::conditional_t<(id == 0),
+                                                                                          typename GET_PROP_TYPE(SubDomainTypeTag<0>, FVGridGeometry)::CellCenterFVGridGeometryType,
+                                                                                          typename GET_PROP_TYPE(SubDomainTypeTag<0>, FVGridGeometry)::FaceFVGridGeometryType>,
+                                                                       typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry)>>;
 
     template<std::size_t id>
     using SubDomainGridVariables = std::shared_ptr<std::conditional_t<(id < 2),
-                                                   std::conditional_t<(id == 0), typename GET_PROP_TYPE(SubDomainTypeTag<0>, GridVariables)::CellCenterGridVariablesType,
-                                                                                 typename GET_PROP_TYPE(SubDomainTypeTag<0>, GridVariables)::FaceGridVariablesType>,
-                                                     typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVariables)>>;
+                                                                      std::conditional_t<(id == 0),
+                                                                                         typename GET_PROP_TYPE(SubDomainTypeTag<0>, GridVariables)::CellCenterGridVariablesType,
+                                                                                         typename GET_PROP_TYPE(SubDomainTypeTag<0>, GridVariables)::FaceGridVariablesType>,
+                                                                      typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVariables)>>;
 
     template<class Scalar, int numEq>
     struct JacobianType
     {
-    private:
-        using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
-    public:
-        using type = typename Dune::BCRSMatrix<MatrixBlock>;
+        private:
+            using MatrixBlock = typename Dune::FieldMatrix<Scalar, numEq, numEq>;
+        public:
+            using type = typename Dune::BCRSMatrix<MatrixBlock>;
     };
 
 
     template<std::size_t id>
     using JacobianDiagBlock = std::conditional_t<(id < 2),
-                                                 std::conditional_t<(id == 0), typename JacobianType<typename GET_PROP_TYPE(SubDomainTypeTag<0>, Scalar), GET_PROP_VALUE(SubDomainTypeTag<0>, NumEqCellCenter)>::type,
-                                                                               typename JacobianType<typename GET_PROP_TYPE(SubDomainTypeTag<0>, Scalar), GET_PROP_VALUE(SubDomainTypeTag<0>, NumEqFace)>::type>,
+                                                 std::conditional_t<(id == 0),
+                                                                    typename JacobianType<typename GET_PROP_TYPE(SubDomainTypeTag<0>, Scalar), GET_PROP_VALUE(SubDomainTypeTag<0>, NumEqCellCenter)>::type,
+                                                                    typename JacobianType<typename GET_PROP_TYPE(SubDomainTypeTag<0>, Scalar), GET_PROP_VALUE(SubDomainTypeTag<0>, NumEqFace)>::type>,
                                                  typename GET_PROP_TYPE(SubDomainTypeTag<id>, JacobianMatrix)>;
 
 public:
