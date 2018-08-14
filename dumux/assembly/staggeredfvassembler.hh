@@ -78,7 +78,7 @@ public:
                  std::make_shared<CouplingManager>())
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
-        this->couplingManager_->init(problem);
+        this->couplingManager_->setSubProblems(std::make_tuple(problem, problem));
     }
 
     //! The constructor for instationary problems
@@ -93,7 +93,7 @@ public:
                  timeLoop)
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
-        this->couplingManager_->init(problem);
+        this->couplingManager_->setSubProblems(std::make_tuple(problem, problem));
     }
 
 

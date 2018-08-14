@@ -69,23 +69,6 @@ public:
     static constexpr auto cellCenterIdx = Dune::index_constant<0>();
     static constexpr auto faceIdx = Dune::index_constant<1>();
 
-    void init(std::shared_ptr<const Problem<0>> problem)
-    {
-        problemTuple_ = std::make_tuple(problem, problem);
-    }
-
-    template<class... Args>
-    void init(Args&&... args)
-    {
-        problemTuple_ = std::make_tuple(args...);
-    }
-
-    void init(typename Traits::ProblemTuple&& problemTuple)
-    {
-        problemTuple_ = std::move(problemTuple);
-    }
-
-
     /*!
      * \copydoc ParentType::updateCouplingContext
      *
@@ -134,8 +117,8 @@ public:
                                            const Element& elementI,
                                            Dune::index_constant<faceIdx> domainJ) const
     {
-        const auto& connectivityMap = problem(domainI).fvGridGeometry().connectivityMap();
-        const auto eIdx = problem(domainI).fvGridGeometry().elementMapper().index(elementI);
+        const auto& connectivityMap = this->problem(domainI).fvGridGeometry().connectivityMap();
+        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(elementI);
         return connectivityMap(domainI, domainJ, eIdx);
     }
 
@@ -175,7 +158,7 @@ public:
                                            const SubControlVolumeFace& scvfI,
                                            Dune::index_constant<cellCenterIdx> domainJ) const
     {
-        const auto& connectivityMap = problem(domainI).fvGridGeometry().connectivityMap();
+        const auto& connectivityMap = this->problem(domainI).fvGridGeometry().connectivityMap();
         return connectivityMap(domainI, domainJ, scvfI.index());
     }
 
@@ -263,17 +246,6 @@ public:
         }
 
     }
-
-    //! Return a reference to the problem
-    template<std::size_t id>
-    const Problem<id>& problem(Dune::index_constant<id> domainIdx) const
-    {
-        assert(std::get<id>(problemTuple_) && "No problem set. Call init() first!");
-        return *std::get<id>(problemTuple_);
-    }
-
-private:
-    typename Traits::ProblemTuple problemTuple_;
 
 };
 

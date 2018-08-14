@@ -99,7 +99,6 @@ private:
     template<std::size_t id>
     using SubDomainProblem = std::shared_ptr<const typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem)>;
 
-
     template<std::size_t id>
     using SubDomainFVGridGeometry = std::shared_ptr<std::conditional_t<(id < 2),
                                                                        std::conditional_t<(id == 0),
@@ -159,6 +158,10 @@ public:
 
     //! the tuple of grid variables
     using GridVariablesTuple = typename makeFromIndexedType<std::tuple, SubDomainGridVariables, Indices>::type;
+
+    //! convenience alias to create tuple from type
+    template<template<std::size_t> class T>
+    using MakeTuple = typename makeFromIndexedType<std::tuple, T, Indices>::type;
 };
 
 } //end namespace Dumux
