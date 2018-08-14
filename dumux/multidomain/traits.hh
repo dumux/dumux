@@ -170,6 +170,10 @@ public:
 
     //! the tuple of grid variables
     using GridVariablesTuple = typename makeFromIndexedType<std::tuple, SubDomainGridVariables, Indices>::type;
+
+    //! convenience alias to create tuple from type
+    template<template<std::size_t> class T>
+    using MakeTuple = typename makeFromIndexedType<std::tuple, T, Indices>::type;
 };
 
 } //end namespace Dumux
