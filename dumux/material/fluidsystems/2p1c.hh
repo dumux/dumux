@@ -259,7 +259,7 @@ public:
         if (Component::isTabulated)
         {
             Component::init(tempMin, tempMax, nTemp,
-                               pressMin, pressMax, nPress);
+                            pressMin, pressMax, nPress);
         }
     }
 
@@ -287,8 +287,8 @@ public:
         {
             return Component::gasDensity(temperature, pressure);
         }
-        else DUNE_THROW(Dune::NotImplemented,
-                   "wrong index");
+        else
+            DUNE_THROW(Dune::NotImplemented, "wrong index");
     }
 
     using Base::molarDensity;
@@ -310,7 +310,6 @@ public:
             return Component::liquidMolarDensity(temperature, pressure);
 
         return Component::gasMolarDensity(temperature, pressure);
-
     }
 
     /*!
@@ -330,15 +329,16 @@ public:
         Scalar pressure = fluidState.pressure(phaseIdx);
 
         // liquid phase
-        if (phaseIdx == liquidPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx)
+        {
             return Component::liquidViscosity(temperature, pressure);
         }
         else if (phaseIdx == gasPhaseIdx) // gas phase
         {
-            return Component::gasViscosity(temperature, pressure) ;
+            return Component::gasViscosity(temperature, pressure);
         }
-        else DUNE_THROW(Dune::NotImplemented,
-                   "wrong index");
+        else
+            DUNE_THROW(Dune::NotImplemented, "wrong index");
     }
 
     /*!
@@ -352,9 +352,9 @@ public:
                                    const unsigned int phaseIdx)
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
-        Scalar pressure = fluidState.pressure(gasPhaseIdx) ;
+        Scalar pressure = fluidState.pressure(gasPhaseIdx);
 
-        return Component::vaporTemperature(pressure) ;
+        return Component::vaporTemperature(pressure);
     }
 
     /*!
@@ -444,9 +444,7 @@ public:
                                              int compIIdx,
                                              int compJIdx)
 
-    {
-        DUNE_THROW(Dune::NotImplemented, "Binary Diffusion coefficients");
-    }
+    { DUNE_THROW(Dune::NotImplemented, "Binary Diffusion coefficients"); }
 
     /*!
      * \brief Calculate specific enthalpy [J/kg].
@@ -462,7 +460,8 @@ public:
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
         // liquid phase
-        if (phaseIdx == liquidPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx)
+        {
             return Component::liquidEnthalpy(fluidState.temperature(phaseIdx),
                                              fluidState.pressure(phaseIdx));
         }
@@ -471,8 +470,8 @@ public:
             return Component::gasEnthalpy(fluidState.temperature(phaseIdx),
                                           fluidState.pressure(phaseIdx));
         }
-        else DUNE_THROW(Dune::NotImplemented,
-                   "wrong index");
+        else
+            DUNE_THROW(Dune::NotImplemented, "wrong index");
     }
 
     /*!
@@ -499,8 +498,8 @@ public:
             return Component::gasThermalConductivity(fluidState.temperature(phaseIdx),
                                                      fluidState.pressure(phaseIdx)); //0.0248;
         }
-        else DUNE_THROW(Dune::NotImplemented,
-                   "wrong index");
+        else
+            DUNE_THROW(Dune::NotImplemented, "wrong index");
     }
 
     /*!
