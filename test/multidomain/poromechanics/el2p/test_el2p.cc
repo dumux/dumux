@@ -186,7 +186,7 @@ int main(int argc, char** argv) try
                                                   couplingManager, timeLoop );
 
     // the linear solver
-    using LinearSolver = ILU0BiCGSTABBackend;
+    using LinearSolver = UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
@@ -214,6 +214,18 @@ int main(int argc, char** argv) try
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
+
+        using TwoPPrimaryVariables = typename GET_PROP_TYPE(TwoPTypeTag, PrimaryVariables);
+        TwoPPrimaryVariables storage(0);
+        const auto& twoPLocalResidual = assembler->localResidual(twoPId);
+        for (const auto& element : elements(leafGridView, Dune::Partitions::interior))
+        {
+            auto storageVec = twoPLocalResidual.evalStorage(*twoPProblem, element, *twoPFvGridGeometry, *twoPGridVariables, x[twoPId]);
+            storage += storageVec[0];
+        }
+        std::cout << "time, mass CO2 (kg), mass brine (kg):" << std::endl;
+        std::cout << timeLoop->time() << " , " << storage[1] << " , " << storage[0] << std::endl;
+        std::cout << "***************************************" << std::endl;
 
         // set new dt as suggested by the Newton solver
         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));

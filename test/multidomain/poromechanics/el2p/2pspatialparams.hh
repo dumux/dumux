@@ -29,7 +29,7 @@
 #include <dumux/discretization/elementsolution.hh>
 
 #include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/spatialparams/gstatrandomfield.hh>
 #include <dumux/material/fluidmatrixinteractions/porositydeformation.hh>
@@ -60,7 +60,7 @@ class TwoPSpatialParams : public FVSpatialParams< typename GET_PROP_TYPE(TypeTag
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
 public:
-    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
+    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
     // export permeability type
@@ -71,10 +71,19 @@ public:
     , initPermeability_(getParam<Scalar>("SpatialParams.Permeability"))
     , initPorosity_(getParam<Scalar>("SpatialParams.InitialPorosity"))
     {
-      myMaterialParams_.setSwr(0.0);
-      myMaterialParams_.setSnr(0.0);
-      myMaterialParams_.setVgAlpha(0.0005);
-      myMaterialParams_.setVgn(4.);
+        // given Van Genuchten m
+        Scalar m = 0.457;
+        // Brooks Corey lambda
+        using std::pow;
+        Scalar brooksCoreyLambda = m / (1 - m) * (1 - pow(0.5, 1/m));
+
+        // residual saturations
+        myMaterialParams_.setSwr(0.3);
+        myMaterialParams_.setSnr(0.05);
+
+        // parameters for the Brooks Corey law
+        myMaterialParams_.setPe(1.99e4);
+        myMaterialParams_.setLambda(brooksCoreyLambda);
     }
 
     //! Return the porosity for a sub-control volume

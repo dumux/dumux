@@ -33,13 +33,10 @@
 #include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/fluidsystems/1pgas.hh>
-#include <dumux/material/fluidsystems/2pimmiscible.hh>
-#include <dumux/material/components/h2o.hh>
-#include <dumux/material/components/air.hh>
+#include <dumux/material/fluidsystems/brineco2.hh>
 
 #include "2pspatialparams.hh"
+#include "el2pco2tables.hh"
 
 namespace Dumux {
 
@@ -55,13 +52,11 @@ NEW_TYPE_TAG(TwoPSubTypeTag, INHERITS_FROM(CCTpfaModel, TwoP));
 SET_PROP(TwoPSubTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::H2O<Scalar> >;
-    using NonwettingPhase = FluidSystems::OnePGas<Scalar, Components::Air<Scalar> >;
-    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
+    using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;
 };
 
 // Set the grid type
-SET_TYPE_PROP(TwoPSubTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TwoPSubTypeTag, Grid, Dune::YaspGrid<3>);
 // Set the problem property
 SET_TYPE_PROP(TwoPSubTypeTag, Problem, TwoPSubProblem<TypeTag> );
 // Set the spatial parameters
@@ -91,7 +86,9 @@ class TwoPSubProblem : public PorousMediumFlowProblem<TypeTag>
           pressureIdx = GET_PROP_TYPE(TypeTag, ModelTraits)::Indices::pressureIdx,
           saturationNIdx = GET_PROP_TYPE(TypeTag, ModelTraits)::Indices::saturationIdx,
           waterPhaseIdx = FluidSystem::phase0Idx,
-          gasPhaseIdx = FluidSystem::phase1Idx };
+          gasPhaseIdx = FluidSystem::phase1Idx,
+          dimWorld = GridView::dimensionworld
+    };
 
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -116,8 +113,8 @@ public:
     {
       PrimaryVariables values;
 
-      values[pressureIdx] = 1.0e5;
-      values[saturationNIdx] = 0.5;
+      values[pressureIdx] = 1.5e7;
+      values[saturationNIdx] = 0.0;
       return values;
     }
 
@@ -128,7 +125,9 @@ public:
 
         static const Scalar sourceG = getParam<Scalar>("Problem.InjectionRateGas");
         static const Scalar sourceW = getParam<Scalar>("Problem.InjectionRateWater");
-        if (globalPos[0] > 0.4 && globalPos[0] < 0.6 && globalPos[1] < 0.6 && globalPos[1] > 0.4)
+        if(globalPos[0] > 250 + eps_ && globalPos[0] < 750 - eps_
+           && globalPos[1] > 250 + eps_ && globalPos[1] < 750 - eps_
+           && globalPos[dimWorld-1] > 250 + eps_ && globalPos[dimWorld-1] < 750 - eps_)
         {
             values[gasPhaseIdx] = sourceG;
             values[waterPhaseIdx] = sourceW;
@@ -144,7 +143,10 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        values.setAllDirichlet();
+        if (globalPos[dimWorld-1] < eps_)
+            values.setAllNeumann();
+        else
+            values.setAllDirichlet();
         return values;
     }
 

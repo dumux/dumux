@@ -32,13 +32,10 @@
 #include <dumux/geomechanics/poroelastic/model.hh>
 #include <dumux/geomechanics/fvproblem.hh>
 
-#include <dumux/material/fluidsystems/1pliquid.hh>
-#include <dumux/material/fluidsystems/1pgas.hh>
-#include <dumux/material/fluidsystems/2pimmiscible.hh>
-#include <dumux/material/components/h2o.hh>
-#include <dumux/material/components/air.hh>
+#include <dumux/material/fluidsystems/brineco2.hh>
 
 #include "poroelasticspatialparams.hh"
+#include "el2pco2tables.hh"
 
 namespace Dumux {
 
@@ -50,7 +47,7 @@ namespace Properties {
 
 NEW_TYPE_TAG(PoroElasticSubTypeTag, INHERITS_FROM(BoxModel, PoroElastic));
 // Set the grid type
-SET_TYPE_PROP(PoroElasticSubTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(PoroElasticSubTypeTag, Grid, Dune::YaspGrid<3>);
 // Set the problem property
 SET_TYPE_PROP(PoroElasticSubTypeTag, Problem, Dumux::PoroElasticSubProblem<TypeTag>);
 
@@ -58,9 +55,7 @@ SET_TYPE_PROP(PoroElasticSubTypeTag, Problem, Dumux::PoroElasticSubProblem<TypeT
 SET_PROP(PoroElasticSubTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using WettingPhase = FluidSystems::OnePLiquid<Scalar, Components::H2O<Scalar> >;
-    using NonwettingPhase = FluidSystems::OnePGas<Scalar, Components::Air<Scalar> >;
-    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
+    using type = FluidSystems::BrineCO2<Scalar, El2P::CO2Tables>;
 };
 
 // The spatial parameters property

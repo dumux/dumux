@@ -67,7 +67,8 @@ public:
             divU += gradU[dir][dir];
 
         using std::max;
-        return max(minPoro, refPoro*(1.0+divU));
+        return max(minPoro, (refPoro + divU)/(1 + divU));
+//         return max(minPoro, refPoro*(1.0+divU));
     }
 
     /*!
