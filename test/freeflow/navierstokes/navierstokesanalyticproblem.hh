@@ -26,6 +26,7 @@
 #ifndef DUMUX_DONEA_TEST_PROBLEM_HH
 #define DUMUX_DONEA_TEST_PROBLEM_HH
 
+#include <dune/common/fmatrix.hh>
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/material/components/constant.hh>
@@ -90,9 +91,10 @@ class NavierStokesAnalyticProblem : public NavierStokesProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     static constexpr auto dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
-    using DimMatrix = Dune::FieldVector<Dune::FieldVector<Scalar, dimWorld>, dimWorld>;
+    using Element = typename FVGridGeometry::GridView::template Codim<0>::Entity;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
+    using DimVector = GlobalPosition;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
     NavierStokesAnalyticProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -199,11 +201,30 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity and pressure everywhere
-        values.setDirichletCell(Indices::conti0EqIdx);
+        // set Dirichlet values for the velocity everywhere
         values.setDirichlet(Indices::momentumXBalanceIdx);
 
         return values;
+    }
+
+    /*!
+     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scv The sub control volume
+     */
+    bool isDirichletCell(const Element& element,
+                         const typename FVGridGeometry::LocalView& fvGeometry,
+                         const typename FVGridGeometry::SubControlVolume& scv,
+                         int pvIdx) const
+    {
+        // set a fixed pressure in all cells at the boundary
+        for (const auto& scvf : scvfs(fvGeometry))
+            if (scvf.boundary())
+                return true;
+
+        return false;
     }
 
    /*!

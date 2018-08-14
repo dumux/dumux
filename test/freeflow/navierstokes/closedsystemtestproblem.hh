@@ -91,6 +91,7 @@ public:
         using CellArray = std::array<unsigned int, dimWorld>;
         const CellArray numCells = getParam<CellArray>("Grid.Cells");
         cellSizeX_ = this->fvGridGeometry().bBoxMax()[0] / numCells[0];
+        cellSizeY_ = this->fvGridGeometry().bBoxMax()[1] / numCells[1];
     }
 
    /*!
@@ -143,11 +144,24 @@ public:
         values.setDirichlet(Indices::velocityXIdx);
         values.setDirichlet(Indices::velocityYIdx);
 
-        // set a fixed pressure in one cell
-        if (isLowerLeftCell_(globalPos))
-            values.setDirichletCell(Indices::pressureIdx);
-
         return values;
+    }
+
+    /*!
+     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scv The sub control volume
+     */
+    template<class Element, class FVElementGeometry, class SubControlVolume>
+    bool isDirichletCell(const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const SubControlVolume& scv,
+                         int pvIdx) const
+    {
+        // set a fixed pressure in one cell
+        return (isLowerLeftCell_(scv.center()) && pvIdx == Indices::pressureIdx);
     }
 
    /*!
@@ -189,12 +203,13 @@ private:
 
     bool isLowerLeftCell_(const GlobalPosition& globalPos) const
     {
-        return globalPos[0] < (0.5*cellSizeX_ + eps_) && globalPos[1] < eps_;
+        return globalPos[0] < (0.5*cellSizeX_ + eps_) && globalPos[1] < (0.5*cellSizeY_ + eps_);
     }
 
     Scalar eps_;
     Scalar lidVelocity_;
     Scalar cellSizeX_;
+    Scalar cellSizeY_;
 };
 } //end namespace
 

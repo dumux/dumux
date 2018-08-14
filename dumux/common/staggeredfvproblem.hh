@@ -83,6 +83,19 @@ public:
     { }
 
     /*!
+     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scv The sub control volume
+     */
+    bool isDirichletCell(const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const SubControlVolume& scv,
+                         int pvIdx) const
+    { return false; }
+
+    /*!
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume (-face).
      *

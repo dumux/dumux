@@ -28,7 +28,6 @@
 
 #include <dune/common/reservedvector.hh>
 #include <dune/grid/common/gridenums.hh> // for GhostEntity
-#include <dune/istl/matrixindexset.hh>
 
 #include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
@@ -57,18 +56,12 @@ class SubDomainStaggeredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag
     using ParentType = FVLocalAssemblerBase<TypeTag, Assembler,Implementation, isImplicit>;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using SolutionVector = typename Assembler::SolutionVector;
-    using SubSolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
 
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using GridVolumeVariables = typename GridVariables::GridVolumeVariables;
     using ElementVolumeVariables = typename GridVolumeVariables::LocalView;
-    using ElementFluxVariablesCache = typename GridVariables::GridFluxVariablesCache::LocalView;
     using Scalar = typename GridVariables::Scalar;
 
     using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables)::LocalView;
@@ -77,7 +70,6 @@ class SubDomainStaggeredLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag
 
     using FVGridGeometry = typename GridVariables::GridGeometry;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -91,7 +83,8 @@ public:
     static constexpr auto cellCenterId = typename Dune::index_constant<0>();
     static constexpr auto faceId = typename Dune::index_constant<1>();
 
-    static constexpr auto faceOffset = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+    static constexpr auto numEqCellCenter = CellCenterResidualValue::dimension;
+    static constexpr auto faceOffset = numEqCellCenter;
 
     using ParentType::ParentType;
 
@@ -170,7 +163,17 @@ public:
         if (!this->assembler().isStationaryProblem())
             residual += evalLocalStorageResidualForCellCenter();
 
-        this->localResidual().evalBoundaryForCellCenter(residual, this->problem(), this->element(), this->fvGeometry(), elemVolVars, elemFaceVars, this->elemBcTypes(), this->elemFluxVarsCache());
+        this->localResidual().evalBoundaryForCellCenter(residual, problem(), this->element(), this->fvGeometry(), elemVolVars, elemFaceVars, this->elemBcTypes(), this->elemFluxVarsCache());
+
+        // handle cells with a fixed Dirichlet value
+        const auto cellCenterGlobalI = problem().fvGridGeometry().elementMapper().index(this->element());
+        const auto& scvI = this->fvGeometry().scv(cellCenterGlobalI);
+        for (int pvIdx = 0; pvIdx < numEqCellCenter; ++pvIdx)
+        {
+            static constexpr auto offset = numEq - numEqCellCenter;
+            if (this->problem().isDirichletCell(this->element(), this->fvGeometry(), scvI, pvIdx + offset))
+                residual[pvIdx] = this->curSol()[cellCenterId][cellCenterGlobalI][pvIdx] - this->problem().dirichlet(this->element(), scvI)[pvIdx + offset];
+        }
 
         return residual;
     }
@@ -243,7 +246,7 @@ public:
         if (!this->assembler().isStationaryProblem())
             residual += evalLocalStorageResidualForFace(scvf);
 
-        this->localResidual().evalBoundaryForFace(residual, this->problem(), this->element(), this->fvGeometry(), elemVolVars, elemFaceVars, this->elemBcTypes(), this->elemFluxVarsCache(), scvf);
+        this->localResidual().evalBoundaryForFace(residual, problem(), this->element(), this->fvGeometry(), elemVolVars, elemFaceVars, this->elemBcTypes(), this->elemFluxVarsCache(), scvf);
 
         return residual;
     }
@@ -321,7 +324,7 @@ private:
     template<class SubSol>
     void assembleResidualImpl_(Dune::index_constant<1>, SubSol& res)
     {
-        for(auto&& scvf : scvfs(this->fvGeometry()))
+        for (auto&& scvf : scvfs(this->fvGeometry()))
             res[scvf.dofIndex()] +=  this->asImp_().assembleFaceResidualImpl(scvf);
     }
 
@@ -342,6 +345,9 @@ private:
         {
             this->asImp_().assembleJacobianCellCenterCoupling(domainJ, jacRow[domainJ], residual, gridVariablesI);
         });
+
+        // handle cells with a fixed Dirichlet value
+        incorporateDirichletCells_(jacRow);
     }
 
     //! Assembles the residuals and derivatives for the face dofs.
@@ -361,6 +367,34 @@ private:
         {
             this->asImp_().assembleJacobianFaceCoupling(domainJ, jacRow[domainJ], residual, gridVariablesI);
         });
+    }
+
+    //! If specified in the problem, a fixed Dirichlet value can be assigned to cell centered unknows such as pressure
+    template<class JacobianMatrixRow>
+    void incorporateDirichletCells_(JacobianMatrixRow& jacRow)
+    {
+        const auto cellCenterGlobalI = problem().fvGridGeometry().elementMapper().index(this->element());
+
+        // overwrite the partial derivative with zero in case a fixed Dirichlet BC is used
+        static constexpr auto offset = numEq - numEqCellCenter;
+        for (int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
+        {
+            if (problem().isDirichletCell(this->element(), this->fvGeometry(), this->fvGeometry().scv(cellCenterGlobalI), eqIdx + offset))
+            {
+                using namespace Dune::Hybrid;
+                forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& i)
+                {
+                    auto& ccRowI = jacRow[i][cellCenterGlobalI];
+                    for (auto col = ccRowI.begin(); col != ccRowI.end(); ++col)
+                    {
+                        ccRowI[col.index()][eqIdx] = 0.0;
+                        // set the diagonal entry to 1.0
+                        if ((i == domainId) && (col.index() == cellCenterGlobalI))
+                            ccRowI[col.index()][eqIdx][eqIdx] = 1.0;
+                    }
+                });
+            }
+        }
     }
 
     ElementFaceVariables curElemFaceVars_;
@@ -449,7 +483,6 @@ class SubDomainStaggeredLocalAssembler<id, TypeTag, Assembler, DiffMethod::numer
     using FaceVariables = typename ElementFaceVariables::FaceVariables;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
-    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
@@ -501,9 +534,6 @@ public:
         auto&& curElemVolVars = this->curElemVolVars();
         const auto& fvGridGeometry = this->problem().fvGridGeometry();
         const auto& curSol = this->curSol()[domainI];
-
-        // get the vecor of the acutal element residuals
-        // const auto origResiduals = this->evalLocalResidual();
 
         const auto cellCenterGlobalI = fvGridGeometry.elementMapper().index(element);
         const auto origResidual = this->evalLocalResidualForCellCenter();
@@ -916,9 +946,7 @@ public:
     template<class JacobianMatrixDiagBlock, class GridVariables>
     void evalAdditionalDerivatives(const std::vector<std::size_t>& additionalDofDependencies,
                                    JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
-    {
-
-    }
+    { }
 
     /*!
      * \brief Updates the current global Jacobian matrix with the
@@ -930,7 +958,7 @@ public:
                                       const int globalI,
                                       const int globalJ,
                                       const int pvIdx,
-                                      const CCOrFacePrimaryVariables &partialDeriv)
+                                      const CCOrFacePrimaryVariables& partialDeriv)
     {
         for (int eqIdx = 0; eqIdx < partialDeriv.size(); eqIdx++)
         {

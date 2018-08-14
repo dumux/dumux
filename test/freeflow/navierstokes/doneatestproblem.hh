@@ -174,9 +174,26 @@ public:
         // set Dirichlet values for the velocity and pressure everywhere
         values.setDirichlet(Indices::velocityXIdx);
         values.setDirichlet(Indices::velocityYIdx);
-        values.setDirichletCell(Indices::pressureIdx);
 
         return values;
+    }
+
+    /*!
+     * \brief Returns whether a fixed Dirichlet value shall be used at a given cell.
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param scv The sub control volume
+     */
+    bool isDirichletCell(const Element& element,
+                         const typename FVGridGeometry::LocalView& fvGeometry,
+                         const typename FVGridGeometry::SubControlVolume& scv,
+                         int pvIdx) const
+    {
+        bool onBoundary = false;
+        for (const auto& scvf : scvfs(fvGeometry))
+            onBoundary = std::max(onBoundary, scvf.boundary());
+        return onBoundary;
     }
 
    /*!
