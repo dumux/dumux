@@ -97,8 +97,8 @@ public:
     {
         static_assert(isCCTpfa<0>() && isCCTpfa<1>(), "Only cctpfa implemented!");
 
+        this->setSubProblems(std::make_tuple(problem0, problem1));
         this->updateSolution(curSol);
-        problemTuple_ = std::make_tuple(problem0, problem1);
         couplingMapper_.update(*this);
     }
 
@@ -123,7 +123,7 @@ public:
                                            Dune::index_constant<j> domainJ) const
     {
         static_assert(i != j, "A domain cannot be coupled to itself!");
-        const auto eIdx = problem(domainI).fvGridGeometry().elementMapper().index(element);
+        const auto eIdx = this->problem(domainI).fvGridGeometry().elementMapper().index(element);
         return couplingMapper_.couplingStencil(domainI, eIdx, domainJ);
     }
 
@@ -166,11 +166,11 @@ public:
                                  int phaseIdx = 0) const
     {
         Scalar flux = 0.0;
-        static const bool enableGravity = getParamFromGroup<bool>(problem(domainI).paramGroup(), "Problem.EnableGravity");
+        static const bool enableGravity = getParamFromGroup<bool>(this->problem(domainI).paramGroup(), "Problem.EnableGravity");
         constexpr auto otherDomainIdx = domainIdx<1-i>();
 
-        const auto& outsideElement = problem(otherDomainIdx).fvGridGeometry().element(couplingMapper_.outsideElementIndex(domainI, scvf));
-        auto fvGeometryOutside = localView(problem(otherDomainIdx).fvGridGeometry());
+        const auto& outsideElement = this->problem(otherDomainIdx).fvGridGeometry().element(couplingMapper_.outsideElementIndex(domainI, scvf));
+        auto fvGeometryOutside = localView(this->problem(otherDomainIdx).fvGridGeometry());
         fvGeometryOutside.bindElement(outsideElement);
 
         const auto& flipScvf = fvGeometryOutside.scvf(couplingMapper_.flipScvfIndex(domainI, scvf));
@@ -190,7 +190,7 @@ public:
         {
             // do averaging for the density over all neighboring elements
             const auto rho = (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
-            const auto& g = problem(domainI).gravityAtPos(scvf.ipGlobal());
+            const auto& g = this->problem(domainI).gravityAtPos(scvf.ipGlobal());
 
             //! compute alpha := n^T*K*g
             const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
@@ -228,11 +228,6 @@ public:
         return flux;
     }
 
-    //! Return a reference to the sub problem with domain index i
-    template<std::size_t i>
-    const Problem<i>& problem(Dune::index_constant<i> domainIdx) const
-    { return *std::get<i>(problemTuple_); }
-
     //! Return the volume variables of domain i for a given element and scv
     template<std::size_t i>
     VolumeVariables<i> volVars(Dune::index_constant<i> domainI,
@@ -240,13 +235,12 @@ public:
                                const SubControlVolume<i>& scv) const
     {
         VolumeVariables<i> volVars;
-        const auto elemSol = elementSolution(element, this->curSol()[domainI], problem(domainI).fvGridGeometry());
-        volVars.update(elemSol, problem(domainI), element, scv);
+        const auto elemSol = elementSolution(element, this->curSol()[domainI], this->problem(domainI).fvGridGeometry());
+        volVars.update(elemSol, this->problem(domainI), element, scv);
         return volVars;
     }
 
 private:
-    typename MDTraits::ProblemTuple problemTuple_;
     DarcyDarcyBoundaryCouplingMapper<MDTraits> couplingMapper_;
 };
 
