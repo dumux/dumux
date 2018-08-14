@@ -589,57 +589,38 @@ public:
                                              int compIIdx,
                                              int compJIdx)
     {
+        using std::swap;
         if (compIIdx > compJIdx)
-        {
-            using std::swap;
             swap(compIIdx, compJIdx);
-        }
-
-#ifndef NDEBUG
-        if (compIIdx == compJIdx ||
-            phaseIdx > numPhases - 1 ||
-            compJIdx > numComponents - 1)
-        {
-            DUNE_THROW(Dune::InvalidStateException,
-                       "Binary diffusion coefficient of components "
-                       << compIIdx << " and " << compJIdx
-                       << " in phase " << phaseIdx << " is undefined!\n");
-        }
-#endif
 
         Scalar T = fluidState.temperature(phaseIdx);
         Scalar p = fluidState.pressure(phaseIdx);
 
-        switch (phaseIdx)
+        // we are in the liquid phase
+        if (phaseIdx == liquidPhaseIdx)
         {
-        case liquidPhaseIdx:
-            switch (compIIdx) {
-            case H2OIdx:
-                switch (compJIdx) {
-                case AirIdx:
-                    return BinaryCoeff::H2O_Air::liquidDiffCoeff(T,
-                                                                 p);
-                }
-            default:
+            if (compIIdx == H2OIdx && compJIdx == AirIdx)
+                return BinaryCoeff::H2O_Air::liquidDiffCoeff(T, p);
+            else
                 DUNE_THROW(Dune::InvalidStateException,
-                           "Binary diffusion coefficients of trace "
-                           "substances in liquid phase is undefined!\n");
-            }
-        case gasPhaseIdx:
-            switch (compIIdx){
-            case H2OIdx:
-                switch (compJIdx){
-                case AirIdx:
-                    return BinaryCoeff::H2O_Air::gasDiffCoeff(T,
-                                                              p);
-                }
-            }
+                           "Binary diffusion coefficient of components "
+                            << compIIdx << " and " << compJIdx
+                            << " in phase " << phaseIdx << " is undefined!\n");
         }
 
-        DUNE_THROW(Dune::InvalidStateException,
-                   "Binary diffusion coefficient of components "
-                   << compIIdx << " and " << compJIdx
-                   << " in phase " << phaseIdx << " is undefined!\n");
+        // we are in the gas phase
+        else if (phaseIdx == gasPhaseIdx)
+        {
+            if (compIIdx == H2OIdx && compJIdx == AirIdx)
+                return BinaryCoeff::H2O_Air::gasDiffCoeff(T, p);
+            else
+                DUNE_THROW(Dune::InvalidStateException,
+                           "Binary diffusion coefficient of components "
+                           << compIIdx << " and " << compJIdx
+                           << " in phase " << phaseIdx << " is undefined!\n");
+        }
+
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
     using Base::enthalpy;
