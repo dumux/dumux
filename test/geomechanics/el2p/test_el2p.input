@@ -1,6 +1,5 @@
 [TimeManager]
-TInitEnd = 1e6       # [s]
-TEnd = 2e6        # [s]
+TEnd = 1e6        # [s]
 DtInitial = 10       # [s]
 EpisodeLength = 1e6  # [s]
 
@@ -9,5 +8,8 @@ UpperRight = 1000 1000 1000
 Cells = 4 4 4
 Refinement = 0
 
+[Problem]
+EnableGravity = false
+
 [Injection]
-DepthBOR = 2000     # Depth at the bottom of the scenario [m]
+DepthBOR = 0 #2000     # Depth at the bottom of the scenario [m]

@@ -93,13 +93,9 @@ public:
     El2PSpatialParams(const GridView &gridView)
     : ParentType(gridView)
     {
-        // episode index
-        episode_ = 0;
         // intrinsic permeabilities [m^2]
-        Kinit_ = Scalar(0.0); // init permeability
         K_ = Scalar(0.0); // permeability
         for (int i = 0; i < dim; i++){
-            Kinit_[i][i] = 1.E-12; //[m²]
             K_[i][i] = 1.E-14; //[m²]
         }
 
@@ -139,19 +135,6 @@ public:
     {}
 
     /*!
-     * \brief This function sets the private variable episode_ to the current episode index
-     * which is checked in the hydraulic parameter functions to identify if we are still in the
-     * initialization run (episode_ == 1)
-     *
-     * \param episode The episode index
-     */
-    void setEpisode(const int& episode)
-    {
-        episode_ = episode;
-        std::cout<< "episode set to: "<< episode_<<std::endl;
-    }
-
-    /*!
      * \brief Apply the intrinsic permeability tensor \f$[m^2]\f$ to a pressure
      *        potential gradient.
      *
@@ -167,10 +150,7 @@ public:
                                        const FVElementGeometry &fvGeometry,
                                        int scvIdx) const
     {
-        if(episode_ <= 1)
-            return Kinit_; // intrinsic permeability applied during initialization
-        else
-             return K_; // intrinsic permeability
+        return K_; // intrinsic permeability
     }
 
     /*!
@@ -269,8 +249,6 @@ private:
     Scalar BrooksCoreyLambda_, m_;
     MaterialLawParams MaterialParams_;
     static constexpr Scalar eps_ = 3e-6;
-    int episode_;
-
 };
 }
 #endif

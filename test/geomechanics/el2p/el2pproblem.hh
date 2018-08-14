@@ -231,22 +231,15 @@ public:
         std::fill( pInit_.begin(), pInit_.end(), 0.0 );
 
         // variable which determines if output should be written (initially set to false)
-        output_ = false;
+        output_ = true;
         // define if current run is initialization run
         // (initially set to true, will be set to false if initialization is over)
-        initializationRun_ = true;
+        initializationRun_ = false;
         // defines if feedback from geomechanics on flow is taken into account or not
         // (usually the coupling is switched off for the initialization run)
-        coupled_ = false;
-        // set initial episode length equal to length of initialization period
-        Scalar tInitEnd = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.TInitEnd);
-        this->timeManager().startNextEpisode(tInitEnd);
-        // transfer the episode index to spatial parameters
-        // (during intialization episode hydraulic different parameters might be applied)
-        this->spatialParams().setEpisode(this->timeManager().episodeIndex());
+        coupled_ = true;
 
         depthBOR_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.DepthBOR);
-        episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
 
         dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.DtInitial);
     }
@@ -282,7 +275,7 @@ public:
             GlobalPosition globalPos = vertex.geometry().corner(0);
 
             // initial approximate pressure distribution at start of initialization run
-            pInit_[vIdxGlobal] = -(1.013e5 + (depthBOR_ - globalPos[dimWorld-1]) * brineDensity_ * 9.81);
+            pInit_[vIdxGlobal] = -1.5e7;//(1.013e5 + (depthBOR_ - globalPos[dimWorld-1]) * brineDensity_ * 9.81);
         }
     }
 
@@ -339,24 +332,9 @@ public:
     // for the principal stress calculation
     GlobalPosition initialStress(const GlobalPosition globalPos, const int dofIdxGlobal) const
     {
-      GlobalPosition stress;
-      Scalar porosity, rockDensity, gravity;
-      gravity = -this->gravity()[dimWorld-1];
-      porosity = this->spatialParams().porosity(globalPos);
-      rockDensity = this->spatialParams().rockDensity(globalPos);
-
-      // initial total stress field here assumed to be isotropic, lithostatic
-      stress[0] = brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dim-1])
-                  + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dim-1]);
-      if(dim >=2)
-      stress[1] = brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dim-1])
-                  + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dim-1]);
-      if(dim == 3)
-      stress[2] = brineDensity_ * porosity * gravity * (depthBOR_ - globalPos[dim-1])
-                  + (1 - porosity) * rockDensity * gravity * (depthBOR_ - globalPos[dim-1]);
-
-      return stress;
+      return GlobalPosition(0);
     }
+
     /*!
      * \name Problem parameters
      */
@@ -381,7 +359,7 @@ public:
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     {
         Scalar T;
-        T = 283.15 + (depthBOR_ - globalPos[dimWorld-1]) * 0.03;
+        T = 283.15;// + (depthBOR_ - globalPos[dimWorld-1]) * 0.03;
 
         return T;
     };
@@ -460,35 +438,21 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) const
     {
         values.setAllNeumann();
+        values.setDirichlet(uxIdx);
+        values.setDirichlet(uyIdx);
+        values.setDirichlet(uzIdx);
 
         // The solid displacement normal to the lateral boundaries is fixed.
         if(globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0]-eps_)
         {
-            values.setDirichlet(uxIdx);
-            if(initializationRun_ == false)
-            {
-                values.setDirichlet(pressureIdx);
-                values.setDirichlet(saturationIdx);
-            }
+            values.setDirichlet(pressureIdx);
+            values.setDirichlet(saturationIdx);
         }
         // The solid displacement normal to the lateral boundaries is fixed.
         if(globalPos[1] < eps_ || globalPos[1] > this->bBoxMax()[1]-eps_)
         {
-            values.setDirichlet(uyIdx);
-            if(initializationRun_ == false)
-            {
-                values.setDirichlet(pressureIdx);
-                values.setDirichlet(saturationIdx);
-            }
-        }
-
-        // Lower boundary closed for brine and CO2 flux, uz is fixed.
-        if(globalPos[dimWorld-1] < eps_)
-        {
-            if(dim == 2)
-                values.setDirichlet(uyIdx);
-            if(dim == 3)
-                values.setDirichlet(uzIdx);
+            values.setDirichlet(pressureIdx);
+            values.setDirichlet(saturationIdx);
         }
 
         // for the initialization run the pressure and saturation
@@ -606,15 +570,6 @@ public:
     // \}
 
     /*!
-     * \brief Transfer episode index to spatial parameters in order to apply different
-     * hydraulic parameters during pressure initialization
-     */
-    void preTimeStep()
-    {
-        this->spatialParams().setEpisode(this->timeManager().episodeIndex());
-    }
-
-    /*!
      * \brief Write mass balance information for both fluid phases
      */
     void postTimeStep()
@@ -637,31 +592,10 @@ public:
 
     }
 
-    /*!
-     * \brief Define length of next episode
-     */
-    void episodeEnd()
-    {
-        this->timeManager().startNextEpisode(episodeLength_);
-        // At the end of the initializationRun
-        if (this->timeManager().time() == GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.TInitEnd))
-        {
-            this->timeManager().setTimeStepSize(dt_);
-
-            this->setCoupled(true);
-            // pressure field resulting from the initialization period is applied for the initial
-            // and the Dirichlet boundary conditions
-            this->setPressure();
-            // output is written
-            this->setOutput(true);
-        }
-    }
-
 private:
     static constexpr Scalar eps_ = 3e-6;
     Scalar depthBOR_;
     static constexpr Scalar brineDensity_ = 1059;
-    Scalar episodeLength_;// = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
 
     std::vector<Scalar> pInit_;
     GridView gridView_;
