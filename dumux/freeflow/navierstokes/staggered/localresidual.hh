@@ -326,7 +326,8 @@ protected:
                 residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
             }
             else
-                DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions for the momentum equations.");
+                DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions "
+                           "for the momentum equations at global position " << scvf.center());
         }
     }
 
