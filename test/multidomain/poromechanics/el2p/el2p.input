@@ -1,6 +1,6 @@
 [TimeLoop]
 DtInitial = 10 # [s]
-TEnd = 1000000 # [s]
+TEnd = 1000 # [s]
 
 [Grid]
 LowerLeft = 0 0 0

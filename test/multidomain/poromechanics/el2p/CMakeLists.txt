@@ -5,9 +5,9 @@ dune_add_test(NAME test_el2p
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/el2p_2p_reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/twop-00016.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/twop-00010.vtu
                                 ${CMAKE_SOURCE_DIR}/test/references/el2p_u_reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/poroelastic-00016.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/poroelastic-00010.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_el2p el2p.input")
 
 set(CMAKE_BUILD_TYPE Release)
