@@ -58,7 +58,8 @@ public:
                                    const typename FVGridGeom::GridView::template Codim<0>::Entity::Geometry::GlobalCoordinate& globalPos,
                                    const ElemSol& elemSol,
                                    Scalar refPoro,
-                                   Scalar minPoro = 0.0)
+                                   Scalar minPoro = 0.0,
+                                   Scalar maxPoro = 1.0)
     {
         // compute divergence of diplacement at the given position
         Scalar divU = 0.0;
@@ -66,9 +67,9 @@ public:
         for (int dir = 0; dir < FVGridGeom::GridView::dimension; ++dir)
             divU += gradU[dir][dir];
 
+        using std::min;
         using std::max;
-        return max(minPoro, (refPoro + divU)/(1 + divU));
-//         return max(minPoro, refPoro*(1.0+divU));
+        return min( maxPoro, max(minPoro, (refPoro+divU)/(1.0+divU)) );
     }
 
     /*!
