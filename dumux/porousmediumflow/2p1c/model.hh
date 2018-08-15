@@ -86,17 +86,20 @@ namespace Dumux {
  *        considering two phases with water as a single component.
  */
 template<TwoPFormulation f>
-struct TwoPOneCModelTraits
+struct TwoPOneCNIModelTraits
 {
     using Indices = TwoPOneCIndices;
 
-    static constexpr int numEq() { return 1; }
+    //! We solve for one more equation, i.e. the energy balance
+    static constexpr int numEq() { return 2; }
+    //! only one energy equation is needed when assuming thermal equilibrium
+    static constexpr int numEnergyEq() { return 1; }
     static constexpr int numPhases() { return 2; }
     static constexpr int numComponents() { return 1; }
 
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return false; }
-    static constexpr bool enableEnergyBalance() { return false; }
+    static constexpr bool enableEnergyBalance() { return true; }
 
     static constexpr TwoPFormulation priVarFormulation() { return f; }
 
@@ -123,7 +126,7 @@ struct TwoPOneCModelTraits
  * \tparam MT The model traits
  */
 template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
-struct TwoPOneCVolumeVariablesTraits
+struct TwoPOneCNIVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
     using FluidSystem = FSY;
@@ -185,7 +188,10 @@ private:
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-    using Traits = TwoPOneCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    static_assert(FSY::numComponents == 1, "Only fluid systems with 1 component are supported by the 2p1cni model!");
+    static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p1cni model!");
+
+    using Traits = TwoPOneCNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
     using type = TwoPOneCVolumeVariables<Traits>;
 };
@@ -211,16 +217,7 @@ SET_TYPE_PROP(TwoPOneCNI, ThermalConductivityModel, ThermalConductivitySomerton<
 //////////////////////////////////////////////////////////////////
 
 //! Set the non-isothermal model traits
-SET_PROP(TwoPOneCNI, ModelTraits)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static_assert(FluidSystem::numComponents == 1, "Only fluid systems with 1 component are supported by the 2p1cni model!");
-    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p1cni model!");
-    using Traits = TwoPOneCModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>;
-public:
-    using type = PorousMediumFlowNIModelTraits< Traits >;
-};
+SET_TYPE_PROP(TwoPOneCNI, ModelTraits, TwoPOneCNIModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>);
 
 //! The non-isothermal vtk output fields.
 SET_TYPE_PROP(TwoPOneCNI, VtkOutputFields, EnergyVtkOutputFields<TwoPOneCVtkOutputFields>);
