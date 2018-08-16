@@ -288,7 +288,7 @@ public:
             return Component::gasDensity(temperature, pressure);
         }
         else
-            DUNE_THROW(Dune::NotImplemented, "wrong index");
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
     using Base::molarDensity;
@@ -308,8 +308,10 @@ public:
         Scalar pressure = fluidState.temperature(phaseIdx);
         if (phaseIdx == liquidPhaseIdx)
             return Component::liquidMolarDensity(temperature, pressure);
-
-        return Component::gasMolarDensity(temperature, pressure);
+        else if (phaseIdx == gasPhaseIdx)
+            return Component::gasMolarDensity(temperature, pressure);
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
     /*!
@@ -330,15 +332,11 @@ public:
 
         // liquid phase
         if (phaseIdx == liquidPhaseIdx)
-        {
             return Component::liquidViscosity(temperature, pressure);
-        }
         else if (phaseIdx == gasPhaseIdx) // gas phase
-        {
             return Component::gasViscosity(temperature, pressure);
-        }
         else
-            DUNE_THROW(Dune::NotImplemented, "wrong index");
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
     /*!
@@ -398,14 +396,15 @@ public:
 
         // liquid phase
         if (phaseIdx == liquidPhaseIdx)
-        {
            return Component::vaporPressure(temperature)/pressure;
-        }
 
         // for the gas phase, assume an ideal gas when it comes to
         // fugacity (-> fugacity == partial pressure)
-        else
+        else if (phaseIdx == gasPhaseIdx)
             return 1.0;
+
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
 
@@ -461,17 +460,15 @@ public:
 
         // liquid phase
         if (phaseIdx == liquidPhaseIdx)
-        {
             return Component::liquidEnthalpy(fluidState.temperature(phaseIdx),
                                              fluidState.pressure(phaseIdx));
-        }
+
         else if (phaseIdx == gasPhaseIdx) // gas phase
-        {
             return Component::gasEnthalpy(fluidState.temperature(phaseIdx),
                                           fluidState.pressure(phaseIdx));
-        }
+
         else
-            DUNE_THROW(Dune::NotImplemented, "wrong index");
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
     /*!
@@ -489,17 +486,16 @@ public:
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         // liquid phase
-        if (phaseIdx == liquidPhaseIdx) {
-                 return Component::liquidThermalConductivity(fluidState.temperature(phaseIdx),
-                                                             fluidState.pressure(phaseIdx)); //0.68 ;
-        }
+        if (phaseIdx == liquidPhaseIdx)
+            return Component::liquidThermalConductivity(fluidState.temperature(phaseIdx),
+                                                        fluidState.pressure(phaseIdx)); //0.68 ;
+
         else if (phaseIdx == gasPhaseIdx) // gas phase
-        {
             return Component::gasThermalConductivity(fluidState.temperature(phaseIdx),
                                                      fluidState.pressure(phaseIdx)); //0.0248;
-        }
+
         else
-            DUNE_THROW(Dune::NotImplemented, "wrong index");
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 
     /*!
@@ -516,16 +512,16 @@ public:
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         // liquid phase
-        if (phaseIdx == liquidPhaseIdx) {
+        if (phaseIdx == liquidPhaseIdx)
             return Component::liquidHeatCapacity(fluidState.temperature(phaseIdx),
                                                  fluidState.pressure(phaseIdx));//4.217e3 ;
-        }
+
         else if (phaseIdx == gasPhaseIdx) // gas phase
-        {
             return Component::gasHeatCapacity(fluidState.temperature(phaseIdx),
                                               fluidState.pressure(phaseIdx));//2.029e3;
-        }
-        else DUNE_THROW(Dune::NotImplemented, "wrong index");
+
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
 };
 
