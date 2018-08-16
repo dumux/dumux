@@ -107,6 +107,39 @@ public:
     {
         BoundaryTypes values;
         values.setAllDirichlet();
+
+        if (globalPos[0] < eps_ && globalPos[1] > eps_ && globalPos[1] < 1.0 - eps_)
+            values.setNeumann(Indices::momentum(/*x-dir*/0));
+        if (globalPos[1] > 1.0 - eps_ && globalPos[0] > eps_ && globalPos[0] < 1.0 - eps_)
+            values.setNeumann(Indices::momentum(/*y-dir*/1));
+
+        return values;
+    }
+
+    NumEqVector neumann(const Element& element,
+                        const FVElementGeometry& fvGeometry,
+                        const ElementVolumeVariables& elemVolvars,
+                        const SubControlVolumeFace& scvf) const
+    {
+        GradU gradU = exactGradient(scvf.ipGlobal());
+
+        GradU epsilon;
+        for (int i = 0; i < dim; ++i)
+            for (int j = 0; j < dimWorld; ++j)
+                epsilon[i][j] = 0.5*(gradU[i][j] + gradU[j][i]);
+
+        const auto& lameParams = this->spatialParams().lameParamsAtPos(scvf.ipGlobal());
+        GradU sigma(0.0);
+        const auto traceEpsilon = trace(epsilon);
+        for (int i = 0; i < dim; ++i)
+        {
+            sigma[i][i] = lameParams.lambda()*traceEpsilon;
+            for (int j = 0; j < dimWorld; ++j)
+                sigma[i][j] += 2.0*lameParams.mu()*epsilon[i][j];
+        }
+
+        NumEqVector values;
+        sigma.mv(scvf.unitOuterNormal(), values);
         return values;
     }
 
