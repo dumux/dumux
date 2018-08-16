@@ -114,7 +114,7 @@ public:
         {
             auto localScvIdx = scv.localDofIndex();
             const auto& volVars = elemVolVars[scv];
-            storage[localScvIdx] = asImp().computeStorage(scv, volVars);
+            storage[localScvIdx] = asImp().computeStorage(problem, scv, volVars);
             storage[localScvIdx] *= scv.volume() * volVars.extrusionFactor();
         }
 

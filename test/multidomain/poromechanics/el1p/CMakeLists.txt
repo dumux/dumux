@@ -5,9 +5,9 @@ dune_add_test(NAME test_el1p
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/el1p_p_reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/onep.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/onep-00001.vtu
                                 ${CMAKE_SOURCE_DIR}/test/references/el1p_u_reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/poromech.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/poroelastic-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_el1p el1p.input")
 
 set(CMAKE_BUILD_TYPE Release)

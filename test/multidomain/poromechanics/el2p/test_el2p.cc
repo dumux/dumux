@@ -21,11 +21,13 @@
  * \brief test for a single-phase elastic coupled model.
  */
 #include <config.h>
+#include <ctime>
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/timer.hh>
 
-#include "1pproblem.hh"
+#include "2pproblem.hh"
 #include "poroelasticproblem.hh"
 
 #include <dumux/common/properties.hh>
@@ -50,11 +52,11 @@ namespace Dumux {
 namespace Properties {
 NEW_PROP_TAG(CouplingManager);
 
-SET_PROP(OnePSubTypeTag, CouplingManager)
+SET_PROP(TwoPSubTypeTag, CouplingManager)
 {
 private:
     // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTAG(OnePSubTypeTag), TTAG(PoroElasticSubTypeTag)>;
+    using Traits = MultiDomainTraits<TTAG(TwoPSubTypeTag), TTAG(PoroElasticSubTypeTag)>;
 public:
     using type = PoroMechanicsCouplingManager< Traits >;
 };
@@ -63,7 +65,7 @@ SET_PROP(PoroElasticSubTypeTag, CouplingManager)
 {
 private:
     // define traits etc. as below in main
-    using Traits = MultiDomainTraits<TTAG(OnePSubTypeTag), TTAG(PoroElasticSubTypeTag)>;
+    using Traits = MultiDomainTraits<TTAG(TwoPSubTypeTag), TTAG(PoroElasticSubTypeTag)>;
 public:
     using type = PoroMechanicsCouplingManager< Traits >;
 };
@@ -90,11 +92,11 @@ int main(int argc, char** argv) try
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
-    using OnePTypeTag = TTAG(OnePSubTypeTag);
+    using TwoPTypeTag = TTAG(TwoPSubTypeTag);
     using PoroMechTypeTag = TTAG(PoroElasticSubTypeTag);
 
     // we simply extract the grid creator from one of the type tags
-    using GridManager = Dumux::GridManager<typename GET_PROP_TYPE(OnePTypeTag, Grid)>;
+    using GridManager = Dumux::GridManager<typename GET_PROP_TYPE(TwoPTypeTag, Grid)>;
     GridManager gridManager;
     gridManager.init();
 
@@ -106,91 +108,135 @@ int main(int argc, char** argv) try
     const auto& leafGridView = gridManager.grid().leafGridView();
 
     // create the finite volume grid geometries
-    using OnePFVGridGeometry = typename GET_PROP_TYPE(OnePTypeTag, FVGridGeometry);
+    using TwoPFVGridGeometry = typename GET_PROP_TYPE(TwoPTypeTag, FVGridGeometry);
     using PoroMechFVGridGeometry = typename GET_PROP_TYPE(PoroMechTypeTag, FVGridGeometry);
-    auto onePFvGridGeometry = std::make_shared<OnePFVGridGeometry>(leafGridView);
+    auto twoPFvGridGeometry = std::make_shared<TwoPFVGridGeometry>(leafGridView);
     auto poroMechFvGridGeometry = std::make_shared<PoroMechFVGridGeometry>(leafGridView);
-    onePFvGridGeometry->update();
+    twoPFvGridGeometry->update();
     poroMechFvGridGeometry->update();
 
     // the problems (boundary conditions)
-    using OnePProblem = typename GET_PROP_TYPE(OnePTypeTag, Problem);
+    using TwoPProblem = typename GET_PROP_TYPE(TwoPTypeTag, Problem);
     using PoroMechProblem = typename GET_PROP_TYPE(PoroMechTypeTag, Problem);
-    auto onePProblem = std::make_shared<OnePProblem>(onePFvGridGeometry, "OneP");
+    auto twoPProblem = std::make_shared<TwoPProblem>(twoPFvGridGeometry, "TwoP");
     auto poroMechProblem = std::make_shared<PoroMechProblem>(poroMechFvGridGeometry, "PoroElastic");
 
     // the solution vectors
-    using Traits = MultiDomainTraits<OnePTypeTag, PoroMechTypeTag>;
+    using Traits = MultiDomainTraits<TwoPTypeTag, PoroMechTypeTag>;
     using SolutionVector = typename Traits::SolutionVector;
     SolutionVector x;
 
-    static const auto onePId = Traits::template DomainIdx<0>();
+    static const auto twoPId = Traits::template DomainIdx<0>();
     static const auto poroMechId = Traits::template DomainIdx<1>();
-    x[onePId].resize(onePFvGridGeometry->numDofs());
+    x[twoPId].resize(twoPFvGridGeometry->numDofs());
     x[poroMechId].resize(poroMechFvGridGeometry->numDofs());
-    onePProblem->applyInitialSolution(x[onePId]);
+    twoPProblem->applyInitialSolution(x[twoPId]);
     poroMechProblem->applyInitialSolution(x[poroMechId]);
     SolutionVector xOld = x;
 
     // the coupling manager
     using CouplingManager = PoroMechanicsCouplingManager<Traits>;
     auto couplingManager = std::make_shared<CouplingManager>();
-    couplingManager->init(onePProblem, poroMechProblem, x);
+    couplingManager->init(twoPProblem, poroMechProblem, x);
 
     // set coupling manager pointer in sub-problems
     // (in 1p problem the coupling enters in the parameters)
-    onePProblem->spatialParams().setCouplingManager(couplingManager);
+    twoPProblem->spatialParams().setCouplingManager(couplingManager);
     poroMechProblem->setCouplingManager(couplingManager);
 
     // the grid variables
-    using OnePGridVariables = typename GET_PROP_TYPE(OnePTypeTag, GridVariables);
+    using TwoPGridVariables = typename GET_PROP_TYPE(TwoPTypeTag, GridVariables);
     using PoroMechGridVariables = typename GET_PROP_TYPE(PoroMechTypeTag, GridVariables);
-    auto onePGridVariables = std::make_shared<OnePGridVariables>(onePProblem, onePFvGridGeometry);
+    auto twoPGridVariables = std::make_shared<TwoPGridVariables>(twoPProblem, twoPFvGridGeometry);
     auto poroMechGridVariables = std::make_shared<PoroMechGridVariables>(poroMechProblem, poroMechFvGridGeometry);
-    onePGridVariables->init(x[onePId]);
+    twoPGridVariables->init(x[twoPId]);
     poroMechGridVariables->init(x[poroMechId]);
 
+    // get some time loop parameters
+    using Scalar = typename GET_PROP_TYPE(TwoPTypeTag, Scalar);
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDT = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
     // intialize the dune vtk writers
-    using OnePVtkOutputModule = Dumux::VtkOutputModule<OnePGridVariables, typename GET_PROP_TYPE(OnePTypeTag, SolutionVector)>;
+    using TwoPVtkOutputModule = Dumux::VtkOutputModule<TwoPGridVariables, typename GET_PROP_TYPE(TwoPTypeTag, SolutionVector)>;
     using PoroMechVtkOutputModule = Dumux::VtkOutputModule<PoroMechGridVariables, typename GET_PROP_TYPE(PoroMechTypeTag, SolutionVector)>;
-    OnePVtkOutputModule onePVtkWriter(*onePGridVariables, x[onePId], onePProblem->name());
+    TwoPVtkOutputModule twoPVtkWriter(*twoPGridVariables, x[twoPId], twoPProblem->name());
     PoroMechVtkOutputModule poroMechVtkWriter(*poroMechGridVariables, x[poroMechId], poroMechProblem->name());
 
     // add output fields to writers
-    using OnePOutputFields = typename GET_PROP_TYPE(OnePTypeTag, VtkOutputFields);
+    using TwoPOutputFields = typename GET_PROP_TYPE(TwoPTypeTag, VtkOutputFields);
     using PoroMechOutputFields = typename GET_PROP_TYPE(PoroMechTypeTag, VtkOutputFields);
-    OnePOutputFields::init(onePVtkWriter);
+    TwoPOutputFields::init(twoPVtkWriter);
     PoroMechOutputFields::init(poroMechVtkWriter);
 
     // write initial solution
-    onePVtkWriter.write(0.0);
+    twoPVtkWriter.write(0.0);
     poroMechVtkWriter.write(0.0);
+
+    //instantiate time loop
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDT);
 
     // the assembler
     using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric, /*implicit?*/true>;
-    auto assembler = std::make_shared<Assembler>( std::make_tuple(onePProblem, poroMechProblem),
-                                                  std::make_tuple(onePFvGridGeometry, poroMechFvGridGeometry),
-                                                  std::make_tuple(onePGridVariables, poroMechGridVariables),
-                                                  couplingManager);
+    auto assembler = std::make_shared<Assembler>( std::make_tuple(twoPProblem, poroMechProblem),
+                                                  std::make_tuple(twoPFvGridGeometry, poroMechFvGridGeometry),
+                                                  std::make_tuple(twoPGridVariables, poroMechGridVariables),
+                                                  couplingManager, timeLoop );
 
     // the linear solver
-    using LinearSolver = ILU0BiCGSTABBackend;
+    using LinearSolver = UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
     using NewtonSolver = Dumux::MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager>;
-    auto newtonSolver = std::make_shared<NewtonSolver>(assembler, linearSolver, couplingManager);
+    NewtonSolver nonLinearSolver(assembler, linearSolver, couplingManager);
 
-    // linearize & solve
-    newtonSolver->solve(x);
+    // time loop
+    timeLoop->start(); do
+    {
+        // set previous solution for storage evaluations
+        assembler->setPreviousSolution(xOld);
 
-    // update grid variables for output
-    onePGridVariables->update(x[onePId]);
-    poroMechGridVariables->update(x[poroMechId]);
+        // solve the non-linear system with time step control
+        nonLinearSolver.solve(x, *timeLoop);
 
-    // write vtk output
-    onePVtkWriter.write(1.0);
-    poroMechVtkWriter.write(1.0);
+        // make the new solution the old solution
+        xOld = x;
+
+        // advance to the time loop to the next step
+        timeLoop->advanceTimeStep();
+
+        // write vtk output
+        twoPVtkWriter.write(timeLoop->time());
+        poroMechVtkWriter.write(timeLoop->time());
+
+        // report statistics of this time step
+        timeLoop->reportTimeStep();
+
+        using TwoPPrimaryVariables = typename GET_PROP_TYPE(TwoPTypeTag, PrimaryVariables);
+        TwoPPrimaryVariables storage(0);
+        const auto& twoPLocalResidual = assembler->localResidual(twoPId);
+        for (const auto& element : elements(leafGridView, Dune::Partitions::interior))
+        {
+            auto storageVec = twoPLocalResidual.evalStorage(*twoPProblem, element, *twoPFvGridGeometry, *twoPGridVariables, x[twoPId]);
+            storage += storageVec[0];
+        }
+        std::cout << "time, mass CO2 (kg), mass brine (kg):" << std::endl;
+        std::cout << timeLoop->time() << " , " << storage[1] << " , " << storage[0] << std::endl;
+        std::cout << "***************************************" << std::endl;
+
+        // set new dt as suggested by the Newton solver
+        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
+
+    } while (!timeLoop->finished());
+
+
+    // output some Newton statistics
+    nonLinearSolver.report();
+
+    timeLoop->finalize(leafGridView.comm());
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye
