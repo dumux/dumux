@@ -141,7 +141,7 @@ public:
         if(Dune::FloatCmp::ne(stokesProblem->gravity(), darcyProblem->gravity()))
             DUNE_THROW(Dune::InvalidStateException, "Both models must use the same gravity vector");
 
-        ParentType::init(std::make_tuple(stokesProblem, stokesProblem, darcyProblem));
+        this->setSubProblems(std::make_tuple(stokesProblem, stokesProblem, darcyProblem));
         this->curSol() = curSol;
         couplingData_ = std::make_shared<CouplingData>(*this);
         computeStencils();

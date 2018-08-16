@@ -70,22 +70,22 @@ public:
 
     //! The constructor for stationary problems
     StaggeredFVAssembler(std::shared_ptr<const Problem> problem,
-                std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                std::shared_ptr<GridVariables> gridVariables)
+                         std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                         std::shared_ptr<GridVariables> gridVariables)
     : ParentType(std::make_tuple(problem, problem),
                  std::make_tuple(fvGridGeometry->cellCenterFVGridGeometryPtr(), fvGridGeometry->faceFVGridGeometryPtr()),
                  std::make_tuple(gridVariables->cellCenterGridVariablesPtr(), gridVariables->faceGridVariablesPtr()),
                  std::make_shared<CouplingManager>())
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
-        this->couplingManager_->init(problem);
+        this->couplingManager_->setSubProblems(std::make_tuple(problem, problem));
     }
 
     //! The constructor for instationary problems
     StaggeredFVAssembler(std::shared_ptr<const Problem> problem,
-                std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                std::shared_ptr<GridVariables> gridVariables,
-                std::shared_ptr<const TimeLoop> timeLoop)
+                         std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                         std::shared_ptr<GridVariables> gridVariables,
+                         std::shared_ptr<const TimeLoop> timeLoop)
     : ParentType(std::make_tuple(problem, problem),
                  std::make_tuple(fvGridGeometry->cellCenterFVGridGeometryPtr(), fvGridGeometry->faceFVGridGeometryPtr()),
                  std::make_tuple(gridVariables->cellCenterGridVariablesPtr(), gridVariables->faceGridVariablesPtr()),
@@ -93,7 +93,7 @@ public:
                  timeLoop)
     {
         static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
-        this->couplingManager_->init(problem);
+        this->couplingManager_->setSubProblems(std::make_tuple(problem, problem));
     }
 
 

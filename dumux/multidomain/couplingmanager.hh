@@ -25,11 +25,14 @@
 #ifndef DUMUX_MULTIDOMAIN_COUPLING_MANAGER_HH
 #define DUMUX_MULTIDOMAIN_COUPLING_MANAGER_HH
 
+#include <memory>
+#include <tuple>
 #include <vector>
-#include <dune/common/indices.hh>
 #include <dune/common/exceptions.hh>
-#include <dumux/common/typetraits/typetraits.hh>
+#include <dune/common/indices.hh>
 #include <dumux/assembly/numericepsilon.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/typetraits/typetraits.hh>
 
 namespace Dumux {
 
@@ -45,6 +48,9 @@ class CouplingManager
     template<std::size_t id> using PrimaryVariables = typename GET_PROP_TYPE(SubDomainTypeTag<id>, PrimaryVariables);
     template<std::size_t id> using GridView = typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry)::GridView;
     template<std::size_t id> using Element = typename GridView<id>::template Codim<0>::Entity;
+    template<std::size_t id> using Problem = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem);
+    template<std::size_t id> using ProblemWeakPtr = std::weak_ptr<const Problem<id>>;
+    using Problems = typename Traits::template MakeTuple<ProblemWeakPtr>;
 
 public:
     //! default type used for coupling element stencils
@@ -231,6 +237,36 @@ public:
         return NumericEpsilon<typename Traits::Scalar, numEq>(paramGroup);
     }
 
+    /*!
+     * \brief set the pointers to the sub problems
+     * \param problems A tuple of shared pointers to the sub problems
+     */
+    template<typename... SubProblems>
+    void setSubProblems(const std::tuple<std::shared_ptr<SubProblems>...>& problems)
+    { problems_ = problems; }
+
+    /*!
+     * \brief set a pointer to one of the sub problems
+     * \param problem a pointer to the sub problem
+     * \param domainIdx the domain index of the sub problem
+     */
+    template<class SubProblem, std::size_t i>
+    void setSubProblem(std::shared_ptr<SubProblem> problem, Dune::index_constant<i> domainIdx)
+    { std::get<i>(problems_) = problem; }
+
+    /*!
+     * \brief Return a reference to the sub problem
+     * \param domainIdx The domain index
+     */
+    template<std::size_t i>
+    const Problem<i>& problem(Dune::index_constant<i> domainIdx) const
+    {
+        if (!std::get<i>(problems_).expired())
+            return *std::get<i>(problems_).lock();
+        else
+            DUNE_THROW(Dune::InvalidStateException, "The problem pointer was not set or has already expired. Use setSubProblems() before calling this function");
+    }
+
 protected:
 
     /*!
@@ -253,6 +289,12 @@ private:
      * \note in case of numeric differentiation the solution vector always carries the deflected solution
      */
     SolutionVector curSol_;
+
+    /*!
+     * \brief A tuple of std::weak_ptrs to the sub problems
+     * \note these are weak pointers and not shared pointers to break the cyclic dependency between coupling manager and problems
+     */
+    Problems problems_;
 
 };
 
