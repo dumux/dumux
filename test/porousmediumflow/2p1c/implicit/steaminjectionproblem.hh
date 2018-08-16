@@ -118,9 +118,7 @@ public:
      */
     InjectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
-    {
-        FluidSystem::init();
-    }
+    { FluidSystem::init(); }
 
     /*!
      * \name Problem parameters
@@ -130,12 +128,10 @@ public:
 
     //! \copydoc Dumux::FVProblem::source()
     NumEqVector source(const Element &element,
-                   const FVElementGeometry& fvGeometry,
-                   const ElementVolumeVariables& elemVolVars,
-                   const SubControlVolume &scv) const
-    {
-          return NumEqVector(0.0);
-    }
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolume &scv) const
+    { return NumEqVector(0.0); }
 
     /*!
      * \name Boundary conditions

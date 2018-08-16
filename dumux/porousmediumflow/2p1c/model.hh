@@ -65,6 +65,7 @@
 #include <dumux/material/fluidstates/compositional.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
+#include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
@@ -84,27 +85,33 @@ namespace Dumux {
  * \brief Specifies a number properties of models
  *        considering two phases with water as a single component.
  */
-struct TwoPOneCModelTraits
+template<TwoPFormulation f>
+struct TwoPOneCNIModelTraits
 {
     using Indices = TwoPOneCIndices;
 
-    static constexpr int numEq() { return 1; }
+    //! We solve for one more equation, i.e. the energy balance
+    static constexpr int numEq() { return 2; }
+    //! only one energy equation is needed when assuming thermal equilibrium
+    static constexpr int numEnergyEq() { return 1; }
     static constexpr int numPhases() { return 2; }
     static constexpr int numComponents() { return 1; }
 
     static constexpr bool enableAdvection() { return true; }
     static constexpr bool enableMolecularDiffusion() { return false; }
-    static constexpr bool enableEnergyBalance() { return false; }
+    static constexpr bool enableEnergyBalance() { return true; }
+
+    static constexpr TwoPFormulation priVarFormulation() { return f; }
 
     template <class FluidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
-        if (pvIdx == 0)
-            return "p_n";
-        else if (state == Indices::twoPhases)
-            return "S_w";
+        if (priVarFormulation() == TwoPFormulation::p0s1)
+            return (pvIdx == 0) ? "p_w" :
+                                  (state == Indices::twoPhases) ? "S_n" : "T";
         else
-            return "T";
+            return (pvIdx == 0) ? "p_n" :
+                                  (state == Indices::twoPhases) ? "S_w" : "T";
     }
 };
 
@@ -119,7 +126,7 @@ struct TwoPOneCModelTraits
  * \tparam MT The model traits
  */
 template<class PV, class FSY, class FST, class SSY, class SST, class PT, class MT>
-struct TwoPOneCVolumeVariablesTraits
+struct TwoPOneCNIVolumeVariablesTraits
 {
     using PrimaryVariables = PV;
     using FluidSystem = FSY;
@@ -156,6 +163,10 @@ public:
      using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
+//! Set the default formulation to pw-sn
+SET_PROP(TwoPOneCNI, Formulation)
+{ static constexpr TwoPFormulation value = TwoPFormulation::p1s0; };
+
 //! Do not block spurious flows by default.
 SET_BOOL_PROP(TwoPOneCNI, UseBlockingOfSpuriousFlow, false);
 
@@ -177,7 +188,10 @@ private:
     using MT = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using PT = typename GET_PROP_TYPE(TypeTag, SpatialParams)::PermeabilityType;
 
-    using Traits = TwoPOneCVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
+    static_assert(FSY::numComponents == 1, "Only fluid systems with 1 component are supported by the 2p1cni model!");
+    static_assert(FSY::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p1cni model!");
+
+    using Traits = TwoPOneCNIVolumeVariablesTraits<PV, FSY, FST, SSY, SST, PT, MT>;
 public:
     using type = TwoPOneCVolumeVariables<Traits>;
 };
@@ -203,15 +217,7 @@ SET_TYPE_PROP(TwoPOneCNI, ThermalConductivityModel, ThermalConductivitySomerton<
 //////////////////////////////////////////////////////////////////
 
 //! Set the non-isothermal model traits
-SET_PROP(TwoPOneCNI, ModelTraits)
-{
-private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static_assert(FluidSystem::numComponents == 1, "Only fluid systems with 1 component are supported by the 2p1cni model!");
-    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 phases are supported by the 2p1cni model!");
-public:
-    using type = PorousMediumFlowNIModelTraits<TwoPOneCModelTraits>;
-};
+SET_TYPE_PROP(TwoPOneCNI, ModelTraits, TwoPOneCNIModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>);
 
 //! The non-isothermal vtk output fields.
 SET_TYPE_PROP(TwoPOneCNI, VtkOutputFields, EnergyVtkOutputFields<TwoPOneCVtkOutputFields>);
