@@ -334,14 +334,13 @@ public:
 
                 MechanicsProblem().spatialParams().setEpisode(ParentType::timeManager_.episodeIndex());
 
-                if (ParentType::timeManager_.time() > eps_)
-                {
-                    Scalar oldTimeStep = ParentType::timeManager_.timeStepSize();
-                    Scalar newTimeStepSize = TranspProblem().newtonController().suggestTimeStepSize(oldTimeStep);
-
-                    std::cout << "newTimeStepSize " << newTimeStepSize << std::endl;
-                    ParentType::timeManager_.setTimeStepSize(newTimeStepSize);
-                }
+//                 if (ParentType::timeManager_.time() > eps_)
+//                 {
+//                     Scalar oldTimeStep = ParentType::timeManager_.timeStepSize();
+//                     Scalar newTimeStepSize = TranspProblem().newtonController().suggestTimeStepSize(oldTimeStep);
+//                     std::cout << "newTimeStepSize " << newTimeStepSize << std::endl;
+//                     ParentType::timeManager_.setTimeStepSize(newTimeStepSize);
+//                 }
 
                 Scalar time = ParentType::timeManager_.time() + ParentType::timeManager_.timeStepSize();
 
@@ -641,10 +640,10 @@ public:
         // When the pore compressibility is used, pwVector_ stores the initial values
         if (!(GET_RUNTIME_PARAM(TypeTag, bool, PoreCompressibility.UsePoreCompressibility)))
         {
-            TranspProblem().setpWOldIteration_() = pwVector_;
-            TranspProblem().setpNOldIteration_() = pnVector_;
-            TranspProblem().setsWOldIteration_() = SwVector_;
-            TranspProblem().setsNOldIteration_() = SnVector_;
+//             TranspProblem().setpWOldIteration_() = pwVector_;
+//             TranspProblem().setpNOldIteration_() = pnVector_;
+//             TranspProblem().setsWOldIteration_() = SwVector_;
+//             TranspProblem().setsNOldIteration_() = SnVector_;
         }
 
 //         // check of get function
@@ -816,7 +815,7 @@ public:
         if (TranspProblem().coupled() == true)
         {
 //             TranspProblem().setdU() = dUVector_;
-            TranspProblem().setDeltaVolumetricStrainOldIteration() = deltaVolumetricStrainOldIteration_;
+//             TranspProblem().setDeltaVolumetricStrainOldIteration() = deltaVolumetricStrainOldIteration_;
         }
 
 //         // check of get function

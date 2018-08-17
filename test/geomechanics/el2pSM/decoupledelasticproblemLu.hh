@@ -99,8 +99,8 @@ SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxSteps, 30);
 // SET_SCALAR_PROP(El2P_TestProblem, NewtonUseLineSearch, true);
 
 // use the algebraic multigrid
-// SET_TYPE_PROP(El2P_TestProblem, LinearSolver, El2PAMGBackend<TypeTag>);
-SET_TYPE_PROP(El2P_TestProblem, LinearSolver, SuperLUBackend<TypeTag> );
+SET_TYPE_PROP(El2P_TestProblem, LinearSolver, El2PAMGBackend<TypeTag>);
+// SET_TYPE_PROP(El2P_TestProblem, LinearSolver, SuperLUBackend<TypeTag> );
 
 // central differences to calculate the jacobian by default
 SET_INT_PROP(El2P_TestProblem, ImplicitNumericDifferenceMethod, 0);
@@ -204,7 +204,7 @@ public:
 
 //         depthBOR_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.DepthBOR);
 
-        brineDensity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Fluid.BrineDensity);
+//         waterDensity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Fluid.waterDensity);
 
         this->spatialParams().setEpisode(this->timeManager().episodeIndex());
         episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthInit);
@@ -271,8 +271,8 @@ public:
             GlobalPosition globalPos = vertex.geometry().corner(0);
 
             // initial approximate pressure distribution at start of initialization run
-//             pInit_[vIdxGlobal] = -(1.0e5 + (depthBOR_ - globalPos[dimWorld-1]) * brineDensity_ * 9.81);
-            pInit_[vIdxGlobal] = -(1.0e5 + wTdepth(globalPos) * brineDensity_ * 9.81);
+//             pInit_[vIdxGlobal] = -(1.0e5 + (depthBOR_ - globalPos[dimWorld-1]) * waterDensity_ * 9.81);
+            pInit_[vIdxGlobal] = -(1.0e5 + wTdepth(globalPos) * waterDensity_ * 9.81);
         }
     }
 
@@ -318,17 +318,58 @@ public:
       porosity = this->spatialParams().porosityAtPos(globalPos);
       rockDensity = this->spatialParams().rockDensity(globalPos);
 
-      // initial total stress field here assumed to be isotropic, lithostatic
-       stress[0] = 0.6 * ( brineDensity_ * porosity * gravity * (-15 - globalPos[dimWorld-1])
-                   + (1 - porosity) * rockDensity * gravity * (-15 - globalPos[dimWorld-1]) );
-       if(dimWorld >=2)
-       stress[1] = 1.0 * ( brineDensity_ * porosity * gravity * (-15 - globalPos[dimWorld-1])
-                   + (1 - porosity) * rockDensity * gravity * (-15 - globalPos[dimWorld-1]) );
-       if(dimWorld == 3)
-       stress[2] = 1.0 * ( brineDensity_ * porosity * gravity * (-15 - globalPos[dimWorld-1])
-                   + (1 - porosity) * rockDensity * gravity * (-15 - globalPos[dimWorld-1]) );
+      //khodam az problem
+       const auto& materialLawParams = this->spatialParams().materialLawParams(globalPos);
+          const Scalar swr = materialLawParams.swr();
+          const Scalar snr = materialLawParams.snr();
 
+
+          const Scalar meterUeberGW = globalPos[1] +15;
+          const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
+          const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
+
+      // initial total stress field here assumed to be isotropic, lithostatic
+
+       stress[0] = sw * ( waterDensity_ * porosity * gravity * (zMax(globalPos) - globalPos[dimWorld-1])
+                   + (1 - porosity) * rockDensity * gravity * (zMax(globalPos) - globalPos[dimWorld-1]) );
+
+//        stress[0] = 0.6 * ( waterDensity_ * porosity * gravity * (-15 - globalPos[dimWorld-1])
+//                    + (1 - porosity) * rockDensity * gravity * (-15 - globalPos[dimWorld-1]) );
+       if(dimWorld >=2)
+       stress[1] = sw * ( waterDensity_ * porosity * gravity * (zMax(globalPos) - globalPos[dimWorld-1])
+                   + (1 - porosity) * rockDensity * gravity * (zMax(globalPos) - globalPos[dimWorld-1]) );;
+       if(dimWorld == 3)
+       stress[2] = sw * ( waterDensity_ * porosity * gravity * (zMax(globalPos) - globalPos[dimWorld-1])
+                   + (1 - porosity) * rockDensity * gravity * (zMax(globalPos) - globalPos[dimWorld-1]) );
       return stress;
+    }
+
+        static Scalar invertPcGW_(const Scalar pcIn,
+                              const MaterialLawParams &pcParams)
+    {
+        Scalar lower(0.0);
+        Scalar upper(1.0);
+        const unsigned int maxIterations = 25;
+        const Scalar bisLimit = 1.0;
+
+        Scalar sw, pcGW;
+        for (unsigned int k = 1; k <= maxIterations; k++)
+        {
+            sw = 0.5*(upper + lower);
+            pcGW = MaterialLaw::pc(pcParams, sw);
+            const Scalar delta = std::abs(pcGW - pcIn);
+            if (delta < bisLimit)
+                return sw;
+
+            if (k == maxIterations)
+                return sw;
+
+            if (pcGW > pcIn)
+                lower = sw;
+            else
+                upper = sw;
+        }
+        return sw;
     }
 
 
@@ -402,7 +443,7 @@ public:
     //function which returns brine density
     const Scalar brineDensity() const
         {
-         return brineDensity_;
+         return waterDensity_;
         }
 
     // returns true if the current solution should be written to
@@ -440,19 +481,6 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
     {
         values.setAllNeumann();
 
-//         // The solid displacement on the left is fixed in x and y.
-//         if(globalPos[0] < eps_)
-//         {
-//             values.setDirichlet(Indices::u(0));
-//         }
-//
-//         // The solid displacement at the bottom is fixed in y.
-//         // Bottom: x = 0, y = -1000
-//         if(globalPos[1] < this->bBoxMin()[1] + eps_)
-//         {
-//             values.setDirichlet(Indices::u(1));
-//         }
-
         // The solid displacement normal to the lateral boundaries is fixed.
         if(onInlet_(globalPos))
         {
@@ -460,14 +488,13 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
             {
                 values.setDirichlet(momentumXEqIdx);
                 values.setDirichlet(momentumYEqIdx);
-                //values.setDirichlet(momentumZEqIdx);
             }
 
           }
 
         if (leftBoundaryO_(globalPos)|| rightBoundaryO_(globalPos)){
             values.setDirichlet(momentumXEqIdx);//this part is aplied all the time
-            //values.setDirichlet(momentumYEqIdx);
+
             if (initializationRun_ == true)
             {
                 values.setDirichlet(momentumYEqIdx);
@@ -485,7 +512,7 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
 
         if (leftBoundaryU_(globalPos)){
             values.setDirichlet(momentumXEqIdx);//this part is aplied all the time
-            //values.setDirichlet(momentumYEqIdx);
+
             if (initializationRun_ == true)
             {
                 values.setDirichlet(momentumYEqIdx);
@@ -494,14 +521,12 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
 
         if ( rightBoundaryU_(globalPos)){
             values.setDirichlet(momentumXEqIdx);//this part is aplied all the time
-            //values.setDirichlet(momentumYEqIdx);
+
             if (initializationRun_ == true)
             {
                 values.setDirichlet(momentumYEqIdx);
             }
          }
-
-
 
         if (onLowerBoundary_(globalPos)){
 
@@ -510,7 +535,6 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
             if(initializationRun_ == true)
             {
                 values.setDirichlet(momentumXEqIdx);
-                //values.setDirichlet(momentumYEqIdx);
            }
         }
      }
@@ -563,8 +587,6 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
      */
     void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-//         values[pressureIdx] = 0;
-//         values[saturationIdx] = 0;
         values = 0.0;
     }
     // \}
@@ -824,7 +846,7 @@ private:
     }
 
     static constexpr Scalar eps_ = 3e-6;
-    Scalar brineDensity_;
+    Scalar waterDensity_ = 1000;
     Scalar episodeLength_;
     GridView gridView_;
 

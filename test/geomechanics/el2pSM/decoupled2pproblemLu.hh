@@ -114,8 +114,8 @@ SET_BOOL_PROP(TwoP_TestProblem, ImplicitEnablePartialReassemble, false);
 SET_BOOL_PROP(TwoP_TestProblem, ProblemEnableGravity, true);
 
 // use the algebraic multigrid
-// SET_TYPE_PROP(TwoP_TestProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
-SET_TYPE_PROP(TwoP_TestProblem, LinearSolver, SuperLUBackend<TypeTag> );
+SET_TYPE_PROP(TwoP_TestProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
+// SET_TYPE_PROP(TwoP_TestProblem, LinearSolver, SuperLUBackend<TypeTag> );
 
 // for better TPFA for CC use  CpDarcyFluxVariable
 // Box uses DecoupledTwoPFluxVariables, which also includes the option of Keff
@@ -272,12 +272,12 @@ public:
         std::cout << "TwoP_TestProblem: Initializing the fluid system for the 2p model\n";
 
         // initialize the tables of the fluid system
-//         FluidSystem::init(/*Tmin=*/273,
-//                           /*Tmax=*/400,
-//                           /*nT=*/120,
-//                           /*pmin=*/1e5,
-//                           /*pmax=*/1e8,
-//                           /*np=*/200);
+         FluidSystem::init(/*Tmin=*/273,
+                           /*Tmax=*/300,
+                           /*nT=*/5,
+                           /*pmin=*/0,
+                           /*pmax=*/1e6,
+                           /*np=*/10);
 
 //         // resize the pressure field vector with the number of vertices
 //         pInit_.resize(gridView.size(dim));
@@ -449,17 +449,21 @@ public:
     {
         values.setAllNeumann();
 
+        if(onInlet_(globalPos))
+          {
+            if (initializationRun_ == true)
+            {
+                values.setDirichlet(pressureIdx, contiWEqIdx);
+                values.setDirichlet(saturationIdx, contiNEqIdx);
+            }
+
+           }
+
         if ( rightBoundaryU_(globalPos)){
             values.setDirichlet(pressureIdx, contiWEqIdx);
             values.setDirichlet(saturationIdx, contiNEqIdx);//this part is aplied all the time
-         }
-        if( (initializationRun_ == true) && (onInlet_(globalPos)) ){
-            values.setDirichlet(pressureIdx, contiWEqIdx);
-            values.setDirichlet(saturationIdx, contiNEqIdx);//this part is aplied all the time
-         }
-
-
-    }
+           }
+     }
 
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
@@ -473,9 +477,20 @@ public:
      */
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-        if ( (initializationRun_ == true) && (onInlet_(globalPos)) ){
+        values = 0.0;
+
+        if ( (onInlet_(globalPos)) ){
+          const auto& materialLawParams = this->spatialParams().materialLawParams(globalPos);
+          const Scalar swr = materialLawParams.swr();
+          const Scalar snr = materialLawParams.snr();
+
+
+          const Scalar meterUeberGW = globalPos[1] +15;
+          const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
+          const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
+//           std::cout<< "invertPcGW_=" <<invertPcGW_(pc, materialLawParams) << std::endl;
           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
-          values[saturationIdx] = 0.5;
+          values[saturationIdx] = 1.-sw;
         } else
         {
           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
@@ -505,24 +520,18 @@ public:
 
         if (onInlet_(globalPos))
         {
-            if(initializationRun_ == true){
-                values[contiWEqIdx] = 0; // -avgRain_*brineDensity_;//-ks_*waterDensity_; //  kg / (m2 * s) in 2D is kg/(m*s) inflow
-                values[contiNEqIdx] = 0;
-                if (pN>1.e5) values[contiNEqIdx] = std::abs(satN) * (pN-1.e5) * rb_;
-                if (pN<1.e5) values[contiNEqIdx] = std::abs(satN) * (pN-1.e5) * rb_;
-            }
-            else
-             {
-//                 Scalar pressure = elemVolVars[scvIdx].pressure(wPhaseIdx);
                if (satW > 1. -eps_){
+                   //std::cout << "saturation above 1 \n" ;
                     values[contiWEqIdx] = rb_ * pW/(9.81); // [kg/(m2*s)]
                     if (pN>1.e5) values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
                }
                 else {
+                   //std::cout << "saturation below 1, infiltration \n" ;
                     values[contiWEqIdx] = -avgRain_*1000.;
-                    if (pN>1.e5) values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
+                    if (pN>1.e5) {
+                    values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
+                    }
                 }
-             }
         }
 
      }
@@ -555,17 +564,12 @@ public:
           const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
           const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
 
-          //std::cout << "globalPos[1]: " << globalPos[1] << std::endl;
-          //std::cout << "meterUeberGW: " << meterUeberGW << std::endl;
-          //std::cout << "pc: " << pc << std::endl;
-          //std::cout << "sw: " << sw << std::endl;
-
           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
           values[saturationIdx] = 1-sw;
         } else
         {
           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
-          values[saturationIdx] = 0.01;
+          values[saturationIdx] = 0.0;
         }
     }
 

@@ -154,10 +154,11 @@ public:
 
         alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.alpha);
         Scalar swr_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.swr); //residual water content
+        Scalar snr_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.snr);
 
         // residual saturations
         MaterialParams_.setSwr(swr_);
-//         MaterialParams_.setSnr(0.05);
+        MaterialParams_.setSnr(snr_);
 
         MaterialParams_.setVgAlpha(alpha_);
         MaterialParams_.setVgn(n_);

@@ -1,12 +1,14 @@
 [TimeManager]
-TInitEnd = 10000000#              0.000000001 # [s]
-TEnd =     12960000#                   155520000 # [s]
-DtInitial =  1#              0.000000001 # [s]
-EpisodeLengthInit =  10000000 #  86400 # [s]
-EpisodeLengthMainSimulation =  86400 #  86400 # [s]
+TInitEnd =0.01#      [s]
+TEnd =  12960000#     [s]
+DtInitial = 0.01 #   [s]
+EpisodeLengthInit =  0.001 #  [s]
+EpisodeLengthMainSimulation =  86400 # [s]
 NumIterationsInit = 1
 NumIterations = 1
 MaxRelDiffPw = 1.0e-6
+
+#Restart = 2 #this is added to adjust the first relative shift to make the initial step convergable, then we activete the Restart in input file and reduce this relative shift
 
 [Newton]
 MaxSteps = 1000
@@ -55,7 +57,7 @@ Nonwetting = 0
 BrineDensity = 1000
 
 [ElasticParameters]
-E = 1e7
+E = 1.0e7
 nu = 0.33
 PoreComp = 3.0e-9
 
@@ -67,7 +69,8 @@ avgRain = 3.7E-8 #[m/s] 400 mm in 150d
 
 Phi   = 0.46     # porosity
 swr = 0  # Residual water content
-n = 1.37
+snr = 0
+n = 1.37 
 alpha = 0.000163196 # [1/m] to [1/pa] = 1.6/9804.139432
 
 

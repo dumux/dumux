@@ -282,6 +282,8 @@ public:
         ScalarField &Pcrtens = *writer.allocateManagedBuffer(numElements);
         ScalarField &Pcrshe = *writer.allocateManagedBuffer(numElements);
 
+        ScalarField &safetyFactor = *writer.allocateManagedBuffer(numElements);//khodam
+
         ScalarField &volumetricStrain = *writer.allocateManagedBuffer(numElements);
 
         // initialize cell stresses, cell-wise hydraulic parameters and cell pressure with zero
@@ -323,6 +325,8 @@ public:
             Pcrshe[eIdx] = Scalar(0.0);
 
             volumetricStrain[eIdx] = Scalar(0.0);
+
+            safetyFactor[eIdx] = Scalar(0.0);//khodam
         }
 
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
@@ -473,6 +477,8 @@ public:
             const Scalar mu = lameParams[1];
 
             B[eIdx] = lambda + 2.0/3.0*mu;
+            E[eIdx] = mu * (3.0 * lambda + 2.0 * mu) / (lambda + mu);
+            nu[eIdx] = lambda / (2 * (lambda + mu));
 
             // calculate strain tensor
             Dune::FieldMatrix<RF, dim, dim> epsilon;
@@ -603,9 +609,11 @@ public:
                 if (a1 >= a2) {
                     principalStress1[eIdx] = a1;
                     principalStress2[eIdx] = a2;
+                    principalStress3[eIdx] = a2;//khodam for dim == 2
                 } else {
                     principalStress1[eIdx] = a2;
                     principalStress2[eIdx] = a1;
+                    principalStress3[eIdx] = a1;//khodam for dim == 2
                 }
             }
 
@@ -659,16 +667,50 @@ public:
             Scalar sigmam = 0.0;
             Scalar Peff = effectivePressure[eIdx];
 
-            Scalar theta = M_PI / 6;
-            Scalar S0 = 0.0;
-            taum = (principalStress1[eIdx] - principalStress3[eIdx]) / 2;
+for (const auto& element : elements(this->gridView_())) {//khodam
+if(element.partitionType() == Dune::InteriorEntity)//khodam
+{
+int numScv = element.subEntities(dim);//khodam
+
+for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)//khodam
+    {
+            unsigned int vIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dim);
+
+//             Scalar theta = M_PI / 6;
+//             Scalar S0 = 0.0;
+            Scalar theta = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.FrictionAngle)*M_PI / 180.0; //khodam
+//             Scalar theta = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.FrictionAngle)*M_PI / 6; //khodam. If so then I should add a negative before cos(theta) in LFS and LFS looks more like comsol
+
+            Scalar S0 = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.Cohesion);//khodam
+
+
+            taum = (principalStress1[eIdx] - principalStress3[eIdx]) / 2;//sigmaII
             sigmam = (principalStress1[eIdx] + principalStress3[eIdx]) / 2;
+
             Scalar Psc = -fabs(taum) / sin(theta) + S0 * cos(theta) / sin(theta)
                     + sigmam;
             // Pressure margins according to J. Rutqvist et al. / International Journal of Rock Mecahnics & Mining Sciences 45 (2008), 132-143
             Pcrtens[eIdx] = Peff - principalStress3[eIdx];
             Pcrshe[eIdx] = Peff - Psc;
 
+            if (std::abs(taum) < 1.0e-2){
+                safetyFactor[eIdx] = 5.0;
+             }
+            else
+            {
+                 safetyFactor[eIdx] = cos(theta) / fabs(taum) * (S0 + sigmam * tan(theta));//khodam
+//                  safetyFactor[eIdx] = -cos(theta) / fabs(taum) * (S0 + sigmam * tan(theta));//khodam
+
+
+                 if (safetyFactor[eIdx]<1)
+                      safetyFactor[eIdx]= 1;
+                 else if (safetyFactor[eIdx]>3)
+                     safetyFactor[eIdx]= 3;
+             }
+
+        }
+}
+}
         }
 
         writer.attachVertexData(pw, "pw");
@@ -717,6 +759,7 @@ public:
         writer.attachCellData(nu, "nu");
 
         writer.attachCellData(volumetricStrain, "volumetricStrain");
+        writer.attachCellData(safetyFactor, "Factor of Safety");//khodam
 
     }
 
@@ -753,6 +796,7 @@ public:
 
 private:
     bool rockMechanicsSignConvention_;
+    Scalar pnRef_ = 1e5;
 
 };
 }
