@@ -274,6 +274,7 @@ public:
         ScalarField &effPorosity = *writer.allocateManagedBuffer(numElements);
         ScalarField &effectivePressure = *writer.allocateManagedBuffer(numElements);
         ScalarField &deltaEffPressure = *writer.allocateManagedBuffer(numElements);
+        ScalarField &safetyFactor = *writer.allocateManagedBuffer(numElements);//khodam
 
 
         ScalarField &Pcrtens = *writer.allocateManagedBuffer(numElements);
@@ -314,6 +315,8 @@ public:
 
             Pcrtens[eIdx] = Scalar(0.0);
             Pcrshe[eIdx] = Scalar(0.0);
+            safetyFactor[eIdx] = Scalar(0.0);//khodam
+
         }
 
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
@@ -561,9 +564,11 @@ public:
                 if (a1 >= a2) {
                     principalStress1[eIdx] = a1;
                     principalStress2[eIdx] = a2;
+                    principalStress3[eIdx] = a2;//khodam for dim == 2
                 } else {
                     principalStress1[eIdx] = a2;
                     principalStress2[eIdx] = a1;
+                    principalStress3[eIdx] = a1;//khodam for dim == 2
                 }
             }
 
@@ -616,21 +621,54 @@ public:
             Scalar taum  = 0.0;
             Scalar sigmam = 0.0;
             Scalar Peff = effectivePressure[eIdx];
+//             Scalar sigmamI = 0.0;//khoam, after comparing to the LFS computation in COMSOL
+//before when we had just a single theta and SO, didnt need to write it S0[eIdx], and just wrote S0 in the following equations. but now thez are field elements and should be used in this way.
+for (const auto& element : elements(this->gridView_())) {//khodam
+if(element.partitionType() == Dune::InteriorEntity)//khodam
+{
+int numScv = element.subEntities(dim);//khodam
 
-            Scalar theta = M_PI / 6;
-            Scalar S0 = 0.0;
-            taum = (principalStress1[eIdx] - principalStress3[eIdx]) / 2;
+for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)//khodam
+    {
+            unsigned int vIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dim);//khodam
+
+//             Scalar theta = M_PI / 6;//Pi/6=30degree
+//             Scalar S0 = 0.0;
+            Scalar theta = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.FrictionAngle)*M_PI / 180.0;//khodam
+
+            Scalar S0 = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.Cohesion);//khodam
+//             std::cout << "Cohesion = " << S0 << std::endl;
+//             std::cout << "Friction Angle = " << theta << std::endl;
+
+            taum = (principalStress1[eIdx] - principalStress3[eIdx]) / 2; //sigmaII
             sigmam = (principalStress1[eIdx] + principalStress3[eIdx]) / 2;
-
+//             sigmamI = (principalStress3[eIdx] + principalStress1[eIdx]) / 2.0-(-sw[vIdxGlobal]*(pnRef_ -pw[vIdxGlobal]));//khodam
             using std::abs;
             using std::sin;
             using std::cos;
             Scalar Psc = -abs(taum) / sin(theta) + S0 * cos(theta) / sin(theta)
-                    + sigmam;
+                    + sigmam; //critical fluid pressure for shear failure
             // Pressure margins according to J. Rutqvist et al. / International Journal of Rock Mecahnics & Mining Sciences 45 (2008), 132-143
             Pcrtens[eIdx] = Peff - principalStress3[eIdx];
-            Pcrshe[eIdx] = Peff - Psc;
+            Pcrshe[eIdx] = Peff - Psc;//equation 2.61 mellanie thesis
+            //LFS khodam
+            if (std::abs(taum) < 1.0e-2){
+                safetyFactor[eIdx] = 5.0;
+             }
+            else
+            {
 
+                 safetyFactor[eIdx] = cos(theta) / fabs(taum) * (S0 + sigmam * tan(theta));
+
+                 if (safetyFactor[eIdx]<1)
+                      safetyFactor[eIdx]= 1;
+                 else if (safetyFactor[eIdx]>3)
+                     safetyFactor[eIdx]= 3;
+             }
+
+        }
+}
+}
         }
 
         writer.attachVertexData(Te, "T");
@@ -673,6 +711,7 @@ public:
         writer.attachCellData(Pcrshe, "Pcr_shear");
         writer.attachCellData(effKx, "effective Kxx");
         writer.attachCellData(effPorosity, "effective Porosity");
+        writer.attachCellData(safetyFactor, "Factor of Safety");//khodam
 
 
     }
@@ -710,6 +749,7 @@ public:
 
 private:
     bool rockMechanicsSignConvention_;
+    Scalar pnRef_ = 1e5; //khodam to adopt comsol
 
 };
 }

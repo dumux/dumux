@@ -27,7 +27,8 @@
 
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
+// #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 #include <dumux/geomechanics/el2p/model.hh>
@@ -54,7 +55,7 @@ private:
     // define the material law which is parameterized by effective
     // saturations
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedBrooksCorey<Scalar> EffectiveLaw;
+    typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
 public:
     // define the material law parameterized by absolute saturations
     typedef EffToAbsLaw<EffectiveLaw> type;
@@ -97,40 +98,44 @@ public:
         episode_ = 0;
         // intrinsic permeabilities [m^2]
         Kinit_ = Scalar(0.0); // init permeability
-        K_ = Scalar(0.0); // permeability
+//         K_ = Scalar(0.0); // permeability
+        k_ = Scalar(0.0); // conductivity.khodam
+        ks_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.ks);//khodam [m/s] we assume this is for standard temp and presure
         for (int i = 0; i < dim; i++){
-            Kinit_[i][i] = 1.E-12; //[m²]
-            K_[i][i] = 1.E-14; //[m²]
+            Kinit_[i][i] = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.Kinit);
+            K_ = (ks_*1.E-3)/(1000*9.81);//khodam [m/s] dynamic viscosity and density are defined from simpleh2o.hh in dumux/material/component , and didnot make them pressure and temp dependent, becasue Ks is constant therefore I consider the standard tem,press for it. k=ks*Krw
         }
 
         // porosities [-]
-        phi_ = 0.2;
+        phi_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.Phi);
 
         // rock density [kg/m^3]
-        rockDensity_ = 2650.0;
+        rockDensity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.rockDensity);
 
         // Young's modulus [Pa]
-        E_ = 6e9;
+        E_ = GET_RUNTIME_PARAM(TypeTag, Scalar,ElasticParameters.E);
         // Poisson's ratio [-]
-        nu_ = 0.2;
+        nu_ = GET_RUNTIME_PARAM(TypeTag, Scalar,ElasticParameters.nu);
         // Lame parameters [Pa]
         lambda_ = (E_ * nu_) / ((1 + nu_)*(1 - 2 * nu_));
         mu_ = E_ / (2 * (1 + nu_));
 
 
         // given Van Genuchten m
-        m_ = 0.457;
-        // Brooks Corey lambda
-        using std::pow;
-        BrooksCoreyLambda_ = m_ / (1 - m_) * (1 - pow(0.5,1/m_));
+        n_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.n);
+
+        m_ = 1.0 - (1.0 / n_);
+
+        alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.alpha);
+        Scalar swr_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.swr); //residual water content
+        Scalar snr_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.snr);
 
         // residual saturations
-        MaterialParams_.setSwr(0.3);
-        MaterialParams_.setSnr(0.05);
+        MaterialParams_.setSwr(swr_);
+        MaterialParams_.setSnr(snr_);
 
-        // parameters for the Brooks Corey law
-        MaterialParams_.setPe(1.99e4);
-        MaterialParams_.setLambda(BrooksCoreyLambda_);
+        MaterialParams_.setVgAlpha(alpha_);
+        MaterialParams_.setVgn(n_);
 
 
      }
@@ -256,6 +261,10 @@ public:
     {
         return MaterialParams_;
     }
+    const MaterialLawParams& materialLawParams(const GlobalPosition& globalPos) const//I added this then I can read the materialLawParams via spatialparams in problem to calculate sw just based on globalPos and no need for fvGeometry, element and scvIdx. then I dont need to read via model, as in localoperatopr.hh, and similar to porosirty I just read it via spatialparams.
+    {
+        return MaterialParams_;
+    }
 
 private:
     Dune::FieldMatrix<Scalar,dim,dim> K_, Kinit_;
@@ -266,7 +275,8 @@ private:
     Scalar mu_;
     Scalar E_;
     Scalar nu_;
-    Scalar BrooksCoreyLambda_, m_;
+    Scalar BrooksCoreyLambda_, m_, alpha_, n_;
+    Scalar k_, ks_;//khodam
     MaterialLawParams MaterialParams_;
     static constexpr Scalar eps_ = 3e-6;
     int episode_;

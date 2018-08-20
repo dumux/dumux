@@ -1,13 +1,40 @@
 [TimeManager]
-TInitEnd = 1e6       # [s]
-TEnd = 2e6        # [s]
-DtInitial = 10       # [s]
-EpisodeLength = 1e6  # [s]
+TInitEnd = 0.01      # [s]
+TEnd = 12960000        # [s]
+DtInitial = 0.01       # [s]
+EpisodeLength = 86400  # [s] # these values are hit in the output
 
 [Grid]
-UpperRight = 1000 1000 1000
-Cells = 4 4 4
-Refinement = 0
+#UpperRight = 1000 1000 1000
+#Cells = 4 4 4
+Refine = 0
+File = ./Lu2D.msh
 
 [Injection]
 DepthBOR = 2000     # Depth at the bottom of the scenario [m]
+
+
+
+[FailureParameters]
+rockDensity = 2000 # [kg/m3]
+FrictionAngle = 30.0 # in degrees
+Cohesion = 15000 #[Pa]
+
+
+[ElasticParameters]
+E = 1e7
+nu = 0.33
+
+
+[TransportParameters]
+Kinit = 1.E-12  # initial permeability [m²]
+ks = 1.39e-6 #Hydraulic conductivity[m/s]
+Phi   = 0.46     # porosity
+n = 1.37
+alpha = 0.000163196 # [1/m] to [1/pa] = 1.6/9804.139432
+swr = 0  # Residual water content
+snr = 0
+
+[Fluid]
+
+waterDensity = 1000 # [kg/m3]

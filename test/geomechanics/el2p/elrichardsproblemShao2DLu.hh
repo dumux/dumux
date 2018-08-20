@@ -18,33 +18,29 @@
  *****************************************************************************/
 /**
  * \file
- * \brief Definition of a problem, for the two-phase flow linear elasticity problem:
+ * \brief Definition of a problem, for the Richards flow linear elasticity problem:
  * Problem definition for the deformation of an elastic solid.
  */
-#ifndef DUMUX_EL2P_TESTPROBLEM_HH
-#define DUMUX_EL2P_TESTPROBLEM_HH
+#ifndef DUMUX_ELRICHARDS_TESTPROBLEM_HH
+#define DUMUX_ELRICHARDS_TESTPROBLEM_HH
 
 #include <dune/pdelab/finiteelementmap/qkfem.hh>
-#include <dumux/material/components/simpleh2o.hh>
 
-
-// #include <dumux/material/fluidsystems/brineco2.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
-#include <dumux/geomechanics/el2p/model.hh>
-#include <dumux/geomechanics/el2p/amgbackend.hh>
-#include <dumux/geomechanics/el2p/elementvolumevariables.hh>//Sh
+//#include <dumux/geomechanics/elrichards/model.hh>//already included
+#include <dumux/geomechanics/elrichards/model.hh> //already included
+#include <dumux/geomechanics/elrichards/amgbackend.hh>
 
 
-#include "el2pspatialparams.hh"
 
-
-#include <dune/common/version.hh>
+//#include "elrichardsco2tables.hh"
+#include "elrichardsspatialparamsShao.hh"
 
 namespace Dumux
 {
 template<class TypeTag>
-class El2P_TestProblem;
+class ElRichards_TestProblem;
 
 
 // initial conditions for momentum balance equation
@@ -56,15 +52,15 @@ template<class TypeTag>
 class InitialPressSat;
 
 namespace Properties {
-NEW_TYPE_TAG(El2P_TestProblem, INHERITS_FROM(BoxModel, BoxElasticTwoP, El2PSpatialParams));
+NEW_TYPE_TAG(ElRichards_TestProblem, INHERITS_FROM(BoxElasticRichards, ElRichardsSpatialParams));
 NEW_PROP_TAG(InitialDisplacement); //!< The initial displacement function
 NEW_PROP_TAG(InitialPressSat); //!< The initial pressure and saturation function
 
 // Set the grid type
-// SET_TYPE_PROP(El2P_TestProblem, Grid, Dune::YaspGrid<3>);
-SET_TYPE_PROP(El2P_TestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(ElRichards_TestProblem, Grid, Dune :: UGGrid <2>);
 
-SET_PROP(El2P_TestProblem, PressureFEM)
+
+SET_PROP(ElRichards_TestProblem, PressureFEM)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -73,7 +69,7 @@ public:
     typedef Dune::PDELab::QkLocalFiniteElementMap<GridView,Scalar,Scalar,1>  type;
 };
 
-SET_PROP(El2P_TestProblem, DisplacementFEM)
+SET_PROP(ElRichards_TestProblem, DisplacementFEM)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -83,21 +79,24 @@ public:
 };
 
 // Set the problem property
-SET_TYPE_PROP(El2P_TestProblem, Problem, El2P_TestProblem<TypeTag>);
+SET_TYPE_PROP(ElRichards_TestProblem, Problem, ElRichards_TestProblem<TypeTag>);
 
 // Set fluid configuration
-SET_PROP(El2P_TestProblem, FluidSystem)
+SET_PROP(ElRichards_TestProblem, FluidSystem)
 {
-//     typedef BrineCO2FluidSystem<TypeTag> type;
-    typedef Dumux::H2OAirFluidSystem<TypeTag> type;
+    typedef H2OAirFluidSystem<TypeTag> type;
 };
 
+// Set the CO2 table to be used; in this case not the the default table
+//SET_TYPE_PROP(ElRichards_TestProblem, CO2Table, ElRichards::CO2Tables);
+// Set the salinity mass fraction of the brine in the reservoir
+//SET_SCALAR_PROP(ElRichards_TestProblem, ProblemSalinity, 1e-1);
 
 // Set the soil properties
-SET_TYPE_PROP(El2P_TestProblem, SpatialParams, El2PSpatialParams<TypeTag>);
+SET_TYPE_PROP(ElRichards_TestProblem, SpatialParams, ElRichardsSpatialParams<TypeTag>);
 
 // Set the initial displacement function
-SET_PROP(El2P_TestProblem, InitialDisplacement)
+SET_PROP(ElRichards_TestProblem, InitialDisplacement)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -108,7 +107,7 @@ public:
 };
 
 // Set the initial pressure and saturation function
-SET_PROP(El2P_TestProblem, InitialPressSat)
+SET_PROP(ElRichards_TestProblem, InitialPressSat)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -117,24 +116,25 @@ public:
     typedef InitialPressSat<TypeTag> type;
 };
 
-SET_SCALAR_PROP(El2P_TestProblem, NewtonMaxRelativeShift, 1e-1);//!!!Holger: this is added to adjust the first relative shift to make the initial step convergable, then we activete the Restart in input file and reduce this relative shift
+SET_SCALAR_PROP(ElRichards_TestProblem, NewtonMaxRelativeShift, 1e-5);
 
 // use the algebraic multigrid
-SET_TYPE_PROP(El2P_TestProblem, LinearSolver, El2PAMGBackend<TypeTag>);
-// SET_TYPE_PROP(El2P_TestProblem, LinearSolver, SuperLUBackend<TypeTag>);
+//SET_TYPE_PROP(ElRichards_TestProblem, LinearSolver, ElRichardsAMGBackend<TypeTag>);
+SET_TYPE_PROP(ElRichards_TestProblem, LinearSolver, SuperLUBackend<TypeTag>);
+//SET_TYPE_PROP(ElRichards_TestProblem, LinearSolver, UMFPackBackend<TypeTag>);
 
 // central differences to calculate the jacobian by default
-SET_INT_PROP(El2P_TestProblem, ImplicitNumericDifferenceMethod, 0);
+SET_INT_PROP(ElRichards_TestProblem, ImplicitNumericDifferenceMethod, 0);
 
 // write the stress and displacement output according to rock mechanics
 // sign convention (compressive stresses > 0)
-SET_BOOL_PROP(El2P_TestProblem, VtkRockMechanicsSignConvention, true);
+SET_BOOL_PROP(ElRichards_TestProblem, VtkRockMechanicsSignConvention, true);
 }
 
 /*!
- * \ingroup ElTwoPBoxProblems
+ * \ingroup ElRichardsBoxProblems
  *
- * \brief Problem definition for a two-phase flow process
+ * \brief Problem definition for a Richards flow process
  * in an elastic deformable matrix.
  *
  * This problem simulates an injection of CO2 into the center of a cube with 1000 m x 1000 m x 1000 m
@@ -151,16 +151,19 @@ SET_BOOL_PROP(El2P_TestProblem, VtkRockMechanicsSignConvention, true);
  * period is applied as initial condition and for the definition of the lateral Dirichlet
  * boundary conditions. The solid  displacement field is set to zero and the CO2 injection is started.
  */
-template<class TypeTag = TTAG(El2P_TestProblem)>
-class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
+template<class TypeTag = TTAG(ElRichards_TestProblem)>
+class ElRichards_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;//khodam
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;//khodam
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;//khodam
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;//khodam
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;//khodam baraie pc
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;//khodam baraie pc
+
+
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
@@ -172,24 +175,22 @@ class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     enum {
         // indices of the primary variables
-            pressureIdx = Indices::pwIdx,
-            saturationIdx = Indices::snIdx,
             uxIdx = Indices::uxIdx,
             uyIdx = Indices::uyIdx,
-            uzIdx = Indices::uzIdx
+            //uzIdx = Indices::uzIdx,
+            pwIdx = Indices::pwIdx,
+            hIdx = Indices::hIdx,
+
+            // equation indices (in Boundary condition we define that which equation should be used. then in case of using momentum balance, it will use displacement u for dirichlet and take stress for neuman. and in case of having conti equation, takes pressure for dirichlet and flux for neumann!!!!!!!!!!!!)
+            contiEqIdx = Indices::contiEqIdx,
+            momentumXEqIdx = Indices::momentumXEqIdx,
+            momentumYEqIdx = Indices::momentumYEqIdx,
+            //momentumZEqIdx = Indices::momentumZEqIdx,
+
+            // phase indices
+            wPhaseIdx = Indices::wPhaseIdx //last line doesnt need ,
 
     };
-    enum {
-        // indices of the equations+
-            contiWEqIdx = Indices::contiWEqIdx,
-            contiNEqIdx = Indices::contiNEqIdx
-    };
-    enum {
-        // indices of the phases
-            wPhaseIdx = Indices::wPhaseIdx,
-            nPhaseIdx = Indices::nPhaseIdx
-    };
-
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -210,37 +211,44 @@ class El2P_TestProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, LocalFEMSpace) LocalFEMSpace;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;//khodam
 
-//     typedef typename GET_PROP_TYPE(TypeTag, CO2Table) CO2Table;
-//     typedef Dumux::CO2<Scalar, CO2Table> CO2;
+//    typedef typename GET_PROP_TYPE(TypeTag, CO2Table) CO2Table;
+//    typedef Dumux::CO2<Scalar, CO2Table> CO2;
+//    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
+
 
 public:
     /*!
-     * \brief The constructor
+     * \brief The constructor //we cant add a function to the constructor
      *
      * \param timeManager The time manager
      * \param gridView The grid view
+     * \param tInitEnd End of initialization period
      */
-    El2P_TestProblem(TimeManager &timeManager,
+    ElRichards_TestProblem(TimeManager &timeManager,
                     const GridView &gridView)
         : ParentType(timeManager, gridView),
         gridView_(gridView)
     {
-        GridCreator::grid().globalRefine(GET_RUNTIME_PARAM(TypeTag, Scalar,Grid.Refine));
+        std::cout << "ElRichards_TestProblem: Initializing the fluid system for the elrichards model\n";
 
-        std::cout << "El2P_TestProblem: Initializing the fluid system for the el2p model\n";
+
+         //eps_ = 3e-6;
+        pnRef_ = 1e5; //to adopt Comsol otherwise it is 1e5;
+
 
         // initialize the tables of the fluid system
+//         FluidSystem::init(); //this one or the next init function. in el2P this part was commented, mazbe because it was defined by default
          FluidSystem::init(/*Tmin=*/273,
                            /*Tmax=*/300,
                            /*nT=*/5,
                            /*pmin=*/0,
                            /*pmax=*/1e6,
                            /*np=*/10);
-
+        temperature_ = 283.15;
         // resize the pressure field vector with the number of vertices
-        pInit_.resize(gridView.size(dim));
-
+         pInit_.resize(gridView_.size(dimWorld));
         // fill the pressure field vector with zeros
         std::fill( pInit_.begin(), pInit_.end(), 0.0 );
 
@@ -259,11 +267,12 @@ public:
         // (during intialization episode hydraulic different parameters might be applied)
         this->spatialParams().setEpisode(this->timeManager().episodeIndex());
 
-//         depthBOR_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.DepthBOR);
+//         depthBOR_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.DepthBOR);//later I need to define a function for depth
+//          depthBOR(globalPos) = yMax(globalPos)-globalPos[1];
         episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
 
         dt_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.DtInitial);
-    }
+     }
 
     void init()
     {
@@ -280,7 +289,8 @@ public:
         ParentType::init();
     }
 
-         //instead of bBoxMax which was constant in the whole domain, we define the max elevation or the ground surface at each point
+
+     //instead of bBoxMax which was constant in the whole domain, we define the max elevation or the ground surface at each point
     Scalar zMax(const GlobalPosition &globalPos) const
     {
       if (globalPos[0]<6.3+eps_)
@@ -307,6 +317,7 @@ public:
     {
        return (-15. - globalPos[1]);
     }
+
     // note: pInit is < 0 (just due to geomechanics sign convention applied here)
     // initialize the pressure field for initialization run
     // first an approximate hydrostatic pressure field is calculated based on an
@@ -317,27 +328,36 @@ public:
 
     void initializePressure()
     {
+         pInit_.resize(gridView_.size(dimWorld));
         for(const auto& vertex : vertices(gridView_))
         {
             int vIdxGlobal = this->vertexMapper().index(vertex);
             GlobalPosition globalPos = vertex.geometry().corner(0);
 
             // initial approximate pressure distribution at start of initialization run
-            pInit_[vIdxGlobal] = -(1.0e5 + wTdepth(globalPos) * waterDensity_ * 9.81);
+//             pInit_[vIdxGlobal] = -(1.013e5 + (depthBOR_ - globalPos[dimWorld-1]) * waterDensity_ * 9.81);
+
+                pInit_[vIdxGlobal] = -pInit(globalPos); //initial 'water'pressure
         }
     }
+
+    Scalar pInit(const GlobalPosition globalPos)
+    {
+        return pnRef_+waterDensity_*9.81*wTdepth(globalPos); //initial 'water'pressure
+    }
+
+
 
     // allows to change the coupled_ variable which defines if geomechanical feedback on flow is taken
     // into account
     void setCoupled(bool coupled)
     {
         coupled_ = coupled;
-        std::cout << "coupled_ is now set to " << coupled << std::endl ;
     }
 
     // returns the coupled_ variable which defines if geomechanical feedback on flow is taken
     // into account
-    bool coupled() const
+    const bool coupled() const
     {
         return coupled_;
     }
@@ -357,7 +377,7 @@ public:
         initializationRun_ = false; // initialization run is now finished
 
         this->setInitializationRun(initializationRun_);
-        std::cout<<"El2P_TestProblem: initialized pressure field copied to pInit_"<<std::endl;
+        std::cout<<"ElRichards_TestProblem: initialized pressure field copied to pInit_"<<std::endl;
         for(const auto& vertex : vertices(gridView_))
         {
             int vIdxGlobal = this->vertexMapper().index(vertex);
@@ -370,6 +390,8 @@ public:
     {
         return initializationRun_;
     }
+
+
 
     // allows to set the initializationRun_ variable which defines if this is an initialization run
     void setInitializationRun(bool initializationRun)
@@ -386,36 +408,70 @@ public:
       gravity = -this->gravity()[dimWorld-1];
       porosity = this->spatialParams().porosity(globalPos);
       rockDensity = this->spatialParams().rockDensity(globalPos);
-
-      //khodam az problem
-       const auto& materialLawParams = this->spatialParams().materialLawParams(globalPos);
-          const Scalar swr = materialLawParams.swr();
-          const Scalar snr = materialLawParams.snr();
-
-
-          const Scalar meterUeberGW = globalPos[1] +15;
-          const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
-
-          Scalar n_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.n);//khodam
-          Scalar m_ = 1.0 - (1.0 / n_);//khodam
-          Scalar alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.alpha);//khodam
-
-          const Scalar sw = std::min(1.0-snr, std::max(swr, pow(pow(alpha_*pc, n_) + 1, -m_)));//khodam: use the numerical solution for sw
-
+//here we have considered that the system is fully saturated. else the water weight should be multiplied by the saturation. and is the same for hydrostatic pressure= rho*g*h*Se
       // initial total stress field here assumed to be isotropic, lithostatic
-          //Asked Martin: Pref_ shouldnt be added because this is just stress and Pref is considered in Peff later on.
+//       stress[0] = waterDensity_ * porosity * gravity * (- globalPos[dim-1])
+//                   + (1 - porosity) * rockDensity * gravity * ( - globalPos[dim-1]);
+//       if(dim >=2)
+//       stress[1] = waterDensity_ * porosity * gravity * ( - globalPos[dim-1])
+//                   + (1 - porosity) * rockDensity * gravity * ( - globalPos[dim-1]);
+//       if(dim == 3)
+//       stress[2] = waterDensity_ * porosity * gravity * ( - globalPos[dim-1])
+//                   + (1 - porosity) * rockDensity * gravity * ( - globalPos[dim-1]);
 
-       stress[0] = 0.4 * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
 
-       if(dimWorld >=2)
-       stress[1] =  sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) );
+       // retrieve materialParams for calculate of capillary pressure
+     const MaterialLawParams& materialParams = this->spatialParams().materialLawParams(globalPos);
 
-       if(dimWorld == 3)
-       stress[2] = sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) );
+     Scalar i_ = 30; //number of elements along the depth, or number of devisions that we wanna measure sw along the depth, therefore we have i+1 measurements for each globalPos
+//      Scalar z_ = (zMax(globalPos)-zMin(globalPos))/i_;//distance of two points that we measure in them or size of the steps .
+     Scalar z_ = (zMax(globalPos)-globalPos[1])/i_;//distance of two points that we measure in them or size of the steps .
+     //std::cout<< "z= " << z_ <<std::endl;
+     int n_ = floor((zMax(globalPos)-globalPos[1])/z_);//number of sections into which the lenght is diveded.  depth dependent. floor0( -7.7 ) --> -7 floor0( 7.7 ) --> 7
+    // std::cout<< "n("<< globalPos << ") is " << n_ <<std::endl;
+     //std::cout<< "distance "<<  zMax(globalPos)-globalPos[2] <<std::endl;
+
+
+     Scalar pc=pnRef_-(pnRef_+waterDensity_*9.81*wTdepth(globalPos));
+//      Scalar swnew = MaterialLaw::sw(materialParams, pc);
+     Scalar swnew =0.;
+     GlobalPosition currentGlobalPos = globalPos;
+
+    // loop over poins, number of points is number of sections + 1
+     for (int j=0; j<n_ + 1; ++j)
+       {
+
+              //std::cout<< "j("<< currentGlobalPos << ") is " << j <<std::endl;
+              currentGlobalPos[1] = globalPos[1]+j*z_;//each time we add one step size to the location for the next measurement location
+              //std::cout<< "cgp2="<< currentGlobalPos[2]  <<std::endl;
+              Scalar pInit= +pnRef_+waterDensity_*9.81*wTdepth(currentGlobalPos);
+
+               Scalar pc=pnRef_-pInit;
+               Scalar sw = MaterialLaw::sw(materialParams, pc);
+               if (sw > 1.+eps_){ //this has not been defined in the regularizedVanGenuchten.hh because of causing some numerical problem. therefore I define it here.
+                   sw = 1.0;
+               }
+              //std::cout<< "sw("<< currentGlobalPos[2] << ") is " << sw <<std::endl;
+               swnew =  (swnew + sw);
+        }
+
+           swnew =  (swnew)/(n_ + 1.);// averaged along the considered height
+
+
+         //std::cout<< "swnew("<< globalPos << ") is " << swnew <<std::endl;
+
+         stress[0] =((1 - porosity) * rockDensity * gravity * ( zMax(globalPos)- globalPos[dim-1])) + (waterDensity_*9.81*porosity* swnew* ( zMax(globalPos)- globalPos[dim-1]));
+         if(dim >=2)
+          stress[1] = ((1 - porosity) * rockDensity * gravity * ( zMax(globalPos)- globalPos[dim-1])) + (waterDensity_*9.81*porosity* swnew* ( zMax(globalPos)- globalPos[dim-1]));
+         if(dim == 3)
+          stress[2] = ((1 - porosity) * rockDensity * gravity * ( zMax(globalPos)- globalPos[dim-1])) + (waterDensity_*9.81*porosity* swnew*( zMax(globalPos)- globalPos[dim-1]));
 
 
       return stress;
     }
+
+
+
     /*!
      * \name Problem parameters
      */
@@ -426,9 +482,9 @@ public:
      *
      * This is used as a prefix for files generated by the simulation.
      */
-    std::string name() const
+    const char *name() const
     {
-        return "el2p";
+        return "elrichards";
     }
 
     /*!
@@ -437,29 +493,43 @@ public:
      * This problem assumes a temperature of 10 degrees Celsius at the ground surface
      * and a geothermal gradient of 0.03 K/m.
      */
-    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
-    {
-        Scalar T;
-        T = 283.15; //+ (depthBOR_ - globalPos[dimWorld-1]) * 0.03;
-
-        return T;
-    };
-
-
-    // returns the bottom of reservoir value (depth in m)
-//     const Scalar depthBOR() const
+//     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
 //     {
-//         return depthBOR_;
-//     }
+//         Scalar T;
+//         T = 283.15 + (depthBOR_ - globalPos[dimWorld-1]) * 0.03;
+//
+//         return T;
+//     };
+    Scalar temperature() const
+    { return temperature_; }; // -> 10°C
+
+          /*!
+     * \brief Returns the reference pressure [Pa] of the non-wetting
+     *        fluid phase within a finite volume
+     *
+     * This problem assumes a constant reference pressure of 1 bar.
+     *
+     * \param element The DUNE Codim<0> entity which intersects with
+     *                the finite volume in question
+     * \param fvGeometry The finite volume geometry of the element
+     * \param scvIdx The sub control volume index inside the finite
+     *               volume geometry
+     */
+    Scalar referencePressure(const Element &element,
+                             const FVElementGeometry &fvGeometry,
+                             const int scvIdx) const
+    { return pnRef_; };
+
+
 
     // note: pInit is < 0 (just due to geomechanics sign convention applied here)
     // function which returns the initialized pressure at an arbitrary location within the element
-    // called from finite element method (el2plocaloperator.hh) and evaluated at Gauss points
+    // called from finite element method (elrichardslocaloperator.hh) and evaluated at Gauss points
     Scalar pInit(const GlobalPosition& globalPos, const GlobalPosition& localPos, const Element& element) const
     {
         Scalar pValue = 0.0;
 
-        typename El2P_TestProblem<TypeTag>::LocalFEMSpace feMap(this->gridView());
+        typename ElRichards_TestProblem<TypeTag>::LocalFEMSpace feMap(this->gridView());
         const typename LocalFEMSpace::Traits::FiniteElementType
         &localFiniteElement = feMap.find(element.geometry().type());
         typedef Dune::FieldVector<CoordScalar, 1> ShapeValue;
@@ -481,7 +551,6 @@ public:
     {
         return pInit_;
     }
-
 
     // returns true if the current solution should be written to
     // disk (i.e. as a VTK file)
@@ -508,7 +577,7 @@ public:
     // \{
 
     /*!
-      \brief Specifies which kind of boundary condition should be
+     * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
      * \param values The boundary types for the conservation equations
@@ -519,46 +588,61 @@ public:
      */
     void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) const
     {
-        values.setAllNeumann();
+        values.setAllNeumann();// means when we define flux, zero or not
 
         // The solid displacement normal to the lateral boundaries is fixed.
         if(onInlet_(globalPos))
         {
+//             values.setDirichlet(contiEqIdx);
             if (initializationRun_ == true)
             {
-                values.setDirichlet(pressureIdx, contiWEqIdx);
-                values.setDirichlet(saturationIdx, contiNEqIdx);
-                values.setDirichlet(uxIdx);
-                values.setDirichlet(uyIdx);
+//                 values.setDirichlet(contiEqIdx);
+                values.setDirichlet(momentumXEqIdx);
+                values.setDirichlet(momentumYEqIdx);
+                //values.setDirichlet(momentumZEqIdx);
             }
-
+//             else {
+//                 values.setDirichlet(contiEqIdx);
+//             }
           }
 
         if (leftBoundaryO_(globalPos)|| rightBoundaryO_(globalPos)){
-            values.setDirichlet(uxIdx);//this part is aplied all the time
+            values.setDirichlet(momentumXEqIdx);//this part is aplied all the time
+            //values.setDirichlet(momentumYEqIdx);
             if (initializationRun_ == true)
             {
-                values.setDirichlet(uyIdx);
+//                 values.setDirichlet(contiEqIdx);
+                values.setDirichlet(momentumYEqIdx);
             }
           }
 
-
-
-        if (leftBoundaryU_(globalPos)){
-            values.setDirichlet(uxIdx);//this part is aplied all the time
+          if (leftBoundaryO_(globalPos)|| rightBoundaryO_(globalPos)){
+            values.setDirichlet(momentumXEqIdx);//this part is aplied all the time
+            //values.setDirichlet(momentumYEqIdx);
             if (initializationRun_ == true)
             {
-                values.setDirichlet(uyIdx);
+//                 values.setDirichlet(contiEqIdx);
+                values.setDirichlet(momentumYEqIdx);
+            }
+          }
+
+        if (leftBoundaryU_(globalPos)){
+            values.setDirichlet(momentumXEqIdx);//this part is aplied all the time
+            //values.setDirichlet(momentumYEqIdx);
+            if (initializationRun_ == true)
+            {
+                values.setDirichlet(contiEqIdx);
+                values.setDirichlet(momentumYEqIdx);
             }
           }
 
         if ( rightBoundaryU_(globalPos)){
-            values.setDirichlet(pressureIdx, contiWEqIdx);
-            values.setDirichlet(saturationIdx, contiNEqIdx);
-            values.setDirichlet(uxIdx);//this part is aplied all the time
+            values.setDirichlet(contiEqIdx);
+            values.setDirichlet(momentumXEqIdx);//this part is aplied all the time
+            //values.setDirichlet(momentumYEqIdx);
             if (initializationRun_ == true)
             {
-                values.setDirichlet(uyIdx);
+                values.setDirichlet(momentumYEqIdx);
             }
          }
 
@@ -566,15 +650,24 @@ public:
 
         if (onLowerBoundary_(globalPos)){
 
-             values.setDirichlet(uyIdx);
+             values.setDirichlet(momentumYEqIdx);
 
             if(initializationRun_ == true)
             {
-                values.setDirichlet(uxIdx);
+                values.setDirichlet(momentumXEqIdx);
+                //values.setDirichlet(momentumYEqIdx);
            }
         }
-     }
 
+//         if (uGBoundary_(globalPos)){
+//
+//             if(initializationRun_ == true)
+//             {
+//              values.setDirichlet(contiEqIdx);
+//            }
+//         }
+
+    }
 
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
@@ -585,13 +678,13 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
+    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const//based on vertex and element
     {
         const GlobalPosition globalPos = vertex.geometry().center();
 
         dirichletAtPos(values, globalPos);
-        //values[0] = -pInit_[this->vertexMapper().index(vertex)];
-    }
+        values[contiEqIdx] = -pInit_[this->vertexMapper().index(vertex)];
+     }
 
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
@@ -603,57 +696,27 @@ public:
      * This function is called directly from dumux/geomechanics/el2p/localoperator.hh
      * If it is renamed to dirichletAtPos it should be adjusted there as well.
      */
-
-    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const//based on globalpos or center of the element
     {
         values = 0.0;
 
-        if ((onInlet_(globalPos)) ){
-          const auto& materialLawParams = this->spatialParams().materialLawParams(globalPos);
-          const Scalar swr = materialLawParams.swr();
-          const Scalar snr = materialLawParams.snr();
+          values[contiEqIdx] =pnRef_+waterDensity_*9.81*wTdepth(globalPos);
+          values[momentumXEqIdx] = 0;
+          values[momentumYEqIdx] = 0;
+          //values[momentumZEqIdx] = 0;
 
+//         if(onInlet_(globalPos)){
+//              values[contiEqIdx] = pnRef_;//pnRef_; We assume that the pressure at the surface is in equilibrium with the air pressure (from paper:Prediction of Evaporation Losses from Shallow Water Table using a numerical Model,C P Kumar, equation 12)
+//         }
+//         else {
+//             values[contiEqIdx] =pnRef_+waterDensity_*9.81*wTdepth(globalPos);
+//         }
+//          if (rightBoundary_(globalPos)){
+//              values[contiEqIdx] =pnRef_+waterDensity_*9.81*depth;
+//         }
 
-          const Scalar meterUeberGW = globalPos[1] +15;
-          const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
-          const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
-          values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
-          values[saturationIdx] = 1.-sw;
-        } else
-        {
-          values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
-          //std::cout<< "pressure=" <<values[pressureIdx] << std::endl;
-          values[saturationIdx] = 0.0;
-        }
     }
 
-    static Scalar invertPcGW_(const Scalar pcIn,
-                              const MaterialLawParams &pcParams)
-    {
-        Scalar lower(0.0);
-        Scalar upper(1.0);
-        const unsigned int maxIterations = 25;
-        const Scalar bisLimit = 1.0;
-
-        Scalar sw, pcGW;
-        for (unsigned int k = 1; k <= maxIterations; k++)
-        {
-            sw = 0.5*(upper + lower);
-            pcGW = MaterialLaw::pc(pcParams, sw);
-            const Scalar delta = std::abs(pcGW - pcIn);
-            if (delta < bisLimit)
-                return sw;
-
-            if (k == maxIterations)
-                return sw;
-
-            if (pcGW > pcIn)
-                lower = sw;
-            else
-                upper = sw;
-        }
-        return sw;
-    }
     /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
@@ -667,12 +730,7 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
-    {
-        values[uxIdx] = 0.0;
-        values[uyIdx] = 0.0;
-    }
-
+//     void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
      void solDependentNeumann(PrimaryVariables &values,
                       const Element &element,
                       const FVElementGeometry &fvGeometry,
@@ -681,41 +739,87 @@ public:
                       const int boundaryFaceIdx,
                       const ElementVolumeVariables &elemVolVars) const
     {
-
         values = 0.0;
         GlobalPosition globalPos = fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
 
-        Scalar avgRain_ = 3.7E-8; //GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameter.avgRain);//[m/s]
-        Scalar rb_ = 2.0E-4; //[1/s] =K/B conductance
+//      Scalar ks_ = GET_RUNTIME_PARAM(TypeTag, Scalar, HydraulicParameters.ks);
+        Scalar avgRain_ = GET_RUNTIME_PARAM(TypeTag, Scalar, HydraulicParameters.avgRain);
+        Scalar rb_ = 2.0E-4; //[1/s]
         Scalar ks_ = 1.39e-6;
+        values[contiEqIdx] = 0;//no flow
+        values[momentumXEqIdx] = 0;
+        values[momentumYEqIdx] = 0;
+        //values[momentumZEqIdx] = 0;
 
-        const Scalar pW = elemVolVars[scvIdx].pressure(pressureIdx);
-        const Scalar pN = elemVolVars[scvIdx].pressure(nPhaseIdx);
-        const Scalar satW = elemVolVars[scvIdx].saturation(wPhaseIdx);
-        const Scalar satN = elemVolVars[scvIdx].saturation(nPhaseIdx);
 
         if (onInlet_(globalPos))
         {
-               if (satW > 1. -eps_){
-                   //std::cout << "saturation above 1 \n" ;
-                    values[contiWEqIdx] = rb_ * pW/(9.81); // [kg/(m2*s)]
-                    if (pN>1.e5) values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
-               }
-                else {
-                   //std::cout << "saturation below 1, infiltration \n" ;
-                    values[contiWEqIdx] = -avgRain_*1000.;
-                    if (pN>1.e5) {
-                    values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
-                    }
-                }
+            values[contiEqIdx] = -avgRain_*waterDensity_;//-ks_*waterDensity_; //  kg / (m2 * s) in 2D is kg/(m*s) inflow
+//             std::cout << "I am here " << std::endl;
+//              if(initializationRun_ == true){
+//                  values[contiEqIdx] = 0;
+//              }
         }
 
+        else if (rightBoundaryO_(globalPos))
+        {
+             if(initializationRun_ == true)
+                 values[contiEqIdx] = 0;
+             else
+             {
+                Scalar pressure = elemVolVars[scvIdx].pressure(wPhaseIdx);
+                      values[momentumXEqIdx] = 0;
+                      values[momentumYEqIdx] = 0;
+                     // values[momentumZEqIdx] = 0;
+               // if (pressure <0.0+eps_)
+                    values[contiEqIdx] =0.0;
+               // else
+                //{
+                     //values[contiEqIdx] = 0.0;//+ks_*waterDensity_; //  kg / (m2 * s) in 2D is kg/(m*s) inflow
+            //values[contiEqIdx] = +pressure/(1000*9.81)*rb_*waterDensity_;//+ks_*waterDensity_; //  kg / (m2 * s) in 2D is kg/(m*s) inflow
+
+//                      Scalar pn = 1e5; //khodam
+//                      Scalar pc = 1e5-pwIdx; //pc [pa]
+//                      Scalar sw = MaterialLaw::sw(this->spatialParams().materialLawParams(globalPos),pc);
+//                      Scalar kh_=ks_*pow (sw,0.5)*pow(1-pow(1-pow(sw,1/0.27),0.27),2);//Moalem hydraulic conductivity
+//                      values[contiEqIdx] = +kh_*waterDensity_;
+               // }
+              }
+         }
      }
+
+//              if (rightBoundary_(globalPos)){
+//              values[contiEqIdx] =ks_*waterDensity_;
+//         }
+//         if (onInlet_(globalPos))
+//         {
+//                  values[contiEqIdx] = -ks_*waterDensity_; //  kg / (m2 * s) in 2D is kg/(m*s) inflow should be negative and outflow positive
+// //                 values[momentumXEqIdx] = 0;//means stress
+// //                 values[momentumYEqIdx] = 0;
+// //                 values[momentumZEqIdx] = 0;
+//         }
+ //   }
 
     /*!
      * \name Volume terms
      */
     // \{
+
+    /*!
+     * \brief Evaluate the initial values for a control volume.
+     *
+     * For this method, the \a values parameter stores primary
+     * variables.
+     *
+     * \param values Storage for all primary variables of the initial condition
+     * \param globalPos The position for which the boundary type is set
+     */
+//     void initialAtPos(PrimaryVariables &values,
+//                  const GlobalPosition &globalPos) const
+//     { initial_(values, globalPos); }; //from richards
+
+    // \{
+
     /*!
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
@@ -737,27 +841,10 @@ public:
     {
         const GlobalPosition globalPos = element.geometry().corner(scvIdx);
 
-        source(values, globalPos);
-    }
-
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * \param values The source values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
-     * \param globalPos The position of the integration point of the boundary segment.
-     *
-     * For this method, the \a values parameter stores the rate mass
-     * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
-     */
-    void source(PrimaryVariables &values, const GlobalPosition& globalPos) const
-    {
         values = 0.0;
-
+        //source(values, globalPos);
     }
-    // \}
+
 
     /*!
      * \brief Transfer episode index to spatial parameters in order to apply different
@@ -776,9 +863,6 @@ public:
         PrimaryVariables mass;
         this->model().globalStorage(mass);
         double time = this->timeManager().time()+this->timeManager().timeStepSize();
-
-        if(time>1.0)
-        this->newtonController().setMaxRelativeShift(1.e-5);
 
         // Write mass balance information for rank 0
         if (this->gridView().comm().rank() == 0) {
@@ -814,17 +898,30 @@ public:
         }
     }
 
+
+
 private:
-    static constexpr Scalar eps_ = 3e-6;
-    Scalar depthBOR_;
-    static constexpr Scalar waterDensity_ = 1000;
-    Scalar episodeLength_;// = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
+//     Model& model_;
+   // void initial_(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    //{
+    //    Scalar depth = zMax(globalPos) - globalPos[2];
+   // }
 
-    std::vector<Scalar> pInit_;
-    GridView gridView_;
-    Scalar dt_;
+//     bool topLeftBoundary_(const GlobalPosition &globalPos) const{
+//         return ((globalPos[0]<6.3+eps_) && (globalPos[2]>0-eps_));
+//     }
+//
+//     bool topRightBoundary_(const GlobalPosition &globalPos) const{
+//         return (globalPos[0]>23.6-eps_ && (globalPos[2]>-10-eps_));
+//     }
+//
+//     bool onSlopeBoundary_(const GlobalPosition &globalPos) const{
+//         if ((globalPos[0] > 6.3-eps_) && (globalPos[0] < 23.6 +eps_) && (globalPos[2] > (-10.-0.)/(23.6-6.3)*(globalPos[0])+3.64 - eps_))
+//         return 1;
+//         else return 0;
+//     }
 
-    bool onInlet_(const GlobalPosition &globalPos) const
+    bool onInlet_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
     {
         return (globalPos[1]>zMax(globalPos)-eps_);
     }
@@ -834,25 +931,65 @@ private:
         return  (globalPos[1] < zMin(globalPos) + eps_);
     }
 
-    bool leftBoundaryO_(const GlobalPosition &globalPos) const
+    bool leftBoundaryO_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
     {
         return (globalPos[0] < -32. + eps_ && globalPos[1] > -15. - eps_);
     }
 
-    bool leftBoundaryU_(const GlobalPosition &globalPos) const
+    bool leftBoundaryU_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
     {
         return (globalPos[0] < -32. + eps_ && globalPos[1] < -15. + eps_);
     }
 
-    bool rightBoundaryO_(const GlobalPosition &globalPos) const
+    bool rightBoundaryO_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
     {
         return (globalPos[0] > 35. - eps_ && globalPos[1] > -15. - eps_);
     }
 
-    bool rightBoundaryU_(const GlobalPosition &globalPos) const
+    bool rightBoundaryU_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
     {
         return (globalPos[0] > 35. - eps_ && globalPos[1] < -15. + eps_);
     }
+
+//     bool frontBoundaryO_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+//     {
+//         return (globalPos[1] > 20. - eps_ && globalPos[1] > -15. - eps_);
+//     }
+//
+//     bool frontBoundaryU_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+//     {
+//         return (globalPos[1] > 20. - eps_ && globalPos[2] < -15. + eps_);
+//     }
+//
+//     bool backBoundaryO_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+//     {
+//         return (globalPos[1] < 0. + eps_ && globalPos[2] > -15. - eps_);
+//     }
+//
+//     bool backBoundaryU_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+//     {
+//         return (globalPos[1] < 0. + eps_ && globalPos[2] < -15. + eps_);
+//     }
+
+    bool uGBoundary_(const GlobalPosition &globalPos) const //is that small part of the upper boundary
+    {
+        return (globalPos[1] < -15. + eps_ );
+    }
+
+//     }
+    static constexpr Scalar eps_ = 1e-6;
+    Scalar pnRef_;
+//     Scalar depthBOR_;
+    static constexpr Scalar waterDensity_ = 1000;
+    Scalar episodeLength_;// = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLength);
+
+    std::vector<Scalar> pInit_;
+    GridView gridView_;
+    Scalar dt_;
+    Scalar temperature_;
+
+
+
 public:
     bool initializationRun_, coupled_, output_;
     InitialStressField initialStressField_;
@@ -860,14 +997,14 @@ public:
 
 
 /*!
- * \ingroup ElTwoPBoxProblems
+ * \ingroup ElRichardsBoxProblems
  *
  * \brief Initial conditions for momentum balance equation.
  *
  * Set initial conditions for solution of momentum balance equation
  * i.e. initialize solid displacement
- * This function is called from dumux/geomechanics/el2p/model.hh
- *  * This function is called from dumux/geomechanics/el2p/model.hh.
+ * This function is called from dumux/geomechanics/elrichards/model.hh
+ *  * This function is called from dumux/geomechanics/elrichards/model.hh.
  *
  * The primary variables are initialized two times:
  * 1. before the initialization run.
@@ -890,9 +1027,6 @@ public:
     typedef typename Traits::DomainType DomainType;
     typedef typename Traits::RangeType RangeType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;//khodam
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;//khodam
-
     /*!
      * \brief The constructor
      *
@@ -913,14 +1047,14 @@ public:
 };
 
 /*!
- * \ingroup ElTwoPBoxProblems
+ * \ingroup ElRichardsBoxProblems
  *
  * \brief Initial conditions for mass balance equations.
  *
  * Set initial conditions for solution of the mass balance equations
  * i.e. initialize wetting phase pressure and nonwetting phase saturation
  *
- * This function is called from dumux/geomechanics/el2p/model.hh.
+ * This function is called from dumux/geomechanics/elrichards/model.hh.
  * The primary variables are initialized two times:
  * 1. before the initialization run.
  * 2. at the start of the actual simulation applying pressure field
@@ -930,24 +1064,23 @@ public:
 template<class TypeTag>
 class InitialPressSat :
 public Dune::PDELab::AnalyticGridFunctionBase<
-    Dune::PDELab::AnalyticGridFunctionTraits<typename GET_PROP_TYPE(TypeTag, GridView),typename GET_PROP_TYPE(TypeTag, Scalar),2>,
+    Dune::PDELab::AnalyticGridFunctionTraits<typename GET_PROP_TYPE(TypeTag, GridView),typename GET_PROP_TYPE(TypeTag, Scalar),1>,
     InitialPressSat<TypeTag> >
 {
 public:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::PDELab::AnalyticGridFunctionTraits<GridView,Scalar,2> Traits;
+    typedef Dune::PDELab::AnalyticGridFunctionTraits<GridView,Scalar,1> Traits;
     typedef Dune::PDELab::AnalyticGridFunctionBase<Traits, InitialPressSat<TypeTag>> BaseT;
 
     typedef typename Traits::DomainType DomainType;
     typedef typename Traits::RangeType RangeType;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-
     enum {
         // indices of the primary variables
-        pressureIdx = Indices::pwIdx,
-        saturationIdx = Indices::snIdx,
+        pwIdx = Indices::pwIdx,
+       // saturationIdx = Indices::snIdx,
 
         dimWorld = GridView::dimensionworld
     };
@@ -960,14 +1093,7 @@ public:
      *
      * \param gridView The grid view
      */
-    InitialPressSat(const GridView & gridView)
-    : BaseT(gridView)
-    , gridView_(gridView)
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-    , vertexMapper_(gridView, Dune::mcmgVertexLayout())
-#else
-    , vertexMapper_(gridView)
-#endif
+    InitialPressSat(const GridView & gridView) : BaseT(gridView) , gridView_(gridView), vertexMapper_(gridView)
     {
         // resize the pressure field vector with the number of vertices
         pInit_.resize(gridView.size(GridView::dimension));
@@ -984,16 +1110,10 @@ public:
      * This function applies the pressure field pInit_ which is defined
      * in the problem.
      */
-
- //from: /temp/moradiC/dumux/dumux/material/fluidmatrixinteractions/2p    : vanGenuchten.hh
-
     inline void evaluateGlobal(const DomainType & position, RangeType & values) const
     {
             bool valueSet;
             valueSet = false;
-            using std::pow;
-            using std::min;
-            using std::max;
 
             // loop over all vertices
             for (const auto& vertex : vertices(gridView_))
@@ -1011,41 +1131,29 @@ public:
                 {
                     // if coordinates are identical write the pressure value for this
                     // vertex (with index vIdxGlobal) into the values vector
-                    values[pressureIdx] = pInit_[vIdxGlobal];
+                    values[pwIdx] = pInit_[vIdxGlobal];
                     // the value of this vertex is set
                     valueSet = true;
-                    //define saturation from Pc khodam
-
-                    Scalar n_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.n);
-                    Scalar m_ = 1.0 - (1.0 / n_);
-                    Scalar alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.alpha);
-
-                    const Scalar meterUeberGW = globalPos[1] +15;
-                    const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
-//                     const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
-                    const Scalar sw = pow(pow(alpha_*pc, n_) + 1, -m_);
-
-                    // initialize saturation values
-                     values[saturationIdx] = 1- sw;
                 }
-
             }
 
-           // check if the pressure value for this vertex has been initialized
+            // check if the pressure value for this vertex has been initialized
             if (valueSet == false)
             {
                 std::cout << " pressure value not initialized correctly "
                                 << std::endl;
             }
-        }
 
+            // initialize saturation values
+            //values[saturationIdx] = 0;
+        }
 
     /*!
      * \brief Fill the vector pInit_ for initialization
      *
      * \param pInit The pressure field vector defined in the problem class
      *
-     * This function is called from dumux/geomechanics/el2p/model.hh.
+     * This function is called from dumux/geomechanics/elrichards/model.hh.
      */
         void setPressure(std::vector<Scalar> pInit)
         {
@@ -1059,7 +1167,8 @@ public:
 
 private:
     static constexpr Scalar eps_ = 3e-6;
-    Scalar depthBOR_;
+    Scalar pnRef_;
+//     Scalar depthBOR_;
     std::vector<Scalar> pInit_;
     GridView gridView_;
     VertexMapper vertexMapper_;
@@ -1068,4 +1177,3 @@ private:
 } //end namespace
 
 #endif
-                    //from: /temp/moradiC/dumux/dumux/material/fluidmatrixinteractions/2p    : vanGenuchten.hh
