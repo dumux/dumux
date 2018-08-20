@@ -299,7 +299,7 @@ public:
             const Scalar mu = stokesContext.volVars.viscosity(darcyPhaseIdx);
             const Scalar rho = stokesContext.volVars.density(darcyPhaseIdx);
             const Scalar distance = (stokesContext.element.geometry().center() - scvf.center()).two_norm();
-            const Scalar g = couplingManager_.problem(darcyIdx).gravity()[scvf.directionIndex()];
+            const Scalar g = -scvf.directionSign() * couplingManager_.problem(darcyIdx).gravity()[scvf.directionIndex()];
             const Scalar interfacePressure = ((scvf.directionSign() * velocity * (mu/darcyPermeability(scvf))) + rho * g) * distance + darcyPressure;
             momentumFlux = interfacePressure;
         }
