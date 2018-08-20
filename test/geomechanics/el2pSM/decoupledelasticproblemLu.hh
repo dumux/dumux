@@ -326,51 +326,56 @@ public:
 
           const Scalar meterUeberGW = globalPos[1] +15;
           const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
-          const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
+
+          Scalar n_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.n);//khodam
+          Scalar m_ = 1.0 - (1.0 / n_);//khodam
+          Scalar alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.alpha);//khodam
+
+          //const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));// khodam: numerical solution
+
+//           const Scalar sw = pow(pow(alpha_*pc, n_) + 1, -m_);//Khodam: numerical solution from vanGenuchten.hh
+          const Scalar sw = std::min(1.0-snr, std::max(swr, pow(pow(alpha_*pc, n_) + 1, -m_)));//khodam: use the numerical solution for sw
 
       // initial total stress field here assumed to be isotropic, lithostatic
 
-       stress[0] = sw * ( waterDensity_ * porosity * gravity * (zMax(globalPos) - globalPos[dimWorld-1])
-                   + (1 - porosity) * rockDensity * gravity * (zMax(globalPos) - globalPos[dimWorld-1]) );
+       stress[0] = 0.5 * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
 
-//        stress[0] = 0.6 * ( waterDensity_ * porosity * gravity * (-15 - globalPos[dimWorld-1])
-//                    + (1 - porosity) * rockDensity * gravity * (-15 - globalPos[dimWorld-1]) );
        if(dimWorld >=2)
-       stress[1] = sw * ( waterDensity_ * porosity * gravity * (zMax(globalPos) - globalPos[dimWorld-1])
-                   + (1 - porosity) * rockDensity * gravity * (zMax(globalPos) - globalPos[dimWorld-1]) );;
+       stress[1] =  sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) );
+
        if(dimWorld == 3)
-       stress[2] = sw * ( waterDensity_ * porosity * gravity * (zMax(globalPos) - globalPos[dimWorld-1])
-                   + (1 - porosity) * rockDensity * gravity * (zMax(globalPos) - globalPos[dimWorld-1]) );
+       stress[2] = sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) );
       return stress;
     }
 
-        static Scalar invertPcGW_(const Scalar pcIn,
-                              const MaterialLawParams &pcParams)
-    {
-        Scalar lower(0.0);
-        Scalar upper(1.0);
-        const unsigned int maxIterations = 25;
-        const Scalar bisLimit = 1.0;
-
-        Scalar sw, pcGW;
-        for (unsigned int k = 1; k <= maxIterations; k++)
-        {
-            sw = 0.5*(upper + lower);
-            pcGW = MaterialLaw::pc(pcParams, sw);
-            const Scalar delta = std::abs(pcGW - pcIn);
-            if (delta < bisLimit)
-                return sw;
-
-            if (k == maxIterations)
-                return sw;
-
-            if (pcGW > pcIn)
-                lower = sw;
-            else
-                upper = sw;
-        }
-        return sw;
-    }
+// //Numerical solution to calculate Pc
+//         static Scalar invertPcGW_(const Scalar pcIn,
+//                               const MaterialLawParams &pcParams)
+//     {
+//         Scalar lower(0.0);
+//         Scalar upper(1.0);
+//         const unsigned int maxIterations = 25;
+//         const Scalar bisLimit = 1.0;
+//
+//         Scalar sw, pcGW;
+//         for (unsigned int k = 1; k <= maxIterations; k++)
+//         {
+//             sw = 0.5*(upper + lower);
+//             pcGW = MaterialLaw::pc(pcParams, sw);
+//             const Scalar delta = std::abs(pcGW - pcIn);
+//             if (delta < bisLimit)
+//                 return sw;
+//
+//             if (k == maxIterations)
+//                 return sw;
+//
+//             if (pcGW > pcIn)
+//                 lower = sw;
+//             else
+//                 upper = sw;
+//         }
+//         return sw;
+//     }
 
 
     /*!

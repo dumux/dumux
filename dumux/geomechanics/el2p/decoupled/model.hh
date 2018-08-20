@@ -678,7 +678,7 @@ for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)//khodam
 
 //             Scalar theta = M_PI / 6;
 //             Scalar S0 = 0.0;
-            Scalar theta = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.FrictionAngle)*M_PI / 180.0; //khodam
+            Scalar theta = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.FrictionAngle)*M_PI / 180.0 ; //khodam
 //             Scalar theta = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.FrictionAngle)*M_PI / 6; //khodam. If so then I should add a negative before cos(theta) in LFS and LFS looks more like comsol
 
             Scalar S0 = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.Cohesion);//khodam
@@ -691,15 +691,15 @@ for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)//khodam
                     + sigmam;
             // Pressure margins according to J. Rutqvist et al. / International Journal of Rock Mecahnics & Mining Sciences 45 (2008), 132-143
             Pcrtens[eIdx] = Peff - principalStress3[eIdx];
-            Pcrshe[eIdx] = Peff - Psc;
+            Pcrshe[eIdx] = Peff - Psc;//equation 2.61 mellanie thesis
 
             if (std::abs(taum) < 1.0e-2){
                 safetyFactor[eIdx] = 5.0;
              }
             else
             {
+//                 std::cout<< "cos(theta)="<< cos(theta)<< std::endl;
                  safetyFactor[eIdx] = cos(theta) / fabs(taum) * (S0 + sigmam * tan(theta));//khodam
-//                  safetyFactor[eIdx] = -cos(theta) / fabs(taum) * (S0 + sigmam * tan(theta));//khodam
 
 
                  if (safetyFactor[eIdx]<1)

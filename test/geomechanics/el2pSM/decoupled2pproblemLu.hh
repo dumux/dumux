@@ -560,9 +560,13 @@ public:
 
         if (globalPos[1] > -15)
         {
+            Scalar n_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.n);
+            Scalar m_ = 1.0 - (1.0 / n_);
+            Scalar alpha_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.alpha);
           const Scalar meterUeberGW = globalPos[1] +15;
           const Scalar pc = std::max(0.0, 9.81*1000.0*meterUeberGW);
-          const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));
+//        const Scalar sw = std::min(1.0-snr, std::max(swr, invertPcGW_(pc, materialLawParams)));// use the numerical solution for Pc
+           const Scalar sw = std::min(1.0-snr, std::max(swr, pow(pow(alpha_*pc, n_) + 1, -m_)));//khodam use the analytical solution for sw
 
           values[pressureIdx] = (1.0e5 + 1000. * 9.81 * wTdepth(globalPos));
           values[saturationIdx] = 1-sw;
@@ -572,7 +576,7 @@ public:
           values[saturationIdx] = 0.0;
         }
     }
-
+//numerical solution for Pc
     static Scalar invertPcGW_(const Scalar pcIn,
                               const MaterialLawParams &pcParams)
     {
