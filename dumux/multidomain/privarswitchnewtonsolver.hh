@@ -48,12 +48,9 @@ class MultiDomainPriVarSwitchNewtonSolver : public MultiDomainNewtonSolver<Assem
     using ParentType = MultiDomainNewtonSolver<Assembler, LinearSolver, CouplingManager, Reassembler, Comm>;
     using SolutionVector = typename Assembler::ResidualType;
 
-    using DomainIds = std::make_index_sequence<Assembler::Traits::numSubDomains>;
-
-    template<std::size_t id>
-    using PrivarSwitchPtr = std::unique_ptr<std::tuple_element_t<id, PrivarSwitchTypeTuple>>;
-
-    using PriVarSwitchPtrTuple = typename makeFromIndexedType<std::tuple, PrivarSwitchPtr, DomainIds>::type;
+    template<std::size_t i> using PriVarSwitch = std::tuple_element_t<i, PrivarSwitchTypeTuple>;
+    template<std::size_t i> using PrivarSwitchPtr = std::unique_ptr<PriVarSwitch<i>>;
+    using PriVarSwitchPtrTuple = typename Assembler::Traits::template MakeTuple<PrivarSwitchPtr>;
 
 public:
     using ParentType::ParentType;
@@ -83,9 +80,10 @@ public:
         switchedInLastIteration_.fill(false);
 
         using namespace Dune::Hybrid;
-        forEach(DomainIds{}, [&](auto&& id)
+        forEach(std::make_index_sequence<Assembler::Traits::numSubDomains>{}, [&](auto&& id)
         {
-            std::get<id>(priVarSwitches_) = std::make_unique<std::tuple_element_t<id, PrivarSwitchTypeTuple>>(u[id].size());
+            using PVSwitch = PriVarSwitch<std::decay_t<decltype(id)>::value>;
+            elementAt(priVarSwitches_, id) = std::make_unique<PVSwitch>(u[id].size());
         });
     }
 
@@ -106,12 +104,12 @@ public:
         auto& assembler = this->assembler();
 
         using namespace Dune::Hybrid;
-        forEach(DomainIds{}, [&](auto&& id)
+        forEach(std::make_index_sequence<Assembler::Traits::numSubDomains>{}, [&](auto&& id)
         {
             const auto& fvGridGeometry = assembler.fvGridGeometry(id);
             const auto& problem = assembler.problem(id);
             auto& gridVariables = assembler.gridVariables(id);
-            auto& priVarSwitch = std::get<id>(priVarSwitches_);
+            auto& priVarSwitch = elementAt(priVarSwitches_, id);
 
             // invoke the primary variable switch
             switchedInLastIteration_[id] = priVarSwitch->update(uCurrentIter[id], gridVariables,
@@ -144,9 +142,9 @@ public:
 
         // free some memory
         using namespace Dune::Hybrid;
-        forEach(DomainIds{}, [&](auto&& id)
+        forEach(std::make_index_sequence<Assembler::Traits::numSubDomains>{}, [&](auto&& id)
         {
-            std::get<id>(priVarSwitches_).release();
+            elementAt(priVarSwitches_, id).release();
         });
     }
 
