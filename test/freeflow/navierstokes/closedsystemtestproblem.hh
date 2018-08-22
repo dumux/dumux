@@ -183,8 +183,6 @@ public:
         return values;
     }
 
-    // \}
-
 private:
 
     bool isLowerLeftCell_(const GlobalPosition& globalPos) const

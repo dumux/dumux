@@ -1,10 +1,10 @@
 [TimeLoop]
-DtInitial = 1 # [s]
+DtInitial = 5e-6 # [s]
 TEnd = 2 # [s]
 
 [Grid]
 UpperRight = 10 1
-Cells = 100 50
+Cells = 10 5
 
 [Problem]
 Name = test_channel_navierstokes # name passed to the output routines
@@ -12,8 +12,9 @@ InletVelocity = 1000
 EnableGravity = false
 
 [ Newton ]
-MaxSteps = 10
-MaxRelativeShift = 1e-5
+MaxSteps = 100
+MaxRelativeShift = 1e-10
+TargetSteps = 100
 
 [Vtk]
 WriteFaceData = false

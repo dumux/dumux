@@ -1,6 +1,6 @@
 [Grid]
 UpperRight = 1 1
-Cells = 40 40
+Cells = 5 5
 
 [Problem]
 Name = test_donea # name passed to the output routines
@@ -8,8 +8,16 @@ EnableGravity = false
 PrintL2Error = false
 
 [ Newton ]
-MaxSteps = 10
-MaxRelativeShift = 1e-5
+MaxSteps = 100
+MaxRelativeShift = 1e-10
 
 [Vtk]
 WriteFaceData = false
+
+#[LinearSolver]
+#Verbosity = 2
+
+[ InitialCondition ]
+# 0: zero
+# 1: exact solution
+InitialConditionType = 0

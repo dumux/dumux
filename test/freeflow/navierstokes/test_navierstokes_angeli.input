@@ -5,7 +5,7 @@ TEnd = 1e-2 # [s]
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 1
-Cells = 50 50
+Cells = 20 20
 
 [Problem]
 Name = test_angeli # name passed to the output routines

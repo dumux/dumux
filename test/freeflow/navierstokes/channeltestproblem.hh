@@ -106,6 +106,10 @@ public:
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
+
+        using CellArray = std::array<unsigned int, dimWorld>;
+        const CellArray numCells = getParam<CellArray>("Grid.Cells");
+        cellSizeY_ = this->fvGridGeometry().bBoxMax()[1] / numCells[1];
     }
 
    /*!
@@ -221,6 +225,23 @@ public:
         values[Indices::velocityXIdx] = 0.0;
         values[Indices::velocityYIdx] = 0.0;
 
+        if(isInlet(globalPos))
+        {
+            values[Indices::velocityXIdx] = 1000;
+//             if (isLowerLeftFace_(globalPos)){
+//                 values[Indices::velocityXIdx] = 0;
+//             }
+//             else if (isUpperLeftFace_(globalPos)){
+//                 values[Indices::velocityXIdx] = 0;
+//             }
+//             else {
+//                 const auto& y = globalPos[1];
+//                 const auto& yMax = this->fvGridGeometry().bBoxMax()[1];
+//                 const auto& vMax = inletVelocity_;
+//                 values[Indices::velocityXIdx] = 4 * vMax * y * (yMax - y)/(yMax * yMax);
+//             }
+        }
+
 #if NONISOTHERMAL
         values[Indices::temperatureIdx] = 283.15;
 #endif
@@ -258,9 +279,20 @@ private:
         return globalPos[0] > eps_ || globalPos[0] < this->fvGridGeometry().bBoxMax()[0] - eps_;
     }
 
+    bool isLowerLeftFace_(const GlobalPosition& globalPos) const
+    {
+        return globalPos[0] < eps_ && globalPos[1] < (0.5*cellSizeY_ + eps_);
+    }
+
+    bool isUpperLeftFace_(const GlobalPosition& globalPos) const
+    {
+        return globalPos[0] < eps_ && globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - 0.5 * cellSizeY_ - eps_;
+    }
+
     Scalar eps_;
     Scalar inletVelocity_;
     TimeLoopPtr timeLoop_;
+    Scalar cellSizeY_;
 };
 } //end namespace
 

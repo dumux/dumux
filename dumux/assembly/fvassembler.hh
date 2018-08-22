@@ -72,6 +72,7 @@ public:
 
     using ResidualType = SolutionVector;
 
+
     /*!
      * \brief The constructor for stationary problems
      * \note the grid variables might be temporarily changed during assembly (if caching is enabled)

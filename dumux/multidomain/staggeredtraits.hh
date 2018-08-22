@@ -131,7 +131,6 @@ private:
                                                  typename GET_PROP_TYPE(SubDomainTypeTag<id>, JacobianMatrix)>;
 
 public:
-
     //! the scalar type
     using Scalar = typename makeFromIndexedType<std::common_type_t, SubDomainScalar, Indices>::type;
 

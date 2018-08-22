@@ -31,6 +31,8 @@
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include <dumux/discretization/methods.hh>
 
+#include <dumux/assembly/simpleassemblystructs.hh>
+
 namespace Dumux {
 
 // forward declaration
@@ -82,6 +84,12 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     static constexpr auto cellCenterIdx = FVGridGeometry::cellCenterIdx();
     static constexpr auto faceIdx = FVGridGeometry::faceIdx();
 
+    using SimpleMomentumBalanceSummands = typename GET_PROP_TYPE(TypeTag, SimpleMomentumBalanceSummands);
+
+    enum {
+        pressureIdx = Indices::pressureIdx
+    };
+
 public:
 
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
@@ -95,6 +103,7 @@ public:
     */
     template<class UpwindTerm>
     static Scalar advectiveFluxForCellCenter(const Problem& problem,
+                                             const Element& element,
                                              const ElementVolumeVariables& elemVolVars,
                                              const ElementFaceVariables& elemFaceVars,
                                              const SubControlVolumeFace &scvf,
@@ -110,9 +119,16 @@ public:
         const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
         const auto& downstreamVolVars = insideIsUpstream ? outsideVolVars : insideVolVars;
 
-        const Scalar flux = (upWindWeight * upwindTerm(upstreamVolVars) +
+        Scalar flux = (upWindWeight * upwindTerm(upstreamVolVars) +
                             (1.0 - upWindWeight) * upwindTerm(downstreamVolVars))
-                            * velocity * scvf.area() * scvf.directionSign();
+                            * scvf.area() * scvf.directionSign();
+
+        if (scvf.boundary()){
+            const auto bcTypes = problem.boundaryTypes(element, scvf);
+            if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex()))){
+                flux *= velocity;
+            }
+        }
 
         return flux * extrusionFactor_(elemVolVars, scvf);
     }
@@ -145,7 +161,7 @@ public:
 
         // Call the generic flux function.
         CellCenterPrimaryVariables result(0.0);
-        result[Indices::conti0EqIdx - ModelTraits::dim()] = advectiveFluxForCellCenter(problem, elemVolVars, elemFaceVars, scvf, upwindTerm);
+        result[Indices::conti0EqIdx - ModelTraits::dim()] = advectiveFluxForCellCenter(problem, element, elemVolVars, elemFaceVars, scvf, upwindTerm);
 
         return result;
     }
@@ -153,15 +169,16 @@ public:
     /*!
     * \brief Returns the momentum flux over all staggered faces.
     */
-    FacePrimaryVariables computeMomentumFlux(const Problem& problem,
-                                             const Element& element,
-                                             const SubControlVolumeFace& scvf,
-                                             const FVElementGeometry& fvGeometry,
-                                             const ElementVolumeVariables& elemVolVars,
-                                             const ElementFaceVariables& elemFaceVars)
+    void computeMomentumFlux(const Problem& problem,
+                             const Element& element,
+                             const SubControlVolumeFace& scvf,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const ElementFaceVariables& elemFaceVars,
+                             SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands)
     {
-        return computeFrontalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars) +
-               computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
+        computeFrontalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, simpleMomentumBalanceSummands);
+        computeLateralMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, simpleMomentumBalanceSummands);
     }
 
     /*!
@@ -181,15 +198,14 @@ public:
     *                   scvf
     * \endverbatim
     */
-    FacePrimaryVariables computeFrontalMomentumFlux(const Problem& problem,
-                                                    const Element& element,
-                                                    const SubControlVolumeFace& scvf,
-                                                    const FVElementGeometry& fvGeometry,
-                                                    const ElementVolumeVariables& elemVolVars,
-                                                    const ElementFaceVariables& elemFaceVars)
+    void computeFrontalMomentumFlux(const Problem& problem,
+                                    const Element& element,
+                                    const SubControlVolumeFace& scvf,
+                                    const FVElementGeometry& fvGeometry,
+                                    const ElementVolumeVariables& elemVolVars,
+                                    const ElementFaceVariables& elemFaceVars,
+                                    SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands)
     {
-        FacePrimaryVariables frontalFlux(0.0);
-
         // The velocities of the dof at interest and the one of the opposite scvf.
         const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
         const Scalar velocityOpposite = elemFaceVars[scvf].velocityOpposite();
@@ -204,57 +220,99 @@ public:
             // Get the average velocity at the center of the element (i.e. the location of the staggered face).
             const Scalar transportingVelocity = (velocitySelf + velocityOpposite) * 0.5;
 
+            //upwinding
+            static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
+
             // Check if the the velocity of the dof at interest lies up- or downstream w.r.t. to the transporting velocity.
             const bool selfIsUpstream = scvf.directionSign() != sign(transportingVelocity);
 
-            // Lamba function to evaluate the transported momentum, regarding an user-specified upwind weight.
-            auto computeMomentum = [&insideVolVars, &problem](const Scalar upstreamVelocity, const Scalar downstreamVelocity)
-            {
-                static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
-                return (upwindWeight * upstreamVelocity + (1.0 - upwindWeight) * downstreamVelocity) * insideVolVars.density();
-            };
+            Scalar selfUpwindFactor;
+            Scalar oppositeUpwindFactor;
 
+            if (selfIsUpstream){
+                selfUpwindFactor = upwindWeight;
+                oppositeUpwindFactor = (1.0 - upwindWeight);
+            }
+            else {
+                selfUpwindFactor = (1.0 - upwindWeight);
+                oppositeUpwindFactor = upwindWeight;
+            }
 
-            // Get the momentum that is advectively transported and account for the flow direction.
-            const Scalar momentum = selfIsUpstream ? computeMomentum(velocitySelf, velocityOpposite)
-                                                   : computeMomentum(velocityOpposite, velocitySelf);
-
-            // Account for the orientation of the staggered face's normal outer normal vector
+            // self
+            // * scvf.directionSign() accounts for the orientation of the staggered face's normal outer normal vector
             // (pointing in opposite direction of the scvf's one).
-            frontalFlux += transportingVelocity * momentum * -1.0 * scvf.directionSign();
+            // "* scvf.area()" accounts for the staggered face's area. For rectangular elements, this equals the area // of the scvf our velocity dof of interest lives on.
+            if (scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(Indices::velocity(scvf.directionIndex()))){
+                simpleMomentumBalanceSummands.RHS -= transportingVelocity * insideVolVars.density() * -1.0 * scvf.directionSign() * scvf.area() * insideVolVars.extrusionFactor() * selfUpwindFactor * velocitySelf;
+            }
+            else {
+                simpleMomentumBalanceSummands.selfCoefficient += transportingVelocity * insideVolVars.density() * -1.0 * scvf.directionSign() * scvf.area() * insideVolVars.extrusionFactor() *  selfUpwindFactor;
+            }
+
+            // opposite
+            const auto eIdx = scvf.insideScvIdx();
+            const auto opposingFace = fvGeometry.scvf(eIdx, scvf.localIdxOpposingFace());
+
+            if (opposingFace.boundary() && problem.boundaryTypes(element, opposingFace).isDirichlet(Indices::velocity(scvf.directionIndex())))
+            {
+                simpleMomentumBalanceSummands.RHS -= transportingVelocity * insideVolVars.density() * -1.0 * scvf.directionSign() * scvf.area() * insideVolVars.extrusionFactor() * oppositeUpwindFactor * velocityOpposite;
+            }
+            else {
+                simpleMomentumBalanceSummands.oppositeCoefficient += transportingVelocity *  insideVolVars.density() * -1.0 * scvf.directionSign() * scvf.area() * insideVolVars.extrusionFactor() * oppositeUpwindFactor;
+            }
         }
 
         // Diffusive flux.
         // The velocity gradient already accounts for the orientation
         // of the staggered face's outer normal vector.
-        const Scalar gradV = (velocityOpposite - velocitySelf) / scvf.selfToOppositeDistance();
-
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
         const Scalar factor = enableUnsymmetrizedVelocityGradient ? 1.0 : 2.0;
-        frontalFlux -= factor * insideVolVars.effectiveViscosity() * gradV;
+
+        if(scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(Indices::velocity(scvf.directionIndex()))){
+            simpleMomentumBalanceSummands.RHS -= factor * insideVolVars.effectiveViscosity() * scvf.area() * insideVolVars.extrusionFactor() * velocitySelf / scvf.selfToOppositeDistance();
+        }
+        else {
+            simpleMomentumBalanceSummands.selfCoefficient += factor * insideVolVars.effectiveViscosity() * scvf.area() * insideVolVars.extrusionFactor() / scvf.selfToOppositeDistance();
+        }
+
+        const auto eIdx = scvf.insideScvIdx();
+        const auto opposingFace = fvGeometry.scvf(eIdx, scvf.localIdxOpposingFace());
+
+        if(opposingFace.boundary() && problem.boundaryTypes(element, opposingFace).isDirichlet(Indices::velocity(scvf.directionIndex()))){
+            simpleMomentumBalanceSummands.RHS += factor * insideVolVars.effectiveViscosity() * scvf.area() * insideVolVars.extrusionFactor() * velocityOpposite / scvf.selfToOppositeDistance();
+        }
+        else {
+            simpleMomentumBalanceSummands.oppositeCoefficient -= factor * insideVolVars.effectiveViscosity() * scvf.area() * insideVolVars.extrusionFactor() / scvf.selfToOppositeDistance();
+        }
 
         // The pressure term.
+        // Account for the orientation of the staggered face's normal outer normal vector
+        // (pointing in opposite direction of the scvf's one).
+        const auto& fixedPressureScvsIndexSet = problem.fixedPressureScvsIndexSet();
+
+        const auto& it = std::find(fixedPressureScvsIndexSet.begin(), fixedPressureScvsIndexSet.end(), scvf.insideScvIdx());
+        if(it != fixedPressureScvsIndexSet.end() /*scvf.insideScvIdx() is in fixedPressureScvsIndexSet*/)
+        {
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            simpleMomentumBalanceSummands.RHS -= -1.0 * scvf.directionSign() * scvf.area() * insideVolVars.extrusionFactor() * problem.dirichletAtPos(insideScv.center())[pressureIdx];
+        }
+        else {
+            simpleMomentumBalanceSummands.pressureCoefficient += -1.0 * scvf.directionSign() * scvf.area() * insideVolVars.extrusionFactor();
+        }
+
         // If specified, the pressure can be normalized using the initial value on the scfv of interest.
         // The scvf is used to normalize by the same value from the left and right side.
         // Can potentially help to improve the condition number of the system matrix.
-        const Scalar pressure = normalizePressure ?
-                                insideVolVars.pressure() - problem.initial(scvf)[Indices::pressureIdx]
-                              : insideVolVars.pressure();
-
-        // Account for the orientation of the staggered face's normal outer normal vector
-        // (pointing in opposite direction of the scvf's one).
-        frontalFlux += pressure * -1.0 * scvf.directionSign();
+        if (normalizePressure){
+            simpleMomentumBalanceSummands.RHS -= problem.initial(scvf)[Indices::pressureIdx] * scvf.directionSign() * scvf.area() * insideVolVars.extrusionFactor();
+        }
 
         // Handle inflow or outflow conditions.
         // Treat the staggered half-volume adjacent to the boundary as if it was on the opposite side of the boundary.
         // The respective face's outer normal vector will point in the same direction as the scvf's one.
         if(scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(Indices::pressureIdx))
-            frontalFlux += inflowOutflowBoundaryFlux_(problem, element, scvf, elemVolVars, elemFaceVars);
-
-        // Account for the staggered face's area. For rectangular elements, this equals the area of the scvf
-        // our velocity dof of interest lives on.
-        return frontalFlux * scvf.area() * insideVolVars.extrusionFactor();
+            inflowOutflowBoundaryFlux_(problem, element, scvf, elemVolVars, elemFaceVars, simpleMomentumBalanceSummands);
    }
 
     /*!
@@ -274,14 +332,14 @@ public:
     *                 scvf
     * \endverbatim
     */
-    FacePrimaryVariables computeLateralMomentumFlux(const Problem& problem,
-                                                    const Element& element,
-                                                    const SubControlVolumeFace& scvf,
-                                                    const FVElementGeometry& fvGeometry,
-                                                    const ElementVolumeVariables& elemVolVars,
-                                                    const ElementFaceVariables& elemFaceVars)
+    void computeLateralMomentumFlux(const Problem& problem,
+                                    const Element& element,
+                                    const SubControlVolumeFace& scvf,
+                                    const FVElementGeometry& fvGeometry,
+                                    const ElementVolumeVariables& elemVolVars,
+                                    const ElementFaceVariables& elemFaceVars,
+                                    SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands)
     {
-        FacePrimaryVariables normalFlux(0.0);
         auto& faceVars = elemFaceVars[scvf];
         const int numSubFaces = scvf.pairData().size();
 
@@ -314,7 +372,7 @@ public:
                 // Handle Neumann boundary conditions. No further calculations are then required for the given sub face.
                 if(bcTypes.isNeumann(Indices::velocity(scvf.directionIndex())))
                 {
-                    normalFlux += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, localSubFace)[Indices::velocity(scvf.directionIndex())]
+                    simpleMomentumBalanceSummands.RHS -= problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, localSubFace)[Indices::velocity(scvf.directionIndex())]
                                                   * elemVolVars[normalFace.insideScvIdx()].extrusionFactor() * normalFace.area() * 0.5;
                     continue;
                 }
@@ -322,7 +380,7 @@ public:
                 // Handle wall-function fluxes (only required for RANS models)
                 if(problem.useWallFunction(element, localSubFace, Indices::velocity(scvf.directionIndex())))
                 {
-                    normalFlux += problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, localSubFace)[Indices::velocity(scvf.directionIndex())]
+                    simpleMomentumBalanceSummands.RHS -= problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, localSubFace)[Indices::velocity(scvf.directionIndex())]
                                                        * elemVolVars[normalFace.insideScvIdx()].extrusionFactor() * normalFace.area() * 0.5;
                     continue;
                 }
@@ -330,11 +388,10 @@ public:
 
             // If there is no symmetry or Neumann boundary condition for the given sub face, proceed to calculate the tangential momentum flux.
             if(enableInertiaTerms)
-                normalFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, bcTypes);
+                computeAdvectivePartOfLateralMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, bcTypes, simpleMomentumBalanceSummands, fvGeometry);
 
-            normalFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, bcTypes);
+            computeDiffusivePartOfLateralMomentumFlux_(problem, element, scvf, fvGeometry, normalFace, elemVolVars, faceVars, localSubFaceIdx, bcTypes, simpleMomentumBalanceSummands);
         }
-        return normalFlux;
     }
 
 private:
@@ -360,66 +417,85 @@ private:
     *                 scvf
     * \endverbatim
     */
-    FacePrimaryVariables computeAdvectivePartOfLateralMomentumFlux_(const Problem& problem,
-                                                                    const Element& element,
-                                                                    const SubControlVolumeFace& scvf,
-                                                                    const SubControlVolumeFace& normalFace,
-                                                                    const ElementVolumeVariables& elemVolVars,
-                                                                    const FaceVariables& faceVars,
-                                                                    const int localSubFaceIdx,
-                                                                    const BoundaryTypes& bcTypes)
+    void computeAdvectivePartOfLateralMomentumFlux_(const Problem& problem,
+                                                    const Element& element,
+                                                    const SubControlVolumeFace& scvf,
+                                                    const SubControlVolumeFace& normalFace,
+                                                    const ElementVolumeVariables& elemVolVars,
+                                                    const FaceVariables& faceVars,
+                                                    const int localSubFaceIdx,
+                                                    const BoundaryTypes& bcTypes,
+                                                    SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands,
+                                                    const FVElementGeometry& fvGeometry)
     {
         // Get the transporting velocity, located at the scvf perpendicular to the current scvf where the dof
         // of interest is located.
         const Scalar transportingVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
 
-        // Check whether the own or the neighboring element is upstream.
-        const bool ownElementIsUpstream = ( normalFace.directionSign() == sign(transportingVelocity) );
-
-        // Get the velocities at the current (own) scvf and at the parallel one at the neighboring scvf.
-        const Scalar velocitySelf = faceVars.velocitySelf();
-
-        // Lambda to conveniently get the outer parallel velocity for normal faces that are on the boundary
-        // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
-        auto getParallelVelocityFromBoundary = [&]()
-        {
-            const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
-
-            // Check if we have a Beavers-Joseph-Saffman condition.
-            // If yes, the parallel velocity at the boundary is calculated accordingly.
-            if (bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
-                return problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, velocitySelf);
-            return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
-        };
-
-        const Scalar velocityParallel = scvf.hasParallelNeighbor(localSubFaceIdx)
-                                        ? faceVars.velocityParallel(localSubFaceIdx)
-                                        : getParallelVelocityFromBoundary();
-
         // Get the volume variables of the own and the neighboring element
         const auto& insideVolVars = elemVolVars[normalFace.insideScvIdx()];
         const auto& outsideVolVars = elemVolVars[normalFace.outsideScvIdx()];
 
-        // Lamba function to evaluate the transported momentum, regarding an user-specified upwind weight.
-        auto computeMomentum = [&problem](const VolumeVariables& upstreamVolVars,
-                                  const VolumeVariables& downstreamVolVars,
-                                  const Scalar upstreamVelocity,
-                                  const Scalar downstreamVelocity)
-        {
-            static const Scalar upWindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
-            const Scalar density = upWindWeight * upstreamVolVars.density() + (1.0 - upWindWeight) * downstreamVolVars.density();
-            const Scalar transportedVelocity =  upWindWeight * upstreamVelocity + (1.0 - upWindWeight) * downstreamVelocity;
-            return transportedVelocity * density;
-        };
+        //upwinding
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(problem.paramGroup(), "Implicit.UpwindWeight");
 
-        // Get the momentum that is advectively transported and account for the flow direction.
-        const Scalar momentum = ownElementIsUpstream ?
-                                computeMomentum(insideVolVars, outsideVolVars, velocitySelf, velocityParallel)
-                              : computeMomentum(outsideVolVars, insideVolVars, velocityParallel, velocitySelf);
+        // Check whether the own or the neighboring element is upstream.
+        const bool ownElementIsUpstream = ( normalFace.directionSign() == sign(transportingVelocity) );
 
+        Scalar selfUpwindFactor;
+        Scalar parallelUpwindFactor;
+
+        if (ownElementIsUpstream) {
+            selfUpwindFactor = upwindWeight;
+            parallelUpwindFactor = 1.0 - upwindWeight;
+        }
+        else {
+            selfUpwindFactor = 1.0 - upwindWeight;
+            parallelUpwindFactor = upwindWeight;
+        }
+
+        const Scalar density = selfUpwindFactor * insideVolVars.density() + parallelUpwindFactor * outsideVolVars.density();
+
+        //self
         // Account for the orientation of the staggered normal face's outer normal vector
         // and its area (0.5 of the coinciding scfv).
-        return transportingVelocity * momentum * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);
+        if(scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(Indices::velocity(scvf.directionIndex()))){
+            simpleMomentumBalanceSummands.RHS -= transportingVelocity * density * normalFace.directionSign() * normalFace.area()  * 0.5 * extrusionFactor_(elemVolVars, normalFace) * faceVars.velocitySelf() * selfUpwindFactor;
+        }
+        else {
+            simpleMomentumBalanceSummands.selfCoefficient += transportingVelocity * density * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace) * selfUpwindFactor;
+        }
+
+        //parallel
+        if(scvf.hasParallelNeighbor(localSubFaceIdx)){
+            const auto eIdx = normalFace.outsideScvIdx();
+            const auto parallelFace = fvGeometry.scvf(eIdx, scvf.localFaceIdx());
+            if (parallelFace.boundary() && problem.boundaryTypes(element, parallelFace).isDirichlet(Indices::velocity(scvf.directionIndex()))) {
+                simpleMomentumBalanceSummands.RHS -= transportingVelocity * density * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace) * faceVars.velocityParallel(localSubFaceIdx) * parallelUpwindFactor;
+            }
+            else {
+                simpleMomentumBalanceSummands.parallelCoefficients[localSubFaceIdx] += transportingVelocity * density * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace) * parallelUpwindFactor;
+            }
+        }
+        //treat boundary
+        else{
+            // Lambda to conveniently get the outer parallel velocity for normal faces that are on the boundary
+            // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
+            auto getParallelVelocityFromBoundary = [&]()
+            {
+                const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
+
+                // Check if we have a Beavers-Joseph-Saffman condition.
+                // If yes, the parallel velocity at the boundary is calculated accordingly.
+                if (bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
+                    return problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, faceVars.velocitySelf());
+                return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
+            };
+
+            const Scalar velocityParallel = getParallelVelocityFromBoundary();
+
+            simpleMomentumBalanceSummands.RHS -= transportingVelocity * density * velocityParallel * normalFace.directionSign() * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace) * parallelUpwindFactor;
+        }
     }
 
     /*!
@@ -444,17 +520,17 @@ private:
     *                                              -- elements
     * \endverbatim
     */
-    FacePrimaryVariables computeDiffusivePartOfLateralMomentumFlux_(const Problem& problem,
-                                                                    const Element& element,
-                                                                    const SubControlVolumeFace& scvf,
-                                                                    const SubControlVolumeFace& normalFace,
-                                                                    const ElementVolumeVariables& elemVolVars,
-                                                                    const FaceVariables& faceVars,
-                                                                    const int localSubFaceIdx,
-                                                                    const BoundaryTypes& bcTypes)
+    void computeDiffusivePartOfLateralMomentumFlux_(const Problem& problem,
+                                                    const Element& element,
+                                                    const SubControlVolumeFace& scvf,
+                                                    const FVElementGeometry& fvGeometry,
+                                                    const SubControlVolumeFace& normalFace,
+                                                    const ElementVolumeVariables& elemVolVars,
+                                                    const FaceVariables& faceVars,
+                                                    const int localSubFaceIdx,
+                                                    const BoundaryTypes& bcTypes,
+                                                    SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands)
     {
-        FacePrimaryVariables normalDiffusiveFlux(0.0);
-
         static const bool enableUnsymmetrizedVelocityGradient
             = getParamFromGroup<bool>(problem.paramGroup(), "FreeFlow.EnableUnsymmetrizedVelocityGradient", false);
 
@@ -475,61 +551,78 @@ private:
             // thus no further calculations are required.
             if (!scvf.boundary())
             {
-                // For the normal gradient, get the velocities perpendicular to the velocity at the current scvf.
-                // The inner one is located at staggered face within the own element,
-                // the outer one at the respective staggered face of the element on the other side of the
-                // current scvf.
-                const Scalar innerNormalVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
-                const Scalar outerNormalVelocity = faceVars.velocityNormalOutside(localSubFaceIdx);
-
-                // Calculate the velocity gradient in positive coordinate direction.
-                const Scalar normalDeltaV = scvf.normalInPosCoordDir()
-                                            ? (outerNormalVelocity - innerNormalVelocity)
-                                            : (innerNormalVelocity - outerNormalVelocity);
-
-                const Scalar normalGradient = normalDeltaV / scvf.pairData(localSubFaceIdx).normalDistance;
-
+                //normal gradient
                 // Account for the orientation of the staggered normal face's outer normal vector.
-                normalDiffusiveFlux -= muAvg * normalGradient * normalFace.directionSign();
+                // Account for the area of the staggered normal face (0.5 of the coinciding scfv)
+                if (normalFace.boundary() && problem.boundaryTypes(element, normalFace).isDirichlet(Indices::velocity(scvf.directionIndex()))){
+                    const auto innerNormalVelocity =  faceVars.velocityNormalInside(localSubFaceIdx);
+                    simpleMomentumBalanceSummands.RHS -= scvf.directionSign() * muAvg * normalFace.directionSign() *  extrusionFactor_(elemVolVars, normalFace) * normalFace.area() * 0.5 * innerNormalVelocity / scvf.pairData(localSubFaceIdx).normalDistance;
+                }
+                else{
+                    simpleMomentumBalanceSummands.innerNormalCoefficients[localSubFaceIdx] += scvf.directionSign() * muAvg * normalFace.directionSign() * extrusionFactor_(elemVolVars, normalFace) * normalFace.area() * 0.5 / scvf.pairData(localSubFaceIdx).normalDistance;
+                }
+
+                const auto outerNormalFace = fvGeometry.scvf(scvf.outsideScvIdx(), normalFace.localFaceIdx());
+
+                if(outerNormalFace.boundary() && problem.boundaryTypes(element, outerNormalFace).isDirichlet(Indices::velocity(scvf.directionIndex()))){
+                    const auto outerNormalVelocity =  faceVars.velocityNormalOutside(localSubFaceIdx);
+                    simpleMomentumBalanceSummands.RHS += scvf.directionSign() * muAvg * normalFace.directionSign() * extrusionFactor_(elemVolVars, normalFace) * normalFace.area() * 0.5 * outerNormalVelocity / scvf.pairData(localSubFaceIdx).normalDistance;
+                }
+                else{
+                    simpleMomentumBalanceSummands.outerNormalCoefficients[localSubFaceIdx] -= scvf.directionSign() * muAvg * normalFace.directionSign() * extrusionFactor_(elemVolVars, normalFace) * normalFace.area() * 0.5 / scvf.pairData(localSubFaceIdx).normalDistance;
+                }
             }
         }
 
-        // For the parallel derivative, get the velocities at the current (own) scvf
-        // and at the parallel one at the neighboring scvf.
-        const Scalar innerParallelVelocity = faceVars.velocitySelf();
+        //parallel gradient
+        if (!(normalFace.boundary() && problem.boundaryTypes(element, normalFace).isOutflow(Indices::velocity(scvf.directionIndex())))){
+            const auto innerParallelVelocity = faceVars.velocitySelf();
+            // Account for the area of the staggered normal face (0.5 of the coinciding scfv)
+            if (scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(Indices::velocity(scvf.directionIndex()))){
+                simpleMomentumBalanceSummands.RHS -= muAvg * extrusionFactor_(elemVolVars, normalFace) * normalFace.area() * 0.5 * innerParallelVelocity/ scvf.pairData(localSubFaceIdx).parallelDistance;
+            }
+            else{
+                simpleMomentumBalanceSummands.selfCoefficient += muAvg * extrusionFactor_(elemVolVars, normalFace) * normalFace.area() * 0.5/ scvf.pairData(localSubFaceIdx).parallelDistance;
+            }
 
-        // Lambda to conveniently get the outer parallel velocity for normal faces that are on the boundary
-        // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
-        auto getParallelVelocityFromBoundary = [&]()
-        {
-            const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
-
-            // Check if we have a Beavers-Joseph-Saffman condition.
-            // If yes, the parallel velocity at the boundary is calculated accordingly.
-            if(bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
-                return problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, innerParallelVelocity);
-
-            else if(bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
-                return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
-
-            //bcTypes.isDirichlet(Indices::pressureIdx) is assumed to be true now
+            if(scvf.hasParallelNeighbor(localSubFaceIdx))
+            {
+                const auto parallelFace = fvGeometry.scvf(normalFace.outsideScvIdx(), scvf.localFaceIdx());
+                if (parallelFace.boundary() && problem.boundaryTypes(element, parallelFace).isDirichlet(Indices::velocity(scvf.directionIndex()))){
+                    const auto outerParallelVelocity = faceVars.velocityParallel(localSubFaceIdx);
+                    simpleMomentumBalanceSummands.RHS += muAvg * extrusionFactor_(elemVolVars, normalFace) * normalFace.area() * 0.5 * outerParallelVelocity/ scvf.pairData(localSubFaceIdx).parallelDistance;
+                }
+                else{
+                    simpleMomentumBalanceSummands.parallelCoefficients[localSubFaceIdx] -= muAvg * extrusionFactor_(elemVolVars, normalFace) * normalFace.area() * 0.5/ scvf.pairData(localSubFaceIdx).parallelDistance;
+                }
+            }
             else
-                return innerParallelVelocity;
-        };
+            {
+                // Lambda to conveniently get the outer parallel velocity for normal faces that are on the boundary
+                // and therefore have no neighbor. Calls the problem to retrieve a fixed value set on the boundary.
+                auto getParallelVelocityFromBoundary = [&]()
+                {
+                    const auto ghostFace = makeParallelGhostFace_(scvf, localSubFaceIdx);
 
-        const Scalar outerParallelVelocity = scvf.hasParallelNeighbor(localSubFaceIdx)
-                                             ? faceVars.velocityParallel(localSubFaceIdx)
-                                             : getParallelVelocityFromBoundary();
+                    // Check if we have a Beavers-Joseph-Saffman condition.
+                    // If yes, the parallel velocity at the boundary is calculated accordingly.
+                    if(bcTypes.isBJS(Indices::velocity(scvf.directionIndex())))
+                        return problem.bjsVelocity(scvf, normalFace, localSubFaceIdx, innerParallelVelocity);
 
-        // The velocity gradient already accounts for the orientation
-        // of the staggered face's outer normal vector.
-        const Scalar parallelGradient = (outerParallelVelocity - innerParallelVelocity)
-                                        / scvf.pairData(localSubFaceIdx).parallelDistance;
+                    else if(bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
+                        return problem.dirichlet(element, ghostFace)[Indices::velocity(scvf.directionIndex())];
 
-        normalDiffusiveFlux -= muAvg * parallelGradient;
+                    //bcTypes.isDirichlet(Indices::pressureIdx) is assumed to be true now
+                    else
+                        return innerParallelVelocity;
+                };
 
-        // Account for the area of the staggered normal face (0.5 of the coinciding scfv).
-        return normalDiffusiveFlux * normalFace.area() * 0.5 * extrusionFactor_(elemVolVars, normalFace);
+                const Scalar outerParallelVelocity = getParallelVelocityFromBoundary();
+
+                // Account for the area of the staggered normal face (0.5 of the coinciding scfv)
+                simpleMomentumBalanceSummands.RHS += muAvg * outerParallelVelocity * extrusionFactor_(elemVolVars, normalFace) * normalFace.area() * 0.5/ scvf.pairData(localSubFaceIdx).parallelDistance;
+            }
+        }
     }
 
     /*!
@@ -548,24 +641,27 @@ private:
     *                                              // boundary
     * \endverbatim
     */
-    FacePrimaryVariables inflowOutflowBoundaryFlux_(const Problem& problem,
-                                                    const Element& element,
-                                                    const SubControlVolumeFace& scvf,
-                                                    const ElementVolumeVariables& elemVolVars,
-                                                    const ElementFaceVariables& elemFaceVars)
+    void inflowOutflowBoundaryFlux_(const Problem& problem,
+                                    const Element& element,
+                                    const SubControlVolumeFace& scvf,
+                                    const ElementVolumeVariables& elemVolVars,
+                                    const ElementFaceVariables& elemFaceVars,
+                                    SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands)
     {
         FacePrimaryVariables inOrOutflow(0.0);
+
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
         // Advective momentum flux.
         if(enableInertiaTerms)
         {
             const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
-            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
             const auto& upVolVars = (scvf.directionSign() == sign(velocitySelf)) ?
                                     insideVolVars : outsideVolVars;
 
-            inOrOutflow += velocitySelf * velocitySelf * upVolVars.density();
+            // "* scvf.directionSign()" is to account for the orientation of the face at the boundary
+            simpleMomentumBalanceSummands.selfCoefficient += velocitySelf * upVolVars.density() * scvf.directionSign() * scvf.area() * insideVolVars.extrusionFactor();
         }
 
         // Apply a pressure at the boundary.
@@ -573,10 +669,14 @@ private:
                                         ? (problem.dirichlet(element, scvf)[Indices::pressureIdx] -
                                            problem.initial(scvf)[Indices::pressureIdx])
                                         : problem.dirichlet(element, scvf)[Indices::pressureIdx];
-        inOrOutflow += boundaryPressure;
 
-        // Account for the orientation of the face at the boundary,
-        return inOrOutflow * scvf.directionSign();
+        // "* scvf.directionSign()" is to account for the orientation of the face at the boundary
+        simpleMomentumBalanceSummands.RHS -= boundaryPressure * scvf.directionSign() * scvf.area() * insideVolVars.extrusionFactor();
+
+        // contribution from grad v^T -> outflow straight out of pipe, assume linear interpolation of velocity,
+        simpleMomentumBalanceSummands.oppositeCoefficient += insideVolVars.viscosity() * scvf.area() * insideVolVars.extrusionFactor() * scvf.directionSign() / scvf.selfToOppositeDistance();
+
+        simpleMomentumBalanceSummands.selfCoefficient -= insideVolVars.viscosity() * scvf.area() * insideVolVars.extrusionFactor() * scvf.directionSign() / scvf.selfToOppositeDistance();
     }
 
 private:

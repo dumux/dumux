@@ -182,7 +182,6 @@ class StaggeredFVGridGeometry<GV, true, Traits>
     using ThisType = StaggeredFVGridGeometry<GV, true, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
     using IndexType = typename GV::IndexSet::IndexType;
-    using Element = typename GV::template Codim<0>::Entity;
 
     using IntersectionMapper = typename Traits::IntersectionMapper;
     using GeometryHelper = typename Traits::GeometryHelper;
@@ -200,6 +199,7 @@ public:
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
     //! export the grid view type
     using GridView = GV;
+    using Element = typename GV::template Codim<0>::Entity;
     //! export the dof type indices
     using DofTypeIndices = typename Traits::DofTypeIndices;
 
@@ -267,6 +267,7 @@ public:
         // clear containers (necessary after grid refinement)
         scvs_.clear();
         scvfs_.clear();
+        boundaryScvfs_.clear();
         scvfIndicesOfScv_.clear();
         intersectionMapper_.update();
 
@@ -279,6 +280,7 @@ public:
         // reserve memory
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvf);
+        boundaryScvfs_.resize(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
         localToGlobalScvfIndices_.resize(numScvs);
 
@@ -321,6 +323,13 @@ public:
                 // boundary sub control volume faces
                 else if (intersection.boundary())
                 {
+                    SubControlVolumeFace tmpScvf(intersection,
+                                        intersection.geometry(),
+                                        scvfIdx,
+                                        std::vector<IndexType>({eIdx, this->gridView().size(0) + numBoundaryScvf_}),
+                                        geometryHelper
+                                        );
+                    boundaryScvfs_[this->gridView().indexSet().subIndex(element, localFaceIndex, 1)] = tmpScvf;
                     scvfs_.emplace_back(intersection,
                                         intersection.geometry(),
                                         scvfIdx,
@@ -328,6 +337,10 @@ public:
                                         geometryHelper);
                     localToGlobalScvfIndices_[eIdx][localFaceIndex] = scvfIdx;
                     scvfsIndexSet.push_back(scvfIdx++);
+                    boundaryScvfsIndexSet_.push_back(this->gridView().indexSet().subIndex(element, localFaceIndex, 1));
+                    bool eIdxAlreadyInVector = (find(boundaryScvsIndexSet_.begin(), boundaryScvsIndexSet_.end(), eIdx) != boundaryScvsIndexSet_.end());
+                    if(eIdxAlreadyInVector == false)
+                        boundaryScvsIndexSet_.push_back(eIdx);
                 }
             }
 
@@ -351,10 +364,29 @@ public:
         return scvfs_[scvfIdx];
     }
 
+    //! Get a boundary sub control volume face with dof index
+    // At the boundary, the dofIdx is clearly connected with a scvf. In the inner of the domain, the dofIdx belongs to two different scvfs. ScvfIdx is not dofIdx, scvfIdx is different depending on what element the scvf is associated with.
+    const SubControlVolumeFace& boundaryScvf(IndexType scvfDofIdx) const
+    {
+        return boundaryScvfs_[scvfDofIdx];
+    }
+
     //! Get the sub control volume face indices of an scv by global index
     const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
     {
         return scvfIndicesOfScv_[scvIdx];
+    }
+
+    //! Get a vector of all dofIndices of the boundary scvfs
+    const std::vector<IndexType>& boundaryScvfsIndexSet() const
+    {
+        return boundaryScvfsIndexSet_;
+    }
+
+    //! Get a vector of all dofIndices of the boundary scvs
+    const std::vector<IndexType>& boundaryScvsIndexSet() const
+    {
+        return boundaryScvsIndexSet_;
     }
 
     IndexType localToGlobalScvfIndex(IndexType eIdx, IndexType localScvfIdx) const
@@ -406,8 +438,11 @@ private:
 
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
+    std::vector<SubControlVolumeFace> boundaryScvfs_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<std::vector<IndexType>> localToGlobalScvfIndices_;
+    std::vector<IndexType> boundaryScvfsIndexSet_;
+    std::vector<IndexType> boundaryScvsIndexSet_;
     IndexType numBoundaryScvf_;
 };
 
@@ -424,7 +459,6 @@ class StaggeredFVGridGeometry<GV, false, Traits>
     using ThisType = StaggeredFVGridGeometry<GV, false, Traits>;
     using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
     using IndexType = typename GV::IndexSet::IndexType;
-    using Element = typename GV::template Codim<0>::Entity;
 
     using IntersectionMapper = typename Traits::IntersectionMapper;
     using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
@@ -443,6 +477,7 @@ public:
     using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
     //! export the grid view type
     using GridView = GV;
+    using Element = typename GV::template Codim<0>::Entity;
     //! export the dof type indices
     using DofTypeIndices = typename Traits::DofTypeIndices;
 

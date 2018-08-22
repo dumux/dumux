@@ -28,6 +28,8 @@
 #include <dumux/common/timeloop.hh>
 #include <dumux/common/properties.hh>
 
+#include "simpleassemblystructs.hh"
+
 namespace Dumux {
 
 /*!
@@ -52,6 +54,7 @@ class StaggeredLocalResidual
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
 
     using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FaceResidual = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
@@ -64,6 +67,9 @@ public:
     using FaceResidualValue = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using ElementResidualVector = CellCenterResidualValue;
 
+    using SimpleMassBalanceSummands = typename GET_PROP_TYPE(TypeTag, SimpleMassBalanceSummands);
+    using SimpleMomentumBalanceSummands = typename GET_PROP_TYPE(TypeTag, SimpleMomentumBalanceSummands);
+
     //! the constructor
     StaggeredLocalResidual(const Problem* problem,
                            const TimeLoop* timeLoop = nullptr)
@@ -72,81 +78,79 @@ public:
     {}
 
     //! Convenience function to evaluate the flux and source terms for the cell center residual
-    CellCenterResidualValue evalFluxAndSourceForCellCenter(const Element& element,
+    void evalFluxAndSourceForCellCenter(const Element& element,
                                                            const FVElementGeometry& fvGeometry,
                                                            const ElementVolumeVariables& elemVolVars,
                                                            const ElementFaceVariables& elemFaceVars,
                                                            const ElementBoundaryTypes& bcTypes,
-                                                           const ElementFluxVariablesCache& elemFluxVarsCache) const
+                                                           const ElementFluxVariablesCache& elemFluxVarsCache,
+                                                           SimpleMassBalanceSummands& simpleMassBalanceSummands) const
     {
-        CellCenterResidualValue residual(0.0);
+        simpleMassBalanceSummands.setToZero(element, fvGeometry);
 
         // evaluate the source term
         for (auto&& scv : scvs(fvGeometry))
-            asImp().evalSourceForCellCenter(residual, this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, scv);
+            asImp().evalSourceForCellCenter(this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, scv, simpleMassBalanceSummands);
 
         // evaluate the flux term
         for (auto&& scvf : scvfs(fvGeometry))
-            asImp().evalFluxForCellCenter(residual, this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache, scvf);
-
-        return residual;
+            asImp().evalFluxForCellCenter(this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache, scvf, simpleMassBalanceSummands);
     }
 
     //! Evaluate the flux terms for a cell center residual
-    void evalFluxForCellCenter(CellCenterResidualValue& residual,
-                               const Problem& problem,
+    void evalFluxForCellCenter(const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
                                const ElementVolumeVariables& elemVolVars,
                                const ElementFaceVariables& elemFaceVars,
                                const ElementBoundaryTypes& bcTypes,
                                const ElementFluxVariablesCache& elemFluxVarsCache,
-                               const SubControlVolumeFace& scvf) const
+                               const SubControlVolumeFace& scvf,
+                               SimpleMassBalanceSummands& simpleMassBalanceSummands) const
     {
         if(!scvf.boundary())
-            residual += asImp_().computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+            simpleMassBalanceSummands.coefficients[scvf.localFaceIdx()] += asImp_().computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
     }
 
     //! Evaluate the source terms for a cell center residual
-    void evalSourceForCellCenter(CellCenterResidualValue& residual,
-                                 const Problem& problem,
+    void evalSourceForCellCenter(const Problem& problem,
                                  const Element& element,
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& curElemVolVars,
                                  const ElementFaceVariables& curElemFaceVars,
-                                 const SubControlVolume& scv) const
+                                 const SubControlVolume& scv,
+                                 SimpleMassBalanceSummands& simpleMassBalanceSummands) const
     {
             const auto curExtrusionFactor = curElemVolVars[scv].extrusionFactor();
 
             // subtract the source term from the local rate
             auto source = asImp_().computeSourceForCellCenter(problem, element, fvGeometry, curElemVolVars, curElemFaceVars, scv);
             source *= scv.volume()*curExtrusionFactor;
-            residual -= source;
+            simpleMassBalanceSummands.RHS += source;
     }
 
     //! Evaluate the storage terms for a cell center residual
-    CellCenterResidualValue evalStorageForCellCenter(const Element &element,
+    void evalStorageForCellCenter(const Element &element,
                                                      const FVElementGeometry& fvGeometry,
                                                      const ElementVolumeVariables& prevElemVolVars,
-                                                     const ElementVolumeVariables& curElemVolVars) const
+                                                     const ElementVolumeVariables& curElemVolVars,
+                                                     SimpleMassBalanceSummands& simpleMassBalanceSummands) const
     {
         assert(timeLoop_ && "no time loop set for storage term evaluation");
         CellCenterResidualValue storage(0.0);
 
         for (auto&& scv : scvs(fvGeometry))
-            asImp().evalStorageForCellCenter(storage, problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, scv);
-
-        return storage;
+            asImp().evalStorageForCellCenter(problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, scv, simpleMassBalanceSummands);
     }
 
     //! Evaluate the storage terms for a cell center residual
-    void evalStorageForCellCenter(CellCenterResidualValue& residual,
-                                  const Problem& problem,
+    void evalStorageForCellCenter(const Problem& problem,
                                   const Element &element,
                                   const FVElementGeometry& fvGeometry,
                                   const ElementVolumeVariables& prevElemVolVars,
                                   const ElementVolumeVariables& curElemVolVars,
-                                  const SubControlVolume& scv) const
+                                  const SubControlVolume& scv,
+                                  SimpleMassBalanceSummands& simpleMassBalanceSummands) const
     {
         CellCenterResidualValue storage(0.0);
         const auto& curVolVars = curElemVolVars[scv];
@@ -169,20 +173,20 @@ public:
         storage *= scv.volume();
         storage /= timeLoop_->timeStepSize();
 
-        residual += storage;
+        simpleMassBalanceSummands.RHS -= storage;
     }
 
     //! Evaluate the boundary conditions for a cell center residual
-    void evalBoundaryForCellCenter(CellCenterResidualValue& residual,
-                                   const Problem& problem,
+    void evalBoundaryForCellCenter(const Problem& problem,
                                    const Element& element,
                                    const FVElementGeometry& fvGeometry,
                                    const ElementVolumeVariables& elemVolVars,
                                    const ElementFaceVariables& elemFaceVars,
                                    const ElementBoundaryTypes& bcTypes,
-                                   const ElementFluxVariablesCache& elemFluxVarsCache) const
+                                   const ElementFluxVariablesCache& elemFluxVarsCache,
+                                   SimpleMassBalanceSummands& simpleMassBalanceSummands) const
     {
-        asImp_().evalBoundaryForCellCenter_(residual, problem, element, fvGeometry, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache);
+        asImp_().evalBoundaryForCellCenter_(problem, element, fvGeometry, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache, simpleMassBalanceSummands);
     }
 
     //! for compatibility with FVLocalAssemblerBase
@@ -207,44 +211,43 @@ public:
     // \{
 
     //! Convenience function to evaluate the flux and source terms for the face residual
-    FaceResidualValue evalFluxAndSourceForFace(const Element& element,
+    void evalFluxAndSourceForFace(const Element& element,
                                                const FVElementGeometry& fvGeometry,
                                                const ElementVolumeVariables& elemVolVars,
                                                const ElementFaceVariables& elemFaceVars,
                                                const ElementBoundaryTypes& bcTypes,
                                                const ElementFluxVariablesCache& elemFluxVarsCache,
-                                               const SubControlVolumeFace& scvf) const
+                                               const SubControlVolumeFace& scvf,
+                                               SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands) const
     {
-        FaceResidualValue residual(0.0);
-        asImp().evalSourceForFace(residual, this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, scvf);
-        asImp().evalFluxForFace(residual, this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache, scvf);
-
-        return residual;
+        simpleMomentumBalanceSummands.setToZero(scvf);
+        asImp().evalSourceForFace(this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, scvf, simpleMomentumBalanceSummands);
+        asImp().evalFluxForFace(this->problem(), element, fvGeometry, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache, scvf, simpleMomentumBalanceSummands);
     }
 
     //! Evaluate the flux terms for a face residual
-    void evalFluxForFace(FaceResidualValue& residual,
-                         const Problem& problem,
+    void evalFluxForFace(const Problem& problem,
                          const Element& element,
                          const FVElementGeometry& fvGeometry,
                          const ElementVolumeVariables& elemVolVars,
                          const ElementFaceVariables& elemFaceVars,
                          const ElementBoundaryTypes& bcTypes,
                          const ElementFluxVariablesCache& elemFluxVarsCache,
-                         const SubControlVolumeFace& scvf) const
+                         const SubControlVolumeFace& scvf,
+                         SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands) const
     {
         if(!scvf.boundary())
-            residual += asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
+            asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache, simpleMomentumBalanceSummands);
     }
 
     //! Evaluate the source terms for a face residual
-    void evalSourceForFace(FaceResidualValue& residual,
-                           const Problem& problem,
+    void evalSourceForFace(const Problem& problem,
                            const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const ElementVolumeVariables& elemVolVars,
                            const ElementFaceVariables& elemFaceVars,
-                           const SubControlVolumeFace& scvf) const
+                           const SubControlVolumeFace& scvf,
+                           SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands) const
     {
         // the source term:
         auto source = asImp_().computeSourceForFace(problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars);
@@ -253,7 +256,7 @@ public:
 
         // multiply by 0.5 because we only consider half of a staggered control volume here
         source *= 0.5*scv.volume()*extrusionFactor;
-        residual -= source;
+        simpleMomentumBalanceSummands.RHS += source;
     }
 
     //! Evaluate the storage terms for a face residual
@@ -263,54 +266,63 @@ public:
                                          const ElementVolumeVariables& curElemVolVars,
                                          const ElementFaceVariables& prevElemFaceVars,
                                          const ElementFaceVariables& curElemFaceVars,
-                                         const SubControlVolumeFace& scvf) const
+                                         const SubControlVolumeFace& scvf,
+                                         SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands) const
     {
         assert(timeLoop_ && "no time loop set for storage term evaluation");
         FaceResidualValue storage(0.0);
-        asImp().evalStorageForFace(storage, problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, scvf);
+        asImp().evalStorageForFace(problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, scvf, simpleMomentumBalanceSummands);
         return storage;
     }
 
     //! Evaluate the storage terms for a face residual
-    void evalStorageForFace(FaceResidualValue& residual,
-                            const Problem& problem,
+    void evalStorageForFace(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
                             const ElementVolumeVariables& prevElemVolVars,
                             const ElementVolumeVariables& curElemVolVars,
                             const ElementFaceVariables& prevElemFaceVars,
                             const ElementFaceVariables& curElemFaceVars,
-                            const SubControlVolumeFace& scvf) const
+                            const SubControlVolumeFace& scvf,
+                            SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands) const
     {
         FaceResidualValue storage(0.0);
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-        auto prevFaceStorage = asImp_().computeStorageForFace(problem, scvf, prevElemVolVars[scv], prevElemFaceVars);
-        auto curFaceStorage = asImp_().computeStorageForFace(problem, scvf, curElemVolVars[scv], curElemFaceVars);
-
-        storage = std::move(curFaceStorage);
-        storage -= std::move(prevFaceStorage);
-
+        auto prevFaceStorage = prevElemVolVars[scv].density() * prevElemFaceVars[scvf].velocitySelf();
         const auto extrusionFactor = curElemVolVars[scv].extrusionFactor();
 
+        simpleMomentumBalanceSummands.RHS = std::move(prevFaceStorage);
         // multiply by 0.5 because we only consider half of a staggered control volume here
-        storage *= 0.5*scv.volume()*extrusionFactor;
-        storage /= timeLoop_->timeStepSize();
+        simpleMomentumBalanceSummands.RHS *= (0.5*scv.volume()*extrusionFactor);
+        simpleMomentumBalanceSummands.RHS /= timeLoop_->timeStepSize();
 
-        residual += storage;
+        //compute contribution to selfCoefficient
+        if(scvf.boundary() && problem.boundaryTypes(element, scvf).isDirichlet(Indices::velocity(scvf.directionIndex()))){
+            auto curFaceStorage = - curElemVolVars[scv].density() * curElemFaceVars[scvf].velocitySelf();
+            simpleMomentumBalanceSummands.RHS = std::move(curFaceStorage);
+            simpleMomentumBalanceSummands.RHS *= (0.5*scv.volume()*extrusionFactor);
+            simpleMomentumBalanceSummands.RHS /= timeLoop_->timeStepSize();
+        }
+        else {
+            auto curFaceStorage = curElemVolVars[scv].density();
+            simpleMomentumBalanceSummands.selfCoefficient = std::move(curFaceStorage);
+            simpleMomentumBalanceSummands.selfCoefficient *= (0.5*scv.volume()*extrusionFactor);
+            simpleMomentumBalanceSummands.selfCoefficient /= timeLoop_->timeStepSize();
+        }
     }
 
     //! Evaluate the boundary conditions for a face residual
-    void evalBoundaryForFace(FaceResidualValue& residual,
-                             const Problem& problem,
+    void evalBoundaryForFace(const Problem& problem,
                              const Element& element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolVars,
                              const ElementFaceVariables& elemFaceVars,
                              const ElementBoundaryTypes& bcTypes,
                              const ElementFluxVariablesCache& elemFluxVarsCache,
-                             const SubControlVolumeFace& scvf) const
+                             const SubControlVolumeFace& scvf,
+                             SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands) const
     {
-        asImp_().evalBoundaryForFace_(residual, problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache);
+        asImp_().evalBoundaryForFace_(problem, element, fvGeometry, scvf, elemVolVars, elemFaceVars, bcTypes, elemFluxVarsCache, simpleMomentumBalanceSummands);
     }
 
     //! If no solution has been set, we treat the problem as stationary.

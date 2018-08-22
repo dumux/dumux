@@ -1,7 +1,7 @@
 [Grid]
 LowerLeft = -0.5 -0.5
 UpperRight = 2 1.5
-Cells = 50 50
+Cells = 20 20
 
 [Problem]
 Name = test_kovasznay # name passed to the output routines
@@ -13,8 +13,14 @@ LiquidDensity = 1
 LiquidKinematicViscosity = 0.025
 
 [ Newton ]
-MaxSteps = 10
+MaxSteps = 100
 MaxRelativeShift = 1e-5
 
 [Vtk]
 WriteFaceData = false
+
+[Algorithm]
+AlgorithmType = 2 #SIMPLER
+
+[Underrelaxation]
+HundredTimesVelocityUnderrelaxationFactor = 0.9

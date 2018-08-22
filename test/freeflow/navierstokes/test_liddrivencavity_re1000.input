@@ -6,7 +6,7 @@ TEnd = 50 # [s] set to 200 for reproducing Ghia et al. (1982)
 
 [Grid]
 UpperRight = 1 1
-Cells = 64 64 # set to 128 128 for reproducing Ghia et al. (1982)
+Cells = 20 20 # set to 128 128 for reproducing Ghia et al. (1982)
 
 [Problem]
 Name = test_liddrivencavity_re1000 # name passed to the output routines
@@ -18,8 +18,8 @@ LiquidDensity = 1
 LiquidKinematicViscosity = 1e-3
 
 [Newton]
-MaxSteps = 10
-MaxRelativeShift = 1e-8
+MaxSteps = 100
+MaxRelativeShift = 1e-10
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-8
@@ -29,3 +29,6 @@ WriteFaceData = false
 
 [Implicit]
 UpwindWeight = 0.5 # set to 0.5 for reproducing Ghia et al. (1982)
+
+#[LinearSolver]
+#Verbosity = 2

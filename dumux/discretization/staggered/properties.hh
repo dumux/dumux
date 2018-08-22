@@ -36,6 +36,7 @@
 
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
 #include <dumux/assembly/staggeredlocalresidual.hh>
+#include <dumux/assembly/simpleassemblystructs.hh>
 
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/staggered/gridvariables.hh>
@@ -180,6 +181,15 @@ public:
     // the jacobian matrix
     using type = typename Dune::MultiTypeBlockMatrix<RowCellCenter, RowFace>;
 };
+
+//! Set the SimpleMassBalanceSummands
+SET_TYPE_PROP(StaggeredModel, SimpleMassBalanceSummands, SimpleMassBalanceSummands<typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables), TypeTag>);
+
+//! Set the SimpleMomentumBalanceSummands
+SET_TYPE_PROP(StaggeredModel, SimpleMomentumBalanceSummands, SimpleMomentumBalanceSummands<typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables), TypeTag>);
+SET_TYPE_PROP(StaggeredModel,
+              SimpleMomentumBalanceSummandsVector,
+              std::vector<typename GET_PROP_TYPE(TypeTag, SimpleMomentumBalanceSummands)>);
 
 } // namespace Properties
 } // namespace Dumux

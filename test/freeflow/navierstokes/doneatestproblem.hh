@@ -228,13 +228,21 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 0.0;
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 0.0;
+        unsigned int initialConditionType = getParamFromGroup<Scalar>("", "InitialCondition.InitialConditionType");
+        if (initialConditionType == 0){
+            PrimaryVariables values;
+            values[Indices::pressureIdx] = 0.0;
+            values[Indices::velocityXIdx] = 0.0;
+            values[Indices::velocityYIdx] = 0.0;
 
-        return values;
+            return values;
+        }
+        else {//else if (initialConditionType == 1)
+            return analyticalSolution(globalPos);
+        }
     }
+
+
 
    /*!
      * \brief Returns the analytical solution for the pressure

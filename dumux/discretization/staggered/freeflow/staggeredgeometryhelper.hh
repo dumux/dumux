@@ -133,6 +133,15 @@ public:
         return intersection_.indexInInside();
     }
 
+    /*!
+     * \brief Returns the local index of the opposing face
+     */
+    int localIdxOpposingFace() const
+    {
+        const auto inIdx = intersection_.indexInInside();
+        return localOppositeIdx_(inIdx);
+    }
+
      /*!
      * \brief Returns the distance between dofSelf and dofOpposite
      */

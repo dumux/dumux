@@ -1,19 +1,20 @@
 [TimeLoop]
-DtInitial = 1 # [s]
+DtInitial = 5e-4 # [s]
 TEnd = 2 # [s]
 
 [Grid]
 UpperRight = 10 1
-Cells = 10 5
+Cells = 10 10
 
 [Problem]
-Name = test_channel_stokes # name passed to the output routines
+Name = test_channel_stokes_stationary # name passed to the output routines
 InletVelocity = 1
 EnableGravity = false
 
 [ Newton ]
-MaxSteps = 10
+MaxSteps = 150
 MaxRelativeShift = 1e-8
+TargetSteps = 100
 
 [Vtk]
 WriteFaceData = false
