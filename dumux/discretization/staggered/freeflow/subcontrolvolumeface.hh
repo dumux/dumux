@@ -83,6 +83,7 @@ public:
       boundary_(is.boundary()),
       dofIdx_(geometryHelper.dofIndex()),
       dofIdxOpposingFace_(geometryHelper.dofIndexOpposingFace()),
+      localIdxOpposingFace_(geometryHelper.localIdxOpposingFace()),
       selfToOppositeDistance_(geometryHelper.selfToOppositeDistance()),
       pairData_(geometryHelper.pairData()),
       localFaceIdx_(geometryHelper.localFaceIndex()),
@@ -191,6 +192,12 @@ public:
         return dofIdxOpposingFace_;
     }
 
+    //! The local index of the opposing face
+    GridIndexType localIdxOpposingFace() const
+    {
+        return localIdxOpposingFace_;
+    }
+
     //! The local index of this sub control volume face
     GridIndexType localFaceIdx() const
     {
@@ -260,6 +267,7 @@ private:
 
     int dofIdx_;
     int dofIdxOpposingFace_;
+    int localIdxOpposingFace_;
     Scalar selfToOppositeDistance_;
     std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_;
     int localFaceIdx_;

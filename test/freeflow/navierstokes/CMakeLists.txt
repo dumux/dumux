@@ -40,6 +40,31 @@ dune_add_test(NAME test_channel_stokes
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokes-00002.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokes")
 
+dune_add_test(NAME test_channel_stokes_stationary
+              SOURCES test_channel_stationary.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/channel-stokes-stationary.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokes_stationary-00002.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokes_stationary")
+
+dune_add_test(NAME test_channel_navierstokes_stationary
+              COMPILE_DEFINITIONS ENABLE_NAVIERSTOKES=1
+              SOURCES test_channel_stationary.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes_stationary")
+
+dune_add_test(NAME test_liddrivenchannel_navierstokes_stationary
+              COMPILE_DEFINITIONS ENABLE_NAVIERSTOKES=1
+              SOURCES test_liddrivenchannel_stationary.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_liddrivenchannel_navierstokes_stationary")
+
 add_executable(test_channel_stokesni EXCLUDE_FROM_ALL test_channel.cc)
 target_compile_definitions(test_channel_stokesni PUBLIC "NONISOTHERMAL=1")
 

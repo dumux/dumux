@@ -68,6 +68,14 @@ public:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using CouplingManager = typename ParentType::CouplingManager;
 
+    using CellCenterSolutionVector = typename GET_PROP_TYPE(TypeTag, CellCenterSolutionVector);
+    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+
+    using CCToCCMatrixBlock = typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockCCToCC;
+    using CCToFaceMatrixBlock = typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockCCToFace;
+    using FaceToCCMatrixBlock = typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockFaceToCC;
+    using FaceToFaceMatrixBlock = typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockFaceToFace;
+
     //! The constructor for stationary problems
     StaggeredFVAssembler(std::shared_ptr<const Problem> problem,
                          std::shared_ptr<const FVGridGeometry> fvGridGeometry,
@@ -96,7 +104,6 @@ public:
         this->couplingManager_->setSubProblems(std::make_tuple(problem, problem));
     }
 
-
     auto& gridVariables()
     { return ParentType::gridVariables(Dune::index_constant<0>()); }
 
@@ -106,6 +113,9 @@ public:
     //! The global finite volume geometry
     const FVGridGeometry& fvGridGeometry() const
     { return ParentType::fvGridGeometry(Dune::index_constant<0>()).actualfvGridGeometry(); }
+
+    const auto& problem() const
+    { return ParentType::problem(Dune::index_constant<0>()); }
 
 };
 

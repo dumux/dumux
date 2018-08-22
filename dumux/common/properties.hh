@@ -157,7 +157,10 @@ NEW_PROP_TAG(BaseEpsilon);                         //!< A base epsilon for numer
 NEW_PROP_TAG(FaceVariables);                       //!< Class containing local face-related data
 NEW_PROP_TAG(BoundaryValues);                      //!< Class containing local boundary data
 NEW_PROP_TAG(StaggeredFaceSolution);               //!< A vector containing the solution for a face (similar to ElementSolution)
-NEW_PROP_TAG(EnableGridFaceVariablesCache);      //!< Switch on/off caching of face variables
+NEW_PROP_TAG(EnableGridFaceVariablesCache);        //!< Switch on/off caching of face variables
+NEW_PROP_TAG(SimpleMassBalanceSummands);           //!< Transfer values from flux calculations etc. to coefficient matrix and RHS of SIMPLE - mass balance equation
+NEW_PROP_TAG(SimpleMomentumBalanceSummands);       //!< Transfer values from flux calculations etc. to coefficient matrix and RHS of SIMPLE - momentum balance equation
+NEW_PROP_TAG(SimpleMomentumBalanceSummandsVector);
 
 /////////////////////////////////////////////////////////////
 // Properties used by the mpnc model

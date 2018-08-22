@@ -4,7 +4,7 @@ TEnd = 1e8 # [s]
 
 [Grid]
 UpperRight = 10 1
-Cells = 100 50
+Cells = 10 5
 
 [Problem]
 Name = test_channel_stokesni_conduction # name passed to the output routines

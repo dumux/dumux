@@ -101,6 +101,12 @@ public:
     DoneaTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
+        using CellArray = std::array<unsigned int, dimWorld>;
+        const CellArray numCells = getParam<CellArray>("Grid.Cells");
+        cellSizeX_ = this->fvGridGeometry().bBoxMax()[0] / numCells[0];
+        cellSizeY_ = this->fvGridGeometry().bBoxMax()[1] / numCells[1];
+
+        kinematicViscosity_ = getParam<Scalar>("Component.LiquidKinematicViscosity", 1.0);
         printL2Error_ = getParam<bool>("Problem.PrintL2Error");
         createAnalyticalSolution_();
     }
@@ -152,13 +158,18 @@ public:
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
 
-        source[Indices::momentumXBalanceIdx] = (12.0-24.0*y) * x*x*x*x + (-24.0 + 48.0*y)* x*x*x
+        source[Indices::momentumXBalanceIdx] = kinematicViscosity_*(
+                                               (12.0-24.0*y) * x*x*x*x + (-24.0 + 48.0*y)* x*x*x
                                              + (-48.0*y + 72.0*y*y - 48.0*y*y*y + 12.0)* x*x
-                                             + (-2.0 + 24.0*y - 72.0*y*y + 48.0*y*y*y)*x
-                                             + 1.0 - 4.0*y + 12.0*y*y - 8.0*y*y*y;
-        source[Indices::momentumYBalanceIdx] = (8.0 - 48.0*y + 48.0*y*y)*x*x*x + (-12.0 + 72.0*y - 72.0*y*y)*x*x
+                                             + (24.0*y - 72.0*y*y + 48.0*y*y*y)*x
+                                             - 4.0*y + 12.0*y*y - 8.0*y*y*y
+                                               )
+                                             - 2.0 * x + 1.0;
+        source[Indices::momentumYBalanceIdx] = kinematicViscosity_*(
+                                               (8.0 - 48.0*y + 48.0*y*y)*x*x*x + (-12.0 + 72.0*y - 72.0*y*y)*x*x
                                              + (4.0 - 24.0*y + 48.0*y*y - 48.0*y*y*y + 24.0*y*y*y*y)*x - 12.0*y*y
-                                             + 24.0*y*y*y - 12.0*y*y*y*y;
+                                             + 24.0*y*y*y - 12.0*y*y*y*y
+                                               );
         return source;
     }
     // \}
@@ -180,7 +191,9 @@ public:
         // set Dirichlet values for the velocity and pressure everywhere
         values.setDirichlet(Indices::velocityXIdx);
         values.setDirichlet(Indices::velocityYIdx);
-        values.setDirichletCell(Indices::pressureIdx);
+
+        if (isLowerLeftCell_(globalPos))
+            values.setDirichletCell(Indices::pressureIdx);
 
         return values;
     }
@@ -228,13 +241,21 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables values;
-        values[Indices::pressureIdx] = 0.0;
-        values[Indices::velocityXIdx] = 0.0;
-        values[Indices::velocityYIdx] = 0.0;
+        unsigned int initialConditionType = getParamFromGroup<Scalar>("", "InitialCondition.InitialConditionType");
+        if (initialConditionType == 0){
+            PrimaryVariables values;
+            values[Indices::pressureIdx] = 0.0;
+            values[Indices::velocityXIdx] = 0.0;
+            values[Indices::velocityYIdx] = 0.0;
 
-        return values;
+            return values;
+        }
+        else {//else if (initialConditionType == 1)
+            return analyticalSolution(globalPos);
+        }
     }
+
+
 
    /*!
      * \brief Returns the analytical solution for the pressure
@@ -299,11 +320,19 @@ private:
         }
      }
 
+    bool isLowerLeftCell_(const GlobalPosition& globalPos) const
+    {
+        return globalPos[0] < (0.5*cellSizeX_ + eps_) && globalPos[1] < (0.5*cellSizeY_ + eps_);
+    }
+
     Scalar eps_;
     bool printL2Error_;
     std::vector<Scalar> analyticalPressure_;
     std::vector<VelocityVector> analyticalVelocity_;
     std::vector<VelocityVector> analyticalVelocityOnFace_;
+    Scalar kinematicViscosity_;
+    Scalar cellSizeX_;
+    Scalar cellSizeY_;
 };
 } //end namespace
 

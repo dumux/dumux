@@ -4,7 +4,7 @@ TEnd = 250 # [s]
 
 [Grid]
 UpperRight = 0.5 0.025
-Cells = 100 50
+Cells = 10 5
 
 [Problem]
 Name = test_channel_stokesni_convection # name passed to the output routines

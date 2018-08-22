@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 1 # [s]
+DtInitial = 1e-2 # [s]
 TEnd = 2 # [s]
 
 [Grid]
@@ -11,9 +11,27 @@ Name = test_channel_navierstokes # name passed to the output routines
 InletVelocity = 1000
 EnableGravity = false
 
+[Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 1
+
 [ Newton ]
-MaxSteps = 10
-MaxRelativeShift = 1e-5
+EnableShiftCriterion = false
+EnableSIMPLEAbsoluteResidualCriterion = true
+MaxSteps = 500
+MaxRelativeShift = 1e-8
+TargetSteps = 500
+MaxTimeStepDivisions = 0
 
 [Vtk]
 WriteFaceData = false
+
+[LinearSolver2]
+schurGMResRestart = 100
+schurResidualReduction = 1e-13
+schurVerbosity = 0
+schurMaxIter = 2000
+precVerbosityA = 0
+precVerbositySchurAppr = 0
+precMaxIter = 2000
+precResidReduction = 1e-13

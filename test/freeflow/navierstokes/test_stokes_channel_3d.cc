@@ -124,6 +124,7 @@ int main(int argc, char** argv) try
     SolutionVector x;
     x[cellCenterIdx].resize(numDofsCellCenter);
     x[faceIdx].resize(numDofsFace);
+    problem->applyInitialSolution(x);
 
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -144,9 +145,12 @@ int main(int argc, char** argv) try
     using LinearSolver = Dumux::UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
+    using LinearSolver2 = SchurComplementSolver<typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::GridView>;
+    auto linearSolver2 = std::make_shared<LinearSolver2>();
+
     // the non-linear solver
-    using NewtonSolver = Dumux::NewtonSolver<Assembler, LinearSolver>;
-    NewtonSolver nonLinearSolver(assembler, linearSolver);
+    using NonlinearSolver = Dumux::SimpleSolver<Assembler, LinearSolver, LinearSolver2>;
+    NonlinearSolver nonLinearSolver(assembler, linearSolver, linearSolver2);
 
     // set up two planes over which fluxes are calculated
     FluxOverSurface<TypeTag> flux(*problem, *gridVariables, x);

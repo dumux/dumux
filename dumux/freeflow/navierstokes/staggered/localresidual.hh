@@ -29,6 +29,7 @@
 #include <dumux/assembly/staggeredlocalresidual.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dumux/freeflow/nonisothermal/localresidual.hh>
+#include <dumux/assembly/simpleassemblystructs.hh>
 
 namespace Dumux
 {
@@ -83,6 +84,9 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethod::staggered>
     static constexpr bool isCompositional = ModelTraits::numComponents() > 1;
 
 public:
+    using SimpleMassBalanceSummands = typename GET_PROP_TYPE(TypeTag, SimpleMassBalanceSummands);
+    using SimpleMomentumBalanceSummands = typename GET_PROP_TYPE(TypeTag, SimpleMomentumBalanceSummands);
+
     using EnergyLocalResidual = FreeFlowEnergyLocalResidual<FVGridGeometry, FluxVariables, ModelTraits::enableEnergyBalance(), (ModelTraits::numComponents() > 1)>;
 
     // account for the offset of the cell center privars within the PrimaryVariables container
@@ -144,18 +148,6 @@ public:
         return storage;
     }
 
-    //! Evaluate the storage term for the face control volume.
-    FacePrimaryVariables computeStorageForFace(const Problem& problem,
-                                               const SubControlVolumeFace& scvf,
-                                               const VolumeVariables& volVars,
-                                               const ElementFaceVariables& elemFaceVars) const
-    {
-        FacePrimaryVariables storage(0.0);
-        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
-        storage[0] = volVars.density() * velocity;
-        return storage;
-    }
-
     //! Evaluate the source term for the face control volume.
     FacePrimaryVariables computeSourceForFace(const Problem& problem,
                                               const Element& element,
@@ -173,36 +165,17 @@ public:
     }
 
     //! Evaluate the momentum flux for the face control volume.
-    FacePrimaryVariables computeFluxForFace(const Problem& problem,
-                                            const Element& element,
-                                            const SubControlVolumeFace& scvf,
-                                            const FVElementGeometry& fvGeometry,
-                                            const ElementVolumeVariables& elemVolVars,
-                                            const ElementFaceVariables& elemFaceVars,
-                                            const ElementFluxVariablesCache& elemFluxVarsCache) const
+    void computeFluxForFace(const Problem& problem,
+                            const Element& element,
+                            const SubControlVolumeFace& scvf,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const ElementFaceVariables& elemFaceVars,
+                            const ElementFluxVariablesCache& elemFluxVarsCache,
+                            SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands) const
     {
         FluxVariables fluxVars;
-        return fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars);
-    }
-
-    /*!
-     * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
-     *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
-     */
-    template<class BoundaryTypes>
-    void setFixedCell(CellCenterResidual& residual,
-                      const Problem& problem,
-                      const Element& element,
-                      const SubControlVolume& insideScv,
-                      const ElementVolumeVariables& elemVolVars,
-                      const BoundaryTypes& bcTypes) const
-    {
-        // set a fixed pressure for cells adjacent to a wall
-        if(bcTypes.isDirichletCell(Indices::pressureIdx))
-        {
-            const auto& insideVolVars = elemVolVars[insideScv];
-            residual[Indices::pressureIdx - cellCenterOffset] = insideVolVars.pressure() - problem.dirichlet(element, insideScv)[Indices::pressureIdx];
-        }
+        fluxVars.computeMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, simpleMomentumBalanceSummands);
     }
 
 protected:
@@ -211,14 +184,14 @@ protected:
      * \brief Evaluate boundary conditions for a cell center dof
      */
     template<class ElementBoundaryTypes>
-    void evalBoundaryForCellCenter_(CellCenterResidual& residual,
-                                    const Problem& problem,
+    void evalBoundaryForCellCenter_(const Problem& problem,
                                     const Element& element,
                                     const FVElementGeometry& fvGeometry,
                                     const ElementVolumeVariables& elemVolVars,
                                     const ElementFaceVariables& elemFaceVars,
                                     const ElementBoundaryTypes& elemBcTypes,
-                                    const ElementFluxVariablesCache& elemFluxVarsCache) const
+                                    const ElementFluxVariablesCache& elemFluxVarsCache,
+                                    SimpleMassBalanceSummands& simpleMassBalanceSummands) const
     {
         for (auto&& scvf : scvfs(fvGeometry))
         {
@@ -246,7 +219,8 @@ protected:
                         {
                             if(bcTypes.isNeumann(eqIdx + cellCenterOffset))
                             {
-                                boundaryFlux[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx + cellCenterOffset]
+                                boundaryFlux[eqIdx] = 0.0;
+                                simpleMassBalanceSummands.RHS[eqIdx] -= problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx + cellCenterOffset]
                                                                       * extrusionFactor * scvf.area();
                             }
                         }
@@ -258,18 +232,22 @@ protected:
                         // use a wall function
                         if(problem.useWallFunction(element, scvf, eqIdx + cellCenterOffset))
                         {
-                            boundaryFlux[eqIdx] = problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx]
+                            boundaryFlux[eqIdx] = 0.0;
+                            simpleMassBalanceSummands.RHS[eqIdx] -= problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[eqIdx]
                                                                        * extrusionFactor * scvf.area();
                         }
                     }
 
                     // add the flux over the boundary scvf to the residual
-                    residual += boundaryFlux;
+                    //non-Dirichlet case
+                    if(!bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex()))){
+                        simpleMassBalanceSummands.coefficients[scvf.localFaceIdx()] += boundaryFlux;
+                    }
+                    //Dirichlet case
+                    else{
+                        simpleMassBalanceSummands.RHS[scvf.localFaceIdx()] -= boundaryFlux;
+                    }
                 }
-
-                // if specified, set a fixed value at the center of a cell at the boundary
-                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-                asImp_().setFixedCell(residual, problem, element, scv, elemVolVars, bcTypes);
             }
         }
     }
@@ -278,15 +256,15 @@ protected:
      * \brief Evaluate boundary conditions for a face dof
      */
     template<class ElementBoundaryTypes>
-    void evalBoundaryForFace_(FaceResidual& residual,
-                              const Problem& problem,
+    void evalBoundaryForFace_(const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
                               const SubControlVolumeFace& scvf,
                               const ElementVolumeVariables& elemVolVars,
                               const ElementFaceVariables& elemFaceVars,
                               const ElementBoundaryTypes& elemBcTypes,
-                              const ElementFluxVariablesCache& elemFluxVarsCache) const
+                              const ElementFluxVariablesCache& elemFluxVarsCache,
+                              SimpleMomentumBalanceSummands& simpleMomentumBalanceSummands) const
     {
         if (scvf.boundary())
         {
@@ -294,36 +272,32 @@ protected:
             const auto bcTypes = problem.boundaryTypes(element, scvf);
 
             if(bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
-            {
-                // set a fixed value for the velocity for Dirichlet boundary conditions
-                const Scalar velocity = elemFaceVars[scvf].velocitySelf();
-                const Scalar dirichletValue = problem.dirichlet(element, scvf)[Indices::velocity(scvf.directionIndex())];
-                residual = velocity - dirichletValue;
-            }
+            {}
             else if(bcTypes.isNeumann(Indices::velocity(scvf.directionIndex())))
             {
                 // the source term has already been accounted for, here we
                 // add a given Neumann flux for the face on the boundary itself ...
                 const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
-                residual += problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
+                simpleMomentumBalanceSummands.RHS -= problem.neumann(element, fvGeometry, elemVolVars, elemFaceVars, scvf)[Indices::velocity(scvf.directionIndex())]
                                            * extrusionFactor * scvf.area();
 
                 // ... and treat the fluxes of the remaining (frontal and lateral) faces of the staggered control volume
-                residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
+                computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache, simpleMomentumBalanceSummands);
             }
             else if(bcTypes.isSymmetry())
             {
+                std::cout << "Symmetry boundary conditions not implemented for SIMPLE." << std::endl;
                 // for symmetry boundary conditions, there is no flow accross the boundary and
                 // we therefore treat it like a Dirichlet boundary conditions with zero velocity
-                const Scalar velocity = elemFaceVars[scvf].velocitySelf();
-                const Scalar fixedValue = 0.0;
-                residual = velocity - fixedValue;
+//                 const Scalar velocity = elemFaceVars[scvf].velocitySelf();
+//                 const Scalar fixedValue = 0.0;
+//                 residual = velocity - fixedValue;
             }
             else if(bcTypes.isDirichlet(Indices::pressureIdx))
             {
                 // if none of the above conditions apply, we are at an "fixed pressure" boundary for which the resdiual of the momentum balance needs to be assembled
                 // as if it where inside the domain and not on the boundary (source term has already been acounted for)
-                residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
+                computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache, simpleMomentumBalanceSummands);
             }
             else
                 DUNE_THROW(Dune::InvalidStateException, "Something went wrong with the boundary conditions "

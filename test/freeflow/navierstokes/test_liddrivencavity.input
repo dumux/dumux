@@ -1,32 +1,27 @@
 [TimeLoop]
-DtInitial = 1e-2 # [s]
-TEnd = 2e-2 # [s]
+DtInitial = 1e-3 # [s]
+TEnd = 0.15 # [s]
 HaveMaxTimeStepSize = true
-MaxTimeStepSize = 1e-2
+MaxTimeStepSize = 1e-3
 
 [Grid]
-LowerLeft = 0 0
 UpperRight = 1 1
-Cells = 10 10
+Cells = 50 50
 
 [Problem]
-Name = test_angeli # name passed to the output routines
+Name = test_liddrivencavity_re1 # name passed to the output routines
+LidVelocity = 1
 EnableGravity = false
-PrintL2Error = false
 
 [Component]
 LiquidDensity = 1
 LiquidKinematicViscosity = 1
 
-[Assembly]
-NumericDifference.BaseEpsilon = 1e-8
-
-[Newton]
+[ Newton ]
 EnableShiftCriterion = false
 EnableSIMPLEAbsoluteResidualCriterion = true
-MaxSteps = 100
+MaxSteps = 10000
 MaxRelativeShift = 1e-8
-TargetSteps = 100
 MaxTimeStepDivisions = 0
 
 [Vtk]

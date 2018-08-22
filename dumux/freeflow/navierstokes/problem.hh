@@ -64,6 +64,7 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
 
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using GridFaceVariables = typename GridVariables::GridFaceVariables;
@@ -89,6 +90,40 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using GravityVector = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    std::vector<IndexType> dirichletBoundaryScvfsIndexSet() const
+    {
+        std::vector<IndexType> vec;
+        const auto boundaryScvfsIndexSet = (this->fvGridGeometry()).boundaryScvfsIndexSet();
+        for (auto& scvfIdx : boundaryScvfsIndexSet)
+        {
+            const auto scvf = (this->fvGridGeometry()).boundaryScvf(scvfIdx);
+            const auto bcTypes = asImp_().boundaryTypesAtPos(scvf.center());
+            if (bcTypes.isDirichlet(Indices::velocity(scvf.directionIndex())))
+            {
+                vec.push_back(scvfIdx);
+            }
+        }
+        return vec;
+    }
+
+    std::vector<IndexType> fixedPressureScvsIndexSet() const
+    {
+        std::vector<IndexType> vec;
+
+        const auto boundaryScvsIndexSet = (this->fvGridGeometry()).boundaryScvsIndexSet();
+        for (auto& scvIdx : boundaryScvsIndexSet)
+        {
+            const auto scv = (this->fvGridGeometry()).scv(scvIdx);
+            const auto bcTypes = asImp_().boundaryTypesAtPos(scv.center());
+            if (bcTypes.isDirichletCell(Indices::pressureIdx))
+            {
+                vec.push_back(scv.dofIndex());
+            }
+        }
+
+        return vec;
+    }
+
     /*!
      * \brief The constructor
      * \param fvGridGeometry The finite volume grid geometry

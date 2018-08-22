@@ -1,5 +1,5 @@
 [TimeLoop]
-DtInitial = 1 # [s]
+DtInitial = 5e-4 # [s]
 TEnd = 2 # [s]
 
 [Grid]
@@ -7,7 +7,7 @@ UpperRight = 10 1
 Cells = 10 10
 
 [Problem]
-Name = test_channel_stokes # name passed to the output routines
+Name = test_channel_stokes_stationary # name passed to the output routines
 InletVelocity = 1
 EnableGravity = false
 
@@ -37,10 +37,10 @@ NumericDifference.PriVarMagnitude = 1 # velocity is in the order of 1
 
 [LinearSolver2]
 schurGMResRestart = 100
-schurResidualReduction = 1e-15
+schurResidualReduction = 1e-10
 schurVerbosity = 0
 schurMaxIter = 2000
 precVerbosityA = 0
 precVerbositySchurAppr = 0
 precMaxIter = 2000
-precResidReduction = 1e-15
+precResidReduction = 1e-13

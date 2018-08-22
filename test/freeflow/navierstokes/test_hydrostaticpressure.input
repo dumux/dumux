@@ -4,7 +4,7 @@ TEnd = 2 # [s]
 
 [Grid]
 UpperRight = 1 1
-Cells = 64 64
+Cells = 20 20
 
 [Problem]
 Name = test_hydrostaticpressure # name passed to the output routines

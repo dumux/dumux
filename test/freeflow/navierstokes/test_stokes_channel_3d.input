@@ -24,3 +24,6 @@ WriteFaceData = false
 
 [FluxOverPlane]
 Verbose = true
+
+[Algorithm]
+AlgorithmType = 2

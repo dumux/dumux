@@ -118,23 +118,16 @@ public:
 private:
 
     /*
-     * \brief Computes the stencil for cell center dofs w.r.t to other cell center dofs.
-     *        Basically, these are the dof indices of the neighboring elements plus the dof index of the element itself.
+     * \brief Computes the stencil for the occupation pattern of the CCToCC block. This is empty.
      */
     void computeCellCenterToCellCenterStencil_(Stencil& stencil,
                                                const Element& element,
                                                const FVElementGeometry& fvGeometry,
                                                const SubControlVolumeFace& scvf)
-    {
-        // the first entry is always the cc dofIdx itself
-        if(stencil.empty())
-            stencil.push_back(scvf.insideScvIdx());
-        if(!scvf.boundary())
-            stencil.push_back(scvf.outsideScvIdx());
-    }
+    {}
 
     /*
-     * \brief Computes the stencil for cell center dofs w.r.t to face dofs.
+     * \brief Computes the stencil for the occupation pattern of the CCToFace block.
      *        Basically, these are the dof indices of the element's faces.
      */
     void computeCellCenterToFaceStencil_(Stencil& stencil,
@@ -146,31 +139,18 @@ private:
     }
 
     /*
-     * \brief Computes the stencil for face dofs w.r.t to cell center dofs.
-     *        Basically, these are the dof indices of the elements adjacent to the face and those of
-     *        the elements adjacent to the faces parallel to the own face.
+     * \brief Computes the stencil for the occupation pattern of the FaceToCC block.
+     *        This is the dof index of the element itself.
      */
     void computeFaceToCellCenterStencil_(Stencil& stencil,
                                          const FVElementGeometry& fvGeometry,
                                          const SubControlVolumeFace& scvf)
     {
-        const auto eIdx = scvf.insideScvIdx();
         stencil.push_back(scvf.insideScvIdx());
-
-        for(const auto& data : scvf.pairData())
-        {
-            auto& normalFace = fvGeometry.scvf(eIdx, data.localNormalFaceIdx);
-            if(!normalFace.boundary())
-            {
-                const auto outerParallelElementDofIdx = normalFace.outsideScvIdx();
-                stencil.push_back(outerParallelElementDofIdx);
-            }
-        }
     }
 
     /*
-     * \brief Computes the stencil for face dofs w.r.t to face dofs.
-     *        For a full description of the stencil, please see the document under dumux/doc/docextra/staggered
+     * \brief Computes the stencil for the occupation pattern of the FaceToFace block.
      */
     void computeFaceToFaceStencil_(Stencil& stencil,
                                    const FVElementGeometry& fvGeometry,
