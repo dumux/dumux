@@ -572,6 +572,24 @@ public:
     const std::string& paramGroup() const
     { return paramGroup_; }
 
+    Scalar assembleTime(){
+        return assembleTime_;
+    }
+
+    Scalar solveTime(){
+        return solveTime_;
+    }
+
+    Scalar updateTime(){
+        return updateTime_;
+    }
+
+    Scalar newtonSteps(){
+        return numSteps_;
+    }
+
+
+
 protected:
 
     void computeResidualReduction_(const SolutionVector &uCurrentIter)
@@ -731,6 +749,10 @@ private:
 
             // tell controller we converged successfully
             newtonSucceed();
+
+            assembleTime_ = assembleTimer.elapsed();
+            solveTime_ = solveTimer.elapsed();
+            updateTime_ = updateTimer.elapsed();
 
             if (verbose_) {
                 const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
@@ -1119,6 +1141,9 @@ private:
     Scalar reassemblyMinThreshold_;
     Scalar reassemblyMaxThreshold_;
     Scalar reassemblyShiftWeight_;
+    Scalar assembleTime_;
+    Scalar solveTime_;
+    Scalar updateTime_;
 };
 
 } // end namespace Dumux
