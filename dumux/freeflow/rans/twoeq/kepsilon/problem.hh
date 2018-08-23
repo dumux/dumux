@@ -80,7 +80,6 @@ class KEpsilonProblem : public RANSProblem<TypeTag>
     static_assert(cellCenterOffset == ModelTraits::dim(), "cellCenterOffset must equal dim for staggered NavierStokes");
 
 public:
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     //! The constructor sets the gravity, if desired by the user.
     KEpsilonProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry, const std::string& paramGroup = "")
@@ -392,7 +391,7 @@ public:
 
             Scalar schmidtNumber = elemVolVars[scvf.insideScvIdx()].kinematicViscosity()
                                    / elemVolVars[scvf.insideScvIdx()].diffusionCoefficient(0, compIdx);
-            Scalar moleToMassConversionFactor = useMoles
+            Scalar moleToMassConversionFactor = ModelTraits::useMoles()
                                                 ? 1.0 : FluidSystem::molarMass(compIdx);
             wallFunctionFlux[compIdx] +=
                 -1.0 * (asImp_().dirichlet(element, scvf)[Indices::conti0EqIdx + compIdx]
