@@ -42,7 +42,8 @@ public:
     CircleSelector(const GlobalPosition& center) : center_(center) {}
 
     //! Select all elements within a circle around a center point.
-    int operator() (const auto& element) const
+    template<class Element>
+    int operator() (const Element& element) const
     {
         const auto x = element.geometry().center()[0];
         const auto y = element.geometry().center()[1];
