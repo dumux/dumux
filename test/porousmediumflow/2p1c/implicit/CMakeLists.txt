@@ -1,18 +1,23 @@
 #add links to input files
 add_input_file_links()
 
-dune_add_test(NAME test_2p1cni_box
-              SOURCES test_2p1c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=TwoPOneCNIBoxTypeTag
+add_executable(test_2p1cni_tpfa EXCLUDE_FROM_ALL test_2p1c_fv.cc)
+target_compile_definitions(test_2p1cni_tpfa PUBLIC "TYPETAG=TwoPOneCNICCTpfaTypeTag")
+
+add_executable(test_2p1cni_box EXCLUDE_FROM_ALL test_2p1c_fv.cc)
+target_compile_definitions(test_2p1cni_box PUBLIC "TYPETAG=TwoPOneCNIBoxTypeTag")
+
+
+dune_add_test(NAME test_2p1cni_box_waterwet
+              TARGET test_2p1cni_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/steaminjectionbox-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_boxsteaminjection-00007.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_box test_boxsteaminjection.input")
 
-dune_add_test(NAME test_2p1cni_tpfa
-              SOURCES test_2p1c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=TwoPOneCNICCTpfaTypeTag
+dune_add_test(NAME test_2p1cni_tpfa_waterwet
+              TARGET test_2p1cni_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/steaminjectioncc-reference.vtu
@@ -20,8 +25,7 @@ dune_add_test(NAME test_2p1cni_tpfa
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_tpfa test_ccsteaminjection.input")
 
 dune_add_test(NAME test_2p1cni_box_gaswet
-              SOURCES test_2p1c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=TwoPOneCNIBoxTypeTag
+              TARGET test_2p1cni_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/steaminjectionbox_gaswet-reference.vtu
@@ -31,8 +35,7 @@ dune_add_test(NAME test_2p1cni_box_gaswet
                                                                                -SpatialParams.GasWetting true")
 
 dune_add_test(NAME test_2p1cni_tpfa_gaswet
-              SOURCES test_2p1c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=TwoPOneCNICCTpfaTypeTag
+              TARGET test_2p1cni_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/steaminjectioncc_gaswet-reference.vtu

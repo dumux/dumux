@@ -46,6 +46,8 @@ public:
     // Equation indices
     static const int conti0EqIdx = 0; //!< Index of the mass conservation equation for the water component.
     static const int energyEqIdx = 1; //<! The index for energy in equation vectors.
+
+    static const int temperatureIdx = -99; //!< For compatibility reasons. Do not use.
 };
 
 } // end namespace Dumux
