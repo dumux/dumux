@@ -212,22 +212,8 @@ public:
                                                                                  : priVars[pressureIdx] + pc_);
         }
 
-        // get temperature
-        Scalar temperature;
-        if (phasePresence == liquidPhaseOnly || phasePresence == gasPhaseOnly)
-            temperature = priVars[switchIdx];
-        else if (phasePresence == twoPhases)
-            temperature = FluidSystem::vaporTemperature(fluidState, wPhaseIdx);
-        else
-            DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-
-        Valgrind::CheckDefined(temperature);
-
-        for(int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
-        {
-            fluidState.setTemperature(phaseIdx, temperature);
-        }
-        solidState.setTemperature(temperature);
+        // set the temperature
+        updateTemperature(elemSol, problem, element, scv, fluidState, solidState);
 
         // set the densities
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -254,6 +240,45 @@ public:
         {
             const Scalar h = FluidSystem::enthalpy(fluidState, phaseIdx);
             fluidState.setEnthalpy(phaseIdx, h);
+        }
+    }
+
+    //! Depending on the phase state, the fluid temperature is either obtained as a primary variable from the solution vector
+    //! or calculated from the liquid's vapor pressure.
+    template<class ElemSol, class Problem, class Element, class Scv>
+    void updateTemperature(const ElemSol& elemSol,
+                           const Problem& problem,
+                           const Element& element,
+                           const Scv& scv,
+                           FluidState& fluidState,
+                           SolidState& solidState)
+    {
+        const auto& priVars = elemSol[scv.localDofIndex()];
+        const auto phasePresence = priVars.state();
+        const int wPhaseIdx = problem.spatialParams().template wettingPhase<FluidSystem>(element, scv, elemSol);
+
+        // get temperature
+        Scalar fluidTemperature;
+        if (phasePresence == liquidPhaseOnly || phasePresence == gasPhaseOnly)
+            fluidTemperature = priVars[switchIdx];
+        else if (phasePresence == twoPhases)
+            fluidTemperature = FluidSystem::vaporTemperature(fluidState, wPhaseIdx);
+        else
+            DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
+
+        Valgrind::CheckDefined(fluidTemperature);
+
+        // the model assumes that all fluid phases have the same temperature
+        for (int phaseIdx=0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
+            fluidState.setTemperature(phaseIdx, fluidTemperature);
+
+        // the solid phase could have a different temperature
+        if (Traits::ModelTraits::numEnergyEq() == 1)
+            solidState.setTemperature(fluidTemperature);
+        else
+        {
+            const Scalar solidTemperature = elemSol[scv.localDofIndex()][Traits::ModelTraits::numEq()-1];
+            solidState.setTemperature(solidTemperature);
         }
     }
 
