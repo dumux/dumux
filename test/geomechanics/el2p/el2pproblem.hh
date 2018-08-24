@@ -405,10 +405,24 @@ public:
       // initial total stress field here assumed to be isotropic, lithostatic
           //Asked Martin: Pref_ shouldnt be added because this is just stress and Pref is considered in Peff later on.
 
-       stress[0] = 0.4 * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
+
+//         Scalar nu_ = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.nu);
+//         Scalar k0_ = nu_ / (1 - nu_);//khodam sigma h/sigma v = nu/(1-nu) and nu shouldnt be more than 0.5
+
+//        stress[0] = k0_ * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
+
+       stress[0] = 0.5 * sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) ); //khodam: (it is assumed that generated stress in X direction as a result of gravity, is 50% of the stress in Y direction
+
 
        if(dimWorld >=2)
        stress[1] =  sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) );
+
+
+//         Scalar theta = GET_RUNTIME_PARAM(TypeTag, Scalar, FailureParameters.FrictionAngle)*M_PI / 180.0;
+//         using std::sin;
+//         stress[0] = (1 - sin(theta)) * stress [1];//khodam
+
+
 
        if(dimWorld == 3)
        stress[2] = sw * ( waterDensity_ * porosity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) + (1 - porosity) * rockDensity * gravity * std::abs((zMax(globalPos) - globalPos[dimWorld-1])) );
@@ -534,7 +548,30 @@ public:
 
           }
 
-        if (leftBoundaryO_(globalPos)|| rightBoundaryO_(globalPos)){
+//         if(onInlet_(globalPos)|| rightBoundaryO_(globalPos))
+//         {
+//             if (initializationRun_ == true)
+//             {
+//                 values.setDirichlet(pressureIdx, contiWEqIdx);
+//                 values.setDirichlet(saturationIdx, contiNEqIdx);
+//                 values.setDirichlet(uxIdx);
+//                 values.setDirichlet(uyIdx);
+//             }
+//
+//           }
+
+          if (leftBoundaryO_(globalPos)){
+
+            values.setDirichlet(uxIdx);//this part is aplied all the time
+            if (initializationRun_ == true)
+            {
+                values.setDirichlet(uyIdx);
+            }
+          }
+
+
+          if (rightBoundaryO_(globalPos)){
+
             values.setDirichlet(uxIdx);//this part is aplied all the time
             if (initializationRun_ == true)
             {
@@ -552,6 +589,7 @@ public:
             }
           }
 
+
         if ( rightBoundaryU_(globalPos)){
             values.setDirichlet(pressureIdx, contiWEqIdx);
             values.setDirichlet(saturationIdx, contiNEqIdx);
@@ -564,14 +602,22 @@ public:
 
 
 
-        if (onLowerBoundary_(globalPos)){
+//         if (onLowerBoundary_(globalPos)){//roler boundary didnt converge for higher E
+//
+//              values.setDirichlet(momentumYEqIdx);
+//
+//             if(initializationRun_ == true)
+//             {
+//                 values.setDirichlet(momentumXEqIdx);
+//            }
+//         }
+
+
+        if (onLowerBoundary_(globalPos)){ //fixed boundary
 
              values.setDirichlet(uyIdx);
+             values.setDirichlet(uxIdx);
 
-            if(initializationRun_ == true)
-            {
-                values.setDirichlet(uxIdx);
-           }
         }
      }
 
@@ -608,7 +654,10 @@ public:
     {
         values = 0.0;
 
-        if ((onInlet_(globalPos)) ){
+
+//         if (onInlet_(globalPos)|| rightBoundaryO_(globalPos)){
+        if (onInlet_(globalPos)){
+
           const auto& materialLawParams = this->spatialParams().materialLawParams(globalPos);
           const Scalar swr = materialLawParams.swr();
           const Scalar snr = materialLawParams.snr();
@@ -685,7 +734,9 @@ public:
         values = 0.0;
         GlobalPosition globalPos = fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
 
-        Scalar avgRain_ = 3.7E-8; //GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameter.avgRain);//[m/s]
+
+        Scalar avgRain_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TransportParameters.avgRain);//[m/s]
+
         Scalar rb_ = 2.0E-4; //[1/s] =K/B conductance
         Scalar ks_ = 1.39e-6;
 
@@ -696,9 +747,12 @@ public:
 
         if (onInlet_(globalPos))
         {
-               if (satW > 1. -eps_){
+
+               if (satW > 1. - eps_){
                    //std::cout << "saturation above 1 \n" ;
                     values[contiWEqIdx] = rb_ * pW/(9.81); // [kg/(m2*s)]
+//                     values[contiNEqIdx] = 0.0;
+
                     if (pN>1.e5) values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
                }
                 else {
@@ -709,6 +763,32 @@ public:
                     }
                 }
         }
+
+
+
+//                 if (rightBoundaryO_(globalPos))
+//         {
+//              if (initializationRun_ == true)
+//             {
+//                 values[contiWEqIdx] = 0.0;
+//                 values[contiNEqIdx] = 0,0;
+//             }
+//               else{
+//                   if (satW > 1. - eps_){
+//                    //std::cout << "saturation above 1 \n" ;
+//                     values[contiWEqIdx] = rb_ * pW/(9.81); // [kg/(m2*s)]
+//                     if (pN>1.e5) values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
+//                }
+//                 else {
+//                    //std::cout << "saturation below 1, infiltration \n" ;
+//                     values[contiWEqIdx] = 0.0;
+//                     if (pN>1.e5) {
+//                     values[contiNEqIdx] = satN * (pN-1.e5) * rb_;
+//                     }
+//                 }
+//         }
+//         }
+
 
      }
 

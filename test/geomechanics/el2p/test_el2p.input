@@ -1,14 +1,20 @@
 [TimeManager]
 TInitEnd = 0.01      # [s]
-TEnd = 12960000        # [s]
+
+TEnd = 12960000 #        # [s]
+#TEnd = 54000        # [s]
 DtInitial = 0.01       # [s]
 EpisodeLength = 86400  # [s] # these values are hit in the output
+#EpisodeLength = 3600  # [s]
+
 
 [Grid]
 #UpperRight = 1000 1000 1000
 #Cells = 4 4 4
 Refine = 0
+<<<<<<< Updated upstream
 File = ./Lu2D.msh
+
 
 [Injection]
 DepthBOR = 2000     # Depth at the bottom of the scenario [m]
@@ -22,6 +28,8 @@ Cohesion = 15000 #[Pa]
 
 
 [ElasticParameters]
+
+#E = 3e8
 E = 1e7
 nu = 0.33
 
@@ -34,6 +42,11 @@ n = 1.37
 alpha = 0.000163196 # [1/m] to [1/pa] = 1.6/9804.139432
 swr = 0  # Residual water content
 snr = 0
+
+avgRain = 3.7E-8 #[m/s] 400 mm in 150d low intensity
+#avgRain = 5.5E-6 #20[mm/h]
+#avgRain =1.39e-6 #Ks
+
 
 [Fluid]
 
