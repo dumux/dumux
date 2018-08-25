@@ -59,7 +59,12 @@ SET_TYPE_PROP(OnePCompressible, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(OnePCompressible, Problem, OnePTestProblem<TypeTag>);
 
 // set the spatial params
-SET_TYPE_PROP(OnePCompressible, SpatialParams, OnePTestSpatialParams<TypeTag>);
+SET_PROP(OnePCompressible, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // the fluid system
 SET_PROP(OnePCompressible, FluidSystem)

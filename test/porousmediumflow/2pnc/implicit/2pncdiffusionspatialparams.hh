@@ -39,16 +39,14 @@ namespace Dumux {
  * \brief Definition of the spatial parameters for the TwoPNCDiffusion
  *        problem which uses the isothermal 2p2c box model
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class TwoPNCDiffusionSpatialParams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, Scalar),
-                         TwoPNCDiffusionSpatialParams<TypeTag>>
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         TwoPNCDiffusionSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, TwoPNCDiffusionSpatialParams<TypeTag>>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       TwoPNCDiffusionSpatialParams<FVGridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 

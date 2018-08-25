@@ -39,21 +39,18 @@ namespace Dumux {
  * \brief Spatial parameters for the dissolution problem
  * where water is injected in a for flushing precipitated salt clogging a gas reservoir.
  */
-template<class TypeTag>
-class DissolutionSpatialparams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, Scalar),
-                         DissolutionSpatialparams<TypeTag>>
+template<class FVGridGeometry, class Scalar>
+class DissolutionSpatialParams
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         DissolutionSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, DissolutionSpatialparams<TypeTag>>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       DissolutionSpatialParams<FVGridGeometry, Scalar>>;
 
     using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
 
@@ -66,7 +63,7 @@ public:
     using MaterialLaw = EffToAbsLaw<EffectiveLaw>;
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    DissolutionSpatialparams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    DissolutionSpatialParams(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);

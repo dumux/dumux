@@ -39,19 +39,17 @@ namespace Dumux {
  * \brief The spatial parameters for the LensProblem which uses the
  *        two-phase fully implicit model
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class FractureSpatialParams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, Scalar),
-                         FractureSpatialParams<TypeTag>>
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         FractureSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, FractureSpatialParams<TypeTag>>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       FractureSpatialParams<FVGridGeometry, Scalar>>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

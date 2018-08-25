@@ -74,7 +74,12 @@ SET_PROP(OnePTwoCTestTypeTag, FluidSystem)
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTwoCTestTypeTag, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
+SET_PROP(OnePTwoCTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(OnePTwoCTestTypeTag, UseMoles, true);

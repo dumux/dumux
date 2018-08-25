@@ -39,20 +39,17 @@ namespace Dumux
  * \brief The spatial parameters class for the test problem using the
  *        1p cc model
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class ConservationSpatialParams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, Scalar),
-                         ConservationSpatialParams<TypeTag>>
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         ConservationSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ConservationSpatialParams<TypeTag>>;
+    using ThisType = ConservationSpatialParams<FVGridGeometry, Scalar>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
     using EffectiveLaw = RegularizedVanGenuchten<Scalar>;

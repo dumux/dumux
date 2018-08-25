@@ -58,7 +58,12 @@ SET_TYPE_PROP(SagdTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(SagdTypeTag, Problem, Dumux::SagdProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(SagdTypeTag, SpatialParams, SagdSpatialParams<TypeTag>);
+SET_PROP(SagdTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = SagdSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Set the fluid system
 SET_TYPE_PROP(SagdTypeTag,

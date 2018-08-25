@@ -71,7 +71,12 @@ SET_PROP(FractureTypeTag, FluidSystem)
     using type = FluidSystems::OnePLiquid<Scalar, Components::SimpleH2O<Scalar> >;
 };
 // Set the spatial parameters
-SET_TYPE_PROP(FractureTypeTag, SpatialParams, FractureSpatialParams<TypeTag>);
+SET_PROP(FractureTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FractureSpatialParams<FVGridGeometry, Scalar>;
+};
 
 } // end namespace Properties
 

@@ -33,16 +33,14 @@ namespace Dumux {
  * \ingroup OnePTests
  * \brief Definition of the spatial parameters for the 1pni problems.
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class OnePNISpatialParams
-: public FVSpatialParamsOneP<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                             typename GET_PROP_TYPE(TypeTag, Scalar),
-                             OnePNISpatialParams<TypeTag>>
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                             OnePNISpatialParams<FVGridGeometry, Scalar>>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, OnePNISpatialParams<TypeTag>>;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                           OnePNISpatialParams<FVGridGeometry, Scalar>>;
 
     static const int dimWorld = GridView::dimensionworld;
     using Element = typename GridView::template Codim<0>::Entity;

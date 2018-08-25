@@ -68,7 +68,12 @@ SET_TYPE_PROP(ThreePNIConvectionTypeTag,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThreePNIConvectionTypeTag, SpatialParams, ThreePNISpatialParams<TypeTag>);
+SET_PROP(ThreePNIConvectionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = ThreePNISpatialParams<FVGridGeometry, Scalar>;
+};
 } // end namespace Properties
 
 /*!

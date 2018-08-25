@@ -60,7 +60,12 @@ SET_TYPE_PROP(TwoPNCDiffusionTypeTag,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TwoPNCDiffusionTypeTag, SpatialParams, TwoPNCDiffusionSpatialParams<TypeTag>);
+SET_PROP(TwoPNCDiffusionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = TwoPNCDiffusionSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(TwoPNCDiffusionTypeTag, UseMoles, true);

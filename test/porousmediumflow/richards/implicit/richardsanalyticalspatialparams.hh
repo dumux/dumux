@@ -40,16 +40,14 @@ namespace Dumux {
  * \ingroup ImplicitTestProblems
  * \brief The spatial parameters for the RichardsAnalyticalProblem
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class RichardsAnalyticalSpatialParams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, Scalar),
-                         RichardsAnalyticalSpatialParams<TypeTag>>
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         RichardsAnalyticalSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, RichardsAnalyticalSpatialParams<TypeTag>>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       RichardsAnalyticalSpatialParams<FVGridGeometry, Scalar>>;
 
     enum { dimWorld=GridView::dimensionworld };
     using Element = typename GridView::template Codim<0>::Entity;

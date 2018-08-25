@@ -54,7 +54,12 @@ SET_TYPE_PROP(DarcyTwoPTypeTag, Grid, Dune::YaspGrid<2>);
 
 SET_BOOL_PROP(DarcyTwoPTypeTag, UseMoles, false);
 
-SET_TYPE_PROP(DarcyTwoPTypeTag, SpatialParams, ConservationSpatialParams<TypeTag>);
+SET_PROP(DarcyTwoPTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = ConservationSpatialParams<FVGridGeometry, Scalar>;
+};
 
 //! Set the default formulation to pw-Sn: This can be over written in the problem.
 SET_PROP(DarcyTwoPTypeTag, Formulation)

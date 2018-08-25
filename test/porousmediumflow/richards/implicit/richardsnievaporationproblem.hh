@@ -63,7 +63,12 @@ SET_TYPE_PROP(RichardsNIEvaporationTypeTag, Problem,
 SET_TYPE_PROP(RichardsNIEvaporationTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsNIEvaporationTypeTag, SpatialParams, RichardsNISpatialParams<TypeTag>);
+SET_PROP(RichardsNIEvaporationTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = RichardsNISpatialParams<FVGridGeometry, Scalar>;
+};
 
 SET_BOOL_PROP(RichardsNIEvaporationTypeTag, EnableWaterDiffusionInAir, true);
 } // end namespace Properties

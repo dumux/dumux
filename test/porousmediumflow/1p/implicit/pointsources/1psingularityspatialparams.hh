@@ -35,19 +35,17 @@ namespace Dumux {
  * \brief The spatial parameters class for the test problem using the
  *        1p model with point sources
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class OnePSingularitySpatialParams
-: public FVSpatialParamsOneP<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                             typename GET_PROP_TYPE(TypeTag, Scalar),
-                             OnePSingularitySpatialParams<TypeTag>>
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                             OnePSingularitySpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, OnePSingularitySpatialParams<TypeTag>>;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                           OnePSingularitySpatialParams<FVGridGeometry, Scalar>>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 public:

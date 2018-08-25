@@ -52,7 +52,12 @@ SET_TYPE_PROP(SaltWaterIntrusionTestTypeTag,
               FluidSystems::Brine< typename GET_PROP_TYPE(TypeTag, Scalar) >);
 
 // Set the spatial parameters
-SET_TYPE_PROP(SaltWaterIntrusionTestTypeTag, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
+SET_PROP(SaltWaterIntrusionTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Use mass fractions to set salinity conveniently
 SET_BOOL_PROP(SaltWaterIntrusionTestTypeTag, UseMoles, false);

@@ -66,7 +66,13 @@ SET_TYPE_PROP(DarcyTwoPTwoCTypeTag, Grid, Dune::YaspGrid<2, Dune::TensorProductC
 
 SET_BOOL_PROP(DarcyTwoPTwoCTypeTag, UseMoles, true);
 
-SET_TYPE_PROP(DarcyTwoPTwoCTypeTag, SpatialParams, TwoPTwoCSpatialParams<TypeTag>);
+SET_PROP(DarcyTwoPTwoCTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = TwoPTwoCSpatialParams<FVGridGeometry, Scalar>;
+};
+
 }
 
 template <class TypeTag>

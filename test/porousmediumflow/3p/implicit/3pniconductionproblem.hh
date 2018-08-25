@@ -68,7 +68,12 @@ SET_TYPE_PROP(ThreePNIConductionTypeTag,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThreePNIConductionTypeTag, SpatialParams, ThreePNISpatialParams<TypeTag>);
+SET_PROP(ThreePNIConductionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = ThreePNISpatialParams<FVGridGeometry, Scalar>;
+};
 }// end namespace Properties
 
 

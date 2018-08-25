@@ -36,17 +36,14 @@ namespace Dumux
  * \brief The spatial parameters class for the test problem using the
  *        1p cc model
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class OnePSpatialParams
-: public FVSpatialParamsOneP<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                             typename GET_PROP_TYPE(TypeTag, Scalar),
-                             OnePSpatialParams<TypeTag>>
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                             OnePSpatialParams<FVGridGeometry, Scalar>>
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, OnePSpatialParams<TypeTag>>;
+    using GridView = typename FVGridGeometry::GridView;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                           OnePSpatialParams<FVGridGeometry, Scalar>>;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;

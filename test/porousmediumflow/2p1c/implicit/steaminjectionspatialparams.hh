@@ -31,37 +31,21 @@
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 namespace Dumux {
-
-//forward declaration
-template<class TypeTag>
-class InjectionProblemSpatialParams;
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(InjectionProblemSpatialParams);
-
-// Set the spatial parameters
-SET_TYPE_PROP(InjectionProblemSpatialParams, SpatialParams, Dumux::InjectionProblemSpatialParams<TypeTag>);
-}
-
 /*!
  * \ingroup TwoPOneCTests
  * \brief Definition of the spatial parameters for various steam injection problems
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class InjectionProblemSpatialParams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, Scalar),
-                         InjectionProblemSpatialParams<TypeTag>>
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         InjectionProblemSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, InjectionProblemSpatialParams<TypeTag>>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       InjectionProblemSpatialParams<FVGridGeometry, Scalar>>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
 

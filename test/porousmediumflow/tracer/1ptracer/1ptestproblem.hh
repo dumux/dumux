@@ -53,7 +53,14 @@ SET_TYPE_PROP(IncompressibleTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem type
 SET_TYPE_PROP(IncompressibleTestTypeTag, Problem, OnePTestProblem<TypeTag>);
-SET_TYPE_PROP(IncompressibleTestTypeTag, SpatialParams, OnePTestSpatialParams<TypeTag>);
+
+SET_PROP(IncompressibleTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+};
+
 SET_TYPE_PROP(IncompressibleTestTypeTag, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // the fluid system
