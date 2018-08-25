@@ -322,10 +322,7 @@ private:
     void assembleResidualImpl_(Dune::index_constant<1>, SubSol& res)
     {
         for(auto&& scvf : scvfs(this->fvGeometry()))
-        {
             res[scvf.dofIndex()] +=  this->asImp_().assembleFaceResidualImpl(scvf);
-
-        }
     }
 
     //! Assembles the residuals and derivatives for the cell center dofs.
@@ -477,7 +474,7 @@ public:
 
     FaceResidualValue assembleFaceResidualImpl(const SubControlVolumeFace& scvf)
     {
-        return this->evalLocalFluxAndSourceResidualForFace(scvf);
+        return this->evalLocalResidualForFace(scvf);
     }
 
     /*!
