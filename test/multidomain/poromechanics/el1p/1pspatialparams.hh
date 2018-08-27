@@ -42,20 +42,16 @@ namespace Dumux {
  * \brief The spatial parameters class for the test problem using the
  *        1p box model
  */
-template<class TypeTag>
-class OnePSpatialParams : public FVSpatialParamsOneP< typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                      typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                      OnePSpatialParams<TypeTag> >
+template<class FVGridGeometry, class Scalar, class CouplingManager>
+class OnePSpatialParams : public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                                     OnePSpatialParams<FVGridGeometry, Scalar, CouplingManager>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using ThisType = OnePSpatialParams<TypeTag>;
+    using ThisType = OnePSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
     using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
 
 public:
