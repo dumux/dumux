@@ -41,24 +41,21 @@ namespace Dumux {
  * \brief Definition of the spatial params properties for the obstacle problem
  *
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar, class FluidSystem>
 class ObstacleSpatialParams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, Scalar),
-                         ObstacleSpatialParams<TypeTag>>
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         ObstacleSpatialParams<FVGridGeometry, Scalar, FluidSystem>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ObstacleSpatialParams<TypeTag>>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       ObstacleSpatialParams<FVGridGeometry, Scalar, FluidSystem>>;
 
     enum {dimWorld=GridView::dimensionworld};
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     enum {liquidPhaseIdx = FluidSystem::liquidPhaseIdx};
 
     using EffectiveLaw = RegularizedLinearMaterial<Scalar>;

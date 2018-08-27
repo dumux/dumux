@@ -61,7 +61,13 @@ SET_TYPE_PROP(MPNCComparisonTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(MPNCComparisonTypeTag, Problem, MPNCComparisonProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(MPNCComparisonTypeTag, SpatialParams, MPNCComparisonSpatialParams<TypeTag>);
+SET_PROP(MPNCComparisonTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using type = MPNCComparisonSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
+};
 
 // Set fluid configuration
 SET_TYPE_PROP(MPNCComparisonTypeTag,

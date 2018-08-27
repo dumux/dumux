@@ -39,22 +39,19 @@ namespace Dumux {
  * \ingroup ImplicitTestProblems
  * \brief Definition of the spatial parameters for the kuevette problem
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class KuevetteSpatialParams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, Scalar),
-                         KuevetteSpatialParams<TypeTag>>
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         KuevetteSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, KuevetteSpatialParams<TypeTag>>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       KuevetteSpatialParams<FVGridGeometry, Scalar>>;
 
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;

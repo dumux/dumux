@@ -60,7 +60,12 @@ SET_TYPE_PROP(RichardsWellTracerTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(RichardsWellTracerTypeTag, Problem, RichardsWellTracerProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsWellTracerTypeTag, SpatialParams, RichardsWellTracerSpatialParams<TypeTag>);
+SET_PROP(RichardsWellTracerTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = RichardsWellTracerSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Set the physical problem to be solved
 SET_TYPE_PROP(RichardsWellTracerTypeTag, PointSource, SolDependentPointSource<TypeTag>);
