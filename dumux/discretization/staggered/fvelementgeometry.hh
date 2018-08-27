@@ -66,6 +66,7 @@ public:
     : ParentType(fvGridGeometry.actualfvGridGeometry()) {}
 
     //! Get a sub control volume face with an element index and a local scvf index
+    using ParentType::scvf;
     const SubControlVolumeFace& scvf(IndexType eIdx, IndexType localScvfIdx) const
     {
         return this->fvGridGeometry().scvf(eIdx, localScvfIdx);
