@@ -539,7 +539,7 @@ public:
         const bool insideIsUpstream = sign(velocity) == scvf.directionSign();
 
         return energyFlux_(stokesIdx, darcyIdx, fvGeometry, stokesContext.fvGeometry, scvf,
-                           stokesVolVars, darcyVolVars, velocity, insideIsUpstream, diffCoeffAvgType);
+                           stokesVolVars, darcyVolVars, velocity * scvf.directionSign(), insideIsUpstream, diffCoeffAvgType);
     }
 
 private:
@@ -720,7 +720,7 @@ public:
         const bool insideIsUpstream = sign(velocity) == scvf.directionSign();
 
         return energyFlux_(stokesIdx, darcyIdx, fvGeometry, stokesContext.fvGeometry, scvf,
-                           stokesVolVars, darcyVolVars, velocity, insideIsUpstream, diffCoeffAvgType);
+                           stokesVolVars, darcyVolVars, velocity * scvf.directionSign(), insideIsUpstream, diffCoeffAvgType);
     }
 
 protected:
