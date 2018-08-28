@@ -47,16 +47,16 @@ namespace Dumux {
 /**
  * \brief Definition of the spatial parameters for the evaporation atmosphere Problem (using a "poor man's coupling")
  */
-template<class FVGridGeometry, class Scalar, class FluidState, class FluidSystem>
+template<class FVGridGeometry, class Scalar, class FluidSystem>
 class EvaporationAtmosphereSpatialParams
 : public FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar,
-                                       EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar, FluidState, FluidSystem>>
+                                       EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar, FluidSystem>>
 {
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ThisType = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar, FluidState, FluidSystem>;
+    using ThisType = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
     using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
@@ -130,28 +130,10 @@ public:
         materialParamsFF_.setLambda(42.);
         materialParamsFF_.setPe(0.);
 
-        {//scope it
-            // capillary pressure parameters
-            FluidState fluidState ;
-            Scalar S[numPhases] ;
-            Scalar capPress[numPhases];
-            //set saturation to inital values, this needs to be done in order for the fluidState to tell me pc
-            for (int phaseIdx = 0; phaseIdx < numPhases ; ++phaseIdx) {
-                // set saturation to zero for getting pcmax
-                S[phaseIdx] = 0. ;
-                Scalar TInitial  = getParam<Scalar>("InitialConditions.TInitial");
-                fluidState.setSaturation(phaseIdx, S[phaseIdx]);
-                fluidState.setTemperature(phaseIdx,TInitial);
-            }
-
-            //obtain pc according to saturation
-            MaterialLaw::capillaryPressures(capPress, materialParamsPM_, fluidState);
-            using std::abs;
-            pcMax_ = abs(capPress[0]);
-
-            // set pressures from capillary pressures
-            aWettingNonWettingSurfaceParams_.setPcMax(pcMax_);
-        }
+        // determine maximum capillary pressure for wetting-nonwetting surface
+        using TwoPLaw = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
+        pcMax_ = TwoPLaw::pc(materialParamsPM_, /*sw = */0.0);
+        aWettingNonWettingSurfaceParams_.setPcMax(pcMax_);
 
         // wetting-non wetting: surface which goes to zero on the edges, but is a polynomial
         aWettingNonWettingSurfaceParams_.setA1(aWettingNonWettingA1_);

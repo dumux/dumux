@@ -122,9 +122,8 @@ struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere>
 {
     using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    using type = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar, FluidState, FluidSystem>;
+    using type = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
 };
 
 // Set the interfacial area relation: wetting -- non-wetting
