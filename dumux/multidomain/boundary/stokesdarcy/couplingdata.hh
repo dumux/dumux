@@ -765,7 +765,16 @@ protected:
 
         // treat the diffusive fluxes
         const auto& insideScv = insideFvGeometry.scv(scvf.insideScvIdx());
-        flux += diffusiveMolecularFlux_(domainI, domainJ, scvf, insideScv, outsideScv, insideVolVars, outsideVolVars, diffCoeffAvgType);
+        auto diffusiveFlux = diffusiveMolecularFlux_(domainI, domainJ, scvf, insideScv, outsideScv, insideVolVars, outsideVolVars, diffCoeffAvgType);
+
+        if(!useMoles)
+        {
+            //convert everything to a mass flux
+            for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+                diffusiveFlux[compIdx] *= FluidSystem<i>::molarMass(compIdx);
+        }
+
+        flux += diffusiveFlux;
 
         // convert to total mass/mole balance, if set be user
         if(replaceCompEqIdx < numComponents)
@@ -842,16 +851,7 @@ protected:
         const Scalar cumulativeFlux = std::accumulate(diffusiveFlux.begin(), diffusiveFlux.end(), 0.0);
         diffusiveFlux[couplingCompIdx(domainI, 0)] = -cumulativeFlux;
 
-
-        if(!useMoles)
-        {
-            //convert everything to a mass flux
-            for(int compIdx = 0; compIdx < numComponents; ++compIdx)
-                diffusiveFlux[compIdx] *= FluidSystem<i>::molarMass(compIdx);
-        }
-
         return diffusiveFlux;
-        // return NumEqVector(0);
     }
 
     /*!
@@ -895,8 +895,7 @@ protected:
                                            : getComponentEnthalpy(outsideVolVars, couplingPhaseIdx(domainJ), domainJCompIdx);
 
             // always use a mass-based calculation for the energy balance
-            if (useMoles)
-                diffusiveFlux[domainICompIdx] *= FluidSystem<i>::molarMass(domainICompIdx);
+            diffusiveFlux[domainICompIdx] *= FluidSystem<i>::molarMass(domainICompIdx);
 
             flux += diffusiveFlux[domainICompIdx] * componentEnthalpy;
         }
