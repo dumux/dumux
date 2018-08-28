@@ -2,6 +2,7 @@ dune_symlink_to_source_files(FILES "tracer.input")
 
 dune_add_test(NAME test_tracer_sequential
               SOURCES test_cctracer.cc
+              CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/tracer-sequential-transport-reference.vtu

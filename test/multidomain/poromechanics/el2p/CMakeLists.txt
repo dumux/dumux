@@ -2,6 +2,7 @@ dune_symlink_to_source_files(FILES "el2p.input")
 
 dune_add_test(NAME test_el2p
               SOURCES test_el2p.cc
+              CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/el2p_2p_reference.vtu
