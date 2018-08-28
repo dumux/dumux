@@ -73,6 +73,16 @@ template<class TypeTag>
 struct Problem<TypeTag, TTag::CombustionOneComponent>
 { using type = CombustionProblemOneComponent<TypeTag>; };
 
+// Set the spatial parameters
+template<class TypeTag>
+struct SpatialParams<TypeTag, TTag::CombustionOneComponent>
+{
+    using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+        using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using type = CombustionSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
+};
+
 template<class TypeTag>
 struct FluidSystem<TypeTag, TTag::CombustionOneComponent>
 { using type = FluidSystems::CombustionFluidsystem<GetPropType<TypeTag, Properties::Scalar>>; };
@@ -144,11 +154,6 @@ private:
 public:
     using type = CompositionalSolidState<Scalar, SolidSystem>;
 };
-
-// Set the spatial parameters
-template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::CombustionOneComponent> { using type = CombustionSpatialParams<TypeTag>; };
-
 }
 /*!
  * \ingroup MPNCTests

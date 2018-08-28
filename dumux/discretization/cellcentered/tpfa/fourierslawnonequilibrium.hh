@@ -43,7 +43,7 @@ class FouriersLawNonEquilibriumImplementation;
 template <class TypeTag>
 class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cctpfa>
 {
-    using Implementation = FouriersLawImplementation<TypeTag, DiscretizationMethod::cctpfa>;
+    using Implementation = FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethod::cctpfa>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using FVElementGeometry = typename GetPropType<TypeTag, Properties::FVGridGeometry>::LocalView;

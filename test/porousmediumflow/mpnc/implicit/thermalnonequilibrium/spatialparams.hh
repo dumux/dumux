@@ -40,26 +40,23 @@ namespace Dumux {
  * \brief Definition of the spatial parameters for the one component combustion problem
  *
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar, class FluidSystem>
 class CombustionSpatialParams
-: public FVNonEquilibriumSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
-                                       GetPropType<TypeTag, Properties::Scalar>,
-                                       CombustionSpatialParams<TypeTag>>
+: public FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar,
+                                       CombustionSpatialParams<FVGridGeometry, Scalar, FluidSystem>>
 {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar, CombustionSpatialParams<TypeTag>>;
+    using ThisType = CombustionSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
+    using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
     enum {dimWorld = GridView::dimensionworld};
     using GlobalPosition = typename SubControlVolume::GlobalPosition;
 
     using EffectiveLaw = HeatPipeLaw<Scalar>;
 
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
 
 public:
