@@ -11,3 +11,7 @@ TransmissibilityCriterion = 1 # 0 = default criterion, 1 = accumulative criterio
 
 RefinementRatio = 0
 
+[LinearSolver]
+GMResRestart = 80
+MaxIterations = 1000;
+ResidualReduction = 1e-8;

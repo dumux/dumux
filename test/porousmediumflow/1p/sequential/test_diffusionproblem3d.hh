@@ -80,10 +80,6 @@ SET_PROP(DiffusionTestTypeTag, FluidSystem)
 SET_TYPE_PROP(DiffusionTestTypeTag, LinearSolver, SuperLUBackend);
 #else
 SET_TYPE_PROP(DiffusionTestTypeTag, LinearSolver, ILUnRestartedGMResBackend);
-SET_INT_PROP(DiffusionTestTypeTag, LinearSolverGMResRestart, 80);
-SET_INT_PROP(DiffusionTestTypeTag, LinearSolverMaxIterations, 1000);
-SET_SCALAR_PROP(DiffusionTestTypeTag, LinearSolverResidualReduction, 1e-8);
-SET_SCALAR_PROP(DiffusionTestTypeTag, LinearSolverPreconditionerIterations, 1);
 #endif
 
 // set the types for the 2PFA FV method
