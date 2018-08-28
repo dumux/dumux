@@ -52,10 +52,6 @@ class StaggeredCouplingManagerBase: public CouplingManager<MDTraits>
     using FVElementGeometry = typename FVGridGeometry<0>::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using Element = typename GridView<0>::template Codim<0>::Entity;
-    using LocalResidual = typename GET_PROP_TYPE(StaggeredSubDomainTypeTag, LocalResidual);
-
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(StaggeredSubDomainTypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(StaggeredSubDomainTypeTag, FacePrimaryVariables);
 
     using CouplingStencils = std::unordered_map<std::size_t, std::vector<std::size_t> >;
     using CouplingStencil = CouplingStencils::mapped_type;
@@ -71,36 +67,21 @@ public:
 
     /*!
      * \copydoc ParentType::updateCouplingContext
-     *
-     * \note this is a specialization for updating the cellcentered dof
-     *       residual context w.r.t. staggered face dof changes
      */
-    template<class LocalAssemblerI>
-    void updateCouplingContext(Dune::index_constant<cellCenterIdx> domainI,
+    template<std::size_t i, std::size_t j, class LocalAssemblerI, class PriVarsJ>
+    void updateCouplingContext(Dune::index_constant<i> domainI,
                                const LocalAssemblerI& localAssemblerI,
-                               Dune::index_constant<faceIdx> domainJ,
-                               std::size_t dofIdxGlobalJ,
-                               const FacePrimaryVariables& priVarsJ,
+                               Dune::index_constant<j> domainJ,
+                               const std::size_t dofIdxGlobalJ,
+                               const PriVarsJ& priVarsJ,
                                int pvIdxJ)
     {
-        this->curSol()[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
-    }
+        auto& curSol = this->curSol()[domainJ];
 
-    /*!
-     * \copydoc ParentType::updateCouplingContext
-     *
-     * \note this is a specialization for updating the staggered face dof
-     *       residual context w.r.t. cellcentered dof changes
-     */
-    template<class LocalAssemblerI>
-    void updateCouplingContext(Dune::index_constant<faceIdx> domainI,
-                               const LocalAssemblerI& localAssemblerI,
-                               Dune::index_constant<cellCenterIdx> domainJ,
-                               std::size_t dofIdxGlobalJ,
-                               const CellCenterPrimaryVariables& priVarsJ,
-                               int pvIdxJ)
-    {
-        this->curSol()[domainJ][dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
+        // only proceed if the solution vector has actually been set in the base class
+        // (which is not the case if the staggered model is not coupled to another domain)
+        if (curSol.size() > 0)
+            curSol[dofIdxGlobalJ][pvIdxJ] = priVarsJ[pvIdxJ];
     }
 
     /*!
