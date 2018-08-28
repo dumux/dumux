@@ -329,17 +329,18 @@ private:
     template<class JacobianMatrixRow, class SubSol, class GridVariablesTuple>
     auto assembleJacobianAndResidualImpl_(Dune::index_constant<0>, JacobianMatrixRow& jacRow, SubSol& res, GridVariablesTuple& gridVariables)
     {
+        auto& gridVariablesI = *std::get<domainId>(gridVariables);
         const auto cellCenterGlobalI = problem().fvGridGeometry().elementMapper().index(this->element());
-        const auto residual = this->asImp_().assembleCellCenterJacobianAndResidualImpl(jacRow[domainId], *std::get<domainId>(gridVariables));
+        const auto residual = this->asImp_().assembleCellCenterJacobianAndResidualImpl(jacRow[domainId], gridVariablesI);
         res[cellCenterGlobalI] = residual;
 
 
         // for the coupling blocks
         using namespace Dune::Hybrid;
-        static constexpr auto otherDomainIds = makeIncompleteIntegerSequence<Dune::Hybrid::size(jacRow), domainId>{};
-        forEach(otherDomainIds, [&, domainId = domainId](auto&& domainJ)
+        static constexpr auto otherDomainIds = makeIncompleteIntegerSequence<JacobianMatrixRow::size(), domainId>{};
+        forEach(otherDomainIds, [&](auto&& domainJ)
         {
-            this->asImp_().assembleJacobianCellCenterCoupling(domainJ, jacRow[domainJ], residual, *std::get<domainJ>(gridVariables));
+            this->asImp_().assembleJacobianCellCenterCoupling(domainJ, jacRow[domainJ], residual, gridVariablesI);
         });
     }
 
@@ -347,17 +348,18 @@ private:
     template<class JacobianMatrixRow, class SubSol, class GridVariablesTuple>
     void assembleJacobianAndResidualImpl_(Dune::index_constant<1>, JacobianMatrixRow& jacRow, SubSol& res, GridVariablesTuple& gridVariables)
     {
-        const auto residual = this->asImp_().assembleFaceJacobianAndResidualImpl(jacRow[domainId], *std::get<domainId>(gridVariables));
+        auto& gridVariablesI = *std::get<domainId>(gridVariables);
+        const auto residual = this->asImp_().assembleFaceJacobianAndResidualImpl(jacRow[domainId], gridVariablesI);
 
         for(auto&& scvf : scvfs(this->fvGeometry()))
             res[scvf.dofIndex()] += residual[scvf.localFaceIdx()];
 
         // for the coupling blocks
         using namespace Dune::Hybrid;
-        static constexpr auto otherDomainIds = makeIncompleteIntegerSequence<Dune::Hybrid::size(jacRow), domainId>{};
-        forEach(otherDomainIds, [&, domainId = domainId](auto&& domainJ)
+        static constexpr auto otherDomainIds = makeIncompleteIntegerSequence<JacobianMatrixRow::size(), domainId>{};
+        forEach(otherDomainIds, [&](auto&& domainJ)
         {
-            this->asImp_().assembleJacobianFaceCoupling(domainJ, jacRow[domainJ], residual, *std::get<domainJ>(gridVariables));
+            this->asImp_().assembleJacobianFaceCoupling(domainJ, jacRow[domainJ], residual, gridVariablesI);
         });
     }
 

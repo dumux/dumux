@@ -150,7 +150,7 @@ int main(int argc, char** argv) try
 
         auto fileNameFace = getParamFromGroup<std::string>("Face", "Restart.File");
         loadSolution(x[FVGridGeometry::faceIdx()], fileNameFace,
-                     ModelTraits::primaryVariableNameFace, *fvGridGeometry);
+                     ModelTraits::primaryVariableNameFace<>, *fvGridGeometry);
     }
     else
         problem->applyInitialSolution(x);
