@@ -9,13 +9,13 @@ add_executable(test_facetcoupling_box_1p1p EXCLUDE_FROM_ALL test_facetcoupling_f
 target_compile_definitions(test_facetcoupling_box_1p1p PUBLIC BULKTYPETAG=OnePBulkBox LOWDIMTYPETAG=OnePLowDimBox)
 
 dune_add_test(NAME test_facet_1p1p_tpfa_convergence
-              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND gmsh_FOUND )"
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND gmsh_FOUND AND HAVE_UMFPACK )"
               TARGET test_facetcoupling_tpfa_1p1p
               COMMAND ./convergencetest.py
               CMD_ARGS test_facetcoupling_tpfa_1p1p 1e-4)
 
 dune_add_test(NAME test_facet_1p1p_box_convergence
-              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND gmsh_FOUND )"
+              CMAKE_GUARD "( dune-foamgrid_FOUND AND dune-alugrid_FOUND AND gmsh_FOUND AND HAVE_UMFPACK )"
               TARGET test_facetcoupling_box_1p1p
               COMMAND ./convergencetest.py
               CMD_ARGS test_facetcoupling_box_1p1p 1e-4)
