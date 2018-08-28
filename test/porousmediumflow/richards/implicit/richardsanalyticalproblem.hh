@@ -70,7 +70,12 @@ SET_TYPE_PROP(RichardsAnalyticalTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(RichardsAnalyticalTypeTag, Problem, RichardsAnalyticalProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsAnalyticalTypeTag, SpatialParams, RichardsAnalyticalSpatialParams<TypeTag>);
+SET_PROP(RichardsAnalyticalTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = RichardsAnalyticalSpatialParams<FVGridGeometry, Scalar>;
+};
 } // end namespace Properties
 
 /*!

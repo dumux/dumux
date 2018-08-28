@@ -74,7 +74,12 @@ SET_PROP(OnePTwoCNIConductionTypeTag, FluidSystem)
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
+SET_PROP(OnePTwoCNIConductionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePNCTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(OnePTwoCNIConductionTypeTag, UseMoles, true);

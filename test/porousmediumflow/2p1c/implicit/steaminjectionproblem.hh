@@ -44,7 +44,7 @@ template <class TypeTag>
 class InjectionProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(InjectionProblemTypeTag, INHERITS_FROM(TwoPOneCNI, InjectionProblemSpatialParams));
+NEW_TYPE_TAG(InjectionProblemTypeTag, INHERITS_FROM(TwoPOneCNI));
 NEW_TYPE_TAG(TwoPOneCNIBoxTypeTag, INHERITS_FROM(BoxModel, InjectionProblemTypeTag));
 NEW_TYPE_TAG(TwoPOneCNICCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InjectionProblemTypeTag));
 
@@ -64,6 +64,13 @@ public:
     using type = Dumux::FluidSystems::TwoPOneC<Scalar, H2OType >;
 };
 
+// Set the spatial parameters
+SET_PROP(InjectionProblemTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = InjectionProblemSpatialParams<FVGridGeometry, Scalar>;
+};
 
 //Define whether spurious cold-water flow into the steam is blocked
 SET_BOOL_PROP(InjectionProblemTypeTag, UseBlockingOfSpuriousFlow, true);

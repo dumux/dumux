@@ -43,20 +43,16 @@ namespace Dumux {
  * \ingroup PoroElastic
  * \brief The spatial parameters class for the two-phase sub problem in the el2p test problem
  */
-template<class TypeTag>
-class TwoPSpatialParams : public FVSpatialParams< typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                      typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                      TwoPSpatialParams<TypeTag> >
+template<class FVGridGeometry, class Scalar, class CouplingManager>
+class TwoPSpatialParams : public FVSpatialParams<FVGridGeometry, Scalar,
+                                                 TwoPSpatialParams<FVGridGeometry, Scalar, CouplingManager>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using ThisType = TwoPSpatialParams<TypeTag>;
+    using ThisType = TwoPSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
     using ParentType = FVSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
 public:

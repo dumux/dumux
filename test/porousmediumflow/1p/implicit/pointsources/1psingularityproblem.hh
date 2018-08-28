@@ -62,7 +62,12 @@ SET_TYPE_PROP(OnePSingularityTypeTag, Grid,
 SET_TYPE_PROP(OnePSingularityTypeTag, Problem, OnePSingularityProblem<TypeTag> );
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePSingularityTypeTag, SpatialParams, OnePSingularitySpatialParams<TypeTag> );
+SET_PROP(OnePSingularityTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePSingularitySpatialParams<FVGridGeometry, Scalar>;
+};
 }
 
 /*!

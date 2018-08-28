@@ -32,19 +32,17 @@
 
 namespace Dumux {
 
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class RichardsNISpatialParams
-: public FVSpatialParams<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                         typename GET_PROP_TYPE(TypeTag, Scalar),
-                         RichardsNISpatialParams<TypeTag>>
+: public FVSpatialParams<FVGridGeometry, Scalar,
+                         RichardsNISpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParams<FVGridGeometry, Scalar, RichardsNISpatialParams<TypeTag>>;
+    using ParentType = FVSpatialParams<FVGridGeometry, Scalar,
+                                       RichardsNISpatialParams<FVGridGeometry, Scalar>>;
 
     enum { dimWorld=GridView::dimensionworld };
 

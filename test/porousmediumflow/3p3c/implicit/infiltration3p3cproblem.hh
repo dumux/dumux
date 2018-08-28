@@ -57,7 +57,12 @@ SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag, Problem, InfiltrationThreePThreeCProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag, SpatialParams, InfiltrationThreePThreeCSpatialParams<TypeTag>);
+SET_PROP(InfiltrationThreePThreeCTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = InfiltrationThreePThreeCSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Set the fluid system
 SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag,

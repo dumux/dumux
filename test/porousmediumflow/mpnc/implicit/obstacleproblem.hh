@@ -64,7 +64,13 @@ SET_TYPE_PROP(ObstacleTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(ObstacleTypeTag, Problem, ObstacleProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ObstacleTypeTag, SpatialParams, ObstacleSpatialParams<TypeTag>);
+SET_PROP(ObstacleTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using type = ObstacleSpatialParams<FVGridGeometry, Scalar, FluidSystem>;
+};
 
 // Set fluid configuration
 SET_TYPE_PROP(ObstacleTypeTag,

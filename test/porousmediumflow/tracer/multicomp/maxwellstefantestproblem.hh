@@ -56,7 +56,12 @@ SET_TYPE_PROP(MaxwellStefanTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(MaxwellStefanTestTypeTag, Problem, MaxwellStefanTestProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(MaxwellStefanTestTypeTag, SpatialParams, MaxwellStefanTestSpatialParams<TypeTag>);
+SET_PROP(MaxwellStefanTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = MaxwellStefanTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(MaxwellStefanTestTypeTag, UseMoles, true);

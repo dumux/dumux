@@ -65,7 +65,12 @@ SET_TYPE_PROP(FuelCellTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(FuelCellTypeTag, Problem, FuelCellProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(FuelCellTypeTag, SpatialParams, FuelCellSpatialParams<TypeTag>);
+SET_PROP(FuelCellTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FuelCellSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Set the primary variable combination for the 2pnc model
 SET_PROP(FuelCellTypeTag, Formulation)

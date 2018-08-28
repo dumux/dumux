@@ -79,11 +79,12 @@ public:
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(InfiltrationThreePTypeTag, SpatialParams, InfiltrationThreePSpatialParams<TypeTag>);
-
-// SET_TYPE_PROP(InfiltrationThreePTypeTag,
-//               FluidSystem,
-//               FluidSystems::ThreePImmiscible<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+SET_PROP(InfiltrationThreePTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = InfiltrationThreePSpatialParams<FVGridGeometry, Scalar>;
+};
 
 }// end namespace Properties
 

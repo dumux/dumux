@@ -77,7 +77,12 @@ SET_PROP(ThermoChemTypeTag, SolidSystem)
 // SET_BOOL_PROP(ThermoChemTypeTag, VtkAddVelocity, false);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThermoChemTypeTag, SpatialParams, ThermoChemSpatialParams<TypeTag>);
+SET_PROP(ThermoChemTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = ThermoChemSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(ThermoChemTypeTag, UseMoles, true);

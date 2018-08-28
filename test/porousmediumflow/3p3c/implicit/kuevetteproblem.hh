@@ -63,7 +63,12 @@ SET_TYPE_PROP(KuevetteTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(KuevetteTypeTag, Problem, KuevetteProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(KuevetteTypeTag, SpatialParams, KuevetteSpatialParams<TypeTag>);
+SET_PROP(KuevetteTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = KuevetteSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Set the fluid system
 SET_TYPE_PROP(KuevetteTypeTag,

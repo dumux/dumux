@@ -35,19 +35,17 @@ namespace Dumux {
  * \brief A test problem for the 1p model. A pipe system with circular cross-section
  *        and a branching point embedded in a three-dimensional world
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class TubesTestSpatialParams
-: public FVSpatialParamsOneP<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                             typename GET_PROP_TYPE(TypeTag, Scalar),
-                             TubesTestSpatialParams<TypeTag>>
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                             TubesTestSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, TubesTestSpatialParams<TypeTag>>;
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                           TubesTestSpatialParams<FVGridGeometry, Scalar>>;
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 

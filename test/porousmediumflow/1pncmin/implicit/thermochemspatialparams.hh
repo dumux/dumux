@@ -39,22 +39,17 @@ namespace Dumux {
  * \brief Definition of the spatial parameters for the FuelCell
  *        problem which uses the isothermal 2p2c box model
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar>
 class ThermoChemSpatialParams
-: public FVSpatialParamsOneP<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                             typename GET_PROP_TYPE(TypeTag, Scalar),
-                             ThermoChemSpatialParams<TypeTag>>
+: public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                             ThermoChemSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThermoChemSpatialParams<TypeTag>>;
-
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                           ThermoChemSpatialParams<FVGridGeometry, Scalar>>;
 
     enum { dimWorld=GridView::dimensionworld };
 

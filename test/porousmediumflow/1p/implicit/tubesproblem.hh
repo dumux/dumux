@@ -93,7 +93,12 @@ public:
 SET_TYPE_PROP(TubesTestTypeTag, Problem, TubesTestProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TubesTestTypeTag, SpatialParams, TubesTestSpatialParams<TypeTag>);
+SET_PROP(TubesTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = TubesTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // the fluid system
 SET_PROP(TubesTestTypeTag, FluidSystem)

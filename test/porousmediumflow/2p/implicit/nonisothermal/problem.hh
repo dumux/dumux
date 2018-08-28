@@ -72,7 +72,13 @@ SET_TYPE_PROP(Injection2PNITypeTag, Problem, InjectionProblem2PNI<TypeTag>);
 SET_TYPE_PROP(Injection2PNITypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(Injection2PNITypeTag, SpatialParams, InjectionSpatialParams<TypeTag>);
+SET_PROP(Injection2PNITypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = InjectionSpatialParams<FVGridGeometry, Scalar>;
+};
+
 } // namespace Properties
 
 /*!

@@ -59,7 +59,13 @@ SET_TYPE_PROP(OnePSubTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(OnePSubTypeTag, Problem, OnePSubProblem<TypeTag> );
 // Set the spatial parameters
-SET_TYPE_PROP(OnePSubTypeTag, SpatialParams, OnePSpatialParams<TypeTag> );
+SET_PROP(OnePSubTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using type = OnePSpatialParams<FVGridGeometry, Scalar, CouplingManager>;
+};
 } // end namespace Properties
 
 /*!

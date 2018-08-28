@@ -76,7 +76,12 @@ SET_PROP(DissolutionTypeTag, SolidSystem)
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(DissolutionTypeTag, SpatialParams, DissolutionSpatialparams<TypeTag>);
+SET_PROP(DissolutionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = DissolutionSpatialParams<FVGridGeometry, Scalar>;
+};
 
 //Set properties here to override the default property settings
 SET_INT_PROP(DissolutionTypeTag, ReplaceCompEqIdx, 1); //!< Replace gas balance by total mass balance

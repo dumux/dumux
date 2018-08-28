@@ -32,19 +32,15 @@ namespace Dumux {
  * \ingroup OnePTests
  * \brief The spatial params the single-phase facet coupling test
  */
-template<class TypeTag>
-class OnePSpatialParams : public FVSpatialParamsOneP< typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                      typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                      OnePSpatialParams<TypeTag> >
+template<class FVGridGeometry, class Scalar>
+class OnePSpatialParams : public FVSpatialParamsOneP<FVGridGeometry, Scalar,
+                                                     OnePSpatialParams<FVGridGeometry, Scalar>>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    using ThisType = OnePSpatialParams<TypeTag>;
+    using ThisType = OnePSpatialParams<FVGridGeometry, Scalar>;
     using ParentType = FVSpatialParamsOneP<FVGridGeometry, Scalar, ThisType>;
 
 public:

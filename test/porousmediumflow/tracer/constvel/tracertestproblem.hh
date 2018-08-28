@@ -67,7 +67,12 @@ SET_TYPE_PROP(TracerTest, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(TracerTest, Problem, TracerTest<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TracerTest, SpatialParams, TracerTestSpatialParams<TypeTag>);
+SET_PROP(TracerTest, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = TracerTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(TracerTest, UseMoles, USEMOLES);

@@ -59,7 +59,12 @@ SET_TYPE_PROP(OnePIncompressible, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(OnePIncompressible, Problem, OnePTestProblem<TypeTag>);
 
 // set the spatial params
-SET_TYPE_PROP(OnePIncompressible, SpatialParams, OnePTestSpatialParams<TypeTag>);
+SET_PROP(OnePIncompressible, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // use the incompressible local residual (provides analytic jacobian)
 SET_TYPE_PROP(OnePIncompressible, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);

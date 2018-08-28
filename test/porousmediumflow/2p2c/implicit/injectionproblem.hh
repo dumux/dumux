@@ -63,7 +63,12 @@ SET_TYPE_PROP(InjectionTypeTag,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(InjectionTypeTag, SpatialParams, InjectionSpatialParams<TypeTag>);
+SET_PROP(InjectionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = InjectionSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(InjectionTypeTag, UseMoles, true);

@@ -71,7 +71,12 @@ SET_TYPE_PROP(DarcyOnePTwoCTypeTag, EffectiveDiffusivityModel,
 SET_TYPE_PROP(DarcyOnePTwoCTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the spatial paramaters type
-SET_TYPE_PROP(DarcyOnePTwoCTypeTag, SpatialParams, OnePSpatialParams<TypeTag>);
+SET_PROP(DarcyOnePTwoCTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePSpatialParams<FVGridGeometry, Scalar>;
+};
 }
 
 template <class TypeTag>

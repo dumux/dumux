@@ -87,7 +87,12 @@ public:
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(ColumnTypeTag, SpatialParams, ColumnSpatialParams<TypeTag>);
+SET_PROP(ColumnTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = ColumnSpatialParams<FVGridGeometry, Scalar>;
+};
 } // end namespace Properties
 
 /*!

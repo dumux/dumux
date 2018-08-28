@@ -62,7 +62,12 @@ SET_TYPE_PROP(WaterAirTypeTag, Problem, WaterAirProblem<TypeTag>);
 SET_TYPE_PROP(WaterAirTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(WaterAirTypeTag, SpatialParams, WaterAirSpatialParams<TypeTag>);
+SET_PROP(WaterAirTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = WaterAirSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(WaterAirTypeTag, UseMoles, true);

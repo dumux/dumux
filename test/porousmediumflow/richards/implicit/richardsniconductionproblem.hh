@@ -64,7 +64,12 @@ SET_TYPE_PROP(RichardsNIConductionTypeTag, Problem,
 SET_TYPE_PROP(RichardsNIConductionTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsNIConductionTypeTag, SpatialParams, RichardsNISpatialParams<TypeTag>);
+SET_PROP(RichardsNIConductionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = RichardsNISpatialParams<FVGridGeometry, Scalar>;
+};
 } // end namespace Properties
 
 /*!

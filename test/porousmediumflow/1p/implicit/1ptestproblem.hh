@@ -65,7 +65,12 @@ SET_TYPE_PROP(OnePTestTypeTag, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(OnePTestTypeTag, Problem, OnePTestProblem<TypeTag> );
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTestTypeTag, SpatialParams, OnePTestSpatialParams<TypeTag> );
+SET_PROP(OnePTestTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePTestSpatialParams<FVGridGeometry, Scalar>;
+};
 }
 
 /*!

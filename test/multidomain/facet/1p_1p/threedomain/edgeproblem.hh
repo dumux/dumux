@@ -52,7 +52,12 @@ SET_TYPE_PROP(OnePEdge, Grid, Dune::FoamGrid<1, 3>);
 // Set the problem type
 SET_TYPE_PROP(OnePEdge, Problem, OnePEdgeProblem<TypeTag>);
 // set the spatial params
-SET_TYPE_PROP(OnePEdge, SpatialParams, OnePSpatialParams<TypeTag>);
+SET_PROP(OnePEdge, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // the fluid system
 SET_PROP(OnePEdge, FluidSystem)

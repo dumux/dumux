@@ -50,7 +50,12 @@ SET_TYPE_PROP(OnePBulk, Grid, Dune::ALUGrid<3, 3, Dune::simplex, Dune::nonconfor
 // Set the problem type
 SET_TYPE_PROP(OnePBulk, Problem, OnePBulkProblem<TypeTag>);
 // set the spatial params
-SET_TYPE_PROP(OnePBulk, SpatialParams, OnePSpatialParams<TypeTag>);
+SET_PROP(OnePBulk, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // the fluid system
 SET_PROP(OnePBulk, FluidSystem)

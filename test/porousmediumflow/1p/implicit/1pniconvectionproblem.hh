@@ -66,7 +66,12 @@ SET_TYPE_PROP(OnePNIConvectionTypeTag, FluidSystem,
                                                            Components::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePNIConvectionTypeTag, SpatialParams, OnePNISpatialParams<TypeTag>);
+SET_PROP(OnePNIConvectionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePNISpatialParams<FVGridGeometry, Scalar>;
+};
 } // end namespace Properties
 
 

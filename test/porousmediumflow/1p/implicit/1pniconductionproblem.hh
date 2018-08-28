@@ -67,7 +67,12 @@ SET_TYPE_PROP(OnePNIConductionTypeTag, FluidSystem,
             FluidSystems::OnePLiquid<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                            Components::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 // Set the spatial parameters
-SET_TYPE_PROP(OnePNIConductionTypeTag, SpatialParams, OnePNISpatialParams<TypeTag>);
+SET_PROP(OnePNIConductionTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePNISpatialParams<FVGridGeometry, Scalar>;
+};
 }
 
 

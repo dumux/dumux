@@ -58,7 +58,12 @@ SET_PROP(DarcyOnePTypeTag, FluidSystem)
 // Set the grid type
 SET_TYPE_PROP(DarcyOnePTypeTag, Grid, Dune::YaspGrid<2>);
 
-SET_TYPE_PROP(DarcyOnePTypeTag, SpatialParams, OnePSpatialParams<TypeTag>);
+SET_PROP(DarcyOnePTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = OnePSpatialParams<FVGridGeometry, Scalar>;
+};
 }
 
 template <class TypeTag>

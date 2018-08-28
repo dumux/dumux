@@ -65,7 +65,12 @@ SET_TYPE_PROP(TwoPTwoCComparisonTypeTag,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), FluidSystems::H2ON2DefaultPolicy</*fastButSimplifiedRelations=*/true>>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, SpatialParams, TwoPTwoCComparisonSpatialParams<TypeTag>);
+SET_PROP(TwoPTwoCComparisonTypeTag, SpatialParams)
+{
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = TwoPTwoCComparisonSpatialParams<FVGridGeometry, Scalar>;
+};
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, Scalar, double);
