@@ -47,28 +47,22 @@ namespace Dumux {
 /**
  * \brief Definition of the spatial parameters for the evaporation atmosphere Problem (using a "poor man's coupling")
  */
-template<class TypeTag>
+template<class FVGridGeometry, class Scalar, class FluidState, class FluidSystem>
 class EvaporationAtmosphereSpatialParams
-: public FVNonEquilibriumSpatialParams<GetPropType<TypeTag, Properties::FVGridGeometry>,
-                                       GetPropType<TypeTag, Properties::Scalar>,
-                                       EvaporationAtmosphereSpatialParams<TypeTag>>
+: public FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar,
+                                       EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar, FluidState, FluidSystem>>
 {
-    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    using FVGridGeometry = GetPropType<TypeTag, Properties::FVGridGeometry>;
     using GridView = typename FVGridGeometry::GridView;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
-    using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar, EvaporationAtmosphereSpatialParams<TypeTag>>;
+    using ThisType = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar, FluidState, FluidSystem>;
+    using ParentType = FVNonEquilibriumSpatialParams<FVGridGeometry, Scalar, ThisType>;
 
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
     enum { dimWorld = GridView::dimensionworld };
-    enum { numPhases = GetPropType<TypeTag, Properties::ModelTraits>::numPhases() };
-
-    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-
+    enum { numPhases = FluidSystem::numPhases };
     enum { liquidPhaseIdx   = FluidSystem::liquidPhaseIdx };
 public:
     //! export the type used for the permeability

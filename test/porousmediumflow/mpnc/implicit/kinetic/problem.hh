@@ -118,7 +118,14 @@ struct SolidSystem<TypeTag, TTag::EvaporationAtmosphere>
 
 // Set the spatial parameters
 template<class TypeTag>
-struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere> { using type = EvaporationAtmosphereSpatialParams<TypeTag>; };
+struct SpatialParams<TypeTag, TTag::EvaporationAtmosphere>
+{
+    using FVGridGeometry = GetPropType<TypeTag, FVGridGeometry>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using FluidState = GetPropType<TypeTag, Properties::FluidState>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using type = EvaporationAtmosphereSpatialParams<FVGridGeometry, Scalar, FluidState, FluidSystem>;
+};
 
 // Set the interfacial area relation: wetting -- non-wetting
 template<class TypeTag>
@@ -131,7 +138,6 @@ struct AwnSurface<TypeTag, TTag::EvaporationAtmosphere>
 public:
     using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
 };
-
 
 // Set the interfacial area relation: wetting -- solid
 template<class TypeTag>
