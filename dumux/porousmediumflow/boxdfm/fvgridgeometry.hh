@@ -413,7 +413,7 @@ public:
     //! Constructor
     BoxDfmFVGridGeometry(const GridView gridView)
     : ParentType(gridView)
-    , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<dim-1>()))
+    , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
     {}
 
     //! the vertex mapper is the dofMapper
