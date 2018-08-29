@@ -154,7 +154,7 @@ struct MPNCModelTraits
     //! Per default, we use the indices without offset
     using Indices = MPNCIndices< numPhases(), numEq() >;
 
-    template <class FluidSystem>
+    template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state=0)
     {
         if (pvIdx < numComponents())
