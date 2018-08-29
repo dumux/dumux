@@ -10,15 +10,30 @@ dune_add_test(NAME test_1p2c_box
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_box test_1p2c_fv.input -Problem.Name 1pnctestbox"
                         --zeroThreshold {"velocity_w \(m/s\)_1":1e-15})
 
+# using tpfa
+add_executable(test_1p2c_tpfa EXCLUDE_FROM_ALL test_1p2c_fv.cc)
+target_compile_definitions(test_1p2c_tpfa PUBLIC TYPETAG=OnePTwoCTestCCTpfaTypeTag)
+
 dune_add_test(NAME test_1p2c_tpfa
-              SOURCES test_1p2c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCTpfaTypeTag
+              TARGET test_1p2c_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2ctestcc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/1pnctest_tpfa-00009.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_tpfa test_1p2c_fv.input -Problem.Name 1pnctest_tpfa"
                         --zeroThreshold {"velocity_w \(m/s\)_1":1e-15})
+
+dune_add_test(NAME test_1p2c_tpfa_restart
+              TARGET test_1p2c_tpfa
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/1p2ctestcc-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1pnctest_tpfa_restart-00003.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_tpfa test_1p2c_fv.input -Problem.Name 1pnctest_tpfa_restart -TimeLoop.DtInitial 21.4335 -Restart.Time 30.6502 -Restart.File 1pnctest_tpfa-00006.vtu"
+                        --zeroThreshold {"velocity_w \(m/s\)_1":1e-15})
+
+# the restart test has to run after the test that produces the corresponding vtu file
+set_tests_properties(test_1p2c_tpfa_restart PROPERTIES DEPENDS test_1p2c_tpfa)
 
 #Note: The mpfa model does not support velocity output yet. We therefore deactivate it for the test and use a copy of the tpfa reference
 #      solution where the velocities have been removed.
