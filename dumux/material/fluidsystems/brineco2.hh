@@ -88,10 +88,11 @@ namespace Detail {
  * \ingroup Fluidsystems
  * \brief Default policy for the Brine-CO2 fluid system
  */
-template<bool salinityIsConstant>
+template<bool salinityIsConstant, bool fastButSimplifiedRelations = false>
 struct BrineCO2DefaultPolicy
 {
     static constexpr bool useConstantSalinity() { return salinityIsConstant; }
+    static constexpr bool useCO2GasDensityAsGasMixtureDensity() { return fastButSimplifiedRelations; }
 };
 
 /*!
@@ -351,11 +352,19 @@ public:
     static Scalar density(const FluidState& fluidState, int phaseIdx)
     {
         if (phaseIdx == liquidPhaseIdx)
-            return liquidDensity_(fluidState);
+            return liquidDensityMixture_(fluidState);
 
-        // in the end it comes down to a simplification of just CO2
         else if (phaseIdx == gasPhaseIdx)
-            return CO2::gasDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+        {
+            if (Policy::useCO2GasDensityAsGasMixtureDensity())
+                // use the CO2 gas density only and neglect compositional effects
+                return CO2::gasDensity(fluidState.temperature(phaseIdx), fluidState.pressure(phaseIdx));
+            else
+                //account for compositional effects (water) in the gas phase
+                return gasDensityMixture_(fluidState.temperature(phaseIdx),
+                                          fluidState.pressure(phaseIdx),
+                                          fluidState.moleFraction(phaseIdx, comp0Idx));
+        }
 
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index.");
     }
@@ -709,15 +718,14 @@ public:
 
 private:
 
-    /***********************************************************************/
-    /*                                                                     */
-    /* Total brine density with dissolved CO2                              */
-    /* rho_{b,CO2} = rho_w + contribution(salt) + contribution(CO2)        */
-    /*                                                                     */
-    /***********************************************************************/
-    // computes the density of the liquid phase
+    /*!
+     * \brief Liquid-phase density calculation of a mixture of brine and CO2 accounting for compositional effects.
+     *
+     * \param fluidState An arbitrary fluid state
+     * \return liquidDensity the liquid-phase density
+     */
     template<class FluidState>
-    static Scalar liquidDensity_(const FluidState& fluidState)
+    static Scalar liquidDensityMixture_(const FluidState& fluidState)
     {
         const auto T = fluidState.temperature(liquidPhaseIdx);
         const auto p = fluidState.pressure(liquidPhaseIdx);
@@ -777,7 +785,17 @@ private:
         return rho_brine + contribCO2;
     }
 
-    // computes the density of the liquid water/CO2 mixture
+
+    /*!
+     * \brief Liquid-phase density for a mixture of CO2 in pure water.
+     * \note this is used by liquidDensityMixture_
+     *
+     * \param temperature The temperature
+     * \param pl the liquid-phase pressure
+     * \param xlH2O the liquid-phase H2O mole fraction
+     * \param xlCO2 the liquid-phase CO2 mole fraction
+     * \return the density of a mixture of CO2 in pure water
+     */
     static Scalar liquidDensityWaterCO2_(Scalar temperature,
                                          Scalar pl,
                                          Scalar xlH2O,
@@ -798,6 +816,23 @@ private:
                                      tempC*(8.74e-4 -
                                             tempC*5.044e-7))) / 1.0e6;
         return 1/(xlCO2 * V_phi/M_T + M_H2O * xlH2O / (rho_pure * M_T));
+    }
+
+    /*!
+     * \brief Gas-phase density calculation accounting for compositional effects.
+     *
+     * \param temperature The temperature
+     * \param pg the gas-phase pressure
+     * \param xgH2O the gas-phase H2O mole fraction
+     * \return the gas-phase density
+     */
+    static Scalar gasDensityMixture_(Scalar temperature, Scalar pg, Scalar xgH2O)
+    {
+        const Scalar pH2O = xgH2O*pg; //Dalton' Law
+        const Scalar pCO2 = pg - pH2O;
+        const Scalar gasDensityCO2 = CO2::gasDensity(temperature, pCO2);
+        const Scalar gasDensityH2O = H2O::gasDensity(temperature, pH2O);
+        return gasDensityCO2 + gasDensityH2O;
     }
 };
 
