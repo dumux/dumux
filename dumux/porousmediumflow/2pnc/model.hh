@@ -135,7 +135,7 @@ struct TwoPNCModelTraits
 
     static constexpr TwoPFormulation priVarFormulation() { return formulation; }
 
-    template <class FluidSystem>
+    template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
         const std::string xString = useMoles() ? "x" : "X";

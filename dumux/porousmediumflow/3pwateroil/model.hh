@@ -112,7 +112,7 @@ struct ThreePWaterOilModelTraits
 
     static constexpr bool onlyGasPhaseCanDisappear() { return onlyGasPhase; }
 
-    template <class FluidSystem>
+    template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
         switch (state)

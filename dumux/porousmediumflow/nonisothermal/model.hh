@@ -75,11 +75,11 @@ struct PorousMediumFlowNIModelTraits : public IsothermalTraits
     //! The indices related to the non-isothermal model
     using Indices = EnergyIndices< typename IsothermalTraits::Indices, numEq()>;
 
-    template <class FluidSystem = void>
+    template <class FluidSystem = void, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         if (pvIdx < numEq() - 1)
-            return IsothermalTraits::template primaryVariableName<FluidSystem>(pvIdx, state);
+            return IsothermalTraits::template primaryVariableName<FluidSystem, SolidSystem>(pvIdx, state);
         else
             return "T";
     }

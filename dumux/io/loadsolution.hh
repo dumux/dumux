@@ -232,7 +232,7 @@ auto loadSolutionFromVtkFile(SolutionVector& sol,
  * \brief helper function to determine the primary variable names of a model with privar state
  * \note use this as input for the load solution function
  */
-template<class ModelTraits, class FluidSystem = void>
+template<class ModelTraits, class FluidSystem = void, class SolidSystem = void>
 std::function<std::string(int,int)> createPVNameFunctionWithState(const std::string& paramGroup = "")
 {
     return  [paramGroup](int pvIdx, int state = 0)
@@ -250,7 +250,7 @@ std::function<std::string(int,int)> createPVNameFunctionWithState(const std::str
                     return pvName[pvIdx];
                 }
                 else
-                    return ModelTraits::template primaryVariableName<FluidSystem>(pvIdx, state);
+                    return ModelTraits::template primaryVariableName<FluidSystem, SolidSystem>(pvIdx, state);
             };
 }
 
@@ -259,7 +259,7 @@ std::function<std::string(int,int)> createPVNameFunctionWithState(const std::str
  * \brief helper function to determine the primary variable names of a model without state
  * \note use this as input for the load solution function
  */
-template<class ModelTraits, class FluidSystem = void>
+template<class ModelTraits, class FluidSystem = void, class SolidSystem = void>
 std::function<std::string(int,int)> createPVNameFunction(const std::string& paramGroup = "")
 {
     if (hasParamInGroup(paramGroup, "LoadSolution.PriVarNames"))
@@ -268,7 +268,7 @@ std::function<std::string(int,int)> createPVNameFunction(const std::string& para
         return [n = std::move(pvName)](int pvIdx, int state = 0){ return n[pvIdx]; };
     }
     else
-        return [](int pvIdx, int state = 0){ return ModelTraits::template primaryVariableName<FluidSystem>(pvIdx, state); };
+        return [](int pvIdx, int state = 0){ return ModelTraits::template primaryVariableName<FluidSystem, SolidSystem>(pvIdx, state); };
 }
 
 /*!
