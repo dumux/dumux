@@ -27,8 +27,8 @@ dune_add_test(NAME test_vtkreader_2d
 
 dune_add_test(NAME test_vtkreader_2d3d
               SOURCES test_vtkreader.cc
-              CMAKE_GUARD dune-alugrid_FOUND
-              COMPILE_DEFINITIONS GRIDTYPE=Dune::ALUGrid<2,3,Dune::simplex,Dune::conforming>
+              CMAKE_GUARD dune-foamgrid_FOUND
+              COMPILE_DEFINITIONS GRIDTYPE=Dune::FoamGrid<2,3>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_vtkreader_2d3d
