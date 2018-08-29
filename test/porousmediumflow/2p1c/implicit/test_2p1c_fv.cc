@@ -48,6 +48,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/loadsolution.hh>
 
 int main(int argc, char** argv) try
 {
@@ -92,10 +93,28 @@ int main(int argc, char** argv) try
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
+    // get some time loop parameters
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+
+    // check if we are about to restart a previously interrupted simulation
+    Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
+
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     SolutionVector x(fvGridGeometry->numDofs());
-    problem->applyInitialSolution(x);
+    if (restartTime > 0)
+    {
+        using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+        const auto fileName = getParam<std::string>("Restart.File");
+        const auto pvName = createPVNameFunctionWithState<ModelTraits, FluidSystem>();
+        loadSolution(x, fileName, pvName, *fvGridGeometry);
+    }
+    else
+        problem->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables
@@ -103,20 +122,14 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
-    // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-    auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-
     // intialize the vtk output module
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
-    vtkWriter.write(0.0);
+    vtkWriter.write(restartTime);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem

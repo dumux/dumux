@@ -16,6 +16,17 @@ dune_add_test(NAME test_2p1cni_box_waterwet
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_boxsteaminjection-00007.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_box test_boxsteaminjection.input")
 
+dune_add_test(NAME test_2p1cni_box_waterwet_restart
+              TARGET test_2p1cni_box
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/steaminjectionbox-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_boxsteaminjection_restart-00002.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_box test_boxsteaminjection.input -Problem.Name test_boxsteaminjection_restart -TimeLoop.DtInitial 15.191 -Restart.Time 277.564 -Restart.File test_boxsteaminjection-00005.vtu")
+
+# the restart test has to run after the test that produces the corresponding vtu file
+set_tests_properties(test_2p1cni_box_waterwet_restart PROPERTIES DEPENDS test_2p1cni_box_waterwet)
+
 dune_add_test(NAME test_2p1cni_tpfa_waterwet
               TARGET test_2p1cni_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
