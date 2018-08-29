@@ -149,30 +149,34 @@ int main()
         success += checkFluidSystem<Scalar, FluidSystem>(); }
 
     // Brine -- CO2
+    // BrineCO2 does not fulfill the restrictToPhase-assertion where we assume that for all
+    // functions depending on a phase index only fluid properties of this phase are used
+    // that is why checkFluidSystem() needs to be called with "false" here
+    // see checkFLuidSystem documentation!
     {   using H2OType = Components::SimpleH2O<Scalar>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true> >;
-        success += checkFluidSystem<Scalar, FluidSystem>(); }
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::SimpleH2O<Scalar>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/false> >;
-        success += checkFluidSystem<Scalar, FluidSystem>(); }
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::H2O<Scalar>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true> >;
-        success += checkFluidSystem<Scalar, FluidSystem>(); }
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::H2O<Scalar>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/false> >;
-        success += checkFluidSystem<Scalar, FluidSystem>(); }
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true> >;
-        success += checkFluidSystem<Scalar, FluidSystem>(); }
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
     {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/false> >;
-        success += checkFluidSystem<Scalar, FluidSystem>(); }
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
 
     // H2O -- Air
     {   using H2OType = Components::SimpleH2O<Scalar>;

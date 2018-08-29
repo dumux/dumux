@@ -89,10 +89,7 @@ public:
             BaseFluidState::setMolarDensity(phaseIdx, 1.0);
 
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            {
                 BaseFluidState::setMoleFraction(phaseIdx, compIdx, 1.0 / numComponents);
-
-            }
         }
 
         // initially, do not allow anything
@@ -398,8 +395,16 @@ int checkFluidState(const BaseFluidState &fs)
     }
 }
 
+/*!
+ * \brief This is a consistency check for FluidSystems.
+ * \param enablePhaseRestriction Parameter passed to the fluidState. If set to true,
+ *        the fluidState will only allow calls to properties of the current phase.
+ * \note While this is very common, it is not necessarily the case for all FluidSystems.
+ *       We keep this, because it might help finding mistakes in FluidSystems that have this invariant.
+ *       If you verified that a fluid system does not have this invariant you can set this option to false.
+ */
 template<class Scalar, class FluidSystem>
-int checkFluidSystem()
+int checkFluidSystem(bool enablePhaseRestriction = true)
 {
     int success = 0;
     std::cout << "Testing fluid system '" << Dune::className<FluidSystem>() << "'\n";
@@ -460,7 +465,8 @@ int checkFluidSystem()
 
     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
     {
-        fs.restrictToPhase(phaseIdx);
+        if (enablePhaseRestriction)
+            fs.restrictToPhase(phaseIdx);
         try
         {
             paramCache.updatePhase(fs, phaseIdx);
@@ -519,10 +525,11 @@ int checkFluidSystem()
     // actually check the fluid system API
     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
     {
-        fs.restrictToPhase(phaseIdx);
         fs.allowPressure(FluidSystem::isCompressible(phaseIdx));
         fs.allowComposition(true);
         fs.allowDensity(false);
+        if (enablePhaseRestriction)
+            fs.restrictToPhase(phaseIdx);
         try
         {
             val = FluidSystem::density(fs, paramCache, phaseIdx);
