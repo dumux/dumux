@@ -165,6 +165,7 @@ struct TwoPNCModelTraits
             return pvIdx == 0 ? "p_w" : p0s1SwitchedPvNames[state-1];
         case TwoPFormulation::p1s0:
             return pvIdx == 0 ? "p_n" : p1s0SwitchedPvNames[state-1];
+        default: DUNE_THROW(Dune::InvalidStateException, "Invalid formulation ");
         }
     }
 };
