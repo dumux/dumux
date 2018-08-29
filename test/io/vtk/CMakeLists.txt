@@ -46,3 +46,15 @@ dune_add_test(NAME test_vtkreader_1d
                                   ${CMAKE_SOURCE_DIR}/test/references/test_embedded_1p_richards_tpfa_1d.vtp test-1d"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_embedded_1p_richards_tpfa_1d.vtp
                                ${CMAKE_CURRENT_BINARY_DIR}/test-1d.vtp)
+
+dune_add_test(NAME test_staggered_ff_pv_names_1d
+             COMPILE_DEFINITIONS DIM=1
+             SOURCES test_staggeredfreeflowpvnames.cc)
+
+dune_add_test(NAME test_staggered_ff_pv_names_2d
+             COMPILE_DEFINITIONS DIM=2
+             SOURCES test_staggeredfreeflowpvnames.cc)
+
+dune_add_test(NAME test_staggered_ff_pv_names_3d
+             COMPILE_DEFINITIONS DIM=3
+             SOURCES test_staggeredfreeflowpvnames.cc)
