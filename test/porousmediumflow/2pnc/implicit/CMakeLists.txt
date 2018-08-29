@@ -1,14 +1,28 @@
 dune_symlink_to_source_files(FILES test_2pnc_fv.input test_2pnc_diffusion.input)
 
+# isothermal tests without caching
+add_executable(test_2pnc_box EXCLUDE_FROM_ALL test_2pnc_fv.cc)
+target_compile_definitions(test_2pnc_box PUBLIC TYPETAG=FuelCellBoxTypeTag ENABLECACHING=0)
+
 # isothermal tests
 dune_add_test(NAME test_2pnc_box
-              SOURCES test_2pnc_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=FuelCellBoxTypeTag
+              TARGET test_2pnc_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/fuelcell2pncbox-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/fuelcell_box-00015.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_box -ParameterFile test_2pnc_fv.input -Problem.Name fuelcell_box")
+
+dune_add_test(NAME test_2pnc_box_restart
+              TARGET test_2pnc_box
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/fuelcell2pncbox-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/fuelcell_box_restart-00003.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_box test_2pnc_fv.input -Problem.Name fuelcell_box_restart -TimeLoop.DtInitial 218.212 -Restart.Time 326.63 -Restart.File fuelcell_box-00012.vtu")
+
+# the restart test has to run after the test that produces the corresponding vtu file
+set_tests_properties(test_2pnc_box_restart PROPERTIES DEPENDS test_2pnc_box)
 
 dune_add_test(NAME test_2pnc_tpfa
               SOURCES test_2pnc_fv.cc
