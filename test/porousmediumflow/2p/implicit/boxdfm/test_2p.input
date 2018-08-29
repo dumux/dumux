@@ -10,5 +10,5 @@ File = grids/durlofsky.msh
 FractureAperture = 1e-3
 
 [Problem]
-Name = 2pboxdfm_quads_alu
+Name = 2pboxdfm
 EnableGravity = false
