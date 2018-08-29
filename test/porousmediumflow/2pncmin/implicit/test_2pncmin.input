@@ -4,7 +4,7 @@
 
 [TimeLoop]
 TEnd = 1e6                         # duration of the simulation [s]
-DtInitial = 10                     # initial time step size [s]
+DtInitial = 10                   # initial time step size [s]
 MaxTimeStepSize = 50000            # maximum time step size
 
 [Grid]
