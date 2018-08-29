@@ -77,12 +77,12 @@ struct LowReKEpsilonNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, 
 
     //! return the names of the primary variables in cells
     template <class FluidSystem>
-    static std::string primaryVariableNameCell(int pvIdx, int state = 0)
+    static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         using ParentType = NavierStokesNCModelTraits<dimension, nComp, useMoles, replaceCompEqIdx>;
-        if (pvIdx < nComp)
-            return ParentType::template primaryVariableNameCell<FluidSystem>(pvIdx, state);
-        else if (pvIdx == nComp)
+        if (pvIdx < nComp + dimension)
+            return ParentType::template primaryVariableName<FluidSystem>(pvIdx, state);
+        else if (pvIdx == nComp + dimension)
             return "k";
         else
             return "epsilon";

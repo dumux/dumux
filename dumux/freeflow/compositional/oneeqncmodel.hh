@@ -77,11 +77,11 @@ struct OneEqNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, useMoles
 
     //! return the names of the primary variables in cells
     template <class FluidSystem>
-    static std::string primaryVariableNameCell(int pvIdx, int state = 0)
+    static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         using ParentType = NavierStokesNCModelTraits<dimension, nComp, useMoles, replaceCompEqIdx>;
-        if (pvIdx < nComp)
-            return ParentType::template primaryVariableNameCell<FluidSystem>(pvIdx, state);
+        if (pvIdx < nComp + dimension)
+            return ParentType::template primaryVariableName<FluidSystem>(pvIdx, state);
         else
             return "nu_tilde";
     }

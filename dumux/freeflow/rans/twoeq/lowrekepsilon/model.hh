@@ -117,18 +117,16 @@ struct LowReKEpsilonModelTraits : RANSModelTraits<dimension>
     using Indices = LowReKEpsilonIndices<dim(), numComponents()>;
 
     //! return the names of the primary variables in cells
-    template<class FluidSystem = void>
-    static std::string primaryVariableNameCell(int pvIdx, int state = 0)
+    template <class FluidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         using ParentType = RANSModelTraits<dimension>;
-        switch (pvIdx) {
-            case 0:
-                return ParentType::template primaryVariableNameCell<FluidSystem>(pvIdx, state);
-            case 1:
-                return "k";
-            default:
-                return "epsilon";
-        }
+        if (pvIdx <= dimension)
+            return ParentType::template primaryVariableName<FluidSystem>(pvIdx, state);
+        else if (pvIdx == dimension + 1)
+            return "k";
+        else
+            return "epsilon";
     }
 };
 

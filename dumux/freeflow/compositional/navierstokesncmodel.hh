@@ -86,7 +86,7 @@ struct NavierStokesNCModelTraits : NavierStokesModelTraits<dimension>
 {
     //! There are as many momentum balance equations as dimensions
     //! and as many balance equations as components.
-    static constexpr int numEq() { return dimension+nComp; }
+    static constexpr int numEq() { return dimension + nComp; }
 
     //! The number of components
     static constexpr int numComponents() { return nComp; }
@@ -105,13 +105,13 @@ struct NavierStokesNCModelTraits : NavierStokesModelTraits<dimension>
 
     //! return the names of the primary variables in cells
     template <class FluidSystem>
-    static std::string primaryVariableNameCell(int pvIdx = 0, int state = 0)
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
         const std::string xString = useMoles() ? "x" : "X";
-        if (pvIdx == 0)
-            return NavierStokesModelTraits<dimension>::template primaryVariableNameCell<FluidSystem>(pvIdx, state);
+        if (pvIdx <= dimension)
+            return NavierStokesModelTraits<dimension>::template primaryVariableName<FluidSystem>(pvIdx, state);
         else
-            return xString + "^" + FluidSystem::componentName(pvIdx)
+            return xString + "^" + FluidSystem::componentName(pvIdx - dimension)
                    + "_" + FluidSystem::phaseName(0);
     }
 };

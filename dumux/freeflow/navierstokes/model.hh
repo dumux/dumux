@@ -106,18 +106,54 @@ struct NavierStokesModelTraits
 
     //! return the names of the primary variables in cells
     template <class FluidSystem = void>
-    static std::string primaryVariableNameCell(int pvIdx = 0, int state = 0)
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
-        return "p";
-    }
+        const std::array<std::string, 3> velocities = {"v_x", "v_y", "v_z"};
 
-    //! return the names of the primary variables on faces
-    template <class FluidSystem = void>
-    static std::string primaryVariableNameFace(int pvIdx = 0, int state = 0)
-    {
-        return "v";
+        if (pvIdx < dim())
+            return velocities[pvIdx];
+        else
+            return "p";
     }
 };
+
+/*!
+ * \ingroup InputOutput
+ * \ingroup NavierStokesModel
+ * \brief helper function to determine the names of cell-centered primary variables of a model with staggered grid discretization
+ * \note use this as input for the load solution function
+ */
+template<class ModelTraits, class FluidSystem = void>
+std::function<std::string(int,int)> createCellCenterPVNameFunction(const std::string& paramGroup = "")
+{
+    if (hasParamInGroup(paramGroup, "LoadSolution.CellCenterPriVarNames"))
+    {
+        const auto pvName = getParamFromGroup<std::vector<std::string>>(paramGroup, "LoadSolution.CellCenterPriVarNames");
+        return [n = std::move(pvName)](int pvIdx, int state = 0){ return n[pvIdx]; };
+    }
+    else
+        // add an offset to the pvIdx so that the velocities are skipped
+        return [](int pvIdx, int state = 0){ return ModelTraits::template primaryVariableName<FluidSystem>(pvIdx + ModelTraits::dim(), state); };
+}
+
+/*!
+ * \ingroup InputOutput
+ * \ingroup NavierStokesModel
+ * \brief helper function to determine the names of face-centered primary variables of a model with staggered grid discretization
+ * \note use this as input for the load solution function
+ */
+template<class ModelTraits, class FluidSystem = void>
+std::function<std::string(int,int)> createFacePVNameFunction(const std::string& paramGroup = "")
+{
+    if (hasParamInGroup(paramGroup, "LoadSolution.FacePriVarNames"))
+    {
+        const auto pvName = getParamFromGroup<std::vector<std::string>>(paramGroup, "LoadSolution.FacePriVarNames");
+        return [n = std::move(pvName)](int pvIdx, int state = 0){ return n[pvIdx]; };
+    }
+    else
+        // there is only one scalar-type primary variable called "v" living on the faces
+        return [](int pvIdx, int state = 0){ return "v"; };
+}
 
 /*!
  * \ingroup NavierStokesModel

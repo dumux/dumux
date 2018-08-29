@@ -115,11 +115,11 @@ struct OneEqModelTraits : RANSModelTraits<dimension>
 
     //! return the names of the primary variables in cells
     template <class FluidSystem = void>
-    static std::string primaryVariableNameCell(int pvIdx, int state = 0)
+    static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         using ParentType = RANSModelTraits<dimension>;
-        if (pvIdx == 0)
-            return ParentType::template primaryVariableNameCell<FluidSystem>(pvIdx, state);
+        if (pvIdx <= dimension)
+            return ParentType::template primaryVariableName<FluidSystem>(pvIdx, state);
         else
             return "nu_tilde";
     }
