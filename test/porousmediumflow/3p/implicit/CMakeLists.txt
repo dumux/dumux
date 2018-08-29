@@ -10,14 +10,29 @@ dune_add_test(NAME test_box3p
                                     ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pbox-00008.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3p test_3p_fv.input -Problem.Name infiltration3pbox")
 
+# isothermal cc tests without caching
+add_executable(test_cc3p EXCLUDE_FROM_ALL test_3p_fv.cc)
+target_compile_definitions(test_cc3p PUBLIC TYPETAG=InfiltrationThreePCCTpfaTypeTag ENABLECACHING=0)
+
 dune_add_test(NAME test_cc3p
-              SOURCES test_3p_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePCCTpfaTypeTag
+              TARGET test_cc3p
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/infiltration3pcc-reference.vtu
                                     ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pcc-00008.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3p test_3p_fv.input -Problem.Name infiltration3pcc")
+
+dune_add_test(NAME test_cc3p_restart
+              TARGET test_cc3p
+              COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePCCTpfaTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS      --script fuzzy
+                            --files ${CMAKE_SOURCE_DIR}/test/references/infiltration3pcc-reference.vtu
+                                    ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pcc_restart-00003.vtu
+                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3p test_3p_fv.input -Problem.Name infiltration3pcc_restart -TimeLoop.DtInitial 771.6 -Restart.Time 1067.41 -Restart.File infiltration3pcc-00005.vtu")
+
+# the restart test has to run after the test that produces the corresponding vtu file
+set_tests_properties(test_cc3p_restart PROPERTIES DEPENDS test_cc3p)
 
 # non-isothermal tests
 dune_add_test(NAME test_box3pniconvection
