@@ -8,5 +8,5 @@ RefinementRatio = 0
 
 [LinearSolver]
 GMResRestart = 80
-MaxIterations = 1000;
-ResidualReduction = 1e-8;
+MaxIterations = 1000
+ResidualReduction = 1e-8
