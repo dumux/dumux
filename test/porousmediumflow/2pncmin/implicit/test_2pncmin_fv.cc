@@ -124,7 +124,7 @@ int main(int argc, char** argv) try
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     SolutionVector x(fvGridGeometry->numDofs());
-     if (restartTime > 0)
+    if (restartTime > 0)
     {
         using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
         using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);

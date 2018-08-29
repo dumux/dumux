@@ -1,9 +1,11 @@
 dune_symlink_to_source_files(FILES test_2pncmin.input)
 
+add_executable(test_2pncmin_box EXCLUDE_FROM_ALL test_2pncmin_fv.cc)
+target_compile_definitions(test_2pncmin_box PUBLIC TYPETAG=DissolutionBoxTypeTag)
+
 # isothermal tests
 dune_add_test(NAME test_2pncmin_box
-              SOURCES test_2pncmin_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=DissolutionBoxTypeTag
+              TARGET test_2pncmin_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/saltflushbox2pncmin-reference.vtu
@@ -11,8 +13,7 @@ dune_add_test(NAME test_2pncmin_box
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncmin_box -ParameterFile test_2pncmin.input -Problem.Name saltflushbox")
 
 dune_add_test(NAME test_2pncmin_box_restart
-              SOURCES  test_2pncmin_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=DissolutionBoxTypeTag
+              TARGET  test_2pncmin_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/saltflushbox2pncmin-reference.vtu
