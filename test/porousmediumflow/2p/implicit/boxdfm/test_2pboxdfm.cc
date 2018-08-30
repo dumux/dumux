@@ -27,10 +27,7 @@
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
+#include <dune/foamgrid/foamgrid.hh>
 
 #include "problem.hh"
 
@@ -47,7 +44,8 @@
 #include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/discretization/methods.hh>
-#include <dumux/io/grid/gridmanager.hh>
+#include <dumux/multidomain/facet/gridmanager.hh>
+#include <dumux/multidomain/facet/codimonegridadapter.hh>
 
 #include <dumux/porousmediumflow/boxdfm/vtkoutputmodule.hh>
 
@@ -100,46 +98,29 @@ int main(int argc, char** argv) try
     // parse command line arguments and input file
     Parameters::init(argc, argv, usage);
 
-    // try to create a grid (from the given grid file or the input file)
-    GridManager<typename GET_PROP_TYPE(TypeTag, Grid)> gridManager;
+    // we reuse the facet coupling grid manager to create the grid
+    // from a mesh file with the fractures being incorporated as
+    // lower-dimensional elements.
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using FractureGrid = FRACTUREGRIDTYPE;
+    using GridManager = FacetCouplingGridManager<Grid, FractureGrid>;
+    GridManager gridManager;
     gridManager.init();
 
-    ////////////////////////////////////////////////////////////
-    // run instationary non-linear problem on this grid
-    ////////////////////////////////////////////////////////////
+    // use the grid adapter from the facet coupling framework to
+    // identify the grid facets that coincide with a fracture.
+    // For instantiation we extract the info on the embeddings from
+    // the grid manager (info is read from the grid file)
+    using MatrixFractureGridAdapter = CodimOneGridAdapter<typename GridManager::Embeddings>;
+    MatrixFractureGridAdapter fractureGridAdapter(gridManager.getEmbeddings());
 
-    // we compute on the leaf grid view
-    const auto& leafGridView = gridManager.grid().leafGridView();
+    // matrix grid view is the first one (index 0) inside the manager
+    const auto& leafGridView = gridManager.template grid<0>().leafGridView();
 
     // create the finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
-
-    // mark some vertices to lie on fractures
-    // When the facet coupling framework is merged into master, some functionality
-    // can be reused to read a network from e.g. a gmsh file
-    std::vector<bool> vertexIsOnFracture(leafGridView.size(FVGridGeometry::GridView::dimension), false);
-    for (const auto& v : vertices(leafGridView))
-    {
-        const auto c = v.geometry().center();
-        constexpr int dimWorld = FVGridGeometry::GridView::dimensionworld;
-
-        bool vertIsOnFrac = true;
-
-        if ( !(c[0] > 0.5 - 1e-6 && c[0] < 0.5 + 1e-6) )
-            vertIsOnFrac = false;
-
-        if (dimWorld == 3 && (c[1] < 0.25 - 1e-6 || c[1] > 0.75 + 1e-6))
-            vertIsOnFrac = false;
-
-        if (c[dimWorld-1] > 0.6 + 1e-6 || c[dimWorld-1] < 0.15 - 1e-6)
-            vertIsOnFrac = false;
-
-        vertexIsOnFracture[fvGridGeometry->vertexMapper().index(v)] = vertIsOnFrac;
-    }
-
-    // update the geometry subject to the marked vertices
-    fvGridGeometry->update(vertexIsOnFracture);
+    fvGridGeometry->update(fractureGridAdapter);
 
     // the problem (initial and boundary conditions)
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -166,9 +147,9 @@ int main(int argc, char** argv) try
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
+    using VtkOutputModule = BoxDfmVtkOutputModule<GridVariables, SolutionVector, FractureGrid>;
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    using FractureGrid = FRACTUREGRIDTYPE;
-    BoxDfmVtkOutputModule<GridVariables, SolutionVector, FractureGrid> vtkWriter(*gridVariables, x, problem->name(), "", Dune::VTK::nonconforming);
+    VtkOutputModule vtkWriter(*gridVariables, x, problem->name(), fractureGridAdapter, "", Dune::VTK::nonconforming);
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 

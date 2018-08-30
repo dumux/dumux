@@ -30,6 +30,7 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 #include <dune/geometry/multilineargeometry.hh>
+#include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/discretization/methods.hh>
 #include <dumux/common/defaultmappertraits.hh>
@@ -58,6 +59,9 @@ struct BoxDfmDefaultGridGeometryTraits
 
     template<class FVGridGeometry, bool enableCache>
     using LocalView = BoxDfmFVElementGeometry<FVGridGeometry, enableCache>;
+
+    // Mapper type for mapping edges
+    using FacetMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 };
 
 /*!
@@ -145,12 +149,9 @@ public:
     { return this->gridView().size(dim); }
 
     //! update all fvElementGeometries (do this again after grid adaption)
-    void update(const std::vector<bool>& vertexIsOnFracture)
+    template< class FractureGridAdapter >
+    void update(const FractureGridAdapter& fractureGridAdapter)
     {
-        fractureDofIndices_ = vertexIsOnFracture;
-        if (vertexIsOnFracture.size() != this->gridView().size(dim))
-            DUNE_THROW(Dune::InvalidStateException, "Provided vector does not have the correct size");
-
         ParentType::update();
 
         scvs_.clear();
@@ -160,7 +161,8 @@ public:
         scvs_.resize(numElements);
         scvfs_.resize(numElements);
 
-        boundaryDofIndices_.resize(numDofs(), false);
+        boundaryDofIndices_.assign(numDofs(), false);
+        fractureDofIndices_.assign(this->gridView.size(dim), false);
 
         numScv_ = 0;
         numScvf_ = 0;
@@ -266,9 +268,11 @@ public:
                 }
 
                 // maybe add fracture scvs & scvfs
-                auto isOnFracture = [&] (auto idx) { return this->fractureDofIndices_[idx]; };
-                if ( std::all_of(isVertexIndices.begin(), isVertexIndices.end(), isOnFracture) )
+                if (fractureGridAdapter.composeFacetElement(isVertexIndices))
                 {
+                    for (auto vIdx : isVertexIndices)
+                        fractureDofIndices_[vIdx] = true;
+
                     // add fracture scv for each vertex of intersection
                     numScv_ += numCorners;
                     const auto curNumScvs = scvs_[eIdx].size();
@@ -383,6 +387,7 @@ class BoxDfmFVGridGeometry<Scalar, GV, false, Traits>
     static const int dimWorld = GV::dimensionworld;
 
     using Element = typename GV::template Codim<0>::Entity;
+    using Intersection = typename GV::Intersection;
     using CoordScalar = typename GV::ctype;
 
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
@@ -407,7 +412,9 @@ public:
 
     //! Constructor
     BoxDfmFVGridGeometry(const GridView gridView)
-    : ParentType(gridView) {}
+    : ParentType(gridView)
+    , facetMapper_(gridView, Dune::mcmgLayout(Dune::template Codim<1>()))
+    {}
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -432,15 +439,14 @@ public:
     { return this->gridView().size(dim); }
 
     //! update all fvElementGeometries (do this again after grid adaption)
-    void update(const std::vector<bool>& vertexIsOnFracture)
+    template< class FractureGridAdapter >
+    void update(const FractureGridAdapter& fractureGridAdapter)
     {
-        fractureDofIndices_ = vertexIsOnFracture;
-        if (vertexIsOnFracture.size() != this->gridView().size(dim))
-            DUNE_THROW(Dune::InvalidStateException, "Provided vector does not have the correct size");
-
         ParentType::update();
 
-        boundaryDofIndices_.resize(numDofs(), false);
+        boundaryDofIndices_.assign(numDofs(), false);
+        fractureDofIndices_.assign(numDofs(), false);
+        facetOnFracture_.assign(this->gridView().size(1), false);
 
         // save global data on the grid's scvs and scvfs
         // TODO do we need those information?
@@ -487,9 +493,12 @@ public:
                 }
 
                 // maybe add fracture scvs & scvfs
-                auto isOnFracture = [&] (auto idx) { return this->fractureDofIndices_[idx]; };
-                if ( std::all_of(isVertexIndices.begin(), isVertexIndices.end(), isOnFracture) )
+                if (fractureGridAdapter.composeFacetElement(isVertexIndices))
                 {
+                    facetOnFracture_[facetMapper_.subIndex(element, idxInInside, 1)] = true;
+                    for (auto vIdx : isVertexIndices)
+                        fractureDofIndices_[vIdx] = true;
+
                     const auto isGeometry = intersection.geometry();
                     numScv_ += isGeometry.corners();
                     numScvf_ += dim == 3 ? FaceReferenceElements::general(isGeometry.type()).size(1) : 1;
@@ -504,6 +513,9 @@ public:
     bool dofOnBoundary(unsigned int dofIdx) const { return boundaryDofIndices_[dofIdx]; }
     //! If a vertex / d.o.f. is on a fracture
     bool dofOnFracture(unsigned int dofIdx) const { return fractureDofIndices_[dofIdx]; }
+    //! Returns true if an intersection coincides with a fracture element
+    bool isOnFracture(const Element& element, const Intersection& intersection) const
+    { return facetOnFracture_[facetMapper_.subIndex(element, intersection.indexInInside(), 1)]; }
 
 private:
 
@@ -518,6 +530,10 @@ private:
     // vertices on the boundary & fracture facets
     std::vector<bool> boundaryDofIndices_;
     std::vector<bool> fractureDofIndices_;
+
+    // facet mapper and markers which facets lie on interior boundaries
+    typename Traits::FacetMapper facetMapper_;
+    std::vector<bool> facetOnFracture_;
 };
 
 } // end namespace Dumux

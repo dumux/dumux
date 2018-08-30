@@ -1,15 +1,14 @@
 [TimeLoop]
-DtInitial = 200 # [s]
-TEnd = 2700 # [s]
-MaxTimeStepSize = 50
+DtInitial = 1 # [s]
+TEnd = 2500 # [s]
+MaxTimeStepSize = 200
 
 [Grid]
-LowerLeft = 0 0
-UpperRight = 1 1
-Cells = 20 20
+File = grids/durlofsky.msh
 
 [SpatialParams]
 FractureAperture = 1e-3
 
 [Problem]
-Name = 2pboxdfm_quads_yasp
+Name = 2pboxdfm
+EnableGravity = false
