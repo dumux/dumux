@@ -10,6 +10,17 @@ dune_add_test(NAME test_2pncmin_box
                                     ${CMAKE_CURRENT_BINARY_DIR}/saltflushbox-00044.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncmin_box -ParameterFile test_2pncmin.input -Problem.Name saltflushbox")
 
+dune_add_test(NAME test_2pncmin_box_restart
+              TARGET  test_2pncmin_box
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/saltflushbox2pncmin-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/saltflushbox_restart-00005.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncmin_box test_2pncmin.input -Problem.Name saltflushbox_restart -TimeLoop.DtInitial 50000 -Restart.Time 756290 -Restart.File saltflushbox-00039.vtu")
+
+# the restart test has to run after the test that produces the corresponding vtu file
+set_tests_properties(test_2pncmin_box_restart PROPERTIES DEPENDS test_2pncmin_box)
+
 dune_add_test(NAME test_2pncmin_tpfa
               SOURCES test_2pncmin_fv.cc
               COMPILE_DEFINITIONS TYPETAG=DissolutionCCTpfaTypeTag

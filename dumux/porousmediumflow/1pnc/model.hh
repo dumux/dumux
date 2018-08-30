@@ -98,7 +98,7 @@ struct OnePNCModelTraits
     static constexpr bool enableMolecularDiffusion() { return true; }
     static constexpr bool enableEnergyBalance() { return false; }
 
-    template <class FluidSystem>
+    template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         const std::string xString = useMoles() ? "x" : "X";

@@ -122,7 +122,7 @@ struct ThreePThreeCModelTraits
     static constexpr bool useConstraintSolver() { return useCS; }
     static constexpr bool useMoles() { return useMol; }
 
-    template <class FluidSystem>
+    template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
         switch (state)

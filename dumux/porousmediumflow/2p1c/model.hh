@@ -103,7 +103,7 @@ struct TwoPOneCNIModelTraits
 
     static constexpr TwoPFormulation priVarFormulation() { return f; }
 
-    template <class FluidSystem = void>
+    template <class FluidSystem = void, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
         if (priVarFormulation() == TwoPFormulation::p0s1)

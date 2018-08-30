@@ -103,7 +103,7 @@ namespace Dumux {
 template<TwoPFormulation formulation, bool useMol, int replCompEqIdx = 2>
 struct TwoPTwoCModelTraits : public TwoPNCModelTraits</*numComps=*/2, useMol, /*setMFracForFirstPhase=*/true, formulation, replCompEqIdx>
 {
-    template <class FluidSystem>
+    template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
         static const std::string xString = useMol ? "x" : "X";

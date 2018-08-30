@@ -115,7 +115,7 @@ struct RichardsNCModelTraits
 
     static constexpr bool useMoles() { return useMol; }
 
-    template <class FluidSystem>
+    template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         const std::string xString = useMoles() ? "x" : "X";
