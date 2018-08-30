@@ -71,7 +71,7 @@ SET_BOOL_PROP(PorousMediumFlow, SolutionDependentMolecularDiffusion, true);
 SET_BOOL_PROP(PorousMediumFlow, SolutionDependentHeatConduction, true);
 
 //! The default implementation of the energy balance equation for flow problems in porous media.
-SET_TYPE_PROP(PorousMediumFlow, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
+SET_TYPE_PROP(PorousMediumFlow, EnergyLocalResidual, Dumux::EnergyLocalResidual<TypeTag> );
 
 //! Velocity output
 SET_TYPE_PROP(PorousMediumFlow, VelocityOutput,

@@ -214,7 +214,7 @@ SET_TYPE_PROP(SequentialModel,  Variables, VariableClass<TypeTag>);
 SET_TYPE_PROP(SequentialModel,  PrimaryVariables, typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables);
 
 //! Set the default type for the time manager
-SET_TYPE_PROP(SequentialModel, TimeManager, TimeManager<TypeTag>);
+SET_TYPE_PROP(SequentialModel, TimeManager, Dumux::TimeManager<TypeTag>);
 
 /*!
  * \brief Boundary types at a single degree of freedom.
@@ -223,7 +223,7 @@ SET_PROP(SequentialModel, BoundaryTypes)
 { private:
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 public:
-    using type = BoundaryTypes<numEq>;
+    using type = Dumux::BoundaryTypes<numEq>;
 };
 
 //! do not specific any model-specific default parameters here
