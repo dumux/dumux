@@ -61,7 +61,7 @@ SET_BOOL_PROP(FiniteVolumeModel, EnableGridVolumeVariablesCache, false);
 SET_BOOL_PROP(FiniteVolumeModel, EnableGridFluxVariablesCache, false);
 
 //! Boundary types at a single degree of freedom
-SET_TYPE_PROP(FiniteVolumeModel, BoundaryTypes, BoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
+SET_TYPE_PROP(FiniteVolumeModel, BoundaryTypes, Dumux::BoundaryTypes<GET_PROP_TYPE(TypeTag, ModelTraits)::numEq()>);
 
 // TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits

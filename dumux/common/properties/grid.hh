@@ -46,7 +46,7 @@ private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using GlobalPosition = typename Dune::FieldVector<typename GridView::ctype, GridView::dimensionworld>;
 public:
-    using type = PointSource<GlobalPosition, SourceValues>;
+    using type = Dumux::PointSource<GlobalPosition, SourceValues>;
 };
 
 //! Use the point source helper using the bounding box tree as a default
