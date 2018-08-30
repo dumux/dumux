@@ -6,6 +6,7 @@ install(FILES
 adaptivegridrestart.hh
 container.hh
 defaultvtkoutputfields.hh
+fieldnames.hh
 gnuplotinterface.hh
 loadsolution.hh
 ploteffectivediffusivitymodel.hh
