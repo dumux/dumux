@@ -145,9 +145,6 @@ NEW_TYPE_TAG(TwoPOneCNI, INHERITS_FROM(PorousMediumFlow));
 // Properties
 //////////////////////////////////////////////////////////////////
 
-//! Determines whether Blocking ofspurious flow is used.
-NEW_PROP_TAG(UseBlockingOfSpuriousFlow);
-
 /*!
  * \brief The fluid state which is used by the volume variables to
  *        store the thermodynamic state. This should be chosen

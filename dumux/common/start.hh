@@ -38,13 +38,7 @@
 
 #warning "start.hh is deprecated. Use new style main files see e.g. /test/porousmediumflow/1p."
 
-namespace Dumux
-{
-
-namespace Properties
-{
-NEW_PROP_TAG(TimeManager);
-}
+namespace Dumux {
 
 /*!
  * \ingroup Common
