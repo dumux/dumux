@@ -151,8 +151,8 @@ int main()
     // Brine -- CO2
     // BrineCO2 does not fulfill the restrictToPhase-assertion where we assume that for all
     // functions depending on a phase index only fluid properties of this phase are used
-    // that is why checkFluidSystem() needs to be called with "false" here
-    // see checkFLuidSystem documentation!
+    // that is why checkFluidSystem() needs to be called with "false" here.
+    // Also see the checkFluidSystem documentation.
     {   using H2OType = Components::SimpleH2O<Scalar>;
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true> >;
