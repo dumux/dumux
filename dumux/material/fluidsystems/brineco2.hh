@@ -331,6 +331,10 @@ public:
     static void init(Scalar startTemp, Scalar endTemp, int tempSteps,
                      Scalar startPressure, Scalar endPressure, int pressureSteps)
     {
+        std::cout << "The Brine-CO2 fluid system was configured with the following policy:\n";
+        std::cout << " - use constant salinity: " << std::boolalpha << Policy::useConstantSalinity() << "\n";
+        std::cout << " - use CO2 gas density as gas mixture density: " << std::boolalpha << Policy::useCO2GasDensityAsGasMixtureDensity() << std::endl;
+
         // maybe set salinity of the constant salinity brine
         if (useConstantSalinity)
             ConstantSalinityBrine::constantSalinity = getParam<Scalar>("FluidSystem.Salinity", 0.3);
