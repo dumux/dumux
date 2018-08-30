@@ -250,8 +250,8 @@ public:
     static bool isIdealMixture(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        if (!useConstantSalinity && phaseIdx == liquidPhaseIdx)
-            return VariableSalinityBrine::isIdealMixture(VariableSalinityBrine::liquidPhaseIdx);
+        if (phaseIdx == liquidPhaseIdx)
+            return false;
         return true;
     }
 
