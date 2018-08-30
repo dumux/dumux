@@ -1,3 +1,5 @@
+add_input_file_links()
+
 dune_add_test(NAME test_vtkreader_3d
               SOURCES test_vtkreader.cc
               CMAKE_GUARD dune-alugrid_FOUND

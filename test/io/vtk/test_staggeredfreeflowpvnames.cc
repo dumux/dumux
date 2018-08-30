@@ -27,11 +27,13 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <numeric>
 
 #include <dune/common/classname.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
+#include <dune/common/float_cmp.hh>
 #include <dune/grid/yaspgrid.hh>
 
 #include <dumux/common/properties.hh>
@@ -48,40 +50,48 @@
 #include <dumux/material/fluidsystems/1padapter.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 
+#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/io/staggeredvtkoutputmodule.hh>
+#include <dumux/io/loadsolution.hh>
+#include <dumux/freeflow/rans/twoeq/kepsilon/problem.hh>
+
 namespace Dumux {
 namespace Properties {
 
-NEW_TYPE_TAG(StaggeredPVNamesTestTypeTag);
+NEW_TYPE_TAG(StaggeredPVNamesTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel));
 
-NEW_TYPE_TAG(NavierStokesPVNameTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(NavierStokesNIPVNameTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNI, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(NavierStokesNCPVNameTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(NavierStokesNCNIPVNameTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNCNI, StaggeredPVNamesTestTypeTag));
+NEW_TYPE_TAG(NavierStokesPVNameTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, NavierStokes));
+NEW_TYPE_TAG(NavierStokesNIPVNameTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, NavierStokesNI));
+NEW_TYPE_TAG(NavierStokesNCPVNameTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, NavierStokesNC));
+NEW_TYPE_TAG(NavierStokesNCNIPVNameTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, NavierStokesNCNI));
 
-NEW_TYPE_TAG(KEpsilonNameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilon, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(KEpsilonNINameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNI, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(KEpsilonNCNameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNC, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(KEpsilonNCNINameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KEpsilonNCNI, StaggeredPVNamesTestTypeTag));
+NEW_TYPE_TAG(KEpsilonNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KEpsilon));
+NEW_TYPE_TAG(KEpsilonNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KEpsilonNI));
+NEW_TYPE_TAG(KEpsilonNCNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KEpsilonNC));
+NEW_TYPE_TAG(KEpsilonNCNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KEpsilonNCNI));
 
-NEW_TYPE_TAG(LowReKEpsilonNameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilon, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(LowReKEpsilonNINameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNI, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(LowReKEpsilonNCNameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNC, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(LowReKEpsilonNCNINameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, LowReKEpsilonNCNI, StaggeredPVNamesTestTypeTag));
+NEW_TYPE_TAG(LowReKEpsilonNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, LowReKEpsilon));
+NEW_TYPE_TAG(LowReKEpsilonNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, LowReKEpsilonNI));
+NEW_TYPE_TAG(LowReKEpsilonNCNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, LowReKEpsilonNC));
+NEW_TYPE_TAG(LowReKEpsilonNCNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, LowReKEpsilonNCNI));
 
-NEW_TYPE_TAG(KOmegaNameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmega, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(KOmegaNINameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNI, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(KOmegaNCNameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNC, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(KOmegaNCNINameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, KOmegaNCNI, StaggeredPVNamesTestTypeTag));
+NEW_TYPE_TAG(KOmegaNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KOmega));
+NEW_TYPE_TAG(KOmegaNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KOmegaNI));
+NEW_TYPE_TAG(KOmegaNCNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KOmegaNC));
+NEW_TYPE_TAG(KOmegaNCNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, KOmegaNCNI));
 
-NEW_TYPE_TAG(OneEqNameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, OneEq, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(OneEqNINameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNI, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(OneEqNCNameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNC, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(OneEqNCNINameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, OneEqNCNI, StaggeredPVNamesTestTypeTag));
+NEW_TYPE_TAG(OneEqNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, OneEq));
+NEW_TYPE_TAG(OneEqNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, OneEqNI));
+NEW_TYPE_TAG(OneEqNCNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, OneEqNC));
+NEW_TYPE_TAG(OneEqNCNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, OneEqNCNI));
 
-NEW_TYPE_TAG(ZeroEqNameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEq, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(ZeroEqNINameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNI, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(ZeroEqNCNameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNC, StaggeredPVNamesTestTypeTag));
-NEW_TYPE_TAG(ZeroEqNCNINameTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEqNCNI, StaggeredPVNamesTestTypeTag));
+NEW_TYPE_TAG(ZeroEqNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, ZeroEq));
+NEW_TYPE_TAG(ZeroEqNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, ZeroEqNI));
+NEW_TYPE_TAG(ZeroEqNCNameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, ZeroEqNC));
+NEW_TYPE_TAG(ZeroEqNCNINameTestTypeTag, INHERITS_FROM(StaggeredPVNamesTestTypeTag, ZeroEqNCNI));
+
+
 
 // The fluid system
 SET_PROP(StaggeredPVNamesTestTypeTag, FluidSystem)
@@ -91,9 +101,69 @@ SET_PROP(StaggeredPVNamesTestTypeTag, FluidSystem)
   using type = FluidSystems::OnePAdapter<H2OAir, phaseIdx>;
 };
 
+SET_TYPE_PROP(StaggeredPVNamesTestTypeTag, Scalar, double);
+
 // Set the grid type
 SET_TYPE_PROP(StaggeredPVNamesTestTypeTag, Grid, Dune::YaspGrid<DIM>);
-SET_BOOL_PROP(StaggeredPVNamesTestTypeTag, UseMoles, true);
+
+SET_PROP(StaggeredPVNamesTestTypeTag, Problem)
+{
+    template<class TTag>
+    class MockProblem : public NavierStokesProblem<TTag>
+    {
+        using ParentType = NavierStokesProblem<TTag>;
+        using BoundaryTypes = typename GET_PROP_TYPE(TTag, BoundaryTypes);
+        using Scalar = typename GET_PROP_TYPE(TTag, Scalar);
+    public:
+        using ParentType::ParentType;
+
+        template<class GlobalPosition>
+        BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+        {
+             BoundaryTypes values;
+             return values;
+        }
+
+        Scalar temperature() const
+        {
+            return 300;
+        }
+
+        void updateStaticWallProperties() {}
+
+        template<class T>
+        void updateDynamicWallProperties(const T&) {}
+    };
+
+    template<class TTag>
+    class TurbulentMockProblem : public KEpsilonProblem<TTag>
+    {
+        using ParentType = KEpsilonProblem<TTag>;
+        using BoundaryTypes = typename GET_PROP_TYPE(TTag, BoundaryTypes);
+        using Scalar = typename GET_PROP_TYPE(TTag, Scalar);
+    public:
+        using ParentType::ParentType;
+
+        template<class GlobalPosition>
+        BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
+        {
+             BoundaryTypes values;
+             return values;
+        }
+
+        Scalar temperature() const
+        {
+            return 300;
+        }
+
+        template<class Scvf>
+        bool isOnWall(const Scvf&) const
+        { return true; }
+    };
+
+    using Traits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using type = std::conditional_t<Traits::usesTurbulenceModel(), TurbulentMockProblem<TypeTag>, MockProblem<TypeTag>>;
+};
 
 }
 }
@@ -176,9 +246,6 @@ void testModel(const std::vector<std::string>&& ccPriVarNames)
             return std::vector<std::string>{"v_x", "v_y", "v_z"};
     };
 
-    // define the type tag for this problem
-    // using TypeTag = TTAG(KEpsilonNCNameTestTypeTag);
-
     // test the methods returning the primary variable names
     using Traits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -187,6 +254,89 @@ void testModel(const std::vector<std::string>&& ccPriVarNames)
     expectedResult.insert(expectedResult.end(), ccPriVarNames.begin(), ccPriVarNames.end());
 
     testNames<Traits, FluidSystem>(expectedResult);
+}
+
+template<class SolutionVector, class Values>
+void assignValues(SolutionVector& sol, Values values)
+{
+    for (auto& entry : sol)
+    {
+        for (int pvIdx = 0; pvIdx < decltype(values)::dimension; ++pvIdx)
+        {
+            // make sure to get values that can be exactly represented in the vtk file (Float32)
+            std::stringstream stream;
+            stream << std::fixed << std::setprecision(5) << std::scientific << values[pvIdx];
+            entry[pvIdx] = std::stod(stream.str());
+        }
+
+        // increment all values by 1% for each dof
+        for (auto& i : values)
+            i += 0.01*i;
+    }
+}
+
+template<class TypeTag, class FVGridGeometry, class Values>
+void testWriteAndReadVtk(std::shared_ptr<FVGridGeometry> fvGridGeometry, const Values& values, const std::string& fileName, bool verbose = false)
+{
+    using namespace Dumux;
+
+    // the solution vector
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    SolutionVector writeFrom;
+
+    writeFrom[FVGridGeometry::cellCenterIdx()].resize(fvGridGeometry->numCellCenterDofs());
+    writeFrom[FVGridGeometry::faceIdx()].resize(fvGridGeometry->numFaceDofs());
+
+    SolutionVector readTo = writeFrom;
+
+    // the problem (initial and boundary conditions)
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    auto problem = std::make_shared<Problem>(fvGridGeometry);
+
+    assignValues(writeFrom[FVGridGeometry::cellCenterIdx()], values);
+
+    problem->updateStaticWallProperties();
+    problem->updateDynamicWallProperties(writeFrom);
+
+    // the grid variables
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    gridVariables->init(writeFrom);
+
+    const std::string fileNameCell = fileName + "_cell";
+
+    // initialize the vtk output module
+    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, writeFrom, fileNameCell);
+    VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
+    vtkWriter.write(0);
+
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+
+    loadSolution(readTo[FVGridGeometry::cellCenterIdx()], fileNameCell + "-00000.vtu",
+                 createCellCenterPVNameFunction<ModelTraits, FluidSystem>(),
+                 *fvGridGeometry);
+
+    if (verbose)
+    {
+        std::cout << "old " << std::endl;
+        for (const auto& block : writeFrom[FVGridGeometry::cellCenterIdx()])
+        std::cout << block << std::endl;
+
+        std::cout << "new " << std::endl;
+        for (const auto& block : readTo[FVGridGeometry::cellCenterIdx()])
+        std::cout << block << std::endl;
+    }
+
+    for (int i = 0; i < readTo[FVGridGeometry::cellCenterIdx()].size(); ++i)
+    {
+        if (Dune::FloatCmp::ne(readTo[FVGridGeometry::cellCenterIdx()][i], writeFrom[FVGridGeometry::cellCenterIdx()][i]))
+            DUNE_THROW(Dune::IOError, "Values don't match: new " << readTo[FVGridGeometry::cellCenterIdx()][i] << ", old " << writeFrom[FVGridGeometry::cellCenterIdx()][i]);
+    }
+
+    // TODO face dofs
+
 }
 
 
@@ -201,9 +351,33 @@ int main(int argc, char** argv) try
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
 
+    // parse command line arguments and input file
+    Parameters::init(argc, argv, usage);
+
+    using CommonTypeTag = TTAG(StaggeredPVNamesTestTypeTag);
+    using Grid = typename GET_PROP_TYPE(CommonTypeTag, Grid);
+    using FVGridGeometry = typename GET_PROP_TYPE(CommonTypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(CommonTypeTag, Scalar);
+    using GlobalPosition = Dune::FieldVector<Scalar, Grid::dimension>;
+
+    const GlobalPosition lowerLeft(0.0);
+    const GlobalPosition upperRight(5.0);
+    std::array<unsigned int, Grid::dimension> cells;
+    std::fill(cells.begin(), cells.end(), 5);
+
+    const auto grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cells);
+    const auto gridView = grid->leafGridView();
+    auto fvGridGeometry = std::make_shared<FVGridGeometry>(gridView);
+    fvGridGeometry->update();
+
+    using FluidSystem = typename GET_PROP_TYPE(CommonTypeTag, FluidSystem);
+    FluidSystem::init();
+
     {
         using TypeTag = TTAG(NavierStokesPVNameTypeTag);
         testModel<TypeTag>({"p"});
+        Dune::FieldVector<Scalar, 1> values = {1e5};
+        testWriteAndReadVtk<TypeTag>(fvGridGeometry, values, "navierstokes");
     }
 
     {
@@ -213,12 +387,12 @@ int main(int argc, char** argv) try
 
     {
         using TypeTag = TTAG(NavierStokesNCPVNameTypeTag);
-        testModel<TypeTag>({"p", "x^H2O_gas"});
+        testModel<TypeTag>({"p", "X^H2O_gas"});
     }
 
     {
         using TypeTag = TTAG(NavierStokesNCNIPVNameTypeTag);
-        testModel<TypeTag>({"p", "x^H2O_gas", "T"});
+        testModel<TypeTag>({"p", "X^H2O_gas", "T"});
     }
 
     // KEpsilon
@@ -234,12 +408,14 @@ int main(int argc, char** argv) try
 
     {
         using TypeTag = TTAG(KEpsilonNCNameTestTypeTag);
-        testModel<TypeTag>({"p", "x^H2O_gas", "k", "epsilon"});
+        testModel<TypeTag>({"p", "X^H2O_gas", "k", "epsilon"});
     }
 
     {
         using TypeTag = TTAG(KEpsilonNCNINameTestTypeTag);
-        testModel<TypeTag>({"p", "x^H2O_gas", "k", "epsilon", "T"});
+        testModel<TypeTag>({"p", "X^H2O_gas", "k", "epsilon", "T"});
+        Dune::FieldVector<Scalar, 5> values = {1e5, 1e-3, 1.0, 1.0, 300};
+        testWriteAndReadVtk<TypeTag>(fvGridGeometry, values, "navierstokes");
     }
 
     // Low-Re-KEpsilon
@@ -255,12 +431,12 @@ int main(int argc, char** argv) try
 
     {
         using TypeTag = TTAG(LowReKEpsilonNCNameTestTypeTag);
-        testModel<TypeTag>({"p", "x^H2O_gas", "k", "epsilon"});
+        testModel<TypeTag>({"p", "X^H2O_gas", "k", "epsilon"});
     }
 
     {
         using TypeTag = TTAG(LowReKEpsilonNCNINameTestTypeTag);
-        testModel<TypeTag>({"p", "x^H2O_gas", "k", "epsilon", "T"});
+        testModel<TypeTag>({"p", "X^H2O_gas", "k", "epsilon", "T"});
     }
 
     // KOmega
@@ -276,12 +452,12 @@ int main(int argc, char** argv) try
 
     {
         using TypeTag = TTAG(KOmegaNCNameTestTypeTag);
-        testModel<TypeTag>({"p", "x^H2O_gas", "k", "omega"});
+        testModel<TypeTag>({"p", "X^H2O_gas", "k", "omega"});
     }
 
     {
         using TypeTag = TTAG(KOmegaNCNINameTestTypeTag);
-        testModel<TypeTag>({"p", "x^H2O_gas", "k", "omega", "T"});
+        testModel<TypeTag>({"p", "X^H2O_gas", "k", "omega", "T"});
     }
 
     // One-Eq
@@ -297,12 +473,12 @@ int main(int argc, char** argv) try
 
     {
         using TypeTag = TTAG(OneEqNCNameTestTypeTag);
-        testModel<TypeTag>({"p", "x^H2O_gas", "nu_tilde"});
+        testModel<TypeTag>({"p", "X^H2O_gas", "nu_tilde"});
     }
 
     {
         using TypeTag = TTAG(OneEqNCNINameTestTypeTag);
-        testModel<TypeTag>({"p", "x^H2O_gas", "nu_tilde", "T"});
+        testModel<TypeTag>({"p", "X^H2O_gas", "nu_tilde", "T"});
     }
 
     // Zero-Eq
@@ -318,12 +494,12 @@ int main(int argc, char** argv) try
 
     {
         using TypeTag = TTAG(ZeroEqNCNameTestTypeTag);
-        testModel<TypeTag>({"p", "x^H2O_gas"});
+        testModel<TypeTag>({"p", "X^H2O_gas"});
     }
 
     {
         using TypeTag = TTAG(ZeroEqNCNINameTestTypeTag);
-        testModel<TypeTag>({"p", "x^H2O_gas", "T"});
+        testModel<TypeTag>({"p", "X^H2O_gas", "T"});
     }
 
     ////////////////////////////////////////////////////////////
