@@ -196,6 +196,11 @@ NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure
 /////////////////////////////////////////////////////////////
 NEW_PROP_TAG(CouplingManager);
 
+///////////////////////////////////////
+// Basic properties of sequential models:
+///////////////////////////////////////
+NEW_PROP_TAG(TimeManager);
+
 } // end namespace Properties
 } // end namespace Dumux
 

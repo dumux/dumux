@@ -52,15 +52,9 @@ NEW_TYPE_TAG(SequentialTwoP, INHERITS_FROM(SequentialModel));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG( SpatialParams ); //!< The type of the spatial parameters object
-NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
-NEW_PROP_TAG( Formulation); //!< The formulation of the model
-NEW_PROP_TAG( PressureFormulation); //!< The formulation of the pressure model
 NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the saturation model
 NEW_PROP_TAG( VelocityFormulation); //!< The type of velocity reconstructed for the transport model
 NEW_PROP_TAG( EnableCompressibility);//!< Returns whether compressibility is allowed
-NEW_PROP_TAG( FluidSystem ); //!< Defines the fluid system
-NEW_PROP_TAG( FluidState );//!< Defines the fluid state
 }
 }
 

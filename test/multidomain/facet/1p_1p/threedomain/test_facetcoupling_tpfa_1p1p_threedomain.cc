@@ -65,7 +65,6 @@ public:
 namespace Dumux {
 namespace Properties {
 
-NEW_PROP_TAG(CouplingManager);
 SET_TYPE_PROP(OnePBulkTpfa, CouplingManager, typename TestTraits::CouplingManager);
 SET_TYPE_PROP(OnePFacetTpfa, CouplingManager, typename TestTraits::CouplingManager);
 SET_TYPE_PROP(OnePEdgeTpfa, CouplingManager, typename TestTraits::CouplingManager);
