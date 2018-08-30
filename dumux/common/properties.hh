@@ -29,6 +29,7 @@
 
 #ifndef DUMUX_PROPERTY_SYSTEM_HH
 #include <dumux/common/properties/propertysystem.hh>
+#include <dumux/common/properties/propertysystemmacros.hh> // remove this once all macros are gone
 #endif
 
 namespace Dumux {
