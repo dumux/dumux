@@ -153,7 +153,7 @@ SET_INT_PROP(OnePNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numC
 SET_PROP(OnePNC, ModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
     using type = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
@@ -225,7 +225,7 @@ SET_TYPE_PROP(OnePNCNI,
 SET_PROP(OnePNCNI, ModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using IsothermalTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
