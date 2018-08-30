@@ -31,6 +31,7 @@
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/sequential/transportproperties.hh>
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
+#include <dumux/porousmediumflow/2p/sequential/properties.hh>
 #include <dumux/material/spatialparams/sequentialfv.hh>
 
 namespace Dumux
@@ -64,17 +65,8 @@ NEW_TYPE_TAG(SequentialTwoPTwoC, INHERITS_FROM(Pressure, Transport, IMPET));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG( Indices );
-NEW_PROP_TAG( SpatialParams ); //!< The type of the soil properties object
-NEW_PROP_TAG( MaterialLaw ); //!< The type of the material law
-NEW_PROP_TAG( PressureFormulation); //!< The formulation of the model
-NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the model
-NEW_PROP_TAG( VelocityFormulation); //!< The formulation of the model
-NEW_PROP_TAG( EnableCompressibility); //!< Returns whether compressibility is allowed
 NEW_PROP_TAG( EnableCapillarity); //!< Returns whether capillarity is regarded
 NEW_PROP_TAG( BoundaryMobility ); //!< Returns whether mobility or saturation is used for Dirichlet B.C.
-NEW_PROP_TAG( FluidSystem ); //!< The fluid system
-NEW_PROP_TAG( FluidState ); //!< The fluid state
 //! A minimum permeability can be assigned via the runtime-Parameter SpatialParams.minBoundaryPermeability
 NEW_PROP_TAG( RegulateBoundaryPermeability );
 }}
@@ -88,6 +80,7 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
+
 SET_TYPE_PROP(SequentialTwoPTwoC, Indices,SequentialTwoPTwoCIndices<TypeTag>);
 
 SET_INT_PROP(SequentialTwoPTwoC, NumEq, 3);

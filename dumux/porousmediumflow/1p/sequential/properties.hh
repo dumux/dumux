@@ -55,11 +55,7 @@ NEW_TYPE_TAG(SequentialOneP, INHERITS_FROM(SequentialModel));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-
-NEW_PROP_TAG( SpatialParams );  //!< The type of the spatial parameters object
 NEW_PROP_TAG( Fluid );          //!< The fluid for one-phase models
-NEW_PROP_TAG( Indices );        //!< Set of indices for the one-phase model
-NEW_PROP_TAG( CellData );       //!< The cell data storage class
 }
 }
 

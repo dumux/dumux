@@ -69,8 +69,6 @@ public:
 namespace Dumux {
 namespace Properties {
 
-NEW_PROP_TAG(CouplingManager);
-
 // set cm property for the box test
 using BoxTraits = TestTraits<TTAG(OnePBulkBox), TTAG(OnePLowDimBox)>;
 SET_TYPE_PROP(OnePBulkBox, CouplingManager, typename BoxTraits::CouplingManager);
