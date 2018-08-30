@@ -115,7 +115,7 @@ public:
         }
 
         //we cannot solve that if the matrix is 0 everywhere
-        if(!(insideVolVars.saturation(phaseIdx) == 0 || outsideVolVars.saturation(phaseIdx) == 0))
+        if(!(Dune::FloatCmp::eq<Scalar>(insideVolVars.saturation(phaseIdx), 0) || Dune::FloatCmp::eq<Scalar>(outsideVolVars.saturation(phaseIdx), 0)))
         {
             const auto insideScvIdx = scvf.insideScvIdx();
             const auto& insideScv = fvGeometry.scv(insideScvIdx);
@@ -211,7 +211,7 @@ private:
         ReducedComponentMatrix reducedDiffusionMatrix(0.0);
 
         //this is to not devide by 0 if the saturation in 0 and the effectiveDiffusivity becomes zero due to that
-        if(volVars.saturation(phaseIdx) == 0)
+        if(Dune::FloatCmp::eq<Scalar>(volVars.saturation(phaseIdx), 0))
             return reducedDiffusionMatrix;
 
         for (int compIIdx = 0; compIIdx < numComponents-1; compIIdx++)

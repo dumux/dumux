@@ -32,6 +32,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/dynmatrix.hh>
+#include <dune/common/float_cmp.hh>
 
 namespace Dumux
 {
@@ -110,7 +111,7 @@ void harmonicMeanMatrix(Dune::FieldMatrix<Scalar, m, n> &K,
 {
     for (int rowIdx=0; rowIdx < m; rowIdx++){
         for (int colIdx=0; colIdx< n; colIdx++){
-            if (Ki[rowIdx][colIdx] != Kj[rowIdx][colIdx]) {
+            if (Dune::FloatCmp::ne<Scalar>(Ki[rowIdx][colIdx], Kj[rowIdx][colIdx])) {
                 K[rowIdx][colIdx] =
                     harmonicMean(Ki[rowIdx][colIdx],
                                  Kj[rowIdx][colIdx]);
