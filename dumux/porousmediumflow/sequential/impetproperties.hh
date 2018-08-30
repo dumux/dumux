@@ -52,9 +52,6 @@ namespace Properties
 
 //! The type tag for models based on the diffusion-scheme
 NEW_TYPE_TAG(IMPET, INHERITS_FROM(SequentialModel));
-
-//forward declaration
-NEW_PROP_TAG( Model ); //!< The model of the specific problem
 }
 }
 

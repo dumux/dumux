@@ -36,23 +36,7 @@
 #include <iostream>
 #include <fstream>
 
-namespace Dumux
-{
-namespace Properties
-{
-    NEW_PROP_TAG(Scalar);
-    NEW_PROP_TAG(Problem);
-    NEW_PROP_TAG(GridView);
-    NEW_PROP_TAG(DofMapper);
-    NEW_PROP_TAG(FluidSystem);
-    NEW_PROP_TAG(ElementSolution);
-    NEW_PROP_TAG(SolutionVector);
-    NEW_PROP_TAG(FVElementGeometry);
-    NEW_PROP_TAG(TwoPIAIndices);
-    NEW_PROP_TAG(NumEq);
-    NEW_PROP_TAG(AwnSurface);
-    NEW_PROP_TAG(AwnSurfaceParams);
-}
+namespace Dumux {
 
 template<class TypeTag>
 class PlotOverLine2D
@@ -62,7 +46,6 @@ class PlotOverLine2D
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using DofMapper = typename GET_PROP_TYPE(TypeTag, DofMapper);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables)::LocalView;
