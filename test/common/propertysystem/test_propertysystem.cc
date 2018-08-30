@@ -18,179 +18,107 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief This file tests the properties system.
- *
- * We define a few type tags and property tags, then we attach values
- * to (TypeTag, PropertyTag) tuples and finally we use them in the
- * main function and print some diagnostic messages.
+ * \ingroup Common
+ * \ingroup Tests
+ * \brief Testing the Dumux property system
  */
-#include <config.h>
-
-#include <dumux/common/properties/propertysystem.hh>
 
 #include <iostream>
+#include <type_traits>
+
+#include <dune/common/classname.hh>
+#include <dune/common/exceptions.hh>
+
+#include <dumux/common/properties/propertysystem.hh>
 
 namespace Dumux {
 namespace Properties {
 
-///////////////////
-// Define some hierarchy of type tags:
-//
-//  Vehicle -- CompactCar -- Sedan -_
-//     \                            \.
-//      \                            +- Pickup ---_
-//       \                          /              \.
-//        +-- Truck ---------------^                \.
-//         \                                         \.
-//          +- Tank ----------------------------------+- HummerH1
-///////////////////
-NEW_TYPE_TAG(Vehicle);
+// create some Properties (equivalent to old macro NEW_PROP_TAG(...))
+// the first type tag is the actual TypeTag for which the property will be obtained
+// (can be used to make properties depend on other properties),
+// the second type tag is for parital specialization (equivalent to old macro SET_PROP(...), see below)
+// the default property should be always undefined to produce a good error message
+// if the user attempt to get an unset property
+template<class TypeTag, class MyTypeTag>
+struct Scalar { using type = UndefinedProperty;  };
 
-NEW_TYPE_TAG(CompactCar, INHERITS_FROM(Vehicle));
-NEW_TYPE_TAG(Truck, INHERITS_FROM(Vehicle));
-NEW_TYPE_TAG(Tank, INHERITS_FROM(Vehicle));
+template<class TypeTag, class MyTypeTag>
+struct CoordinateType { using type = UndefinedProperty; };
 
-NEW_TYPE_TAG(Sedan, INHERITS_FROM(CompactCar));
-NEW_TYPE_TAG(Pickup, INHERITS_FROM(Sedan, Truck));
+namespace TTag {
+// create some TypeTags (equivalent to old macro NEW_TYPE_TAG(..., INHERITS_FROM(...)))
+// the tuple is sorted by precedence, the first one overwriting the following
+struct Base { };
+struct Grid { };
+struct CCTpfaDisc { using InheritsFrom = std::tuple<Grid, Base>; };
+struct BoxDisc { using InheritsFrom = std::tuple<Grid, Base>; };
+struct OnePModel { using InheritsFrom = std::tuple<Base>; };
+struct OnePTestTypeTag { using InheritsFrom = std::tuple<OnePModel, BoxDisc>; };
 
-NEW_TYPE_TAG(HummerH1, INHERITS_FROM(Sedan, Pickup, Tank));
+} // end namespace TTag
 
-///////////////////
-// Define the property tags:
-// TopSpeed, NumSeats, CanonCaliber, GasUsage, AutomaticTransmission, Payload
-///////////////////
-NEW_PROP_TAG(TopSpeed); // [km/h]
-NEW_PROP_TAG(NumSeats); // []
-NEW_PROP_TAG(CanonCaliber); // [mm]
-NEW_PROP_TAG(GasUsage); // [l/100km]
-NEW_PROP_TAG(AutomaticTransmission); // true/false
-NEW_PROP_TAG(Payload); // [t]
+// set and overwrite some properties (equivalent to old macro SET_PROP(...){};)
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::Base> { using type = float; };
 
-///////////////////
-// Make the AutomaticTransmission default to false
-SET_BOOL_PROP(Vehicle, AutomaticTransmission, false);
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::OnePModel> { using type = double; };
 
-///////////////////
-// Define some values for the properties on the type tags:
-//
-// (CompactCar, TopSpeed) = GasUsage*35
-// (CompactCar, NumSeats) = 5
-// (CompactCar, GasUsage) = 4
-//
-// (Truck, TopSpeed) = 100
-// (Truck, NumSeats) = 2
-// (Truck, GasUsage) = 12
-// (Truck, Payload) = 35
-//
-// (Tank, TopSpeed) = 60
-// (Tank, GasUsage) = 65
-// (Tank, CanonCaliber) = 120
-//
-// (Sedan, GasUsage) = 7
-// (Sedan, AutomaticTransmission) = true
-//
-// (Pickup, TopSpeed) = 120
-// (Pickup, Payload) = 5
-//
-// (HummmerH1, TopSpeed) = (Pickup, TopSpeed)
-///////////////////
+template<class TypeTag>
+struct Scalar<TypeTag, TTag::OnePTestTypeTag> { using type = int; };
 
-SET_INT_PROP(CompactCar, TopSpeed, GET_PROP_VALUE(TypeTag, GasUsage) * 30);
-SET_INT_PROP(CompactCar, NumSeats, 5);
-SET_INT_PROP(CompactCar, GasUsage, 4);
+template<class TypeTag>
+struct CoordinateType<TypeTag, TTag::Grid> { using type = GetPropType<TypeTag, Scalar>; };
 
-SET_INT_PROP(Truck, TopSpeed, 100);
-SET_INT_PROP(Truck, NumSeats, 2);
-SET_INT_PROP(Truck, GasUsage, 12);
-SET_INT_PROP(Truck, Payload, 35);
+} // end namespace Properties
+} // end namespace Dumux
 
-SET_INT_PROP(Tank, TopSpeed, 60);
-SET_INT_PROP(Tank, GasUsage, 65);
-SET_INT_PROP(Tank, CanonCaliber, 120);
-
-SET_INT_PROP(Sedan, GasUsage, 7);
-SET_BOOL_PROP(Sedan, AutomaticTransmission, true);
-
-SET_INT_PROP(Pickup, TopSpeed, 120);
-SET_INT_PROP(Pickup, Payload, 5);
-
-SET_INT_PROP(HummerH1, TopSpeed, GET_PROP_VALUE(TTAG(Pickup), TopSpeed));
-
-///////////////////
-// Unmount the canon from the Hummer
-UNSET_PROP(HummerH1, CanonCaliber);
-
-} // namespace Properties
-} // namespace Dumux
-
-
-int main()
+//! the main function
+int main(int argc, char* argv[]) try
 {
-    // print all properties for all type tags
-    std::cout << "---------------------------------------\n";
-    std::cout << "-- Property values\n";
-    std::cout << "---------------------------------------\n";
+    using namespace Dumux;
+    using namespace Properties;
 
-    std::cout << "---------- Values for CompactCar ----------\n";
+    {
+        using Scalar = GetPropType<TTag::Base, Scalar>;
+        if (!std::is_same<Scalar, float>::value)
+            DUNE_THROW(Dune::InvalidStateException, "Property Scalar in TTag::Base should be float but is " << Dune::className<Scalar>());
+    }
+    {
+        using Scalar = GetPropType<TTag::OnePTestTypeTag, Scalar>;
+        if (!std::is_same<Scalar, int>::value)
+            DUNE_THROW(Dune::InvalidStateException, "Property Scalar in TTag::OnePTestTypeTag should be int but is " << Dune::className<Scalar>());
+    }
+    {
+        using Scalar = GetPropType<TTag::OnePModel, Scalar>;
+        if (!std::is_same<Scalar, double>::value)
+        DUNE_THROW(Dune::InvalidStateException, "Property Scalar in TTag::OnePModel should be double but is " << Dune::className<Scalar>());
+    }
+    {
+        using CoordinateType = GetPropType<TTag::OnePTestTypeTag, CoordinateType>;
+        if (!std::is_same<CoordinateType, int>::value)
+            DUNE_THROW(Dune::InvalidStateException, "Property CoordinateType in TTag::OnePTestTypeTag should be int but is " << Dune::className<CoordinateType>());
+    }
+    {
+        using CoordinateType = GetPropType<TTag::CCTpfaDisc, CoordinateType>;
+        if (!std::is_same<CoordinateType, float>::value)
+            DUNE_THROW(Dune::InvalidStateException, "Property CoordinateType in TTag::CCTpfaDisc should be float but is " << Dune::className<CoordinateType>());
+    }
 
-    std::cout << "(CompactCar, TopSpeed) = " << GET_PROP_VALUE(TTAG(CompactCar), TopSpeed) << "\n";
-    std::cout << "(CompactCar, NumSeats) = " << GET_PROP_VALUE(TTAG(CompactCar), NumSeats) << "\n";
-    std::cout << "(CompactCar, GasUsage) = " << GET_PROP_VALUE(TTAG(CompactCar), GasUsage) << "\n";
-    std::cout << "(CompactCar, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(CompactCar), AutomaticTransmission) << "\n";
-
-    std::cout << "---------- Values for Truck ----------\n";
-
-    std::cout << "(Truck, TopSpeed) = " << GET_PROP_VALUE(TTAG(Truck), TopSpeed) << "\n";
-    std::cout << "(Truck, NumSeats) = " << GET_PROP_VALUE(TTAG(Truck), NumSeats) << "\n";
-    std::cout << "(Truck, GasUsage) = " << GET_PROP_VALUE(TTAG(Truck), GasUsage) << "\n";
-    std::cout << "(Truck, Payload) = " << GET_PROP_VALUE(TTAG(Truck), Payload) << "\n";
-    std::cout << "(Truck, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(Truck), AutomaticTransmission) << "\n";
-
-    std::cout << "---------- Values for Tank ----------\n";
-
-    std::cout << "(Tank, TopSpeed) = " << GET_PROP_VALUE(TTAG(Tank), TopSpeed) << "\n";
-    std::cout << "(Tank, GasUsage) = " << GET_PROP_VALUE(TTAG(Tank), GasUsage) << "\n";
-    std::cout << "(Tank, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(Tank), AutomaticTransmission) << "\n";
-    std::cout << "(Tank, CanonCaliber) = " << GET_PROP_VALUE(TTAG(Tank), CanonCaliber) << "\n";
-
-    std::cout << "---------- Values for Sedan ----------\n";
-
-    std::cout << "(Sedan, TopSpeed) = " << GET_PROP_VALUE(TTAG(Sedan), TopSpeed) << "\n";
-    std::cout << "(Sedan, NumSeats) = " << GET_PROP_VALUE(TTAG(Sedan), NumSeats) << "\n";
-    std::cout << "(Sedan, GasUsage) = " << GET_PROP_VALUE(TTAG(Sedan), GasUsage) << "\n";
-    std::cout << "(Sedan, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(Sedan), AutomaticTransmission) << "\n";
-
-    std::cout << "---------- Values for Pickup ----------\n";
-    std::cout << "(Pickup, TopSpeed) = " << GET_PROP_VALUE(TTAG(Pickup), TopSpeed) << "\n";
-    std::cout << "(Pickup, NumSeats) = " << GET_PROP_VALUE(TTAG(Pickup), NumSeats) << "\n";
-    std::cout << "(Pickup, GasUsage) = " << GET_PROP_VALUE(TTAG(Pickup), GasUsage) << "\n";
-    std::cout << "(Pickup, Payload) = " << GET_PROP_VALUE(TTAG(Pickup), Payload) << "\n";
-    std::cout << "(Pickup, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(Pickup), AutomaticTransmission) << "\n";
-
-    std::cout << "---------- Values for HummerH1 ----------\n";
-    std::cout << "(HummerH1, TopSpeed) = " << GET_PROP_VALUE(TTAG(HummerH1), TopSpeed) << "\n";
-    std::cout << "(HummerH1, NumSeats) = " << GET_PROP_VALUE(TTAG(HummerH1), NumSeats) << "\n";
-    std::cout << "(HummerH1, GasUsage) = " << GET_PROP_VALUE(TTAG(HummerH1), GasUsage) << "\n";
-    std::cout << "(HummerH1, Payload) = " << GET_PROP_VALUE(TTAG(HummerH1), Payload) << "\n";
-    std::cout << "(HummerH1, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(HummerH1), AutomaticTransmission) << "\n";
-    // CanonCaliber is explcitly unset for the Hummer -> this would not compile:
-    // std::cout << "(HummerH1, CanonCaliber) = " << GET_PROP_VALUE(TTAG(HummerH1), CanonCaliber) << "\n";
-
-    std::cout << "\n";
-    std::cout << "---------------------------------------\n";
-    std::cout << "-- Diagnostic messages\n";
-    std::cout << "---------------------------------------\n";
-
-    std::cout << "---- All properties for Sedan ---\n";
-    Dumux::Properties::print<TTAG(Sedan)>();
-
-    std::cout << "---- Message for (HummerH1, CanonCaliber) ---\n"
-              << PROP_DIAGNOSTIC(TTAG(HummerH1), CanonCaliber);
-    std::cout << "---- Message for (HummerH1, GasUsage) ---\n"
-              << PROP_DIAGNOSTIC(TTAG(HummerH1), GasUsage);
-    std::cout << "---- Message for (HummerH1, AutomaticTransmission) ---\n"
-              << PROP_DIAGNOSTIC(TTAG(HummerH1), AutomaticTransmission);
-
+    std::cout << "All tests passed!" << std::endl;
     return 0;
+}
+
+// error handler
+catch (const Dune::Exception& e)
+{
+    std::cerr << "Dune exception thrown: " << e << " --> Abort!" << std::endl;
+    return 1;
+}
+
+catch (...)
+{
+    std::cerr << "Unknown exception thrown --> Abort!" << std::endl;
+    return 2;
 }
