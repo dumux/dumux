@@ -5,7 +5,7 @@ add_subdirectory(xml)
 install(FILES
 adaptivegridrestart.hh
 container.hh
-defaultvtkoutputfields.hh
+defaultiofields.hh
 fieldnames.hh
 gnuplotinterface.hh
 loadsolution.hh

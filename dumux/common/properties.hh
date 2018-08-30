@@ -48,7 +48,9 @@ NEW_PROP_TAG(ModelTraits);            //!< Traits class encapsulating model spec
 NEW_PROP_TAG(Problem);                //!< Property to specify the type of a problem which has to be solved
 NEW_PROP_TAG(PointSource);            //!< Property defining the type of point source used
 NEW_PROP_TAG(PointSourceHelper);      //!< Property defining the class that computes which sub control volume point sources belong to
+// TODO: Remove deprecated property VtkOutputFields
 NEW_PROP_TAG(VtkOutputFields);        //!< A class helping models to define default vtk output parameters
+NEW_PROP_TAG(IOFields);               //!< A class helping models to define input and output fields
 NEW_PROP_TAG(BaseLocalResidual);      //!< The type of the base class of the local residual (specific to a discretization scheme)
 NEW_PROP_TAG(JacobianMatrix);         //!< Type of the global jacobian matrix
 NEW_PROP_TAG(SolutionVector);         //!< Vector containing all primary variable vector of the grid

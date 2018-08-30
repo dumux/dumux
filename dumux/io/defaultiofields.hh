@@ -19,28 +19,33 @@
 /*!
  * \file
  * \ingroup InputOutput
- * \brief Adds vtk output fields specific to a model, this is the default if a
+ * \brief Adds output fields to a given output module, this is the default if a
           model doesn't implement this functionality
  */
-#ifndef DUMUX_DEFAULT_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_DEFAULT_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_IO_DEFAULT_IO_FIELDS_HH
+#define DUMUX_IO_DEFAULT_IO_FIELDS_HH
 
 #include <dune/common/exceptions.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup InputOutput
- * \brief Adds vtk output fields specific to a model
+ * \brief Adds output fields to a given output module
  */
-class DefaultVtkOutputFields
+class DefaultIOFields
 {
 public:
-    template<class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template<class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        DUNE_THROW(Dune::NotImplemented, "This model doesn't implement default vtk fields!");
+        DUNE_THROW(Dune::NotImplemented, "This model doesn't implement default output fields!");
+    }
+
+    template <class FluidSystem = void, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
+    {
+        DUNE_THROW(Dune::NotImplemented, "This model doesn't implement primaryVariableName!");
     }
 };
 
