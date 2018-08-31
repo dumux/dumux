@@ -80,12 +80,13 @@
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/rans/model.hh>
+#include <dumux/freeflow/nonisothermal/iofields.hh>
 
 #include "fluxvariables.hh"
 #include "indices.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux
 {
@@ -179,13 +180,13 @@ public:
     using type = OneEqVolumeVariables<Traits, NSVolVars>;
 };
 
-//! The specific vtk output fields
-SET_PROP(OneEq, VtkOutputFields)
+//! The specific I/O fields
+SET_PROP(OneEq, IOFields)
 {
 private:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 public:
-    using type = OneEqVtkOutputFields<FVGridGeometry>;
+    using type = OneEqIOFields<FVGridGeometry>;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -225,15 +226,15 @@ public:
     using type = OneEqVolumeVariables<Traits, NSVolVars>;
 };
 
-//! The specific non-isothermal vtk output fields
-SET_PROP(OneEqNI, VtkOutputFields)
+//! The specific non-isothermal I/O fields
+SET_PROP(OneEqNI, IOFields)
 {
 private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IsothermalFields = OneEqVtkOutputFields<FVGridGeometry>;
+    using IsothermalFields = OneEqIOFields<FVGridGeometry>;
 public:
-    using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
+    using type = FreeflowNonIsothermalIOFields<IsothermalFields, ModelTraits>;
 };
 
 // \}

@@ -19,59 +19,84 @@
 /*!
  * \file
  * \ingroup NavierStokesModel
- * \copydoc Dumux::NavierStokesVtkOutputFields
+ * \copydoc Dumux::NavierStokesIOFields
  */
-#ifndef DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_NAVIER_STOKES_IO_FIELDS_HH
+#define DUMUX_NAVIER_STOKES_IO_FIELDS_HH
 
 #include <dune/common/fvector.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
+
+#include <dumux/io/fieldnames.hh>
+#include <dune/common/deprecated.hh>
 
 namespace Dumux
 {
 
 /*!
  * \ingroup NavierStokesModel
- * \brief Adds vtk output fields for the Navier-Stokes model
+ * \brief Adds I/O fields for the Navier-Stokes model
  */
 template<class FVGridGeometry>
-class NavierStokesVtkOutputFields
+class NavierStokesIOFields
 {
     // Helper type used for tag dispatching (to add discretization-specific fields).
     template<DiscretizationMethod discMethod>
     using discMethodTag = std::integral_constant<DiscretizationMethod, discMethod>;
 
 public:
-    //! Initialize the Navier-Stokes specific vtk output fields.
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    //! Initialize the Navier-Stokes specific output fields.
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        vtk.addVolumeVariable([](const auto& v){ return v.pressure(); }, "p");
-        vtk.addVolumeVariable([](const auto& v){ return v.molarDensity(); }, "rhoMolar");
-        vtk.addVolumeVariable([](const auto& v){ return v.density(); }, "rho");
+        using namespace IOFieldNames;
+        using FluidSystem = typename OutputModule::VolumeVariables::FluidSystem;
+        out.addVolumeVariable([](const auto& v){ return v.pressure(); }, pressure());
+        out.addVolumeVariable([](const auto& v){ return v.molarDensity(); }, molarDensity<FluidSystem>());
+        out.addVolumeVariable([](const auto& v){ return v.density(); }, density());
 
         // add discretization-specific fields
-        additionalOutput_(vtk, discMethodTag<FVGridGeometry::discMethod>{});
+        additionalOutput_(out, discMethodTag<FVGridGeometry::discMethod>{});
+    }
+
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
+    {
+        initOutputModule(out);
+    }
+
+    //! return the names of the primary variables
+    template <class FluidSystem = void>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
+    {
+        using namespace IOFieldNames;
+        const std::array<std::string, 3> velocities = {"v_x", "v_y", "v_z"};
+
+        if (pvIdx < FVGridGeometry::Grid::dimension)
+            return velocities[pvIdx];
+        else
+            return pressure();
     }
 
 private:
 
     //! Adds discretization-specific fields (nothing by default).
-    template <class VtkOutputModule, class AnyMethod>
-    static void additionalOutput_(VtkOutputModule& vtk, AnyMethod)
+    template <class OutputModule, class AnyMethod>
+    static void additionalOutput_(OutputModule& out, AnyMethod)
     { }
 
     //! Adds discretization-specific fields (velocity vectors on the faces for the staggered discretization).
-    template <class VtkOutputModule>
-    static void additionalOutput_(VtkOutputModule& vtk, discMethodTag<DiscretizationMethod::staggered>)
+    template <class OutputModule>
+    static void additionalOutput_(OutputModule& out, discMethodTag<DiscretizationMethod::staggered>)
     {
-        const bool writeFaceVars = getParamFromGroup<bool>(vtk.paramGroup(), "Vtk.WriteFaceData", false);
+        const bool writeFaceVars = getParamFromGroup<bool>(out.paramGroup(), "Vtk.WriteFaceData", false);
         if(writeFaceVars)
         {
             auto faceVelocityVector = [](const typename FVGridGeometry::SubControlVolumeFace& scvf, const auto& faceVars)
                                       {
-                                          using Scalar = typename VtkOutputModule::VolumeVariables::PrimaryVariables::value_type;
+                                          using Scalar = typename OutputModule::VolumeVariables::PrimaryVariables::value_type;
                                           using VelocityVector = Dune::FieldVector<Scalar, FVGridGeometry::GridView::dimensionworld>;
 
                                           VelocityVector velocity(0.0);
@@ -79,14 +104,14 @@ private:
                                           return velocity;
                                       };
 
-            vtk.addFaceVariable(faceVelocityVector, "faceVelocity");
+            out.addFaceVariable(faceVelocityVector, "faceVelocity");
 
             auto faceNormalVelocity = [](const auto& faceVars)
                                       {
                                           return faceVars.velocitySelf();
                                       };
 
-            vtk.addFaceVariable(faceNormalVelocity, "v");
+            out.addFaceVariable(faceNormalVelocity, "v");
         }
     }
 };

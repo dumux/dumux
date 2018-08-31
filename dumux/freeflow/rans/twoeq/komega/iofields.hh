@@ -18,40 +18,42 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FreeflowNIModel
- * \copydoc Dumux::FreeflowNonIsothermalVtkOutputFields
+ * \ingroup KOmegaModel
+ * \copydoc Dumux::KOmegaIOFields
  */
-#ifndef DUMUX_FREEFLOW_NI_OUTPUT_FIELDS_HH
-#define DUMUX_FREEFLOW_NI_OUTPUT_FIELDS_HH
+#ifndef DUMUX_KOMEGA_IO_FIELDS_HH
+#define DUMUX_KOMEGA_IO_FIELDS_HH
+
+#include <dumux/freeflow/rans/iofields.hh>
+#include <dune/common/deprecated.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup FreeflowNIModel
- * \brief Adds vtk output fields specific to non-isothermal free-flow models
+ * \ingroup KOmegaModel
+ * \brief Adds I/O fields for the Reynolds-Averaged Navier-Stokes model
  */
-template<class IsothermalVtkOutputFields, class ModelTraits>
-class FreeflowNonIsothermalVtkOutputFields
+template<class FVGridGeometry>
+class KOmegaIOFields
 {
+    enum { dim = FVGridGeometry::GridView::dimension };
 
 public:
-    //! Initialize the non-isothermal specific vtk output fields.
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
     {
-        IsothermalVtkOutputFields::init(vtk);
-        add(vtk);
+        initOutputModule(out);
     }
 
-    //! Add the non-isothermal specific vtk output fields.
-    template <class VtkOutputModule>
-    static void add(VtkOutputModule& vtk)
+    //! Initialize the KOmegaModel specific output fields.
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        vtk.addVolumeVariable([](const auto& v){ return v.temperature(); }, "T");
-        vtk.addVolumeVariable([](const auto& v){ return v.thermalConductivity(); }, "lambda");
-        if (ModelTraits::usesTurbulenceModel())
-            vtk.addVolumeVariable([](const auto& v){ return v.effectiveThermalConductivity() - v.thermalConductivity(); }, "lambda_t");
+        out.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
+        out.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "omega");
     }
 };
 

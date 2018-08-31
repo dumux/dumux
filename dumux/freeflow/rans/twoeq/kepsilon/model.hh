@@ -72,7 +72,7 @@
 #include "indices.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux
 {
@@ -170,13 +170,13 @@ public:
     using type = KEpsilonVolumeVariables<Traits, NSVolVars>;
 };
 
-//! The specific vtk output fields
-SET_PROP(KEpsilon, VtkOutputFields)
+//! The specific I/O fields
+SET_PROP(KEpsilon, IOFields)
 {
 private:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 public:
-    using type = KEpsilonVtkOutputFields<FVGridGeometry>;
+    using type = KEpsilonIOFields<FVGridGeometry>;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -216,15 +216,15 @@ public:
     using type = KEpsilonVolumeVariables<Traits, NSVolVars>;
 };
 
-//! The specific non-isothermal vtk output fields
-SET_PROP(KEpsilonNI, VtkOutputFields)
+//! The specific non-isothermal I/O fields
+SET_PROP(KEpsilonNI, IOFields)
 {
 private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IsothermalFields = KEpsilonVtkOutputFields<FVGridGeometry>;
+    using IsothermalFields = KEpsilonIOFields<FVGridGeometry>;
 public:
-    using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
+    using type = FreeflowNonIsothermalIOFields<IsothermalFields, ModelTraits>;
 };
 
 // \}

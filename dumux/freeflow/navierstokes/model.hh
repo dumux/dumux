@@ -52,14 +52,14 @@
 #include <dumux/freeflow/properties.hh>
 #include <dumux/freeflow/nonisothermal/model.hh>
 #include <dumux/freeflow/nonisothermal/indices.hh>
-#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/freeflow/nonisothermal/iofields.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
 #include "fluxvariables.hh"
 #include "fluxvariablescache.hh"
 #include "indices.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/methods.hh>
@@ -212,13 +212,13 @@ SET_TYPE_PROP(NavierStokes, FluxVariables, NavierStokesFluxVariables<TypeTag>);
 //! The flux variables cache class, by default the one for free flow
 SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
-//! The specific vtk output fields
-SET_PROP(NavierStokes, VtkOutputFields)
+//! The specific I/O fields
+SET_PROP(NavierStokes, IOFields)
 {
 private:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 public:
-     using type = NavierStokesVtkOutputFields<FVGridGeometry>;
+     using type = NavierStokesIOFields<FVGridGeometry>;
 };
 //////////////////////////////////////////////////////////////////
 // Property values for non-isothermal Navier-Stokes model
@@ -235,15 +235,15 @@ public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };
 
-//! The specific non-isothermal vtk output fields
-SET_PROP(NavierStokesNI, VtkOutputFields)
+//! The specific non-isothermal I/O fields
+SET_PROP(NavierStokesNI, IOFields)
 {
 private:
      using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
      using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-     using IsothermalFields = NavierStokesVtkOutputFields<FVGridGeometry>;
+     using IsothermalFields = NavierStokesIOFields<FVGridGeometry>;
 public:
-     using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
+     using type = FreeflowNonIsothermalIOFields<IsothermalFields, ModelTraits>;
 };
 
  // \}

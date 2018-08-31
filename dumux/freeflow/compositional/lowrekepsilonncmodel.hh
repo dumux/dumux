@@ -30,10 +30,10 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/compositional/navierstokesncmodel.hh>
-#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/freeflow/nonisothermal/iofields.hh>
 #include <dumux/freeflow/rans/twoeq/lowrekepsilon/model.hh>
 
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux {
 
@@ -141,16 +141,15 @@ public:
     using type = LowReKEpsilonFluxVariables<TypeTag, BaseFluxVariables>;
 };
 
-//! The specific vtk output fields
-SET_PROP(LowReKEpsilonNC, VtkOutputFields)
+//! The specific I/O fields
+SET_PROP(LowReKEpsilonNC, IOFields)
 {
 private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SinglePhaseVtkOutputFields = LowReKEpsilonVtkOutputFields<FVGridGeometry>;
+    using SinglePhaseIOFields = LowReKEpsilonIOFields<FVGridGeometry>;
 public:
-    using type = FreeflowNCVtkOutputFields<SinglePhaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem>;
+    using type = FreeflowNCIOFields<SinglePhaseIOFields, ModelTraits>;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -213,17 +212,16 @@ public:
     using type = LowReKEpsilonFluxVariables<TypeTag, BaseFluxVariables>;
 };
 
-//! The specific vtk output fields
-SET_PROP(LowReKEpsilonNCNI, VtkOutputFields)
+//! The specific I/O fields
+SET_PROP(LowReKEpsilonNCNI, IOFields)
 {
 private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BaseVtkOutputFields = LowReKEpsilonVtkOutputFields<FVGridGeometry>;
-    using NonIsothermalFields = FreeflowNonIsothermalVtkOutputFields<BaseVtkOutputFields, ModelTraits>;
+    using BaseIOFields = LowReKEpsilonIOFields<FVGridGeometry>;
+    using NonIsothermalFields = FreeflowNonIsothermalIOFields<BaseIOFields, ModelTraits>;
 public:
-    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem>;
+    using type = FreeflowNCIOFields<NonIsothermalFields, ModelTraits>;
 };
 
 // \}

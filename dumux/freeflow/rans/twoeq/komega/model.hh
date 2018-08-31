@@ -79,7 +79,7 @@
 #include "indices.hh"
 #include "localresidual.hh"
 #include "volumevariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux
 {
@@ -177,13 +177,13 @@ public:
     using type = KOmegaVolumeVariables<Traits, NSVolVars>;
 };
 
-//! The specific vtk output fields
-SET_PROP(KOmega, VtkOutputFields)
+//! The specific I/O fields
+SET_PROP(KOmega, IOFields)
 {
 private:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 public:
-    using type = KOmegaVtkOutputFields<FVGridGeometry>;
+    using type = KOmegaIOFields<FVGridGeometry>;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -224,15 +224,15 @@ public:
     using type = KOmegaVolumeVariables<Traits, NSVolVars>;
 };
 
-//! The specific non-isothermal vtk output fields
-SET_PROP(KOmegaNI, VtkOutputFields)
+//! The specific non-isothermal I/O fields
+SET_PROP(KOmegaNI, IOFields)
 {
 private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IsothermalFields = KOmegaVtkOutputFields<FVGridGeometry>;
+    using IsothermalFields = KOmegaIOFields<FVGridGeometry>;
 public:
-    using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
+    using type = FreeflowNonIsothermalIOFields<IsothermalFields, ModelTraits>;
 };
 
 // \}

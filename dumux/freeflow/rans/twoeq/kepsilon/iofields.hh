@@ -18,41 +18,48 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup KOmegaModel
- * \copydoc Dumux::KOmegaVtkOutputFields
+ * \ingroup KEpsilonModel
+ * \copydoc Dumux::KEpsilonIOFields
  */
-#ifndef DUMUX_KOMEGA_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_KOMEGA_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_KEPSILON_IO_FIELDS_HH
+#define DUMUX_KEPSILON_IO_FIELDS_HH
 
-#include <dumux/freeflow/rans/vtkoutputfields.hh>
+#include <dumux/freeflow/rans/iofields.hh>
+#include <dune/common/deprecated.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup KOmegaModel
- * \brief Adds vtk output fields for the Reynolds-Averaged Navier-Stokes model
+ * \ingroup KEpsilonModel
+ * \brief Adds I/O fields for the k-epsilon turbulence model
  */
 template<class FVGridGeometry>
-class KOmegaVtkOutputFields : public RANSVtkOutputFields<FVGridGeometry>
+class KEpsilonIOFields
 {
     enum { dim = FVGridGeometry::GridView::dimension };
 
 public:
-    //! Initialize the Navier-Stokes specific vtk output fields.
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
     {
-        RANSVtkOutputFields<FVGridGeometry>::init(vtk);
-        add(vtk);
+        initOutputModule(out);
     }
 
-    //! Add the KOmegaModel specific vtk output fields.
-    template <class VtkOutputModule>
-    static void add(VtkOutputModule& vtk)
+    //! Initialize the KEpsilon specific output fields.
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        vtk.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
-        vtk.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "omega");
+        RANSIOFields<FVGridGeometry>::initOutputModule(out);
+
+        out.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
+        out.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "epsilon");
+        out.addVolumeVariable([](const auto& v){ return v.yPlusNominal(); }, "y^+_nom");
+        out.addVolumeVariable([](const auto& v){ return v.uPlusNominal(); }, "u^+_nom");
+        out.addVolumeVariable([](const auto& v){ return v.inNearWallRegion(); }, "inNearWallRegion");
+        out.addVolumeVariable([](const auto& v){ return v.isMatchingPoint(); }, "isMatchingPoint");
     }
 };
 

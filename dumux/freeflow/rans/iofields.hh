@@ -19,50 +19,53 @@
 /*!
  * \file
  * \ingroup RANSModel
- * \copydoc Dumux::RANSVtkOutputFields
+ * \copydoc Dumux::RANSIOFields
  */
-#ifndef DUMUX_RANS_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_RANS_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_RANS_IO_FIELDS_HH
+#define DUMUX_RANS_IO_FIELDS_HH
 
-#include <dumux/freeflow/navierstokes/vtkoutputfields.hh>
+#include <dumux/freeflow/navierstokes/iofields.hh>
+#include <dune/common/deprecated.hh>
 
 namespace Dumux
 {
 
 /*!
  * \ingroup RANSModel
- * \brief Adds vtk output fields for the Reynolds-Averaged Navier-Stokes model
+ * \brief Adds I/O fields for the Reynolds-Averaged Navier-Stokes model
  */
 template<class FVGridGeometry>
-class RANSVtkOutputFields : public NavierStokesVtkOutputFields<FVGridGeometry>
+class RANSIOFields
 {
     enum { dim = FVGridGeometry::GridView::dimension };
 
 public:
-    //! Initialize the Navier-Stokes specific vtk output fields.
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
     {
-        NavierStokesVtkOutputFields<FVGridGeometry>::init(vtk);
-        add(vtk);
+        initOutputModule(out);
     }
 
-    //! Add the RANS specific vtk output fields.
-    template <class VtkOutputModule>
-    static void add(VtkOutputModule& vtk)
+    //! Initialize the RANS specific output fields.
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        vtk.addVolumeVariable([](const auto& v){ return v.velocity()[0] / v.velocityMaximum()[0]; }, "v_x/v_x,max");
-        vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0]; }, "dv_x/dx_");
+        NavierStokesIOFields<FVGridGeometry>::initOutputModule(out);
+
+        out.addVolumeVariable([](const auto& v){ return v.velocity()[0] / v.velocityMaximum()[0]; }, "v_x/v_x,max");
+        out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0]; }, "dv_x/dx_");
         if (dim > 1)
-            vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[1]; }, "dv_y/dx_");
+            out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[1]; }, "dv_y/dx_");
         if (dim > 2)
-            vtk.addVolumeVariable([](const auto& v){ return v.velocityGradients()[2]; }, "dv_z/dx_");
-        vtk.addVolumeVariable([](const auto& v){ return v.pressure() - 1e5; }, "p_rel");
-        vtk.addVolumeVariable([](const auto& v){ return v.viscosity() / v.density(); }, "nu");
-        vtk.addVolumeVariable([](const auto& v){ return v.kinematicEddyViscosity(); }, "nu_t");
-        vtk.addVolumeVariable([](const auto& v){ return v.wallDistance(); }, "l_w");
-        vtk.addVolumeVariable([](const auto& v){ return v.yPlus(); }, "y^+");
-        vtk.addVolumeVariable([](const auto& v){ return v.uPlus(); }, "u^+");
+            out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[2]; }, "dv_z/dx_");
+        out.addVolumeVariable([](const auto& v){ return v.pressure() - 1e5; }, "p_rel");
+        out.addVolumeVariable([](const auto& v){ return v.viscosity() / v.density(); }, "nu");
+        out.addVolumeVariable([](const auto& v){ return v.kinematicEddyViscosity(); }, "nu_t");
+        out.addVolumeVariable([](const auto& v){ return v.wallDistance(); }, "l_w");
+        out.addVolumeVariable([](const auto& v){ return v.yPlus(); }, "y^+");
+        out.addVolumeVariable([](const auto& v){ return v.uPlus(); }, "u^+");
     }
 };
 

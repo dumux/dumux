@@ -40,7 +40,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
 
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux {
 
@@ -83,13 +83,13 @@ public:
     using type = RANSModelTraits<dim>;
 };
 
-//! The specific vtk output fields
-SET_PROP(RANS, VtkOutputFields)
+//! The specific I/O fields
+SET_PROP(RANS, IOFields)
 {
 private:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 public:
-    using type = RANSVtkOutputFields<FVGridGeometry>;
+    using type = RANSIOFields<FVGridGeometry>;
 };
 
 //////////////////////////////////////////////////////////////////
@@ -111,15 +111,15 @@ public:
     using type = FreeflowNIModelTraits<IsothermalTraits>;
 };
 
-//! The specific non-isothermal vtk output fields
-SET_PROP(RANSNI, VtkOutputFields)
+//! The specific non-isothermal I/O fields
+SET_PROP(RANSNI, IOFields)
 {
 private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IsothermalFields = RANSVtkOutputFields<FVGridGeometry>;
+    using IsothermalFields = RANSIOFields<FVGridGeometry>;
 public:
-    using type = FreeflowNonIsothermalVtkOutputFields<IsothermalFields, ModelTraits>;
+    using type = FreeflowNonIsothermalIOFields<IsothermalFields, ModelTraits>;
 };
 
 //! Use Fourier's Law as default heat conduction type

@@ -55,14 +55,14 @@
 #include <dumux/freeflow/navierstokes/model.hh>
 #include <dumux/freeflow/nonisothermal/model.hh>
 #include <dumux/freeflow/nonisothermal/indices.hh>
-#include <dumux/freeflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/freeflow/nonisothermal/iofields.hh>
 #include <dumux/discretization/fickslaw.hh>
 #include <dumux/discretization/fourierslaw.hh>
 
 #include "volumevariables.hh"
 #include "localresidual.hh"
 #include "fluxvariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 #include <dumux/assembly/staggeredlocalresidual.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>
@@ -182,16 +182,15 @@ SET_TYPE_PROP(NavierStokesNC, FluxVariables, FreeflowNCFluxVariables<TypeTag>);
 //! The flux variables cache class, by default the one for free flow
 SET_TYPE_PROP(NavierStokesNC, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
-//! The specific vtk output fields
-SET_PROP(NavierStokesNC, VtkOutputFields)
+//! The specific I/O fields
+SET_PROP(NavierStokesNC, IOFields)
 {
 private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BaseVtkOutputFields = NavierStokesVtkOutputFields<FVGridGeometry>;
+    using BaseIOFields = NavierStokesIOFields<FVGridGeometry>;
 public:
-    using type = FreeflowNCVtkOutputFields<BaseVtkOutputFields, ModelTraits, FVGridGeometry, FluidSystem>;
+    using type = FreeflowNCIOFields<BaseIOFields, ModelTraits>;
 };
 
 /*!
@@ -231,17 +230,16 @@ public:
     using type = FreeflowNIModelTraits<IsothermalModelTraits>;
 };
 
-//! The non-isothermal vtk output fields
-SET_PROP(NavierStokesNCNI, VtkOutputFields)
+//! The non-isothermal I/O fields
+SET_PROP(NavierStokesNCNI, IOFields)
 {
 private:
     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using BaseVtkOutputFields = NavierStokesVtkOutputFields<FVGridGeometry>;
-    using NonIsothermalFields = FreeflowNonIsothermalVtkOutputFields<BaseVtkOutputFields, ModelTraits>;
+    using BaseIOFields = NavierStokesIOFields<FVGridGeometry>;
+    using NonIsothermalFields = FreeflowNonIsothermalIOFields<BaseIOFields, ModelTraits>;
 public:
-    using type = FreeflowNCVtkOutputFields<NonIsothermalFields, ModelTraits, FVGridGeometry, FluidSystem>;
+    using type = FreeflowNCIOFields<NonIsothermalFields, ModelTraits>;
 };
 
 //! Use Fourier's Law as default heat conduction type

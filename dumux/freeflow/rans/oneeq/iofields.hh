@@ -18,41 +18,40 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup LowReKEpsilonModel
- * \copydoc Dumux::LowReKEpsilonVtkOutputFields
+ * \ingroup OneEqModel
+ * \copydoc Dumux::OneEqIOFields
  */
-#ifndef DUMUX_LOWREKEPSILON_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_LOWREKEPSILON_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_ONEEQ_IO_FIELDS_HH
+#define DUMUX_ONEEQ_IO_FIELDS_HH
 
-#include <dumux/freeflow/rans/vtkoutputfields.hh>
+#include <dumux/freeflow/rans/iofields.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup LowReKEpsilonModel
- * \brief Adds vtk output fields for the low-Re k-epsilon turbulence model
+ * \ingroup OneEqModel
+ * \brief Adds I/O fields for the one-equation turbulence model by Spalart-Allmaras
  */
 template<class FVGridGeometry>
-class LowReKEpsilonVtkOutputFields : public RANSVtkOutputFields<FVGridGeometry>
+class OneEqIOFields
 {
     enum { dim = FVGridGeometry::GridView::dimension };
 
 public:
-    //! Initialize the Reynolds-averagedNavier-Stokes specific vtk output fields.
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
     {
-        RANSVtkOutputFields<FVGridGeometry>::init(vtk);
-        add(vtk);
+        initOutputModule(out);
     }
 
-    //! Add the LowReKEpsilon specific vtk output fields.
-    template <class VtkOutputModule>
-    static void add(VtkOutputModule& vtk)
+    //! Initialize the OneEq specific output fields.
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        vtk.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
-        vtk.addVolumeVariable([](const auto& v){ return v.dissipationTilde(); }, "epsilon");
+        RANSIOFields<FVGridGeometry>::initOutputModule(out);
+        out.addVolumeVariable([](const auto& v){ return v.viscosityTilde(); }, "nu_tilde");
     }
 };
 

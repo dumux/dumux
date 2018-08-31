@@ -18,45 +18,43 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup KEpsilonModel
- * \copydoc Dumux::KEpsilonVtkOutputFields
+ * \ingroup LowReKEpsilonModel
+ * \copydoc Dumux::LowReKEpsilonIOFields
  */
-#ifndef DUMUX_KEPSILON_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_KEPSILON_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_LOWREKEPSILON_IO_FIELDS_HH
+#define DUMUX_LOWREKEPSILON_IO_FIELDS_HH
 
-#include <dumux/freeflow/rans/vtkoutputfields.hh>
+#include <dumux/freeflow/rans/iofields.hh>
+#include <dune/common/deprecated.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup KEpsilonModel
- * \brief Adds vtk output fields for the k-epsilon turbulence model
+ * \ingroup LowReKEpsilonModel
+ * \brief Adds I/O fields for the low-Re k-epsilon turbulence model
  */
 template<class FVGridGeometry>
-class KEpsilonVtkOutputFields : public RANSVtkOutputFields<FVGridGeometry>
+class LowReKEpsilonIOFields
 {
     enum { dim = FVGridGeometry::GridView::dimension };
 
 public:
-    //! Initialize the Reynolds-averaged Navier-Stokes specific vtk output fields.
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
     {
-        RANSVtkOutputFields<FVGridGeometry>::init(vtk);
-        add(vtk);
+        initOutputModule(out);
     }
 
-    //! Add the KEpsilon specific vtk output fields.
-    template <class VtkOutputModule>
-    static void add(VtkOutputModule& vtk)
+    //! Initialize the LowReKEpsilon specific output fields.
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        vtk.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
-        vtk.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "epsilon");
-        vtk.addVolumeVariable([](const auto& v){ return v.yPlusNominal(); }, "y^+_nom");
-        vtk.addVolumeVariable([](const auto& v){ return v.uPlusNominal(); }, "u^+_nom");
-        vtk.addVolumeVariable([](const auto& v){ return v.inNearWallRegion(); }, "inNearWallRegion");
-        vtk.addVolumeVariable([](const auto& v){ return v.isMatchingPoint(); }, "isMatchingPoint");
+        RANSIOFields<FVGridGeometry>::initOutputModule(out);
+        out.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
+        out.addVolumeVariable([](const auto& v){ return v.dissipationTilde(); }, "epsilon");
     }
 };
 
