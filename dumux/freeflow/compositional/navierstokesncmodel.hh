@@ -152,7 +152,6 @@ public:
 
 SET_BOOL_PROP(NavierStokesNC, UseMoles, false); //!< Defines whether molar (true) or mass (false) density is used
 SET_INT_PROP(NavierStokesNC, ReplaceCompEqIdx, 0); //<! Set the ReplaceCompEqIdx to 0 by default
-SET_BOOL_PROP(NavierStokesNC, EnableInertiaTerms, true); //!< Consider inertia terms by default
 SET_BOOL_PROP(NavierStokesNC, NormalizePressure, true); //!< Normalize the pressure term in the momentum balance by default
 
 //! The local residual
