@@ -21,22 +21,42 @@
  * \ingroup OnePModel
  * \brief Adds vtk output fields specific to the one phase model
  */
-#ifndef DUMUX_ONEP_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_ONEP_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_ONEP_IO_FIELDS_HH
+#define DUMUX_ONEP_IO_FIELDS_HH
+
+#include <dune/common/deprecated.hh>
+
+#include <dumux/io/fieldnames.hh>
 
 namespace Dumux {
 
+using namespace IOFieldNames;
+
 /*!
  * \ingroup OnePModel
- * \brief Adds vtk output fields specific to the one phase model
+ * \brief Adds I/O fields specific to the one phase model
  */
-class OnePVtkOutputFields
+class OnePIOFields
 {
 public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(); }, "p");
+        out.addVolumeVariable([](const auto& volVars){ return volVars.pressure(); },
+                              pressure());
+    }
+
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
+    {
+        initOutputModule(out);
+    }
+
+    template <class FluidSystem = void, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
+    {
+        return pressure();
     }
 };
 
