@@ -21,13 +21,13 @@
  * \ingroup InputOutput
  * \brief A collection of input/output field names for common physical quantities
  */
-#ifndef DUMUX_IO_FIELD_NAMES_HH
-#define DUMUX_IO_FIELD_NAMES_HH
+#ifndef DUMUX_IO_NAME_HH
+#define DUMUX_IO_NAME_HH
 
 #include <string>
 
 namespace Dumux {
-namespace IOFieldNames {
+namespace IOName {
 
 //! name of variable pressure
 template<class FluidSystem>
@@ -110,7 +110,7 @@ template<class SolidSystem>
 std::string solidVolumeFraction(int compIdx = 0) noexcept
 { return "precipitateVolumeFraction^" + SolidSystem::componentName(compIdx); }
 
-} // end namespace IOFieldNames
+} // end namespace IOName
 } // end namespace Dumux
 
 #endif
