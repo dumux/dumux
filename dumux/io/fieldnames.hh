@@ -31,8 +31,12 @@ namespace IOFieldNames {
 
 //! name of variable pressure
 template<class FluidSystem>
-std::string pressure(int phaseIdx) noexcept
+std::string pressure(int phaseIdx = 0) noexcept
 { return (FluidSystem::numPhases == 1) ? "p" : "p_" + FluidSystem::phaseName(phaseIdx); }
+
+//! name of variable pressure
+std::string pressure() noexcept
+{ return "p"; }
 
 //! name of variable saturation
 template<class FluidSystem>
@@ -45,7 +49,7 @@ std::string temperature() noexcept
 
 //! name of variable temperature (non-equilibrium models)
 template<class FluidSystem>
-std::string fluidTemperature(int phaseIdx) noexcept
+std::string fluidTemperature(int phaseIdx = 0) noexcept
 { return "T_" + FluidSystem::phaseName(phaseIdx); }
 
 //! name of variable temperature (non-equilibrium models)
@@ -54,18 +58,30 @@ std::string solidTemperature() noexcept
 
 //! name of variable density
 template<class FluidSystem>
-std::string density(int phaseIdx) noexcept
+std::string density(int phaseIdx = 0) noexcept
 { return (FluidSystem::numPhases == 1) ? "rho" : "rho_" + FluidSystem::phaseName(phaseIdx); }
+
+//! name of variable density
+std::string density() noexcept
+{ return "rho"; }
 
 //! name of variable molar density
 template<class FluidSystem>
-std::string molarDensity(int phaseIdx) noexcept
+std::string molarDensity(int phaseIdx = 0) noexcept
 { return (FluidSystem::numPhases == 1) ? "rhoMolar" : "rhoMolar_" + FluidSystem::phaseName(phaseIdx); }
+
+//! name of variable molar density
+std::string molarDensity() noexcept
+{ return "rhoMolar"; }
 
 //! name of variable mobility
 template<class FluidSystem>
-std::string mobility(int phaseIdx) noexcept
+std::string mobility(int phaseIdx = 0) noexcept
 { return (FluidSystem::numPhases == 1) ? "mob" : "mob_" + FluidSystem::phaseName(phaseIdx); }
+
+//! name of variable mobility
+std::string mobility() noexcept
+{ return "mob"; }
 
 //! name of variable mole fraction
 template<class FluidSystem>
@@ -74,7 +90,7 @@ std::string moleFraction(int phaseIdx, int compIdx) noexcept
 
 //! name of variable mass fraction
 template<class FluidSystem>
-std::string moleFraction(int phaseIdx, int compIdx) noexcept
+std::string massFraction(int phaseIdx, int compIdx) noexcept
 { return "X^" + FluidSystem::componentName(compIdx) + "_" + FluidSystem::phaseName(phaseIdx); }
 
 //! name of variable capillary pressure
@@ -91,10 +107,10 @@ std::string phasePresence() noexcept
 
 //! name of solid volume fraction
 template<class SolidSystem>
-std::string solidVolumeFraction(int compIdx) noexcept
+std::string solidVolumeFraction(int compIdx = 0) noexcept
 { return "precipitateVolumeFraction^" + SolidSystem::componentName(compIdx); }
 
-} // end namespace IO
+} // end namespace IOFieldNames
 } // end namespace Dumux
 
 #endif
