@@ -29,83 +29,83 @@
 namespace Dumux {
 namespace IOName {
 
-//! name of variable pressure
+//! I/O name of pressure for multiphase systems
 template<class FluidSystem>
-std::string pressure(int phaseIdx = 0) noexcept
+std::string pressure(int phaseIdx) noexcept
 { return (FluidSystem::numPhases == 1) ? "p" : "p_" + FluidSystem::phaseName(phaseIdx); }
 
-//! name of variable pressure
+//! I/O name of pressure for singlephase systems
 std::string pressure() noexcept
 { return "p"; }
 
-//! name of variable saturation
+//! I/O name of saturation
 template<class FluidSystem>
 std::string saturation(int phaseIdx) noexcept
 { return (FluidSystem::numPhases == 1) ? "S" : "S_" + FluidSystem::phaseName(phaseIdx); }
 
-//! name of variable temperature (equilibrium models)
+//! I/O name of temperature for equilibrium models
 std::string temperature() noexcept
 { return "T"; }
 
-//! name of variable temperature (non-equilibrium models)
+//! I/O name of temperature for non-equilibrium models
 template<class FluidSystem>
-std::string fluidTemperature(int phaseIdx = 0) noexcept
+std::string fluidTemperature(int phaseIdx) noexcept
 { return "T_" + FluidSystem::phaseName(phaseIdx); }
 
-//! name of variable temperature (non-equilibrium models)
+//! I/O name of solid temperature for non-equilibrium models
 std::string solidTemperature() noexcept
 { return "T_s"; }
 
-//! name of variable density
+//! I/O name of density for multiphase systems
 template<class FluidSystem>
-std::string density(int phaseIdx = 0) noexcept
+std::string density(int phaseIdx) noexcept
 { return (FluidSystem::numPhases == 1) ? "rho" : "rho_" + FluidSystem::phaseName(phaseIdx); }
 
-//! name of variable density
+//! I/O name of density for singlephase systems
 std::string density() noexcept
 { return "rho"; }
 
-//! name of variable molar density
+//! I/O name of molar density for multiphase systems
 template<class FluidSystem>
-std::string molarDensity(int phaseIdx = 0) noexcept
+std::string molarDensity(int phaseIdx) noexcept
 { return (FluidSystem::numPhases == 1) ? "rhoMolar" : "rhoMolar_" + FluidSystem::phaseName(phaseIdx); }
 
-//! name of variable molar density
+//! I/O name of molar density for singlephase systems
 std::string molarDensity() noexcept
 { return "rhoMolar"; }
 
-//! name of variable mobility
+//! I/O name of mobility for multiphase systems
 template<class FluidSystem>
-std::string mobility(int phaseIdx = 0) noexcept
+std::string mobility(int phaseIdx) noexcept
 { return (FluidSystem::numPhases == 1) ? "mob" : "mob_" + FluidSystem::phaseName(phaseIdx); }
 
-//! name of variable mobility
+//! I/O name of mobility for singlephase systems
 std::string mobility() noexcept
 { return "mob"; }
 
-//! name of variable mole fraction
+//! I/O name of mole fraction
 template<class FluidSystem>
 std::string moleFraction(int phaseIdx, int compIdx) noexcept
 { return "x^" + FluidSystem::componentName(compIdx) + "_" + FluidSystem::phaseName(phaseIdx); }
 
-//! name of variable mass fraction
+//! I/O name of mass fraction
 template<class FluidSystem>
 std::string massFraction(int phaseIdx, int compIdx) noexcept
 { return "X^" + FluidSystem::componentName(compIdx) + "_" + FluidSystem::phaseName(phaseIdx); }
 
-//! name of variable capillary pressure
+//! I/O name of capillary pressure
 std::string capillaryPressure() noexcept
 { return "pc"; }
 
-//! name of variable porosity
+//! I/O name of porosity
 std::string porosity() noexcept
 { return "porosity"; }
 
-//! name of variable phase presence
+//! I/O name of phase presence
 std::string phasePresence() noexcept
 { return "phase presence"; }
 
-//! name of solid volume fraction
+//! I/O name of solid volume fraction
 template<class SolidSystem>
 std::string solidVolumeFraction(int compIdx = 0) noexcept
 { return "precipitateVolumeFraction^" + SolidSystem::componentName(compIdx); }
