@@ -26,11 +26,9 @@
 
 #include <dune/common/deprecated.hh>
 
-#include <dumux/io/fieldnames.hh>
+#include <dumux/io/name.hh>
 
 namespace Dumux {
-
-using namespace IOFieldNames;
 
 /*!
  * \ingroup OnePModel
@@ -43,7 +41,7 @@ public:
     static void initOutputModule(OutputModule& out)
     {
         out.addVolumeVariable([](const auto& volVars){ return volVars.pressure(); },
-                              pressure());
+                              IOName::pressure());
     }
 
     template <class OutputModule>
@@ -56,7 +54,7 @@ public:
     template <class FluidSystem = void, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
-        return pressure();
+        return IOName::pressure();
     }
 };
 

@@ -25,11 +25,11 @@
 #define DUMUX_NAVIER_STOKES_IO_FIELDS_HH
 
 #include <dune/common/fvector.hh>
+#include <dune/common/deprecated.hh>
+
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
-
-#include <dumux/io/fieldnames.hh>
-#include <dune/common/deprecated.hh>
+#include <dumux/io/name.hh>
 
 namespace Dumux
 {
@@ -50,11 +50,10 @@ public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
-        using namespace IOFieldNames;
         using FluidSystem = typename OutputModule::VolumeVariables::FluidSystem;
-        out.addVolumeVariable([](const auto& v){ return v.pressure(); }, pressure());
-        out.addVolumeVariable([](const auto& v){ return v.molarDensity(); }, molarDensity<FluidSystem>());
-        out.addVolumeVariable([](const auto& v){ return v.density(); }, density());
+        out.addVolumeVariable([](const auto& v){ return v.pressure(); }, IOName::pressure());
+        out.addVolumeVariable([](const auto& v){ return v.molarDensity(); }, IOName::molarDensity<FluidSystem>());
+        out.addVolumeVariable([](const auto& v){ return v.density(); }, IOName::density());
 
         // add discretization-specific fields
         additionalOutput_(out, discMethodTag<FVGridGeometry::discMethod>{});
@@ -71,13 +70,12 @@ public:
     template <class FluidSystem = void>
     static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
-        using namespace IOFieldNames;
         const std::array<std::string, 3> velocities = {"v_x", "v_y", "v_z"};
 
         if (pvIdx < FVGridGeometry::Grid::dimension)
             return velocities[pvIdx];
         else
-            return pressure();
+            return IOName::pressure();
     }
 
 private:

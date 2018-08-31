@@ -24,8 +24,9 @@
 #ifndef DUMUX_FREEFLOW_NI_IO_FIELDS_HH
 #define DUMUX_FREEFLOW_NI_IO_FIELDS_HH
 
-#include <dumux/io/fieldnames.hh>
 #include <dune/common/deprecated.hh>
+
+#include <dumux/io/name.hh>
 
 namespace Dumux
 {
@@ -54,8 +55,7 @@ public:
     {
         IsothermalIOFields::initOutputModule(out);
 
-        using namespace IOFieldNames;
-        out.addVolumeVariable([](const auto& v){ return v.temperature(); }, temperature());
+        out.addVolumeVariable([](const auto& v){ return v.temperature(); }, IOName::temperature());
         out.addVolumeVariable([](const auto& v){ return v.thermalConductivity(); }, "lambda");
         if (ModelTraits::usesTurbulenceModel())
             out.addVolumeVariable([](const auto& v){ return v.effectiveThermalConductivity() - v.thermalConductivity(); }, "lambda_t");
@@ -65,11 +65,10 @@ public:
     template <class FluidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
-        using namespace IOFieldNames;
         if (pvIdx < ModelTraits::numEq() - 1)
             return IsothermalIOFields::template primaryVariableName<FluidSystem>(pvIdx, state);
         else
-            return temperature();
+            return IOName::temperature();
     }
 };
 

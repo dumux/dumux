@@ -24,8 +24,10 @@
 #ifndef DUMUX_FREEFLOW_NC_IO_FIELDS_HH
 #define DUMUX_FREEFLOW_NC_IO_FIELDS_HH
 
-#include <dumux/freeflow/navierstokes/iofields.hh>
 #include <dune/common/deprecated.hh>
+
+#include <dumux/io/name.hh>
+#include <dumux/freeflow/navierstokes/iofields.hh>
 
 namespace Dumux
 {
@@ -54,12 +56,11 @@ public:
     {
         BaseOutputFields::initOutputModule(out);
 
-        using namespace IOFieldNames;
         using FluidSystem = typename OutputModule::VolumeVariables::FluidSystem;
         for (int j = 0; j < FluidSystem::numComponents; ++j)
         {
-            out.addVolumeVariable([j](const auto& v){ return v.massFraction(j); }, massFraction<FluidSystem>(0, j));
-            out.addVolumeVariable([j](const auto& v){ return v.moleFraction(j); }, moleFraction<FluidSystem>(0, j));
+            out.addVolumeVariable([j](const auto& v){ return v.massFraction(j); }, IOName::massFraction<FluidSystem>(0, j));
+            out.addVolumeVariable([j](const auto& v){ return v.moleFraction(j); }, IOName::moleFraction<FluidSystem>(0, j));
 
             if (j != FluidSystem::getMainComponent(0))
             {
@@ -76,12 +77,11 @@ public:
     template <class FluidSystem>
     static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
-        using namespace IOFieldNames;
         if (pvIdx <= ModelTraits::dim())
             return BaseOutputFields::template primaryVariableName<FluidSystem>(pvIdx, state);
         else
-            return ModelTraits::useMoles() ? moleFraction<FluidSystem>(pvIdx - ModelTraits::dim())
-                                           : massFraction<FluidSystem>(pvIdx - ModelTraits::dim());
+            return ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(pvIdx - ModelTraits::dim())
+                                           : IOName::massFraction<FluidSystem>(pvIdx - ModelTraits::dim());
     }
 };
 
