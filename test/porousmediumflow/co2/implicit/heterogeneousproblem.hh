@@ -34,6 +34,8 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/co2/model.hh>
 
+#include <dumux/material/components/tabulatedcomponent.hh>
+#include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidsystems/brineco2.hh>
 #include <dumux/discretization/box/scvftoscvboundarytypes.hh>
 
@@ -69,8 +71,11 @@ SET_TYPE_PROP(HeterogeneousTypeTag, SpatialParams, HeterogeneousSpatialParams<ty
                                                                               typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set fluid configuration
-SET_TYPE_PROP(HeterogeneousTypeTag, FluidSystem, FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                                        HeterogeneousCO2Tables::CO2Tables>);
+SET_TYPE_PROP(HeterogeneousTypeTag, FluidSystem,
+    FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
+                           HeterogeneousCO2Tables::CO2Tables,
+                           Components::TabulatedComponent<Components::H2O<typename GET_PROP_TYPE(TypeTag, Scalar)>>,
+                           FluidSystems::BrineCO2DefaultPolicy</*constantSalinity=*/true, /*simpleButFast=*/true>>);
 
 // Use Moles
 SET_BOOL_PROP(HeterogeneousTypeTag, UseMoles, false);

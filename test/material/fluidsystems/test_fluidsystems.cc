@@ -177,6 +177,16 @@ int main()
         using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
                                                     H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/false> >;
         success += checkFluidSystem<Scalar, FluidSystem>( false ); }
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
+                                                    H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/true,
+                                                    /*fastButSimplifiedRelations*/true> >;
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
+    {   using H2OType = Components::TabulatedComponent<Components::H2O<Scalar>>;
+        using FluidSystem = FluidSystems::BrineCO2< Scalar, HeterogeneousCO2Tables::CO2Tables,
+                                                    H2OType, FluidSystems::BrineCO2DefaultPolicy</*useConstantSalinity=*/false,
+                                                    /*fastButSimplifiedRelations*/true> >;
+        success += checkFluidSystem<Scalar, FluidSystem>( false ); }
 
     // H2O -- Air
     {   using H2OType = Components::SimpleH2O<Scalar>;
