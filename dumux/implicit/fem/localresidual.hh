@@ -73,6 +73,10 @@ class FemLocalResidual
 public:
     using FluxTermType = Dune::FieldMatrix<Scalar, numEq, dimWorld>;
 
+    //added afterwards
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+
+
     // copying the local residual class is not a good idea
     FemLocalResidual(const FemLocalResidual&) = delete;
 
@@ -356,7 +360,9 @@ int count = 0;
             FluxTermType flux = asImp_().computeFlux(element, ipData, curSecVars, curElemSol);
 
             // evaluate stabilization term contributions
-            PrimaryVariables stabTerms = asImp_().computeStabilizationTerms(element, ipData, curSecVars, curElemSol);
+//            PrimaryVariables stabTerms = asImp_().computeStabilizationTerms(element, ipData, curSecVars, curElemSol);
+            DimVector stabTerms = asImp_().computeStabilizationTerms(element, ipData, curSecVars, curElemSol);
+
 
 
 //std::cout <<  "femLocResCurSecVarsPressure: " << curSecVars.pressure() << std::endl;
@@ -420,7 +426,15 @@ int count = 0;
         //  std::cout <<"FemLocResqWeight: "<< qWeight <<std::endl;
                     residual_[i][eqIdx] += (storage[eqIdx] - source[eqIdx])*ipData.shapeValues(i)*qWeight;
                     residual_[i][eqIdx] -= (flux[eqIdx]*ipData.shapeGradients(i))*qWeight;
-                    residual_[i][eqIdx] += stabTerms[eqIdx];
+//		  std::cout <<"FemLocResResidual_[i][eqIdx]: "<< (storage[eqIdx] - source[eqIdx])*ipData.shapeValues(i)*qWeight- (flux[eqIdx]*ipData.shapeGradients(i))*qWeight <<std::endl;
+//		  std::cout <<"FemLocResStabTerms: "<<  (stabTerms*ipData.shapeGradients(i))*qWeight<<std::endl;
+
+//                    residual_[i][eqIdx] += stabTerms[eqIdx];
+                    if(eqIdx <= 1){
+                    residual_[i][eqIdx] += (stabTerms[eqIdx]*curSecVars.velocity()[eqIdx]*ipData.shapeGradients(i)[eqIdx])*qWeight;
+                    }
+//std::cout <<"FemLocResResidual_[i][eqIdx]: "<< (storage[eqIdx] - source[eqIdx])*ipData.shapeValues(i)*qWeight- (flux[eqIdx]*ipData.shapeGradients(i))*qWeight <<std::endl;
+//std::cout <<"FemLocResStabTerms: "<<  (stabTerms[eqIdx]*curSecVars.velocity()[eqIdx]*ipData.shapeGradients(i)[eqIdx])*qWeight<<std::endl;
         //  printvector(std::cout, residual_, "LocResresidual", "");
         //std::cout << "FemLocResipData.shapeValues(i): " << ipData.shapeValues(i) << std::endl;
                 }
