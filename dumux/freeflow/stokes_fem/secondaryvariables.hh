@@ -225,6 +225,12 @@ public:
 
 
 
+    Scalar artificialCompr() const
+    {
+        return 10;
+    }
+
+
 
     Scalar epsGeneral(DimVector velocity, Scalar pressure) const {
     Scalar eps(0.0),k(0.0), normU(0.0);
@@ -247,7 +253,7 @@ public:
     if(pressure < 1e-13 || normU < 1e-26){
         std::cout << "mySecVars pressure or vel. too small" << std::endl;
         std::cout << "1e-3  " << std::endl;
-        return 1e-3;
+        return 1e-2;
     }
     else{
 //        std::cout << "mySecVars pressure or vel. large enough" << std::endl;
@@ -257,7 +263,7 @@ public:
         //absolute value of pressure
         if(pressure < 0){
         pressure *= -1;
-     }
+        }
 //    		std::cout << "mySecVars normU: " << normU <<  std::endl;
 //    		std::cout << "mySecVars pressure: " << pressure << std::endl;
 //    		std::cout << "mySecVars eps: " << k*normU/pressure << std::endl;
@@ -268,11 +274,119 @@ public:
     }
 
 
+    Scalar meshWidthX() const
+    {
+        Scalar hx(0.0);
+        DimVector upperRight(0.0), numbCells(0.0);
+
+        upperRight = GET_RUNTIME_PARAM(TypeTag, DimVector, Grid.UpperRight);
+        numbCells = GET_RUNTIME_PARAM(TypeTag, DimVector, Grid.Cells);
+
+        hx = upperRight[0]/numbCells[0];
+
+        return hx;
+    }
+
+
+    Scalar meshWidthY() const
+    {
+        Scalar hy(0.0);
+        DimVector upperRight(0.0), numbCells(0.0);
+
+        upperRight = GET_RUNTIME_PARAM(TypeTag, DimVector, Grid.UpperRight);
+        numbCells = GET_RUNTIME_PARAM(TypeTag, DimVector, Grid.Cells);
+
+        hy = upperRight[1]/numbCells[1];
+
+        return hy;
+    }
+
+
+
+    //viscosity = dynamicViscosity? -> viscosity = kinematicViscosity (Wiki: ReynoldsNumber)
+    Scalar stabAlpha(Scalar velocity, Scalar viscosity, Scalar meshWidth) const
+    {
+        Scalar alpha(0.0);
+        Scalar reynolds(0.0);
+        Scalar reynoldsHalf(0.0);
+        Scalar funcCosH(0.0);
+
+//        reynolds = (velocity*meshWidth) / viscosity;
+//std::cout << "secVarsReynolds " << reynolds << std::endl;
+//        reynoldsHalf = reynolds/2;
+//std::cout << "secVarsReynoldsHalf " << reynoldsHalf << std::endl;
+//        funcCosH = cosh(reynoldsHalf)/sinh(reynoldsHalf);
+//std::cout << "secVarsFuncCosH " << funcCosH << std::endl;
+//
+//
+//        alpha = 0.5*( (funcCosH)-(2/reynolds) );
+//std::cout << "secVarsAlpha " << alpha << std::endl;
+
+        Scalar H(0.0), alphaDash(0.0);
+        reynolds = (velocity*meshWidth) / viscosity;
+//std::cout << "secVarsVelocity " << velocity << std::endl;
+//std::cout << "secVarsMeshWidth " << meshWidth << std::endl;
+//std::cout << "secVarsViscosity " << viscosity << std::endl;
+//std::cout << "secVarsReynolds " << reynolds << std::endl;
+
+        H = reynolds/2;
+//std::cout << "secVarsH " << H << std::endl;
+
+
+        if(H>=-3 && H<=3){
+            alphaDash = H/3;
+        }else{
+            if(H>0){
+                alphaDash = 1;
+            }else{
+                alphaDash = -1;
+            }
+        }
+
+//std::cout << "secVarsAlphaDash " << alphaDash << std::endl;
+
+
+        alpha = 0.5*alphaDash;
+
+
+        return alpha;
+    }
+
+    Scalar stabAlpha2(Scalar velocity, Scalar viscosity, Scalar meshWidth) const
+    {
+        Scalar alpha(0.0);
+        Scalar reynolds(0.0);
+        Scalar reynoldsHalf(0.0);
+        Scalar funcCosH(0.0);
+
+        Scalar H(0.0), alphaDash(0.0);
+        reynolds = (velocity*meshWidth) / viscosity;
+
+        H = reynolds/2;
+
+        if(H>=-3 && H<=3){
+            alphaDash = H/3;
+        }else{
+            if(H>0){
+                alphaDash = 1;
+            }else{
+                alphaDash = -1;
+            }
+        }
+
+
+        alpha = 0.5*alphaDash;
+
+
+        return alpha;
+    }
+
+
 
 
     Scalar penaltyEps() const
     {
-        return 1e-3;
+        return 0.001;
     }
 
 
