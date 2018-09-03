@@ -18,37 +18,44 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ThreePModel
- * \brief Adds vtk output fields specific to the three-phase model
+ * \ingroup NIModel
+ * \brief Adds I/O fields specific to non-isothermal models
  */
-#ifndef DUMUX_THREEP_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_THREEP_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_ENERGY_OUTPUT_FIELDS_HH
+#define DUMUX_ENERGY_OUTPUT_FIELDS_HH
 
 namespace Dumux {
 
 /*!
- * \ingroup ThreePModel
- * \brief Adds vtk output fields specific to the three-phase model
+ * \ingroup NIModel
+ * \brief Adds I/O fields specific to non-isothermal models
  */
-class ThreePVtkOutputFields
+template<class IsothermalIOFields, class ModelTraits>
+class EnergyIOFields
 {
+
 public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
-        using FluidSystem = typename VolumeVariables::FluidSystem;
+        IsothermalIOFields::initOutputModule(out);
+        out.addVolumeVariable( [](const auto& v){ return v.temperature(); }, "T");
+    }
 
-        // register standardized vtk output fields
-        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
-        {
-            vtk.addVolumeVariable([i](const auto& v){ return v.saturation(i); }, "S_"+ FluidSystem::phaseName(i));
-            vtk.addVolumeVariable([i](const auto& v){ return v.pressure(i); }, "p_"+ FluidSystem::phaseName(i));
-            vtk.addVolumeVariable([i](const auto& v){ return v.density(i); }, "rho_"+ FluidSystem::phaseName(i));
-        }
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
+    {
+        initOutputModule(out);
+    }
 
-        vtk.addVolumeVariable( [](const auto& v){ return v.porosity(); },"porosity");
-        vtk.addVolumeVariable( [](const auto& v){ return v.permeability(); },"permeability");
+    template <class FluidSystem = void, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        if (pvIdx < ModelTraits::numEq() - 1)
+            return IsothermalIOFields::template primaryVariableName<FluidSystem, SolidSystem>(pvIdx, state);
+        else
+            return "T";
     }
 };
 

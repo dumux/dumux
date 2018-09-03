@@ -82,13 +82,13 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 
 #include <dumux/porousmediumflow/richards/model.hh>
 
 #include "volumevariables.hh"
 #include "indices.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux {
 
@@ -213,7 +213,7 @@ SET_PROP(RichardsNC, FluidState)
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(RichardsNC, VtkOutputFields, RichardsNCVtkOutputFields);
+SET_TYPE_PROP(RichardsNC, IOFields, RichardsNCIOFields<GET_PROP_VALUE(TypeTag, UseMoles)>);
 
 //! The model after Millington (1961) is used for the effective diffusivity
 SET_TYPE_PROP(RichardsNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);

@@ -137,8 +137,8 @@ int main(int argc, char** argv) try
 
     // intialize the vtk output module
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
-    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    VtkOutputFields::init(vtkWriter);
+    using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
+    IOFields::init(vtkWriter);
 
     // Add model specific output fields
     vtkWriter.addField(problem->getPerm(), "permeability");

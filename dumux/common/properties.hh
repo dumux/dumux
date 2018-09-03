@@ -174,7 +174,7 @@ NEW_PROP_TAG(PressureFormulation); //! the formulation of the pressure e.g most 
 NEW_PROP_TAG(EquilibriumModelTraits);
 NEW_PROP_TAG(EquilibriumLocalResidual);
 NEW_PROP_TAG(EquilibriumIndices);
-NEW_PROP_TAG(EquilibriumVtkOutputFields);
+NEW_PROP_TAG(EquilibriumIOFields);
 NEW_PROP_TAG(NumEqBalance);
 NEW_PROP_TAG(EnableThermalNonEquilibrium);
 NEW_PROP_TAG(EnableChemicalNonEquilibrium);

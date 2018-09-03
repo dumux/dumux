@@ -19,35 +19,51 @@
 /*!
  * \file
  * \ingroup MineralizationModel
- * \brief Adds vtk output fields specific to the models considering
+ * \brief Adds I/O fields specific to the models considering
  *        mineralization processes.
  */
-#ifndef DUMUX_MINERALIZATION_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_MINERALIZATION_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_MINERALIZATION_IO_FIELDS_HH
+#define DUMUX_MINERALIZATION_IO_FIELDS_HH
 
 namespace Dumux {
 
 /*!
  * \ingroup MineralizationModel
- * \brief Adds vtk output fields specific to a NCMin model
+ * \brief Adds I/O fields specific to a NCMin model
  */
-template<class NonMineralizationVtkOutputFields>
-class MineralizationVtkOutputFields
+template<class NonMineralizationIOFields, int nonMineralizationNumEq>
+class MineralizationIOFields
 {
 public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        using SolidSystem = typename VtkOutputModule::VolumeVariables::SolidSystem;
+        using SolidSystem = typename OutputModule::VolumeVariables::SolidSystem;
 
         // output of the model without mineralization
-        NonMineralizationVtkOutputFields::init(vtk);
+        NonMineralizationIOFields::initOutputModule(out);
 
         // additional output
         for (int i = 0; i < SolidSystem::numComponents - SolidSystem::numInertComponents; ++i)
         {
-            vtk.addVolumeVariable([i](const auto& v){ return v.solidVolumeFraction(i); },"precipitateVolumeFraction^"+ SolidSystem::componentName(i));
+            out.addVolumeVariable([i](const auto& v){ return v.solidVolumeFraction(i); },"precipitateVolumeFraction^"+ SolidSystem::componentName(i));
         }
+    }
+
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
+    {
+        initOutputModule(out);
+    }
+
+    template <class FluidSystem, class SolidSystem>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        if (pvIdx < nonMineralizationNumEq)
+            return NonMineralizationIOFields::template primaryVariableName<FluidSystem, SolidSystem>(pvIdx, state);
+        else
+            return "precipitateVolumeFraction^" + SolidSystem::componentName(pvIdx - nonMineralizationNumEq);
     }
 };
 

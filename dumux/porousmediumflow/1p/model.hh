@@ -50,7 +50,7 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -160,7 +160,11 @@ public:
 ///////////////////////////////////////////////////////////////////////////
 
 //! Add temperature to the output
-SET_TYPE_PROP(OnePNI, VtkOutputFields, EnergyVtkOutputFields<OnePIOFields>);
+SET_PROP(OnePNI, IOFields)
+{
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using type = EnergyIOFields<OnePIOFields, ModelTraits>;
+};
 
 //! The model traits of the non-isothermal model
 SET_TYPE_PROP(OnePNI, ModelTraits, PorousMediumFlowNIModelTraits<OnePModelTraits>);

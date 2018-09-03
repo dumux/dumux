@@ -18,42 +18,53 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MPNCModel
- * \brief Adds vtk output fields specific to the twop model
+ * \ingroup TracerModel
+ * \brief Adds I/O fields specific to the tracer model
  */
-#ifndef DUMUX_MPNC_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_MPNC_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_TRACER_IO_FIELDS_HH
+#define DUMUX_TRACER_IO_FIELDS_HH
+
+#include <string>
 
 namespace Dumux {
 
 /*!
- * \ingroup MPNCModel
- * \brief Adds vtk output fields specific to the twop model
+ * \ingroup TracerModel
+ * \brief Adds I/O fields specific to the tracer model
  */
-class MPNCVtkOutputFields
+template <bool useMoles>
+class TracerIOFields
 {
 public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
+        using VolumeVariables = typename OutputModule::VolumeVariables;
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
-        vtk.addVolumeVariable([](const auto& v){ return v.porosity(); }, "porosity");
-        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+        // register standardized out output fields
+        for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
         {
-            vtk.addVolumeVariable([i](const auto& v){ return v.saturation(i); }, "S_"+ FluidSystem::phaseName(i));
-            vtk.addVolumeVariable([i](const auto& v){ return v.pressure(i); }, "p_"+ FluidSystem::phaseName(i));
-            vtk.addVolumeVariable([i](const auto& v){ return v.density(i); }, "rho_"+ FluidSystem::phaseName(i));
-            vtk.addVolumeVariable([i](const auto& v){ return v.mobility(i); },"mob_"+ FluidSystem::phaseName(i));
-
-            for (int j = 0; j < VolumeVariables::numComponents(); ++j)
-                vtk.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },
-                                      "x^"+ FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i));
+            out.addVolumeVariable( [compIdx](const auto& v){  return v.moleFraction(0, compIdx); },
+                                   "x^" + std::string(FluidSystem::componentName(compIdx)));
+            out.addVolumeVariable( [compIdx](const auto& v){  return v.massFraction(0, compIdx); },
+                                   "X^" + std::string(FluidSystem::componentName(compIdx)));
         }
-        for (int j = 0; j < VolumeVariables::numComponents(); ++j)
-            vtk.addVolumeVariable([j](const auto& v){ return v.fugacity(j); },
-                                  "fugacity^"+ FluidSystem::componentName(j));
+        out.addVolumeVariable( [](const auto& v){ return v.density(); }, "rho");
+    }
+
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
+    {
+        initOutputModule(out);
+    }
+
+    template <class FluidSystem, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        const std::string xString = useMoles ? "x" : "X";
+        return xString + "^" + FluidSystem::componentName(pvIdx);
     }
 };
 

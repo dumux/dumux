@@ -98,12 +98,12 @@
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 
 #include "volumevariables.hh"
 #include "primaryvariableswitch.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 #include "indices.hh"
 
 namespace Dumux {
@@ -249,7 +249,14 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(TwoPNC, VtkOutputFields, TwoPNCVtkOutputFields);
+SET_PROP(TwoPNC, IOFields)
+{
+    static constexpr auto formulation = GET_PROP_VALUE(TypeTag, Formulation);
+    using Indices = TwoPNCIndices;
+    static constexpr auto useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr auto setMoleFractionsForFirstPhase = GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase);
+    using type = TwoPNCIOFields<formulation, Indices, useMoles, setMoleFractionsForFirstPhase>;
+};
 
 SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //!< Use the compositional local residual
 
@@ -295,7 +302,16 @@ public:
 };
 
 //! Set non-isothermal output fields
-SET_TYPE_PROP(TwoPNCNI, VtkOutputFields, EnergyVtkOutputFields<TwoPNCVtkOutputFields>);
+SET_PROP(TwoPNCNI, IOFields)
+{
+    static constexpr auto formulation = GET_PROP_VALUE(TypeTag, Formulation);
+    using Indices = TwoPNCIndices;
+    static constexpr auto useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    static constexpr auto setMoleFractionsForFirstPhase = ModelTraits::setMoleFractionsForFirstPhase();
+    using TwoPNCIOF = TwoPNCIOFields<formulation, Indices, useMoles, setMoleFractionsForFirstPhase>;
+    using type = EnergyIOFields<TwoPNCIOF, ModelTraits>;
+};
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNCNI, ThermalConductivityModel)

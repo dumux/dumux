@@ -76,10 +76,10 @@ v = - \frac{k_{r}}{\mu} \mbox{\bf K}
 #include <dumux/porousmediumflow/mineralization/model.hh>
 #include <dumux/porousmediumflow/mineralization/localresidual.hh>
 #include <dumux/porousmediumflow/mineralization/volumevariables.hh>
-#include <dumux/porousmediumflow/mineralization/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/mineralization/iofields.hh>
 
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
 namespace Dumux {
@@ -142,15 +142,26 @@ public:
 };
 
 //! Use the mineralization vtk output fields
-SET_TYPE_PROP(OnePNCMin, VtkOutputFields, MineralizationVtkOutputFields<OnePNCVtkOutputFields>);
+SET_PROP(OnePNCMin, IOFields)
+{
+    using OnePNCIOF = OnePNCIOFields<GET_PROP_VALUE(TypeTag, UseMoles)>;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using type = MineralizationIOFields<OnePNCIOF, FluidSystem::numComponents>;
+};
 
 //////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
 
 //! non-isothermal vtk output
-//! non-isothermal vtk output
-SET_TYPE_PROP(OnePNCMinNI, VtkOutputFields, EnergyVtkOutputFields<MineralizationVtkOutputFields<OnePNCVtkOutputFields>>);
+SET_PROP(OnePNCMinNI, IOFields)
+{
+    using OnePNCIOF = OnePNCIOFields<GET_PROP_VALUE(TypeTag, UseMoles)>;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MineralizationIOF = MineralizationIOFields<OnePNCIOF, FluidSystem::numComponents>;
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using type = EnergyIOFields<MineralizationIOF, ModelTraits>;
+};
 
 //! The non-isothermal model traits
 SET_PROP(OnePNCMinNI, ModelTraits)

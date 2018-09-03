@@ -67,12 +67,12 @@
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 
 namespace Dumux {
 
@@ -207,14 +207,19 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(OnePNC, VtkOutputFields, OnePNCVtkOutputFields);
+SET_TYPE_PROP(OnePNC, IOFields, OnePNCIOFields<GET_PROP_VALUE(TypeTag, UseMoles)>);
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
 //! the non-isothermal vtk output fields
-SET_TYPE_PROP(OnePNCNI, VtkOutputFields, EnergyVtkOutputFields<OnePNCVtkOutputFields>);
+SET_PROP(OnePNCNI, IOFields)
+{
+    using OnePNCIOF = OnePNCIOFields<GET_PROP_VALUE(TypeTag, UseMoles)>;
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using type = EnergyIOFields<OnePNCIOF, ModelTraits>;
+};
 
 //! Use the average for effective conductivities
 SET_TYPE_PROP(OnePNCNI,

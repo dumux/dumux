@@ -100,10 +100,10 @@
 #include <dumux/porousmediumflow/mineralization/model.hh>
 #include <dumux/porousmediumflow/mineralization/localresidual.hh>
 #include <dumux/porousmediumflow/mineralization/volumevariables.hh>
-#include <dumux/porousmediumflow/mineralization/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/mineralization/iofields.hh>
 
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 
 namespace Dumux {
 namespace Properties {
@@ -139,7 +139,16 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(TwoPNCMin, VtkOutputFields, MineralizationVtkOutputFields<TwoPNCVtkOutputFields>);
+SET_PROP(TwoPNCMin, IOFields)
+{
+    static constexpr auto formulation = GET_PROP_VALUE(TypeTag, Formulation);
+    using Indices = TwoPNCIndices;
+    static constexpr auto useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr auto setMoleFractionsForFirstPhase = GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase);
+    using TwoPNCIOF = TwoPNCIOFields<formulation, Indices, useMoles, setMoleFractionsForFirstPhase>;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using type = MineralizationIOFields<TwoPNCIOF, FluidSystem::numComponents>;
+};
 
 //! The 2pnc model traits define the non-mineralization part
 SET_PROP(TwoPNCMin, ModelTraits)
@@ -190,7 +199,18 @@ public:
 };
 
 //! non-isothermal vtkoutput
-SET_TYPE_PROP(TwoPNCMinNI, VtkOutputFields, EnergyVtkOutputFields<MineralizationVtkOutputFields<TwoPNCVtkOutputFields>>);
+SET_PROP(TwoPNCMinNI, IOFields)
+{
+    static constexpr auto formulation = GET_PROP_VALUE(TypeTag, Formulation);
+    using Indices = TwoPNCIndices;
+    static constexpr auto useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr auto setMoleFractionsForFirstPhase = GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase);
+    using TwoPNCIOF = TwoPNCIOFields<formulation, Indices, useMoles, setMoleFractionsForFirstPhase>;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MineralizationIOF = MineralizationIOFields<TwoPNCIOF, FluidSystem::numComponents>;
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using type = EnergyIOFields<MineralizationIOF, ModelTraits>;
+};
 
 } // end namespace Properties
 } // end namespace Dumux

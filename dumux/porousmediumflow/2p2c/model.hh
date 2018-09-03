@@ -85,7 +85,7 @@
 #include <dumux/porousmediumflow/2pnc/model.hh>
 #include <dumux/porousmediumflow/2p/formulation.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
 #include "volumevariables.hh"
@@ -199,7 +199,16 @@ public:
 };
 
 //! Set non-isothermal output fields
-SET_TYPE_PROP(TwoPTwoCNI, VtkOutputFields, EnergyVtkOutputFields<TwoPNCVtkOutputFields>);
+SET_PROP(TwoPTwoCNI, IOFields)
+{
+    static constexpr auto formulation = GET_PROP_VALUE(TypeTag, Formulation);
+    using Indices = TwoPNCIndices;
+    static constexpr auto useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    static constexpr auto setMoleFractionsForFirstPhase = true;
+    using TwoPNCIOF = TwoPNCIOFields<formulation, Indices, useMoles, setMoleFractionsForFirstPhase>;
+    using type = EnergyIOFields<TwoPNCIOF, ModelTraits>;
+};
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_TYPE_PROP(TwoPTwoCNI, ThermalConductivityModel, ThermalConductivitySomerton<typename GET_PROP_TYPE(TypeTag, Scalar)>);

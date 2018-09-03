@@ -84,7 +84,7 @@
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/indices.hh>
-#include <dumux/porousmediumflow/nonisothermal/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/nonisothermal/iofields.hh>
 
 #include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidstates/compositional.hh>
@@ -95,7 +95,7 @@
 
 #include "indices.hh"
 #include "volumevariables.hh"
-#include "vtkoutputfields.hh"
+#include "iofields.hh"
 #include "primaryvariableswitch.hh"
 #include "localresidual.hh"
 
@@ -272,7 +272,7 @@ public:
 SET_TYPE_PROP(ThreePThreeC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(ThreePThreeC, VtkOutputFields, ThreePThreeCVtkOutputFields);
+SET_TYPE_PROP(ThreePThreeC, IOFields, ThreePThreeCIOFields<ThreePThreeCIndices>);
 
 //! Use mole fractions in the balance equations by default
 SET_BOOL_PROP(ThreePThreeC, UseMoles, true);
@@ -297,7 +297,12 @@ public:
 };
 
 //! Set the non-isothermal vktoutputfields
-SET_TYPE_PROP(ThreePThreeCNI, VtkOutputFields, EnergyVtkOutputFields<ThreePThreeCVtkOutputFields>);
+SET_PROP(ThreePThreeCNI, IOFields)
+{
+    using ThreePThreeCIOF = ThreePThreeCIOFields<ThreePThreeCIndices>;
+    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+    using type = EnergyIOFields<ThreePThreeCIOF, ModelTraits>;
+};
 
 } // end namespace Properties
 } // end namespace Dumux

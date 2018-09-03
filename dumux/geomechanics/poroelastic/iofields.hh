@@ -19,25 +19,32 @@
 /*!
  * \file
  * \ingroup PoroElastic
- * \brief Adds vtk output fields specific to the poro-elastic model
+ * \brief Adds I/O fields specific to the poro-elastic model
  */
-#ifndef DUMUX_POROELASTIC_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_POROELASTIC_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_POROELASTIC_IO_FIELDS_HH
+#define DUMUX_POROELASTIC_IO_FIELDS_HH
 
 namespace Dumux {
 
 /*!
  * \ingroup PoroElastic
- * \brief Adds vtk output fields specific to the poro-elastic model
+ * \brief Adds I/O fields specific to the poro-elastic model
  */
-class PoroElasticVtkOutputFields
+class PoroElasticIOFields
 {
 public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.displacement(); }, "u");
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.porosity(); }, "porosity");
+        out.addVolumeVariable([](const auto& volVars){ return volVars.displacement(); }, "u");
+        out.addVolumeVariable([](const auto& volVars){ return volVars.porosity(); }, "porosity");
+    }
+
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
+    {
+        initOutputModule(out);
     }
 };
 

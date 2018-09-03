@@ -19,10 +19,10 @@
 /*!
  * \file
  * \ingroup OnePNCModel
- * \brief Adds vtk output fields specific to the OnePNC model
+ * \brief Adds I/O fields specific to the OnePNC model
  */
-#ifndef DUMUX_ONEPNC_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_ONEPNC_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_ONEPNC_IO_FIELDS_HH
+#define DUMUX_ONEPNC_IO_FIELDS_HH
 
 #include <string>
 
@@ -30,29 +30,48 @@ namespace Dumux {
 
 /*!
  * \ingroup OnePNCModel
- * \brief Adds vtk output fields specific to the OnePNC model
+ * \brief Adds I/O fields specific to the OnePNC model
  */
-class OnePNCVtkOutputFields
+template <bool useMoles>
+class OnePNCIOFields
 {
 public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
-        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
+        using VolumeVariables = typename OutputModule::VolumeVariables;
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(0); }, "p");
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.density(0); }, "rho");
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.viscosity(0); }, "mu");
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(0) - 1e5; }, "delp");
+        out.addVolumeVariable([](const auto& volVars){ return volVars.pressure(0); }, "p");
+        out.addVolumeVariable([](const auto& volVars){ return volVars.density(0); }, "rho");
+        out.addVolumeVariable([](const auto& volVars){ return volVars.viscosity(0); }, "mu");
+        out.addVolumeVariable([](const auto& volVars){ return volVars.pressure(0) - 1e5; }, "delp");
 
         for (int i = 0; i < VolumeVariables::numComponents(); ++i)
-           vtk.addVolumeVariable([i](const auto& volVars){ return volVars.moleFraction(0, i); },
+           out.addVolumeVariable([i](const auto& volVars){ return volVars.moleFraction(0, i); },
                                      "x^" + std::string(FluidSystem::componentName(i)) + "_" + std::string(FluidSystem::phaseName(0)));
 
         for (int i = 0; i < VolumeVariables::numComponents(); ++i)
-           vtk.addVolumeVariable([i](const auto& volVars){ return volVars.massFraction(0, i); },
+           out.addVolumeVariable([i](const auto& volVars){ return volVars.massFraction(0, i); },
                                      "X^" + std::string(FluidSystem::componentName(i))+ "_" + std::string(FluidSystem::phaseName(0)));
+    }
+
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
+    {
+        initOutputModule(out);
+    }
+
+    template <class FluidSystem, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state = 0)
+    {
+        const std::string xString = useMoles ? "x" : "X";
+        if (pvIdx == 0)
+            return "p";
+        else
+            return xString + "^" + FluidSystem::componentName(pvIdx)
+                   + "_" + FluidSystem::phaseName(0);
     }
 };
 

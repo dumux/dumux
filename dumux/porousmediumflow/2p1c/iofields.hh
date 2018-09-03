@@ -19,30 +19,49 @@
 /*!
  * \file
  * \ingroup TwoPOneCModel
- * \copydoc Dumux::TwoPOneCVtkOutputFields
+ * \copydoc Dumux::TwoPOneCIOFields
  */
-#ifndef DUMUX_TWOP_ONEC_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_TWOP_ONEC_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_TWOP_ONEC_IO_FIELDS_HH
+#define DUMUX_TWOP_ONEC_IO_FIELDS_HH
 
-#include <dumux/porousmediumflow/2p/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/2p/iofields.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup TwoPOneCModel
- * \brief Adds vtk output fields specific to two-phase one-component model.
+ * \brief Adds I/O fields specific to two-phase one-component model.
  */
-class TwoPOneCVtkOutputFields
+template <TwoPFormulation priVarFormulation, class Indices>
+class TwoPOneCIOFields
 {
 public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
+    template <class OutputModule>
+    static void initOutputModule(OutputModule& out)
     {
         // use default fields from the 2p model
-        TwoPVtkOutputFields::init(vtk);
+        TwoPIOFields<priVarFormulation>::initOutputModule(out);
 
         // output additional to TwoP output:
-        vtk.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phase presence");
+        out.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phase presence");
+    }
+
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
+    {
+        initOutputModule(out);
+    }
+
+    template <class FluidSystem = void, class SolidSystem = void>
+    static std::string primaryVariableName(int pvIdx, int state)
+    {
+        if (priVarFormulation == TwoPFormulation::p0s1)
+            return (pvIdx == 0) ? "p_w" :
+                                  (state == Indices::twoPhases) ? "S_n" : "T";
+        else
+            return (pvIdx == 0) ? "p_n" :
+                                  (state == Indices::twoPhases) ? "S_w" : "T";
     }
 };
 
