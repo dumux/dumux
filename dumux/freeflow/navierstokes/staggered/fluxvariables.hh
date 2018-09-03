@@ -319,12 +319,8 @@ public:
                 }
 
                 // Handle wall-function fluxes (only required for RANS models)
-                if(problem.useWallFunction(element, localSubFace, Indices::velocity(scvf.directionIndex())))
-                {
-                    normalFlux += problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, localSubFace)[Indices::velocity(scvf.directionIndex())]
-                                                       * elemVolVars[normalFace.insideScvIdx()].extrusionFactor() * normalFace.area() * 0.5;
+                if (incorporateWallFunction_(normalFlux, problem, element, fvGeometry, scvf, normalFace, localSubFace, elemVolVars, elemFaceVars))
                     continue;
-                }
             }
 
             // If there is no symmetry or Neumann boundary condition for the given sub face, proceed to calculate the tangential momentum flux.
@@ -599,6 +595,33 @@ private:
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
         return harmonicMean(insideVolVars.extrusionFactor(), outsideVolVars.extrusionFactor());
     }
+
+    //! do nothing if no turbulence model is used
+    template<class ...Args, bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<!turbulenceModel, int> = 0>
+    bool incorporateWallFunction_(Args&&... args) const
+    { return false; };
+
+    //! if a turbulence model is used, ask the problem is a wall function shall be employed and get the flux accordingly
+    template<bool turbulenceModel = ModelTraits::usesTurbulenceModel(), std::enable_if_t<turbulenceModel, int> = 0>
+    bool incorporateWallFunction_(FacePrimaryVariables& normalFlux,
+                                  const Problem& problem,
+                                  const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const SubControlVolumeFace& scvf,
+                                  const SubControlVolumeFace& normalFace,
+                                  const SubControlVolumeFace& localSubFace,
+                                  const ElementVolumeVariables& elemVolVars,
+                                  const ElementFaceVariables& elemFaceVars) const
+    {
+        if (problem.useWallFunction(element, localSubFace, Indices::velocity(scvf.directionIndex())))
+        {
+            normalFlux += problem.wallFunction(element, fvGeometry, elemVolVars, elemFaceVars, scvf, localSubFace)[Indices::velocity(scvf.directionIndex())]
+                                               * elemVolVars[normalFace.insideScvIdx()].extrusionFactor() * normalFace.area() * 0.5;
+            return true;
+        }
+        else
+            return false;
+    };
 };
 
 } // end namespace
