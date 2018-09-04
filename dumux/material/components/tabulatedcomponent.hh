@@ -1061,6 +1061,9 @@ typename RawComponent::Scalar TabulatedComponent<RawComponent, useVaporPressure>
 template <class RawComponent, bool useVaporPressure>
 unsigned TabulatedComponent<RawComponent, useVaporPressure>::nDensity_;
 
+template <class RawComponent, bool useVaporPressure>
+struct IsAqueous<TabulatedComponent<RawComponent, useVaporPressure>> : public IsAqueous<RawComponent> {};
+
 } // end namespace Components
 
 } // end namespace Dumux

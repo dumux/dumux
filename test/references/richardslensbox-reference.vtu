@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="384" NumberOfPoints="425">
-      <PointData Scalars="S_Water">
-        <DataArray type="Float32" Name="S_Water" NumberOfComponents="1" format="ascii">
+      <PointData Scalars="S_liq">
+        <DataArray type="Float32" Name="S_liq" NumberOfComponents="1" format="ascii">
           9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17
           9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17
           9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17
@@ -41,7 +41,7 @@
           0.713034 0.932869 0.936509 0.932869 0.713034 0.0814728 3.93768e-06 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17
           9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17 9.02056e-17
         </DataArray>
-        <DataArray type="Float32" Name="S_Air" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_gas" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -79,7 +79,7 @@
           0.286966 0.0671314 0.0634913 0.0671314 0.286966 0.918527 0.999996 1 1 1 1 1
           1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="p_Water" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_liq" NumberOfComponents="1" format="ascii">
           97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4
           97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4
           97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4 97470.4
@@ -117,7 +117,7 @@
           99759.4 99835.3 99837.4 99835.3 99759.4 99323.1 97470.5 97470.4 97470.4 97470.4 97470.4 97470.4
           97470.4 97470.4 97470.4 97470.4 97470.4
         </DataArray>
-        <DataArray type="Float32" Name="p_Air" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_gas" NumberOfComponents="1" format="ascii">
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
@@ -193,7 +193,7 @@
           240.611 164.722 162.618 164.722 240.611 676.884 2529.52 2529.62 2529.62 2529.62 2529.62 2529.62
           2529.62 2529.62 2529.62 2529.62 2529.62
         </DataArray>
-        <DataArray type="Float32" Name="rho_Water" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_liq" NumberOfComponents="1" format="ascii">
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
@@ -231,7 +231,7 @@
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000
         </DataArray>
-        <DataArray type="Float32" Name="mob_Water" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_liq" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0

@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="1000" NumberOfPoints="1071">
-      <PointData Scalars="S_SimpleH2O" Vectors="velocity_SimpleH2O (m/s)">
-        <DataArray type="Float32" Name="S_SimpleH2O" NumberOfComponents="1" format="ascii">
+      <PointData Scalars="S_liq" Vectors="velocity_liq (m/s)">
+        <DataArray type="Float32" Name="S_liq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -95,7 +95,7 @@
           0.0659598 0.0660826 0.0662806 0.066634 0.0673324 0.0685594 0.0703741 0.0728358 0.076515 0.0844592 0.102671 0.136716
           0.194957 0.285667 0.4
         </DataArray>
-        <DataArray type="Float32" Name="S_Gas" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_gas" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -187,7 +187,7 @@
           0.93404 0.933917 0.933719 0.933366 0.932668 0.931441 0.929626 0.927164 0.923485 0.915541 0.897329 0.863284
           0.805043 0.714333 0.6
         </DataArray>
-        <DataArray type="Float32" Name="p_SimpleH2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_liq" NumberOfComponents="1" format="ascii">
           109480 109417 108990 108927 109353 108863 109289 108799 109223 108733 109155 108666
           109084 108595 109009 108520 108928 108441 108840 108353 108741 108256 108628 108144
           108496 108013 108342 107859 108168 107683 107980 107492 107784 107294 107586 107095
@@ -279,7 +279,7 @@
           99185.4 99187.1 99189.8 99194.5 99203.5 99218.2 99237.8 99261.1 99290.6 99339.7 99412.6 99489.2
           99559.9 99621.4 99670
         </DataArray>
-        <DataArray type="Float32" Name="p_Gas" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_gas" NumberOfComponents="1" format="ascii">
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
@@ -463,7 +463,7 @@
           814.573 812.878 810.179 805.463 796.505 781.823 762.218 738.891 709.374 660.272 587.385 510.802
           440.121 378.606 329.977
         </DataArray>
-        <DataArray type="Float32" Name="rho_SimpleH2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_liq" NumberOfComponents="1" format="ascii">
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
@@ -555,7 +555,7 @@
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000
         </DataArray>
-        <DataArray type="Float32" Name="mob_SimpleH2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_liq" NumberOfComponents="1" format="ascii">
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
@@ -1107,7 +1107,7 @@
           0.0263839 0.026433 0.0265122 0.0266536 0.026933 0.0274237 0.0281497 0.0291343 0.030606 0.0337837 0.0410686 0.0546863
           0.0779827 0.114267 0.16
         </DataArray>
-        <DataArray type="Float32" Name="x^SimpleH2O_SimpleH2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^SimpleH2O_liq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -1199,7 +1199,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="x^D2O_SimpleH2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^D2O_liq" NumberOfComponents="1" format="ascii">
           0 4.40022e-34 0 1.16839e-33 3.8932e-32 1.22037e-31 2.63812e-30 1.00452e-29 1.31911e-28 6.24494e-28 4.53834e-27 2.63418e-26
           1.03659e-25 6.23889e-25 1.56903e-24 8.85024e-24 1.69161e-23 8.66094e-23 1.4134e-22 6.57456e-22 1.00924e-21 4.35416e-21 9.59529e-21 3.87121e-20
           4.66686e-19 2.30597e-18 2.46347e-17 1.99321e-16 5.32236e-17 3.79027e-16 7.05029e-17 4.6906e-16 7.61886e-17 4.95173e-16 7.77263e-17 4.97768e-16
@@ -1291,7 +1291,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="velocity_SimpleH2O (m/s)" NumberOfComponents="3" format="ascii">
+        <DataArray type="Float32" Name="velocity_liq (m/s)" NumberOfComponents="3" format="ascii">
           5.25453e-06 -3.74861e-09 0 5.27269e-06 -1.51338e-08 0 5.24211e-06 -7.40309e-09 0 5.25982e-06 -2.98848e-08 0
           5.32853e-06 -3.14007e-08 0 5.31422e-06 -6.19853e-08 0 5.42632e-06 -5.00852e-08 0 5.40939e-06 -9.88104e-08 0
           5.57378e-06 -7.2803e-08 0 5.55271e-06 -1.43511e-07 0 5.78324e-06 -1.01742e-07 0 5.75589e-06 -2.00347e-07 0

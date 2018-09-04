@@ -29,7 +29,7 @@ dune_add_test(NAME test_navierstokes_hydrostaticpressure
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokeshydrostaticpressure-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_hydrostaticpressure-00002.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_closedsystem test_hydrostaticpressure.input"
-                             --zeroThreshold {"velocity_Constant \(m/s\)":1e-16})
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-16})
 
 dune_add_test(NAME test_channel_stokes
               SOURCES test_channel.cc
@@ -60,7 +60,7 @@ dune_add_test(NAME test_channel_stokesni_conduction
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokesni-conduction-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokesni_conduction-00004.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokesni test_channel_stokesni_conduction.input"
-                             --zeroThreshold {"velocity_H2O \(m/s\)":1e-20})
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-20})
 
 dune_add_test(NAME test_channel_navierstokes
               SOURCES test_channel.cc
@@ -140,7 +140,7 @@ dune_add_test(NAME test_stokes_channel_3d
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes_channel_3d-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_stokes_channel_3d-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes_channel_3d"
-                             --zeroThreshold {"velocity_component \(m/s\)":1e-12})
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-12})
 
 dune_add_test(NAME test_stokes_channel_pseudo3d
               SOURCES test_stokes_channel_3d.cc
@@ -151,4 +151,4 @@ dune_add_test(NAME test_stokes_channel_pseudo3d
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes_channel_pseudo3d-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_stokes_channel_pseudo3d-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes_channel_pseudo3d"
-                             --zeroThreshold {"velocity_component \(m/s\)":1e-12})
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-12})

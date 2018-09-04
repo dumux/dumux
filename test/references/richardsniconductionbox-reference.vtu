@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="200" NumberOfPoints="402">
-      <PointData Scalars="S_Air" Vectors="velocity">
-        <DataArray type="Float32" Name="S_Air" NumberOfComponents="1" format="ascii">
+      <PointData Scalars="S_gas" Vectors="velocity">
+        <DataArray type="Float32" Name="S_gas" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -39,7 +39,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="S_Water" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_liq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -75,7 +75,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="p_Air" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_gas" NumberOfComponents="1" format="ascii">
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
@@ -111,7 +111,7 @@
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
           100000 100000 100000 100000 100000 100000
         </DataArray>
-        <DataArray type="Float32" Name="p_Water" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_liq" NumberOfComponents="1" format="ascii">
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
@@ -183,7 +183,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="rho_Water" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_liq" NumberOfComponents="1" format="ascii">
           996.544 996.726 996.544 996.726 996.906 996.906 997.084 997.084 997.239 997.239 997.385 997.385
           997.526 997.526 997.66 997.66 997.787 997.787 997.906 997.906 998.007 998.007 998.094 998.094
           998.175 998.175 998.248 998.248 998.315 998.315 998.376 998.376 998.431 998.431 998.48 998.48
@@ -219,7 +219,7 @@
           998.789 998.789 998.789 998.789 998.789 998.789 998.789 998.789 998.789 998.789 998.789 998.789
           998.789 998.789 998.789 998.789 998.789 998.789
         </DataArray>
-        <DataArray type="Float32" Name="mob_Water" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_liq" NumberOfComponents="1" format="ascii">
           1169.89 1152.46 1169.89 1152.46 1135.68 1135.68 1119.64 1119.64 1102.68 1102.68 1086.42 1086.42
           1071.26 1071.26 1057.19 1057.19 1044.22 1044.22 1032.32 1032.32 1020.47 1020.47 1009.2 1009.2
           999.031 999.031 989.899 989.899 981.729 981.729 974.446 974.446 967.977 967.977 962.249 962.249

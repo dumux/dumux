@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="5457" NumberOfPoints="5718">
-      <CellData Scalars="S_liqSimpleH2O">
-        <DataArray type="Float32" Name="S_liqSimpleH2O" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="S_aq">
+        <DataArray type="Float32" Name="S_aq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -460,7 +460,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="S_liqTrichloroethene" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_napl" NumberOfComponents="1" format="ascii">
           0 0 0 0 -0 0 0 0 -0 -0 -0 -0
           0 0 0 0 -0 -0 -0 -0 -0 -0 0 0
           -0 -0 -0 0 -0 -0 0 0 -0 0 0 -0
@@ -917,7 +917,7 @@
           -0 -0 0 -0 0 -0 -0 0 -0 0 -0 0
           0 0 0 0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="p_liqSimpleH2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_aq" NumberOfComponents="1" format="ascii">
           152501 151573 150810 150983 150181 149475 150156 149580 149064 148851 148293 147790
           149381 148692 148058 147748 147151 146585 147479 146953 146471 146056 145567 145114
           148597 148168 147772 147331 146909 146518 147402 147056 146728 146153 145810 145486
@@ -1374,7 +1374,7 @@
           103550 103464 103378 104518 104428 104337 103289 103200 103111 102320 102235 102149
           101092 101007 100921 102061 101973 101884 100834 100746 100658
         </DataArray>
-        <DataArray type="Float32" Name="p_liqTrichloroethene" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_napl" NumberOfComponents="1" format="ascii">
           152501 151573 150810 150983 150181 149475 150156 149580 149064 148851 148293 147790
           149381 148692 148058 147748 147151 146585 147479 146953 146471 146056 145567 145114
           148597 148168 147772 147331 146909 146518 147402 147056 146728 146153 145810 145486
@@ -2288,7 +2288,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="rho_liqSimpleH2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_aq" NumberOfComponents="1" format="ascii">
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
@@ -2745,7 +2745,7 @@
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000
         </DataArray>
-        <DataArray type="Float32" Name="rho_liqTrichloroethene" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_napl" NumberOfComponents="1" format="ascii">
           1460 1460 1460 1460 1460 1460 1460 1460 1460 1460 1460 1460
           1460 1460 1460 1460 1460 1460 1460 1460 1460 1460 1460 1460
           1460 1460 1460 1460 1460 1460 1460 1460 1460 1460 1460 1460
@@ -3202,7 +3202,7 @@
           1460 1460 1460 1460 1460 1460 1460 1460 1460 1460 1460 1460
           1460 1460 1460 1460 1460 1460 1460 1460 1460
         </DataArray>
-        <DataArray type="Float32" Name="mob_liqSimpleH2O" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_aq" NumberOfComponents="1" format="ascii">
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
@@ -3659,7 +3659,7 @@
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000
         </DataArray>
-        <DataArray type="Float32" Name="mob_liqTrichloroethene" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_napl" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0

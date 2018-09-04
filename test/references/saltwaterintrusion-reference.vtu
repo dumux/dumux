@@ -2,7 +2,7 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="100" NumberOfPoints="126">
-      <PointData Scalars="pressure" Vectors="velocity_Brine (m/s)">
+      <PointData Scalars="pressure" Vectors="velocity_liq (m/s)">
         <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
           590500 590285 492400 492299 590207 492235 590200 492207 590269 492202 590418 492216
           590651 492253 590968 492318 591361 492418 591823 492559 592340 492748 592899 492988
@@ -107,7 +107,7 @@
           2.17377e-07 7.09331e-07 1.75684e-06 4.24513e-06 9.82734e-06 2.13416e-05 4.35676e-05 8.4579e-05 0.000157063 0.000279793 0.00048348 0.000832206
           0.0014613 0.00268871 0.00442348 0.00446347 0.0853952 0.0911839
         </DataArray>
-        <DataArray type="Float32" Name="velocity_Brine (m/s)" NumberOfComponents="3" format="ascii">
+        <DataArray type="Float32" Name="velocity_liq (m/s)" NumberOfComponents="3" format="ascii">
           1.90517e-06 1.31733e-06 0 1.3318e-06 5.73367e-07 0 1.09948e-06 1.40499e-06 0 8.61489e-07 8.11376e-07 0
           4.38221e-07 3.20212e-07 0 4.35845e-07 5.07866e-07 0 -1.93381e-07 3.1139e-07 0 1.14063e-07 4.45532e-07 0
           -8.27179e-07 3.22407e-07 0 -1.42296e-07 4.44639e-07 0 -1.4806e-06 3.31012e-07 0 -3.95628e-07 4.62127e-07 0

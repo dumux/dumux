@@ -8,9 +8,9 @@ dune_add_test(NAME test_stokes2c_densitydrivenflow
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-densitydriven-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_densitydrivenflow-00021.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2c_densitydrivenflow"
-                             --zeroThreshold {"X^Air_liquid":1e-12}
-                             --zeroThreshold {"x^Air_liquid":1e-12}
-                             --zeroThreshold {"velocity_liquid \(m/s\)":1e-10}
+                             --zeroThreshold {"X^Air_liq":1e-12}
+                             --zeroThreshold {"x^Air_liq":1e-12}
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-10}
                              --zeroThreshold {"deltaRho":1e-7})
 
 add_executable(test_stokes2c_mass EXCLUDE_FROM_ALL test_channel.cc)
@@ -26,7 +26,7 @@ dune_add_test(NAME test_stokes2c_purediffusion_mass
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-purediffusion.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_purediffusion-00014.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2c_mass test_stokes2c_purediffusion.input"
-                             --zeroThreshold {"velocity_liquid \(m/s\)":1e-22})
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-22})
 
 dune_add_test(NAME test_stokes2c_purediffusion_mole
               TARGET test_stokes2c
@@ -36,7 +36,7 @@ dune_add_test(NAME test_stokes2c_purediffusion_mole
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-purediffusion.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_purediffusion-00013.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2c test_stokes2c_purediffusion.input"
-                             --zeroThreshold {"velocity_liquid \(m/s\)":1e-22})
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-22})
 
 dune_add_test(NAME test_stokes2c_advection
               TARGET test_stokes2c
@@ -77,7 +77,7 @@ dune_add_test(NAME test_stokes2cni_diffusion
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes2cni-diffusion.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni_diffusion-00014.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}//test_stokes2cni test_stokes2cni_diffusion.input"
-                             --zeroThreshold {"velocity_liquid \(m/s\)":1e-13})
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-13})
 
 dune_add_test(NAME test_msfreeflow
               SOURCES test_msfreeflow.cc

@@ -148,8 +148,8 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         switch (phaseIdx)
         {
-            case liquidPhaseIdx: return Brine::phaseName(Brine::liquidPhaseIdx);
-            case gasPhaseIdx: return Air::name();
+            case liquidPhaseIdx: return "liq";
+            case gasPhaseIdx: return "gas";
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

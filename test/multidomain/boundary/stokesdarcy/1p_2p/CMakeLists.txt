@@ -11,4 +11,4 @@ dune_add_test(NAME test_stokes1pdarcy2pvertical
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_stokes1pdarcy2pvertical_darcy-00024.vtu
 
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes1pdarcy2pvertical test_stokes1pdarcy2pvertical.input"
-                             --zeroThreshold {"velocity_SimpleH2O \(m/s\)_0":1e-14,"velocity_Air \(m/s\)":1e-15})
+                             --zeroThreshold {"velocity_liq \(m/s\)_0":1e-14,"velocity_gas \(m/s\)":1e-15})

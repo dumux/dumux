@@ -73,7 +73,7 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      */
     static std::string phaseName(int phaseIdx = 0)
-    { return Component::name(); }
+    { return "liq"; }
 
     /*!
      * \brief A human readable name for the component.

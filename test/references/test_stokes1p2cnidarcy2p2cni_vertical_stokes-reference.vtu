@@ -2,7 +2,7 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="400" NumberOfPoints="441">
-      <CellData Scalars="p" Vectors="velocity_liquid (m/s)">
+      <CellData Scalars="p" Vectors="velocity_liq (m/s)">
         <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
           100044 100044 100044 100044 100044 100044 100044 100044 100044 100044 100044 100044
           100044 100044 100044 100044 100044 100044 100044 100044 100044 100044 100044 100044
@@ -291,7 +291,7 @@
           293.146 293.146 293.146 293.145 293.145 293.145 293.145 293.145 293.145 293.146 293.146 293.146
           293.147 293.148 293.149 293.15
         </DataArray>
-        <DataArray type="Float32" Name="velocity_liquid (m/s)" NumberOfComponents="3" format="ascii">
+        <DataArray type="Float32" Name="velocity_liq (m/s)" NumberOfComponents="3" format="ascii">
           -0.000925729 -0.00574904 0 -0.00180581 -0.00672058 0 -0.00158322 -0.00685186 0 -0.00125148 -0.0068297 0
           -0.000974899 -0.00679665 0 -0.000753262 -0.00677471 0 -0.000565602 -0.00676262 0 -0.000396017 -0.0067566 0
           -0.000235167 -0.00675386 0 -7.80518e-05 -0.00675284 0 7.80504e-05 -0.00675285 0 0.000235166 -0.00675386 0

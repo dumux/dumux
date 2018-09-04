@@ -124,8 +124,8 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         switch (phaseIdx)
         {
-            case liquidPhaseIdx: return "Water";
-            case gasPhaseIdx: return "Nitrogen";
+            case liquidPhaseIdx: return "liq";
+            case gasPhaseIdx: return "gas";
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

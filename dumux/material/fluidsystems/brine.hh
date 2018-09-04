@@ -69,7 +69,7 @@ public:
     static const std::string phaseName(int phaseIdx = liquidPhaseIdx)
     {
         assert(phaseIdx == liquidPhaseIdx);
-        return "Brine";
+        return "liq";
     }
 
     /*!

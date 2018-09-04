@@ -49,7 +49,7 @@ dune_add_test(NAME test_richards_tpfa_parallel_yasp_restart
               TARGET test_richards_tpfa
               CMAKE_GUARD MPI_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100,"S_w":1e-3,"water content":1e-3}
+              CMD_ARGS --script fuzzy --zeroThreshold {"process rank":100,"S_liq":1e-3,"water content":1e-3}
                       --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference-parallel.vtu
                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_tpfa_parallel_yasp_restart-00004.vtu
                               ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu

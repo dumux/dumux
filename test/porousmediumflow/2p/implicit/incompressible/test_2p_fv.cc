@@ -137,8 +137,9 @@ int main(int argc, char** argv) try
     if (restartTime > 0)
     {
         using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
         const auto fileName = getParam<std::string>("Restart.File");
-        loadSolution(x, fileName, createPVNameFunction<ModelTraits>(), *fvGridGeometry);
+        loadSolution(x, fileName, createPVNameFunction<ModelTraits, FluidSystem>(), *fvGridGeometry);
     }
     else
         problem->applyInitialSolution(x);

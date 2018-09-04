@@ -99,13 +99,15 @@ struct TwoPModelTraits
     static constexpr bool enableMolecularDiffusion() { return false; }
     static constexpr bool enableEnergyBalance() { return false; }
 
-    template <class FluidSystem = void, class SolidSystem = void>
+    template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         if (priVarFormulation() == TwoPFormulation::p0s1)
-            return pvIdx == 0 ? "p_w" : "S_n";
+            return pvIdx == 0 ? "p_" + FluidSystem::phaseName(FluidSystem::phase0Idx)
+                              : "S_" + FluidSystem::phaseName(FluidSystem::phase1Idx) ;
         else
-            return pvIdx == 0 ? "p_n" : "S_w";
+            return pvIdx == 0 ? "p_" + FluidSystem::phaseName(FluidSystem::phase1Idx)
+                              : "S_" + FluidSystem::phaseName(FluidSystem::phase0Idx);
     }
 };
 

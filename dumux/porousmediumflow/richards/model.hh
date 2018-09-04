@@ -136,13 +136,14 @@ struct RichardsModelTraits
     static constexpr bool enableMolecularDiffusion() { return enableDiff; }
     static constexpr bool enableEnergyBalance() { return false; }
 
-    template<class FluidSystem = void, class SolidSystem = void>
+    template<class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
         if (state == Indices::gasPhaseOnly)
-            return "x^w_n";
+            return "x^" + FluidSystem::componentName(FluidSystem::comp0Idx)
+                   + "_" + FluidSystem::phaseName(FluidSystem::phase1Idx);
         else
-            return "p_w";
+            return "p_" + FluidSystem::phaseName(FluidSystem::phase0Idx);
     }
 };
 

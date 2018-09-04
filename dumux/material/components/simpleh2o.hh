@@ -360,6 +360,9 @@ public:
 };
 
 template <class Scalar>
+struct IsAqueous<SimpleH2O<Scalar>> : public std::true_type {};
+
+template <class Scalar>
 const Scalar Components::SimpleH2O<Scalar>::R = Constants<Scalar>::R / 18e-3;
 
 } // end namespace Components

@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="200" NumberOfPoints="231">
-      <PointData Scalars="S_liquid">
-        <DataArray type="Float32" Name="S_liquid" NumberOfComponents="1" format="ascii">
+      <PointData Scalars="S_liq">
+        <DataArray type="Float32" Name="S_liq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -25,7 +25,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="S_vapor" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_gas" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -47,7 +47,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="p_liquid" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_liq" NumberOfComponents="1" format="ascii">
           179934 179932 176014 176011 179924 176003 179913 175992 179898 175976 179880 175958
           179861 175939 179841 175919 179821 175898 179800 175877 179780 175856 172098 172096
           172087 172074 172057 172038 172017 171996 171975 171953 171932 168189 168186 168176
@@ -69,7 +69,7 @@
           105229 105227 105226 105224 101300 101300 101300 101300 101300 101300 101300 101300
           101300 101300 101300
         </DataArray>
-        <DataArray type="Float32" Name="p_vapor" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_gas" NumberOfComponents="1" format="ascii">
           179934 179932 176014 176011 179924 176003 179913 175992 179898 175976 179880 175958
           179861 175939 179841 175919 179821 175898 179800 175877 179780 175856 172098 172096
           172087 172074 172057 172038 172017 171996 171975 171953 171932 168189 168186 168176
@@ -113,7 +113,7 @@
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="rho_liquid" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_liq" NumberOfComponents="1" format="ascii">
           999.729 999.729 999.727 999.727 999.729 999.727 999.729 999.727 999.729 999.727 999.729 999.727
           999.729 999.727 999.729 999.727 999.729 999.727 999.729 999.727 999.729 999.727 999.725 999.725
           999.725 999.725 999.725 999.725 999.725 999.725 999.725 999.725 999.725 999.722 999.723 999.723
@@ -135,7 +135,7 @@
           999.693 999.693 999.693 999.693 999.691 999.691 999.691 999.691 999.691 999.691 999.691 999.691
           999.691 999.691 999.691
         </DataArray>
-        <DataArray type="Float32" Name="rho_vapor" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_gas" NumberOfComponents="1" format="ascii">
           1.37955 1.37953 1.3495 1.34948 1.37948 1.34942 1.37939 1.34933 1.37928 1.34921 1.37914 1.34907
           1.379 1.34892 1.37884 1.34877 1.37868 1.34861 1.37853 1.34845 1.37837 1.34829 1.31948 1.31946
           1.31939 1.31929 1.31916 1.31901 1.31886 1.31869 1.31853 1.31837 1.3182 1.28945 1.28948 1.2894
@@ -157,7 +157,7 @@
           0.806787 0.806775 0.806762 0.806748 0.776663 0.776663 0.776663 0.776663 0.776663 0.776663 0.776663 0.776663
           0.776663 0.776663 0.776663
         </DataArray>
-        <DataArray type="Float32" Name="mob_liquid" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_liq" NumberOfComponents="1" format="ascii">
           764.381 764.381 764.378 764.378 764.381 764.378 764.381 764.378 764.381 764.378 764.381 764.378
           764.381 764.378 764.381 764.378 764.381 764.378 764.381 764.378 764.381 764.378 764.378 764.376
           764.376 764.376 764.376 764.376 764.376 764.376 764.376 764.376 764.376 764.642 764.382 764.374
@@ -179,7 +179,7 @@
           764.341 764.341 764.341 764.341 764.339 764.339 764.339 764.339 764.339 764.339 764.339 764.339
           764.339 764.339 764.339
         </DataArray>
-        <DataArray type="Float32" Name="mob_vapor" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_gas" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0

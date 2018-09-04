@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="1536" NumberOfPoints="1617">
-      <PointData Scalars="S_n">
-        <DataArray type="Float32" Name="S_n" NumberOfComponents="1" format="ascii">
+      <PointData Scalars="S_napl">
+        <DataArray type="Float32" Name="S_napl" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -140,7 +140,7 @@
           5.89372e-19 -5.13402e-30 -9.4627e-38 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="S_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_aq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -277,7 +277,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="p_n" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_napl" NumberOfComponents="1" format="ascii">
           153955 152689 152269 151338 151813 150518 151091 149818 150467 149206 149913 148660
           149415 148167 148960 147716 148542 147301 148153 146915 147790 146553 147448 146213
           147124 145890 146815 145582 146519 145287 146234 145003 145959 144728 145691 144461
@@ -414,7 +414,7 @@
           101723 101646 101569 101492 101414 101336 101257 101176 101095 101012 100927 100841
           100753 100663 100572 100479 100385 100289 100193 100097 100000
         </DataArray>
-        <DataArray type="Float32" Name="p_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_aq" NumberOfComponents="1" format="ascii">
           153955 152689 152269 151338 151813 150518 151091 149818 150467 149206 149913 148660
           149415 148167 148960 147716 148542 147301 148153 146915 147790 146553 147448 146213
           147124 145890 146815 145582 146519 145287 146234 145003 145959 144728 145691 144461
@@ -962,7 +962,7 @@
           1460 1460 1460 1460 1460 1460 1460 1460 1460 1460 1460 1460
           1460 1460 1460 1460 1460 1460 1460 1460 1460
         </DataArray>
-        <DataArray type="Float32" Name="mobW" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_aq" NumberOfComponents="1" format="ascii">
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
@@ -1099,7 +1099,7 @@
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000
         </DataArray>
-        <DataArray type="Float32" Name="mobN" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_napl" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
