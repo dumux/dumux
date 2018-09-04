@@ -75,7 +75,7 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      */
     static std::string phaseName(int phaseIdx = 0)
-    { return MainComponent::name(); }
+    { return "liq"; }
 
     /*!
      * \brief Returns whether the fluids are miscible

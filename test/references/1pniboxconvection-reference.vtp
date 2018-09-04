@@ -31,8 +31,8 @@
           290 290 290 290 290 290 290 290 290
         </DataArray>
       </PointData>
-      <CellData Scalars="velocity_H2O (m/s)">
-        <DataArray type="Float32" Name="velocity_H2O (m/s)" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="velocity_liq (m/s)">
+        <DataArray type="Float32" Name="velocity_liq (m/s)" NumberOfComponents="1" format="ascii">
           0.0001 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001 9.99999e-05 9.99998e-05 9.99995e-05 9.99992e-05
           9.99988e-05 9.99984e-05 9.99978e-05 9.99973e-05 9.99967e-05 9.99961e-05 9.99955e-05 9.9995e-05 9.99945e-05 9.99941e-05 9.99938e-05 9.99935e-05
           9.99933e-05 9.99931e-05 9.9993e-05 9.99929e-05 9.99928e-05 9.99928e-05 9.99928e-05 9.99927e-05 9.99927e-05 9.99927e-05 9.99927e-05 9.99928e-05

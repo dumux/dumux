@@ -195,8 +195,8 @@ public:
     {
         switch (phaseIdx)
         {
-            case liquidPhaseIdx: return "l";
-            case gasPhaseIdx: return "g";
+            case liquidPhaseIdx: return "liq";
+            case gasPhaseIdx: return "gas";
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

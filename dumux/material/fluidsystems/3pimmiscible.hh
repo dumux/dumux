@@ -33,6 +33,7 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
+#include <dumux/material/components/base.hh>
 
 namespace Dumux {
 namespace FluidSystems {
@@ -89,13 +90,15 @@ public:
     static std::string phaseName(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-
-        static std::string name[] = {
-            std::string("w"),
-            std::string("n"),
-            std::string("g")
-        };
-        return name[phaseIdx];
+        switch (phaseIdx)
+        {
+            case wPhaseIdx: return Components::IsAqueous<typename WettingFluid::Component>::value
+                            ? "aq" : "napl";
+            case nPhaseIdx: return Components::IsAqueous<typename NonwettingFluid::Component>::value
+                            ? "aq" : "napl";
+            case gPhaseIdx: return "gas";
+        }
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
     /*!

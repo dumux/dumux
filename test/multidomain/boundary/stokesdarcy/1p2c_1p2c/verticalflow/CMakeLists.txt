@@ -7,7 +7,7 @@ dune_add_test(NAME test_stokes1p2cdarcy1p2cvertical_diffusion
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --zeroThreshold {"velocity_liquid \(m/s\)":1e-20}
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-20}
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_stokes1p2cdarcy1p2cvertical_diffusion_stokes-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_stokes1p2cdarcy1p2cvertical_diffusion_stokes-00003.vtu
                                      ${CMAKE_SOURCE_DIR}/test/references/test_stokes1p2cdarcy1p2cvertical_diffusion_darcy-reference.vtu
@@ -19,7 +19,7 @@ dune_add_test(NAME test_stokes1p2cdarcy1p2cvertical_advection
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --zeroThreshold {"velocity_liquid \(m/s\)":1e-15}
+                             --zeroThreshold {"velocity_liq \(m/s\)":1e-15}
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_stokes1p2cdarcy1p2cvertical_advection_stokes-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_stokes1p2cdarcy1p2cvertical_stokes-00030.vtu
                                      ${CMAKE_SOURCE_DIR}/test/references/test_stokes1p2cdarcy1p2cvertical_advection_darcy-reference.vtu

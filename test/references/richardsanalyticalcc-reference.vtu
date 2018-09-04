@@ -2,8 +2,8 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="512" NumberOfPoints="1026">
-      <CellData Scalars="S_n">
-        <DataArray type="Float32" Name="S_n" NumberOfComponents="1" format="ascii">
+      <CellData Scalars="S_gas">
+        <DataArray type="Float32" Name="S_gas" NumberOfComponents="1" format="ascii">
           4.35874e-07 4.35873e-07 4.35872e-07 4.3587e-07 4.35869e-07 4.35867e-07 4.35865e-07 4.35863e-07 4.35861e-07 4.35859e-07 4.35856e-07 4.35853e-07
           4.3585e-07 4.35847e-07 4.35844e-07 4.3584e-07 4.35836e-07 4.35831e-07 4.35826e-07 4.35821e-07 4.35816e-07 4.3581e-07 4.35803e-07 4.35796e-07
           4.35788e-07 4.3578e-07 4.35771e-07 4.35762e-07 4.35751e-07 4.3574e-07 4.35728e-07 4.35715e-07 4.357e-07 4.35685e-07 4.35668e-07 4.3565e-07
@@ -48,7 +48,7 @@
           1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07
           1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07 1.0572e-07
         </DataArray>
-        <DataArray type="Float32" Name="S_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="S_liq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -93,7 +93,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="p_n" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_gas" NumberOfComponents="1" format="ascii">
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
@@ -138,7 +138,7 @@
           100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000 100000
           100000 100000 100000 100000 100000 100000 100000 100000
         </DataArray>
-        <DataArray type="Float32" Name="p_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="p_liq" NumberOfComponents="1" format="ascii">
           95641.3 95641.3 95641.3 95641.3 95641.3 95641.3 95641.4 95641.4 95641.4 95641.4 95641.4 95641.5
           95641.5 95641.5 95641.6 95641.6 95641.6 95641.7 95641.7 95641.8 95641.8 95641.9 95642 95642
           95642.1 95642.2 95642.3 95642.4 95642.5 95642.6 95642.7 95642.9 95643 95643.1 95643.3 95643.5
@@ -228,7 +228,7 @@
           1057.2 1057.2 1057.2 1057.2 1057.2 1057.2 1057.2 1057.2 1057.2 1057.2 1057.2 1057.2
           1057.2 1057.2 1057.2 1057.2 1057.2 1057.2 1057.2 1057.2
         </DataArray>
-        <DataArray type="Float32" Name="density" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="rho_liq" NumberOfComponents="1" format="ascii">
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
@@ -273,7 +273,7 @@
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000
         </DataArray>
-        <DataArray type="Float32" Name="mobility" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="mob_liq" NumberOfComponents="1" format="ascii">
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000
           1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000

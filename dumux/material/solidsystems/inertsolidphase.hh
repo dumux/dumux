@@ -60,7 +60,7 @@ public:
      * \brief A human readable name for the solid system.
      */
     static std::string name()
-    { return Component::name(); }
+    { return "s"; }
 
     /*!
      * \brief Returns whether the phase is incompressible

@@ -86,14 +86,14 @@ public:
      */
     static std::string phaseName(int phaseIdx)
     {
-        static std::string name[] = {
-            std::string("g"),
-            std::string("w"),
-            std::string("o"),
-        };
-
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        return name[phaseIdx];
+        switch (phaseIdx)
+        {
+            case gPhaseIdx: return "gas";
+            case wPhaseIdx: return "aq";
+            case oPhaseIdx: return "napl";
+        }
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
     /*!

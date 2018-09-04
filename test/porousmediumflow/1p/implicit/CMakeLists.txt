@@ -51,7 +51,7 @@ dune_add_test(NAME test_1pnibox_conduction
                        --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconduction-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/1pnibox_conduction-00005.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnibox_conduction test_1pnifv_conduction.input -Problem.Name 1pnibox_conduction"
-                       --zeroThreshold {"velocity_H2O":1e-8})
+                       --zeroThreshold {"velocity_liq":1e-8})
 
 add_executable(test_1pnibox_convection EXCLUDE_FROM_ALL test_1pnifv.cc)
 target_compile_definitions(test_1pnibox_convection PUBLIC TYPETAG=OnePNIConvectionBoxTypeTag)

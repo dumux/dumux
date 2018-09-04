@@ -2,7 +2,7 @@
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
   <UnstructuredGrid>
     <Piece NumberOfCells="80" NumberOfPoints="162">
-      <PointData Scalars="pressuere" Vectors="velocity_w (m/s)">
+      <PointData Scalars="pressuere" Vectors="velocity_liq (m/s)">
         <DataArray type="Float32" Name="p" NumberOfComponents="1" format="ascii">
           121579 121315 121579 121315 121051 121051 120787 120787 120522 120522 120258 120258
           119994 119994 119730 119730 119465 119465 119201 119201 118936 118936 118672 118672
@@ -35,7 +35,7 @@
           2170.43 2170.43 1899.12 1899.12 1627.82 1627.82 1356.52 1356.52 1085.21 1085.21 813.911 813.911
           542.607 542.607 271.304 271.304 0 0
         </DataArray>
-        <DataArray type="Float32" Name="velocity_w (m/s)" NumberOfComponents="3" format="ascii">
+        <DataArray type="Float32" Name="velocity_liq (m/s)" NumberOfComponents="3" format="ascii">
           0.0001 5.50706e-18 0 0.0001 -3.44192e-19 0 0.0001 5.50706e-18 0 0.0001 -3.44192e-19 0
           0.0001 3.09773e-18 0 0.0001 3.09773e-18 0 0.0001 -1.06699e-17 0 0.0001 -1.06699e-17 0
           0.0001 2.75349e-18 0 0.0001 2.75349e-18 0 0.0001 -1.37669e-17 0 0.0001 -1.37669e-17 0
@@ -78,7 +78,7 @@
           9.99937e-05 -3.3521e-19 0 9.99937e-05 -3.3521e-19 0 9.99937e-05 0 0 9.99937e-05 0 0
           9.99937e-05 0 0 9.99937e-05 0 0
         </DataArray>
-        <DataArray type="Float32" Name="x^H2O_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^H2O_liq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -94,7 +94,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="x^N2_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="x^N2_liq" NumberOfComponents="1" format="ascii">
           1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10
           1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10
           1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10
@@ -110,7 +110,7 @@
           1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10 1e-10
           1e-10 1e-10 1e-10 1e-10 1e-10 1e-10
         </DataArray>
-        <DataArray type="Float32" Name="X^H2O_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="X^H2O_liq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
@@ -126,7 +126,7 @@
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1
         </DataArray>
-        <DataArray type="Float32" Name="X^N2_w" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="X^N2_liq" NumberOfComponents="1" format="ascii">
           1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10
           1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10
           1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10 1.55499e-10

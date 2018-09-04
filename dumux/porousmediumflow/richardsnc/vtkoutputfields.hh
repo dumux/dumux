@@ -41,13 +41,13 @@ public:
         using VolumeVariables = typename VtkOutputModule::VolumeVariables;
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
-        vtk.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::liquidPhaseIdx); }, "S_w");
-        vtk.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::gasPhaseIdx); }, "S_n");
-        vtk.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::liquidPhaseIdx); }, "p_w");
-        vtk.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::gasPhaseIdx); }, "p_n");
+        vtk.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::liquidPhaseIdx); }, "S_"+FluidSystem::phaseName(VolumeVariables::liquidPhaseIdx));
+        vtk.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::gasPhaseIdx); }, "S_gas");
+        vtk.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::liquidPhaseIdx); }, "p_"+FluidSystem::phaseName(VolumeVariables::liquidPhaseIdx));
+        vtk.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::gasPhaseIdx); }, "p_gas");
         vtk.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); }, "pc");
-        vtk.addVolumeVariable([](const auto& v){ return v.density(VolumeVariables::liquidPhaseIdx); }, "density");
-        vtk.addVolumeVariable([](const auto& v){ return v.mobility(VolumeVariables::liquidPhaseIdx); }, "mobility");
+        vtk.addVolumeVariable([](const auto& v){ return v.density(FluidSystem::liquidPhaseIdx); }, "rho_"+FluidSystem::phaseName(FluidSystem::liquidPhaseIdx));
+        vtk.addVolumeVariable([](const auto& v){ return v.mobility(FluidSystem::liquidPhaseIdx); }, "mob_"+FluidSystem::phaseName(FluidSystem::liquidPhaseIdx));
         vtk.addVolumeVariable([](const auto& v){ return v.relativePermeability(VolumeVariables::liquidPhaseIdx); }, "kr");
         vtk.addVolumeVariable([](const auto& v){ return v.porosity(); }, "porosity");
         vtk.addVolumeVariable([](const auto& v){ return v.temperature(); }, "T");

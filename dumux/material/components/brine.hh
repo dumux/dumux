@@ -426,6 +426,9 @@ public:
     { return H2O::liquidThermalConductivity(temperature, pressure); }
 };
 
+template <class Scalar, class H2O>
+struct IsAqueous<Brine<Scalar, H2O>> : public std::true_type {};
+
 /*!
  * \brief Default value for the salinity of the brine (dimensionless).
  */

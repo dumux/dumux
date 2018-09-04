@@ -32,6 +32,7 @@
 #include <dumux/material/fluidsystems/1pliquid.hh>
 #include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
+#include <dumux/material/components/base.hh>
 
 #include "base.hh"
 
@@ -85,10 +86,20 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        if (phaseIdx == phase0Idx)
-            return Fluid0::phaseName();
+        if (!Fluid0::isGas() && !Fluid1::isGas())
+        {
+            if (phaseIdx == phase0Idx)
+                return Components::IsAqueous<typename Fluid0::Component>::value ? "aq" : "napl";
+            else
+                return Components::IsAqueous<typename Fluid1::Component>::value ? "aq" : "napl";
+        }
         else
-            return Fluid1::phaseName();
+        {
+            if (phaseIdx == phase0Idx)
+                return Fluid0::isGas() ? "gas" : "liq";
+            else
+                return Fluid1::isGas() ? "gas" : "liq";
+        }
     }
 
     /*!

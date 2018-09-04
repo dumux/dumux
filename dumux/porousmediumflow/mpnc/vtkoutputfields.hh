@@ -45,7 +45,7 @@ public:
             vtk.addVolumeVariable([i](const auto& v){ return v.saturation(i); }, "S_"+ FluidSystem::phaseName(i));
             vtk.addVolumeVariable([i](const auto& v){ return v.pressure(i); }, "p_"+ FluidSystem::phaseName(i));
             vtk.addVolumeVariable([i](const auto& v){ return v.density(i); }, "rho_"+ FluidSystem::phaseName(i));
-            vtk.addVolumeVariable([i](const auto& v){ return v.mobility(i); },"lambda_"+ FluidSystem::phaseName(i));
+            vtk.addVolumeVariable([i](const auto& v){ return v.mobility(i); },"mob_"+ FluidSystem::phaseName(i));
 
             for (int j = 0; j < VolumeVariables::numComponents(); ++j)
                 vtk.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },"x^"+ FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i));

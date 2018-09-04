@@ -915,6 +915,9 @@ private:
     }
 }; // end class
 
+template <class Scalar>
+struct IsAqueous<H2O<Scalar>> : public std::true_type {};
+
 } // end namespace Components
 
 } // end namespace Dumux

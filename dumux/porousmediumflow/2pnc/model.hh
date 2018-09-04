@@ -153,18 +153,20 @@ struct TwoPNCModelTraits
         const std::vector<std::string> p0s1SwitchedPvNames = {
             xString + "^" + FluidSystem::componentName(FluidSystem::comp1Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase0Idx),
             xString + "^" + FluidSystem::componentName(FluidSystem::comp0Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase1Idx),
-            "S_n"};
+            "S_" + FluidSystem::phaseName(FluidSystem::phase1Idx)};
         const std::vector<std::string> p1s0SwitchedPvNames = {
             xString + "^" + FluidSystem::componentName(FluidSystem::comp1Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase0Idx),
             xString + "^" + FluidSystem::componentName(FluidSystem::comp0Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase1Idx),
-            "S_w"};
+            "S_" + FluidSystem::phaseName(FluidSystem::phase0Idx)};
 
         switch (priVarFormulation())
         {
         case TwoPFormulation::p0s1:
-            return pvIdx == 0 ? "p_w" : p0s1SwitchedPvNames[state-1];
+            return pvIdx == 0 ? "p_" + FluidSystem::phaseName(FluidSystem::phase0Idx)
+                              : p0s1SwitchedPvNames[state-1];
         case TwoPFormulation::p1s0:
-            return pvIdx == 0 ? "p_n" : p1s0SwitchedPvNames[state-1];
+            return pvIdx == 0 ? "p_" + FluidSystem::phaseName(FluidSystem::phase1Idx)
+                              : p1s0SwitchedPvNames[state-1];
         default: DUNE_THROW(Dune::InvalidStateException, "Invalid formulation ");
         }
     }

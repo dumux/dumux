@@ -68,8 +68,8 @@ public:
     static std::string phaseName(int phaseIdx)
     {
         static std::string name[] = {
-            std::string("liquid"),
-            std::string("vapor"),
+            std::string("liq"),
+            std::string("gas"),
         };
 
         assert(0 <= phaseIdx && phaseIdx < numPhases);

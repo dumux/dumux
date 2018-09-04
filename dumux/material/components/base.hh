@@ -39,6 +39,9 @@
 namespace Dumux {
 namespace Components {
 
+template <class Component>
+struct IsAqueous : public std::false_type {};
+
 template <class ScalarType, class Component>
 class Base
 {
