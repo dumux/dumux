@@ -259,10 +259,9 @@ public:
                     faceVelocity[scvf.directionIndex()] = this->curSol()[stokesFaceIdx][scvf.dofIndex()];
             }
 
+            using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
             const auto& cellCenterPriVars = this->curSol()[stokesCellCenterIdx][indices.eIdx];
-            using PrimaryVariablesType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
-            PrimaryVariablesType priVars = makePriVarsFromCellCenterPriVars<PrimaryVariablesType>(cellCenterPriVars);
-            const auto elemSol = elementSolution<FVElementGeometry<stokesCellCenterIdx>>(std::move(priVars));
+            const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(cellCenterPriVars);
 
             VolumeVariables<stokesIdx> stokesVolVars;
             for(const auto& scv : scvs(stokesFvGeometry))
@@ -307,12 +306,8 @@ public:
             if(stokesElemIdx != dofIdxGlobalJ)
                 continue;
 
-            using PrimaryVariablesType = typename ElementVolumeVariables<stokesCellCenterIdx>::VolumeVariables::PrimaryVariables;
-
-            const auto& cellCenterPriVars = this->curSol()[stokesCellCenterIdx][stokesElemIdx];
-            PrimaryVariablesType priVars = makePriVarsFromCellCenterPriVars<PrimaryVariablesType>(cellCenterPriVars);
-
-            const auto elemSol = elementSolution<FVElementGeometry<stokesCellCenterIdx>>(std::move(priVars));
+            using PriVarsType = typename VolumeVariables<stokesCellCenterIdx>::PrimaryVariables;
+            const auto elemSol = makeElementSolutionFromCellCenterPrivars<PriVarsType>(priVars);
 
             for(const auto& scv : scvs(data.fvGeometry))
                 data.volVars.update(elemSol, this->problem(stokesIdx), data.element, scv);
