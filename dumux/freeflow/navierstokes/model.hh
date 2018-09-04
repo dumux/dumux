@@ -101,6 +101,9 @@ struct NavierStokesModelTraits
     //! The model does not include a turbulence model
     static constexpr bool usesTurbulenceModel() { return false; }
 
+    //! The type of turbulence model used (none)
+    static constexpr auto turbulenceModel = TurbulenceModel::none;
+
     //! the indices
     using Indices = NavierStokesIndices<dim()>;
 

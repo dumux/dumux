@@ -17,30 +17,25 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup FreeflowModels
  * \file
- *
- * \brief Defines a type tag and some properties for free flow models.
+ * \ingroup FreeflowModels
+ * \brief The available free flow turbulence models in Dumux
  */
-
-#ifndef DUMUX_FREE_FLOW_PROPERTIES_HH
-#define DUMUX_FREE_FLOW_PROPERTIES_HH
-
-#include <dumux/common/properties.hh>
-#include <dumux/common/properties/model.hh>
-#include <dumux/discretization/fourierslaw.hh>
-#include "turbulencemodel.hh"
+#ifndef DUMUX_FREEFLOW_TURBLENCEMODEL_HH
+#define DUMUX_FREEFLOW_TURBLENCEMODEL_HH
 
 namespace Dumux {
-namespace Properties {
 
-//! Type tag for free-flow models
-NEW_TYPE_TAG(FreeFlow, INHERITS_FROM(ModelProperties));
+    /*!
+     * \brief The available free flow turbulence models in Dumux
+     * \ingroup FreeflowModels
+     * \note Use none for plain (Navier-) Stokes models (DNS)
+     */
+    enum class TurbulenceModel
+    {
+        none, zeroeq, oneeq, kepsilon, lowrekepsilon, komega
+    };
 
-//! Use Fourier's Law as default heat conduction type
-SET_TYPE_PROP(FreeFlow, HeatConductionType, FouriersLaw<TypeTag>);
+} // end namespace Dumux
 
-} // namespace Properties
-} // namespace Dumux
-
- #endif
+#endif
