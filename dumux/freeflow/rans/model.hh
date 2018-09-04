@@ -41,6 +41,7 @@
 #include <dumux/freeflow/navierstokes/model.hh>
 
 #include "vtkoutputfields.hh"
+#include "gridvariables.hh"
 
 namespace Dumux {
 
@@ -81,6 +82,19 @@ private:
     static constexpr int dim = GridView::dimension;
 public:
     using type = RANSModelTraits<dim>;
+};
+
+//! Set the grid variables (volume, flux and face variables)
+SET_PROP(RANS, GridVariables)
+{
+private:
+    using GG = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GVV = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
+    using GFVC = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
+    using GFV = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
+    using NavierStokesGridVariables = StaggeredGridVariables<GG, GVV, GFVC, GFV>;
+public:
+    using type = RANSGridVariables<NavierStokesGridVariables>;
 };
 
 //! The specific vtk output fields
