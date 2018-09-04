@@ -5,7 +5,7 @@
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation, either version 3 of the License, or       *
+ *   the Free Software Foundation, either version 2 of the License, or       *
  *   (at your option) any later version.                                     *
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
@@ -19,31 +19,33 @@
 /*!
  * \file
  * \ingroup FreeflowModels
- * \brief Defines a type tag and some properties for free flow models.
+ * \brief The available free flow turbulence models in Dumux
  */
-
-#ifndef DUMUX_FREE_FLOW_PROPERTIES_HH
-#define DUMUX_FREE_FLOW_PROPERTIES_HH
-
-#include <dumux/common/properties.hh>
-#include <dumux/common/properties/model.hh>
-#include <dumux/flux/fourierslaw.hh>
-#include "turbulencemodel.hh"
+#ifndef DUMUX_FREEFLOW_TURBLENCEMODEL_HH
+#define DUMUX_FREEFLOW_TURBLENCEMODEL_HH
 
 namespace Dumux {
-namespace Properties {
 
-//! Type tag for free-flow models
-// Create new type tags
-namespace TTag {
-struct FreeFlow { using InheritsFrom = std::tuple<ModelProperties>; };
-} // end namespace TTag
+    /*!
+     * \brief The available free flow turbulence models in Dumux
+     * \ingroup FreeflowModels
+     * \note Use none for plain (Navier-) Stokes models (DNS)
+     */
+    enum class TurbulenceModel
+    {
+        none, zeroeq, oneeq, kepsilon, lowrekepsilon, komega
+    };
 
-//! Use Fourier's Law as default heat conduction type
-template<class TypeTag>
-struct HeatConductionType<TypeTag, TTag::FreeFlow> { using type = FouriersLaw<TypeTag>; };
+    constexpr unsigned int numTurbulenceEq(TurbulenceModel model)
+    {
+        if (model == TurbulenceModel::none || model == TurbulenceModel::zeroeq)
+            return 0;
+        else if (model == TurbulenceModel::oneeq)
+            return 1;
+        else
+            return 2;
+    }
 
-} // namespace Properties
-} // namespace Dumux
+} // end namespace Dumux
 
- #endif
+#endif
