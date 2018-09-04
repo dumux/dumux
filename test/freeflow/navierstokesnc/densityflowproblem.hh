@@ -66,12 +66,6 @@ SET_BOOL_PROP(DensityDrivenFlowTypeTag, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(DensityDrivenFlowTypeTag, EnableGridVolumeVariablesCache, true);
 
 SET_BOOL_PROP(DensityDrivenFlowTypeTag, UseMoles, true);
-
-#if ENABLE_NAVIERSTOKES
-SET_BOOL_PROP(DensityDrivenFlowTypeTag, EnableInertiaTerms, true);
-#else
-SET_BOOL_PROP(DensityDrivenFlowTypeTag, EnableInertiaTerms, false);
-#endif
 }
 
 /*!

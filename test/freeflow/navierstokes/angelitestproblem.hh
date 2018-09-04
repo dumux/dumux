@@ -63,7 +63,6 @@ SET_BOOL_PROP(AngeliTestTypeTag, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(AngeliTestTypeTag, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(AngeliTestTypeTag, EnableGridVolumeVariablesCache, true);
 
-SET_BOOL_PROP(AngeliTestTypeTag, EnableInertiaTerms, true);
 }
 
 /*!

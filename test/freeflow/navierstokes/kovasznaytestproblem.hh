@@ -60,8 +60,6 @@ SET_BOOL_PROP(KovasznayTestTypeTag, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(KovasznayTestTypeTag, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(KovasznayTestTypeTag, EnableGridVolumeVariablesCache, true);
-
-SET_BOOL_PROP(KovasznayTestTypeTag, EnableInertiaTerms, true);
 }
 
 /*!

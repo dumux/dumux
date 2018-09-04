@@ -80,7 +80,6 @@ SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, false);
 SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, true);
 #endif
 
-SET_BOOL_PROP(ChannelNCTestTypeTag, EnableInertiaTerms, true);
 }
 
 /*!

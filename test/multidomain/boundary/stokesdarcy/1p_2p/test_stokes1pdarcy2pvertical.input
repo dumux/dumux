@@ -36,6 +36,7 @@ VgN = 8.0
 [Problem]
 Name = test_stokes1pdarcy2pvertical
 EnableGravity = false
+EnableInertiaTerms = false
 
 [Vtk]
 AddVelocity = 1

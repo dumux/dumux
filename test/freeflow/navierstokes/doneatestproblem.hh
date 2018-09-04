@@ -65,12 +65,6 @@ SET_BOOL_PROP(DoneaTestTypeTag, EnableFVGridGeometryCache, ENABLECACHING);
 SET_BOOL_PROP(DoneaTestTypeTag, EnableGridFluxVariablesCache, ENABLECACHING);
 SET_BOOL_PROP(DoneaTestTypeTag, EnableGridVolumeVariablesCache, ENABLECACHING);
 SET_BOOL_PROP(DoneaTestTypeTag, EnableGridFaceVariablesCache, ENABLECACHING);
-
-#if ENABLE_NAVIERSTOKES
-SET_BOOL_PROP(DoneaTestTypeTag, EnableInertiaTerms, true);
-#else
-SET_BOOL_PROP(DoneaTestTypeTag, EnableInertiaTerms, false);
-#endif
 }
 
 /*!

@@ -10,6 +10,7 @@ Cells = 40 40
 [Problem]
 Name = test_densitydrivenflow # name passed to the output routines
 EnableGravity = true
+EnableInertiaTerms = false
 UseWholeLength = false
 
 [Assembly]

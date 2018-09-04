@@ -61,8 +61,6 @@ SET_BOOL_PROP(MaxwellStefanNCTestTypeTag, EnableGridVolumeVariablesCache, true);
 
 SET_BOOL_PROP(MaxwellStefanNCTestTypeTag, UseMoles, true);
 
-// #if ENABLE_NAVIERSTOKES
-SET_BOOL_PROP(MaxwellStefanNCTestTypeTag, EnableInertiaTerms, false);
 
 //! Here we set FicksLaw or MaxwellStefansLaw
 SET_TYPE_PROP(MaxwellStefanNCTestTypeTag, MolecularDiffusionType, MaxwellStefansLaw<TypeTag>);

@@ -10,6 +10,7 @@ Cells = 50 10
 Name = test_purediffusion # name passed to the output routines
 InletVelocity = 0
 EnableGravity = false
+EnableInertiaTerms = false
 
 [ Newton ]
 MaxSteps = 10

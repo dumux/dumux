@@ -22,6 +22,7 @@ AlphaBeaversJoseph = 1.0
 [Problem]
 Name = test_stokes1pdarcy1phorizontal
 EnableGravity = false
+EnableInertiaTerms = false
 
 [Vtk]
 AddVelocity = 1

@@ -6,6 +6,7 @@ Cells = 40 40
 Name = test_donea # name passed to the output routines
 EnableGravity = false
 PrintL2Error = false
+EnableInertiaTerms = false
 
 [ Newton ]
 MaxSteps = 10

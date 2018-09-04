@@ -5,6 +5,7 @@ Cells = 32
 [Problem]
 Name = test_navierstokes_1d
 EnableGravity = false
+EnableInertiaTerms = true
 PrintL2Error = true
 
 [Component]
