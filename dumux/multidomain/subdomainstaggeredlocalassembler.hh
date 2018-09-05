@@ -520,9 +520,6 @@ public:
 
        const auto& connectivityMap = fvGridGeometry.connectivityMap();
 
-       // create the vector storing the partial derivatives
-       CellCenterResidualValue partialDeriv(0.0);
-
        for(const auto& globalJ : connectivityMap(cellCenterId, cellCenterId, cellCenterGlobalI))
        {
            // get the volVars of the element with respect to which we are going to build the derivative
@@ -538,7 +535,6 @@ public:
                PrimaryVariables priVars = makePriVarsFromCellCenterPriVars<PrimaryVariables>(cellCenterPriVars);
 
                constexpr auto offset = numEq - numEqCellCenter;
-               partialDeriv = 0.0;
 
                auto evalResidual = [&](Scalar priVar)
                {
@@ -548,6 +544,9 @@ public:
                    curVolVars.update(elemSol, this->problem(), elementJ, scvJ);
                    return this->evalLocalResidualForCellCenter();
                };
+
+               // create the vector storing the partial derivatives
+               CellCenterResidualValue partialDeriv(0.0);
 
                // derive the residuals numerically
                const auto& paramGroup = this->problem().paramGroup();
@@ -614,7 +613,6 @@ public:
 
        const auto& connectivityMap = fvGridGeometry.connectivityMap();
 
-       FaceResidualValue partialDeriv(0.0);
 
        for(auto&& scvf : scvfs(fvGeometry))
        {
@@ -634,7 +632,6 @@ public:
                for(int pvIdx = 0; pvIdx < numEqFace; ++pvIdx)
                {
                    auto faceSolution = origFaceSolution;
-                   partialDeriv = 0;
 
                    auto evalResidual = [&](Scalar priVar)
                    {
@@ -645,6 +642,7 @@ public:
                    };
 
                    // derive the residuals numerically
+                   FaceResidualValue partialDeriv(0.0);
                    const auto& paramGroup = problem.paramGroup();
                    static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
                    static const auto eps = this->couplingManager().numericEpsilon(domainI, paramGroup);
@@ -685,8 +683,6 @@ public:
         // build derivatives with for cell center dofs w.r.t. cell center dofs
         const auto cellCenterGlobalI = fvGridGeometry.elementMapper().index(element);
 
-        // create the vector storing the partial derivatives
-        CellCenterResidualValue partialDeriv(0.0);
 
         for(const auto& scvfJ : scvfs(fvGeometry))
         {
@@ -699,7 +695,6 @@ public:
             for(int pvIdx = 0; pvIdx < numEqFace; ++pvIdx)
             {
                 auto facePriVars(this->curSol()[faceId][globalJ]);
-                partialDeriv = 0.0;
 
                 auto evalResidual = [&](Scalar priVar)
                 {
@@ -708,6 +703,9 @@ public:
                     faceVars.updateOwnFaceOnly(facePriVars);
                     return this->evalLocalResidualForCellCenter();
                 };
+
+                // create the vector storing the partial derivatives
+                CellCenterResidualValue partialDeriv(0.0);
 
                 // derive the residuals numerically
                 const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
@@ -759,6 +757,7 @@ public:
                     return this->couplingManager().evalCouplingResidual(domainI, *this, domainJ, globalJ);
                 };
 
+                // create the vector storing the partial derivatives
                 CellCenterResidualValue partialDeriv(0.0);
 
                 // derive the residuals numerically
@@ -797,7 +796,6 @@ public:
         const auto& fvGeometry = this->fvGeometry();
         const auto& fvGridGeometry = this->problem().fvGridGeometry();
         const auto& connectivityMap = fvGridGeometry.connectivityMap();
-        FaceResidualValue partialDeriv;
 
         // build derivatives with for cell center dofs w.r.t. cell center dofs
         for(auto&& scvf : scvfs(fvGeometry))
@@ -825,7 +823,6 @@ public:
 
                     constexpr auto offset = PrimaryVariables::dimension - CellCenterPrimaryVariables::dimension;
 
-                    partialDeriv = 0;
 
                     auto evalResidual = [&](Scalar priVar)
                     {
@@ -837,6 +834,7 @@ public:
                     };
 
                     // derive the residuals numerically
+                    FaceResidualValue partialDeriv(0.0);
                     const auto& paramGroup = this->assembler().problem(domainJ).paramGroup();
                     static const int numDiffMethod = getParamFromGroup<int>(paramGroup, "Assembly.NumericDifferenceMethod");
                     static const auto epsCoupl = this->couplingManager().numericEpsilon(domainJ, paramGroup);
