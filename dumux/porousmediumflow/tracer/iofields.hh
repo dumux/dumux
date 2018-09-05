@@ -26,6 +26,8 @@
 
 #include <string>
 
+#include <dumux/io/name.hh>
+
 namespace Dumux {
 
 /*!
@@ -45,12 +47,12 @@ public:
         // register standardized out output fields
         for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
         {
-            out.addVolumeVariable( [compIdx](const auto& v){  return v.moleFraction(0, compIdx); },
-                                   "x^" + std::string(FluidSystem::componentName(compIdx)));
-            out.addVolumeVariable( [compIdx](const auto& v){  return v.massFraction(0, compIdx); },
-                                   "X^" + std::string(FluidSystem::componentName(compIdx)));
+            out.addVolumeVariable([compIdx](const auto& v){ return v.moleFraction(0, compIdx); },
+                                  "x^" + FluidSystem::componentName(compIdx));
+            out.addVolumeVariable([compIdx](const auto& v){ return v.massFraction(0, compIdx); },
+                                  "X^" + FluidSystem::componentName(compIdx));
         }
-        out.addVolumeVariable( [](const auto& v){ return v.density(); }, "rho");
+        out.addVolumeVariable( [](const auto& v){ return v.density(); }, IOName::density());
     }
 
     template <class OutputModule>

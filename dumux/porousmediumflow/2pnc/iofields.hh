@@ -25,6 +25,7 @@
 #define DUMUX_TWOP_NC_IO_FIELDS_HH
 
 #include <dumux/porousmediumflow/2p/iofields.hh>
+#include <dumux/io/name.hh>
 
 namespace Dumux
 {
@@ -46,24 +47,24 @@ public:
         // use default fields from the 2p model
         TwoPIOFields<priVarFormulation>::initOutputModule(out);
 
-        //output additional to TwoP output:
-        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
-            for (int j = 0; j < VolumeVariables::numComponents(); ++j)
-                out.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },
-                                    "x^"+ FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i));
+        // output additional to TwoP output:
+        for (int phaseIdx = 0; phaseIdx < VolumeVariables::numPhases(); ++phaseIdx)
+        {
+            for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
+            {
+                out.addVolumeVariable([phaseIdx,compIdx](const auto& v){ return v.moleFraction(phaseIdx,compIdx); },
+                                      IOName::moleFraction<FluidSystem>(phaseIdx, compIdx));
+                if (VolumeVariables::numComponents() < 3)
+                    out.addVolumeVariable([phaseIdx,compIdx](const auto& v){ return v.massFraction(phaseIdx,compIdx); },
+                                          IOName::massFraction<FluidSystem>(phaseIdx, compIdx));
+            }
 
-        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
-            out.addVolumeVariable([i](const auto& v){ return v.molarDensity(i); },
-                                    "rhoMolar_" + FluidSystem::phaseName(i));
-
-        if (VolumeVariables::numComponents() < 3){
-            for (int i = 0; i < VolumeVariables::numPhases(); ++i)
-                for (int j = 0; j < VolumeVariables::numComponents(); ++j)
-                    out.addVolumeVariable([i,j](const auto& v){ return v.massFraction(i,j); },
-                                    "X^"+ FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i));
+            out.addVolumeVariable([phaseIdx](const auto& v){ return v.molarDensity(phaseIdx); },
+                                    IOName::molarDensity<FluidSystem>(phaseIdx));
         }
 
-        out.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phase presence");
+        out.addVolumeVariable([](const auto& v){ return v.priVars().state(); },
+                              IOName::phasePresence());
     }
 
     template <class OutputModule>
@@ -76,33 +77,39 @@ public:
     template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
-        const std::string xString = useMoles ? "x" : "X";
-
-        std::string phaseNameSecComps;
+        int idxSecComps;
         if (state == Indices::firstPhaseOnly
             || (state == Indices::bothPhases && setMoleFractionsForFirstPhase))
-            phaseNameSecComps = FluidSystem::phaseName(FluidSystem::phase0Idx);
+            idxSecComps = FluidSystem::phase0Idx;
         else
-            phaseNameSecComps = FluidSystem::phaseName(FluidSystem::phase1Idx);
+            idxSecComps = FluidSystem::phase1Idx;
 
         if (pvIdx > 1)
-            return xString + "^" + FluidSystem::componentName(pvIdx) + "_" + phaseNameSecComps;
+            return useMoles ? IOName::moleFraction<FluidSystem>(idxSecComps, pvIdx)
+                            : IOName::massFraction<FluidSystem>(idxSecComps, pvIdx);
 
         const std::vector<std::string> p0s1SwitchedPvNames = {
-            xString + "^" + FluidSystem::componentName(FluidSystem::comp1Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase0Idx),
-            xString + "^" + FluidSystem::componentName(FluidSystem::comp0Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase1Idx),
-            "S_n"};
+            useMoles ? IOName::moleFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx)
+                     : IOName::massFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx),
+            useMoles ? IOName::moleFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx)
+                     : IOName::massFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx),
+            IOName::saturation<FluidSystem>(FluidSystem::phase1Idx)};
+
         const std::vector<std::string> p1s0SwitchedPvNames = {
-            xString + "^" + FluidSystem::componentName(FluidSystem::comp1Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase0Idx),
-            xString + "^" + FluidSystem::componentName(FluidSystem::comp0Idx) + "_" + FluidSystem::phaseName(FluidSystem::phase1Idx),
-            "S_w"};
+            useMoles ? IOName::moleFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx)
+                     : IOName::massFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx),
+            useMoles ? IOName::moleFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx)
+                     : IOName::massFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx),
+            IOName::saturation<FluidSystem>(FluidSystem::phase0Idx)};
 
         switch (priVarFormulation)
         {
         case TwoPFormulation::p0s1:
-            return pvIdx == 0 ? "p_w" : p0s1SwitchedPvNames[state-1];
+            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::wPhaseIdx)
+                              : p0s1SwitchedPvNames[state-1];
         case TwoPFormulation::p1s0:
-            return pvIdx == 0 ? "p_n" : p1s0SwitchedPvNames[state-1];
+            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::nPhaseIdx)
+                              : p1s0SwitchedPvNames[state-1];
         default: DUNE_THROW(Dune::InvalidStateException, "Invalid formulation ");
         }
     }

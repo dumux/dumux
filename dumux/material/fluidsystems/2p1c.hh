@@ -30,6 +30,8 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <dumux/io/name.hh>
+
 #include "base.hh"
 
 namespace Dumux {
@@ -68,8 +70,8 @@ public:
     static std::string phaseName(int phaseIdx)
     {
         static std::string name[] = {
-            std::string("liq"),
-            std::string("gas"),
+            std::string(IOName::liquid()),
+            std::string(IOName::gaseous()),
         };
 
         assert(0 <= phaseIdx && phaseIdx < numPhases);

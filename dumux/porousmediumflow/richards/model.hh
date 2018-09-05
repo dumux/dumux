@@ -143,7 +143,7 @@ struct RichardsModelTraits
             return "x^" + FluidSystem::componentName(FluidSystem::comp0Idx)
                    + "_" + FluidSystem::phaseName(FluidSystem::phase1Idx);
         else
-            return "p_" + FluidSystem::phaseName(FluidSystem::phase0Idx);
+            return IOName::pressure<FluidSystem>(FluidSystem::phase0Idx);
     }
 };
 

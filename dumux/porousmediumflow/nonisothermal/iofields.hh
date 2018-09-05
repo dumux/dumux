@@ -24,6 +24,8 @@
 #ifndef DUMUX_ENERGY_OUTPUT_FIELDS_HH
 #define DUMUX_ENERGY_OUTPUT_FIELDS_HH
 
+#include <dumux/io/name.hh>
+
 namespace Dumux {
 
 /*!
@@ -39,7 +41,8 @@ public:
     static void initOutputModule(OutputModule& out)
     {
         IsothermalIOFields::initOutputModule(out);
-        out.addVolumeVariable( [](const auto& v){ return v.temperature(); }, "T");
+        out.addVolumeVariable( [](const auto& v){ return v.temperature(); },
+                               IOName::temperature());
     }
 
     template <class OutputModule>
@@ -55,7 +58,7 @@ public:
         if (pvIdx < ModelTraits::numEq() - 1)
             return IsothermalIOFields::template primaryVariableName<FluidSystem, SolidSystem>(pvIdx, state);
         else
-            return "T";
+            return IOName::temperature();
     }
 };
 

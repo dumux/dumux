@@ -34,6 +34,7 @@
 #include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/components/base.hh>
+#include <dumux/io/name.hh>
 
 namespace Dumux {
 namespace FluidSystems {
@@ -93,10 +94,10 @@ public:
         switch (phaseIdx)
         {
             case wPhaseIdx: return Components::IsAqueous<typename WettingFluid::Component>::value
-                            ? "aq" : "napl";
+                            ? IOName::aqueous() : IOName::napl();
             case nPhaseIdx: return Components::IsAqueous<typename NonwettingFluid::Component>::value
-                            ? "aq" : "napl";
-            case gPhaseIdx: return "gas";
+                            ? IOName::aqueous() : IOName::napl();
+            case gPhaseIdx: return IOName::gaseous();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

@@ -43,20 +43,25 @@ public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
-        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
+        using VolumeVariables = typename OutputModule::VolumeVariables;
         using FS = typename VolumeVariables::FluidSystem;
 
-        out.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(FS::phase0Idx); }, "S_"+FS::phaseName(FS::phase0Idx));
-        out.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(FS::phase1Idx); }, "S_"+FS::phaseName(FS::phase1Idx));
-        out.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(FS::phase0Idx); }, "p_"+FS::phaseName(FS::phase0Idx));
-        out.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(FS::phase1Idx); }, "p_"+FS::phaseName(FS::phase1Idx));
-        out.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); }, "pc");
-        out.addVolumeVariable([](const auto& v){ return v.density(FS::phase0Idx); }, "rho_"+FS::phaseName(FS::phase0Idx));
-        out.addVolumeVariable([](const auto& v){ return v.density(FS::phase1Idx); }, "rho_"+FS::phaseName(FS::phase1Idx));
-        out.addVolumeVariable([](const auto& v){ return v.mobility(FS::phase0Idx); },"mob_"+ FS::phaseName(FS::phase0Idx));
-        out.addVolumeVariable([](const auto& v){ return v.mobility(FS::phase1Idx); },"mob_"+ FS::phaseName(FS::phase1Idx));
+        for (int phaseIdx = 0; phaseIdx < FS::numPhases; ++phaseIdx)
+        {
+            out.addVolumeVariable([phaseIdx](const VolumeVariables& v){ return v.saturation(phaseIdx); },
+                                  IOName::saturation<FS>(phaseIdx));
+            out.addVolumeVariable([phaseIdx](const VolumeVariables& v){ return v.pressure(phaseIdx); },
+                                  IOName::pressure<FS>(phaseIdx));
+            out.addVolumeVariable([phaseIdx](const auto& v){ return v.density(phaseIdx); },
+                                  IOName::density<FS>(phaseIdx));
+            out.addVolumeVariable([phaseIdx](const auto& v){ return v.mobility(phaseIdx); },
+                                  IOName::mobility<FS>(phaseIdx));
+        }
 
-        out.addVolumeVariable([](const auto& v){ return v.porosity(); }, "porosity");
+        out.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); },
+                              IOName::capillaryPressure());
+        out.addVolumeVariable([](const auto& v){ return v.porosity(); },
+                              IOName::porosity());
     }
 
     template <class OutputModule>
@@ -66,13 +71,15 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem = void, class SolidSystem = void>
+    template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         if (priVarFormulation == TwoPFormulation::p0s1)
-            return pvIdx == 0 ? "p_w" : "S_n";
+            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::phase0Idx)
+                              : IOName::saturation<FluidSystem>(FluidSystem::phase1Idx);
         else
-            return pvIdx == 0 ? "p_n" : "S_w";
+            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::phase1Idx)
+                              : IOName::saturation<FluidSystem>(FluidSystem::phase0Idx);
     }
 };
 

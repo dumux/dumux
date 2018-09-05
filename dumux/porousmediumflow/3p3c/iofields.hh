@@ -24,6 +24,8 @@
 #ifndef DUMUX_THREEPTHREEC_IO_FIELDS_HH
 #define DUMUX_THREEPTHREEC_IO_FIELDS_HH
 
+#include <dumux/io/name.hh>
+
 namespace Dumux {
 
 /*!
@@ -40,25 +42,27 @@ public:
         using VolumeVariables = typename OutputModule::VolumeVariables;
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
-        // register standardized out output fields
-        out.addVolumeVariable( [](const auto& v){ return v.saturation(FluidSystem::wPhaseIdx); }, "S_w");
-        out.addVolumeVariable( [](const auto& v){ return v.saturation(FluidSystem::nPhaseIdx); },"S_n");
-        out.addVolumeVariable( [](const auto& v){ return v.saturation(FluidSystem::gPhaseIdx); },"S_g");
-        out.addVolumeVariable( [](const auto& v){ return v.pressure(FluidSystem::wPhaseIdx); },"p_w");
-        out.addVolumeVariable( [](const auto& v){ return v.pressure(FluidSystem::nPhaseIdx); },"p_n");
-        out.addVolumeVariable( [](const auto& v){ return v.pressure(FluidSystem::gPhaseIdx); },"p_g");
-        out.addVolumeVariable( [](const auto& v){ return v.density(FluidSystem::wPhaseIdx); },"rho_w");
-        out.addVolumeVariable( [](const auto& v){ return v.density(FluidSystem::nPhaseIdx); },"rho_n");
-        out.addVolumeVariable( [](const auto& v){ return v.density(FluidSystem::gPhaseIdx); },"rho_g");
+        // register standardized output fields
+        for (int phaseIdx = 0; phaseIdx < VolumeVariables::numPhases(); ++phaseIdx)
+        {
+            out.addVolumeVariable( [phaseIdx](const auto& v){ return v.saturation(phaseIdx); },
+                                   IOName::saturation<FluidSystem>(phaseIdx));
+            out.addVolumeVariable( [phaseIdx](const auto& v){ return v.pressure(phaseIdx); },
+                                   IOName::pressure<FluidSystem>(phaseIdx));
+            out.addVolumeVariable( [phaseIdx](const auto& v){ return v.density(phaseIdx); },
+                                   IOName::density<FluidSystem>(phaseIdx));
 
-        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
-            for (int j = 0; j < VolumeVariables::numComponents(); ++j)
-                out.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },
-                                      "x^" + FluidSystem::componentName(j) + "_" +  FluidSystem::phaseName(i));
+            for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
+                out.addVolumeVariable([phaseIdx, compIdx](const auto& v){ return v.moleFraction(phaseIdx, compIdx); },
+                                      IOName::moleFraction<FluidSystem>(phaseIdx, compIdx));
+        }
 
-        out.addVolumeVariable( [](const auto& v){ return v.porosity(); },"porosity");
-        out.addVolumeVariable( [](const auto& v){ return v.priVars().state(); },"phase presence");
-        out.addVolumeVariable( [](const auto& v){ return v.permeability(); },"permeability");
+        out.addVolumeVariable( [](const auto& v){ return v.porosity(); },
+                               IOName::porosity());
+        out.addVolumeVariable( [](const auto& v){ return v.priVars().state(); },
+                               IOName::phasePresence());
+        out.addVolumeVariable( [](const auto& v){ return v.permeability(); },
+                               IOName::permeability());
     }
 
     template <class OutputModule>
@@ -75,44 +79,44 @@ public:
         {
             case Indices::threePhases:
             {
-                const std::vector<std::string> s1 = {"p_g",
-                                                     "S_w",
-                                                     "S_n"};
+                const std::vector<std::string> s1 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
+                                                     IOName::saturation<FluidSystem>(FluidSystem::wPhaseIdx),
+                                                     IOName::saturation<FluidSystem>(FluidSystem::nPhaseIdx)};
                 return s1[pvIdx];
             }
             case Indices::wPhaseOnly:
             {
-                const std::vector<std::string> s2 = {"p_g",
-                                                     "x^" + FluidSystem::componentName(FluidSystem::gCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::wPhaseIdx),
-                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::wPhaseIdx)};
+                const std::vector<std::string> s2 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
+                                                     IOName::moleFraction<FluidSystem>(FluidSystem::wPhaseIdx, FluidSystem::gCompIdx),
+                                                     IOName::moleFraction<FluidSystem>(FluidSystem::wPhaseIdx, FluidSystem::nCompIdx)};
                 return s2[pvIdx];
             }
             case Indices::gnPhaseOnly:
             {
-                const std::vector<std::string> s3 = {"p_g",
-                                                     "x^" + FluidSystem::componentName(FluidSystem::wCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx),
-                                                     "S_n"};
+                const std::vector<std::string> s3 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
+                                                     IOName::moleFraction<FluidSystem>(FluidSystem::gPhaseIdx, FluidSystem::wCompIdx),
+                                                     IOName::saturation<FluidSystem>(FluidSystem::nPhaseIdx)};
                 return s3[pvIdx];
             }
             case Indices::wnPhaseOnly:
             {
-                const std::vector<std::string> s4 = {"p_g",
-                                                     "x^" + FluidSystem::componentName(FluidSystem::gCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::wPhaseIdx),
-                                                     "S_n"};
+                const std::vector<std::string> s4 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
+                                                     IOName::moleFraction<FluidSystem>(FluidSystem::wPhaseIdx, FluidSystem::gCompIdx),
+                                                     IOName::saturation<FluidSystem>(FluidSystem::nPhaseIdx)};
                 return s4[pvIdx];
             }
             case Indices::gPhaseOnly:
             {
-                const std::vector<std::string> s5 = {"p_g",
-                                                     "x^" + FluidSystem::componentName(FluidSystem::wCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx),
-                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx)};
+                const std::vector<std::string> s5 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
+                                                     IOName::moleFraction<FluidSystem>(FluidSystem::gPhaseIdx, FluidSystem::wCompIdx),
+                                                     IOName::moleFraction<FluidSystem>(FluidSystem::gPhaseIdx, FluidSystem::nCompIdx)};
                 return s5[pvIdx];
             }
             case Indices::wgPhaseOnly:
             {
-                const std::vector<std::string> s6 = {"p_g",
-                                                     "S_w",
-                                                     "x^" + FluidSystem::componentName(FluidSystem::nCompIdx) + "_" +  FluidSystem::phaseName(FluidSystem::gPhaseIdx)};
+                const std::vector<std::string> s6 = {IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx),
+                                                     IOName::saturation<FluidSystem>(FluidSystem::wPhaseIdx),
+                                                     IOName::moleFraction<FluidSystem>(FluidSystem::gPhaseIdx, FluidSystem::nCompIdx)};
                 return s6[pvIdx];
             }
         }

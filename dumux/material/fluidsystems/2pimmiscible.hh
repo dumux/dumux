@@ -33,6 +33,7 @@
 #include <dumux/material/fluidsystems/1pgas.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/components/base.hh>
+#include <dumux/io/name.hh>
 
 #include "base.hh"
 
@@ -89,16 +90,16 @@ public:
         if (!Fluid0::isGas() && !Fluid1::isGas())
         {
             if (phaseIdx == phase0Idx)
-                return Components::IsAqueous<typename Fluid0::Component>::value ? "aq" : "napl";
+                return Components::IsAqueous<typename Fluid0::Component>::value ? IOName::aqueous() : IOName::napl();
             else
-                return Components::IsAqueous<typename Fluid1::Component>::value ? "aq" : "napl";
+                return Components::IsAqueous<typename Fluid1::Component>::value ? IOName::aqueous() : IOName::napl();
         }
         else
         {
             if (phaseIdx == phase0Idx)
-                return Fluid0::isGas() ? "gas" : "liq";
+                return Fluid0::isGas() ? IOName::gaseous() : IOName::liquid();
             else
-                return Fluid1::isGas() ? "gas" : "liq";
+                return Fluid1::isGas() ? IOName::gaseous() : IOName::liquid();
         }
     }
 

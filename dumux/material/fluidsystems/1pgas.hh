@@ -31,6 +31,7 @@
 
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/components/componenttraits.hh>
+#include <dumux/io/name.hh>
 
 namespace Dumux {
 namespace FluidSystems {
@@ -73,7 +74,7 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      */
     static std::string phaseName(int phaseIdx = 0)
-    { return "gas"; }
+    { return IOName::gaseous(); }
 
     /*!
      * \brief A human readable name for the component.

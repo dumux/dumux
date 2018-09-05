@@ -129,7 +129,7 @@
           0 0 0 0 0 0 0 0 10.7357 17.6661 17.6661 10.7357
           0 0 0 0 0 0 0 0.0154609 407.511 473.279 473.279 407.511
         </DataArray>
-        <DataArray type="Float32" Name="kr" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="kr_liq" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0

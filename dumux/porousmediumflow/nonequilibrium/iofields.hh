@@ -24,6 +24,8 @@
 #ifndef DUMUX_NONEQUILBRIUM_OUTPUT_FIELDS_HH
 #define DUMUX_NONEQUILBRIUM_OUTPUT_FIELDS_HH
 
+#include <dumux/io/name.hh>
+
 namespace Dumux {
 
 /*!
@@ -41,9 +43,10 @@ public:
 
         EquilibriumIOFields::initOutputModule(out);
         for (int i = 0; i < ModelTraits::numEnergyEqFluid(); ++i)
-            out.addVolumeVariable( [i](const auto& v){ return v.temperatureFluid(i); }, "T_" + FluidSystem::phaseName(i) );
-        for (int i = 0; i < ModelTraits::numEnergyEqSolid(); ++i)
-            out.addVolumeVariable( [i](const auto& v){ return v.temperatureSolid(); }, "T_s" );
+            out.addVolumeVariable([i](const auto& v){ return v.temperatureFluid(i); },
+                                  IOName::fluidTemperature<FluidSystem>(i));
+        out.addVolumeVariable([](const auto& v){ return v.temperatureSolid(); },
+                              IOName::solidTemperature());
         for (int i = 0; i < ModelTraits::numPhases(); ++i){
             out.addVolumeVariable( [i](const auto& v){ return v.reynoldsNumber(i); }, "reynoldsNumber_" + FluidSystem::phaseName(i) );
             out.addVolumeVariable( [i](const auto& v){ return v.nusseltNumber(i); }, "nusseltNumber_" + FluidSystem::phaseName(i) );

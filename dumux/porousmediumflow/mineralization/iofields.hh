@@ -25,6 +25,8 @@
 #ifndef DUMUX_MINERALIZATION_IO_FIELDS_HH
 #define DUMUX_MINERALIZATION_IO_FIELDS_HH
 
+#include <dumux/io/name.hh>
+
 namespace Dumux {
 
 /*!
@@ -46,7 +48,8 @@ public:
         // additional output
         for (int i = 0; i < SolidSystem::numComponents - SolidSystem::numInertComponents; ++i)
         {
-            out.addVolumeVariable([i](const auto& v){ return v.solidVolumeFraction(i); },"precipitateVolumeFraction^"+ SolidSystem::componentName(i));
+            out.addVolumeVariable([i](const auto& v){ return v.solidVolumeFraction(i); },
+                                  IOName::solidVolumeFraction<SolidSystem>(i));
         }
     }
 
@@ -63,7 +66,7 @@ public:
         if (pvIdx < nonMineralizationNumEq)
             return NonMineralizationIOFields::template primaryVariableName<FluidSystem, SolidSystem>(pvIdx, state);
         else
-            return "precipitateVolumeFraction^" + SolidSystem::componentName(pvIdx - nonMineralizationNumEq);
+            return IOName::solidVolumeFraction<SolidSystem>(pvIdx - nonMineralizationNumEq);
     }
 };
 

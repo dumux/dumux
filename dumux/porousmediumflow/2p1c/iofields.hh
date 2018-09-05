@@ -25,6 +25,7 @@
 #define DUMUX_TWOP_ONEC_IO_FIELDS_HH
 
 #include <dumux/porousmediumflow/2p/iofields.hh>
+#include <dumux/io/name.hh>
 
 namespace Dumux {
 
@@ -43,7 +44,8 @@ public:
         TwoPIOFields<priVarFormulation>::initOutputModule(out);
 
         // output additional to TwoP output:
-        out.addVolumeVariable([](const auto& v){ return v.priVars().state(); }, "phase presence");
+        out.addVolumeVariable([](const auto& v){ return v.priVars().state(); },
+                              IOName::phasePresence());
     }
 
     template <class OutputModule>
@@ -53,15 +55,19 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem = void, class SolidSystem = void>
+    template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
         if (priVarFormulation == TwoPFormulation::p0s1)
-            return (pvIdx == 0) ? "p_w" :
-                                  (state == Indices::twoPhases) ? "S_n" : "T";
+            return (pvIdx == 0) ? IOName::pressure<FluidSystem>(FluidSystem::phase0Idx) :
+                                  (state == Indices::twoPhases)
+                                  ? IOName::saturation<FluidSystem>(FluidSystem::phase1Idx)
+                                  : IOName::temperature();
         else
-            return (pvIdx == 0) ? "p_n" :
-                                  (state == Indices::twoPhases) ? "S_w" : "T";
+            return (pvIdx == 0) ? IOName::pressure<FluidSystem>(FluidSystem::phase1Idx) :
+                                  (state == Indices::twoPhases)
+                                  ? IOName::saturation<FluidSystem>(FluidSystem::phase0Idx)
+                                  : IOName::temperature();
     }
 };
 

@@ -25,6 +25,7 @@
 #define DUMUX_RICHARDSNC_IO_FIELDS_HH
 
 #include <dumux/common/parameters.hh>
+#include <dumux/io/name.hh>
 
 namespace Dumux {
 
@@ -42,25 +43,37 @@ public:
         using VolumeVariables = typename OutputModule::VolumeVariables;
         using FS = typename VolumeVariables::FluidSystem;
 
-        out.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::liquidPhaseIdx); }, "S_"+FS::phaseName(VolumeVariables::liquidPhaseIdx));
-        out.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::gasPhaseIdx); }, "S_gas");
-        out.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::liquidPhaseIdx); }, "p_"+FS::phaseName(VolumeVariables::liquidPhaseIdx));
-        out.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::gasPhaseIdx); }, "p_gas");
-        out.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); }, "pc");
-        out.addVolumeVariable([](const auto& v){ return v.density(FS::liquidPhaseIdx); }, "rho_"+FS::phaseName(FS::liquidPhaseIdx));
-        out.addVolumeVariable([](const auto& v){ return v.mobility(FS::liquidPhaseIdx); }, "mob_"+FS::phaseName(FS::liquidPhaseIdx));
-        out.addVolumeVariable([](const auto& v){ return v.relativePermeability(VolumeVariables::liquidPhaseIdx); }, "kr");
-        out.addVolumeVariable([](const auto& v){ return v.porosity(); }, "porosity");
-        out.addVolumeVariable([](const auto& v){ return v.temperature(); }, "T");
+        out.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::liquidPhaseIdx); },
+                              IOName::saturation() + "_" + IOName::liquid());
+        out.addVolumeVariable([](const auto& v){ return v.saturation(VolumeVariables::gasPhaseIdx); },
+                              IOName::saturation() + "_" + IOName::gaseous());
+        out.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::liquidPhaseIdx); },
+                              IOName::pressure() + "_" + IOName::liquid());
+        out.addVolumeVariable([](const auto& v){ return v.pressure(VolumeVariables::gasPhaseIdx); },
+                              IOName::pressure() + "_" + IOName::gaseous());
+        out.addVolumeVariable([](const auto& v){ return v.capillaryPressure(); },
+                              IOName::capillaryPressure());
+        out.addVolumeVariable([](const auto& v){ return v.density(FS::liquidPhaseIdx); },
+                              IOName::density() + "_" + IOName::liquid());
+        out.addVolumeVariable([](const auto& v){ return v.mobility(FS::liquidPhaseIdx); },
+                              IOName::mobility() + "_" + IOName::liquid());
+        out.addVolumeVariable([](const auto& v){ return v.relativePermeability(VolumeVariables::liquidPhaseIdx); },
+                              IOName::relativePermeability() + "_" + IOName::liquid());
+        out.addVolumeVariable([](const auto& v){ return v.porosity(); },
+                              IOName::porosity());
+        out.addVolumeVariable([](const auto& v){ return v.temperature(); },
+                              IOName::temperature());
 
         static const bool gravity = getParamFromGroup<bool>(out.paramGroup(), "Problem.EnableGravity");
-        if(gravity)
-            out.addVolumeVariable([](const auto& v){ return v.pressureHead(VolumeVariables::liquidPhaseIdx); }, "pressure head");
-        out.addVolumeVariable([](const auto& v){ return v.waterContent(VolumeVariables::liquidPhaseIdx); },"water content");
+        if (gravity)
+            out.addVolumeVariable([](const auto& v){ return v.pressureHead(VolumeVariables::liquidPhaseIdx); },
+                                  IOName::pressureHead());
+        out.addVolumeVariable([](const auto& v){ return v.waterContent(VolumeVariables::liquidPhaseIdx); },
+                              IOName::waterContent());
 
         for (int compIdx = 0; compIdx < VolumeVariables::numComponents(); ++compIdx)
             out.addVolumeVariable([compIdx](const auto& v){ return v.moleFraction(VolumeVariables::liquidPhaseIdx, compIdx); },
-                                  "x^" + FS::componentName(compIdx) + "_" + FS::phaseName(VolumeVariables::liquidPhaseIdx));
+                                  IOName::moleFraction<FS>(VolumeVariables::liquidPhaseIdx, compIdx));
 
     }
 
@@ -74,12 +87,11 @@ public:
     template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
-        const std::string xString = useMoles ? "x" : "X";
         if (pvIdx == 0)
-            return "p_" + FluidSystem::phaseName(0);
+            return IOName::pressure<FluidSystem>(0);
         else
-            return xString + "^" + FluidSystem::componentName(pvIdx)
-                   + "_" + FluidSystem::phaseName(0);
+            return useMoles ? IOName::moleFraction<FluidSystem>(0, pvIdx)
+                            : IOName::massFraction<FluidSystem>(0, pvIdx);
     }
 };
 

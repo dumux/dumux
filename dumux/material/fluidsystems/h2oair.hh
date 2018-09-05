@@ -39,6 +39,8 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
+#include <dumux/io/name.hh>
+
 namespace Dumux {
 namespace FluidSystems {
 /*!
@@ -104,8 +106,8 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         switch (phaseIdx)
         {
-            case liquidPhaseIdx: return "liq";
-            case gasPhaseIdx: return "gas";
+            case liquidPhaseIdx: return IOName::liquid();
+            case gasPhaseIdx: return IOName::gaseous();
         }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }

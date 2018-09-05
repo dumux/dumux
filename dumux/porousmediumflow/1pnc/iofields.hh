@@ -26,6 +26,8 @@
 
 #include <string>
 
+#include <dumux/io/name.hh>
+
 namespace Dumux {
 
 /*!
@@ -42,18 +44,22 @@ public:
         using VolumeVariables = typename OutputModule::VolumeVariables;
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
-        out.addVolumeVariable([](const auto& volVars){ return volVars.pressure(0); }, "p");
-        out.addVolumeVariable([](const auto& volVars){ return volVars.density(0); }, "rho");
-        out.addVolumeVariable([](const auto& volVars){ return volVars.viscosity(0); }, "mu");
-        out.addVolumeVariable([](const auto& volVars){ return volVars.pressure(0) - 1e5; }, "delp");
+        out.addVolumeVariable([](const auto& volVars){ return volVars.pressure(0); },
+                              IOName::pressure());
+        out.addVolumeVariable([](const auto& volVars){ return volVars.density(0); },
+                              IOName::density());
+        out.addVolumeVariable([](const auto& volVars){ return volVars.viscosity(0); },
+                              IOName::viscosity());
+        out.addVolumeVariable([](const auto& volVars){ return volVars.pressure(0) - 1e5; },
+                              "delp");
 
         for (int i = 0; i < VolumeVariables::numComponents(); ++i)
            out.addVolumeVariable([i](const auto& volVars){ return volVars.moleFraction(0, i); },
-                                     "x^" + std::string(FluidSystem::componentName(i)) + "_" + std::string(FluidSystem::phaseName(0)));
+                                     IOName::moleFraction<FluidSystem>(0, i));
 
         for (int i = 0; i < VolumeVariables::numComponents(); ++i)
            out.addVolumeVariable([i](const auto& volVars){ return volVars.massFraction(0, i); },
-                                     "X^" + std::string(FluidSystem::componentName(i))+ "_" + std::string(FluidSystem::phaseName(0)));
+                                     IOName::massFraction<FluidSystem>(0, i));
     }
 
     template <class OutputModule>
@@ -66,12 +72,12 @@ public:
     template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
-        const std::string xString = useMoles ? "x" : "X";
         if (pvIdx == 0)
-            return "p";
+            return IOName::pressure();
+        else if (useMoles)
+            return IOName::moleFraction<FluidSystem>(0, pvIdx);
         else
-            return xString + "^" + FluidSystem::componentName(pvIdx)
-                   + "_" + FluidSystem::phaseName(0);
+            return IOName::massFraction<FluidSystem>(0, pvIdx);
     }
 };
 

@@ -24,6 +24,8 @@
 #ifndef DUMUX_MPNC_IO_FIELDS_HH
 #define DUMUX_MPNC_IO_FIELDS_HH
 
+#include <dumux/io/name.hh>
+
 namespace Dumux {
 
 /*!
@@ -41,18 +43,29 @@ public:
 
         for (int i = 0; i < VolumeVariables::numPhases(); ++i)
         {
-            out.addVolumeVariable([i](const auto& v){ return v.saturation(i); }, "S_"+ FluidSystem::phaseName(i));
-            out.addVolumeVariable([i](const auto& v){ return v.pressure(i); }, "p_"+ FluidSystem::phaseName(i));
-            out.addVolumeVariable([i](const auto& v){ return v.density(i); }, "rho_"+ FluidSystem::phaseName(i));
-            out.addVolumeVariable([i](const auto& v){ return v.mobility(i); },"mob_"+ FluidSystem::phaseName(i));
+            out.addVolumeVariable([i](const auto& v){ return v.saturation(i); },
+                                  IOName::saturation<FluidSystem>(i));
+            out.addVolumeVariable([i](const auto& v){ return v.pressure(i); },
+                                  IOName::pressure<FluidSystem>(i));
+            out.addVolumeVariable([i](const auto& v){ return v.density(i); },
+                                  IOName::density<FluidSystem>(i));
+            out.addVolumeVariable([i](const auto& v){ return v.mobility(i); },
+                                  IOName::mobility<FluidSystem>(i));
 
             for (int j = 0; j < VolumeVariables::numComponents(); ++j)
-                vtk.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },
-                                      "x^"+ FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i));
+                out.addVolumeVariable([i,j](const auto& v){ return v.moleFraction(i,j); },
+                                      IOName::moleFraction<FluidSystem>(i, j));
         }
-        for (int j = 0; j < VolumeVariables::numComponents(); ++j)
-            vtk.addVolumeVariable([j](const auto& v){ return v.fugacity(j); },
-                                  "fugacity^"+ FluidSystem::componentName(j));
+
+        out.addVolumeVariable([](const auto& v){ return v.porosity(); },
+                              IOName::porosity());
+    }
+
+    template <class OutputModule>
+    DUNE_DEPRECATED_MSG("use initOutputModule instead")
+    static void init(OutputModule& out)
+    {
+        initOutputModule(out);
     }
 };
 

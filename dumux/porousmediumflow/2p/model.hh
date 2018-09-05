@@ -103,11 +103,11 @@ struct TwoPModelTraits
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         if (priVarFormulation() == TwoPFormulation::p0s1)
-            return pvIdx == 0 ? "p_" + FluidSystem::phaseName(FluidSystem::phase0Idx)
-                              : "S_" + FluidSystem::phaseName(FluidSystem::phase1Idx) ;
+            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::phase0Idx)
+                              : IOName::saturation<FluidSystem>(FluidSystem::phase1Idx) ;
         else
-            return pvIdx == 0 ? "p_" + FluidSystem::phaseName(FluidSystem::phase1Idx)
-                              : "S_" + FluidSystem::phaseName(FluidSystem::phase0Idx);
+            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::phase1Idx)
+                              : IOName::saturation<FluidSystem>(FluidSystem::phase0Idx);
     }
 };
 

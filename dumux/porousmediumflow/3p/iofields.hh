@@ -24,6 +24,8 @@
 #ifndef DUMUX_THREEP_IO_FIELDS_HH
 #define DUMUX_THREEP_IO_FIELDS_HH
 
+#include <dumux/io/name.hh>
+
 namespace Dumux {
 
 /*!
@@ -36,19 +38,24 @@ public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
-        using VolumeVariables = typename VtkOutputModule::VolumeVariables;
+        using VolumeVariables = typename OutputModule::VolumeVariables;
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
         // register standardized output fields
-        for (int i = 0; i < VolumeVariables::numPhases(); ++i)
+        for (int phaseIdx = 0; phaseIdx < VolumeVariables::numPhases(); ++phaseIdx)
         {
-            out.addVolumeVariable([i](const auto& v){ return v.saturation(i); }, "S_"+ FluidSystem::phaseName(i));
-            out.addVolumeVariable([i](const auto& v){ return v.pressure(i); }, "p_"+ FluidSystem::phaseName(i));
-            out.addVolumeVariable([i](const auto& v){ return v.density(i); }, "rho_"+ FluidSystem::phaseName(i));
+            out.addVolumeVariable([phaseIdx](const auto& v){ return v.saturation(phaseIdx); },
+                                  IOName::saturation<FluidSystem>(phaseIdx));
+            out.addVolumeVariable([phaseIdx](const auto& v){ return v.pressure(phaseIdx); },
+                                  IOName::pressure<FluidSystem>(phaseIdx));
+            out.addVolumeVariable([phaseIdx](const auto& v){ return v.density(phaseIdx); },
+                                  IOName::density<FluidSystem>(phaseIdx));
         }
 
-        out.addVolumeVariable( [](const auto& v){ return v.porosity(); },"porosity");
-        out.addVolumeVariable( [](const auto& v){ return v.permeability(); },"permeability");
+        out.addVolumeVariable( [](const auto& v){ return v.porosity(); },
+                               IOName::porosity());
+        out.addVolumeVariable( [](const auto& v){ return v.permeability(); },
+                               IOName::permeability());
     }
 
     template <class OutputModule>
@@ -58,14 +65,14 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem = void, class SolidSystem = void>
+    template <class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         switch (pvIdx)
         {
-            case 0: return "p_g";
-            case 1: return "S_w";
-            default: return "S_n";
+            case 0: return IOName::pressure<FluidSystem>(FluidSystem::gPhaseIdx);
+            case 1: return IOName::saturation<FluidSystem>(FluidSystem::wPhaseIdx);
+            default: return IOName::saturation<FluidSystem>(FluidSystem::nPhaseIdx);
         }
     }
 };

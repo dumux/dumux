@@ -150,7 +150,7 @@
           146.749 164.984 146.749 3.92159 0 0 0 0 0 0 0 0.0196823
           249.082 733.751 753.199 733.751 249.082
         </DataArray>
-        <DataArray type="Float32" Name="kr" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="kr_liq" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0

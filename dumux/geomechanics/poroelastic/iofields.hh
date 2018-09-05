@@ -24,6 +24,8 @@
 #ifndef DUMUX_POROELASTIC_IO_FIELDS_HH
 #define DUMUX_POROELASTIC_IO_FIELDS_HH
 
+#include <dumux/io/name.hh>
+
 namespace Dumux {
 
 /*!
@@ -36,8 +38,10 @@ public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
-        out.addVolumeVariable([](const auto& volVars){ return volVars.displacement(); }, "u");
-        out.addVolumeVariable([](const auto& volVars){ return volVars.porosity(); }, "porosity");
+        out.addVolumeVariable([](const auto& volVars){ return volVars.displacement(); },
+                              IOName::displacement());
+        out.addVolumeVariable([](const auto& volVars){ return volVars.porosity(); },
+                              IOName::porosity());
     }
 
     template <class OutputModule>

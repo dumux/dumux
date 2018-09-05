@@ -120,7 +120,7 @@ struct RichardsNCModelTraits
     {
         const std::string xString = useMoles() ? "x" : "X";
         if (pvIdx == 0)
-            return "p_" + FluidSystem::phaseName(0);
+            return IOName::pressure<FluidSystem>(0);
         else
             return xString + "^" + FluidSystem::componentName(pvIdx)
                    + "_" + FluidSystem::phaseName(0);

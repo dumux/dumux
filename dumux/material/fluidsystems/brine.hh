@@ -32,6 +32,8 @@
 
 #include <dumux/common/exceptions.hh>
 
+#include <dumux/io/name.hh>
+
 namespace Dumux {
 namespace FluidSystems {
 
@@ -69,7 +71,7 @@ public:
     static const std::string phaseName(int phaseIdx = liquidPhaseIdx)
     {
         assert(phaseIdx == liquidPhaseIdx);
-        return "liq";
+        return IOName::liquid();
     }
 
     /*!

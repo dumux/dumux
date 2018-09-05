@@ -30,6 +30,7 @@
 #include <dune/common/exceptions.hh>
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/binarycoefficients/h2o_constant.hh>
+#include <dumux/io/name.hh>
 
 namespace Dumux {
 namespace FluidSystems {
@@ -75,7 +76,7 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      */
     static std::string phaseName(int phaseIdx = 0)
-    { return "liq"; }
+    { return IOName::liquid(); }
 
     /*!
      * \brief Returns whether the fluids are miscible

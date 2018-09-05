@@ -605,7 +605,7 @@
           0.00614061 0.0062582 0.00646096 0.00684863 0.00773605 0.00951366 0.0130612 0.0244501 0.0786285 0.344282 1.70825 8.96678
           45.2552 188.888 535.009 890.348
         </DataArray>
-        <DataArray type="Float32" Name="kr" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="kr_liq" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1

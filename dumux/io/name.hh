@@ -38,10 +38,14 @@ std::string pressure(int phaseIdx) noexcept
 std::string pressure() noexcept
 { return "p"; }
 
-//! I/O name of saturation
+//! I/O name of saturation for multiphase systems
 template<class FluidSystem>
 std::string saturation(int phaseIdx) noexcept
 { return (FluidSystem::numPhases == 1) ? "S" : "S_" + FluidSystem::phaseName(phaseIdx); }
+
+//! I/O name of saturation for singlephase systems
+std::string saturation() noexcept
+{ return "S"; }
 
 //! I/O name of temperature for equilibrium models
 std::string temperature() noexcept
@@ -65,6 +69,15 @@ std::string density(int phaseIdx) noexcept
 std::string density() noexcept
 { return "rho"; }
 
+//! I/O name of viscosity for multiphase systems
+template<class FluidSystem>
+std::string viscosity(int phaseIdx) noexcept
+{ return (FluidSystem::numPhases == 1) ? "mu" : "mu_" + FluidSystem::phaseName(phaseIdx); }
+
+//! I/O name of viscosity for singlephase systems
+std::string viscosity() noexcept
+{ return "mu"; }
+
 //! I/O name of molar density for multiphase systems
 template<class FluidSystem>
 std::string molarDensity(int phaseIdx) noexcept
@@ -73,6 +86,15 @@ std::string molarDensity(int phaseIdx) noexcept
 //! I/O name of molar density for singlephase systems
 std::string molarDensity() noexcept
 { return "rhoMolar"; }
+
+//! I/O name of relative permeability for multiphase systems
+template<class FluidSystem>
+std::string relativePermeability(int phaseIdx) noexcept
+{ return (FluidSystem::numPhases == 1) ? "kr" : "kr_" + FluidSystem::phaseName(phaseIdx); }
+
+//! I/O name of relative permeability for singlephase systems
+std::string relativePermeability() noexcept
+{ return "kr"; }
 
 //! I/O name of mobility for multiphase systems
 template<class FluidSystem>
@@ -93,6 +115,22 @@ template<class FluidSystem>
 std::string massFraction(int phaseIdx, int compIdx) noexcept
 { return "X^" + FluidSystem::componentName(compIdx) + "_" + FluidSystem::phaseName(phaseIdx); }
 
+//! I/O name of liquid
+std::string liquid() noexcept
+{ return "liq"; }
+
+//! I/O name of gaseous
+std::string gaseous() noexcept
+{ return "gas"; }
+
+//! I/O name of aqueous
+std::string aqueous() noexcept
+{ return "aq"; }
+
+//! I/O name of napl
+std::string napl() noexcept
+{ return "napl"; }
+
 //! I/O name of capillary pressure
 std::string capillaryPressure() noexcept
 { return "pc"; }
@@ -101,14 +139,30 @@ std::string capillaryPressure() noexcept
 std::string porosity() noexcept
 { return "porosity"; }
 
+//! I/O name of permeability
+std::string permeability() noexcept
+{ return "permeability"; }
+
 //! I/O name of phase presence
 std::string phasePresence() noexcept
 { return "phase presence"; }
+
+//! I/O name of pressure head
+std::string pressureHead() noexcept
+{ return "pressure head"; }
+
+//! I/O name of water content
+std::string waterContent() noexcept
+{ return "water content"; }
 
 //! I/O name of solid volume fraction
 template<class SolidSystem>
 std::string solidVolumeFraction(int compIdx = 0) noexcept
 { return "precipitateVolumeFraction^" + SolidSystem::componentName(compIdx); }
+
+//! I/O name of displacement
+std::string displacement() noexcept
+{ return "u"; }
 
 } // end namespace IOName
 } // end namespace Dumux
