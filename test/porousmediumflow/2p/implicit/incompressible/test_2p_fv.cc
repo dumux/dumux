@@ -163,7 +163,7 @@ int main(int argc, char** argv) try
                                                              ncOutput ? Dune::VTK::nonconforming : Dune::VTK::conforming);
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    IOFields::init(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(restartTime);
 
     // instantiate time loop

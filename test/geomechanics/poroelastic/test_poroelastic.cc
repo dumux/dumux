@@ -147,7 +147,7 @@ int main(int argc, char** argv) try
     using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
     using VtkOutputModule = Dumux::VtkOutputModule<GridVariables, SolutionVector>;
     VtkOutputModule vtkWriter(*gridVariables, x, problem->name());
-    IOFields::init(vtkWriter);
+    IOFields::initOutputModule(vtkWriter);
 
     // also, add exact solution to the output
     SolutionVector xExact(fvGridGeometry->numDofs());

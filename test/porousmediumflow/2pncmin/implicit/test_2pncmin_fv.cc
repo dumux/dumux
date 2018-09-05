@@ -147,7 +147,7 @@ int main(int argc, char** argv) try
     VtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
-    IOFields::init(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     //add specific output
     vtkWriter.addField(problem->getPermeability(), "Permeability");
     // update the output fields before write

@@ -102,7 +102,7 @@ int main(int argc, char** argv) try
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     vtkWriter.addVelocityOutput(std::make_shared<VelocityOutput>(*gridVariables));
     using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
-    IOFields::init(vtkWriter); //!< Add model specific output fields
+    IOFields::initOutputModule(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 
     // make assemble and attach linear system
