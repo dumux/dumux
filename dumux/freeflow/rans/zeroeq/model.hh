@@ -42,6 +42,7 @@
 #include <dumux/freeflow/navierstokes/volumevariables.hh>
 
 #include "volumevariables.hh"
+#include "gridvariables.hh"
 
 namespace Dumux {
 namespace Properties {
@@ -72,6 +73,19 @@ public:
     using type = ZeroEqVolumeVariables<Traits, NSVolVars>;
 };
 
+//! Set the grid variables (volume, flux and face variables)
+SET_PROP(ZeroEq, GridVariables)
+{
+private:
+    using GG = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GVV = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
+    using GFVC = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
+    using GFV = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
+    using NavierStokesGridVariables = StaggeredGridVariables<GG, GVV, GFVC, GFV>;
+public:
+    using type = ZeroEqGridVariables<NavierStokesGridVariables>;
+};
+
 //////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal RANS 0-Eq. model
 //////////////////////////////////////////////////////////////////
@@ -96,6 +110,19 @@ private:
     using NSVolVars = NavierStokesVolumeVariables<Traits>;
 public:
     using type = ZeroEqVolumeVariables<Traits, NSVolVars>;
+};
+
+//! Set the grid variables (volume, flux and face variables)
+SET_PROP(ZeroEqNI, GridVariables)
+{
+private:
+    using GG = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GVV = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
+    using GFVC = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
+    using GFV = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
+    using NavierStokesGridVariables = StaggeredGridVariables<GG, GVV, GFVC, GFV>;
+public:
+    using type = ZeroEqGridVariables<NavierStokesGridVariables>;
 };
 
 // \}
