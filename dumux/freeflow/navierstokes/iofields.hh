@@ -52,7 +52,7 @@ public:
     {
         using FluidSystem = typename OutputModule::VolumeVariables::FluidSystem;
         out.addVolumeVariable([](const auto& v){ return v.pressure(); }, IOName::pressure());
-        out.addVolumeVariable([](const auto& v){ return v.molarDensity(); }, IOName::molarDensity<FluidSystem>());
+        out.addVolumeVariable([](const auto& v){ return v.molarDensity(); }, IOName::molarDensity());
         out.addVolumeVariable([](const auto& v){ return v.density(); }, IOName::density());
 
         // add discretization-specific fields

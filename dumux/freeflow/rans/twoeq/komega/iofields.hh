@@ -52,6 +52,8 @@ public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
+        RANSIOFields<FVGridGeometry>::initOutputModule(out);
+
         out.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
         out.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "omega");
     }

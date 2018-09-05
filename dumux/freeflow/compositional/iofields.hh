@@ -77,11 +77,13 @@ public:
     template <class FluidSystem>
     static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
-        if (pvIdx <= ModelTraits::dim())
-            return BaseOutputFields::template primaryVariableName<FluidSystem>(pvIdx, state);
+        // priVars: v_0, ..., v_dim-1, p, x_0, ..., x_numComp-1, otherPv ..., T
+        if (pvIdx > ModelTraits::dim() && pvIdx < ModelTraits::dim() + ModelTraits::numComponents())
+            return ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(0, pvIdx - ModelTraits::dim())
+                                           : IOName::massFraction<FluidSystem>(0, pvIdx - ModelTraits::dim());
         else
-            return ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(pvIdx - ModelTraits::dim())
-                                           : IOName::massFraction<FluidSystem>(pvIdx - ModelTraits::dim());
+            return BaseOutputFields::template primaryVariableName<FluidSystem>(pvIdx, state);
+
     }
 };
 
