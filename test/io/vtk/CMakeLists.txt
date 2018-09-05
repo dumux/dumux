@@ -1,3 +1,5 @@
+add_input_file_links()
+
 dune_add_test(NAME test_vtkreader_3d
               SOURCES test_vtkreader.cc
               CMAKE_GUARD dune-alugrid_FOUND
@@ -46,3 +48,6 @@ dune_add_test(NAME test_vtkreader_1d
                                   ${CMAKE_SOURCE_DIR}/test/references/test_embedded_1p_richards_tpfa_1d.vtp test-1d"
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_embedded_1p_richards_tpfa_1d.vtp
                                ${CMAKE_CURRENT_BINARY_DIR}/test-1d.vtp)
+
+dune_add_test(NAME test_vtk_staggeredfreeflowpvnames
+              SOURCES test_vtk_staggeredfreeflowpvnames.cc)
