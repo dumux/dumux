@@ -343,6 +343,20 @@ private:
                     for (int phaseIdx = 0; phaseIdx < velocityOutput_->numPhases(); ++phaseIdx)
                         velocityOutput_->calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
 
+#ifdef DUMUXFENICS
+                // write velocity for exchange with Fenics
+                if (name() == "test_stokes1p2cdarcy2p2chorizontal_darcy") // TODO make more general
+                {
+                    std::ofstream vpmForFenics;
+                    vpmForFenics.open ("vpmForFenics.csv", std::ios_base::app);
+                    // write to output file
+                    vpmForFenics << eIdxGlobal << ","
+                            << velocity[1][eIdxGlobal][0] << ","
+                            << velocity[1][eIdxGlobal][1] << "\n";
+                    vpmForFenics.close();
+                }
+#endif
+
                 //! the rank
                 if (addProcessRank)
                     rank[eIdxGlobal] = static_cast<double>(fvGridGeometry().gridView().comm().rank());

@@ -196,6 +196,9 @@ NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure
 /////////////////////////////////////////////////////////////
 NEW_PROP_TAG(CouplingManager);
 
+// TODO set in dumux-fenics
+NEW_PROP_TAG(InputOutputCSV);
+
 } // end namespace Properties
 } // end namespace Dumux
 
