@@ -50,6 +50,7 @@
 
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/io/grid/gridmanager.hh>
+#include <dumux/io/loadsolution.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -126,10 +127,8 @@ int main(int argc, char** argv) try
     const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
-    problem->setTimeLoop(timeLoop);
+    // check if we are about to restart a previously interrupted simulation
+    Scalar restartTime = getParam<Scalar>("Restart.Time", 0);
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -138,8 +137,27 @@ int main(int argc, char** argv) try
     SolutionVector x;
     x[FVGridGeometry::cellCenterIdx()].resize(numDofsCellCenter);
     x[FVGridGeometry::faceIdx()].resize(numDofsFace);
-    problem->applyInitialSolution(x);
+    if (restartTime > 0)
+    {
+        using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
+        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+
+        auto fileNameCell = getParamFromGroup<std::string>("CellCenter", "Restart.File");
+        loadSolution(x[FVGridGeometry::cellCenterIdx()], fileNameCell,
+                     ModelTraits::primaryVariableNameCell<FluidSystem>, *fvGridGeometry);
+
+        auto fileNameFace = getParamFromGroup<std::string>("Face", "Restart.File");
+        loadSolution(x[FVGridGeometry::faceIdx()], fileNameFace,
+                     ModelTraits::primaryVariableNameFace<FluidSystem>, *fvGridGeometry);
+    }
+    else
+        problem->applyInitialSolution(x);
     auto xOld = x;
+
+    // instantiate time loop
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
+    problem->setTimeLoop(timeLoop);
 
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -151,7 +169,7 @@ int main(int argc, char** argv) try
     StaggeredVtkOutputModule<GridVariables, SolutionVector> vtkWriter(*gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.addField(problem->getDeltaP(), "deltaP");
-    vtkWriter.write(0.0);
+    vtkWriter.write(restartTime);
 
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;

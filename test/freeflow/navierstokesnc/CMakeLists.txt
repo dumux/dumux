@@ -1,4 +1,5 @@
 add_input_file_links()
+set(CMAKE_BUILD_TYPE Release)
 
 dune_add_test(NAME test_stokes2c_densitydrivenflow
               SOURCES test_densitydrivenflow.cc
@@ -67,7 +68,20 @@ dune_add_test(NAME test_stokes2cni_advection
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes2cni-advection.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni_advection-00009.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}//test_stokes2cni test_stokes2cni_advection.input")
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni test_stokes2cni_advection.input -Vtk.WriteFaceData 1")
+
+dune_add_test(NAME test_stokes2cni_advection_restart
+              TARGET test_stokes2cni
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/stokes2cni-advection.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni_advection_restart-00004.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni test_stokes2cni_advection.input -Vtk.WriteFaceData 1 -TimeLoop.DtInitial 46.8754 -Restart.Time 79.3056 -CellCenter.Restart.File test_stokes2cni_advection-00005.vtu -Face.Restart.File test_stokes2cni_advection-face-00005.vtp -Problem.Name test_stokes2cni_advection_restart"
+                             --zeroThreshold {"velocity_liquid \(m/s\)":5e-9})
+
+# the restart test has to run after the test that produces the corresponding vtu file
+set_tests_properties(test_stokes2cni_advection_restart PROPERTIES DEPENDS test_stokes2cni_advection)
 
 dune_add_test(NAME test_stokes2cni_diffusion
               TARGET test_stokes2cni
@@ -76,7 +90,7 @@ dune_add_test(NAME test_stokes2cni_diffusion
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes2cni-diffusion.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni_diffusion-00014.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}//test_stokes2cni test_stokes2cni_diffusion.input"
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni test_stokes2cni_diffusion.input"
                              --zeroThreshold {"velocity_liquid \(m/s\)":1e-13})
 
 dune_add_test(NAME test_msfreeflow
