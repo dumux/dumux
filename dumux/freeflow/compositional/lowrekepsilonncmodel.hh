@@ -74,19 +74,6 @@ struct LowReKEpsilonNCModelTraits : NavierStokesNCModelTraits<dimension, nComp, 
 
     //! the indices
     using Indices = LowReKEpsilonIndices<dimension, nComp>;
-
-    //! return the names of the primary variables in cells
-    template <class FluidSystem>
-    static std::string primaryVariableNameCell(int pvIdx, int state = 0)
-    {
-        using ParentType = NavierStokesNCModelTraits<dimension, nComp, useMoles, replaceCompEqIdx>;
-        if (pvIdx < nComp)
-            return ParentType::template primaryVariableNameCell<FluidSystem>(pvIdx, state);
-        else if (pvIdx == nComp)
-            return "k";
-        else
-            return "epsilon";
-    }
 };
 
 //!< states some specifics of the isothermal multi-component low-Reynolds k-epsilon model

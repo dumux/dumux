@@ -103,20 +103,6 @@ struct NavierStokesModelTraits
 
     //! the indices
     using Indices = NavierStokesIndices<dim()>;
-
-    //! return the names of the primary variables in cells
-    template <class FluidSystem = void>
-    static std::string primaryVariableNameCell(int pvIdx = 0, int state = 0)
-    {
-        return "p";
-    }
-
-    //! return the names of the primary variables on faces
-    template <class FluidSystem = void>
-    static std::string primaryVariableNameFace(int pvIdx = 0, int state = 0)
-    {
-        return "v";
-    }
 };
 
 /*!
