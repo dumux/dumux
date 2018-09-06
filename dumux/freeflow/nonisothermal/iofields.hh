@@ -62,11 +62,11 @@ public:
     }
 
     //! return the names of the primary variables
-    template <class FluidSystem = void>
+    template<class ModelTraits, class FluidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         if (pvIdx < ModelTraits::numEq() - 1)
-            return IsothermalIOFields::template primaryVariableName<FluidSystem>(pvIdx, state);
+            return IsothermalIOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
         else
             return IOName::temperature();
     }

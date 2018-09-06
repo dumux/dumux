@@ -61,6 +61,19 @@ public:
         out.addVolumeVariable([](const auto& v){ return v.inNearWallRegion(); }, "inNearWallRegion");
         out.addVolumeVariable([](const auto& v){ return v.isMatchingPoint(); }, "isMatchingPoint");
     }
+
+    //! return the names of the primary variables
+    template <class ModelTraits, class FluidSystem>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
+    {
+        std::cout << "kepsi called with " << pvIdx << std::endl;
+        if (pvIdx < ModelTraits::dim() + ModelTraits::numComponents())
+            return RANSIOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
+        else if (pvIdx == ModelTraits::dim() + ModelTraits::numComponents())
+            return "k";
+        else
+            return "epsilon";
+    }
 };
 
 } // end namespace Dumux

@@ -74,7 +74,7 @@ public:
     }
 
     //! return the names of the primary variables
-    template <class FluidSystem>
+    template <class ModelTraits, class FluidSystem>
     static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
         // priVars: v_0, ..., v_dim-1, p, x_0, ..., x_numComp-1, otherPv ..., T
@@ -82,7 +82,7 @@ public:
             return ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(0, pvIdx - ModelTraits::dim())
                                            : IOName::massFraction<FluidSystem>(0, pvIdx - ModelTraits::dim());
         else
-            return BaseOutputFields::template primaryVariableName<FluidSystem>(pvIdx, state);
+            return BaseOutputFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
 
     }
 };

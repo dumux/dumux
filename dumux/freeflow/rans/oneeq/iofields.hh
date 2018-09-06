@@ -53,6 +53,16 @@ public:
         RANSIOFields<FVGridGeometry>::initOutputModule(out);
         out.addVolumeVariable([](const auto& v){ return v.viscosityTilde(); }, "nu_tilde");
     }
+
+    //! return the names of the primary variables
+    template <class ModelTraits, class FluidSystem>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
+    {
+        if (pvIdx < ModelTraits::dim() + 1)
+            return RANSIOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
+        else
+            return "nu_tilde";
+    }
 };
 
 } // end namespace Dumux

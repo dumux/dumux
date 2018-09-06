@@ -67,13 +67,11 @@ public:
     }
 
     //! return the names of the primary variables
-    template <class FluidSystem = void>
+    template <class ModelTraits, class FluidSystem = void>
     static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
-        const std::array<std::string, 3> velocities = {"v_x", "v_y", "v_z"};
-
-        if (pvIdx < FVGridGeometry::Grid::dimension)
-            return velocities[pvIdx];
+        if (pvIdx < ModelTraits::dim())
+            return "v";
         else
             return IOName::pressure();
     }

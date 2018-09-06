@@ -56,6 +56,18 @@ public:
         out.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
         out.addVolumeVariable([](const auto& v){ return v.dissipationTilde(); }, "epsilon");
     }
+
+    //! return the names of the primary variables
+    template <class ModelTraits, class FluidSystem>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
+    {
+        if (pvIdx < ModelTraits::dim() + ModelTraits::numComponents())
+            return RANSIOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
+        else if (pvIdx == ModelTraits::dim() + ModelTraits::numComponents())
+            return "k";
+        else
+            return "epsilon";
+    }
 };
 
 } // end namespace Dumux

@@ -67,6 +67,13 @@ public:
         out.addVolumeVariable([](const auto& v){ return v.yPlus(); }, "y^+");
         out.addVolumeVariable([](const auto& v){ return v.uPlus(); }, "u^+");
     }
+
+    //! return the names of the primary variables
+    template <class ModelTraits, class FluidSystem>
+    static std::string primaryVariableName(int pvIdx = 0, int state = 0)
+    {
+        return NavierStokesIOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx, state);
+    }
 };
 
 } // end namespace Dumux
