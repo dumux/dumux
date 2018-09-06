@@ -34,13 +34,8 @@ namespace Dumux
  * \ingroup KOmegaModel
  * \brief Adds I/O fields for the Reynolds-Averaged Navier-Stokes model
  */
-template<class FVGridGeometry>
-class KOmegaIOFields
+struct KOmegaIOFields
 {
-    enum { dim = FVGridGeometry::GridView::dimension };
-
-public:
-
     template <class OutputModule>
     DUNE_DEPRECATED_MSG("use initOutputModule instead")
     static void init(OutputModule& out)
@@ -52,7 +47,7 @@ public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
-        RANSIOFields<FVGridGeometry>::initOutputModule(out);
+        RANSIOFields::initOutputModule(out);
 
         out.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
         out.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "omega");

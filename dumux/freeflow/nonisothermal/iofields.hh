@@ -35,12 +35,9 @@ namespace Dumux
  * \ingroup FreeflowNIModel
  * \brief Adds I/O fields specific to non-isothermal free-flow models
  */
-template<class IsothermalIOFields, class ModelTraits>
-class FreeflowNonIsothermalIOFields
+template<class IsothermalIOFields, bool turbulenceModel = false>
+struct FreeflowNonIsothermalIOFields
 {
-
-public:
-
     //! Initialize the non-isothermal specific output fields.
     template <class OutputModule>
     DUNE_DEPRECATED_MSG("use initOutputModule instead")
@@ -57,7 +54,7 @@ public:
 
         out.addVolumeVariable([](const auto& v){ return v.temperature(); }, IOName::temperature());
         out.addVolumeVariable([](const auto& v){ return v.thermalConductivity(); }, "lambda");
-        if (ModelTraits::usesTurbulenceModel())
+        if (turbulenceModel)
             out.addVolumeVariable([](const auto& v){ return v.effectiveThermalConductivity() - v.thermalConductivity(); }, "lambda_t");
     }
 

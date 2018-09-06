@@ -124,15 +124,7 @@ public:
 };
 
 //! The specific I/O fields
-SET_PROP(KEpsilonNC, IOFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SinglePhaseIOFields = KEpsilonIOFields<FVGridGeometry>;
-public:
-    using type = FreeflowNCIOFields<SinglePhaseIOFields, ModelTraits>;
-};
+SET_TYPE_PROP(KEpsilonNC, IOFields, FreeflowNCIOFields<KEpsilonIOFields, true/*turbulenceModel*/>);
 
 //////////////////////////////////////////////////////////////////////////
 // Property values for non-isothermal multi-component k-epsilon model
@@ -198,12 +190,9 @@ public:
 SET_PROP(KEpsilonNCNI, IOFields)
 {
 private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using BaseIOFields = KEpsilonIOFields<FVGridGeometry>;
-    using NonIsothermalFields = FreeflowNonIsothermalIOFields<BaseIOFields, ModelTraits>;
+    using IsothermalIOFields = FreeflowNCIOFields<KEpsilonIOFields, true/*turbulenceModel*/>;
 public:
-    using type = FreeflowNCIOFields<NonIsothermalFields, ModelTraits>;
+    using type = FreeflowNonIsothermalIOFields<IsothermalIOFields, true/*turbulenceModel*/>;
 };
 
 // \}

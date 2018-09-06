@@ -99,15 +99,7 @@ public:
 };
 
 //! The specific I/O fields
-SET_PROP(ZeroEqNC, IOFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using BaseIOFields = RANSIOFields<FVGridGeometry>;
-public:
-     using type = FreeflowNCIOFields<BaseIOFields, ModelTraits>;
-};
+SET_TYPE_PROP(ZeroEqNC, IOFields, FreeflowNCIOFields<RANSIOFields, true/*turbulenceModel*/>);
 
 //////////////////////////////////////////////////////////////////////////
 // Property values for non-isothermal multi-component ZeroEq model
@@ -155,12 +147,9 @@ public:
 SET_PROP(ZeroEqNCNI, IOFields)
 {
 private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using BaseIOFields = RANSIOFields<FVGridGeometry>;
-    using NonIsothermalFields = FreeflowNonIsothermalIOFields<BaseIOFields, ModelTraits>;
+    using IsothermalIOFields = FreeflowNCIOFields<RANSIOFields, true/*turbulenceModel*/>;
 public:
-    using type = FreeflowNCIOFields<NonIsothermalFields, ModelTraits>;
+    using type = FreeflowNonIsothermalIOFields<IsothermalIOFields, true/*turbulenceModel*/>;
 };
 
 // \}

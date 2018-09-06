@@ -172,13 +172,7 @@ public:
 };
 
 //! The specific I/O fields
-SET_PROP(LowReKEpsilon, IOFields)
-{
-private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-public:
-    using type = LowReKEpsilonIOFields<FVGridGeometry>;
-};
+SET_TYPE_PROP(LowReKEpsilon, IOFields, LowReKEpsilonIOFields);
 
 //////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal low-Reynolds k-epsilon model
@@ -218,15 +212,7 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_PROP(LowReKEpsilonNI, IOFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IsothermalFields = LowReKEpsilonIOFields<FVGridGeometry>;
-public:
-    using type = FreeflowNonIsothermalIOFields<IsothermalFields, ModelTraits>;
-};
+SET_TYPE_PROP(LowReKEpsilonNI, IOFields, FreeflowNonIsothermalIOFields<LowReKEpsilonIOFields, true/*turbulenceModel*/>);
 
 // \}
 }

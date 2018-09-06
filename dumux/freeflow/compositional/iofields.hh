@@ -36,12 +36,9 @@ namespace Dumux
  * \ingroup FreeflowNCModel
  * \brief Adds I/O fields specific to the FreeflowNC model
  */
-template<class BaseOutputFields, class ModelTraits>
-class FreeflowNCIOFields
+template<class BaseOutputFields, bool turbulenceModel = false>
+struct FreeflowNCIOFields
 {
-
-public:
-
     //! Initialize the FreeflowNC specific output fields.
     template <class OutputModule>
     DUNE_DEPRECATED_MSG("use initOutputModule instead")
@@ -67,7 +64,7 @@ public:
                 out.addVolumeVariable([j](const auto& v){ return v.diffusionCoefficient(0, j); }, "D^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(0));
 
                 // the eddy diffusivity is recalculated for an arbitrary component which is not the phase component
-                if (ModelTraits::usesTurbulenceModel())
+                if (turbulenceModel)
                     out.addVolumeVariable([j](const auto& v){ return v.effectiveDiffusivity(0, j) - v.diffusionCoefficient(0, j); }, "D_t");
             }
         }

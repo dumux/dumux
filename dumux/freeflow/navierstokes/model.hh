@@ -199,13 +199,8 @@ SET_TYPE_PROP(NavierStokes, FluxVariables, NavierStokesFluxVariables<TypeTag>);
 SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
 //! The specific I/O fields
-SET_PROP(NavierStokes, IOFields)
-{
-private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-public:
-     using type = NavierStokesIOFields<FVGridGeometry>;
-};
+SET_TYPE_PROP(NavierStokes, IOFields, NavierStokesIOFields);
+
 //////////////////////////////////////////////////////////////////
 // Property values for non-isothermal Navier-Stokes model
 //////////////////////////////////////////////////////////////////
@@ -222,15 +217,7 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_PROP(NavierStokesNI, IOFields)
-{
-private:
-     using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-     using IsothermalFields = NavierStokesIOFields<FVGridGeometry>;
-public:
-     using type = FreeflowNonIsothermalIOFields<IsothermalFields, ModelTraits>;
-};
+SET_TYPE_PROP(NavierStokesNI, IOFields, FreeflowNonIsothermalIOFields<NavierStokesIOFields>);
 
  // \}
 }

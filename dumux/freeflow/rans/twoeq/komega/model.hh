@@ -163,13 +163,7 @@ public:
 };
 
 //! The specific I/O fields
-SET_PROP(KOmega, IOFields)
-{
-private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-public:
-    using type = KOmegaIOFields<FVGridGeometry>;
-};
+SET_TYPE_PROP(KOmega, IOFields, KOmegaIOFields);
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal k-omega single phase model
@@ -210,15 +204,7 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_PROP(KOmegaNI, IOFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IsothermalFields = KOmegaIOFields<FVGridGeometry>;
-public:
-    using type = FreeflowNonIsothermalIOFields<IsothermalFields, ModelTraits>;
-};
+SET_TYPE_PROP(KOmegaNI, IOFields, FreeflowNonIsothermalIOFields<KOmegaIOFields, true/*turbulenceModel*/>);
 
 // \}
 }

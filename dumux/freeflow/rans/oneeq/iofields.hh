@@ -33,12 +33,8 @@ namespace Dumux
  * \ingroup OneEqModel
  * \brief Adds I/O fields for the one-equation turbulence model by Spalart-Allmaras
  */
-template<class FVGridGeometry>
-class OneEqIOFields
+struct OneEqIOFields
 {
-    enum { dim = FVGridGeometry::GridView::dimension };
-
-public:
     template <class OutputModule>
     DUNE_DEPRECATED_MSG("use initOutputModule instead")
     static void init(OutputModule& out)
@@ -50,7 +46,7 @@ public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
-        RANSIOFields<FVGridGeometry>::initOutputModule(out);
+        RANSIOFields::initOutputModule(out);
         out.addVolumeVariable([](const auto& v){ return v.viscosityTilde(); }, "nu_tilde");
     }
 

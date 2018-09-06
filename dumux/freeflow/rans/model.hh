@@ -84,13 +84,7 @@ public:
 };
 
 //! The specific I/O fields
-SET_PROP(RANS, IOFields)
-{
-private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-public:
-    using type = RANSIOFields<FVGridGeometry>;
-};
+SET_TYPE_PROP(RANS, IOFields, RANSIOFields);
 
 //////////////////////////////////////////////////////////////////
 // Property values for non-isothermal Reynolds-averaged Navier-Stokes model
@@ -112,15 +106,7 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_PROP(RANSNI, IOFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IsothermalFields = RANSIOFields<FVGridGeometry>;
-public:
-    using type = FreeflowNonIsothermalIOFields<IsothermalFields, ModelTraits>;
-};
+SET_TYPE_PROP(RANSNI, IOFields, FreeflowNonIsothermalIOFields<RANSIOFields, true/*turbulenceModel*/>);
 
 //! Use Fourier's Law as default heat conduction type
 SET_TYPE_PROP(RANSNI, HeatConductionType, FouriersLaw<TypeTag>);

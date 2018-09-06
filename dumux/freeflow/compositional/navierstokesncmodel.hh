@@ -171,15 +171,7 @@ SET_TYPE_PROP(NavierStokesNC, FluxVariables, FreeflowNCFluxVariables<TypeTag>);
 SET_TYPE_PROP(NavierStokesNC, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
 //! The specific I/O fields
-SET_PROP(NavierStokesNC, IOFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using BaseIOFields = NavierStokesIOFields<FVGridGeometry>;
-public:
-    using type = FreeflowNCIOFields<BaseIOFields, ModelTraits>;
-};
+SET_TYPE_PROP(NavierStokesNC, IOFields, FreeflowNCIOFields<NavierStokesIOFields>);
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -222,12 +214,9 @@ public:
 SET_PROP(NavierStokesNCNI, IOFields)
 {
 private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using BaseIOFields = NavierStokesIOFields<FVGridGeometry>;
-    using NonIsothermalFields = FreeflowNonIsothermalIOFields<BaseIOFields, ModelTraits>;
+    using IsothermalIOFields = FreeflowNCIOFields<NavierStokesIOFields>;
 public:
-    using type = FreeflowNCIOFields<NonIsothermalFields, ModelTraits>;
+    using type = FreeflowNonIsothermalIOFields<IsothermalIOFields>;
 };
 
 //! Use Fourier's Law as default heat conduction type

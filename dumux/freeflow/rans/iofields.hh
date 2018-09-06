@@ -34,13 +34,8 @@ namespace Dumux
  * \ingroup RANSModel
  * \brief Adds I/O fields for the Reynolds-Averaged Navier-Stokes model
  */
-template<class FVGridGeometry>
-class RANSIOFields
+struct RANSIOFields
 {
-    enum { dim = FVGridGeometry::GridView::dimension };
-
-public:
-
     template <class OutputModule>
     DUNE_DEPRECATED_MSG("use initOutputModule instead")
     static void init(OutputModule& out)
@@ -52,7 +47,9 @@ public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
-        NavierStokesIOFields<FVGridGeometry>::initOutputModule(out);
+        NavierStokesIOFields::initOutputModule(out);
+
+        static constexpr auto dim = decltype(std::declval<typename OutputModule::VolumeVariables>().velocity())::dimension;
 
         out.addVolumeVariable([](const auto& v){ return v.velocity()[0] / v.velocityMaximum()[0]; }, "v_x/v_x,max");
         out.addVolumeVariable([](const auto& v){ return v.velocityGradients()[0]; }, "dv_x/dx_");

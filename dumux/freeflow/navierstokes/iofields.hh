@@ -74,29 +74,35 @@ std::function<std::string(int,int)> createStaggeredPVNameFunction(const Dune::Mu
     }
 }
 
+// forward declare
+template<class T, class U>
+class StaggeredVtkOutputModule;
+
 /*!
  * \ingroup NavierStokesModel
  * \brief Adds I/O fields for the Navier-Stokes model
  */
-template<class FVGridGeometry>
 class NavierStokesIOFields
 {
-    // Helper type used for tag dispatching (to add discretization-specific fields).
-    template<DiscretizationMethod discMethod>
-    using discMethodTag = std::integral_constant<DiscretizationMethod, discMethod>;
+    //! Helper strcuts to determine whether a staggered grid discretization is used
+    template<class T>
+    struct isStaggered : public std::false_type {};
+
+    template<class... Args>
+    struct isStaggered<StaggeredVtkOutputModule<Args...>>
+    : public std::true_type {};
 
 public:
     //! Initialize the Navier-Stokes specific output fields.
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
-        using FluidSystem = typename OutputModule::VolumeVariables::FluidSystem;
         out.addVolumeVariable([](const auto& v){ return v.pressure(); }, IOName::pressure());
         out.addVolumeVariable([](const auto& v){ return v.molarDensity(); }, IOName::molarDensity());
         out.addVolumeVariable([](const auto& v){ return v.density(); }, IOName::density());
 
         // add discretization-specific fields
-        additionalOutput_(out, discMethodTag<FVGridGeometry::discMethod>{});
+        additionalOutput_(out, isStaggered<OutputModule>());
     }
 
     template <class OutputModule>
@@ -119,21 +125,20 @@ public:
 private:
 
     //! Adds discretization-specific fields (nothing by default).
-    template <class OutputModule, class AnyMethod>
-    static void additionalOutput_(OutputModule& out, AnyMethod)
+    template <class OutputModule>
+    static void additionalOutput_(OutputModule& out)
     { }
 
     //! Adds discretization-specific fields (velocity vectors on the faces for the staggered discretization).
     template <class OutputModule>
-    static void additionalOutput_(OutputModule& out, discMethodTag<DiscretizationMethod::staggered>)
+    static void additionalOutput_(OutputModule& out, std::true_type)
     {
         const bool writeFaceVars = getParamFromGroup<bool>(out.paramGroup(), "Vtk.WriteFaceData", false);
         if(writeFaceVars)
         {
-            auto faceVelocityVector = [](const typename FVGridGeometry::SubControlVolumeFace& scvf, const auto& faceVars)
+            auto faceVelocityVector = [](const auto& scvf, const auto& faceVars)
                                       {
-                                          using Scalar = typename OutputModule::VolumeVariables::PrimaryVariables::value_type;
-                                          using VelocityVector = Dune::FieldVector<Scalar, FVGridGeometry::GridView::dimensionworld>;
+                                          using VelocityVector = std::decay_t<decltype(scvf.unitOuterNormal())>;
 
                                           VelocityVector velocity(0.0);
                                           velocity[scvf.directionIndex()] = faceVars.velocitySelf();

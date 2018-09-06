@@ -34,13 +34,8 @@ namespace Dumux
  * \ingroup KEpsilonModel
  * \brief Adds I/O fields for the k-epsilon turbulence model
  */
-template<class FVGridGeometry>
-class KEpsilonIOFields
+struct KEpsilonIOFields
 {
-    enum { dim = FVGridGeometry::GridView::dimension };
-
-public:
-
     template <class OutputModule>
     DUNE_DEPRECATED_MSG("use initOutputModule instead")
     static void init(OutputModule& out)
@@ -52,7 +47,7 @@ public:
     template <class OutputModule>
     static void initOutputModule(OutputModule& out)
     {
-        RANSIOFields<FVGridGeometry>::initOutputModule(out);
+        RANSIOFields::initOutputModule(out);
 
         out.addVolumeVariable([](const auto& v){ return v.turbulentKineticEnergy(); }, "k");
         out.addVolumeVariable([](const auto& v){ return v.dissipation(); }, "epsilon");

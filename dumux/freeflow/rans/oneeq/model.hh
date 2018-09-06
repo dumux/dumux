@@ -170,13 +170,7 @@ public:
 };
 
 //! The specific I/O fields
-SET_PROP(OneEq, IOFields)
-{
-private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-public:
-    using type = OneEqIOFields<FVGridGeometry>;
-};
+SET_TYPE_PROP(OneEq, IOFields, OneEqIOFields);
 
 //////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal Spalart-Allmaras model
@@ -216,15 +210,7 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_PROP(OneEqNI, IOFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IsothermalFields = OneEqIOFields<FVGridGeometry>;
-public:
-    using type = FreeflowNonIsothermalIOFields<IsothermalFields, ModelTraits>;
-};
+SET_TYPE_PROP(OneEqNI, IOFields, FreeflowNonIsothermalIOFields<OneEqIOFields, true/*turbulenceModel*/>);
 
 // \}
 }

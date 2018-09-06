@@ -156,13 +156,7 @@ public:
 };
 
 //! The specific I/O fields
-SET_PROP(KEpsilon, IOFields)
-{
-private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-public:
-    using type = KEpsilonIOFields<FVGridGeometry>;
-};
+SET_TYPE_PROP(KEpsilon, IOFields, KEpsilonIOFields);
 
 //////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal k-epsilon model
@@ -202,15 +196,7 @@ public:
 };
 
 //! The specific non-isothermal I/O fields
-SET_PROP(KEpsilonNI, IOFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IsothermalFields = KEpsilonIOFields<FVGridGeometry>;
-public:
-    using type = FreeflowNonIsothermalIOFields<IsothermalFields, ModelTraits>;
-};
+SET_TYPE_PROP(KEpsilonNI, IOFields, FreeflowNonIsothermalIOFields<KEpsilonIOFields, true/*turbulenceModel*/>);
 
 // \}
 }

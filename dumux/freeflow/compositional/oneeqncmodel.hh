@@ -140,15 +140,7 @@ public:
 };
 
 //! The specific I/O fields
-SET_PROP(OneEqNC, IOFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SinglePhaseIOFields = OneEqIOFields<FVGridGeometry>;
-public:
-    using type = FreeflowNCIOFields<SinglePhaseIOFields, ModelTraits>;
-};
+SET_TYPE_PROP(OneEqNC, IOFields, FreeflowNCIOFields<OneEqIOFields, true/*turbulenceModel*/>);
 
 //////////////////////////////////////////////////////////////////////////
 // Property values for non-isothermal multi-component one-equation model
@@ -214,12 +206,9 @@ public:
 SET_PROP(OneEqNCNI, IOFields)
 {
 private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using BaseIOFields = OneEqIOFields<FVGridGeometry>;
-    using NonIsothermalFields = FreeflowNonIsothermalIOFields<BaseIOFields, ModelTraits>;
+    using IsothermalIOFields = FreeflowNCIOFields<OneEqIOFields, true/*turbulenceModel*/>;
 public:
-    using type = FreeflowNCIOFields<NonIsothermalFields, ModelTraits>;
+    using type = FreeflowNonIsothermalIOFields<IsothermalIOFields, true/*turbulenceModel*/>;
 };
 
 // \}
