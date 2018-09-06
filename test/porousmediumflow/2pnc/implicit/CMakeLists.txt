@@ -1,12 +1,9 @@
 dune_symlink_to_source_files(FILES test_2pnc_fv.input test_2pnc_diffusion.input)
 
-# isothermal tests without caching
-add_executable(test_2pnc_box EXCLUDE_FROM_ALL test_2pnc_fv.cc)
-target_compile_definitions(test_2pnc_box PUBLIC TYPETAG=FuelCellBoxTypeTag ENABLECACHING=0)
-
 # isothermal tests
 dune_add_test(NAME test_2pnc_box
-              TARGET test_2pnc_box
+              SOURCES test_2pnc_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=FuelCellBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/fuelcell2pncbox-reference.vtu

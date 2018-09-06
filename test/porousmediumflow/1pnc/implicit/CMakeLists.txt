@@ -10,12 +10,9 @@ dune_add_test(NAME test_1p2c_box
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_box test_1p2c_fv.input -Problem.Name 1pnctestbox"
                         --zeroThreshold {"velocity_w \(m/s\)_1":1e-15})
 
-# using tpfa
-add_executable(test_1p2c_tpfa EXCLUDE_FROM_ALL test_1p2c_fv.cc)
-target_compile_definitions(test_1p2c_tpfa PUBLIC TYPETAG=OnePTwoCTestCCTpfaTypeTag)
-
 dune_add_test(NAME test_1p2c_tpfa
-              TARGET test_1p2c_tpfa
+              SOURCES test_1p2c_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCTpfaTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2ctestcc-reference.vtu

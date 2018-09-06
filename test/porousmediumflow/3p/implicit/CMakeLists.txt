@@ -10,12 +10,9 @@ dune_add_test(NAME test_box3p
                                     ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pbox-00008.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3p test_3p_fv.input -Problem.Name infiltration3pbox")
 
-# isothermal cc tests without caching
-add_executable(test_cc3p EXCLUDE_FROM_ALL test_3p_fv.cc)
-target_compile_definitions(test_cc3p PUBLIC TYPETAG=InfiltrationThreePCCTpfaTypeTag ENABLECACHING=0)
-
 dune_add_test(NAME test_cc3p
-              TARGET test_cc3p
+              SOURCES test_3p_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePCCTpfaTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/infiltration3pcc-reference.vtu
