@@ -63,10 +63,10 @@ public:
     template <class ModelTraits, class FluidSystem, class SolidSystem>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
-        static constexpr int nonMinNumEq = ModelTraits::numEq() - ModelTraits::numSolidComp() + ModelTraits::numInertSolidComp();
+        static constexpr int nonMinNumEq = ModelTraits::numEq() - ModelTraits::numSolidComps() + ModelTraits::numInertSolidComps();
 
         if (pvIdx < nonMinNumEq)
-            return NonMineralizationIOFields::template primaryVariableName<FluidSystem, SolidSystem>(pvIdx, state);
+            return NonMineralizationIOFields::template primaryVariableName<ModelTraits, FluidSystem, SolidSystem>(pvIdx, state);
         else
             return IOName::solidVolumeFraction<SolidSystem>(pvIdx - nonMinNumEq);
     }

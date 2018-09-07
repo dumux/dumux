@@ -106,10 +106,10 @@ public:
         switch (ModelTraits::priVarFormulation())
         {
         case TwoPFormulation::p0s1:
-            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::wPhaseIdx)
+            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::phase0Idx)
                               : p0s1SwitchedPvNames[state-1];
         case TwoPFormulation::p1s0:
-            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::nPhaseIdx)
+            return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::phase1Idx)
                               : p1s0SwitchedPvNames[state-1];
         default: DUNE_THROW(Dune::InvalidStateException, "Invalid formulation ");
         }
