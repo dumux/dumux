@@ -89,8 +89,8 @@ inline void boundaryFluxes(const auto& nxy,
       cellStatesRight[0] = bdValue - cellStatesRight[3];
       auto uboundIn = nxy[0] * cellStatesLeft[1]  + nxy[1] * cellStatesLeft[2] ;
       auto uboundQut =  uboundIn + 2.0 * std::sqrt(9.81 * cellStatesLeft[0]) - 2.0 * std::sqrt(9.81 * cellStatesRight[0]);
-      cellStatesRight[1] = (nxy[0] * uboundQut - nxy[1] * (-nxy[1] * cellStatesLeft[1] + nxy[0] * cellStatesLeft[1]));
-      cellStatesRight[2] = (nxy[1] * uboundQut + nxy[0] * (-nxy[1] * cellStatesLeft[1] + nxy[0] * cellStatesLeft[1]));
+      cellStatesRight[1] = (nxy[0] * uboundQut); // - nxy[1] * (-nxy[1] * cellStatesLeft[1] + nxy[0] * cellStatesLeft[1]));
+      cellStatesRight[2] = (nxy[1] * uboundQut); // + nxy[0] * (-nxy[1] * cellStatesLeft[1] + nxy[0] * cellStatesLeft[1]));
     }
   }
 } // end namespace Dumux

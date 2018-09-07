@@ -168,7 +168,6 @@ public:
         this->readBoundaryBoxFile("boundary_boxes.dat");
     }
 
-
     // \}
 
     /*!
@@ -221,7 +220,6 @@ public:
 
         int bdType = 0; //0 = Neumann, 1 = definded q, 2 = defined h
         double bdValue = 0.0;
-
         auto myBoundaryId = this->getBoundaryId(ip[0],ip[1]); //use the integration point
 
         if (myBoundaryId != 0){
@@ -241,13 +239,14 @@ public:
             {
                 bdValue = getBoundaryValue(time_,myBoundaryId);
                 using std::abs;
-                if (abs(bdValue) != 0.0)
+                if (abs(bdValue) < (1.0E-20))
                 {
-                    bdValue = (bdValue / this->hBoundarySumMap_.at(boundaryValues.id)) * hBoundarySegmentMap_.at(scvf.index());
-                    bdType = 1;
-                }else{
-                    bdType = 0;
                     bdValue = 0.0;
+                    bdType = 0;
+                }else{
+                    bdValue = (bdValue / this->hBoundarySumMap_.at(boundaryValues.id))
+                               * hBoundarySegmentMap_.at(scvf.index());
+                    bdType = 1;
                 }
             }
         }else{
@@ -256,14 +255,11 @@ public:
         }
 
 
-        //TODO scale the boundary?
-        //auto segIndex = is.boundarySegmentIndex();
-
-
         //call boundaryfluxes for computing the Riemann invariants
-        boundaryFluxes(nxy,scvf.area(),0.2,
-                       cellStatesLeft,cellStatesRight,bdType,bdValue);
+        auto localBD = this->minHBoundary_;
 
+        boundaryFluxes(nxy,scvf.area(),localBD,
+                       cellStatesLeft,cellStatesRight,bdType,bdValue);
 
         stateRotation(nxy,cellStatesLeft);
         stateRotation(nxy,cellStatesRight);
@@ -273,33 +269,14 @@ public:
                             cellStatesLeft[1],cellStatesRight[1],
                             cellStatesLeft[2],cellStatesRight[2],insideVolVars.getGravity());
 
-
         rotateFluxBack(nxy,riemannFlux);
 
         values[massBalanceIdx] = riemannFlux[0];
         values[velocityXIdx]   = riemannFlux[1];
         values[velocityYIdx]   = riemannFlux[2];
 
-
         return values;
     }
-
-    //! set neumann condition for phases (flux, [kg/(m^2 s)])
-    /*
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    {
-        PrimaryVariables values(0.0);
-
-        //we need the Riemann invariants to compute the values depending of the boundary type
-        //since we use a weak imposition we do not have a dirichlet value. We impose fluxes
-        //based on q,h, etc. computed with the Riemann invariants
-        values[massBalanceIdx] = 0.0;
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
-
-        return values;
-    }
-    */
 
     //! do some preprocessing
     void preTimeStep(const SolutionVector& curSol,
@@ -461,13 +438,17 @@ public:
                                     if (boundaryValues.type == "discharge")
                                     {
                                         bdValue = getBoundaryValue(time_,myBoundaryId);
-                                        bdType = 1;
+                                        using std::abs;
+                                        if (abs(bdValue) < (1.0E-20))
+                                        {
+                                            bdValue = 0.0;
+                                            bdType = 0;
+                                        }else{
+                                            bdValue = (bdValue / this->hBoundarySumMap_.at(boundaryValues.id))
+                                                      * hBoundarySegmentMap_.at(scvf.index());
+                                            bdType = 1;
+                                        }
                                     }
-
-
-                                    //TODO scale the boundary?
-                                    //auto segIndex = is.boundarySegmentIndex();
-                                    //bdValue = (bdValue / this->hA_boundarySum[bd_id])* this->hA_boundaryMap.at(segIndex);
 
                                     //call boundaryfluxes for computing the Riemann invariants
                                     boundaryFluxes(nxy,scvf.area(),0.2,
@@ -478,8 +459,8 @@ public:
 
                                     Scalar riemannFlux[3] = {0.0};
                                     computeExactRiemann(riemannFlux,cellStatesLeft[0],cellStatesRight[0],
-                                                        cellStatesLeft[1],cellStatesRight[1],
-                                                        cellStatesLeft[2],cellStatesRight[2],insideVolVars.getGravity());
+                                        cellStatesLeft[1],cellStatesRight[1],
+                                        cellStatesLeft[2],cellStatesRight[2],insideVolVars.getGravity());
 
                                     rotateFluxBack(nxy,riemannFlux);
 
@@ -495,7 +476,7 @@ public:
         //TODO compute parallel sum for this->hBoundaryFluxMap_[boundaryValues.id]
         for( auto const& [key, val] : this->hBoundaryFluxMap_)
         {
-            std::cout << "hBoundaryFluxMap_ key " << key << " val " << val << std::endl;
+            //std::cout << "hBoundaryFluxMap_ key " << key << " val " << val << std::endl;
         }
 
     }
@@ -518,15 +499,15 @@ public:
     {
         PrimaryVariables values(0.0);
 
-        values[massBalanceIdx] = 0.5;
+        values[massBalanceIdx] = 1.0;
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
 
-        //auto someInitSol = element.geometry().center();
-        //if (someInitSol[0] < 10.001)
-        //{
-        //    values[massBalanceIdx] = 0.5
-        //}
+        auto someInitSol = element.geometry().center();
+        if (someInitSol[0] < 10.001)
+        {
+            values[massBalanceIdx] = 4.0;
+        }
 
         return values;
     };
@@ -714,8 +695,6 @@ private:
         std::vector<double> x;
         std::vector<double> y;
         double inx,iny;
-
-
         std::string actualfile;
 
         //open an read all files n = numberOfBoundaryfiles there might be more boxes as files!
