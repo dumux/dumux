@@ -33,7 +33,7 @@ namespace Dumux {
  * \ingroup MineralizationModel
  * \brief Adds I/O fields specific to a NCMin model
  */
-template<class NonMineralizationIOFields, int nonMineralizationNumEq>
+template<class NonMineralizationIOFields>
 class MineralizationIOFields
 {
 public:
@@ -60,13 +60,15 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem, class SolidSystem>
+    template <class ModelTraits, class FluidSystem, class SolidSystem>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
-        if (pvIdx < nonMineralizationNumEq)
+        static constexpr int nonMinNumEq = ModelTraits::numEq() - ModelTraits::numSolidComp() + ModelTraits::numInertSolidComp();
+
+        if (pvIdx < nonMinNumEq)
             return NonMineralizationIOFields::template primaryVariableName<FluidSystem, SolidSystem>(pvIdx, state);
         else
-            return IOName::solidVolumeFraction<SolidSystem>(pvIdx - nonMineralizationNumEq);
+            return IOName::solidVolumeFraction<SolidSystem>(pvIdx - nonMinNumEq);
     }
 };
 

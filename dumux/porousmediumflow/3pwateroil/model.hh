@@ -274,12 +274,7 @@ public:
 };
 
 //! Set the non-isothermal vkt output fields
-SET_PROP(ThreePWaterOilNI, IOFields)
-{
-    using ThreePWaterOilIOF = ThreePWaterOilIOFields<ThreePWaterOilIndices>;
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using type = EnergyIOFields<ThreePWaterOilIOF, ModelTraits>;
-};
+SET_TYPE_PROP(ThreePWaterOilNI, IOFields, EnergyIOFields<ThreePWaterOilIOFields>);
 
 } // end namespace Properties
 } // end namespace Dumux

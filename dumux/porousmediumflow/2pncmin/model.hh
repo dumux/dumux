@@ -139,29 +139,14 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_PROP(TwoPNCMin, IOFields)
-{
-    static constexpr auto formulation = GET_PROP_VALUE(TypeTag, Formulation);
-    using Indices = TwoPNCIndices;
-    static constexpr auto useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static constexpr auto setMoleFractionsForFirstPhase = GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase);
-    using TwoPNCIOF = TwoPNCIOFields<formulation, Indices, useMoles, setMoleFractionsForFirstPhase>;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using type = MineralizationIOFields<TwoPNCIOF, FluidSystem::numComponents>;
-};
+SET_TYPE_PROP(TwoPNCMin, IOFields, MineralizationIOFields<TwoPNCIOFields>);
 
 //! The 2pnc model traits define the non-mineralization part
 SET_PROP(TwoPNCMin, ModelTraits)
 {
 private:
-    //! we use the number of components specified by the fluid system here
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
     using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using NonMineralizationTraits = TwoPNCModelTraits<FluidSystem::numComponents,
-                                                      GET_PROP_VALUE(TypeTag, UseMoles),
-                                                      GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
-                                                      GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using NonMineralizationTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
 public:
     using type = MineralizationModelTraits<NonMineralizationTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 };
@@ -184,14 +169,8 @@ public:
 SET_PROP(TwoPNCMinNI, ModelTraits)
 {
 private:
-    //! we use the number of components specified by the fluid system here
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
     using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using TwoPNCTraits = TwoPNCModelTraits<FluidSystem::numComponents,
-                                           GET_PROP_VALUE(TypeTag, UseMoles),
-                                           GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
-                                           GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using TwoPNCTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
     using IsothermalTraits = MineralizationModelTraits<TwoPNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:
     // the mineralization traits, based on 2pnc traits, are the isothermal traits
@@ -201,15 +180,8 @@ public:
 //! non-isothermal vtkoutput
 SET_PROP(TwoPNCMinNI, IOFields)
 {
-    static constexpr auto formulation = GET_PROP_VALUE(TypeTag, Formulation);
-    using Indices = TwoPNCIndices;
-    static constexpr auto useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static constexpr auto setMoleFractionsForFirstPhase = GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase);
-    using TwoPNCIOF = TwoPNCIOFields<formulation, Indices, useMoles, setMoleFractionsForFirstPhase>;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using MineralizationIOF = MineralizationIOFields<TwoPNCIOF, FluidSystem::numComponents>;
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using type = EnergyIOFields<MineralizationIOF, ModelTraits>;
+    using MineralizationIOF = MineralizationIOFields<TwoPNCIOFields>;
+    using type = EnergyIOFields<MineralizationIOF>;
 };
 
 } // end namespace Properties

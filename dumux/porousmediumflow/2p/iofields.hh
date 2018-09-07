@@ -36,7 +36,6 @@ namespace Dumux {
  * \ingroup TwoPModel
  * \brief Adds I/O fields specific to the two-phase model
  */
-template <TwoPFormulation priVarFormulation>
 class TwoPIOFields
 {
 public:
@@ -71,10 +70,10 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem, class SolidSystem = void>
+    template <class ModelTraits, class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
-        if (priVarFormulation == TwoPFormulation::p0s1)
+        if (ModelTraits::priVarFormulation() == TwoPFormulation::p0s1)
             return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::phase0Idx)
                               : IOName::saturation<FluidSystem>(FluidSystem::phase1Idx);
         else

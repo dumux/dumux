@@ -33,7 +33,6 @@ namespace Dumux {
  * \ingroup RichardsNCModel
  * \brief Adds I/O fields specific to the Richards model.
  */
-template <bool useMoles>
 class RichardsNCIOFields
 {
 public:
@@ -84,14 +83,14 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem, class SolidSystem = void>
+    template <class ModelTraits, class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         if (pvIdx == 0)
             return IOName::pressure<FluidSystem>(0);
         else
-            return useMoles ? IOName::moleFraction<FluidSystem>(0, pvIdx)
-                            : IOName::massFraction<FluidSystem>(0, pvIdx);
+            return ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(0, pvIdx)
+                                           : IOName::massFraction<FluidSystem>(0, pvIdx);
     }
 };
 

@@ -32,7 +32,7 @@ namespace Dumux {
  * \ingroup NIModel
  * \brief Adds I/O fields specific to non-isothermal models
  */
-template<class IsothermalIOFields, class ModelTraits>
+template<class IsothermalIOFields>
 class EnergyIOFields
 {
 
@@ -52,11 +52,13 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem = void, class SolidSystem = void>
+    template <class ModelTraits, class FluidSystem = void, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
+        using IsothermalTraits = typename ModelTraits::IsothermalTraits;
+
         if (pvIdx < ModelTraits::numEq() - 1)
-            return IsothermalIOFields::template primaryVariableName<FluidSystem, SolidSystem>(pvIdx, state);
+            return IsothermalIOFields::template primaryVariableName<IsothermalTraits, FluidSystem, SolidSystem>(pvIdx, state);
         else
             return IOName::temperature();
     }

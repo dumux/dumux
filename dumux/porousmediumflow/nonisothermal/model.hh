@@ -63,9 +63,12 @@ namespace Dumux {
  *        flow models based on the specifics of a given isothermal model.
  * \tparam IsothermalTraits Model traits of the isothermal model
  */
-template<class IsothermalTraits>
-struct PorousMediumFlowNIModelTraits : public IsothermalTraits
+template<class IsothermalT>
+struct PorousMediumFlowNIModelTraits : public IsothermalT
 {
+    //! Export the isothermal model traits
+    using IsothermalTraits = IsothermalT;
+
     //! We solve for one more equation, i.e. the energy balance
     static constexpr int numEq() { return IsothermalTraits::numEq()+1; }
     //! only one energy equation is needed when assuming thermal equilibrium

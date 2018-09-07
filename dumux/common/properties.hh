@@ -45,6 +45,7 @@ NEW_PROP_TAG(PrimaryVariables);       //!< A vector of primary variables
 NEW_PROP_TAG(NumEqVector);            //!< A vector of size number equations that can be used for Neumann fluxes, sources, residuals, ...
 NEW_PROP_TAG(GridView);               //!< The type of the grid view according to the grid type
 NEW_PROP_TAG(ModelTraits);            //!< Traits class encapsulating model specifications
+NEW_PROP_TAG(BaseModelTraits);        //!< Model traits to be used as a base for nonisothermal, mineralization ... models
 NEW_PROP_TAG(Problem);                //!< Property to specify the type of a problem which has to be solved
 NEW_PROP_TAG(PointSource);            //!< Property defining the type of point source used
 NEW_PROP_TAG(PointSourceHelper);      //!< Property defining the class that computes which sub control volume point sources belong to

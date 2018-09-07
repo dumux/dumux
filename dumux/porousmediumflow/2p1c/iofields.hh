@@ -33,7 +33,6 @@ namespace Dumux {
  * \ingroup TwoPOneCModel
  * \brief Adds I/O fields specific to two-phase one-component model.
  */
-template <TwoPFormulation priVarFormulation, class Indices>
 class TwoPOneCIOFields
 {
 public:
@@ -41,7 +40,7 @@ public:
     static void initOutputModule(OutputModule& out)
     {
         // use default fields from the 2p model
-        TwoPIOFields<priVarFormulation>::initOutputModule(out);
+        TwoPIOFields::initOutputModule(out);
 
         // output additional to TwoP output:
         out.addVolumeVariable([](const auto& v){ return v.priVars().state(); },
@@ -55,10 +54,12 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem, class SolidSystem = void>
+    template <class ModelTraits, class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
-        if (priVarFormulation == TwoPFormulation::p0s1)
+        using Indices = typename ModelTraits::Indices;
+
+        if (ModelTraits::priVarFormulation() == TwoPFormulation::p0s1)
             return (pvIdx == 0) ? IOName::pressure<FluidSystem>(FluidSystem::phase0Idx) :
                                   (state == Indices::twoPhases)
                                   ? IOName::saturation<FluidSystem>(FluidSystem::phase1Idx)

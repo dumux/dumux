@@ -121,7 +121,8 @@ NEW_TYPE_TAG(OnePNI, INHERITS_FROM(OneP));
 ///////////////////////////////////////////////////////////////////////////
 SET_TYPE_PROP(OneP, IOFields, OnePIOFields);                          //!< default I/O fields specific to this model
 SET_TYPE_PROP(OneP, LocalResidual, ImmiscibleLocalResidual<TypeTag>); //!< the local residual function
-SET_TYPE_PROP(OneP, ModelTraits, OnePModelTraits);                    //!< states some specifics of the one-phase model
+SET_TYPE_PROP(OneP, BaseModelTraits, OnePModelTraits);                //!< states some specifics of the one-phase model
+SET_TYPE_PROP(OneP, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits)); //!< default the actually used traits to the base traits
 
 //! Set the volume variables property
 SET_PROP(OneP, VolumeVariables)
@@ -160,11 +161,7 @@ public:
 ///////////////////////////////////////////////////////////////////////////
 
 //! Add temperature to the output
-SET_PROP(OnePNI, IOFields)
-{
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using type = EnergyIOFields<OnePIOFields, ModelTraits>;
-};
+SET_TYPE_PROP(OnePNI, IOFields, EnergyIOFields<OnePIOFields>);
 
 //! The model traits of the non-isothermal model
 SET_TYPE_PROP(OnePNI, ModelTraits, PorousMediumFlowNIModelTraits<OnePModelTraits>);

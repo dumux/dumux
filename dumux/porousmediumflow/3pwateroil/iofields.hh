@@ -33,7 +33,6 @@ namespace Dumux {
  * \ingroup ThreePWaterOilModel
  * \brief Adds I/O fields specific to the three-phase three-component model
  */
-template <class Indices>
 class ThreePWaterOilIOFields
 {
 
@@ -78,9 +77,11 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem, class SolidSystem = void>
+    template <class ModelTraits, class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
+        using Indices = typename ModelTraits::Indices;
+
         switch (state)
         {
             case Indices::threePhases:

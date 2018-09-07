@@ -65,7 +65,7 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem, class SolidSystem = void>
+    template <class ModelTraits, class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         switch (pvIdx)

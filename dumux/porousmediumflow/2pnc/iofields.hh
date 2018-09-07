@@ -34,7 +34,6 @@ namespace Dumux
  * \ingroup TwoPNCModel
  * \brief Adds I/O fields specific to the TwoPNC model
  */
-template <TwoPFormulation priVarFormulation, class Indices, bool useMoles, bool setMoleFractionsForFirstPhase>
 class TwoPNCIOFields
 {
 public:
@@ -45,7 +44,7 @@ public:
         using FluidSystem = typename VolumeVariables::FluidSystem;
 
         // use default fields from the 2p model
-        TwoPIOFields<priVarFormulation>::initOutputModule(out);
+        TwoPIOFields::initOutputModule(out);
 
         // output additional to TwoP output:
         for (int phaseIdx = 0; phaseIdx < VolumeVariables::numPhases(); ++phaseIdx)
@@ -74,35 +73,37 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem, class SolidSystem = void>
+    template <class ModelTraits, class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
+        using Indices = typename ModelTraits::Indices;
+
         int idxSecComps;
         if (state == Indices::firstPhaseOnly
-            || (state == Indices::bothPhases && setMoleFractionsForFirstPhase))
+            || (state == Indices::bothPhases && ModelTraits::setMoleFractionsForFirstPhase()))
             idxSecComps = FluidSystem::phase0Idx;
         else
             idxSecComps = FluidSystem::phase1Idx;
 
         if (pvIdx > 1)
-            return useMoles ? IOName::moleFraction<FluidSystem>(idxSecComps, pvIdx)
-                            : IOName::massFraction<FluidSystem>(idxSecComps, pvIdx);
+            return ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(idxSecComps, pvIdx)
+                                           : IOName::massFraction<FluidSystem>(idxSecComps, pvIdx);
 
         const std::vector<std::string> p0s1SwitchedPvNames = {
-            useMoles ? IOName::moleFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx)
-                     : IOName::massFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx),
-            useMoles ? IOName::moleFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx)
-                     : IOName::massFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx),
+            ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx)
+                                    : IOName::massFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx),
+            ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx)
+                                    : IOName::massFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx),
             IOName::saturation<FluidSystem>(FluidSystem::phase1Idx)};
 
         const std::vector<std::string> p1s0SwitchedPvNames = {
-            useMoles ? IOName::moleFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx)
-                     : IOName::massFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx),
-            useMoles ? IOName::moleFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx)
-                     : IOName::massFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx),
+            ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx)
+                                    : IOName::massFraction<FluidSystem>(FluidSystem::phase0Idx, FluidSystem::comp1Idx),
+            ModelTraits::useMoles() ? IOName::moleFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx)
+                                    : IOName::massFraction<FluidSystem>(FluidSystem::phase1Idx, FluidSystem::comp0Idx),
             IOName::saturation<FluidSystem>(FluidSystem::phase0Idx)};
 
-        switch (priVarFormulation)
+        switch (ModelTraits::priVarFormulation())
         {
         case TwoPFormulation::p0s1:
             return pvIdx == 0 ? IOName::pressure<FluidSystem>(FluidSystem::wPhaseIdx)

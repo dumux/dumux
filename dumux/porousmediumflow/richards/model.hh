@@ -198,7 +198,7 @@ private:
         = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
 
 public:
-    using type = RichardsIOFields<enableWaterDiffusionInAir, RichardsIndices>;
+    using type = RichardsIOFields<enableWaterDiffusionInAir>;
 };
 
 //! The model traits
@@ -300,9 +300,8 @@ SET_PROP(RichardsNI, IOFields)
 {
     static constexpr bool enableWaterDiffusionInAir
         = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
-    using RichardsIOF = RichardsIOFields<enableWaterDiffusionInAir, RichardsIndices>;
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using type = EnergyIOFields<RichardsIOF, ModelTraits>;
+    using RichardsIOF = RichardsIOFields<enableWaterDiffusionInAir>;
+    using type = EnergyIOFields<RichardsIOF>;
 };
 
 // \}

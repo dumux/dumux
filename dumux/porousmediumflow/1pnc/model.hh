@@ -149,14 +149,15 @@ NEW_TYPE_TAG(OnePNCNI, INHERITS_FROM(OnePNC));
 //! Set as default that no component mass balance is replaced by the total mass balance
 SET_INT_PROP(OnePNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);
 
-//! The model traits. Per default, we use the number of components of the fluid system.
-SET_PROP(OnePNC, ModelTraits)
+//! The base model traits. Per default, we use the number of components of the fluid system.
+SET_PROP(OnePNC, BaseModelTraits)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
     using type = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
+SET_TYPE_PROP(OnePNC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits)); //!< default the actually used traits to the base traits
 
 
 /*!
@@ -207,19 +208,14 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(OnePNC, IOFields, OnePNCIOFields<GET_PROP_VALUE(TypeTag, UseMoles)>);
+SET_TYPE_PROP(OnePNC, IOFields, OnePNCIOFields);
 
 ///////////////////////////////////////////////////////////////////////////
 // properties for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
 //! the non-isothermal vtk output fields
-SET_PROP(OnePNCNI, IOFields)
-{
-    using OnePNCIOF = OnePNCIOFields<GET_PROP_VALUE(TypeTag, UseMoles)>;
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using type = EnergyIOFields<OnePNCIOF, ModelTraits>;
-};
+SET_TYPE_PROP(OnePNCNI, IOFields, EnergyIOFields<OnePNCIOFields>);
 
 //! Use the average for effective conductivities
 SET_TYPE_PROP(OnePNCNI,
@@ -230,8 +226,7 @@ SET_TYPE_PROP(OnePNCNI,
 SET_PROP(OnePNCNI, ModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using IsothermalTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };

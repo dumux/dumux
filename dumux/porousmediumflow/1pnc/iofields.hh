@@ -34,7 +34,6 @@ namespace Dumux {
  * \ingroup OnePNCModel
  * \brief Adds I/O fields specific to the OnePNC model
  */
-template <bool useMoles>
 class OnePNCIOFields
 {
 public:
@@ -69,12 +68,12 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem, class SolidSystem = void>
+    template <class ModelTraits, class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
         if (pvIdx == 0)
             return IOName::pressure();
-        else if (useMoles)
+        else if (ModelTraits::useMoles())
             return IOName::moleFraction<FluidSystem>(0, pvIdx);
         else
             return IOName::massFraction<FluidSystem>(0, pvIdx);

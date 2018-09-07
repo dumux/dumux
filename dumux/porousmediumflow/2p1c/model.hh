@@ -217,12 +217,7 @@ SET_TYPE_PROP(TwoPOneCNI, ThermalConductivityModel, ThermalConductivitySomerton<
 SET_TYPE_PROP(TwoPOneCNI, ModelTraits, TwoPOneCNIModelTraits<GET_PROP_VALUE(TypeTag, Formulation)>);
 
 //! The non-isothermal vtk output fields.
-SET_PROP(TwoPOneCNI, IOFields)
-{
-    using TwoPOneCIOF = TwoPOneCIOFields<GET_PROP_VALUE(TypeTag, Formulation), TwoPOneCIndices>;
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using type = EnergyIOFields<TwoPOneCIOF, ModelTraits>;
-};
+SET_TYPE_PROP(TwoPOneCNI, IOFields, EnergyIOFields<TwoPOneCIOFields>);
 
 } // end namespace Properties
 } // end namespace Dumux

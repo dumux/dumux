@@ -33,7 +33,7 @@ namespace Dumux {
  * \ingroup RichardsModel
  * \brief Adds I/O fields specific to the Richards model.
  */
-template<bool enableWaterDiffusionInAir, class Indices>
+template <bool enableWaterDiffusionInAir>
 class RichardsIOFields
 {
 public:
@@ -84,9 +84,11 @@ public:
         initOutputModule(out);
     }
 
-    template<class FluidSystem, class SolidSystem = void>
+    template<class ModelTraits, class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state)
     {
+        using Indices = typename ModelTraits::Indices;
+
         if (state == Indices::gasPhaseOnly)
             return IOName::moleFraction<FluidSystem>(FluidSystem::gasPhaseIdx,
                                                      FluidSystem::liquidCompIdx);

@@ -194,7 +194,6 @@ struct TwoPNCVolumeVariablesTraits
     using ModelTraits = MT;
 };
 
-
 namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
@@ -234,8 +233,8 @@ public:
     using type = TwoPNCVolumeVariables<Traits>;
 };
 
-//! Set the model traits
-SET_PROP(TwoPNC, ModelTraits)
+//! Set the base model traits
+SET_PROP(TwoPNC, BaseModelTraits)
 {
 private:
     //! we use the number of components specified by the fluid system here
@@ -247,16 +246,10 @@ public:
                                    GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
                                    GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
 };
+SET_TYPE_PROP(TwoPNC, ModelTraits, typename GET_PROP_TYPE(TypeTag, BaseModelTraits)); //!< default the actually used traits to the base traits
 
 //! Set the vtk output fields specific to this model
-SET_PROP(TwoPNC, IOFields)
-{
-    static constexpr auto formulation = GET_PROP_VALUE(TypeTag, Formulation);
-    using Indices = TwoPNCIndices;
-    static constexpr auto useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static constexpr auto setMoleFractionsForFirstPhase = GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase);
-    using type = TwoPNCIOFields<formulation, Indices, useMoles, setMoleFractionsForFirstPhase>;
-};
+SET_TYPE_PROP(TwoPNC, IOFields, TwoPNCIOFields);
 
 SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //!< Use the compositional local residual
 
@@ -290,28 +283,13 @@ public:
 SET_PROP(TwoPNCNI, ModelTraits)
 {
 private:
-    //! we use the number of components specified by the fluid system here
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    static_assert(FluidSystem::numPhases == 2, "Only fluid systems with 2 fluid phases are supported by the 2p-nc model!");
-    using IsothermalTraits = TwoPNCModelTraits<FluidSystem::numComponents,
-                                               GET_PROP_VALUE(TypeTag, UseMoles),
-                                               GET_PROP_VALUE(TypeTag, SetMoleFractionsForFirstPhase),
-                                               GET_PROP_VALUE(TypeTag, Formulation), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using IsothermalTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;
 };
 
 //! Set non-isothermal output fields
-SET_PROP(TwoPNCNI, IOFields)
-{
-    static constexpr auto formulation = GET_PROP_VALUE(TypeTag, Formulation);
-    using Indices = TwoPNCIndices;
-    static constexpr auto useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    static constexpr auto setMoleFractionsForFirstPhase = ModelTraits::setMoleFractionsForFirstPhase();
-    using TwoPNCIOF = TwoPNCIOFields<formulation, Indices, useMoles, setMoleFractionsForFirstPhase>;
-    using type = EnergyIOFields<TwoPNCIOF, ModelTraits>;
-};
+SET_TYPE_PROP(TwoPNCNI, IOFields, EnergyIOFields<TwoPNCIOFields>);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNCNI, ThermalConductivityModel)

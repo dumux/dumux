@@ -142,7 +142,7 @@ public:
 SET_TYPE_PROP(Tracer, LocalResidual, TracerLocalResidual<TypeTag>);
 
 //! Set the vtk output fields specific to this model
-SET_TYPE_PROP(Tracer, IOFields, TracerIOFields<GET_PROP_VALUE(TypeTag, UseMoles)>);
+SET_TYPE_PROP(Tracer, IOFields, TracerIOFields);
 
 //! Set the volume variables property
 SET_PROP(Tracer, VolumeVariables)

@@ -51,7 +51,7 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem = void, class SolidSystem = void>
+    template <class ModelTraits = void, class FluidSystem = void, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx = 0, int state = 0)
     {
         return IOName::pressure();

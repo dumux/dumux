@@ -124,9 +124,8 @@ SET_TYPE_PROP(OnePNCMin, LocalResidual, MineralizationLocalResidual<TypeTag>);
 SET_PROP(OnePNCMin, ModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using NonMinTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using NonMinTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
 public:
     using type = MineralizationModelTraits<NonMinTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 };
@@ -142,12 +141,7 @@ public:
 };
 
 //! Use the mineralization vtk output fields
-SET_PROP(OnePNCMin, IOFields)
-{
-    using OnePNCIOF = OnePNCIOFields<GET_PROP_VALUE(TypeTag, UseMoles)>;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using type = MineralizationIOFields<OnePNCIOF, FluidSystem::numComponents>;
-};
+SET_TYPE_PROP(OnePNCMin, IOFields, MineralizationIOFields<OnePNCIOFields>);
 
 //////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2pncmin model
@@ -156,20 +150,16 @@ SET_PROP(OnePNCMin, IOFields)
 //! non-isothermal vtk output
 SET_PROP(OnePNCMinNI, IOFields)
 {
-    using OnePNCIOF = OnePNCIOFields<GET_PROP_VALUE(TypeTag, UseMoles)>;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using MineralizationIOF = MineralizationIOFields<OnePNCIOF, FluidSystem::numComponents>;
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using type = EnergyIOFields<MineralizationIOF, ModelTraits>;
+    using MineralizationIOF = MineralizationIOFields<OnePNCIOFields>;
+    using type = EnergyIOFields<MineralizationIOF>;
 };
 
 //! The non-isothermal model traits
 SET_PROP(OnePNCMinNI, ModelTraits)
 {
 private:
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SolidSystem = typename GET_PROP_TYPE(TypeTag, SolidSystem);
-    using OnePNCTraits = OnePNCModelTraits<FluidSystem::numComponents, GET_PROP_VALUE(TypeTag, UseMoles), GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx)>;
+    using OnePNCTraits = typename GET_PROP_TYPE(TypeTag, BaseModelTraits);
     using IsothermalTraits = MineralizationModelTraits<OnePNCTraits, SolidSystem::numComponents, SolidSystem::numInertComponents>;
 public:
     using type = PorousMediumFlowNIModelTraits<IsothermalTraits>;

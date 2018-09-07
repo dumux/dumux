@@ -186,14 +186,7 @@ public:
 };
 
 //! Set the vtk output fields specific to this model
-SET_PROP(ThreeP, IOFields)
-{
-private:
-   using Indices = typename GET_PROP_TYPE(TypeTag, ModelTraits)::Indices;
-
-public:
-    using type = ThreePIOFields;
-};
+SET_TYPE_PROP(ThreeP, IOFields, ThreePIOFields);
 
 /////////////////////////////////////////////////
 // Properties for the non-isothermal 3p model
@@ -209,14 +202,7 @@ public:
 };
 
 //! Set non-isothermal output fields
-SET_PROP(ThreePNI, IOFields)
-{
-private:
-    using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
-    using IsothermalFields = ThreePIOFields;
-public:
-    using type = EnergyIOFields<IsothermalFields, ModelTraits>;
-};
+SET_TYPE_PROP(ThreePNI, IOFields, EnergyIOFields<ThreePIOFields>);
 
 //! Set non-isothermal model traits
 SET_PROP(ThreePNI, ModelTraits)

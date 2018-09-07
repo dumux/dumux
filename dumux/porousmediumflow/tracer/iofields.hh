@@ -34,7 +34,6 @@ namespace Dumux {
  * \ingroup TracerModel
  * \brief Adds I/O fields specific to the tracer model
  */
-template <bool useMoles>
 class TracerIOFields
 {
 public:
@@ -62,10 +61,10 @@ public:
         initOutputModule(out);
     }
 
-    template <class FluidSystem, class SolidSystem = void>
+    template <class ModelTraits, class FluidSystem, class SolidSystem = void>
     static std::string primaryVariableName(int pvIdx, int state = 0)
     {
-        const std::string xString = useMoles ? "x" : "X";
+        const std::string xString = ModelTraits::useMoles() ? "x" : "X";
         return xString + "^" + FluidSystem::componentName(pvIdx);
     }
 };
