@@ -42,36 +42,38 @@ namespace Dumux
  * \brief helper function to determine the names of cell-centered primary variables of a model with staggered grid discretization
  * \note use this as input for the load solution function
  */
-template<class ModelTraits, class IOFields, class FluidSystem, std::size_t cellCenterIdx = 0, class ...Args, std::size_t i>
-std::function<std::string(int,int)> createStaggeredPVNameFunction(const Dune::MultiTypeBlockVector<Args...>&,
-                                                                  Dune::index_constant<i> idx,
-                                                                  const std::string& paramGroup = "")
+template<class IOFields, class PrimaryVariables, class ModelTraits, class FluidSystem>
+std::function<std::string(int,int)> createCellCenterPVNameFunction(const std::string& paramGroup = "")
 {
-    using CellCenterPriVarsType = typename std::tuple_element_t<cellCenterIdx, std::tuple<Args...>>::block_type;
-    static constexpr auto offset = ModelTraits::numEq() - CellCenterPriVarsType::dimension;
+    static constexpr auto offset = ModelTraits::numEq() - PrimaryVariables::dimension;
 
-    if (i == cellCenterIdx) // cell center
+    if (hasParamInGroup(paramGroup, "LoadSolution.CellCenterPriVarNames"))
     {
-        if (hasParamInGroup(paramGroup, "LoadSolution.CellCenterPriVarNames"))
-        {
-            const auto pvName = getParamFromGroup<std::vector<std::string>>(paramGroup, "LoadSolution.CellCenterPriVarNames");
-            return [n = std::move(pvName)](int pvIdx, int state = 0){ return n[pvIdx]; };
-        }
-        else
+        const auto pvName = getParamFromGroup<std::vector<std::string>>(paramGroup, "LoadSolution.CellCenterPriVarNames");
+        return [n = std::move(pvName)](int pvIdx, int state = 0){ return n[pvIdx]; };
+    }
+    else
         // add an offset to the pvIdx so that the velocities are skipped
-        return [](int pvIdx, int state = 0){ return IOFields::template primaryVariableName<ModelTraits ,FluidSystem>(pvIdx + offset, state); };
-    }
-    else // face
+        return [](int pvIdx, int state = 0){ return IOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx + offset, state); };
+}
+
+/*!
+ * \ingroup InputOutput
+ * \ingroup NavierStokesModel
+ * \brief helper function to determine the names of primary variables on the cell faces of a model with staggered grid discretization
+ * \note use this as input for the load solution function
+ */
+template<class IOFields, class PrimaryVariables, class ModelTraits, class FluidSystem>
+std::function<std::string(int,int)> createFacePVNameFunction(const std::string& paramGroup = "")
+{
+    if (hasParamInGroup(paramGroup, "LoadSolution.FacePriVarNames"))
     {
-            if (hasParamInGroup(paramGroup, "LoadSolution.FacePriVarNames"))
-            {
-                const auto pvName = getParamFromGroup<std::vector<std::string>>(paramGroup, "LoadSolution.FacePriVarNames");
-                return [n = std::move(pvName)](int pvIdx, int state = 0){ return n[pvIdx]; };
-            }
-            else
-                // there is only one scalar-type primary variable called "v" living on the faces
-                return [](int pvIdx, int state = 0){ return IOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx , state); };
+        const auto pvName = getParamFromGroup<std::vector<std::string>>(paramGroup, "LoadSolution.FacePriVarNames");
+        return [n = std::move(pvName)](int pvIdx, int state = 0){ return n[pvIdx]; };
     }
+    else
+        // there is only one scalar-type primary variable called "v" living on the faces
+        return [](int pvIdx, int state = 0){ return IOFields::template primaryVariableName<ModelTraits, FluidSystem>(pvIdx , state); };
 }
 
 // forward declare

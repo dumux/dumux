@@ -104,10 +104,12 @@ int main(int argc, char** argv) try
     SolutionVector x(fvGridGeometry->numDofs());
     if (restartTime > 0)
     {
+        using IOFields = typename GET_PROP_TYPE(TypeTag, IOFields);
+        using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
         using ModelTraits = typename GET_PROP_TYPE(TypeTag, ModelTraits);
         using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
         const auto fileName = getParam<std::string>("Restart.File");
-        const auto pvName = createPVNameFunctionWithState<ModelTraits, FluidSystem>();
+        const auto pvName = createPVNameFunction<IOFields, PrimaryVariables, ModelTraits, FluidSystem>();
         loadSolution(x, fileName, pvName, *fvGridGeometry);
     }
     else
