@@ -486,9 +486,11 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     Scalar stabTerm(0.0), tau(0.0), S(0.0);
 
-    tau = secVars.meshWidthX()*secVars.stabAlpha(secVars.velocity()[0], secVars.kinematicViscosity(), secVars.meshWidthX())*secVars.velocity()[0] +
-          secVars.meshWidthY()*secVars.stabAlpha(secVars.velocity()[1], secVars.kinematicViscosity(), secVars.meshWidthY())*secVars.velocity()[1];
-    tau /= 6;
+//    tau = secVars.meshWidthX()*secVars.stabAlpha(secVars.velocity()[0], secVars.kinematicViscosity(), secVars.meshWidthX())*secVars.velocity()[0] +
+//          secVars.meshWidthY()*secVars.stabAlpha(secVars.velocity()[1], secVars.kinematicViscosity(), secVars.meshWidthY())*secVars.velocity()[1];
+    tau = 1*secVars.stabAlpha(secVars.velocity()[0], secVars.kinematicViscosity(), 1)*secVars.velocity()[0] +
+          1*secVars.stabAlpha(secVars.velocity()[1], secVars.kinematicViscosity(), 1)*secVars.velocity()[1];
+    tau /= 2;
 //std::cout << "myLocResTauPreS: " << tau << std::endl;
 
 
