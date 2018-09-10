@@ -49,6 +49,8 @@
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/hdf5reader.hh>
+
 /*!
  * \brief Provides an interface for customizing error messages associated with
  *        reading in parameters.
@@ -97,16 +99,33 @@ int main(int argc, char** argv) try
     Parameters::init(argc, argv, usage);
 
     // try to create a grid (from the given grid file or the input file)
+    /*old-way
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     GridCreator::makeGrid();
     GridCreator::loadBalance();
+    */
+
+    //xdmf-way
+    typedef Dune::UGGrid<2> GridType;
+
+    Dune::Dumux::HDF5Reader<GridType> reader("init.hdf5");
+    reader.readGrid();
+    reader.readAllCellData("/timesteps/start");
+    reader.loadBalance();
+    auto& elementdata = reader.getCellData();
+
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
     ////////////////////////////////////////////////////////////
 
     // we compute on the leaf grid view
+    /* old-way
     const auto& leafGridView = GridCreator::grid().leafGridView();
+    */
+
+    //xdmf-way:
+    const auto& leafGridView  = reader.grid().leafGridView();
 
     // create the finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -154,12 +173,17 @@ int main(int argc, char** argv) try
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
-    // the linear solver
+    // the linear solver AMG works parallel and seriell (parallel AMG is slow for triangular grids)
     using LinearSolver = Dumux::AMGBackend<TypeTag>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
-    //using LinearSolver = Dumux::ILUnBiCGSTABBackend;
-    //using LinearSolver = Dumux::SSORRestartedGMResBackend;
-    //auto linearSolver = std::make_shared<LinearSolver>();
+
+
+    //seriell choosing on of:
+        //using LinearSolver = Dumux::ILUnBiCGSTABBackend;
+        //using LinearSolver = Dumux::SSORRestartedGMResBackend; //slow
+
+        //further add linear solver
+        //auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
     using NewtonController = Dumux::NewtonController<Scalar>;

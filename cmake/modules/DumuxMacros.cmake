@@ -3,6 +3,7 @@ include(AddGstatFileLinks)
 include(AddInputFileLinks)
 include(DumuxDoxygen)
 include(DumuxTestMacros)
+include(DumuxHDF5)
 
 find_package(GLPK)
 find_package(Gnuplot)

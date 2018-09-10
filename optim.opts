@@ -17,12 +17,15 @@ GXX_OPTS=" \
     -fno-finite-math-only \
     -O3 \
     -march=native \
+    -Wl,-rpath /cluster/tools/spack/opt/spack/linux-centos7-x86_64/gcc-7.2.0/hdf5-1.10.1-5zhgy3nytiap6rwcbpiovjvufdtzbmun/lib \
+    -L /cluster/tools/spack/opt/spack/linux-centos7-x86_64/gcc-7.2.0/hdf5-1.10.1-5zhgy3nytiap6rwcbpiovjvufdtzbmun/lib \
     -DNDEBUG=1"
 
 # configure flags
 CMAKE_FLAGS=" \
   -DCMAKE_CXX_FLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
-  -DUG_DIR=ug_installation_path \
+  -DHDF5_C_COMPILER_EXECUTABLE=/cluster/tools/spack/opt/spack/linux-centos7-x86_64/gcc-7.2.0/hdf5-1.10.1-5zhgy3nytiap6rwcbpiovjvufdtzbmun/include/bin/h5pcc \
+  -DHDF5_CXX_INCLUDE_DIR=/cluster/tools/spack/opt/spack/linux-centos7-x86_64/gcc-7.2.0/hdf5-1.10.1-5zhgy3nytiap6rwcbpiovjvufdtzbmun/include \
   "
 
 # optional configure flags

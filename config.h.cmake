@@ -55,6 +55,9 @@
 /* Define path to gstat executable */
 #cmakedefine GSTAT_EXECUTABLE "@GSTAT_EXECUTABLE@"
 
+/* Define to true if we have parallel HDF5 support */
+#cmakedefine DUMUX_HAVE_PARALLEL_HDF5 @DUMUX_HAVE_PARALLEL_HDF5@
+
 /* end dumux
    Everything below here will be overwritten
 */

@@ -9,5 +9,6 @@ install(FILES
   plotmateriallaw3p.hh
   plotthermalconductivitymodel.hh
   restart.hh
+  hdf5reader.hh
   vtknestedfunction.hh
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/io)

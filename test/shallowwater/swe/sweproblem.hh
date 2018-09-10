@@ -56,7 +56,9 @@ namespace Properties
     NEW_TYPE_TAG(SweTestTypeTag, INHERITS_FROM(CCTpfaModel, Swe, SweTestSpatialParams));
 
 // Use 2d YaspGrid
-SET_TYPE_PROP(SweTestTypeTag, Grid, Dune::YaspGrid<2>);
+//SET_TYPE_PROP(SweTestTypeTag, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(SweTestTypeTag, Grid, Dune::UGGrid<2>);
+//SET_TYPE_PROP(SweTestTypeTag, Grid, Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming>);
 
 // Set the physical problem to be solved
 SET_TYPE_PROP(SweTestTypeTag, Problem,SweTestProblem<TypeTag>);
