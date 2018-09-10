@@ -74,7 +74,22 @@ public:
         init(argc, argv, defaultParams, "", usage);
     }
 
-    //! Initialize the parameter tree singletons
+    /*!
+     * \brief Initialize the parameter tree
+     * \param argc number of command line argument (forwarded from main)
+     * \param argv command line argument (forwarded from main)
+     * \param a function that sets parameters of the default runtim parameter tree
+     * \param parameterFileName the file name of the input file
+     * \param usage the usage function to print if the help option was passed on the command line
+     * \note the default parameter tree is initialized in the following way
+     *         1) global defaults (see member function globalDefaultParameters)
+     *         2) user provided defaults (overwrite global defaults)
+     *       the parameter tree is initialized in the following way
+     *         1) parameters from the input file
+     *         2) parameters from the command line (overwrite input file parameters)
+     * \note if a parameter is looked up without explicitly providing a default, the
+     *       default tree is consulted if the parameter could not be found in the parameter tree
+     */
     static void init(int argc, char **argv,
                      const DefaultParams& defaultParams = [] (Dune::ParameterTree&) {},
                      std::string parameterFileName = "",
@@ -138,6 +153,50 @@ public:
                                                    /*overwrite=*/false);
         }
         parameterFile.close();
+    }
+
+    /*!
+     * \brief Initialize the parameter tree
+     * \param params a function that sets parameters of the runtime parameter tree
+     * \param defaultParams a function that sets parameters of the default runtim parameter tree
+     * \note if a parameter is looked up without explicitly providing a default, the
+     *       default tree is consulted if the parameter could not be found in the parameter tree
+     */
+    static void init(const DefaultParams&  params = [] (Dune::ParameterTree&) {},
+                     const DefaultParams& defaultParams = [] (Dune::ParameterTree&) {})
+    {
+        // apply the parameters
+        params(paramTree());
+        // apply the default parameters
+        globalDefaultParameters(defaultParamTree());
+        defaultParams(defaultParamTree());
+    }
+
+    /*!
+     * \brief Initialize the parameter tree
+     * \param parameterFileName an input parameter file name
+     * \param params a parameter tree with runtime parameters
+     * \param inputFileOverwritesParams if set to true (default) the parameters from the input file have precedence,
+     *                                  if set to false the input the parameters provided via params have precedence
+     * \param defaultParams a parameter tree with default parameters
+     * \note the params function overwrites
+     * \note if a parameter is looked up without explicitly providing a default, the
+     *       default tree is consulted if the parameter could not be found in the parameter tree
+     */
+    static void init(const std::string& parameterFileName,
+                     const DefaultParams& params = [] (Dune::ParameterTree&) {},
+                     bool inputFileOverwritesParams = true,
+                     const DefaultParams& defaultParams = [] (Dune::ParameterTree&) {})
+    {
+        // apply the parameters
+        params(paramTree());
+
+        // read parameters from the input file
+        Dune::ParameterTreeParser::readINITree(parameterFileName, paramTree(), inputFileOverwritesParams);
+
+        // apply the default parameters
+        globalDefaultParameters(defaultParamTree());
+        defaultParams(defaultParamTree());
     }
 
     //! \brief parse the arguments given on the command line
