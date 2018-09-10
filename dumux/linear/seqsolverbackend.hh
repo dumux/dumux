@@ -1128,7 +1128,7 @@ public:
     }
 
     std::string name() const
-    { return "block-diagonal ILU0 preconditioned BiCGSTAB solver"; }
+    { return "block-diagonal AMG preconditioned BiCGSTAB solver"; }
 
 private:
     template<template<class M, std::size_t i> class Criterion, class Matrix, class Params, std::size_t... Is>
