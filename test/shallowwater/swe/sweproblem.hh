@@ -280,6 +280,56 @@ public:
         return values;
     }
 
+
+    std::map<std::string,std::vector<double>> & xdmfGetVariable(const SolutionVector& curSol,
+                      const GridVariables& gridVariables,
+                      const Scalar time)
+    {
+        //get all cell data for XDMF
+        auto fvGeometry = localView(this->fvGridGeometry());
+        int size = this->fvGridGeometry().gridView().size(0);
+
+        this->XDMFCellData_["h"] = std::vector<double>(size);
+        this->XDMFCellData_["u"] = std::vector<double>(size);
+        this->XDMFCellData_["v"] = std::vector<double>(size);
+        this->XDMFCellData_["z"] = std::vector<double>(size);
+        this->XDMFCellData_["theta"] = std::vector<double>(size);
+
+        // bulk elements
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
+
+            auto elemVolVars = localView(gridVariables.curGridVolVars());
+            elemVolVars.bindElement(element, fvGeometry, curSol);
+
+            //get local index of the element
+            const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+
+            //check if the actual element is a ghost
+            if (element.partitionType() != Dune::GhostEntity)
+            {
+                for (auto&& scv : scvs(fvGeometry))
+                {
+                    auto h = elemVolVars[scv].getH();
+                    auto u = elemVolVars[scv].getU();
+                    auto v = elemVolVars[scv].getV();
+                    auto z = elemVolVars[scv].getBottom();
+
+                    //TODO here we assume that we have only one scv this is ugly
+                    XDMFCellData_["h"][eIdx] = h;
+                    XDMFCellData_["u"][eIdx] = u;
+                    XDMFCellData_["v"][eIdx] = v;
+                    XDMFCellData_["z"][eIdx] = z;
+                }
+            }
+        }
+
+        return XDMFCellData_;
+    }
+
+
     //! do some preprocessing
     void preTimeStep(const SolutionVector& curSol,
                       const GridVariables& gridVariables,
@@ -660,6 +710,8 @@ private:
     std::map<int,double> hBoundarySegmentMap_;
     std::map<int,double> hBoundarySumMap_;
     std::map<int,double> hBoundaryFluxMap_;
+
+    std::map<std::string, std::vector<double>> XDMFCellData_;
 
     std::vector<BoundaryBox> boundaryBoxesVec_;
     std::map<int,BoundaryValues> boundaryValuesMap_;

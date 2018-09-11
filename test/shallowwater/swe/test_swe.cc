@@ -50,6 +50,8 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/hdf5reader.hh>
+#include <dumux/io/xdmfwriter.hh>
+
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -107,7 +109,7 @@ int main(int argc, char** argv) try
 
     //xdmf-way
     typedef Dune::UGGrid<2> GridType;
-
+    //typedef Dune::ALUGrid<2,2,Dune::simplex,Dune::nonconforming> GridType;
     Dune::Dumux::HDF5Reader<GridType> reader("init.hdf5");
     reader.readGrid();
     reader.readAllCellData("/timesteps/start");
@@ -160,10 +162,17 @@ int main(int argc, char** argv) try
         restartTime = getParam<Scalar>("TimeLoop.Restart");
 
     // intialize the vtk output module
-    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    /*using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
+    */
+
+    //intialize xdmf output module
+    Dune::Swf::XDMFWriter<typename GridType::LeafGridView>
+        writer("result", leafGridView,"Dune-SWF implicit", 0);
+
+
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -193,6 +202,18 @@ int main(int argc, char** argv) try
 
     // read in the boundary values
     problem->setBoundaryValues();
+
+
+    // write a first output file with no data
+    auto& plotMap = problem->xdmfGetVariable(x, *gridVariables, timeLoop->time());
+    writer.beginTimeStep(0.0);
+    //std::cout << "Debug Write Cell Data" << std::endl;
+    writer.writeCellData(plotMap["h"],"h","m");
+    writer.writeCellData(plotMap["u"],"u","m");
+    writer.writeCellData(plotMap["v"],"v","m");
+    writer.writeCellData(plotMap["z"],"z","m");
+    writer.endTimeStep();
+
 
     int vtkTrigger = 0;
     // time loop
@@ -233,11 +254,17 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // write vtk output
+        // write output
         if (vtkTrigger == 1)
         {
-            vtkWriter.write(timeLoop->time());
-            vtkTrigger = 0;
+            //write
+            auto& plotMap = problem->xdmfGetVariable(x, *gridVariables, timeLoop->time());
+            writer.beginTimeStep(0.0);
+            writer.writeCellData(plotMap["h"],"h","m");
+            writer.writeCellData(plotMap["u"],"u","m");
+            writer.writeCellData(plotMap["v"],"v","m");
+            writer.writeCellData(plotMap["z"],"z","m");
+            writer.endTimeStep();
         }
         // report statistics of this time step
         timeLoop->reportTimeStep();

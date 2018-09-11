@@ -10,5 +10,6 @@ install(FILES
   plotthermalconductivitymodel.hh
   restart.hh
   hdf5reader.hh
+  xdmfwriter.hh
   vtknestedfunction.hh
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/io)
