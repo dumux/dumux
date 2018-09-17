@@ -550,16 +550,11 @@ public:
     PrimaryVariables initial(const Element& element) const
     {
         PrimaryVariables values(0.0);
+        auto elemId = this->fvGridGeometry().elementMapper().index(element);
 
-        values[massBalanceIdx] = 1.0;
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
-
-        auto someInitSol = element.geometry().center();
-        if (someInitSol[0] < 10.001)
-        {
-            values[massBalanceIdx] = 4.0;
-        }
+        values[massBalanceIdx] = hInit_[elemId];
+        values[velocityXIdx] = uInit_[elemId];
+        values[velocityYIdx] = vInit_[elemId];
 
         return values;
     };
@@ -702,13 +697,19 @@ public:
     }
 
     //set the input data from map (we get this map from the XDMF/HDF5-Reader)
-    void setInputData(auto elementdata, auto startPosition)
+    void setInputData(auto elementdata)
     {
         //read the init data
-
-
-        //send the data to spatial parameters
-
+        if ((elementdata.find("h") != elementdata.end())&&
+            (elementdata.find("u") != elementdata.end())&&
+            (elementdata.find("v") != elementdata.end()))
+        {
+            hInit_ = elementdata["h"];
+            uInit_ = elementdata["u"];
+            vInit_ = elementdata["v"];
+        }else{
+            std::cout << "Can not find initial data in elementdata"<< std::endl;
+        }
     }
 
 private:

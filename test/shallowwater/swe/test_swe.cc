@@ -203,6 +203,10 @@ int main(int argc, char** argv) try
     // read in the boundary values
     problem->setBoundaryValues();
 
+    // set the inital values
+    problem->setInputData(elementdata);
+    problem->spatialParams().setElementdata(elementdata);
+
 
     // write a first output file with no data
     auto& plotMap = problem->xdmfGetVariable(x, *gridVariables, timeLoop->time());
