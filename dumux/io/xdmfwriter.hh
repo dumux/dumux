@@ -1,4 +1,7 @@
 // -*- tab-width: 4; indent-tabs-mode: nil -*-
+// TODO check license
+// This file is from the BAW dune-swf module
+
 #ifndef DUNE_SWF_XDMFWriter
 #define DUNE_SWF_XDMFWriter
 
