@@ -115,7 +115,7 @@ int main(int argc, char** argv) try
     reader.readAllCellData("/timesteps/start");
     reader.loadBalance();
     auto& elementdata = reader.getCellData();
-
+    std::cout << "\nDebug alive " << std::endl;
 
     ////////////////////////////////////////////////////////////
     // run instationary non-linear problem on this grid
@@ -137,6 +137,11 @@ int main(int argc, char** argv) try
     // the problem (initial and boundary conditions)
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
+
+    // set the inital values
+    problem->setInputData(elementdata);
+    problem->spatialParams().setElementdata(elementdata);
+
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -203,10 +208,6 @@ int main(int argc, char** argv) try
     // read in the boundary values
     problem->setBoundaryValues();
 
-    // set the inital values
-    problem->setInputData(elementdata);
-    problem->spatialParams().setElementdata(elementdata);
-
 
     // write a first output file with no data
     auto& plotMap = problem->xdmfGetVariable(x, *gridVariables, timeLoop->time());
@@ -219,7 +220,7 @@ int main(int argc, char** argv) try
     writer.endTimeStep();
 
 
-    int vtkTrigger = 0;
+    bool doPolot = true;
     // time loop
     timeLoop->start(); do
     {
@@ -259,9 +260,7 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // write output
-        if (vtkTrigger == 1)
-        {
-            //write
+        if (doPolot){
             auto& plotMap = problem->xdmfGetVariable(x, *gridVariables, timeLoop->time());
             writer.beginTimeStep(0.0);
             writer.writeCellData(plotMap["h"],"h","m");
@@ -270,12 +269,12 @@ int main(int argc, char** argv) try
             writer.writeCellData(plotMap["z"],"z","m");
             writer.endTimeStep();
         }
+
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
-        vtkTrigger += 1;
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());
