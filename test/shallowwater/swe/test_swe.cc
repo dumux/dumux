@@ -262,7 +262,7 @@ int main(int argc, char** argv) try
         // write output
         if (doPolot){
             auto& plotMap = problem->xdmfGetVariable(x, *gridVariables, timeLoop->time());
-            writer.beginTimeStep(0.0);
+            writer.beginTimeStep(timeLoop->time());
             writer.writeCellData(plotMap["h"],"h","m");
             writer.writeCellData(plotMap["u"],"u","m");
             writer.writeCellData(plotMap["v"],"v","m");
