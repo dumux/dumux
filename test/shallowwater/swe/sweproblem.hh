@@ -701,6 +701,15 @@ public:
         return bd_value;
     }
 
+    //set the input data from map (we get this map from the XDMF/HDF5-Reader)
+    void setInputData(auto elementdata, auto startPosition)
+    {
+        //read the init data
+
+
+        //send the data to spatial parameters
+
+    }
 
 private:
 
@@ -723,6 +732,12 @@ private:
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
     static constexpr Scalar minHBoundary_ = 1.0E-6;
+
+    /*Initial data */
+    std::vector<double> hInit_;
+    std::vector<double> uInit_;
+    std::vector<double> vInit_;
+
 
     /*!
      * \brief read boundary value files.

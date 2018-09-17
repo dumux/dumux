@@ -115,14 +115,21 @@ public:
     * \param element The current element
     * \param scv The sub-control volume inside the element.
     * \param elemSol The solution at the dofs connected to the element.
-    * \return the material parameters object
+    * \return the friction law of the object
     */
     int frictionlaw() const
     {
         return 0;
     }
 
-
+    /*! \brief Define the bottom (for SWEs without sediment transport
+    *          this should be z.
+    *
+    *
+    * \param element The current element
+    * \param scv The sub-control volume inside the element.
+    * \return the material parameters object
+    */
     Scalar bottom(const Element& element,
              const SubControlVolume& scv) const
     {
@@ -133,12 +140,79 @@ public:
         return 0.0;
     }
 
+    /*! \brief Set all element data for SWEs and set them.
+    *
+    *
+    * \param Gridview gv
+    * \param elementdata map
+    * \return the material parameters object
+    */
+    void setElementdata(auto elementdata)
+    {
+        //set all data
+        if ( elementdata.find("z") != elementdata.end() ){
+            eleZ_ = elementdata["z"];
+        }else{
+            //TODO thorw an error
+            std::cout << "Error elementdata missing z" << std::endl;
+        }
+
+        //optional variables
+        auto nelem = eleZ_.size();
+
+        if (elementdata.find("ks") != elementdata.end() ){
+            eleKs_ = elementdata["ks"];
+        }else{
+            eleKs_.assign(nelem, 0.0);
+        }
+
+        if (elementdata.find("vegDp") != elementdata.end() ){
+            eleVegDp_ = elementdata["vegDp"];
+        }else{
+            eleVegDp_.assign(nelem, 0.0);
+        }
+
+        if (elementdata.find("vegAp") != elementdata.end() ){
+            eleVegAp_ = elementdata["vegAp"];
+        }else{
+            eleVegAp_.assign(nelem, 0.0);
+        }
+
+        if (elementdata.find("vegHp") != elementdata.end() ){
+            eleVegHp_ = elementdata["vegHp"];
+        }else{
+            eleVegHp_.assign(nelem, 0.0);
+        }
+
+        if (elementdata.find("zoneId") != elementdata.end() ){
+            eleZoneId_ = elementdata["zoneId"];
+        }else{
+            eleZoneId_.assign(nelem, 0.0);
+        }
+
+        if (elementdata.find("defaultId") != elementdata.end() ){
+            eleDefaultId_ = elementdata["defaultId"];
+        }else{
+            eleDefaultId_.assign(nelem, 0.0);
+        }
+    }
+
 
 private:
 
-//    const IndexSet& indexSet_;
+   //const IndexSet& indexSet_;
     static constexpr Scalar eps_ = 1.5e-7;
     static constexpr Scalar grav_ = 9.81;
+
+    // element data
+    std::vector<double> eleZ_;
+    std::vector<double> eleKs_;
+    std::vector<double> eleVegDp_;
+    std::vector<double> eleVegAp_;
+    std::vector<double> eleVegHp_;
+    std::vector<double> eleCflLentgth_;
+    std::vector<double> eleDefaultId_;
+    std::vector<double> eleZoneId_; //Do we need this?
 };
 
 } // end namespace
