@@ -76,8 +76,8 @@ public:
         outerMaterialParams_.setLambda(2.0);
         outerMaterialParams_.setPe(0);
 
-        lensK_ = 9.05e-12;
-        outerK_ = 4.6e-10;
+        lensK_ = 1.0e-7;
+        outerK_ = 1.0e-7;
     }
 
     /*!
@@ -107,7 +107,7 @@ public:
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.4; }
+    { return 0.2; }
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law.

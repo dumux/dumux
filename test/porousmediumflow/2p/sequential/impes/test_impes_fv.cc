@@ -199,7 +199,7 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, twoPImpesFvGridGeometry->dofMapper());
 
     //! set some check points for the time loop
-    timeLoop->setPeriodicCheckPoint(tEnd/100.0);
+    timeLoop->setPeriodicCheckPoint(1.0e4);
 
     //! start the time loop
     timeLoop->start();
@@ -250,7 +250,7 @@ int main(int argc, char** argv) try
         std::vector<Scalar> volumeFlux(twoPImpesFvGridGeometry->numScvf(), 0.0);
 
         using FluxVariables =  typename GET_PROP_TYPE(TwoPImpesTT, FluxVariables);
-        auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0)*volVars.density(0); };
+        auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
         for (const auto& element : elements(leafGridView))
         {
             auto fvGeometry = localView(*twoPImpesFvGridGeometry);

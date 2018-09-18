@@ -24,6 +24,7 @@
 #define DUMUX_IMPES_TRANSPORT_TEST_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
+#include <dune/grid/uggrid.hh>
 
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
@@ -46,7 +47,7 @@ template<class TypeTag> class TwoPTransport;
 namespace Properties {
 NEW_TYPE_TAG(TwoPTransport, INHERITS_FROM(CCTpfaModel, Transport));
 // Set the grid type
-SET_TYPE_PROP(TwoPTransport, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TwoPTransport, Grid, Dune::UGGrid<2>);
 
 // Set the problem type
 SET_TYPE_PROP(TwoPTransport, Problem, TwoPTransport<TypeTag>);
@@ -72,8 +73,8 @@ public:
 
 // Enable caching
 SET_BOOL_PROP(TwoPTransport, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(TwoPTransport, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(TwoPTransport, EnableFVGridGeometryCache, false);
+SET_BOOL_PROP(TwoPTransport, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(TwoPTransport, EnableFVGridGeometryCache, true);
 } // end namespace Properties
 
 /*!
@@ -113,7 +114,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
+        if (onLeftBoundary_(globalPos))
             values.setAllDirichlet();
         else
             values.setAllNeumann();

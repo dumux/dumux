@@ -1,21 +1,23 @@
 [TimeLoop]
-DtInitial = 1# [s]
-MaxTimeStepSize = 10
-TEnd = 400 # [s]
+DtInitial = 1e2# [s]
+MaxTimeStepSize = 1e2
+TEnd = 7e5 # [s]
 
 [Grid]
-LowerLeft = 0 0
-UpperRight = 100 10
-Cells = 100 1
+File = ../grids/test_mpfa2p.dgf #grid for buckley-leverett or mcwhorter problem
+Refinement = 2
+#LowerLeft = 0 0
+#UpperRight = 30 3
+#Cells = 100 3
 
 [SpatialParams]
 LensLowerLeft = 20.0 0.0 # [m] coordinates of the lower left lens corner
 LensUpperRight = 40.0 1.0 # [m] coordinates of the upper right lens corner
 
 [Problem]
-Name = test_impes
+Name = test_buckleyleverett
 EnableGravity = false
 
 [Component]
 LiquidDensity = 1000
-LiquidKinematicViscosity = 1e-5
+LiquidKinematicViscosity = 1e-6

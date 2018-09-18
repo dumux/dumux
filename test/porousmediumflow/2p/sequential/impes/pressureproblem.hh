@@ -24,6 +24,7 @@
 #define DUMUX_IMPES_PRESSURE_TEST_PROBLEM_HH
 
 #include <dune/grid/yaspgrid.hh>
+#include <dune/grid/uggrid.hh>
 
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
@@ -44,10 +45,10 @@ namespace Dumux {
 template<class TypeTag> class TwoPTestProblem;
 
 namespace Properties {
-NEW_TYPE_TAG(TwoPImpes, INHERITS_FROM(CCTpfaModel,Pressure));
+NEW_TYPE_TAG(TwoPImpes, INHERITS_FROM(CCMpfaModel,Pressure));
 
 // Set the grid type
-SET_TYPE_PROP(TwoPImpes, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TwoPImpes, Grid, Dune::UGGrid<2>);
 
 // Set the problem type
 SET_TYPE_PROP(TwoPImpes, Problem, TwoPTestProblem<TypeTag>);
@@ -73,8 +74,8 @@ public:
 
 // Enable caching
 SET_BOOL_PROP(TwoPImpes, EnableGridVolumeVariablesCache, false);
-SET_BOOL_PROP(TwoPImpes, EnableGridFluxVariablesCache, false);
-SET_BOOL_PROP(TwoPImpes, EnableFVGridGeometryCache, false);
+SET_BOOL_PROP(TwoPImpes, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(TwoPImpes, EnableFVGridGeometryCache, true);
 } // end namespace Properties
 
 /*!
@@ -114,7 +115,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
+        if (onLeftBoundary_(globalPos))
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -133,7 +134,7 @@ public:
     {
         PrimaryVariables values(1.0e5);
         if (onLeftBoundary_(globalPos))
-                values[pressureIdx] = 2.0e5;
+                values[pressureIdx] = 1.0e5;
 
         return values;
     }
@@ -152,6 +153,8 @@ public:
     NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
         NumEqVector values(0.0);
+        if(onRightBoundary_(globalPos))
+            values[pressureEqIdx] = 3e-3;
 
         return values;
     }
