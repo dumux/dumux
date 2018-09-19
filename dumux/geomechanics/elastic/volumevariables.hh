@@ -118,14 +118,15 @@ public:
 
 private:
     //! sets the temperature in the solid state for non-isothermal models
+    static constexpr bool enableEnergyBalance = ModelTraits::enableEnergyBalance();
     template< class Problem, class ElemSol,
-              bool EB = ModelTraits::enableEnergyBalance(), std::enable_if_t<EB, int> = 0 >
+              bool enableEB = enableEnergyBalance, typename std::enable_if_t<enableEB, bool> = 0 >
     void setSolidTemperature_(const Problem& problem, const ElemSol& elemSol)
     { DUNE_THROW(Dune::InvalidStateException, "Non-isothermal elastic model."); }
 
     //! sets the temperature in the solid state for isothermal models
     template< class Problem, class ElemSol,
-              bool EB = ModelTraits::enableEnergyBalance(), std::enable_if_t<!EB, int> = 0 >
+              bool enableEB = enableEnergyBalance, typename std::enable_if_t<!enableEB, bool> = 0 >
     void setSolidTemperature_(const Problem& problem, const ElemSol& elemSol)
     { solidState_.setTemperature(problem.temperature()); }
 

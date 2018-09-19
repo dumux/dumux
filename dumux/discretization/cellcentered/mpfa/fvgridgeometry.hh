@@ -154,13 +154,14 @@ public:
 
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! This specialization is enabled if the use of secondary interaction volumes is active.
-    template<bool useSecondary = MpfaHelper::considerSecondaryIVs(), std::enable_if_t<useSecondary, int> = 0>
+    static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
+    template<bool useSecondary = considerSecondaryIVs, std::enable_if_t<useSecondary, bool> = 0>
     bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
     { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
 
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! If the use of secondary interaction volumes is disabled, this can be evaluated at compile time.
-    template<bool useSecondary = MpfaHelper::considerSecondaryIVs(), std::enable_if_t<!useSecondary, int> = 0>
+    template<bool useSecondary = considerSecondaryIVs, std::enable_if_t<!useSecondary, bool> = 0>
     constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const { return false; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
@@ -509,13 +510,14 @@ public:
 
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! This specialization is enabled if the use of secondary interaction volumes is active.
-    template<bool useSecondary = MpfaHelper::considerSecondaryIVs(), std::enable_if_t<useSecondary, int> = 0>
+    static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
+    template<bool useSecondary = considerSecondaryIVs, std::enable_if_t<useSecondary, bool> = 0>
     bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
     { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
 
     //! Returns true if secondary interaction volumes are used around a given vertex (index).
     //! If the use of secondary interaction volumes is disabled, this can be evaluated at compile time.
-    template<bool useSecondary = MpfaHelper::considerSecondaryIVs(), std::enable_if_t<!useSecondary, int> = 0>
+    template<bool useSecondary = considerSecondaryIVs, std::enable_if_t<!useSecondary, bool> = 0>
     constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const { return false; }
 
     //! Returns true if a given vertex lies on a processor boundary inside a ghost element.
