@@ -227,13 +227,7 @@ public:
 
         for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
         {
-
-            // for ghost elements we assemble a 1.0 where the primary variable and zero everywhere else
-            // as we always solve for a delta of the solution with repect to the initial solution this
-            // results in a delta of zero for ghosts, we still need to do the neighbor derivatives though
-            // so we are not done yet here.
             partialDerivs = 0.0;
-            if (this->elementIsGhost()) partialDerivs[0][pvIdx] = 1.0;
 
             auto evalResiduals = [&](Scalar priVar)
             {
@@ -248,7 +242,7 @@ public:
                     elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                 // calculate the residual with the deflected primary variables
-                if (!this->elementIsGhost()) partialDerivsTmp[0] = this->evalLocalResidual()[0];
+                partialDerivsTmp[0] = this->evalLocalResidual()[0];
 
                 // calculate the fluxes in the neighbors with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
@@ -263,6 +257,15 @@ public:
             static const int numDiffMethod = getParamFromGroup<int>(this->problem().paramGroup(), "Assembly.NumericDifferenceMethod");
             NumericDifferentiation::partialDerivative(evalResiduals, elemSol[0][pvIdx], partialDerivs, origResiduals,
                                                       eps_(elemSol[0][pvIdx], pvIdx), numDiffMethod);
+
+            // Correct derivative for ghost elements, i.e. set a 1 for the derivative w.r.t. the
+            // current primary variable and a 0 elsewhere. As we always solve for a delta of the
+            // solution with repect to the initial one, this results in a delta of 0 for ghosts.
+            if (this->elementIsGhost())
+            {
+                partialDerivs[0] = 0.0;
+                partialDerivs[0][pvIdx] = 1.0;
+            }
 
             // add the current partial derivatives to the global jacobian matrix
             for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
