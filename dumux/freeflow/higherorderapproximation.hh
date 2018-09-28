@@ -37,20 +37,30 @@ class HigherOrderApproximation
 {
 public:
     /**
-      * \brief First Order Upwind Method
+      * \brief Upwind Method
       */
-    Scalar firstOrderUpwind(const Scalar downstreamVelocity,
-                            const Scalar upstreamVelocity,
-                            const Scalar upwindWeight,
+    Scalar upwind(const Scalar downstreamVelocity,
+                            const Scalar upstreamVelocity
                             const Scalar density) const
     {
-        return (upwindWeight * upstreamVelocity + (1.0 - upwindWeight) * downstreamVelocity) * density;
+        return upstreamVelocity * density;
     }
 
     /**
-      * \brief Second Order Upwind Method
+      * \brief Central Differencing Method
       */
-    Scalar secondOrderUpwind(const Scalar upstreamVelocity,
+    Scalar centralDifference(const Scalar downstreamVelocity,
+                            const Scalar upstreamVelocity
+                            const Scalar density) const
+    {
+        return (0.5 * (upstreamVelocity + downstreamVelocity)) * density;
+    }
+
+
+    /**
+      * \brief Linear Upwind Method
+      */
+    Scalar linearUpwind(const Scalar upstreamVelocity,
                              const Scalar previousVelocity,
                              const Scalar upstreamToDownstreamDistance,
                              const Scalar previousToUpstreamDistance,
@@ -64,7 +74,7 @@ public:
     /**
       * \brief QUICK upwinding Scheme: Quadratic Upstream Interpolation for Convective Kinematics
       */
-    Scalar quickUpwind(const Scalar downstreamVelocity,
+    Scalar upwindQUICK(const Scalar downstreamVelocity,
                        const Scalar upstreamVelocity,
                        const Scalar previousVelocity,
                        const Scalar upstreamToDownstreamDistance,
@@ -76,9 +86,6 @@ public:
         Scalar firstOrder = ((downstreamVelocity - upstreamVelocity) / 2.0);
         Scalar secondOrder = -(((downstreamVelocity - upstreamVelocity) / upstreamToDownstreamDistance) - ((upstreamVelocity - previousVelocity) / previousToUpstreamDistance))
                   * std::pow(upstreamToDownstreamDistance , 2 ) / (8.0 * normalDistance);
-        std::cout<<"0th Order: " << zeroOrder << std::endl;
-        std::cout<<"1st Order: " << firstOrder << std::endl;
-        std::cout<<"2nd Order: " << secondOrder << std::endl;
         return (zeroOrder + firstOrder + secondOrder) * density;
     }
 
