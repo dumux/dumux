@@ -232,8 +232,8 @@ public:
             Scalar kinematicViscosity_ = 0.000001;
             Scalar reynoldsNumber = 1.0 / kinematicViscosity_;
 
-//        	Scalar v0 = 100;
-//        	Scalar reynoldsNumber = v0 / kinematicViscosity_;
+            Scalar v0 = 100;
+            reynoldsNumber = v0 / kinematicViscosity_;
 
             Scalar lambda_ = 0.5 * reynoldsNumber
                              - std::sqrt(reynoldsNumber * reynoldsNumber * 0.25 + 4.0 * M_PI * M_PI);
@@ -243,15 +243,26 @@ public:
             Scalar y = globalPos[1];
 
             PrimaryVariables values;
-            values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
-            values[Indices::velocityXIdx] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
-            values[Indices::velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
 
-
-
+            //in x-richtung
 //            values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
-//            values[Indices::velocityXIdx] = v0*(1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y));
+//            values[Indices::velocityXIdx] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
 //            values[Indices::velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
+
+            //in y-Richtung
+//            values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * y));
+//            values[Indices::velocityXIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * y) * std::sin(2.0 * M_PI * x);
+//            values[Indices::velocityYIdx] = 1.0 - std::exp(lambda_ * y) * std::cos(2.0 * M_PI * x);
+
+//            values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * y));
+//            values[Indices::velocityXIdx] = 1.0-y;
+//            values[Indices::velocityYIdx] = 1.0-x;
+
+
+
+            values[Indices::pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
+            values[Indices::velocityXIdx] = v0*(1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y));
+            values[Indices::velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
 
             return values;
         }

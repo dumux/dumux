@@ -428,11 +428,13 @@ int count = 0;
                     residual_[i][eqIdx] -= (flux[eqIdx]*ipData.shapeGradients(i))*qWeight;
 //		  std::cout <<"FemLocResResidual_[i][eqIdx]: "<< (storage[eqIdx] - source[eqIdx])*ipData.shapeValues(i)*qWeight- (flux[eqIdx]*ipData.shapeGradients(i))*qWeight <<std::endl;
 //		  std::cout <<"FemLocResStabTerms: "<<  (stabTerms*ipData.shapeGradients(i))*qWeight<<std::endl;
-
 //                    residual_[i][eqIdx] += stabTerms[eqIdx];
+
                     if(eqIdx <= 1){
                     residual_[i][eqIdx] += (stabTerms[eqIdx]*curSecVars.velocity()[eqIdx]*ipData.shapeGradients(i)[eqIdx])*qWeight;
                     }
+
+
 //std::cout <<"FemLocResResidual_[i][eqIdx]: "<< (storage[eqIdx] - source[eqIdx])*ipData.shapeValues(i)*qWeight- (flux[eqIdx]*ipData.shapeGradients(i))*qWeight <<std::endl;
 //std::cout <<"FemLocResStabTerms: "<<  (stabTerms[eqIdx]*curSecVars.velocity()[eqIdx]*ipData.shapeGradients(i)[eqIdx])*qWeight<<std::endl;
         //  printvector(std::cout, residual_, "LocResresidual", "");

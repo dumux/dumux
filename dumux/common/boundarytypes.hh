@@ -214,6 +214,30 @@ public:
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
 
+//    /*!
+//     * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
+//     *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
+//     *
+//     * \param eqIdx The index of the equation which should used to set
+//     *              the Dirichlet condition
+//     */
+//    void setDirichletCell(int eqIdx)
+//    {
+//        resetEq(eqIdx);
+//        boundaryInfo_[eqIdx].visited = true;
+//        boundaryInfo_[eqIdx].isDirichletCell = true;
+//    }
+//
+//    /*!
+//     * \brief Returns true if an equation is used to specify a
+//     *        Dirichlet condition.
+//     *
+//     * \param eqIdx The index of the equation
+//     */
+//    bool isDirichletCell(unsigned eqIdx) const
+//    { return boundaryInfo_[eqIdx].isDirichletCell; }
+
+
     /*!
      * \brief Set a boundary condition for a single equation to
      *        a Dirichlet-like coupling condition.

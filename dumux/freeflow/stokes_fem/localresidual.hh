@@ -245,6 +245,7 @@ using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 //    eps /= secVars.density();
 
     divV /= eps;
+    divV /= secVars.density();
 
     /*******************
      ***************
