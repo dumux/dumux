@@ -58,12 +58,6 @@ SET_TYPE_PROP(StokesOnePTypeTag, Problem, Dumux::StokesSubProblem<TypeTag> );
 SET_BOOL_PROP(StokesOnePTypeTag, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(StokesOnePTypeTag, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(StokesOnePTypeTag, EnableGridVolumeVariablesCache, true);
-
-// #if ENABLE_NAVIERSTOKES
-// SET_BOOL_PROP(StokesOnePTypeTag, EnableInertiaTerms, true);
-// #else
-SET_BOOL_PROP(StokesOnePTypeTag, EnableInertiaTerms, false);
-// #endif
 }
 
 /*!

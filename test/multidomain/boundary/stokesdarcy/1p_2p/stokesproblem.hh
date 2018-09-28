@@ -49,7 +49,6 @@ SET_BOOL_PROP(StokesOnePTypeTag, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(StokesOnePTypeTag, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(StokesOnePTypeTag, EnableGridVolumeVariablesCache, true);
 
-SET_BOOL_PROP(StokesOnePTypeTag, EnableInertiaTerms, false);
 }
 
 /*!

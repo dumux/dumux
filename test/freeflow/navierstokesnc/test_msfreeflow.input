@@ -10,6 +10,7 @@ Cells = 30 30
 [Problem]
 Name = test_msfreeflow # name passed to the output routines
 EnableGravity = false
+EnableInertiaTerms = false
 
 [Assembly]
 NumericDifference.BaseEpsilon = 1e-8

@@ -10,6 +10,7 @@ Cells = 100 50
 Name = test_channel_stokesni_convection # name passed to the output routines
 InletVelocity = 1e-2
 EnableGravity = false
+EnableInertiaTerms = false
 
 [ Newton ]
 MaxSteps = 10

@@ -232,6 +232,7 @@ private:
 
         // parameters in the problem group
         params["Problem.EnableGravity"] = "true";
+        params["Problem.EnableInertiaTerms"] = "true";
 
         // parameters in the Newton group
         params["Newton.MaxSteps"] = "18";

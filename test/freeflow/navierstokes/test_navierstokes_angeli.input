@@ -11,6 +11,7 @@ Cells = 50 50
 Name = test_angeli # name passed to the output routines
 EnableGravity = false
 PrintL2Error = false
+EnableInertiaTerms = true
 
 [Component]
 LiquidDensity = 1

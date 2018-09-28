@@ -68,13 +68,6 @@ SET_BOOL_PROP(ChannelTestTypeTag, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(ChannelTestTypeTag, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(ChannelTestTypeTag, EnableGridVolumeVariablesCache, true);
-
-
-#if ENABLE_NAVIERSTOKES
-SET_BOOL_PROP(ChannelTestTypeTag, EnableInertiaTerms, true);
-#else
-SET_BOOL_PROP(ChannelTestTypeTag, EnableInertiaTerms, false);
-#endif
 }
 
 /*!

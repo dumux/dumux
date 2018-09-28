@@ -74,7 +74,6 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethod::staggered>
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    static constexpr bool enableInertiaTerms = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
     static constexpr bool normalizePressure = GET_PROP_VALUE(TypeTag, NormalizePressure);
 
     using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
@@ -199,7 +198,7 @@ public:
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
         // Advective flux.
-        if(enableInertiaTerms)
+        if (problem.enableInertiaTerms())
         {
             // Get the average velocity at the center of the element (i.e. the location of the staggered face).
             const Scalar transportingVelocity = (velocitySelf + velocityOpposite) * 0.5;
@@ -329,7 +328,7 @@ public:
             }
 
             // If there is no symmetry or Neumann boundary condition for the given sub face, proceed to calculate the tangential momentum flux.
-            if(enableInertiaTerms)
+            if (problem.enableInertiaTerms())
                 normalFlux += computeAdvectivePartOfLateralMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, bcTypes);
 
             normalFlux += computeDiffusivePartOfLateralMomentumFlux_(problem, element, scvf, normalFace, elemVolVars, faceVars, localSubFaceIdx, bcTypes);
@@ -557,7 +556,7 @@ private:
         FacePrimaryVariables inOrOutflow(0.0);
 
         // Advective momentum flux.
-        if(enableInertiaTerms)
+        if (problem.enableInertiaTerms())
         {
             const Scalar velocitySelf = elemFaceVars[scvf].velocitySelf();
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];

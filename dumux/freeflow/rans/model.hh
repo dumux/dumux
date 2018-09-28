@@ -60,8 +60,6 @@ NEW_TYPE_TAG(RANS, INHERITS_FROM(NavierStokes));
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_BOOL_PROP(RANS, EnableInertiaTerms, true); //!< Explicitly force the consideration of inertia terms by default
-
 /*!
  * \ingroup RANSModel
  * \brief Traits for the Reynolds-averaged Navier-Stokes model

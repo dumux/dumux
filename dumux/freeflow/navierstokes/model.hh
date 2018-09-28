@@ -159,7 +159,6 @@ NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes));
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true); //!< Consider inertia terms by default
 SET_BOOL_PROP(NavierStokes, NormalizePressure, true); //!< Normalize the pressure term in the momentum balance by default
 
 //!< states some specifics of the Navier-Stokes model

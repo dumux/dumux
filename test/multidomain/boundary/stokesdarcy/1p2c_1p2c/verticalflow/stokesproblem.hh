@@ -61,9 +61,6 @@ SET_BOOL_PROP(StokesOnePTwoCTypeTag, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(StokesOnePTwoCTypeTag, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(StokesOnePTwoCTypeTag, EnableGridVolumeVariablesCache, true);
 
-// Do not consider intertia terms
-SET_BOOL_PROP(StokesOnePTwoCTypeTag, EnableInertiaTerms, false);
-
 // Use moles
 SET_BOOL_PROP(StokesOnePTwoCTypeTag, UseMoles, true);
 

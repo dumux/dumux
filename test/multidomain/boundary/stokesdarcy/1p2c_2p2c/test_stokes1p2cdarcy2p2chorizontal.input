@@ -46,6 +46,7 @@ VgN = 6.9
 Name = test_stokes1p2cdarcy2p2chorizontal
 EnableGravity = true
 InterfaceDiffusionCoefficientAvg = FreeFlowOnly
+EnableInertiaTerms = false
 
 [Vtk]
 AddVelocity = true

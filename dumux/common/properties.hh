@@ -188,7 +188,6 @@ NEW_PROP_TAG(SherwoodFormulation);
 // Properties used by free flow models
 /////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(EnableInertiaTerms); //!< Returns whether to include inertia terms in the momentum balance eq or not (Stokes / Navier-Stokes)
 NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure term in the momentum balance or not
 
 /////////////////////////////////////////////////////////////

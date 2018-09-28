@@ -64,7 +64,6 @@ SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableGridVolumeVariablesCache, true);
 
-SET_BOOL_PROP(NavierStokesAnalyticTypeTag, EnableInertiaTerms, true);
 SET_BOOL_PROP(NavierStokesAnalyticTypeTag, NormalizePressure, false);
 }
 
@@ -162,7 +161,7 @@ public:
             for (unsigned int dimIdx = 0; dimIdx < dimWorld; ++dimIdx)
             {
                 // inertia term
-                if (GET_PROP_VALUE(TypeTag, EnableInertiaTerms))
+                if (this->enableInertiaTerms())
                   source[Indices::velocity(velIdx)] += density_ * dv2dx(globalPos)[velIdx][dimIdx];
 
                 // viscous term (molecular)

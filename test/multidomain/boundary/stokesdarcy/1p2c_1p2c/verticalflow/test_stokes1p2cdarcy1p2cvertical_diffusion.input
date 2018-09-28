@@ -29,6 +29,7 @@ Tortuosity = 1.0
 Name = test_stokes1p2cdarcy1p2cvertical_diffusion
 EnableGravity = false
 OnlyDiffusion = true
+EnableInertiaTerms = false
 
 [Vtk]
 AddVelocity = 1

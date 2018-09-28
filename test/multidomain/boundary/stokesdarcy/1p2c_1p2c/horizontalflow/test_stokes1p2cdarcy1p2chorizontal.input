@@ -33,6 +33,7 @@ Tortuosity = 0.5
 [Problem]
 Name = test_stokes1p2cdarcy1p2chorizontal
 EnableGravity = false
+EnableInertiaTerms = true
 
 [Vtk]
 AddVelocity = 1

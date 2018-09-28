@@ -100,6 +100,8 @@ public:
     {
         if (getParamFromGroup<bool>(paramGroup, "Problem.EnableGravity"))
             gravity_[dim-1]  = -9.81;
+
+        enableInertiaTerms_ = getParamFromGroup<bool>(paramGroup, "Problem.EnableInertiaTerms");
     }
 
     /*!
@@ -129,6 +131,12 @@ public:
      */
     const GravityVector& gravity() const
     { return gravity_; }
+
+    /*!
+     * \brief Returns whether interia terms should be considered.
+     */
+    bool enableInertiaTerms() const
+    { return enableInertiaTerms_; }
 
     //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
     template <class G = FVGridGeometry>
@@ -246,6 +254,7 @@ private:
     { return *static_cast<const Implementation *>(this); }
 
     GravityVector gravity_;
+    bool enableInertiaTerms_;
 };
 
 } // end namespace Dumux
