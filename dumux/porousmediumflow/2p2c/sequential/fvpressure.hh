@@ -1026,7 +1026,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     Scalar massw = sumConc * fluidState.phaseMassFraction(wPhaseIdx);
     Scalar massn = sumConc * fluidState.phaseMassFraction(nPhaseIdx);
 
-    if ((cellData.density(wPhaseIdx)*cellData.density(nPhaseIdx)) == 0)
+    if (Dune::FloatCmp::eq<Scalar>((cellData.density(wPhaseIdx)*cellData.density(nPhaseIdx)), 0))
         DUNE_THROW(Dune::MathError, "Sequential2p2c::postProcessUpdate: try to divide by 0 density");
     Scalar vol = massw / cellData.density(wPhaseIdx) + massn / cellData.density(nPhaseIdx);
     if (Dune::FloatCmp::ne<Scalar, Dune::FloatCmp::absolute>(problem().timeManager().timeStepSize(), 0.0, 1.0e-30))

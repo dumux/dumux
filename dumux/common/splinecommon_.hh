@@ -251,9 +251,9 @@ public:
         }
 
         // corner case where the whole spline is a constant
-        if (moment_(0) == 0 &&
-            moment_(1) == 0 &&
-            y_(0) == y_(1))
+        if (Dune::FloatCmp::eq<Scalar>(moment_(0), 0) &&
+            Dune::FloatCmp::eq<Scalar>(moment_(1), 0) &&
+            Dune::FloatCmp::eq<Scalar>(y_(0), y_(1)))
         {
             // actually the is monotonically increasing as well as
             // monotonously decreasing
@@ -562,9 +562,9 @@ protected:
         Scalar xE1 = (-2*b + disc)/(6*a);
         Scalar xE2 = (-2*b - disc)/(6*a);
 
-        if (disc == 0) {
+        if (Dune::FloatCmp::eq<Scalar>(disc, 0)) {
             // saddle point -> no extrema
-            if (xE1 == x0)
+            if (Dune::FloatCmp::eq<Scalar>(xE1, x0))
                 // make sure that we're not picking the saddle point
                 // to determine whether we're monotonically increasing
                 // or decreasing

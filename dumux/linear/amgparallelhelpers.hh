@@ -424,7 +424,7 @@ public:
     }
 
     // access to ghost vector
-    double ghost (std::size_t i) const
+    std::size_t ghost (std::size_t i) const
     {
         return isGhost_[i];
     }

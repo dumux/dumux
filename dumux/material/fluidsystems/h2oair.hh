@@ -266,7 +266,7 @@ public:
                 return H2O::vaporPressure(t);
             else
             {
-                const auto pc = (fluidState.wettingPhase() == H2OIdx)
+                const auto pc =  (fluidState.wettingPhase() == (int) H2OIdx)
                                  ? fluidState.pressure(AirIdx)-fluidState.pressure(H2OIdx)
                                  : fluidState.pressure(H2OIdx)-fluidState.pressure(AirIdx);
                 return H2O::vaporPressure(t)*exp( -pc * molarMass(H2OIdx)
