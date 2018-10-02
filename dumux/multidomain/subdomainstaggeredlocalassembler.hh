@@ -865,7 +865,6 @@ public:
         // get some aliases for convenience
         const auto& fvGeometry = this->fvGeometry();
         const auto& curSol = this->curSol()[domainJ];
-        FaceResidualValue partialDeriv;
 
         // build derivatives with for cell center dofs w.r.t. cell center dofs
         for(auto&& scvf : scvfs(fvGeometry))
