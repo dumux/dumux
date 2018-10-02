@@ -260,6 +260,8 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Only element or vertex quantities allowed.");
     }
 
+    virtual ~Field() {}
+
     //! return the name of this field
     virtual std::string name () const { return field_->name(); }
 
